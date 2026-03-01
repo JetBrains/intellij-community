@@ -4,7 +4,18 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:junit4",
+    "//plugins/kotlin/copyright",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/test-framework",
+    "//platform/ide-core",
+    "//java/java-analysis-api:analysis",
+    "//plugins/copyright",
+  ]
 )
 
 jvm_library(
@@ -17,14 +28,19 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:junit4",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/copyright",
+    "//plugins/kotlin/copyright:copyright_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework",
@@ -33,8 +49,9 @@ jvm_library(
     "//plugins/copyright:copyright_test_lib",
   ],
   runtime_deps = [
-    "//platform/ide-core",
-    "//java/java-analysis-api:analysis",
+    ":tests",
+    "//platform/ide-core:ide-core_test_lib",
+    "//java/java-analysis-api:analysis_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.copyright.tests` end

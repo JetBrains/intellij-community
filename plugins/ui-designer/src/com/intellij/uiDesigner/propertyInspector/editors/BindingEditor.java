@@ -5,10 +5,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.inspections.FormInspectionUtil;
@@ -24,7 +29,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -44,7 +50,9 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
       new ActionListener(){
         @Override
         public void actionPerformed(final ActionEvent e){
-          fireValueCommitted(true, false);
+          WriteIntentReadAction.run(() -> {
+            fireValueCommitted(true, false);
+          });
         }
       }
     );

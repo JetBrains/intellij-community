@@ -4,7 +4,16 @@ package org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle
 
 import kotlinx.collections.immutable.PersistentList
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemPluginIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.FileIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.PluginManagementIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.PluginManagementRepositoryIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.distinctAndSorted
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.freeIrs
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.irsOfTypeOrNull
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.removeSingleIRDuplicates
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.render
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 
 data class SettingsGradleFileIR(

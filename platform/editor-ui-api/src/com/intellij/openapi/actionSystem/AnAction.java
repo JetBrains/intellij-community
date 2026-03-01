@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.diagnostic.LoadingState;
@@ -14,11 +14,16 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -344,13 +349,13 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * to notify the action subsystem to update all toolbar actions
    * when your subsystem's determines that its actions' visibility might be affected.
    * <br/>
-   * This method is always called under the {@link com.intellij.openapi.application.ReadAction}.
+   * This method is called under the {@link com.intellij.openapi.application.ReadAction}
+   * if {@link Presentation#isRWLockRequired()} is set to {@code true}
    *
    * @see #getActionUpdateThread()
    * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html">Action System (IntelliJ Platform Docs)</a>
    */
   @ApiStatus.OverrideOnly
-  @RequiresReadLock(generateAssertion = false)
   public void update(@NotNull AnActionEvent e) {
   }
 
@@ -413,6 +418,9 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * The method must not be called directly.
    * Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#performAction} or
    * (when delegating) {@link ActionWrapperUtil#actionPerformed}
+   * <p>
+   * This method is executed in {@link <a href="https://jb.gg/ij-platform-threading">Write-Intent Read Action</a>}
+   * if {@link Presentation#isRWLockRequired()} is {@code true}.
    *
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#performAction
    * @see ActionWrapperUtil#actionPerformed

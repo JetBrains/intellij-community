@@ -12,28 +12,45 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.xdebugger.*
+import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
-import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle
+import com.intellij.platform.debugger.impl.ui.XDebuggerUiBundle
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 import org.assertj.swing.fixture.JComboBoxFixture
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonSamplePosition
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.checkPositionOfEditor
 import training.dsl.LessonUtil.highlightBreakpointGutter
 import training.dsl.LessonUtil.sampleRestoreNotification
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
+import training.dsl.checkToolWindowState
+import training.dsl.highlightButtonById
+import training.dsl.lineWithBreakpoints
+import training.dsl.showInvalidDebugLayoutWarning
 import training.learn.CourseManager
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -219,7 +236,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
                                  icon(AllIcons.Debugger.AddToWatch)))
       text(LessonsBundle.message("debug.workflow.use.watches.shortcut", action(it),
                                  strong(LessonsBundle.message("debug.workflow.debugger.watches")), shortcut))
-      val addToWatchActionText = XDebuggerImplBundle.message("action.Debugger.AddToWatch.text")
+      val addToWatchActionText = XDebuggerUiBundle.message("action.Debugger.AddToWatch.text")
       triggerAndFullHighlight { usePulsation = true }.component { ui: ActionButton ->
         ui.action.templatePresentation.text == addToWatchActionText
       }

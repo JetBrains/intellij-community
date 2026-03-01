@@ -11,9 +11,18 @@ import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.coroutineNameAppended
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.CHECK_CODE
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.NORMAL
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 /**
@@ -65,7 +74,12 @@ abstract class IjentSessionProcessMediator private constructor(
      * Nothing happens with [parentScope] if IJent exits expectedly, f.i., after [com.intellij.platform.ijent.IjentApi.close].
      */
     @OptIn(DelicateCoroutinesApi::class)
-    fun create(parentScope: CoroutineScope, process: Process, ijentLabel: String, isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 }): IjentSessionProcessMediator {
+    fun create(
+      parentScope: CoroutineScope,
+      process: Process,
+      ijentLabel: String,
+      isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 },
+    ): IjentSessionProcessMediator {
       require(parentScope.coroutineContext[Job] != null) {
         "Scope $parentScope has no Job"
       }

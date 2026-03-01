@@ -221,7 +221,7 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
         self,
         path: str | os.PathLike[str] | SupportsWrite[Incomplete],
         index: bool | None = None,
-        compression: Literal["snappy", "gzip", "brotli"] | None = "snappy",
+        compression: Literal["snappy", "gzip", "brotli", "lz4", "zstd"] | None = "snappy",
         geometry_encoding: _GeomEncoding = "WKB",
         write_covering_bbox: bool = False,
         schema_version: str | None = None,
@@ -282,6 +282,7 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
     def to_crs(self, crs: _ConvertibleToCRS | None, epsg: int, inplace: Literal[True]) -> None: ...
     def estimate_utm_crs(self, datum_name: str = "WGS 84") -> CRS: ...
     # def __getitem__(self, key): ...
+    def __delitem__(self, key) -> None: ...  # type: ignore[misc]
     # def __setitem__(self, key, value) -> None: ...
     def copy(self, deep: bool = True) -> Self: ...  # type: ignore[misc]
     # def merge(self, *args, **kwargs) -> GeoDataFrame | pd.DataFrame: ...

@@ -31,6 +31,7 @@ interface PolyContextSourceProximityProvider {
 
     data object ProjectToolExecutable : SourceKind
 
+    @ConsistentCopyVisibility
     data class PackageManagerDependency internal constructor(val name: String) : SourceKind
   }
 

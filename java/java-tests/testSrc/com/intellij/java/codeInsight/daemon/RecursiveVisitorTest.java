@@ -6,11 +6,13 @@ import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethodCallExpression;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
   public void testStopWalking() {
-    PsiJavaFile file = (PsiJavaFile)createFile("Test.java", """
+    @Language("JAVA")
+    String text = """
       class Test {
         Test() {
           super();
@@ -19,9 +21,10 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
             super();
           }
         }
-      }""");
+      }""";
+    PsiJavaFile psiJavaFile = (PsiJavaFile)createFile("Test.java", text);
     int[] count = {0};
-    PsiCodeBlock body = file.getClasses()[0].getMethods()[0].getBody();
+    PsiCodeBlock body = psiJavaFile.getClasses()[0].getMethods()[0].getBody();
     body.acceptChildren(new JavaRecursiveElementWalkingVisitor() {
 
       @Override

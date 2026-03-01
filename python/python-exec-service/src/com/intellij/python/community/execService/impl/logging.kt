@@ -5,23 +5,25 @@ import com.google.common.io.ByteStreams
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.python.community.execService.ConcurrentProcessWeight
+import com.intellij.python.processOutput.common.ExecutableDto
+import com.intellij.python.processOutput.common.LoggedProcessDto
+import com.intellij.python.processOutput.common.OutputKindDto
+import com.intellij.python.processOutput.common.OutputLineDto
+import com.intellij.python.processOutput.common.ProcessOutputEventDto
+import com.intellij.python.processOutput.common.ProcessWeightDto
+import com.intellij.python.processOutput.common.TraceContextDto
+import com.intellij.python.processOutput.common.TraceContextKind
+import com.intellij.python.processOutput.common.TraceContextUuid
+import com.intellij.python.processOutput.common.sendProcessOutputTopicEvent
 import com.intellij.util.io.awaitExit
-import com.intellij.util.io.readLineAsync
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.Exe
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
-import java.io.BufferedReader
-import java.io.ByteArrayInputStream
 import java.io.InputStream
-import java.io.InputStreamReader
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -35,75 +37,12 @@ object LoggingLimits {
    * The maximum buffer size of a LoggingProcess
    */
   const val MAX_OUTPUT_SIZE = 100_000
-  const val MAX_LINES = 1024
-}
-
-@ApiStatus.Internal
-data class LoggedProcess(
-  val traceContext: TraceContext?,
-  val pid: Long?,
-  val startedAt: Instant,
-  val cwd: String?,
-  val exe: LoggedProcessExe,
-  val args: List<String>,
-  val env: Map<String, String>,
-  val target: String,
-  val lines: SharedFlow<LoggedProcessLine>,
-  val exitInfo: MutableStateFlow<LoggedProcessExitInfo?>,
-) {
-  val id: Int = nextId.getAndAdd(1)
-
-  val commandString: String
-    get() = commandFromSegments(listOf(exe.path) + args)
-
-  /**
-   * Command string with the full path of the exe trimmed only to the latest segments. E.g., `/usr/bin/uv` -> `uv`.
-   */
-  val shortenedCommandString: String
-    get() = commandFromSegments(listOf(exe.parts.last()) + args)
-
-  companion object {
-    private val nextId: AtomicInteger = AtomicInteger(0)
-
-    private fun commandFromSegments(segments: List<String>) =
-      segments.joinToString(" ")
-  }
-}
-
-@ApiStatus.Internal
-data class LoggedProcessExe(
-  val path: String,
-  val parts: List<String>,
-)
-
-@ApiStatus.Internal
-data class LoggedProcessExitInfo(
-  val exitedAt: Instant,
-  val exitValue: Int,
-  val additionalMessageToUser: @Nls String? = null,
-)
-
-@ApiStatus.Internal
-data class LoggedProcessLine(
-  val text: String,
-  val kind: Kind,
-) {
-  enum class Kind {
-    OUT,
-    ERR
-  }
-}
-
-@ApiStatus.Internal
-@Service
-class ExecLoggerService(val scope: CoroutineScope) {
-  internal val processesInternal = MutableSharedFlow<LoggedProcess>()
-  val processes: Flow<LoggedProcess> = processesInternal.asSharedFlow()
 }
 
 @ApiStatus.Internal
 class LoggingProcess(
   private val backingProcess: Process,
+  weight: ConcurrentProcessWeight?,
   traceContext: TraceContext?,
   startedAt: Instant,
   cwd: String?,
@@ -112,52 +51,65 @@ class LoggingProcess(
   env: Map<String, String>,
   target: String,
 ) : Process() {
-  val loggedProcess: LoggedProcess
-
-  private val stdoutStream = LoggingInputStream(backingProcess.inputStream)
-  private val stderrStream = LoggingInputStream(backingProcess.errorStream)
-
-  init {
-    val service = ApplicationManager.getApplication().service<ExecLoggerService>()
-    val linesFlow = MutableSharedFlow<LoggedProcessLine>(replay = LoggingLimits.MAX_LINES)
-    val exitInfoFlow = MutableStateFlow<LoggedProcessExitInfo?>(null)
-
-    loggedProcess =
-      LoggedProcess(
-        traceContext,
+  val loggedProcess: LoggedProcessDto =
+    LoggedProcessDto(
+      weight =
+        when (weight) {
+          ConcurrentProcessWeight.LIGHT -> ProcessWeightDto.LIGHT
+          ConcurrentProcessWeight.MEDIUM -> ProcessWeightDto.MEDIUM
+          ConcurrentProcessWeight.HEAVY -> ProcessWeightDto.HEAVY
+          null -> null
+        },
+      traceContextUuid =
+        traceContext?.let {
+          TraceContextUuid(it.uuid.toString())
+        },
+      pid =
         try {
           backingProcess.pid()
         }
         catch (_: UnsupportedOperationException) {
           null
         },
-        startedAt,
-        cwd,
-        LoggedProcessExe(
+      startedAt = startedAt,
+      cwd = cwd,
+      exe =
+        ExecutableDto(
           path = exe.toString(),
           parts = exe.pathParts(),
         ),
-        args,
-        env,
-        target,
-        linesFlow,
-        exitInfoFlow,
-      )
+      args = args,
+      env = env,
+      target = target,
+      id = nextId.getAndAdd(1),
+    )
+  private val lineCounter = AtomicInteger(0)
 
-    service.scope.launch {
-      service.processesInternal.emit(loggedProcess)
+  private val stdoutStream = LoggingInputStream(loggedProcess.id, backingProcess.inputStream, OutputKindDto.OUT, lineCounter)
+  private val stderrStream = LoggingInputStream(loggedProcess.id, backingProcess.errorStream, OutputKindDto.ERR, lineCounter)
+
+  init {
+    ApplicationManager.getApplication().service<LoggingService>().scope.launch {
+      val traceHierarchy = mutableListOf<TraceContextDto>()
+      var currentTraceContext = traceContext
+
+      while (currentTraceContext != null) {
+        traceHierarchy += currentTraceContext.toDto()
+        currentTraceContext = currentTraceContext.parentTraceContext
+      }
+
+      sendProcessOutputTopicEvent(
+        ProcessOutputEventDto.NewProcess(loggedProcess, traceHierarchy)
+      )
 
       awaitExit()
 
-      val stdoutReader = BufferedReader(InputStreamReader(ByteArrayInputStream(stdoutStream.byteArray)))
-      val stderrReader = BufferedReader(InputStreamReader(ByteArrayInputStream(stderrStream.byteArray)))
-
-      collectOutputLines(stdoutReader, linesFlow, LoggedProcessLine.Kind.OUT)
-      collectOutputLines(stderrReader, linesFlow, LoggedProcessLine.Kind.ERR)
-
-      exitInfoFlow.value = LoggedProcessExitInfo(
-        exitedAt = Clock.System.now(),
-        exitValue = exitValue(),
+      sendProcessOutputTopicEvent(
+        ProcessOutputEventDto.ProcessExit(
+          processId = loggedProcess.id,
+          exitedAt = Clock.System.now(),
+          exitValue = exitValue(),
+        )
       )
     }
   }
@@ -193,17 +145,22 @@ class LoggingProcess(
 
   override fun supportsNormalTermination(): Boolean =
     backingProcess.supportsNormalTermination()
+
+  companion object {
+    private val nextId: AtomicInteger = AtomicInteger(0)
+  }
 }
 
 private class LoggingInputStream(
+  private val processId: Int,
   private val backingInputStream: InputStream,
+  private val kind: OutputKindDto,
+  private val lineCounter: AtomicInteger,
 ) : InputStream() {
-  private val bytes = ByteStreams.newDataOutput()
-  private var tail = 0
   private var closed = AtomicBoolean(false)
-
-  val byteArray
-    get() = bytes.toByteArray()
+  private var outputSize = 0
+  private var reachedEnd = false
+  private var currentLineBytes = ByteStreams.newDataOutput()
 
   override fun read(): Int {
     if (closed.get()) {
@@ -212,9 +169,11 @@ private class LoggingInputStream(
 
     val byte = backingInputStream.read()
 
-    if (tail < LoggingLimits.MAX_OUTPUT_SIZE && byte != -1) {
-      bytes.write(byte)
-      tail += 1
+    checkForStreamEnd(byte)
+
+    if (!reachedEnd) {
+      processChar(byte)
+      outputSize += 1
     }
 
     return byte
@@ -231,18 +190,20 @@ private class LoggingInputStream(
 
     val finalLen = backingInputStream.read(b, off, len)
 
-    if (finalLen != -1) {
-      val truncatedLen = if (tail + finalLen > LoggingLimits.MAX_OUTPUT_SIZE) {
-        LoggingLimits.MAX_OUTPUT_SIZE - tail
+    checkForStreamEnd(finalLen)
+
+    if (!reachedEnd) {
+      val truncatedLen = if (outputSize + finalLen > LoggingLimits.MAX_OUTPUT_SIZE) {
+        LoggingLimits.MAX_OUTPUT_SIZE - outputSize
       }
       else {
         finalLen
       }
 
-      if (truncatedLen > 0) {
-        bytes.write(b, off, truncatedLen)
-        tail += truncatedLen
+      for (index in off..<off + truncatedLen) {
+        processChar(b[index].toInt())
       }
+      outputSize += truncatedLen
     }
 
     return finalLen
@@ -250,21 +211,76 @@ private class LoggingInputStream(
 
   override fun close() {
     closed.set(true)
+    finalizeLastLine()
     super.close()
   }
-}
 
-private suspend fun collectOutputLines(
-  reader: BufferedReader,
-  linesFlow: MutableSharedFlow<LoggedProcessLine>,
-  kind: LoggedProcessLine.Kind,
-) {
-  var line: String? = null
+  private fun checkForStreamEnd(char: Int) {
+    if (!reachedEnd && (outputSize >= LoggingLimits.MAX_OUTPUT_SIZE || char == -1)) {
+      reachedEnd = true
+      finalizeLastLine()
+    }
+  }
 
-  while (reader.readLineAsync()?.also { line = it } != null) {
-    linesFlow.emit(LoggedProcessLine(
-      text = line!!,
-      kind = kind,
-    ))
+  private fun processChar(char: Int) {
+    if (char == -1) {
+      return
+    }
+
+    when (char.toChar()) {
+      '\r' -> {
+        // ignore
+      }
+      '\n' -> {
+        finalizeLine(currentLineBytes.toByteArray())
+      }
+      else -> {
+        currentLineBytes.write(char)
+      }
+    }
+  }
+
+  private fun finalizeLine(bytes: ByteArray) {
+    val line = String(bytes)
+
+    sendProcessOutputTopicEvent(
+      ProcessOutputEventDto.NewOutputLine(
+        processId = processId,
+        OutputLineDto(
+          kind = kind,
+          text = line,
+          lineNo = lineCounter.getAndAdd(1),
+        )
+      )
+    )
+
+    currentLineBytes = ByteStreams.newDataOutput()
+  }
+
+  private fun finalizeLastLine() {
+    val bytes = currentLineBytes.toByteArray()
+
+    if (bytes.size > 0) {
+      finalizeLine(bytes)
+    }
   }
 }
+
+private fun TraceContext.toDto(): TraceContextDto =
+  TraceContextDto(
+    title = title,
+    timestamp = timestamp,
+    uuid = TraceContextUuid(uuid.toString()),
+    kind =
+      when (this) {
+        NON_INTERACTIVE_ROOT_TRACE_CONTEXT -> TraceContextKind.NON_INTERACTIVE
+        else -> TraceContextKind.INTERACTIVE
+      },
+    parentUuid =
+      parentTraceContext?.let {
+        TraceContextUuid(it.uuid.toString())
+      }
+  )
+
+@Service
+private class LoggingService(val scope: CoroutineScope)

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 object ConvertExtensionToFunctionTypeFixFactory : KotlinIntentionActionsFactory() {
     private fun KotlinType.renderType(renderer: DescriptorRenderer) = buildString {
         append('(')

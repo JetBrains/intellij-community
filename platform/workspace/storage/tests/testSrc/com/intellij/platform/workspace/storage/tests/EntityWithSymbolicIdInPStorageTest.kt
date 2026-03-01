@@ -4,7 +4,15 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntityId
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyLinkedListEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyXParentEntity
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.assertErrorLogged

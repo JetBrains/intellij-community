@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;

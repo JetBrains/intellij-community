@@ -2,7 +2,13 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
-import com.intellij.ide.util.gotoByName.*;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
+import com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel;
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider;
+import com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor;
+import com.intellij.ide.util.gotoByName.GotoFileModel;
+import com.intellij.ide.util.gotoByName.MatchResult;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +18,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,9 +35,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.UriUtil;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
+import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.text.matching.MatchingMode;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -40,11 +49,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
-import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FUZZY_SEARCH_ACTIVITY;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FUZZY_SEARCH_RESULT;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FUZZY_SEARCH_TOTAL_RESULTS;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FUZZY_SEARCH_TYPE;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FuzzySearchResult;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FuzzySearchType;
 import static com.intellij.ide.util.gotoByName.FuzzyFileSearchExperimentOptionKt.isFuzzyFileSearchEnabled;
 
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
@@ -191,16 +211,15 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     // Find all directories and files names similar to the last component in patternComponents
     List<MatchResult> matchingNames = new ArrayList<>();
-    final String fullPattern = String.join("", patternComponents);
-    final MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, true);
-    String lastPatternComponent = patternComponents.get(patternComponents.size() - 1);
-    MinusculeMatcher matcher = buildPatternMatcher(lastPatternComponent, true);
+    final var fullPattern = String.join("", patternComponents);
+    final var fullMatcher = buildPatternMatcher(fullPattern, true);
+    final var lastPatternComponent = patternComponents.get(patternComponents.size() - 1);
     var nameMatchingCheck = new ProcessorWithThrottledCancellationCheck<>(
       (CharSequence fileNameCharSeq) -> {
         indicator.checkCanceled();
         if (fileNameCharSeq != null) {
           String fileName = fileNameCharSeq.toString();
-          MatchResult result = matchesWithFullMatcherCheck(base, fullMatcher, parameters.getCompletePattern(), matcher, fileName);
+          MatchResult result = matches(base, parameters.getCompletePattern(), fullMatcher, fileName);
           if (result != null) {
             matchingNames.add(result);
           }
@@ -234,7 +253,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       if (patternComponents.size() > 1) {
         int patternSize = patternComponents.size();
         LevenshteinCalculator calculator = new LevenshteinCalculator(patternComponents.subList(0, patternSize - 1));
-        float distance = calculator.distanceToVirtualFile(psiFileItem.getVirtualFile().getParent(), false, false);
+        float distance = calculator.distanceToVirtualFile(psiFileItem.getVirtualFile().getParent(), false, false, base.getModel());
         if (distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE) {
           int avgWeight = (psiFileItemWeight + LevenshteinCalculator.weightFromDistance(distance) * (patternSize - 1)) / patternSize;
           matchingItems.add(new FoundItemDescriptor<>(psiFileItem, avgWeight));
@@ -396,9 +415,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       ProgressManager.checkCanceled();
 
       String qualifier = Objects.requireNonNull(getParentPath(item));
-      FList<TextRange> fragments = qualifierMatcher.matchingFragments(qualifier);
+      List<MatchedFragment> fragments = qualifierMatcher.match(qualifier);
       if (fragments != null) {
-        int gapPenalty = fragments.isEmpty() ? 0 : qualifier.length() - fragments.get(fragments.size() - 1).getEndOffset();
+        int gapPenalty = fragments.isEmpty() ? 0 : qualifier.length() - fragments.getLast().getEndOffset();
         int exactMatchScore = isExactMatch(item, completePattern) ? EXACT_MATCH_DEGREE : 0;
         int qualifierDegree = qualifierMatcher.matchingDegree(qualifier, false, fragments) - gapPenalty + exactMatchScore;
         matching.add(new FoundItemDescriptor<>(item, qualifierDegree));
@@ -461,7 +480,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
 
   private @Unmodifiable @NotNull Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
-                                                                                                   @NotNull List<? extends MatchResult> matchResults,
+                                                                                                   @NotNull List<MatchResult> matchResults,
                                                                                                    @NotNull Function<? super String, Object[]> indexResult) {
     List<PsiFileSystemItem> group = new ArrayList<>();
     Map<PsiFileSystemItem, Integer> nesting = new HashMap<>();
@@ -579,27 +598,20 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private final class SuffixMatches {
     final String patternSuffix;
     final MinusculeMatcher fullMatcher;
-    final MinusculeMatcher matcher;
     final List<MatchResult> matchingNames = new ArrayList<>();
     final ProgressIndicator indicator;
 
     SuffixMatches(@NotNull String pattern, int from, @NotNull ProgressIndicator indicator) {
       patternSuffix = pattern.substring(from);
-      boolean preferStartMatches = from == 0 && !patternSuffix.startsWith("*");
-      String matchPattern = (from > 0 ? " " : "*") + patternSuffix;
+      final boolean preferStartMatches = from == 0 && !patternSuffix.startsWith("*");
+      final var matchPattern = (from > 0 ? " " : "*") + patternSuffix;
 
-      NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(matchPattern).withMatchingMode(MatchingMode.IGNORE_CASE);
+      final var fullBuilder = NameUtil.buildMatcher(matchPattern).withMatchingMode(MatchingMode.IGNORE_CASE);
       if (preferStartMatches) {
-        builder.preferringStartMatches();
-      }
-
-      final var fullBuilder = NameUtil.buildMatcher(patternSuffix).withMatchingMode(MatchingMode.IGNORE_CASE);
-      if (preferStartMatches) {
-        builder.preferringStartMatches();
+        fullBuilder.preferringStartMatches();
       }
 
       this.fullMatcher = fullBuilder.build();
-      this.matcher = builder.build();
       this.indicator = indicator;
     }
 
@@ -612,7 +624,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     boolean matchName(@NotNull ChooseByNameViewModel base, String name) {
-      MatchResult result = matchesWithFullMatcherCheck(base, fullMatcher, patternSuffix, matcher, name);
+      MatchResult result = matches(base, patternSuffix, fullMatcher, name);
       if (result != null) {
         matchingNames.add(result);
         return true;
@@ -629,7 +641,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       if (patternSuffix.length() <= 3 && !dirMatcher.dirPattern.isEmpty()) {
         // just enumerate over files
         // otherwise there are too many names matching the remaining few letters, and querying index for all of them with a very constrained scope is expensive
-        Set<String> existingNames = dirMatcher.findFileNamesMatchingIfCheap(patternSuffix.charAt(0), matcher);
+        Set<String> existingNames = dirMatcher.findFileNamesMatchingIfCheap(patternSuffix.charAt(0), fullMatcher);
         if (existingNames != null) {
           matchingNames = ContainerUtil.filter(matchingNames, mr -> existingNames.contains(mr.elementName));
         }

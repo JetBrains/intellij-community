@@ -3,7 +3,11 @@ package com.jetbrains.python.psi.stubs
 
 import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyBoolLiteralExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyNoneLiteralExpression
+import com.jetbrains.python.psi.PyNumericLiteralExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 

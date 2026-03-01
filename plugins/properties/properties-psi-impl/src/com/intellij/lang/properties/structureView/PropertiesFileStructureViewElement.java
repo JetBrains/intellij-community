@@ -9,7 +9,7 @@ import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.navigation.ItemPresentation;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

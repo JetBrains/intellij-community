@@ -15,7 +15,12 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import java.awt.BorderLayout
-import javax.swing.*
+import javax.swing.Box
+import javax.swing.ButtonGroup
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JRadioButton
 
 internal class KotlinSelectNestedClassRefactoringDialog private constructor(
     project: Project,

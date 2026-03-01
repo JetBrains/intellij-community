@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -22,7 +23,8 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
 
-internal class AddNamesToFollowingArgumentsIntention :
+@ApiStatus.Internal
+class AddNamesToFollowingArgumentsIntention :
     KotlinApplicableModCommandAction<KtValueArgument, AddNamesToFollowingArgumentsIntention.Context>(KtValueArgument::class) {
 
     data class Context(

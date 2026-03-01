@@ -36,7 +36,13 @@ import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Locator;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
   private static final @NonNls QName UNKNOWN = new QName("", "#unknown");

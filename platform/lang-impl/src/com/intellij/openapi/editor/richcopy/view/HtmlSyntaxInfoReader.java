@@ -13,7 +13,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
 
 @ApiStatus.Internal
 public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements MarkupHandler {

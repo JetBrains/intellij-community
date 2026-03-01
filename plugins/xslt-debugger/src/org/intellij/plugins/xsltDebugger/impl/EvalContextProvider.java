@@ -18,7 +18,11 @@ package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtilRt;
-import org.intellij.lang.xpath.context.*;
+import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.context.ContextType;
+import org.intellij.lang.xpath.context.NamespaceContext;
+import org.intellij.lang.xpath.context.SimpleVariableContext;
+import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.xslt.context.XsltContextProvider;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;

@@ -8,9 +8,18 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterator;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.*;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.BIG_INTEGER_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.BOOLEAN_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.DOUBLE_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.INTEGER_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.STRING_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.getType;
 import static com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.extractValueByHierarchicalIndex;
 import static java.lang.Math.min;
 import static java.lang.String.format;

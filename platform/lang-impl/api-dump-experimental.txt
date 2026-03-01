@@ -5,30 +5,6 @@ com.intellij.analysis.problemsView.Problem
 f:com.intellij.analysis.problemsView.toolWindow.ProblemNode
 - com.intellij.analysis.problemsView.toolWindow.Node
 - *f:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
-*f:com.intellij.analysis.problemsView.toolWindow.ProblemsContextGroupNode
-- com.intellij.analysis.problemsView.toolWindow.Node
-- <init>(com.intellij.analysis.problemsView.toolWindow.ProblemsContextNode,java.lang.String,java.util.Collection):V
-- equals(java.lang.Object):Z
-- getChildren():java.util.List
-- f:getGroup():java.lang.String
-- getLeafState():com.intellij.ui.tree.LeafState
-- getName():java.lang.String
-- f:getParent():com.intellij.analysis.problemsView.toolWindow.ProblemsContextNode
-- f:getProblems():java.util.Collection
-- hashCode():I
-*f:com.intellij.analysis.problemsView.toolWindow.ProblemsContextNode
-- com.intellij.analysis.problemsView.toolWindow.Node
-- <init>(com.intellij.analysis.problemsView.toolWindow.FileNode,com.intellij.codeInsight.multiverse.CodeInsightContext,java.util.Collection,kotlin.jvm.functions.Function0):V
-- equals(java.lang.Object):Z
-- getChildren():java.util.List
-- f:getContextGroup():com.intellij.codeInsight.multiverse.CodeInsightContext
-- getLeafState():com.intellij.ui.tree.LeafState
-- f:getMyIcon():javax.swing.Icon
-- getName():java.lang.String
-- f:getParent():com.intellij.analysis.problemsView.toolWindow.FileNode
-- f:getProblems():java.util.Collection
-- hashCode():I
-- f:isGroupIdToolSwitchedOn():kotlin.jvm.functions.Function0
 a:com.intellij.build.AbstractViewManager
 - com.intellij.build.BuildProgressListener
 - com.intellij.build.BuildProgressObservable
@@ -144,7 +120,9 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:getName():java.lang.String
 - getPlaceholderCollector(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.codeVision.CodeVisionPlaceholderCollector
 - a:getRelativeOrderings():java.util.List
+- getSingleEntryPerLine():Z
 - handleClick(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
+- handleExtraAction(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry,java.lang.String):V
 - handleExtraAction(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,java.lang.String):V
 - isAvailableFor(com.intellij.openapi.project.Project):Z
 - a:precomputeOnUiThread(com.intellij.openapi.editor.Editor):java.lang.Object
@@ -771,6 +749,15 @@ com.intellij.ide.projectView.impl.ProjectViewListener
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - a:createNode(com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.openapi.project.Project,com.intellij.ide.projectView.ViewSettings):com.intellij.ide.util.treeView.AbstractTreeNode
 - a:getWorkspaceClass():java.lang.Class
+*:com.intellij.ide.structureView.newStructureView.StructurePopup
+- com.intellij.ide.structureView.newStructureView.TreeActionsOwner
+- com.intellij.openapi.Disposable
+- a:setTitle(java.lang.String):V
+- a:show():V
+*:com.intellij.ide.structureView.newStructureView.TreeActionsOwnerEx
+- com.intellij.ide.structureView.newStructureView.TreeActionsOwner
+- a:isActionActive(com.intellij.ide.util.treeView.smartTree.TreeAction):Z
+- a:setActionActive(com.intellij.ide.util.treeView.smartTree.TreeAction,Z):V
 c:com.intellij.ide.util.scopeChooser.ScopeDescriptor
 - com.intellij.openapi.util.ColoredItem
 - *:needsUserInputForScope():Z
@@ -1162,10 +1149,6 @@ f:com.intellij.testIntegration.TestFinderHelper
 - com.intellij.openapi.util.ModificationTracker
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
 - getModificationCount():J
-c:com.intellij.util.indexing.IndexInfrastructureVersionBase
-- *s:getAllLanguageStubDescriptors():java.util.List
-- *s:getStubFileElementBaseVersion(com.intellij.psi.stubs.LanguageStubDescriptor):I
-- *s:getStubFileElementTypeKey(com.intellij.psi.stubs.LanguageStubDescriptor):java.lang.String
 *f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 - com.intellij.openapi.Disposable
 - *sf:Companion:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion

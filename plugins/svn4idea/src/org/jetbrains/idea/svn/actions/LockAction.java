@@ -12,7 +12,9 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
-import static org.jetbrains.idea.svn.SvnStatusUtil.*;
+import static org.jetbrains.idea.svn.SvnStatusUtil.isAdded;
+import static org.jetbrains.idea.svn.SvnStatusUtil.isExplicitlyLocked;
+import static org.jetbrains.idea.svn.SvnStatusUtil.isUnderControl;
 import static org.jetbrains.idea.svn.SvnUtil.toIoFiles;
 
 public class LockAction extends BasicAction {

@@ -12,11 +12,23 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.authentication.GHLoginSource
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -96,18 +108,22 @@ internal class GHPRChangesViewModelImpl(
 
   override fun selectCommit(index: Int) {
     delegate.selectCommit(index)?.selectChange(null)
+    GHPRStatisticsCollector.logDetailsCommitChosen(project)
   }
 
   override fun selectNextCommit() {
     delegate.selectNextCommit()?.selectChange(null)
+    GHPRStatisticsCollector.logDetailsNextCommitChosen(project)
   }
 
   override fun selectPreviousCommit() {
     delegate.selectPreviousCommit()?.selectChange(null)
+    GHPRStatisticsCollector.logDetailsPrevCommitChosen(project)
   }
 
   override fun selectCommit(sha: String) {
     delegate.selectCommit(sha)?.selectChange(null)
+    GHPRStatisticsCollector.logDetailsCommitChosen(project)
   }
 
   override fun selectChange(change: RefComparisonChange) {
@@ -115,6 +131,7 @@ internal class GHPRChangesViewModelImpl(
       it.commitsByChange[change]
     }
     delegate.selectCommit(commit)?.selectChange(change)
+    GHPRStatisticsCollector.logChangeSelected(project)
   }
 
   override fun commitHash(commit: GHCommit): String = commit.abbreviatedOid

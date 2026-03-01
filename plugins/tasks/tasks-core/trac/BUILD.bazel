@@ -24,4 +24,22 @@ jvm_library(
     "//libraries/xml-rpc",
   ]
 )
+
+jvm_library(
+  name = "trac_test_lib",
+  module_name = "intellij.tasks.trac",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":trac",
+    "//plugins/tasks/tasks-api:tasks_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//plugins/tasks/tasks-core:core_test_lib",
+    "//plugins/tasks/tasks-compatibility:compatibility_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/tasks-platform-impl:tasks-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/xml-rpc:xml-rpc_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tasks.trac` end

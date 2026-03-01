@@ -7,11 +7,17 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.MediaTracker;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 public final class BuildIcons {
   public static void main(String[] args) throws Exception {

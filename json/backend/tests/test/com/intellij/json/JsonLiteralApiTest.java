@@ -1,6 +1,11 @@
 package com.intellij.json;
 
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonBooleanLiteral;
+import com.intellij.json.psi.JsonElementGenerator;
+import com.intellij.json.psi.JsonNumberLiteral;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;

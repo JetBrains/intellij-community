@@ -14,7 +14,15 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.TestOnlyThreading
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -41,14 +49,40 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.FileStatusListener
+import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeList
+import com.intellij.openapi.vcs.changes.ChangeListAdapter
+import com.intellij.openapi.vcs.changes.ChangeListAvailabilityListener
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.VcsFreezingProcess
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vcs.ex.*
+import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.LineStatusTracker
+import com.intellij.openapi.vcs.ex.LineStatusTrackerI
+import com.intellij.openapi.vcs.ex.LineStatusTrackerListener
+import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.LocalLineStatusTrackerImpl
+import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.ContentInfo
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.TrackerContent
@@ -72,13 +106,19 @@ import com.intellij.util.messages.Topic.ProjectLevel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcsUtil.VcsUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.charset.Charset
-import java.util.*
+import java.util.ArrayDeque
+import java.util.EventListener
 import java.util.function.Supplier
 
 class LineStatusTrackerManager(
@@ -1178,7 +1218,7 @@ class LineStatusTrackerManager(
     val start = System.currentTimeMillis()
     while (true) {
       if (ApplicationManager.getApplication().isDispatchThread) {
-        UIUtil.dispatchAllInvocationEvents()
+        TestOnlyThreading.dispatchAwtEventsWithoutWriteIntentLock()
       }
       if (semaphore.waitFor(10)) {
         return

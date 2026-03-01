@@ -9,7 +9,7 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Vladislav.Soroka

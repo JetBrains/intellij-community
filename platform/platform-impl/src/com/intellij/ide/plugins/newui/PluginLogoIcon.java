@@ -12,7 +12,8 @@ import com.intellij.util.ui.GrayFilter;
 import com.intellij.util.ui.JBImageIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.SwingConstants;
 
 /**
  * @author Alexander Lobas

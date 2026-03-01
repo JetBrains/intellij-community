@@ -1,15 +1,13 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="AnalysisImpl.analyzer.xml"/>
+
   <extensionPoints>
     <extensionPoint name="severitiesProvider"
                     interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
 
-    <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger" dynamic="true"/>
-    <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
     <extensionPoint name="fileRankerMlService" interface="com.intellij.psi.search.FileRankerMlService" dynamic="true"/>
 
     <extensionPoint name="psi.fileReferenceHelper" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper" dynamic="true"/>
-    <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger" dynamic="true"/>
-    <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider" dynamic="true"/>
     <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer" dynamic="true"/>
     <extensionPoint name="outerLanguageRangePatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.templateLanguages.TemplateDataElementType$OuterLanguageRangePatcher"/>
@@ -23,16 +21,35 @@
 
     <extensionPoint name="daemon.highlightInfoFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter" dynamic="true"/>
     <extensionPoint name="daemon.intentionActionFilter" interface="com.intellij.codeInsight.daemon.impl.IntentionActionFilter" dynamic="true"/>
-    <extensionPoint name="completion.frontendFriendlyInsertHandler" beanClass="com.intellij.codeInsight.completion.FrontendFriendlyInsertHandlerSerializerBean" dynamic="true">
-      <with attribute="handler" implements="com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler"/>
+    <extensionPoint name="completion.frontendFriendlyInsertHandler" beanClass="com.intellij.codeInsight.serialization.ExtensionPointSerializerBean" dynamic="true">
+      <with attribute="target" implements="com.intellij.codeInsight.completion.InsertHandler"/>
+      <with attribute="descriptor" implements="com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler"/>
+      <with attribute="converter" implements="com.intellij.codeInsight.completion.InsertHandlerToFrontendFriendlyConverter"/>
+    </extensionPoint>
+    <extensionPoint name="completion.frontendFriendlyPrefixMatcher" beanClass="com.intellij.codeInsight.serialization.ExtensionPointSerializerBean" dynamic="true">
+      <with attribute="target" implements="com.intellij.codeInsight.completion.PrefixMatcher"/>
+      <with attribute="descriptor" implements="com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptor"/>
+      <with attribute="converter" implements="com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptorConverter"/>
+    </extensionPoint>
+    <extensionPoint name="completion.frontendFriendlyRestartPrefixCondition" beanClass="com.intellij.codeInsight.serialization.ExtensionPointSerializerBean" dynamic="true">
+      <with attribute="target" implements="com.intellij.patterns.ElementPattern"/>
+      <with attribute="descriptor" implements="com.intellij.codeInsight.completion.serialization.RestartPrefixConditionDescriptor"/>
+      <with attribute="converter" implements="com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptorConverter"/>
+    </extensionPoint>
+    <extensionPoint name="completion.frontendFriendlyTailType" beanClass="com.intellij.codeInsight.serialization.ExtensionPointSerializerBean" dynamic="true">
+      <with attribute="target" implements="com.intellij.codeInsight.TailType"/>
+      <with attribute="descriptor" implements="com.intellij.codeInsight.completion.FrontendFriendlyTailType"/>
+      <with attribute="converter" implements="com.intellij.codeInsight.completion.TailTypeToFrontendFriendlyConverter"/>
     </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"
+    <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager" open="true"
       serviceImplementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager" preload="notHeadless"/>
     <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
                     serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy"
+                            order="last"/>
+    <modcompletion.completionItemProvider language="any" implementationClass="com.intellij.codeInsight.completion.PsiReferenceCompletionItemProvider"
                             order="last"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManagerEx"
                         serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
@@ -40,7 +57,7 @@
     <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings" client="all"/>
     <applicationSettings service="com.intellij.codeInsight.CodeInsightSettings"/>
 
-    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
+    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService" open="true"
                         serviceImplementation="com.intellij.codeInsight.completion.BaseCompletionService"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginUtil"
                         serviceImplementation="com.intellij.ide.plugins.PluginUtilImpl"/>
@@ -52,25 +69,14 @@
                         serviceImplementation="com.intellij.find.ngrams.TrigramTextSearchService"/>
     <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
                         serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.modcommand.ModCommandService"
-                        serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandServiceImpl"/>
-    <applicationService serviceInterface="com.intellij.modcommand.ModCommandExecutor"
-                        serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandBatchExecutorImpl"/>
-
-    <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
-                    serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
-    <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
-                    serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
                     serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.module.impl.ModuleScopeProviderFactory"
+    <projectService serviceInterface="com.intellij.openapi.module.impl.ModuleScopeProviderFactory" open="true"
                     serviceImplementation="com.intellij.openapi.module.impl.scopes.ModuleScopeProviderFactoryImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
                     serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.multiverse.EditorContextManager"
-                    serviceImplementation="com.intellij.codeInsight.multiverse.EditorContextManagerImpl"/>
     <multiverse.codeInsightContextPresentationProvider implementation="com.intellij.codeInsight.multiverse.ModuleEntityContextPresentationProvider"/>
     <iw.actionProvider implementation="com.intellij.openapi.editor.impl.multiverse.CodeInsightContextSwitcherProvider"/>
 
@@ -79,8 +85,6 @@
              order="after priority"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="grouping"
              order="last"/>
-
-    <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndexImpl"/>
 
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.PlainTextFormatter"/>
     <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonInspectionsReportConverter"/>
@@ -94,10 +98,17 @@
 
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileSupport$HighlightFilter"/>
     <daemon.intentionActionFilter implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileSupport$IntentionFilter"/>
-    <completion.frontendFriendlyInsertHandler
-      handler="com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler"/>
-    <!--suppress KotlinObjectExtensionRegistration -->
-    <completion.frontendFriendlyInsertHandler
-      handler="com.intellij.codeInsight.completion.NoOpFrontendFriendlyInsertHandler"/>
+
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler"/>
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.NoOpFrontendFriendlyInsertHandler"/>
+
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.completion.FrontendFriendlyCharTailType"/>
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.completion.NoneTailType"/>
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.completion.HumbleSpaceBeforeWordTailType"/>
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.completion.CondExprColonTailType"/>
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.completion.FrontendFriendlyUnknownTailType"/>
+    <completion.frontendFriendlyTailType target="com.intellij.codeInsight.CharTailType"
+                                         converter="com.intellij.codeInsight.completion.CharTailTypeConverter"
+                                         descriptor="com.intellij.codeInsight.completion.FrontendFriendlyCharTailType"/>
   </extensions>
 </idea-plugin>

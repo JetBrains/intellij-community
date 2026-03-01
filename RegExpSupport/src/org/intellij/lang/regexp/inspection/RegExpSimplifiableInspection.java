@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -19,7 +19,21 @@ import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpCapability;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpCharRange;
+import org.intellij.lang.regexp.psi.RegExpClass;
+import org.intellij.lang.regexp.psi.RegExpClassElement;
+import org.intellij.lang.regexp.psi.RegExpClosure;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpIntersection;
+import org.intellij.lang.regexp.psi.RegExpNumber;
+import org.intellij.lang.regexp.psi.RegExpPosixBracketExpression;
+import org.intellij.lang.regexp.psi.RegExpProperty;
+import org.intellij.lang.regexp.psi.RegExpQuantifier;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -74,6 +88,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
             if (!(element instanceof RegExpChar) || !"[{}().*+?|$".contains(element.getText())) {
               final String text = element.getUnescapedText();
               if (StringUtil.isWhiteSpace(text.charAt(0)) && isCommentMode(element)) return;
+              if (text.equals("\\b")) return;
               // [a] -> a
               registerProblem(regExpClass, text);
             }

@@ -1,7 +1,13 @@
 package ru.adelf.idea.dotenv.php;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.php.lang.psi.elements.*;
+import com.jetbrains.php.lang.psi.elements.ArrayAccessExpression;
+import com.jetbrains.php.lang.psi.elements.ArrayIndex;
+import com.jetbrains.php.lang.psi.elements.FunctionReference;
+import com.jetbrains.php.lang.psi.elements.ParameterList;
+import com.jetbrains.php.lang.psi.elements.PhpPsiElement;
+import com.jetbrains.php.lang.psi.elements.StringLiteralExpression;
+import com.jetbrains.php.lang.psi.elements.Variable;
 
 import java.util.Arrays;
 import java.util.List;

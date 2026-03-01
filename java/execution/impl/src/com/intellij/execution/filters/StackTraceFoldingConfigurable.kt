@@ -4,7 +4,12 @@ package com.intellij.execution.filters
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.console.ConsoleOptionsProvider
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.selected
 
 internal class StackTraceFoldingConfigurable : UiDslUnnamedConfigurable.Simple(), ConsoleOptionsProvider {
 

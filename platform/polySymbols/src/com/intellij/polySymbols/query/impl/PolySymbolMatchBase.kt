@@ -7,10 +7,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol.HideFromCompletionProperty
 import com.intellij.polySymbols.PolySymbol.Priority
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolNameSegment
+import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
-import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolMatchBuilder
 import com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory
@@ -26,8 +30,7 @@ import javax.swing.Icon
 internal open class PolySymbolMatchBase internal constructor(
   override val matchedName: String,
   override val nameSegments: List<PolySymbolNameSegment>,
-  override val qualifiedKind: PolySymbolQualifiedKind,
-  override val origin: PolySymbolOrigin,
+  override val kind: PolySymbolKind,
   override val explicitPriority: Priority?,
   override val explicitProximity: Int?,
   override val additionalProperties: Map<String, Any>,
@@ -42,7 +45,7 @@ internal open class PolySymbolMatchBase internal constructor(
   }
 
   internal fun withSegments(segments: List<PolySymbolNameSegment>): PolySymbolMatch =
-    create(matchedName, segments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties)
+    create(matchedName, segments, kind, explicitPriority, explicitProximity, additionalProperties)
 
 
   override val modifiers: Set<PolySymbolModifier>
@@ -60,8 +63,7 @@ internal open class PolySymbolMatchBase internal constructor(
   override fun equals(other: Any?): Boolean =
     other is PolySymbolMatch
     && other.name == name
-    && other.origin == origin
-    && other.qualifiedKind == qualifiedKind
+    && other.kind == kind
     && other.nameSegments.equalsIgnoreOffset(nameSegments)
 
   override fun hashCode(): Int = name.hashCode()
@@ -71,8 +73,7 @@ internal open class PolySymbolMatchBase internal constructor(
 
   class BuilderImpl(
     private var matchedName: String,
-    private var qualifiedKind: PolySymbolQualifiedKind,
-    private var origin: PolySymbolOrigin,
+    private var kind: PolySymbolKind,
   ) : PolySymbolMatchBuilder {
 
     private var nameSegments = mutableListOf<PolySymbolNameSegment>()
@@ -81,8 +82,8 @@ internal open class PolySymbolMatchBase internal constructor(
     private var explicitProximity: Int? = null
 
     fun build(): PolySymbolMatch =
-      create(matchedName, nameSegments, qualifiedKind,
-             origin, explicitPriority, explicitProximity, properties)
+      create(matchedName, nameSegments, kind,
+             explicitPriority, explicitProximity, properties)
 
     override fun addNameSegments(value: List<PolySymbolNameSegment>): PolySymbolMatchBuilder = this.also {
       nameSegments.addAll(value)
@@ -114,12 +115,11 @@ internal open class PolySymbolMatchBase internal constructor(
 private class PsiSourcedPolySymbolMatch(
   matchedName: String,
   nameSegments: List<PolySymbolNameSegment>,
-  qualifiedKind: PolySymbolQualifiedKind,
-  origin: PolySymbolOrigin,
+  kind: PolySymbolKind,
   explicitPriority: Priority?,
   explicitProximity: Int?,
   additionalProperties: Map<String, Any>,
-) : PolySymbolMatchBase(matchedName, nameSegments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties),
+) : PolySymbolMatchBase(matchedName, nameSegments, kind, explicitPriority, explicitProximity, additionalProperties),
     PsiSourcedPolySymbolMatchMixin {
 
   override fun createPointer(): Pointer<PsiSourcedPolySymbolMatch> =
@@ -130,19 +130,19 @@ private class PsiSourcedPolySymbolMatch(
 private fun create(
   matchedName: String,
   nameSegments: List<PolySymbolNameSegment>,
-  qualifiedKind: PolySymbolQualifiedKind,
-  origin: PolySymbolOrigin,
+  kind: PolySymbolKind,
   explicitPriority: Priority?,
   explicitProximity: Int?,
   additionalProperties: Map<String, Any>,
 ): PolySymbolMatch {
-  val psiSourcedMixin = nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiSourcedPolySymbol }) }
+  val psiSourcedMixin =
+    nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiSourcedPolySymbol }) }
   return if (psiSourcedMixin) {
-    PsiSourcedPolySymbolMatch(matchedName, nameSegments, qualifiedKind, origin,
-                              explicitPriority, explicitProximity, additionalProperties)
+    PsiSourcedPolySymbolMatch(matchedName, nameSegments, kind, explicitPriority,
+                              explicitProximity, additionalProperties)
   }
   else {
-    PolySymbolMatchBase(matchedName, nameSegments, qualifiedKind, origin,
+    PolySymbolMatchBase(matchedName, nameSegments, kind,
                         explicitPriority, explicitProximity, additionalProperties)
   }
 }
@@ -156,7 +156,7 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
   fun reversedSegments() = Sequence { ReverseListIterator(nameSegments) }
 
   override fun withCustomProperties(properties: Map<String, Any>): PolySymbolMatch =
-    create(matchedName, nameSegments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties + properties)
+    create(matchedName, nameSegments, kind, explicitPriority, explicitProximity, additionalProperties + properties)
 
   override val psiContext: PsiElement?
     get() = reversedSegments().flatMap { it.symbols.asSequence() }
@@ -187,7 +187,7 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
 
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     property.tryCast(additionalProperties[property.name])
-    ?: if (property != PolySymbol.PROP_HIDE_FROM_COMPLETION)
+    ?: if (property != HideFromCompletionProperty)
       reversedSegments().flatMap { it.symbols }.mapNotNull { it[property] }.firstOrNull()
     else null
 
@@ -297,8 +297,7 @@ private class PolySymbolMatchPointer<T : PolySymbolMatch>(
   private val newInstanceProvider: (
     matchedName: String,
     nameSegments: List<PolySymbolNameSegment>,
-    qualifiedKind: PolySymbolQualifiedKind,
-    origin: PolySymbolOrigin,
+    kind: PolySymbolKind,
     explicitPriority: Priority?,
     explicitProximity: Int?,
     additionalProperties: Map<String, Any>,
@@ -308,8 +307,7 @@ private class PolySymbolMatchPointer<T : PolySymbolMatch>(
   private val matchedName = polySymbolMatch.matchedName
   private val nameSegments = polySymbolMatch.nameSegments
     .map { it.createPointer() }
-  private val qualifiedKind = polySymbolMatch.qualifiedKind
-  private val origin = polySymbolMatch.origin
+  private val kind = polySymbolMatch.kind
   private val explicitPriority = polySymbolMatch.explicitPriority
   private val explicitProximity = polySymbolMatch.explicitProximity
   private val additionalProperties = polySymbolMatch.additionalProperties
@@ -324,7 +322,7 @@ private class PolySymbolMatchPointer<T : PolySymbolMatch>(
         if (dereferencingProblems.get()) return null
 
         @Suppress("UNCHECKED_CAST")
-        newInstanceProvider(matchedName, it as List<PolySymbolNameSegment>, qualifiedKind, origin,
+        newInstanceProvider(matchedName, it as List<PolySymbolNameSegment>, kind,
                             explicitPriority, explicitProximity, dereferencedProperties)
       }
 

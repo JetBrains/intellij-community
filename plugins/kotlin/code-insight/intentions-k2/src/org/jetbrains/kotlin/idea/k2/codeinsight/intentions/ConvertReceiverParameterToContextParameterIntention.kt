@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.createChangeInfo
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.getContextParameters
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.renameParameter

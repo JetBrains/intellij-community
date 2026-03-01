@@ -1,6 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
-import com.intellij.tools.ide.util.common.starterLogger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.containers.orNull
 import org.junit.platform.engine.FilterResult
 import org.junit.platform.engine.TestDescriptor
@@ -15,7 +15,7 @@ class GroupByModePostDiscoveryFilter : PostDiscoveryFilter {
     val engineId = testDescriptor.uniqueId.engineId.orNull()
 
     if (!isGroupedExecutionEnabled) {
-      starterLogger<GroupByModePostDiscoveryFilter>().info("Test descriptor is included in all JUnit engines because grouped execution is disabled")
+      thisLogger().info("Test descriptor is included in all JUnit engines because grouped execution is disabled")
       return FilterResult.included("No filter is applied")
     }
 

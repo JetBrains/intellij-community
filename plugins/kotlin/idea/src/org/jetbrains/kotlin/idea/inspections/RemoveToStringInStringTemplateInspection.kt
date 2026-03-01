@@ -2,15 +2,25 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.isToString
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-
+@K1Deprecation
 class RemoveToStringInStringTemplateInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         dotQualifiedExpressionVisitor(fun(expression) {
@@ -27,6 +37,7 @@ class RemoveToStringInStringTemplateInspection : AbstractKotlinInspection(), Cle
         })
 }
 
+@K1Deprecation
 class RemoveToStringFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("remove.to.string.fix.text")
     override fun getFamilyName() = name

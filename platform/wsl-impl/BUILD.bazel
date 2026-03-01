@@ -20,4 +20,24 @@ jvm_library(
     "//libraries/ktor/network-tls:libraries-ktor-network-tls",
   ]
 )
+
+jvm_library(
+  name = "wsl-impl_test_lib",
+  module_name = "intellij.platform.wsl.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":wsl-impl",
+    "//platform/execution:execution_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/lz4:lz4_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//libraries/ktor/utils:utils_test_lib",
+    "//libraries/ktor/io:io_test_lib",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.wsl.impl` end

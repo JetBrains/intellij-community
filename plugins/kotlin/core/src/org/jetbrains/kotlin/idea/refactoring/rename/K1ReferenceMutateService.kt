@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -25,9 +26,26 @@ import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.isOneSegmentFQN
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
+@K1Deprecation
 class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
     override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement = when (ktReference) {
         is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.DELAYED_SHORTENING)

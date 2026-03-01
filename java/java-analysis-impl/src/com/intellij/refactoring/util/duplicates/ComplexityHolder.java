@@ -1,7 +1,21 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util.duplicates;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiQualifiedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiUnaryExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ObjectIntHashMap;

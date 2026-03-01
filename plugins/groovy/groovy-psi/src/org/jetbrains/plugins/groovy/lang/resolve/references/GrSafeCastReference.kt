@@ -5,7 +5,11 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.AS_TYPE
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createJavaLangClassType
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBase
+import org.jetbrains.plugins.groovy.lang.resolve.api.LazyTypeArgument
 
 class GrSafeCastReference(element: GrSafeCastExpression) : GroovyMethodCallReferenceBase<GrSafeCastExpression>(element) {
 

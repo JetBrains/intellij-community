@@ -10,7 +10,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -22,7 +29,11 @@ import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author gregsh

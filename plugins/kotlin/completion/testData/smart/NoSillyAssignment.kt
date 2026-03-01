@@ -5,3 +5,5 @@ fun f(p : String) {
 
 // EXIST: p
 // ABSENT: a
+
+// IGNORE_K2

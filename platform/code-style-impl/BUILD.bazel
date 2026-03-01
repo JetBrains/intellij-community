@@ -30,4 +30,27 @@ jvm_library(
     "//platform/util/coroutines",
   ]
 )
+
+jvm_library(
+  name = "codeStyle-impl_test_lib",
+  module_name = "intellij.platform.codeStyle.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":codeStyle-impl",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.codeStyle.impl` end

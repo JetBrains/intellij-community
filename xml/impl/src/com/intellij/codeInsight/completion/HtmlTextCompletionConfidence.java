@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class HtmlTextCompletionConfidence extends CompletionConfidence {
   @Override
-  public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  public @NotNull ThreeState shouldSkipAutopopup(@NotNull Editor editor, @NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     if (HtmlCompletionContributor.isHtmlElementInTextCompletionAutoPopupEnabledForFile(psiFile)) {
       return notAfterASpace(psiFile, offset);
     }

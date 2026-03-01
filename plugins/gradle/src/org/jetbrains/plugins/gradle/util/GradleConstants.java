@@ -59,6 +59,7 @@ public final class GradleConstants {
   public static final String GRADLE_PROPERTIES_FILE_NAME = "gradle.properties";
   public static final String GRADLE_LOCAL_PROPERTIES_FILE_NAME = "config.properties";
   public static final String GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME = "gradle-daemon-jvm.properties";
+  public static final String GRADLE_WRAPPER_PROPERTIES_FILE_NAME = "gradle-wrapper.properties";
 
   public static final String GRADLE_DIR_NAME = "gradle";
   public static final String GRADLE_CACHE_DIR_NAME = ".gradle";

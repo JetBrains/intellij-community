@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.InlayHintsProviderFactory
+import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.util.IntentionName
@@ -9,11 +11,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 @Suppress("IntentionDescriptionNotFoundInspection")
 class KotlinInlayHintToggleAction : IntentionAction, LowPriorityAction {
     @IntentionName

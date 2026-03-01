@@ -1,5 +1,8 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.debugger.streams.core"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinTest"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

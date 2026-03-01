@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
@@ -40,6 +40,51 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
         runTest("testData/exitPoints/anonymousFunction2.kt");
     }
 
+    @TestMetadata("buildListNested.kt")
+    public void testBuildListNested() throws Exception {
+        runTest("testData/exitPoints/buildListNested.kt");
+    }
+
+    @TestMetadata("buildListSimple.kt")
+    public void testBuildListSimple() throws Exception {
+        runTest("testData/exitPoints/buildListSimple.kt");
+    }
+
+    @TestMetadata("buildMapNested.kt")
+    public void testBuildMapNested() throws Exception {
+        runTest("testData/exitPoints/buildMapNested.kt");
+    }
+
+    @TestMetadata("buildMapSimple.kt")
+    public void testBuildMapSimple() throws Exception {
+        runTest("testData/exitPoints/buildMapSimple.kt");
+    }
+
+    @TestMetadata("buildMixedGenerators.kt")
+    public void testBuildMixedGenerators() throws Exception {
+        runTest("testData/exitPoints/buildMixedGenerators.kt");
+    }
+
+    @TestMetadata("buildSetNested.kt")
+    public void testBuildSetNested() throws Exception {
+        runTest("testData/exitPoints/buildSetNested.kt");
+    }
+
+    @TestMetadata("buildSetSimple.kt")
+    public void testBuildSetSimple() throws Exception {
+        runTest("testData/exitPoints/buildSetSimple.kt");
+    }
+
+    @TestMetadata("buildStringNested.kt")
+    public void testBuildStringNested() throws Exception {
+        runTest("testData/exitPoints/buildStringNested.kt");
+    }
+
+    @TestMetadata("buildStringSimple.kt")
+    public void testBuildStringSimple() throws Exception {
+        runTest("testData/exitPoints/buildStringSimple.kt");
+    }
+
     @TestMetadata("continueInNestedForDeclaration.kt")
     public void testContinueInNestedForDeclaration() throws Exception {
         runTest("testData/exitPoints/continueInNestedForDeclaration.kt");
@@ -65,6 +110,16 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
         runTest("testData/exitPoints/doWhileLoopBreak2.kt");
     }
 
+    @TestMetadata("flowNested.kt")
+    public void testFlowNested() throws Exception {
+        runTest("testData/exitPoints/flowNested.kt");
+    }
+
+    @TestMetadata("flowSimple.kt")
+    public void testFlowSimple() throws Exception {
+        runTest("testData/exitPoints/flowSimple.kt");
+    }
+
     @TestMetadata("forLoopBreak.kt")
     public void testForLoopBreak() throws Exception {
         runTest("testData/exitPoints/forLoopBreak.kt");
@@ -78,6 +133,11 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
     @TestMetadata("forLoopNestedBreak2.kt")
     public void testForLoopNestedBreak2() throws Exception {
         runTest("testData/exitPoints/forLoopNestedBreak2.kt");
+    }
+
+    @TestMetadata("forLoopNestedBreakInLocalProperty.kt")
+    public void testForLoopNestedBreakInLocalProperty() throws Exception {
+        runTest("testData/exitPoints/forLoopNestedBreakInLocalProperty.kt");
     }
 
     @TestMetadata("forLoopNestedLabeledBreak.kt")
@@ -303,6 +363,61 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
     @TestMetadata("returnWhenStatement.kt")
     public void testReturnWhenStatement() throws Exception {
         runTest("testData/exitPoints/returnWhenStatement.kt");
+    }
+
+    @TestMetadata("sequenceInLambda.kt")
+    public void testSequenceInLambda() throws Exception {
+        runTest("testData/exitPoints/sequenceInLambda.kt");
+    }
+
+    @TestMetadata("sequenceNested.kt")
+    public void testSequenceNested() throws Exception {
+        runTest("testData/exitPoints/sequenceNested.kt");
+    }
+
+    @TestMetadata("sequenceNested2.kt")
+    public void testSequenceNested2() throws Exception {
+        runTest("testData/exitPoints/sequenceNested2.kt");
+    }
+
+    @TestMetadata("sequenceNestedMixedSyntax.kt")
+    public void testSequenceNestedMixedSyntax() throws Exception {
+        runTest("testData/exitPoints/sequenceNestedMixedSyntax.kt");
+    }
+
+    @TestMetadata("sequenceNestedParenthesized.kt")
+    public void testSequenceNestedParenthesized() throws Exception {
+        runTest("testData/exitPoints/sequenceNestedParenthesized.kt");
+    }
+
+    @TestMetadata("sequenceSimple.kt")
+    public void testSequenceSimple() throws Exception {
+        runTest("testData/exitPoints/sequenceSimple.kt");
+    }
+
+    @TestMetadata("sequenceTryCatch.kt")
+    public void testSequenceTryCatch() throws Exception {
+        runTest("testData/exitPoints/sequenceTryCatch.kt");
+    }
+
+    @TestMetadata("sequenceWithControlFlow.kt")
+    public void testSequenceWithControlFlow() throws Exception {
+        runTest("testData/exitPoints/sequenceWithControlFlow.kt");
+    }
+
+    @TestMetadata("sequenceWithLambdaContinue.kt")
+    public void testSequenceWithLambdaContinue() throws Exception {
+        runTest("testData/exitPoints/sequenceWithLambdaContinue.kt");
+    }
+
+    @TestMetadata("sequenceWithMixedExitPoint.kt")
+    public void testSequenceWithMixedExitPoint() throws Exception {
+        runTest("testData/exitPoints/sequenceWithMixedExitPoint.kt");
+    }
+
+    @TestMetadata("sequenceWithReturn.kt")
+    public void testSequenceWithReturn() throws Exception {
+        runTest("testData/exitPoints/sequenceWithReturn.kt");
     }
 
     @TestMetadata("simple.kt")

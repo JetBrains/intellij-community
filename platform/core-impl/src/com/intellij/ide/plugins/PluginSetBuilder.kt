@@ -11,7 +11,7 @@ import com.intellij.util.containers.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Arrays
 import java.util.function.Supplier
 
 @ApiStatus.Internal
@@ -32,11 +32,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
   private val enabledPluginIds = HashMap<PluginId, PluginModuleDescriptor>(unsortedPlugins.size)
   private val enabledModuleV2Ids = HashMap<PluginModuleId, ContentModuleDescriptor>(unsortedPlugins.size * 2)
 
-  internal fun checkPluginCycles(errors: MutableList<PluginLoadingError>) {
+  internal fun checkPluginCycles(): List<PluginLoadingError> {
     if (builder.isAcyclic) {
-      return
+      return emptyList()
     }
 
+    val errors = ArrayList<PluginLoadingError>()
     for (component in builder.components) {
       if (component.size < 2) {
         continue
@@ -75,6 +76,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         }
       PluginManagerCore.logger.info(detailedMessage.toString())
     }
+    return errors
   }
 
   // Only plugins returned. Not modules. See PluginManagerTest.moduleSort test to understand the issue.
@@ -314,11 +316,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     }
   }
 
-  fun createPluginSetWithEnabledModulesMap(): PluginSet {
-    // FIXME pass proper list of incomplete plugins to ensure that this information isn't lost after enabling/disabling a plugin dynamically
-    //   and proper init context too
-    val incompletePlugins = emptyList<PluginMainDescriptor>()
-    computeEnabledModuleMap(incompletePlugins = incompletePlugins, initContext = ProductPluginInitContext())
+  fun createPluginSetWithEnabledModulesMap(
+    incompletePlugins: Collection<PluginMainDescriptor> = emptyList(),
+    nonLoadReasonCollector: ArrayList<PluginNonLoadReason>? = null
+  ): PluginSet {
+    val nonLoadReasons = computeEnabledModuleMap(incompletePlugins = incompletePlugins, initContext = ProductPluginInitContext())
+    nonLoadReasonCollector?.addAll(nonLoadReasons)
     return createPluginSet(incompletePlugins = incompletePlugins)
   }
 
@@ -413,7 +416,8 @@ private val pluginModuleVisibilityCheck by lazy {
   when (System.getProperty("intellij.platform.plugin.modules.check.visibility")) {
     "warning" -> PluginModuleVisibilityCheckOption.REPORT_WARNING
     "error" -> PluginModuleVisibilityCheckOption.REPORT_ERROR
-    else -> PluginModuleVisibilityCheckOption.DISABLED
+    "disabled" -> PluginModuleVisibilityCheckOption.DISABLED
+    else -> PluginModuleVisibilityCheckOption.REPORT_WARNING
   }
 }
 
@@ -426,7 +430,7 @@ private fun createCannotLoadError(
   val dependencyIdString = dependencyPluginId.idString
   val dependency = errors.get(dependencyPluginId)?.plugin
   if (dependency != null) {
-    return PluginDependencyCannotBeLoaded(plugin = descriptor, dependencyNameOrId = dependency.name ?: dependencyIdString, shouldNotifyUser = isNotifyUser)
+    return PluginDependencyCannotBeLoaded(plugin = descriptor, dependency = dependency, shouldNotifyUser = isNotifyUser)
   }
   else {
     return PluginDependencyIsNotInstalled(plugin = descriptor, dependencyNameOrId = dependencyIdString, shouldNotifyUser = isNotifyUser)

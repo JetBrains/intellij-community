@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.InitialPatternCondition;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiFilePattern;
+import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;

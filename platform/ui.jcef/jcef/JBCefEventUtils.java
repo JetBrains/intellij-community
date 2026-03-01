@@ -4,7 +4,7 @@ package com.intellij.ui.jcef;
 import org.cef.handler.CefKeyboardHandler.CefKeyEvent;
 import org.cef.misc.EventFlags;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;

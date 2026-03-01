@@ -14,7 +14,12 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.QualifiedName
-import com.intellij.ui.*
+import com.intellij.ui.AnActionButton
+import com.intellij.ui.AnActionButtonRunnable
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.TableUtil
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.LabelPosition
@@ -39,7 +44,11 @@ import java.awt.event.ActionListener
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JRadioButton
+import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 import javax.swing.table.AbstractTableModel
 

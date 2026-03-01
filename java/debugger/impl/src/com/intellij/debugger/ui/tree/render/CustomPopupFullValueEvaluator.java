@@ -13,8 +13,10 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import java.awt.Dimension;
+import java.awt.Point;
 
 public abstract class CustomPopupFullValueEvaluator<T> extends JavaValue.JavaFullValueEvaluator {
   public CustomPopupFullValueEvaluator(@NotNull @Nls String linkText, @NotNull EvaluationContextImpl evaluationContext) {

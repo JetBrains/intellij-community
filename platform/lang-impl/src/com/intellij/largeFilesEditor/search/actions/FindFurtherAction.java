@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
 public final class FindFurtherAction extends AnAction implements DumbAware {

@@ -7,10 +7,12 @@ import com.intellij.ide.hierarchy.HierarchyBrowser
 import com.intellij.ide.hierarchy.HierarchyProvider
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.psiElement
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class KotlinCallHierarchyProvider : HierarchyProvider {
     override fun getTarget(dataContext: DataContext): KtElement? {
         val element = dataContext.psiElement?.let { getCallHierarchyElement(it) }

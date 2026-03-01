@@ -21,4 +21,18 @@ jvm_library(
     "//json/backend",
   ]
 )
+
+jvm_library(
+  name = "json-impl_test_lib",
+  module_name = "intellij.grid.json.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":json-impl",
+    "//platform/core-api:core_test_lib",
+    "//grid/impl:impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//json/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.grid.json.impl` end

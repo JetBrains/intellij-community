@@ -1,6 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.handler.singular;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
@@ -13,7 +18,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations.createRelevantNonNullAnnotation;
 

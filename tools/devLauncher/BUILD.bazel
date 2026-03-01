@@ -14,4 +14,17 @@ jvm_library(
     "@lib//:kotlin-stdlib",
   ]
 )
+
+jvm_library(
+  name = "devLauncher_test_lib",
+  module_name = "intellij.tools.devLauncher",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":devLauncher",
+    "//platform/runtime/loader:loader_test_lib",
+    "//platform/runtime/repository:repository_test_lib",
+    "//platform/runtime/product:product_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tools.devLauncher` end

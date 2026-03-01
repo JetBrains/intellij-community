@@ -1,0 +1,26 @@
+================ Step #1 =================
+Cleaning output files:
+  Foo.class
+  META-INF/kotlin_withJava_convertBetweenJavaAndKotlin_javaToKotlinAndBack-a.kotlin_module
+  UsageKt.class
+End of files
+Compiling files:
+  kotlin/withJava/convertBetweenJavaAndKotlin/javaToKotlinAndBack/a/Foo.kt
+  kotlin/withJava/convertBetweenJavaAndKotlin/javaToKotlinAndBack/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  Foo.class
+  META-INF/kotlin_withJava_convertBetweenJavaAndKotlin_javaToKotlinAndBack-a.kotlin_module
+  UsageKt.class
+End of files
+Compiling files:
+  kotlin/withJava/convertBetweenJavaAndKotlin/javaToKotlinAndBack/a/usage.kt
+End of files
+Compiling files:
+  kotlin/withJava/convertBetweenJavaAndKotlin/javaToKotlinAndBack/a/Foo.java
+End of files
+------------------------------------------
+Exit code: OK

@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Map;
 import java.util.function.Consumer;
 

@@ -31,7 +31,7 @@ import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
@@ -41,11 +41,12 @@ import org.jetbrains.kotlin.config.additionalArgumentsAsList
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
+import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModules
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
@@ -55,16 +56,20 @@ import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
 import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationTextAsync
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
 import org.jetbrains.kotlin.idea.test.resetCodeStyle
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
-import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.CommonPlatforms
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.oldFashionedDescription
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import org.junit.Assert.assertNotEquals
@@ -120,7 +125,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
-    @OptIn(K1ModeProjectStructureApi::class)
+    @OptIn(KaExperimentalApi::class)
     protected suspend fun checkStableModuleName(
         projectName: String,
         expectedName: String,
@@ -128,12 +133,9 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         isProduction: Boolean
     ) = readAction {
         val module = getModule(projectName)
-        val moduleInfo = if (isProduction) module.productionSourceInfo else module.testSourceInfo
+        val kaModule = module.toKaSourceModule(if (isProduction) KaSourceModuleKind.PRODUCTION else KaSourceModuleKind.TEST)
 
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeByModuleInfo(moduleInfo!!, platform)
-        val moduleDescriptor = resolutionFacade.moduleDescriptor
-
-        Assert.assertEquals("<$expectedName>", moduleDescriptor.stableName?.asString())
+        Assert.assertEquals("<$expectedName>", kaModule?.stableModuleName)
     }
 
     protected fun facetSettings(moduleName: String) = KotlinFacet.get(getModule(moduleName))!!.configuration.settings
@@ -2894,10 +2896,11 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertModules("module-with-kotlin", "module-with-java", "mvnktest")
 
             val dependencies = readAction {
-                (dummyFile.toPsiFile(project) as KtFile).analyzeAndGetResult().moduleDescriptor.allDependencyModules
+                val module = (dummyFile.toPsiFile(project) as KtFile).module
+                module?.let { ModuleRootManager.getInstance(it).getDependencies(true).flatMap { it.toKaSourceModules() } }.orEmpty()
             }
-            assertTrue(dependencies.any { it.name.asString() == "<production sources for module module-with-java>" })
-            assertTrue(dependencies.any { it.name.asString() == "<test sources for module module-with-java>" })
+            assertTrue(dependencies.any { it.name == "module-with-java" && it.sourceModuleKind == KaSourceModuleKind.PRODUCTION })
+            assertTrue(dependencies.any { it.name == "module-with-java" && it.sourceModuleKind == KaSourceModuleKind.TEST })
         }
     }
 
@@ -3644,11 +3647,11 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertModules("project")
             assertEquals(
                 listOf(
-                    KotlinArtifacts.allopenCompilerPlugin,
-                    KotlinArtifacts.kotlinxSerializationCompilerPlugin,
-                    KotlinArtifacts.lombokCompilerPlugin,
-                    KotlinArtifacts.noargCompilerPlugin,
-                    KotlinArtifacts.samWithReceiverCompilerPlugin,
+                    KotlinArtifacts.allopenCompilerPluginPath,
+                    KotlinArtifacts.kotlinxSerializationCompilerPluginPath,
+                    KotlinArtifacts.lombokCompilerPluginPath,
+                    KotlinArtifacts.noargCompilerPluginPath,
+                    KotlinArtifacts.samWithReceiverCompilerPluginPath,
                 ).map { it.toJpsVersionAgnosticKotlinBundledPath() },
                 facetSettings.compilerArguments?.pluginClasspaths?.sorted()
             )
@@ -3917,6 +3920,15 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
                 Assert.assertEquals("1.2", apiLevel!!.versionString)
                 Assert.assertEquals("1.2", compilerArguments!!.apiVersion)
             }
+        }
+    }
+
+    object TestVersions {
+        object Kotlin {
+            const val KOTLIN_2_3_10 = "2.3.10"
+            const val KOTLIN_2_3_20 = "2.3.20-Beta2"
+
+            const val LATEST_STABLE = "2.3.10"
         }
     }
 }

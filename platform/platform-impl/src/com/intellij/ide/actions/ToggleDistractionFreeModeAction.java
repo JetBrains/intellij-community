@@ -24,7 +24,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.mac.MacFullScreenControlsManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingConstants;
 
 /**
  * @see DistractionFreeModeController

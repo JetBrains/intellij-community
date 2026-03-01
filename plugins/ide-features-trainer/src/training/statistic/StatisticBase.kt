@@ -6,7 +6,12 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.events.EventId2
+import com.intellij.internal.statistic.eventLog.events.EventId3
+import com.intellij.internal.statistic.eventLog.events.FusInputEvent
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.Keymap
@@ -63,7 +68,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JOptionPane
 
 enum class LessonStartingWay {
-  NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER, NO_SDK_RESTART
+  NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER, NO_SDK_RESTART, WELCOME_SCREEN
 }
 
 internal enum class FeedbackEntryPlace {
@@ -95,7 +100,7 @@ object StatisticBase : CounterUsagesCollector() {
   private val LOG = logger<StatisticBase>()
   private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
   private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 21)
+  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 22)
 
   var isLearnProjectCloseLogged = false
 

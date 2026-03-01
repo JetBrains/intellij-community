@@ -6,7 +6,7 @@ import com.intellij.ide.startup.importSettings.providers.vswin.utilities.Version
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSIsolationIniParser
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSRegistryParserNew
 import com.intellij.openapi.diagnostic.logger
-import java.util.*
+import java.util.Date
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 

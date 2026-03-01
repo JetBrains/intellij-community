@@ -40,4 +40,37 @@ jvm_library(
     "//platform/remote-driver/client",
   ]
 )
+
+jvm_library(
+  name = "remote-driver_test_lib",
+  module_name = "intellij.performanceTesting.remoteDriver",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/remote-driver/core:driver-impl",
+    "//platform/remote-driver/core:driver-impl_test_lib",
+    "//platform/remote-driver/client",
+    "//platform/remote-driver/client:client_test_lib",
+  ],
+  runtime_deps = [
+    ":remote-driver",
+    "//plugins/performanceTesting/core:performanceTesting_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-util-netty:ide-util-netty_test_lib",
+    "//platform/built-in-server-api:builtInServer_test_lib",
+    "//platform/built-in-server:builtInServer-impl_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/remote-driver/model:model_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//libraries/jsoup:jsoup_test_lib",
+    "//platform/remote-driver/core:driver-impl_test_lib",
+    "//platform/remote-driver/client:client_test_lib",
+    "//libraries/jcef:jcef_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ui.jcef:ui.jcef_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.performanceTesting.remoteDriver` end

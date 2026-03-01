@@ -21,8 +21,14 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ReplaceStringFormatWithLiteralInspection.Context
-import org.jetbrains.kotlin.psi.*
-import java.util.*
+import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.callExpressionVisitor
+import java.util.LinkedList
 
 private val placeHolder: Regex by lazy { "%".toRegex() }
 private val stringPlaceHolder: Regex by lazy { "%s".toRegex() }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend.frame
 
+import com.intellij.ide.ui.colors.attributes
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
@@ -10,7 +11,6 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFronten
 import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
 import com.intellij.platform.debugger.impl.rpc.XStackFrameId
 import com.intellij.platform.debugger.impl.rpc.XStackFramePresentation
-import com.intellij.platform.debugger.impl.rpc.toSimpleTextAttributes
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XSourcePosition
@@ -73,7 +73,7 @@ internal class FrontendXStackFrame(
     component.setIcon(iconId?.icon())
     component.setToolTipText(tooltipText)
     for ((text, attributes) in fragments) {
-      component.append(text, attributes.toSimpleTextAttributes())
+      component.append(text, attributes.attributes())
     }
   }
 
@@ -86,7 +86,7 @@ internal class FrontendXStackFrame(
       setIcon(presentation.iconId?.icon())
       setToolTipText(presentation.tooltipText)
       presentation.fragments.forEach { (text, attributes) ->
-        append(text, attributes.toSimpleTextAttributes())
+        append(text, attributes.attributes())
       }
     }
     currentUiPresentation.value = presentationContainer

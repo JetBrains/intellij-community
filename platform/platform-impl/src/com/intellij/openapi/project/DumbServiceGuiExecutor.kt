@@ -4,7 +4,9 @@ package com.intellij.openapi.project
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType
 import com.intellij.openapi.project.DumbModeStatisticsCollector.logProcessFinished
@@ -34,17 +36,22 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
       thisLogger().error("DumbServiceGuiExecutor is supposed to have a plain structure of activities. $parentActivity")
     }
     val childActivity = DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.started(project)
+    if (project.isDisposed) {
+      throw ProcessCanceledException()
+    }
+
     var taskCompletedNormally = false
     return try {
       if (visibleIndicator is ProgressIndicatorEx) DumbServiceAppIconProgress.registerForProgress(project, visibleIndicator)
-      DumbModeProgressTitle.getInstance(project).attachDumbModeProgress(visibleIndicator)
       super.processTasksWithProgress(suspender, visibleIndicator, childActivity).also {
         taskCompletedNormally = true
       }
     }
     finally {
       logProcessFinished(childActivity, if (taskCompletedNormally) IndexingFinishType.FINISHED else IndexingFinishType.TERMINATED)
-      DumbModeProgressTitle.getInstance(project).removeDumbModeProgress(visibleIndicator)
+      if (project.isDisposed) {
+        throw ProcessCanceledException()
+      }
     }
   }
 

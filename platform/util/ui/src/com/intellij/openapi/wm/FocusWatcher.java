@@ -7,9 +7,10 @@ import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.Component;
 import java.awt.event.FocusEvent;
 import java.lang.ref.WeakReference;
 

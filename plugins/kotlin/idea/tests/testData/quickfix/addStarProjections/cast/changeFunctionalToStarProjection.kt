@@ -1,4 +1,5 @@
 // "class org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix" "false"
+// K2_ACTION: "class org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix" "false"
 
 class Constructor<out T>(val x: T)
 

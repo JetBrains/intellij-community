@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 
+@K1Deprecation
 class KotlinWrapperForPropertyInheritorsUsage(
     val propertyChangeInfo: KotlinChangeInfo,
     val originalUsageInfo: UsageInfo,
@@ -21,4 +23,5 @@ class KotlinWrapperForPropertyInheritorsUsage(
     override fun hashCode(): Int = originalUsageInfo.hashCode()
 }
 
+@K1Deprecation
 val UsageInfo.unwrapped: UsageInfo get() = if (this is KotlinWrapperForPropertyInheritorsUsage) originalUsageInfo else this

@@ -15,4 +15,22 @@ jvm_library(
   ],
   exports = ["//platform/script-debugger/protocol/protocol-reader-runtime"]
 )
+
+jvm_library(
+  name = "protocol-reader_test_lib",
+  module_name = "intellij.javascript.protocolReader",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/script-debugger/protocol/protocol-reader-runtime",
+    "//platform/script-debugger/protocol/protocol-reader-runtime:protocol-reader-runtime_test_lib",
+  ],
+  runtime_deps = [
+    ":protocol-reader",
+    "//libraries/gson:gson_test_lib",
+    "//platform/script-debugger/protocol/protocol-reader-runtime:protocol-reader-runtime_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.javascript.protocolReader` end

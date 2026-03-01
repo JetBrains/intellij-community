@@ -6,7 +6,11 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.init
 import com.intellij.util.containers.tail
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import org.junit.jupiter.api.Assertions.assertEquals
 
 fun progressReporterTest(

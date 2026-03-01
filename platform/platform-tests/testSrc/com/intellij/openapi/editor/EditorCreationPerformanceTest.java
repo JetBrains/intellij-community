@@ -18,8 +18,10 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
+@PerformanceUnitTest
 public class EditorCreationPerformanceTest extends AbstractEditorTest {
   public void testOpeningEditorWithManyLines() {
     Document document = EditorFactory.getInstance().createDocument(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));

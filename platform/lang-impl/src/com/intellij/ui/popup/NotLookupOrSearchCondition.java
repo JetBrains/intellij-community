@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 
-import java.awt.*;
+import java.awt.Component;
 
 
 public final class NotLookupOrSearchCondition implements Condition<Project> {

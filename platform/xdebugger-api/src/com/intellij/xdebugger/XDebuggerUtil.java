@@ -18,13 +18,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
-import kotlin.Deprecated;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,7 +108,12 @@ public abstract class XDebuggerUtil {
 
   public abstract <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass);
 
-  @Deprecated(message = "Use XDebuggerTreeActionBase#getSelectedValue instead.")
+  /**
+   * Returns an {@link com.intellij.xdebugger.frame.XValue} for the currenlty selected node in the debugger tree.
+   *
+   * @deprecated Use {@link com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase#getSelectedValue} instead.
+   */
+  @Deprecated
   public abstract @Nullable XValueContainer getValueContainer(DataContext dataContext);
 
   /**

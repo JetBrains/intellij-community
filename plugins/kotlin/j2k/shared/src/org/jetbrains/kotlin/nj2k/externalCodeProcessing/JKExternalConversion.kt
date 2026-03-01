@@ -2,9 +2,20 @@
 
 package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiReferenceExpression
 import org.jetbrains.kotlin.j2k.AccessorKind
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
@@ -108,14 +109,22 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
 
   @Override
   public @Nullable PyType getIteratedItemType() {
-    // TODO: Select the parameter type that matches T in Iterable[T]
+    if (myElementTypes.size() >= 2) {
+      if (!PyTypingTypeProvider.ITERABLE.equals(getClassQName())) {
+        TypeEvalContext context = TypeEvalContext.codeInsightFallback(getPyClass().getProject());
+        PyType asIterable = PyTypeUtil.convertToType(this, PyTypingTypeProvider.ITERABLE, getPyClass(), context);
+        if (asIterable instanceof PyCollectionType collectionType) {
+          return collectionType.getIteratedItemType();
+        }
+      }
+    }
     return ContainerUtil.getFirstItem(myElementTypes);
   }
 
   @Override
   public String toString() {
     return ((isValid() ? "" : "[INVALID] ") + "PyCollectionClassType: " + getClassQName()) +
-           "[" + StringUtil.join(getElementTypes(), ", ") + "]";
+           "[" + StringUtil.join(getElementTypes(), item -> item == null ? "Any" : item.toString(), ", ") + "]";
   }
 
   @Override

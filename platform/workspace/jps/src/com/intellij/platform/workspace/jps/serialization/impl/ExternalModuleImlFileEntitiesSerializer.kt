@@ -7,9 +7,9 @@ import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity

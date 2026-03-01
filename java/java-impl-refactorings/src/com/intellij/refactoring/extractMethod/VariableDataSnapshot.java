@@ -2,7 +2,12 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartTypePointer;
+import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.refactoring.util.AbstractVariableData;
 import com.intellij.refactoring.util.VariableData;
 import org.jetbrains.annotations.NotNull;

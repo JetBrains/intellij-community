@@ -15,8 +15,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 
 final class EditorTablessBorder extends SideBorder {

@@ -23,4 +23,19 @@ jvm_library(
     "//plugins/copyright",
   ]
 )
+
+jvm_library(
+  name = "copyright_test_lib",
+  module_name = "intellij.kotlin.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":copyright",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/copyright:copyright_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.copyright` end

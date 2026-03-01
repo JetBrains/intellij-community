@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":intelliLang_resources"]
 )
+
+jvm_library(
+  name = "intelliLang_test_lib",
+  module_name = "intellij.devkit.intelliLang",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":intelliLang"]
+)
 ### auto-generated section `build intellij.devkit.intelliLang` end

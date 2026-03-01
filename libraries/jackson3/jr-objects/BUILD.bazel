@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.libraries.jackson3.jr.objects` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-jackson3-jr-objects_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-jackson3-jr-objects",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-jackson3-jr-objects_resources"],
+  exports = ["@lib//:libraries-jackson3-jr-objects-jackson3-jr-objects"],
+  runtime_deps = ["@lib//:libraries-jackson3-jr-objects-jackson3-jr-objects"]
+)
+
+jvm_library(
+  name = "libraries-jackson3-jr-objects_test_lib",
+  module_name = "intellij.libraries.jackson3.jr.objects",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-jackson3-jr-objects-jackson3-jr-objects"],
+  runtime_deps = [":libraries-jackson3-jr-objects"]
+)
+### auto-generated section `build intellij.libraries.jackson3.jr.objects` end

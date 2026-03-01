@@ -5,9 +5,18 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -97,7 +106,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
    */
   @Contract(pure = true)
   public @NotNull OptTab asTab(@NotNull @NlsContexts.TabTitle String label) {
-    return new OptTab(new PlainMessage(label), components());
+    return new OptTab(LocMessage.of(label), components());
   }
 
   /**
@@ -110,7 +119,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   @Contract(pure = true)
   public @NotNull OptCheckbox asCheckbox(@Language("jvm-field-name") @NotNull String bindId,
                                          @NotNull @NlsContexts.Label String label) {
-    return new OptCheckbox(bindId, new PlainMessage(label), components(), null);
+    return new OptCheckbox(bindId, LocMessage.of(label), components(), null);
   }
   
   /**
@@ -170,7 +179,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   public static @NotNull OptCheckbox checkbox(@Language("jvm-field-name") @NotNull String bindId,
                                               @NotNull @NlsContexts.Label String label,
                                               @NotNull OptRegularComponent @NotNull ... children) {
-    return new OptCheckbox(bindId, new PlainMessage(label), List.of(children), null);
+    return new OptCheckbox(bindId, LocMessage.of(label), List.of(children), null);
   }
 
   /**
@@ -195,7 +204,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int minValue,
                                           int maxValue) {
-    return new OptNumber(bindId, new PlainMessage(splitLabel), minValue, maxValue, null);
+    return new OptNumber(bindId, LocMessage.of(splitLabel), minValue, maxValue, null);
   }
 
   /**
@@ -206,7 +215,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   @Contract(pure = true)
   public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel) {
-    return new OptString(bindId, new PlainMessage(splitLabel), null, -1, null);
+    return new OptString(bindId, LocMessage.of(splitLabel), null, -1, null);
   }
 
   /**
@@ -219,7 +228,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int width) {
-    return new OptString(bindId, new PlainMessage(splitLabel), null, width, null);
+    return new OptString(bindId, LocMessage.of(splitLabel), null, width, null);
   }
 
   /**
@@ -233,7 +242,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   public static @NotNull OptString string(@Language("jvm-field-name") @NotNull String bindId,
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           @NotNull StringValidator validator) {
-    return new OptString(bindId, new PlainMessage(splitLabel), validator, -1, null);
+    return new OptString(bindId, LocMessage.of(splitLabel), validator, -1, null);
   }
 
   /**
@@ -249,7 +258,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
                                           @NotNull @NlsContexts.Label String splitLabel,
                                           int width,
                                           @NotNull StringValidator validator) {
-    return new OptString(bindId, new PlainMessage(splitLabel), validator, width, null);
+    return new OptString(bindId, LocMessage.of(splitLabel), validator, width, null);
   }
 
   /**
@@ -262,7 +271,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   public static OptExpandableString expandableString(@Language("jvm-field-name") @NotNull String bindId,
                                                      @NotNull @NlsContexts.Label String label,
                                                      @NotNull String separator) {
-    return new OptExpandableString(bindId, new PlainMessage(label), separator, null);
+    return new OptExpandableString(bindId, LocMessage.of(label), separator, null);
   }
 
   /**
@@ -277,7 +286,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   public static @NotNull OptDropdown dropdown(@Language("jvm-field-name") @NotNull String bindId,
                                               @NotNull @NlsContexts.Label String splitLabel,
                                               @NotNull OptDropdown.Option @NotNull ... options) {
-    return new OptDropdown(bindId, new PlainMessage(splitLabel), List.of(options));
+    return new OptDropdown(bindId, LocMessage.of(splitLabel), List.of(options));
   }
 
   /**
@@ -295,7 +304,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
                                                   @NotNull Collection<T> values,
                                                   @NotNull Function<? super T, @NotNull @NonNls String> keyExtractor,
                                                   @NotNull Function<? super T, @NotNull @Nls String> presentableTextExtractor) {
-    return new OptDropdown(bindId, new PlainMessage(splitLabel),
+    return new OptDropdown(bindId, LocMessage.of(splitLabel),
                            ContainerUtil.map(values, c -> option(keyExtractor.apply(c), presentableTextExtractor.apply(c))));
   }
 
@@ -312,7 +321,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
                                                                   @NotNull @NlsContexts.Label String splitLabel,
                                                                   @NotNull Class<T> enumClass,
                                                                   @NotNull Function<@NotNull T, @NotNull @Nls String> presentableTextExtractor) {
-    return new OptDropdown(bindId, new PlainMessage(splitLabel),
+    return new OptDropdown(bindId, LocMessage.of(splitLabel),
                            ContainerUtil.map(enumClass.getEnumConstants(), c -> option(c, presentableTextExtractor.apply(c))));
   }
 
@@ -324,7 +333,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
    */
   @Contract(pure = true)
   public static @NotNull OptDropdown.Option option(@NotNull String key, @NotNull @Nls String label) {
-    return new OptDropdown.Option(key, new PlainMessage(label));
+    return new OptDropdown.Option(key, LocMessage.of(label));
   }
 
   /**
@@ -335,7 +344,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
    */
   @Contract(pure = true)
   public static @NotNull OptDropdown.Option option(@NotNull Enum<?> key, @NotNull @Nls String label) {
-    return new OptDropdown.Option(key.name(), new PlainMessage(label));
+    return new OptDropdown.Option(key.name(), LocMessage.of(label));
   }
 
   /**
@@ -346,7 +355,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   @Contract(pure = true)
   public static @NotNull OptStringList stringList(@Language("jvm-field-name") @NotNull String bindId,
                                                   @NotNull @NlsContexts.Label String label) {
-    return new OptStringList(bindId, new PlainMessage(label), null, null);
+    return new OptStringList(bindId, LocMessage.of(label), null, null);
   }
 
   /**
@@ -360,7 +369,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   public static @NotNull OptStringList stringList(@Language("jvm-field-name") @NotNull String bindId,
                                                   @NotNull @NlsContexts.Label String label,
                                                   @NotNull StringValidator validator) {
-    return new OptStringList(bindId, new PlainMessage(label), validator, null);
+    return new OptStringList(bindId, LocMessage.of(label), validator, null);
   }
 
   /**
@@ -371,7 +380,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
    * @see #column(String, String, StringValidator) 
    */
   public static @NotNull OptTable table(@NotNull @NlsContexts.Label String label, @NotNull OptTableColumn @NotNull ... columns) {
-    return new OptTable(new PlainMessage(label), List.of(columns), null);
+    return new OptTable(LocMessage.of(label), List.of(columns), null);
   }
 
   /**
@@ -395,7 +404,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   @Contract(pure = true)
   public static @NotNull OptTableColumn column(@Language("jvm-field-name") @NotNull String bindId,
                                                @NotNull @NlsContexts.ColumnName String name) {
-    return new OptTableColumn(bindId, new PlainMessage(name), null);
+    return new OptTableColumn(bindId, LocMessage.of(name), null);
   }
 
   /**
@@ -410,7 +419,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   public static @NotNull OptTableColumn column(@Language("jvm-field-name") @NotNull String bindId,
                                                @NotNull @NlsContexts.ColumnName String name,
                                                @NotNull StringValidator validator) {
-    return new OptTableColumn(bindId, new PlainMessage(name), validator);
+    return new OptTableColumn(bindId, LocMessage.of(name), validator);
   }
 
   /* Layout elements */
@@ -422,7 +431,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
    */
   @Contract(pure = true)
   public static @NotNull OptGroup group(@NotNull @NlsContexts.Label String label, @NotNull OptRegularComponent @NotNull ... children) {
-    return new OptGroup(new PlainMessage(label), List.of(children));
+    return new OptGroup(LocMessage.of(label), List.of(children));
   }
 
   /**
@@ -448,7 +457,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
    */
   @Contract(pure = true)
   public static @NotNull OptSeparator separator(@NotNull @NlsContexts.Label String label) {
-    return new OptSeparator(new PlainMessage(label));
+    return new OptSeparator(LocMessage.of(label));
   }
 
   /**
@@ -470,7 +479,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
    */
   @Contract(pure = true)
   public static @NotNull OptTab tab(@NotNull @NlsContexts.TabTitle String label, @NotNull OptRegularComponent @NotNull ... children) {
-    return new OptTab(new PlainMessage(label), List.of(children));
+    return new OptTab(LocMessage.of(label), List.of(children));
   }
 
   /**
@@ -481,7 +490,7 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   @Contract(pure = true)
   public static @NotNull OptSettingLink settingLink(@NotNull @NlsContexts.Label String displayName,
                                                     @NotNull @NonNls String configurableID) {
-    return new OptSettingLink(new PlainMessage(displayName), configurableID, null);
+    return new OptSettingLink(LocMessage.of(displayName), configurableID, null);
   }
 
   /**
@@ -494,6 +503,6 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   public static @NotNull OptSettingLink settingLink(@NotNull @NlsContexts.Label String displayName,
                                                     @NotNull @NonNls String configurableID,
                                                     @NotNull @Nls String controlLabel) {
-    return new OptSettingLink(new PlainMessage(displayName), configurableID, controlLabel);
+    return new OptSettingLink(LocMessage.of(displayName), configurableID, controlLabel);
   }
 }

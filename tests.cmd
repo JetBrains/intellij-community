@@ -7,10 +7,25 @@ GOTO :CMDSCRIPT
 # THIS SCRIPTS WORKS FOR ALL SYSTEMS Linux/Windows/macOS
 # See README.md for usage scenarios
 
-set -eux
+# Arguments are passed as JVM options
+# and used in org.jetbrains.intellij.build.BuildOptions and org.jetbrains.intellij.build.TestingOptions
+
+# To debug build scripts (CommunityRunTestsBuildTarget) use: --debug
+# To debug tests use: -Dintellij.build.test.debug.suspend=true -Dintellij.build.test.debug.port=5005
+
+set -eu
 root="$(cd "$(dirname "$0")"; pwd)"
-exec "$root/platform/jps-bootstrap/jps-bootstrap.sh" -Dintellij.build.incremental.compilation=true -Dintellij.build.use.compiled.classes=false "$@" "$root" intellij.idea.community.build CommunityRunTestsBuildTarget
+
+exec "$root/build/run_build_target.sh" "$root" //build:run_tests_build_target "$@"
+
 :CMDSCRIPT
 
-call "%~dp0\platform\jps-bootstrap\jps-bootstrap.cmd" -Dintellij.build.incremental.compilation=true -Dintellij.build.use.compiled.classes=false %* "%~dp0." intellij.idea.community.build CommunityRunTestsBuildTarget
-EXIT /B %ERRORLEVEL%
+set "ROOT=%~dp0"
+set "ROOT=%ROOT:~0,-1%"
+
+"%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe" ^
+  -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass ^
+  -File "%~dp0build\run_build_target.ps1" ^
+  "%ROOT%" ^
+  "@community//build:run_tests_build_target" ^
+  %*

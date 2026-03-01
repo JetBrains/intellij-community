@@ -14,7 +14,13 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.Builder;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
@@ -30,7 +36,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public final class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(GroovyBuilder.class);

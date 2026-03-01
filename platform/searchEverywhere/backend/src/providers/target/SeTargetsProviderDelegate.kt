@@ -15,10 +15,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeLegacyItem
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SePreviewInfoFactory
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
-import com.intellij.platform.searchEverywhere.providers.*
+import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
+import com.intellij.platform.searchEverywhere.providers.ScopeChooserActionProviderDelegate
+import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
+import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.psi.codeStyle.NameUtil
@@ -49,7 +60,7 @@ class SeTargetItem(
 @OptIn(ExperimentalAtomicApi::class)
 @Internal
 class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContributorWrapper<Any>, parentDisposable: Disposable): Disposable {
-  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
+  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate.createOrNull(contributorWrapper)
   private val contributor = contributorWrapper.contributor
   private val usagePreviewDisposableList = ConcurrentLinkedQueue<Disposable>()
 
@@ -57,20 +68,18 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     Disposer.register(parentDisposable, this)
   }
 
-  suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
+  suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector, operationDisposable: Disposable? = null) {
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
-    SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-      val selectedScopeId = scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-        if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
-      } ?: return@let
-
-      scopeProviderDelegate.applyScope(selectedScopeId, false)
-    } ?: run {
-      val targetsFilter = SeTargetsFilter.from(params.filter)
-      SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
-      scopeProviderDelegate.applyScope(targetsFilter.selectedScopeId, targetsFilter.isAutoTogglePossible)
+    scopeProviderDelegate?.let { scopeProviderDelegate ->
+      SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+        scopeProviderDelegate.applyScope(isEverywhere, false)
+      } ?: run {
+        val targetsFilter = SeTargetsFilter.from(params.filter)
+        SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
+        scopeProviderDelegate.applyScope(targetsFilter.selectedScopeId, targetsFilter.isAutoTogglePossible)
+      }
     }
 
     contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
@@ -81,7 +90,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
 
         return collector.put(SeTargetItem(legacyItem, matchers, weight, contributor, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
       }
-    })
+    }, operationDisposable)
   }
 
   suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
@@ -137,7 +146,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
   }
 
   suspend fun getSearchScopesInfo(): SearchScopesInfo? {
-    return scopeProviderDelegate.searchScopesInfo.getValue()
+    return scopeProviderDelegate?.searchScopesInfo?.getValue()
   }
 
   fun <T> getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> {

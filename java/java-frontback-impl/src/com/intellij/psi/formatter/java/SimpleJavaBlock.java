@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.FormattingMode;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;

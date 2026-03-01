@@ -5,6 +5,7 @@ import pytest
 from pycharm._jb_unittest_runner import build_unittest_args
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Python 3 is required")
 def test_path_doesnt_exist():
     pattern = r"No such file or directory: 'test_foo.py'"
     with pytest.raises(OSError, match=pattern):
@@ -12,6 +13,7 @@ def test_path_doesnt_exist():
 
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Python 3 is required")
 def test_targets():
     assert build_unittest_args(
         path=None,
@@ -26,6 +28,7 @@ def test_targets():
     ]
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Python 3 is required")
 def test_quiet_discover(tmp_path):
     assert build_unittest_args(
         path=str(tmp_path),
@@ -44,6 +47,7 @@ def test_quiet_discover(tmp_path):
     ]
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Python 3 is required")
 def test_verbose_discover(tmp_path):
     assert build_unittest_args(
         path=str(tmp_path),
@@ -70,7 +74,6 @@ def test_python2(tmp_path):
         additional_args=[],
         verbose=True,
         project_dir="/project_dir",
-        python_version=(2, 7),
     ) == [
         "python -m unittest",
         "discover",
@@ -93,7 +96,6 @@ def test_python2_and_path_is_file(tmp_path):
         additional_args=[],
         verbose=True,
         project_dir="/project_dir",
-        python_version=(2, 7),
     ) == [
         "python -m unittest",
         "discover",
@@ -125,6 +127,7 @@ def test_python3_and_path_is_file(tmp_path):
     ]
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Python 3 is required")
 def test_user_args():
     assert build_unittest_args(
         path=None,
@@ -141,6 +144,7 @@ def test_user_args():
     ]
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Python 3 is required")
 def test_user_overrides_verbosity():
     assert build_unittest_args(
         path=None,
@@ -156,6 +160,7 @@ def test_user_overrides_verbosity():
     ]
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Python 3 is required")
 def test_rerun_failed_tests():
     assert build_unittest_args(
         path=None,

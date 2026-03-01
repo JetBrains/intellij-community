@@ -3,10 +3,11 @@ package org.jetbrains.idea.devkit.util;
 
 import com.intellij.execution.console.CustomizableConsoleFoldingBean;
 import com.intellij.psi.PsiClass;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 
@@ -18,6 +19,7 @@ import java.util.stream.IntStream;
 import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByPsiClass;
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {

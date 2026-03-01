@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTweaks.Companion.WRITE_PROJECTS_TO_ENV_PROPERTY
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.AndroidGradlePluginVersionTestsProperty
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.GradleVersionTestsProperty
-import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.KotlinGradlePluginVersionTestsProperty
+import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.KotlinVersionTestsProperty
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import java.io.File
@@ -42,7 +42,7 @@ interface DevModeTweaks {
      */
     var overrideGradleVersion: String?
     var overrideAgpVersion: String?
-    var overrideKgpVersion: String?
+    var overrideKotlinVersion: String?
 
     /**
      * Launches Gradle Daemon with suspend option, listening for debugger connection on [port]
@@ -67,8 +67,8 @@ class DevModeTweaksImpl : DevModeTweaks {
     override var overrideAgpVersion: String? = null
         get() = field.checkNotOverriddenOnTeamcity()
 
-    /** See [KotlinGradlePluginVersionTestsProperty] for some well-known values */
-    override var overrideKgpVersion: String? = null
+    /** See [KotlinVersionTestsProperty] for some well-known values */
+    override var overrideKotlinVersion: String? = null
         get() = field.checkNotOverriddenOnTeamcity()
 
     var writeTestProjectTo: File? = null

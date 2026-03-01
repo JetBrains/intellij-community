@@ -1,11 +1,14 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.xml.analysis"/>
-    <module name="intellij.xml.psi.impl"/>
-    <module name="intellij.xml.psi"/>
-    <module name="intellij.xml.parser"/>
-    <module name="intellij.platform.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.xerces"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.xml.analysis"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

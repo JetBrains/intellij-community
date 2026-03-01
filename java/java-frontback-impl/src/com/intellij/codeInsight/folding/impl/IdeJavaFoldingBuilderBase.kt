@@ -4,7 +4,11 @@ package com.intellij.codeInsight.folding.impl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.jetbrains.annotations.ApiStatus
 

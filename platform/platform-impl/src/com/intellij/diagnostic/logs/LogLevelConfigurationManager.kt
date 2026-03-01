@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logs
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -16,12 +15,11 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.io.FileUtil.sanitizeFileName
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.nio.file.Path
 import java.util.logging.Level
 import java.util.logging.LogRecord
 
 /**
- * Allows applying & persisting custom log debug categories
+ * Allows applying and persisting custom log debug categories
  * which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
  * Applies these custom categories at startup.
  */
@@ -147,11 +145,11 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
     private val parentLogger: java.util.logging.Logger?,
   ) : java.util.logging.Handler() {
     private val separateHandler = lazy {
-      val logRoot =
-        if (ApplicationManager.getApplication()?.isUnitTestMode == true)
-          PathManager.getSystemDir().resolve("testlog")
-        else
-          Path.of(PathManager.getLogPath())
+      var logRoot = parentLogger?.handlers.orEmpty().filterIsInstance<RollingFileHandler>().firstOrNull()?.logPath?.parent
+      if (logRoot == null) {
+        logRoot = PathManager.getLogDir()
+      }
+
       val logFileName = "idea_${sanitizeFileName(IdeaLogRecordFormatter.smartAbbreviate(category.trimStart('#')), true, ".")}.log"
       val handler = RollingFileHandler(
         logPath = logRoot.resolve(logFileName),
@@ -198,7 +196,7 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
 
   private fun cleanCurrentCategories() {
     synchronized(lock) {
-      for ((category, logger) in customizedLoggers) {
+      for ((_, logger) in customizedLoggers) {
         setSeparateFile(logger, false)
         logger.level = null
       }

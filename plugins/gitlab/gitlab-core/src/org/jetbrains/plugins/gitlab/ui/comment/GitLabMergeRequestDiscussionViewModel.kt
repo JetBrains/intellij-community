@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.childScope
+import com.intellij.collaboration.async.combineStateIn
+import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStateInNow
+import com.intellij.collaboration.async.mapStatefulToStateful
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.FocusableViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
@@ -12,15 +18,26 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDraftNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 import java.net.URL
-import java.util.*
+import java.util.Date
 
 interface GitLabMergeRequestDiscussionViewModel
   : CodeReviewTrackableItemViewModel,
@@ -128,7 +145,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date? = note.createdAt
   override val isDraft: Boolean = true
-  override val serverUrl: URL = mr.glProject.serverPath.toURL()
+  override val serverUrl: URL = mr.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null

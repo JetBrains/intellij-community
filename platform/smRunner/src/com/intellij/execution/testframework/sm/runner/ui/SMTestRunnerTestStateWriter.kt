@@ -14,7 +14,7 @@ import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import java.util.*
+import java.util.Date
 
 internal object SMTestRunnerTestStateWriter {
   @RequiresBackgroundThread

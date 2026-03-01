@@ -23,7 +23,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -37,15 +44,28 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JTree;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+
+import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
 
 public abstract class TodoTreeBuilder implements Disposable {
   public static final Comparator<NodeDescriptor<?>> NODE_DESCRIPTOR_COMPARATOR =
@@ -327,6 +347,9 @@ public abstract class TodoTreeBuilder implements Disposable {
    */
   @RequiresBackgroundThread
   protected final void markFileAsDirty(@NotNull VirtualFile file) {
+    // Filter out in-memory files and remote files (e.g., ThinClientVirtualFile) that don't have valid parent directories
+    // and trigger expensive synchronous network calls when content is accessed
+    //if (!(file instanceof LightVirtualFile) && file.getParent() != null) {
     if (!(file instanceof LightVirtualFile)) {
       myDirtyFileSet.add(file);
     }
@@ -345,14 +368,18 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   @RequiresBackgroundThread
   protected void collectFiles(@NotNull Consumer<? super @NotNull PsiFile> consumer) {
-    TodoTreeStructure treeStructure = getTodoTreeStructure();
-    PsiTodoSearchHelper searchHelper = getSearchHelper();
-    searchHelper.processFilesWithTodoItems(psiFile -> {
-      if (searchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)) {
-        consumer.accept(psiFile);
-      }
-      return true;
-    });
+    if (shouldUseSplitTodo()) {
+      myCoroutineHelper.collectFilesFromFlow(getTodoTreeStructure().getTodoFilter(), consumer);
+    } else {
+      TodoTreeStructure treeStructure = getTodoTreeStructure();
+      PsiTodoSearchHelper searchHelper = getSearchHelper();
+      searchHelper.processFilesWithTodoItems(psiFile -> {
+        if (searchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)) {
+          consumer.accept(psiFile);
+        }
+        return true;
+      });
+    }
   }
 
   @RequiresBackgroundThread

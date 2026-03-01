@@ -3,7 +3,11 @@ package com.intellij.json.editor.folding;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonElementTypes;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonLiteral;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonPsiUtil;
 import com.intellij.json.psi.impl.JsonCollectionPsiPresentationUtils;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;

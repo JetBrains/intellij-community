@@ -165,8 +165,8 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
 
   internal class ZoomResetAction : ZoomActionBase(ZoomEvent.RESET)
 
-  private class CompilationChartsStatsActionHolder(private val diagrams: CompilationChartsDiagramsComponent,
-                                                   private val vm: CompilationChartsViewModel) : DumbAwareAction(), CustomComponentAction {
+  internal class CompilationChartsStatsActionHolder(private val diagrams: CompilationChartsDiagramsComponent,
+                                                    private val vm: CompilationChartsViewModel) : DumbAwareAction(), CustomComponentAction {
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.LINE_AXIS)

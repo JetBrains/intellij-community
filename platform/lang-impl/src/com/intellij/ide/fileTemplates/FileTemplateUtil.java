@@ -29,15 +29,28 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.exception.VelocityException;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.Token;
-import org.apache.velocity.runtime.parser.node.*;
+import org.apache.velocity.runtime.parser.node.ASTDirective;
+import org.apache.velocity.runtime.parser.node.ASTReference;
+import org.apache.velocity.runtime.parser.node.ASTSetDirective;
+import org.apache.velocity.runtime.parser.node.ASTStringLiteral;
+import org.apache.velocity.runtime.parser.node.Node;
+import org.apache.velocity.runtime.parser.node.SimpleNode;
 import org.apache.velocity.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -367,7 +380,11 @@ public final class FileTemplateUtil {
   }
 
   private static @NotNull FileType getFileType(@NotNull FileTemplate template) {
-    FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
+    // Try to match by full filename first (handles files like "Dockerfile", "CMakeLists.txt", etc.)
+    FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByFileName(template.getName());
+    if (!fileType.equals(FileTypes.UNKNOWN)) return fileType;
+
+    fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
     if (fileType.equals(FileTypes.UNKNOWN)) {
       return FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(FileUtilRt.getExtension(template.getExtension()));
     }

@@ -1,7 +1,6 @@
 package com.intellij.ide.starter.driver.engine.remoteDev
 
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
-import kotlin.apply
 
 private const val CMD_PREFIX = '%'
 

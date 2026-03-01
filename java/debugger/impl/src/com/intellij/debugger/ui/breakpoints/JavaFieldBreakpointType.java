@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.util.List;
 
 /**

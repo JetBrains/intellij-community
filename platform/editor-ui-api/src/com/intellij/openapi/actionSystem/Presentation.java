@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
@@ -9,16 +9,21 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeListenerProxy;
@@ -67,9 +72,10 @@ public final class Presentation implements Cloneable {
   private static final int IS_APPLICATION_SCOPE = 0x100;
   private static final int IS_PREFER_INJECTED_PSI = 0x200;
   private static final int IS_ENABLED_IN_MODAL_CONTEXT = 0x400;
+  private static final int IS_RW_LOCK_REQUIRED = 0x800;
   private static final int IS_TEMPLATE = 0x1000;
 
-  private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
+  private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY | IS_RW_LOCK_REQUIRED;
   private @NotNull Supplier<@ActionDescription String> descriptionSupplier = NULL_STRING;
   private @NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier = NULL_TEXT_WITH_MNEMONIC;
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
@@ -451,6 +457,39 @@ public final class Presentation implements Cloneable {
   }
 
   /**
+   * @see Presentation#setRWLockRequired
+   */
+  @ApiStatus.Experimental
+  public boolean isRWLockRequired() {
+    if (!Registry.is("actions.allow.update.and.perform.without.rw.lock")) {
+      return true;
+    }
+    return BitUtil.isSet(myFlags, IS_RW_LOCK_REQUIRED);
+  }
+
+  /**
+   * For an action presentation sets whether the action requires {@link <a href="https://jb.gg/ij-platform-threading">the Read-Write lock</a>}.
+   * <p>
+   * <ul>
+   *   <li>If {@code true}, the action is updated in read action and performed in write-intent read action on the EDT.
+   *   Such actions may hinder the performance of the IDE, but they allow access to PSI.</li>
+   *   <li>If {@code false}, the action is updated and performed without locks.
+   *   Such actions can be executed and updated quickly, but they do not allow access to PSI and Document.</li>
+   * </ul>
+   * <p>
+   * Default value is {@code true}.
+   * <p>
+   * This property needs to be set for {@link AnAction#getTemplatePresentation()}, because it affects {@link AnAction#update}
+   */
+  @ApiStatus.Experimental
+  public void setRWLockRequired(boolean rwLockRequired) {
+    if (!isTemplate()) {
+      LOG.error("setRWLockRequired() should be called only for template presentations");
+    }
+    myFlags = BitUtil.set(myFlags, IS_RW_LOCK_REQUIRED, rwLockRequired);
+  }
+
+  /**
    * For an action presentation in a popup sets whether a popup is closed or kept open
    * when the action is performed.
    * <p>
@@ -700,6 +739,7 @@ public final class Presentation implements Cloneable {
     appendFlag(myFlags, IS_APPLICATION_SCOPE, sb, start, "application_scope");
     appendFlag(myFlags, IS_PREFER_INJECTED_PSI, sb, start, "prefer_injected_psi");
     appendFlag(myFlags, IS_ENABLED_IN_MODAL_CONTEXT, sb, start, "enabled_in_modal_context");
+    appendFlag(myFlags, IS_RW_LOCK_REQUIRED, sb, start, "lock_required");
     sb.append("]");
     return sb.toString();
   }

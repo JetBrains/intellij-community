@@ -18,9 +18,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.SwingConstants;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
 import java.util.List;
 
 import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;

@@ -19,7 +19,14 @@ import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingTag
 import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.deserializeAsJdomElement
-import com.intellij.util.xmlb.*
+import com.intellij.util.xmlb.BeanBinding
+import com.intellij.util.xmlb.Binding
+import com.intellij.util.xmlb.KotlinxSerializationBinding
+import com.intellij.util.xmlb.SettingsInternalApi
+import com.intellij.util.xmlb.XmlSerializationException
+import com.intellij.util.xmlb.isPropertySkipped
+import com.intellij.util.xmlb.jdomToJson
+import com.intellij.util.xmlb.normalizePropertyNameForKotlinx
 import kotlinx.serialization.json.JsonElement
 import org.jdom.Element
 import java.lang.invoke.MethodHandles

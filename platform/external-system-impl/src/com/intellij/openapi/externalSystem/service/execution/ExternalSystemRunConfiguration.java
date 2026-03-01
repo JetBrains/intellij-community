@@ -5,12 +5,22 @@ import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildViewManager;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.AdditionalTabComponentManager;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.SearchScopeProvidingRunProfile;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.*;
+import com.intellij.execution.runners.BackendExecutionEnvironmentProxy;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentProxy;
+import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -57,7 +67,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
@@ -237,7 +247,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @Override
   public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     // DebugExecutor ID  - com.intellij.execution.executors.DefaultDebugExecutor.EXECUTOR_ID
-    var isStateForDebug = ToolWindowId.DEBUG.equals(executor.getId());
+    var isStateForDebug = ToolWindowId.DEBUG.equals(executor.getId())
+                          || ToolWindowId.DEBUG.equals(executor.getToolWindowId()); // there can be another debug executor with non-standard ID
     var runnableState = new ExternalSystemRunnableState(mySettings, getProject(), isStateForDebug, this, env);
     copyUserDataTo(runnableState);
     return runnableState;

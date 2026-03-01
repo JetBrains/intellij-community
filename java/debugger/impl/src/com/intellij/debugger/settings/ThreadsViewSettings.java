@@ -16,7 +16,6 @@ public final class ThreadsViewSettings implements PersistentStateComponent<Threa
   public boolean SHOW_CLASS_NAME = true;
   public boolean SHOW_PACKAGE_NAME = true;
   public boolean SHOW_SOURCE_NAME = false;
-  public boolean SHOW_SYNTHETIC_FRAMES = true;
   public boolean SHOW_CURRENT_THREAD = true;
   public boolean SHOW_ARGUMENTS_TYPES = false;
 

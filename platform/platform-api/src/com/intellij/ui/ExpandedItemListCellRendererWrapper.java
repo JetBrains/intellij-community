@@ -6,8 +6,10 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
+import java.awt.Rectangle;
 
 public final class ExpandedItemListCellRendererWrapper<T> implements ListCellRenderer<T> {
   private final @NotNull ListCellRenderer<? super T> myWrappee;

@@ -21,6 +21,17 @@ class SeTargetsFilter(val selectedScopeId: String?, val isAutoTogglePossible: Bo
     return SeFilterState.Data(map)
   }
 
+  override fun isEqualTo(other: SeFilter): Boolean {
+    if (this === other) return true
+    if (other !is SeTargetsFilter) return false
+
+    if (selectedScopeId != other.selectedScopeId) return false
+    if (isAutoTogglePossible != other.isAutoTogglePossible) return false
+    if (hiddenTypes != other.hiddenTypes) return false
+
+    return true
+  }
+
   companion object {
     private const val SELECTED_SCOPE_ID = "SELECTED_SCOPE_ID"
     private const val IS_AUTO_TOGGLE_POSSIBLE: String = "IS_AUTO_TOGGLE_POSSIBLE"

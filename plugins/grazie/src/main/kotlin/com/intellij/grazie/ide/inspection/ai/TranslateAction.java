@@ -11,13 +11,14 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.grazie.GrazieBundle;
 import com.intellij.grazie.cloud.APIQueries;
 import com.intellij.grazie.cloud.GrazieCloudConnector;
-import com.intellij.grazie.cloud.TranslationUnavailableException;
+import com.intellij.grazie.cloud.PrematureEndException;
 import com.intellij.grazie.detection.LangDetector;
 import com.intellij.grazie.ide.fus.GrazieFUSCounter;
 import com.intellij.grazie.ide.ui.PaddedListCellRenderer;
 import com.intellij.grazie.rule.SentenceTokenizer;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextExtractor;
+import com.intellij.grazie.utils.HighlightingUtil;
 import com.intellij.grazie.utils.NaturalTextDetector;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -40,12 +41,15 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.ListSelectionModel;
+import java.awt.Font;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-
-import static com.intellij.grazie.text.TextExtractor.findAllTextContents;
+import java.util.Map;
+import java.util.Objects;
 
 @SuppressWarnings("IntentionDescriptionNotFoundInspection")
 public class TranslateAction implements IntentionAction, CustomizableIntentionAction {
@@ -167,7 +171,7 @@ public class TranslateAction implements IntentionAction, CustomizableIntentionAc
   ) {
     try {
       tryTranslate(project, editor, file, toTranslate, from, target);
-    } catch (TranslationUnavailableException e) {
+    } catch (PrematureEndException e) {
       IdeUiService.getInstance().showErrorHint(editor, GrazieBundle.message("intention.translate.unavailable"));
     }
   }
@@ -216,7 +220,7 @@ public class TranslateAction implements IntentionAction, CustomizableIntentionAc
     }
 
     return ContainerUtil.filter(
-      findAllTextContents(file.getViewProvider(), TextContent.TextDomain.ALL),
+      HighlightingUtil.getAllFileTexts(file.getViewProvider()),
       tc -> tc.intersectsRange(new TextRange(selStart, selEnd))
     );
   }

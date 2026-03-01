@@ -5,11 +5,16 @@ import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.ide.util.MethodCellRenderer
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFunctionalExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.search.PsiElementProcessorAdapter
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isTraitFakeOverride
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -50,6 +55,7 @@ internal fun <T> getOverriddenDeclarations(mappingToJava: MutableMap<PsiElement,
 }
 
 // Module-specific version of MarkerType.getSubclassedClassTooltip
+@K1Deprecation
 fun getModuleSpecificSubclassedClassTooltip(klass: PsiClass): String? {
     val processor = PsiElementProcessor.CollectElementsWithLimit(5, HashSet<PsiClass>())
     ClassInheritorsSearch.search(klass).forEach(PsiElementProcessorAdapter(processor))
@@ -78,6 +84,7 @@ fun getModuleSpecificSubclassedClassTooltip(klass: PsiClass): String? {
     )
 }
 
+@K1Deprecation
 fun getOverriddenMethodTooltip(method: PsiMethod): String? {
     val processor = PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5)
     method.forEachOverridingMethod(processor = PsiElementProcessorAdapter(processor)::process)

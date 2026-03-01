@@ -8,7 +8,12 @@ import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
 

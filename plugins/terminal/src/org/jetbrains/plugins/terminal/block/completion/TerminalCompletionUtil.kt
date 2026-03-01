@@ -2,10 +2,25 @@
 package org.jetbrains.plugins.terminal.block.completion
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.UnknownFileType
-import com.intellij.terminal.completion.spec.*
-import com.intellij.terminal.completion.spec.ShellSuggestionType.*
+import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
+import com.intellij.terminal.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellFileInfo
+import com.intellij.terminal.completion.spec.ShellName
+import com.intellij.terminal.completion.spec.ShellOptionSpec
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.completion.spec.ShellSuggestionType
+import com.intellij.terminal.completion.spec.ShellSuggestionType.ARGUMENT
+import com.intellij.terminal.completion.spec.ShellSuggestionType.COMMAND
+import com.intellij.terminal.completion.spec.ShellSuggestionType.FILE
+import com.intellij.terminal.completion.spec.ShellSuggestionType.FOLDER
+import com.intellij.terminal.completion.spec.ShellSuggestionType.OPTION
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -72,5 +87,46 @@ object TerminalCompletionUtil {
 
   fun ShellType.toShellName(): ShellName {
     return ShellName(this.toString().lowercase())
+  }
+
+  fun String.toShellFileInfo(fileSeparator: Char): ShellFileInfo {
+    return if (endsWith(fileSeparator)) {
+      ShellFileInfo.create(removeSuffix(fileSeparator.toString()), ShellFileInfo.Type.DIRECTORY)
+    }
+    else ShellFileInfo.create(this, ShellFileInfo.Type.FILE)
+  }
+
+  suspend fun <T : Any> doExecuteGenerator(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T? {
+    return try {
+      generator.generate(context)
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: UnsupportedOperationException) {
+      logger<ShellDataGeneratorsExecutor>().debug(e)
+      null
+    }
+    catch (e: Exception) {
+      logger<ShellDataGeneratorsExecutor>().error("Failed to execute generator: $generator in context: $context", e)
+      null
+    }
+  }
+
+  fun throwUnsupportedInExpTerminalException(): Nothing {
+    throw UnsupportedOperationException("This API is not supported in Experimental 2024 Terminal")
+  }
+
+  /**
+   * [tokens] - the words of the command text.
+   * Considers the last token as the currently typed prefix without starting quotes.
+   */
+  fun getTypedPrefix(tokens: List<String>): String {
+    check(tokens.isNotEmpty()) { "tokens should not be empty" }
+    val last = tokens.last()
+    return if (last.startsWith("'") || last.startsWith('"')) {
+      last.drop(1)
+    }
+    else last
   }
 }

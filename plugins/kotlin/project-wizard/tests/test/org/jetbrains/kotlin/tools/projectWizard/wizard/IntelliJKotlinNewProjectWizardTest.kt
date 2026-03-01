@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.application.options.CodeStyle
@@ -48,7 +48,11 @@ import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.formatter.*
+import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle
+import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
+import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
+import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
+import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestRoot
 import org.jetbrains.kotlin.idea.test.addDependency
@@ -330,7 +334,7 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
     }
 
     fun testSampleCode() {
-        runProjectTestCase(addSampleCode = true, useCompactProjectStructure = false) { project ->
+        runProjectTestCase(addSampleCode = true, useCompactProjectStructure = false) { _ ->
             val mainFile = getOutputFile("project/src/main/kotlin/Main.kt")
             assertTrue(mainFile.exists())
             val text = mainFile.readText()
@@ -340,7 +344,7 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
     }
 
     fun testSampleCodeCompact() {
-        runProjectTestCase(addSampleCode = true, useCompactProjectStructure = true) { project ->
+        runProjectTestCase(addSampleCode = true, useCompactProjectStructure = true) { _ ->
             val mainFile = getOutputFile("project/src/Main.kt")
             assertTrue(mainFile.exists())
             val text = mainFile.readText()
@@ -351,7 +355,7 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
 
     fun testSampleCodeRawOnboardingTips() {
         Registry.get("doc.onboarding.tips.render").withValue(false) {
-            runProjectTestCase(addSampleCode = true, useCompactProjectStructure = true) { project ->
+            runProjectTestCase(addSampleCode = true, useCompactProjectStructure = true) { _ ->
                 val mainFile = getOutputFile("project/src/Main.kt")
                 assertTrue(mainFile.exists())
                 val text = mainFile.readText()

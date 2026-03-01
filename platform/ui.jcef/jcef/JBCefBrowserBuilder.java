@@ -18,7 +18,8 @@ public class JBCefBrowserBuilder {
   @Nullable String myUrl;
   @Nullable CefBrowser myCefBrowser;
   @Nullable JBCefOSRHandlerFactory myOSRHandlerFactory;
-  boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled") || JBCefApp.isRemoteEnabled();
+  boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled") || JBCefApp.getInstance()
+    .isRemoteEnabled();
   boolean myCreateImmediately;
   boolean myEnableOpenDevToolsMenuItem;
   boolean myMouseWheelEventEnable = true;
@@ -36,7 +37,7 @@ public class JBCefBrowserBuilder {
    */
   public @NotNull JBCefBrowserBuilder setOffScreenRendering(boolean isOffScreenRendering) {
     if (!isOffScreenRendering) {
-      if (JBCefApp.isRemoteEnabled()) {
+      if (JBCefApp.getInstance().isRemoteEnabled()) {
         Logger.getInstance(JBCefBrowserBuilder.class).warn("Trying to create windowed browser when remote-mode is enabled. Settings isOffScreenRendering=false will be ignored.");
         myIsOffScreenRendering = true;
         return this;

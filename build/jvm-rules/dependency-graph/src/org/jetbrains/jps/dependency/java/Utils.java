@@ -5,18 +5,43 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.DifferentiateContext;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.jps.util.Pair;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.contains;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.recurse;
+import static org.jetbrains.jps.util.Iterators.recurseDepth;
+import static org.jetbrains.jps.util.Iterators.unique;
 
 /**
  * This class provides commonly used graph traversal methods.
@@ -36,10 +61,10 @@ public final class Utils {
   /**
    * Use this constructor for traversal during differentiate operation
    * @param context differentiate context
-   * @param isDelta false, if new nodes in Delta should be taken into account, false otherwise
+   * @param isDelta true, if new nodes in Delta should be taken into account, false otherwise
    */
   public Utils(@NotNull DifferentiateContext context, boolean isDelta) {
-    this(context.getGraph(), isDelta? context.getDelta() : null, context.getParams().affectionFilter(), context::isDeleted);
+    this(context.getGraph(), isDelta? context.getDelta() : null, context.getParams().scopeFilter(), context::isDeleted);
   }
 
   /**
@@ -48,7 +73,7 @@ public final class Utils {
    * @param sourceFilter NodeSource filter limiting the scope of traversal. Usually this is used to limit the sources set to some scope defined by some external layout, (i.e. a module structure)
    */
   public Utils(@NotNull Graph graph, @NotNull Predicate<? super NodeSource> sourceFilter) {
-    this(graph, null, sourceFilter, id -> false);
+    this(graph, null, sourceFilter, __-> false);
   }
 
   /**
@@ -231,7 +256,7 @@ public final class Utils {
   }
 
   public Set<JvmNodeReferenceID> collectSubclassesWithoutField(JvmNodeReferenceID classId, JvmField field) {
-    return collectSubclassesWithoutMember(classId, f -> Objects.equals(field.getName(), f.getName()), JvmClass::getFields);
+    return collectSubclassesWithoutMember(classId, field::isSame, JvmClass::getFields);
   }
 
   public Set<JvmNodeReferenceID> collectSubclassesWithoutMethod(JvmNodeReferenceID classId, JvmMethod method) {
@@ -330,7 +355,7 @@ public final class Utils {
   }
 
   public boolean hasOverriddenMethods(JvmClass cls, JvmMethod method) {
-    return !isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules)) || inheritsFromLibraryClass(cls) /*assume the method can override some method from the library*/;
+    return !isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules)) || inheritsFromUnknownClass(cls) /*assume the method can override some method from the library*/;
   }
 
   boolean isFieldVisible(final JvmClass cls, final JvmField field) {
@@ -363,16 +388,21 @@ public final class Utils {
     return find(recurseDepth(who, cl -> flat(map(who.getSuperTypes(), this::getClassesByName)), true), cl -> cl.getReferenceID().equals(whom.getReferenceID())) != null;
   }
 
-  public boolean inheritsFromLibraryClass(JvmClass cls) {
-    for (String st : cls.getSuperTypes()) {
-      Iterator<JvmClass> classes = getClassesByName(st).iterator();
-      if (!classes.hasNext()) {
-        // the supertype is not present in the graph (not compiled yet?), assuming this is a library class
-        return true;
-      }
-      while (classes.hasNext()) {
-        if (inheritsFromLibraryClass(classes.next())) {
+  public boolean inheritsFromUnknownClass(JvmClass aClass) {
+    Deque<JvmClass> classesToCheck = new ArrayDeque<>(List.of(aClass));
+    Set<String> visited = new HashSet<>();
+    for (JvmClass cls = classesToCheck.pollFirst(); cls != null; cls = classesToCheck.pollFirst()) {
+      for (String superTypeName : cls.getSuperTypes()) {
+        if (!visited.add(superTypeName)) {
+          continue;
+        }
+        Iterator<JvmClass> superTypes = getClassesByName(superTypeName).iterator();
+        if (!superTypes.hasNext()) {
+          // the supertype is not present in the graph (not compiled yet?), assuming this is a class from some external library
           return true;
+        }
+        while (superTypes.hasNext()) {
+          classesToCheck.addLast(superTypes.next());
         }
       }
     }
@@ -436,7 +466,7 @@ public final class Utils {
     return Boolean.FALSE;
   }
 
-  private static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
+  public static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
     Map<K, V> cache = new HashMap<>();
     return k -> cache.computeIfAbsent(k, f);
   }

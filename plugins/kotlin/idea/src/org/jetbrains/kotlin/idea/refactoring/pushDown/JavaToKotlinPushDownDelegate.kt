@@ -2,13 +2,19 @@
 
 package org.jetbrains.kotlin.idea.refactoring.pushDown
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
 import com.intellij.refactoring.memberPushDown.JavaPushDownDelegate
 import com.intellij.refactoring.memberPushDown.NewSubClassData
 import com.intellij.refactoring.memberPushDown.PushDownData
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.refactoring.util.classMembers.MemberInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -30,6 +36,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
+@K1Deprecation
 class JavaToKotlinPushDownDelegate : JavaPushDownDelegate() {
     override fun checkTargetClassConflicts(
         targetClass: PsiElement?,

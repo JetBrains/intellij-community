@@ -181,6 +181,8 @@ class EchoTeamCityMessages(object):
         return str(location)
 
     def pytest_sessionfinish(self, session, exitstatus):
+        if sys.version_info[0] == 2:
+            return
         if exitstatus > pytest.ExitCode.TESTS_FAILED and self.current_test_item:
             test_id = self.format_test_id(self.current_test_item.nodeid, self.current_test_item.location)
             self.teamcity.testStopped(
@@ -272,7 +274,8 @@ class EchoTeamCityMessages(object):
                     left, right = right, left
                 diff_error = diff_tools.EqualsAssertionError(expected=right, actual=left)
             else:
-                if m := re.search("AssertionError: Expected <(.*)> to .*? <(.*)>, but .*", err_message):
+                m = re.search("AssertionError: Expected <(.*)> to .*? <(.*)>, but .*", err_message)
+                if m:
                     left, right = m.group(1), m.group(2)
                     if self.swap_diff:
                         left, right = right, left

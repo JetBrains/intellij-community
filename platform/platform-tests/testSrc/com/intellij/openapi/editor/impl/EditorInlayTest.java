@@ -2,7 +2,13 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -13,7 +19,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -533,6 +539,10 @@ public class EditorInlayTest extends AbstractEditorTest {
     }
     finally {
       Disposer.dispose(disposable1);
+
+      // FIXME: Disposer.register(inlay, ...) triggers True-Positive 'Memory leak detected' in 'LastInSuiteTest'
+      //      Remove when the inlays are fixed
+      Disposer.dispose(inlay1);
     }
   }
 
@@ -540,12 +550,15 @@ public class EditorInlayTest extends AbstractEditorTest {
     CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
     CheckedDisposable disposable2 = Disposer.newCheckedDisposable();
     CheckedDisposable disposable3 = Disposer.newCheckedDisposable();
+
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+
+    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 0);
+    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
+    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
+
     try {
-      Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
       try {
-        Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 0);
-        Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
-        Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
         Disposer.register(inlay1, disposable1);
         Disposer.register(inlay2, disposable2);
         Disposer.register(inlay3, disposable3);
@@ -563,6 +576,12 @@ public class EditorInlayTest extends AbstractEditorTest {
       Disposer.dispose(disposable1);
       Disposer.dispose(disposable2);
       Disposer.dispose(disposable3);
+
+      // FIXME: Disposer.register(inlay, ...) triggers True-Positive 'Memory leak detected' in 'LastInSuiteTest'
+      //      Remove when the inlays are fixed
+      Disposer.dispose(inlay1);
+      Disposer.dispose(inlay2);
+      Disposer.dispose(inlay3);
     }
   }
 
@@ -572,11 +591,11 @@ public class EditorInlayTest extends AbstractEditorTest {
     CheckedDisposable disposable3 = Disposer.newCheckedDisposable();
 
     Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl("some\nmultiline\ntext"));
-    try {
-      Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 10);
-      Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 10, false, false, 10, 10);
-      Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 10, 10);
 
+    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 10);
+    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 10, false, false, 10, 10);
+    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 10, 10);
+    try {
       Disposer.register(inlay1, disposable1);
       Disposer.register(inlay2, disposable2);
       Disposer.register(inlay3, disposable3);
@@ -596,9 +615,16 @@ public class EditorInlayTest extends AbstractEditorTest {
     }
     finally {
       EditorFactory.getInstance().releaseEditor(editor);
+
       Disposer.dispose(disposable1);
       Disposer.dispose(disposable2);
       Disposer.dispose(disposable3);
+
+      // FIXME: Disposer.register(inlay, ...) triggers True-Positive 'Memory leak detected' in 'LastInSuiteTest'
+      //      Remove when the inlays are fixed
+      Disposer.dispose(inlay1);
+      Disposer.dispose(inlay2);
+      Disposer.dispose(inlay3);
     }
   }
 

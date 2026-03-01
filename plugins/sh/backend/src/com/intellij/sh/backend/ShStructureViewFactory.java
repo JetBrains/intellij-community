@@ -2,7 +2,11 @@
 package com.intellij.sh.backend;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.structureView.*;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewModelBase;
+import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.navigation.ItemPresentation;
@@ -19,7 +23,7 @@ import com.intellij.sh.psi.ShFunctionDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class ShStructureViewFactory implements PsiStructureViewFactory {
   @Override

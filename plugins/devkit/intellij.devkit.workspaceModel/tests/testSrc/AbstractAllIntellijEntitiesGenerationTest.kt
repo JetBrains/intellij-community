@@ -73,6 +73,10 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
   override val testDataDirectory: File
     get() = File(IdeaTestExecutionPolicy.getHomePathWithPolicy())
 
+  override fun runInDispatchThread(): Boolean {
+    return false
+  }
+
   open fun `test generation of all entities in intellij codebase`() {
     executeWorkspaceCodeGeneration(::compareIntellijWorkspaceCode)
   }
@@ -93,10 +97,11 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     val (storage, jpsProjectSerializer) = runBlocking { loadProjectIntellijProject() }
 
     val modulesToCheck = findModulesWhichRequireWorkspace(storage)
+    refreshCompilationOutputInVfs()
 
     var storageChanged = false
     modulesToCheck.forEachIndexed { index, (moduleEntity, sourceRoot) ->
-      println("[${index + 1}/${modulesToCheck.size}] Generating workspace code for module ${moduleEntity.name}")
+      println("[${index + 1}/${modulesToCheck.size}] Generating workspace code for module ${moduleEntity.name} [${sourceRoot.url.presentableUrl}]")
       val isTestModule = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
       val libraries = LibrariesRequiredForWorkspace.getRelatedLibraries(moduleEntity.name)
       val gen = generateWorkspaceCode(moduleEntity, sourceRoot, isTestModule, libraries)
@@ -105,7 +110,9 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     }
     if (storageChanged) {
       val affectedEntitySources = modulesToCheck.map { it.first.entitySource }.toSet()
-      (jpsProjectSerializer as JpsProjectSerializersImpl).saveAffectedEntities(storage, affectedEntitySources, createProjectConfigLocation())
+      (jpsProjectSerializer as JpsProjectSerializersImpl).saveAffectedEntities(storage,
+                                                                               affectedEntitySources,
+                                                                               createProjectConfigLocation())
     }
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
@@ -116,7 +123,8 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     isTestModule: Boolean,
     libraries: List<RelatedLibrary>,
   ): Pair<VirtualFile, VirtualFile> {
-    val path = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl)).invariantSeparatorsPathString
+    val path = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy())
+      .relativize(Path.of(sourceRoot.url.presentableUrl)).invariantSeparatorsPathString
     LOG.info("Generating workspace code for module: ${moduleEntity.name}, path $path")
     myFixture.copyDirectoryToProject(path, path)
 
@@ -137,7 +145,8 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
       relativePathToEntitiesDirectory = path,
       processAbstractTypes = moduleEntity.withAbstractTypes,
       explicitApiEnabled = false,
-      isTestModule = isTestModule
+      isTestModule = isTestModule,
+      formatCode = true
     )
 
     if (libraries.isNotEmpty())
@@ -231,9 +240,10 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     }
     return null
   }
- 
+
   private fun createGenSourceRoot(storage: MutableEntityStorage, sourceRoot: SourceRootEntity): SourceRootEntity {
-    val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
+    val genFolderVirtualFile =
+      VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
     val javaSourceRoot = sourceRoot.javaSourceRoots.first()
     val updatedContentRoot = storage.modifyContentRootEntity(sourceRoot.contentRoot) {
       this.sourceRoots += SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager),
@@ -322,10 +332,11 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
 
       srcRoots@ for (sourceRoot in storage.entities<SourceRootEntity>()) {
         val moduleEntity = sourceRoot.contentRoot.module
-        var toCheck = false
 
         if (moduleEntity.name in skippedModules) continue
+        if (sourceRoot.javaSourceRoots.none { !it.generated }) continue
 
+        var toCheck = false
         for (file in File(sourceRoot.url.presentableUrl).walk()) {
           if (file.isFile && file.extension == "kt") {
             processFileIfMatch(file, regexToDetectWsmClasses) {

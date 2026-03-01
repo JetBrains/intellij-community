@@ -40,5 +40,6 @@
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.fixes" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir.testFramework" scope="TEST" />
   </component>
 </module>

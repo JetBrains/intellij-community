@@ -30,4 +30,16 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "buildData_test_lib",
+  module_name = "intellij.platform.buildData",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_buildData",
+  runtime_deps = [
+    ":buildData",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.buildData` end

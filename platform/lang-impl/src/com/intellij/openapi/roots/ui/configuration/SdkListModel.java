@@ -10,12 +10,17 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.ActionItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.NoneSdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.ProjectSdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SuggestedItem;
 
 public final class SdkListModel extends AbstractListModel<SdkListItem> implements ComboBoxPopupState<SdkListItem> {
   private final boolean myIsSearching;

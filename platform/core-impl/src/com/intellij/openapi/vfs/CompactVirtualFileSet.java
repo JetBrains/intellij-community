@@ -6,10 +6,25 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.containers.IdBitSet;
 import com.intellij.util.indexing.containers.IntIdsIterator;
-import it.unimi.dsi.fastutil.ints.*;
-import org.jetbrains.annotations.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.BitSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Set of {@link VirtualFile}s optimized for compact storage of very large number of files.

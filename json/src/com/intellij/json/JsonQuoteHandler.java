@@ -1,18 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
 import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler;
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler;
 import com.intellij.json.editor.JsonTypedHandler;
-import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,30 +24,63 @@ public final class JsonQuoteHandler extends SimpleTokenSetQuoteHandler implement
 
   @Override
   public @Nullable CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
-    final IElementType tokenType = iterator.getTokenType();
-    if (tokenType == TokenType.WHITE_SPACE) {
-      final int index = iterator.getStart() - 1;
-      if (index >= 0) {
-        return String.valueOf(iterator.getDocument().getCharsSequence().charAt(index));
-      }
+    if (offset == 0) {
+      // there can be no open string literal at zero offset
+      return null;
     }
-    return tokenType == JsonElementTypes.SINGLE_QUOTED_STRING ? "'" : "\"";
+
+    if (iterator.getStart() == offset) {
+      iterator.retreat();
+    }
+
+    // ensure we're right after opening quote
+    IElementType tokenType = iterator.getTokenType();
+    if (tokenType != JsonElementTypes.SINGLE_QUOTED_STRING &&
+        tokenType != JsonElementTypes.DOUBLE_QUOTED_STRING) {
+      return null;
+    }
+
+    if (offset != iterator.getStart() + 1) {
+      return null;
+    }
+
+    if (previousTokenIsValidEscapeSequence(iterator)) {
+      // aha, the string is actually longer, aborting!
+      return null;
+    }
+
+    if (tokenType == JsonElementTypes.DOUBLE_QUOTED_STRING) {
+      return "\"";
+    }
+    else {
+      return "'";
+    }
+  }
+
+  @Override
+  public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
+    return super.isOpeningQuote(iterator, offset) && !previousTokenIsValidEscapeSequence(iterator);
   }
 
   @Override
   public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull PsiFile file, @NotNull CharSequence closingQuote) {
-    PsiElement element = file.findElementAt(offset - 1);
-    PsiElement parent = element == null ? null : element.getParent();
-    if (parent instanceof JsonStringLiteral) {
-      PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
-      TextRange range = parent.getTextRange();
-      if (offset - 1 != range.getStartOffset() || !"\"".contentEquals(closingQuote)) {
-        int endOffset = range.getEndOffset();
-        if (offset < endOffset) return;
-        if (offset == endOffset && !StringUtil.isEmpty(((JsonStringLiteral)parent).getValue())) return;
+    insertClosingQuote(editor, offset, closingQuote);
+    JsonTypedHandler.processPairedBracesComma(closingQuote.charAt(0), editor, file);
+  }
+
+  /**
+   * we're using highlighting iterator, and a valid escape sequence can "break" a string token into several highlighting tokens.
+   * let's check that. if that's the case, we are not at the start of just open string literal, and we have to return false
+   * {@code "abc\""<caret>}, where the last quote has been just typed in.
+   */
+  private static boolean previousTokenIsValidEscapeSequence(@NotNull HighlighterIterator iterator) {
+    if (iterator.getStart() > 0) {
+      iterator.retreat();
+      IElementType prev = iterator.getTokenType();
+      if (prev == StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN) {
+        return true;
       }
     }
-    editor.getDocument().insertString(offset, closingQuote);
-    JsonTypedHandler.processPairedBracesComma(closingQuote.charAt(0), editor, file);
+    return false;
   }
 }

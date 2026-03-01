@@ -8,11 +8,13 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.util.addOptionTag
 import org.jdom.Element
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
+@K1Deprecation
 @State(
     name = "KotlinScriptingSettings",
     storages = [

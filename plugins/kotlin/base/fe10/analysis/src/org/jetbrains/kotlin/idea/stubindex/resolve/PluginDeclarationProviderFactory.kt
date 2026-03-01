@@ -9,19 +9,28 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassLikeInfo
-import org.jetbrains.kotlin.resolve.lazy.declarations.*
+import org.jetbrains.kotlin.resolve.lazy.declarations.AbstractDeclarationProviderFactory
+import org.jetbrains.kotlin.resolve.lazy.declarations.ClassMemberDeclarationProvider
+import org.jetbrains.kotlin.resolve.lazy.declarations.CombinedPackageMemberDeclarationProvider
+import org.jetbrains.kotlin.resolve.lazy.declarations.FileBasedDeclarationProviderFactory
+import org.jetbrains.kotlin.resolve.lazy.declarations.PackageMemberDeclarationProvider
+import org.jetbrains.kotlin.resolve.lazy.declarations.PsiBasedClassMemberDeclarationProvider
 import org.jetbrains.kotlin.storage.StorageManager
 
+@K1Deprecation
 class PluginDeclarationProviderFactory(
   private val project: Project,
   private val indexedFilesScope: GlobalSearchScope,
@@ -53,7 +62,7 @@ class PluginDeclarationProviderFactory(
     private fun stubBasedPackageExists(name: FqName): Boolean {
         // We're only looking for source-based declarations
         return (moduleInfo as? IdeaModuleInfo)?.projectSourceModules()
-            ?.any { PerModulePackageCacheService.getInstance(project).packageExists(name, it) }
+            ?.any { PerModulePackageCacheService.getInstance(project).packageExists(name, it.toKaModule() as KaSourceModule) }
             ?: false
     }
 
@@ -87,7 +96,7 @@ class PluginDeclarationProviderFactory(
         val spiPackageExists = KotlinPackageIndexUtils.packageExists(fqName, project)
         val oldPackageExists = oldPackageExists(fqName)
         val cachedPackageExists =
-            moduleSourceInfo?.let { project.service<PerModulePackageCacheService>().packageExists(fqName, it) }
+            moduleSourceInfo?.let { project.service<PerModulePackageCacheService>().packageExists(fqName, it.toKaModule() as KaSourceModule) }
         val moduleModificationCount = moduleSourceInfo?.createModificationTracker()?.modificationCount
 
         val common = """

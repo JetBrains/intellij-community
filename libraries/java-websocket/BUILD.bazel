@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:java-_web_socket"],
   runtime_deps = ["@lib//:java-_web_socket"]
 )
+
+jvm_library(
+  name = "java-websocket_test_lib",
+  module_name = "intellij.libraries.java.websocket",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:java-_web_socket"],
+  runtime_deps = [":java-websocket"]
+)
 ### auto-generated section `build intellij.libraries.java.websocket` end

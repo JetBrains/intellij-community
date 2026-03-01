@@ -10,7 +10,12 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.jetbrains.idea.svn.api.ErrorCode.*;
+import static org.jetbrains.idea.svn.api.ErrorCode.WC_CORRUPT;
+import static org.jetbrains.idea.svn.api.ErrorCode.WC_CORRUPT_TEXT_BASE;
+import static org.jetbrains.idea.svn.api.ErrorCode.WC_NOT_FILE;
+import static org.jetbrains.idea.svn.api.ErrorCode.WC_NOT_WORKING_COPY;
+import static org.jetbrains.idea.svn.api.ErrorCode.WC_PATH_NOT_FOUND;
+import static org.jetbrains.idea.svn.api.ErrorCode.WC_UNSUPPORTED_FORMAT;
 
 class SvnFilteringExceptionLogger extends DelegatingLogger<Logger> {
   private static final long EXPIRATION = TimeUnit.SECONDS.toNanos(30);

@@ -16,7 +16,25 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssertStatement;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;

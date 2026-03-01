@@ -9,22 +9,44 @@ data class GitLabDiffPositionInput(
   val oldLine: Int?, // Line on HEAD SHA that was changed.
   val headSha: String, // SHA of the HEAD at the time the comment was made.
   val newLine: Int?, // Line on start SHA that was changed.
-  val paths: DiffPathsInput // The paths of the file that was changed. Both of the properties of this input are optional, but at least one of them is required.
+  val paths: DiffPathsInputDTO, // The paths of the file that was changed. Both of the properties of this input are optional, but at least one of them is required.
+  val lineRange: LineRangeDTO? = null,
 ) {
   companion object {
     fun from(position: GitLabMergeRequestNewDiscussionPosition): GitLabDiffPositionInput =
       GitLabDiffPositionInput(
         position.baseSha,
         position.startSha,
-        position.oldLineIndex?.inc(),
+        position.endLineIndexLeft?.inc(),
         position.headSha,
-        position.newLineIndex?.inc(),
-        position.paths
+        position.endLineIndexRight?.inc(),
+        position.paths,
+        position.lineRange.let { range ->
+          LineRangeDTO(
+            start = range.start.toLinePositionDTO(position.paths),
+            end = range.end.toLinePositionDTO(position.paths)
+          )
+        }
       )
   }
 }
 
-data class DiffPathsInput(
+data class DiffPathsInputDTO(
   val oldPath: String?,
-  val newPath: String?
+  val newPath: String?,
+)
+
+data class LineRangeDTO(
+  val start: LinePositionDTO,
+  val end: LinePositionDTO,
+)
+
+/**
+ * Line position data with 1-based line indexes
+ */
+data class LinePositionDTO(
+  val lineCode: String?,
+  val type: String?,
+  val oldLine: Int?,
+  val newLine: Int?,
 )

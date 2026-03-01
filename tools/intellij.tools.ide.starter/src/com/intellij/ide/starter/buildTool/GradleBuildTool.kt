@@ -6,8 +6,8 @@ import com.intellij.ide.starter.buildTool.events.GradleDaemonEvent
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
-import com.intellij.ide.starter.process.getProcessesIdByProcessName
 import com.intellij.ide.starter.process.findAndKillProcesses
+import com.intellij.ide.starter.process.getProcessesIdByProcessName
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.ide.starter.utils.XmlBuilder
@@ -26,7 +26,23 @@ import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.appendLines
+import kotlin.io.path.appendText
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.forEachLine
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.notExists
+import kotlin.io.path.readLines
+import kotlin.io.path.readText
+import kotlin.io.path.walk
+import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 

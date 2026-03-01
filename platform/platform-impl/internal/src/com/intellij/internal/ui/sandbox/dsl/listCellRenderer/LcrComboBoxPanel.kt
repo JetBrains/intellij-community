@@ -6,6 +6,7 @@ package com.intellij.internal.ui.sandbox.dsl.listCellRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
@@ -14,8 +15,12 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
-import javax.swing.*
+import java.util.Vector
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JCheckBox
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.ListCellRenderer
 
 internal class LcrComboBoxPanel : UISandboxPanel {
 
@@ -30,27 +35,43 @@ internal class LcrComboBoxPanel : UISandboxPanel {
           .component
       }
       group("ComboBox") {
+        val comboBoxes = mutableListOf<ComboBox<*>>()
+
+        row {
+          checkBox("Swing popup")
+            .selected(true)
+            .onChanged {
+              for (comboBox in comboBoxes) {
+                comboBox.isSwingPopup = it.isSelected
+              }
+            }
+        }
+
         row("Empty:") {
           comboBox(emptyList<String>(), textListCellRenderer { it })
+            .addTo(comboBoxes)
         }
         row("No selection:") {
           comboBox(listOf("First", "Second", "Last"), textListCellRenderer { it })
             .applyToComponent { selectedItem = null }
+            .addTo(comboBoxes)
         }
         row("Few items, tooltips:") {
           comboBox(listOf("First", "Second", "Try with y", "Try with ()"), listCellRenderer("") {
             toolTipText = value
             text(value)
-          })
+          }).addTo(comboBoxes)
         }
         row("Items with icon:") {
           comboBox((1..100).toList(), listCellRenderer("") {
             icon(if (value % 2 == 0) AllIcons.General.Information else AllIcons.General.Gear)
             text("Item $value")
-          })
+          }).addTo(comboBoxes)
+
         }
         row("Long items:") {
-          comboBox((1..100).map { "$it " + "Item".repeat(10) }, textListCellRenderer { it }).component
+          comboBox((1..100).map { "$it " + "Item".repeat(10) }, textListCellRenderer { it })
+            .addTo(comboBoxes)
         }
       }.enabledIf(enabled.selected)
       group("JComboBox") {
@@ -82,5 +103,9 @@ internal class LcrComboBoxPanel : UISandboxPanel {
     return cell(JComboBox(model)).applyToComponent {
       setRenderer(renderer)
     }
+  }
+
+  private fun Cell<ComboBox<*>>.addTo(list: MutableList<ComboBox<*>>) {
+    list.add(this.component)
   }
 }

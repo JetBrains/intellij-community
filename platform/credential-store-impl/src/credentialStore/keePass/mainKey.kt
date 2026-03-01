@@ -1,20 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore.keePass
 
-import com.intellij.credentialStore.*
+import com.intellij.credentialStore.EncryptionSpec
+import com.intellij.credentialStore.EncryptionType
+import com.intellij.credentialStore.LOG
+import com.intellij.credentialStore.createBuiltInOrCrypt32EncryptionSupport
+import com.intellij.credentialStore.createEncryptionSupport
+import com.intellij.credentialStore.getDefaultEncryptionType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.io.delete
 import com.intellij.util.io.safeOutputStream
 import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.composer.Composer
-import org.yaml.snakeyaml.nodes.*
+import org.yaml.snakeyaml.nodes.MappingNode
+import org.yaml.snakeyaml.nodes.NodeId
+import org.yaml.snakeyaml.nodes.NodeTuple
+import org.yaml.snakeyaml.nodes.ScalarNode
+import org.yaml.snakeyaml.nodes.Tag
 import org.yaml.snakeyaml.parser.ParserImpl
 import org.yaml.snakeyaml.reader.StreamReader
 import org.yaml.snakeyaml.resolver.Resolver
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.util.*
+import java.util.Base64
 import kotlin.io.path.readBytes
 
 internal const val MAIN_KEY_FILE_NAME = "c.pwd"

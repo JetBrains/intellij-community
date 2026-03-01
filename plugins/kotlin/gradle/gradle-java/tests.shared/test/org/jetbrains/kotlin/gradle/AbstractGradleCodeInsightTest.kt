@@ -93,9 +93,12 @@ abstract class AbstractGradleCodeInsightTest : AbstractKotlinGradleCodeInsightBa
 
     protected fun dataFile(fileName: String): File = File(getTestDataPath(), fileName)
 
-    protected fun dataFile(): File = dataFile(fileName())
+    protected fun dataFile(): File? {
+        val testMetadataFileName = fileName() ?: return null
+        return dataFile(testMetadataFileName)
+    }
 
-    protected open fun fileName(): String = getMethodMetadata(testInfo.testMethod.get()) ?: error("no @TestMetadata")
+    protected open fun fileName(): String? = getMethodMetadata(testInfo.testMethod.get())
 
     protected val document: Document
         get() {
@@ -103,23 +106,30 @@ abstract class AbstractGradleCodeInsightTest : AbstractKotlinGradleCodeInsightBa
             return fileEditorManager.selectedTextEditor?.document ?: error("no document found")
         }
 
+    protected open val testFileFactory = object : TestFiles.TestFileFactoryNoModules<TestFile>() {
+        override fun create(fileName: String, text: String, directives: Directives): TestFile {
+            val linesWithoutDirectives = text.lines().filter { !it.startsWith("// FILE") }
+            return TestFile(fileName, linesWithoutDirectives.joinToString(separator = "\n"), directives)
+        }
+    }
+
     private fun loadTestDataFiles() {
         val mainFile = dataFile()
+        if (mainFile == null) {
+            // when a test method doesn't have @TestMetadata
+            _testDataFiles = emptyList()
+            return
+        }
         val multiFileText = FileUtil.loadFile(mainFile, true)
 
         _testDataFiles = TestFiles.createTestFiles(
             mainFile.name,
             multiFileText,
-            object : TestFiles.TestFileFactoryNoModules<TestFile>() {
-                override fun create(fileName: String, text: String, directives: Directives): TestFile {
-                    val linesWithoutDirectives = text.lines().filter { !it.startsWith("// FILE") }
-                    return TestFile(fileName, linesWithoutDirectives.joinToString(separator = "\n"))
-                }
-            }
+            testFileFactory
         )
     }
 
-    class TestFile internal constructor(val path: String, val content: String)
+    class TestFile(val path: String, val content: String, val directives: Directives)
 
     companion object {
         @JvmStatic

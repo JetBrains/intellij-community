@@ -5,7 +5,7 @@ import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.BitUtil;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;

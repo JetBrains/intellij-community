@@ -3,23 +3,51 @@ module(
     version = "0.1",
 )
 
-bazel_dep(name = "rules_java", version = "8.14.0")
-bazel_dep(name = "rules_kotlin", version = "2.2.0")
-bazel_dep(name = "rules_jvm_external", version = "6.7")
-
-# https://github.com/JetBrains/rules_jvm_external/commits/no-windows-check
-# https://github.com/JetBrains/rules_jvm_external/commit/4d575639286760f67ae1ce416c4e922dc269851c
-# differs from released version of rules_jvm_external by two things
-#  - uses copyfile instead of genrule (platform independent, already in upstream master), https://github.com/bazel-contrib/rules_jvm_external/commit/6dda4baeb438117480e40b1844b48da2dd8043ff
-#  - disables check for bash presence since it's not used for dependency resolution anyway, https://github.com/JetBrains/rules_jvm_external/commit/4d575639286760f67ae1ce416c4e922dc269851c
+bazel_dep(name = "rules_java", version = "9.3.0")
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
+    module_name = "rules_kotlin",
+    sha256 = "45a8f73fd663df02dfd2925cf7be02a03b075dd14f8b473dd454feeaa28e54d0",
+    strip_prefix = "rules_kotlin-30e89b8f9a246952e14eb6f56c2265a46bf4dc54",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/30e89b8f9a246952e14eb6f56c2265a46bf4dc54.zip",
+)
+bazel_dep(name = "rules_jvm_external", version = "6.10")
+single_version_override(
   module_name = "rules_jvm_external",
-  url = "https://github.com/JetBrains/rules_jvm_external/archive/4d575639286760f67ae1ce416c4e922dc269851c.zip",
-  sha256 = "bca26ef5cdaff94991c0ddf3e77b6811f4226816045aab5e70212c9426ae99f9",
-  strip_prefix = "rules_jvm_external-4d575639286760f67ae1ce416c4e922dc269851c",
+  version = '6.10',
+  patches = [
+    "rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
+    "rules-jvm-external-6.10-default-to-maven-resolver.patch",
+  ],
 )
 
-intellij_version = "251.21223"
+single_version_override(
+  module_name = "rules_android",
+  version = "0.7.1",
+  patches = [
+    "rules-android-0.7.1-pin-maven-installs.patch",
+  ],
+)
+
+single_version_override(
+  module_name = "bazel_worker_java",
+  version = "0.0.10",
+  patches = [
+    "worker-java-0.0.9-pin-bazel-worker-maven.patch",
+  ],
+)
+
+bazel_dep(name = "protobuf", version = "33.4")
+single_version_override(
+    module_name = "protobuf",
+    version = "33.4",
+    patch_strip = 1,
+    patches = [
+      "protobuf-33.4-reuse-win64-for-arm.patch",
+    ],
+)
+
+intellij_version = "253.29346.138"
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
@@ -38,22 +66,12 @@ maven.install(
         "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2",
         "https://cache-redirector.jetbrains.com/intellij-dependencies",
         "https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository",
+        "https://cache-redirector.jetbrains.com/www.jetbrains.com/intellij-repository/releases",
     ],
 )
 use_repo(maven, "j2b_maven")
 
-bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
-
-toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
-
-use_repo(toolchains, "zig_sdk")
-
-register_toolchains(
-    "@zig_sdk//toolchain/...",
-    "@zig_sdk//libc_aware/toolchain/...",
-)
-
-bazel_dep(name = "rules_python", version = "1.6.3")
+bazel_dep(name = "rules_python", version = "1.7.0")
 
 # Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")

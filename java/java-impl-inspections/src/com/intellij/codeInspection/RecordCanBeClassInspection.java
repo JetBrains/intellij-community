@@ -5,7 +5,11 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiIdentifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;

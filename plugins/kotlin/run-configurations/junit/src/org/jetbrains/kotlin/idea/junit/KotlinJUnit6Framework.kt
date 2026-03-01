@@ -6,7 +6,9 @@ import com.intellij.ide.fileTemplates.FileTemplateDescriptor
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
-import com.intellij.util.ThreeState.*
+import com.intellij.util.ThreeState.NO
+import com.intellij.util.ThreeState.UNSURE
+import com.intellij.util.ThreeState.YES
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework

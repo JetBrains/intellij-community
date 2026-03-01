@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices.archetype
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.net.URL
 import java.util.concurrent.CopyOnWriteArrayList

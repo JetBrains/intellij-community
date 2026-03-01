@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("ModuleExtensions")
-
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
@@ -10,9 +8,9 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -30,59 +28,50 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: ExternalSystemModuleOptionsEntityData) : ExternalSystemModuleOptionsEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: ExternalSystemModuleOptionsEntityData) :
+  ExternalSystemModuleOptionsEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
                                                                           ExternalSystemModuleOptionsEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
-
-    private val connections = listOf<ConnectionId>(
-      MODULE_CONNECTION_ID,
-    )
+                                                                          ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                          false)
+    private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
 
   }
 
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
-
   override val externalSystem: String?
     get() {
       readField("externalSystem")
       return dataSource.externalSystem
     }
-
   override val externalSystemModuleVersion: String?
     get() {
       readField("externalSystemModuleVersion")
       return dataSource.externalSystemModuleVersion
     }
-
   override val linkedProjectPath: String?
     get() {
       readField("linkedProjectPath")
       return dataSource.linkedProjectPath
     }
-
   override val linkedProjectId: String?
     get() {
       readField("linkedProjectId")
       return dataSource.linkedProjectId
     }
-
   override val rootProjectPath: String?
     get() {
       readField("rootProjectPath")
       return dataSource.rootProjectPath
     }
-
   override val externalSystemModuleGroup: String?
     get() {
       readField("externalSystemModuleGroup")
       return dataSource.externalSystemModuleGroup
     }
-
   override val externalSystemModuleType: String?
     get() {
       readField("externalSystemModuleType")
@@ -100,8 +89,9 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
   }
 
 
-  internal class Builder(result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityData>(
-    result), ExternalSystemModuleOptionsEntity.Builder {
+  internal class Builder(result: ExternalSystemModuleOptionsEntityData?) :
+    ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityData>(result),
+    ExternalSystemModuleOptionsEntity.Builder {
     internal constructor() : this(ExternalSystemModuleOptionsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -114,15 +104,13 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
           error("Entity ExternalSystemModuleOptionsEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -153,12 +141,15 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
       dataSource as ExternalSystemModuleOptionsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.externalSystem != dataSource?.externalSystem) this.externalSystem = dataSource.externalSystem
-      if (this.externalSystemModuleVersion != dataSource?.externalSystemModuleVersion) this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
+      if (this.externalSystemModuleVersion != dataSource?.externalSystemModuleVersion) this.externalSystemModuleVersion =
+        dataSource.externalSystemModuleVersion
       if (this.linkedProjectPath != dataSource?.linkedProjectPath) this.linkedProjectPath = dataSource.linkedProjectPath
       if (this.linkedProjectId != dataSource?.linkedProjectId) this.linkedProjectId = dataSource.linkedProjectId
       if (this.rootProjectPath != dataSource?.rootProjectPath) this.rootProjectPath = dataSource.rootProjectPath
-      if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
-      if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType = dataSource.externalSystemModuleType
+      if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup =
+        dataSource.externalSystemModuleGroup
+      if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType =
+        dataSource.externalSystemModuleType
       updateChildToParentReferences(parents)
     }
 
@@ -171,7 +162,6 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
         changedProperty.add("entitySource")
 
       }
-
     override var module: ModuleEntityBuilder
       get() {
         val _diff = diff
@@ -191,7 +181,7 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -201,8 +191,7 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
@@ -215,7 +204,6 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
         getEntityData(true).externalSystem = value
         changedProperty.add("externalSystem")
       }
-
     override var externalSystemModuleVersion: String?
       get() = getEntityData().externalSystemModuleVersion
       set(value) {
@@ -223,7 +211,6 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
         getEntityData(true).externalSystemModuleVersion = value
         changedProperty.add("externalSystemModuleVersion")
       }
-
     override var linkedProjectPath: String?
       get() = getEntityData().linkedProjectPath
       set(value) {
@@ -231,7 +218,6 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
         getEntityData(true).linkedProjectPath = value
         changedProperty.add("linkedProjectPath")
       }
-
     override var linkedProjectId: String?
       get() = getEntityData().linkedProjectId
       set(value) {
@@ -239,7 +225,6 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
         getEntityData(true).linkedProjectId = value
         changedProperty.add("linkedProjectId")
       }
-
     override var rootProjectPath: String?
       get() = getEntityData().rootProjectPath
       set(value) {
@@ -247,7 +232,6 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
         getEntityData(true).rootProjectPath = value
         changedProperty.add("rootProjectPath")
       }
-
     override var externalSystemModuleGroup: String?
       get() = getEntityData().externalSystemModuleGroup
       set(value) {
@@ -255,7 +239,6 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
         getEntityData(true).externalSystemModuleGroup = value
         changedProperty.add("externalSystemModuleGroup")
       }
-
     override var externalSystemModuleType: String?
       get() = getEntityData().externalSystemModuleType
       set(value) {
@@ -266,6 +249,7 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
 
     override fun getEntityClass(): Class<ExternalSystemModuleOptionsEntity> = ExternalSystemModuleOptionsEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -298,8 +282,7 @@ internal class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<Exter
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -328,9 +311,7 @@ internal class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<Exter
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ExternalSystemModuleOptionsEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.externalSystem != other.externalSystem) return false
     if (this.externalSystemModuleVersion != other.externalSystemModuleVersion) return false
@@ -345,9 +326,7 @@ internal class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<Exter
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ExternalSystemModuleOptionsEntityData
-
     if (this.externalSystem != other.externalSystem) return false
     if (this.externalSystemModuleVersion != other.externalSystemModuleVersion) return false
     if (this.linkedProjectPath != other.linkedProjectPath) return false

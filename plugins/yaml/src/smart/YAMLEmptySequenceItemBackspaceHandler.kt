@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.yaml.YAMLLanguage
 import org.jetbrains.yaml.YAMLTokenTypes
 
-private class YAMLEmptySequenceItemBackspaceHandler : BackspaceHandlerDelegate() {
+internal class YAMLEmptySequenceItemBackspaceHandler : BackspaceHandlerDelegate() {
   private var shouldDelete = false
 
   override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) {

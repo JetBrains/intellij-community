@@ -36,7 +36,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 final class FileIncludeManagerImpl extends FileIncludeManager implements Disposable {

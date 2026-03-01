@@ -1,30 +1,73 @@
 package com.intellij.tools.build.bazel;
 
 import com.intellij.tools.build.bazel.impl.BazelIncBuildTest;
-import com.intellij.tools.build.bazel.impl.BazelTestProgressExtension;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Test;
 
-@ExtendWith(BazelTestProgressExtension.class)
+
 public class JvmIncBuilderTest extends BazelIncBuildTest {
 
   @Test
-  void testConvertJavaToKotlinGetterUsages() throws Exception {
+  public void testConvertJavaToKotlinGetterUsages() throws Exception {
     performTest("kotlin/convertJavaToKotlinGetterUsages").assertFailure();
   }
 
   @Test
-  void testInlineFunctionImplementationChanged() throws Exception {
+  public void testInlineFunctionImplementationChanged() throws Exception {
     performTest("kotlin/inlineFunctionImplementationChanged").assertSuccessful();
   }
 
   @Test
-  void testAssignJavaFieldFromKotlinSubclass() throws Exception {
+  public void testAssignJavaFieldFromKotlinSubclass() throws Exception {
     performTest("kotlin/assignJavaFieldFromKotlinSubclass").assertFailure();
   }
 
   @Test
-  void testAssignFieldFromSubclassAcrossTargets() throws Exception {
+  public void testAffectMutuallyDependentSourcesOnErrors() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors_prop() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors_prop").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors2() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors2").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors2_prop() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors2_prop").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors3() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors3").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors3_prop() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors3_prop").assertSuccessful();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors4() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors4").assertFailure();
+  }
+
+  @Test
+  public void testAffectMutuallyDependentSourcesOnErrors4_prop() throws Exception {
+    performTest("kotlin/affectMutuallyDependentSourcesOnErrors4_prop").assertFailure();
+  }
+
+  @Test
+  public void testAssignFieldFromSubclassAcrossTargets() throws Exception {
     performTest("java/assignFieldFromSubclassAcrossTargets").assertFailure();
+  }
+
+  @Test
+  public void testRebuildOnUntrackedInputChange() throws Exception {
+    performTest("worker/rebuildOnUntrackedInputChange").assertSuccessful();
   }
 }

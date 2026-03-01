@@ -13,6 +13,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import java.util.function.Function
 import javax.swing.JComponent
 
+@K1Deprecation
 class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {

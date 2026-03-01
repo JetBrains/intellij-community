@@ -6,6 +6,7 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
@@ -20,6 +21,7 @@ import kotlin.math.max
 
 private const val BONUS_FOR_SPACE_IN_PATTERN = 100
 private const val SETTINGS_PENALTY = 100
+private const val SHORTCUT_BONUS = 100
 
 @ApiStatus.Internal
 fun getGroupName(@NotNull description: OptionDescription): @Nls @NotNull String {
@@ -48,7 +50,8 @@ fun buildMatcher(pattern: String): Matcher {
 }
 
 fun calcElementWeight(element: Any, pattern: String, matcher: MinusculeMatcher): Int? {
-  var degree = calculateDegree(matcher, getActionText(element))
+  val actionText = getActionText(element)
+  var degree = calculateDegree(matcher, actionText)
   if (degree == null) return null
 
   if (degree == 0) {
@@ -60,6 +63,13 @@ fun calcElementWeight(element: Any, pattern: String, matcher: MinusculeMatcher):
 
   if (pattern.trim { it <= ' ' }.contains(" ")) degree += BONUS_FOR_SPACE_IN_PATTERN
   if (element is OptionDescription && degree > 0) degree -= SETTINGS_PENALTY
+
+  if (Registry.`is`("search.everywhere.prioritise.actions.with.shortcuts", false) &&
+      degree > 0 &&
+      actionText?.startsWith(pattern, true) == true &&
+      getAction(element)?.shortcutSet?.shortcuts?.isNotEmpty() == true) {
+    degree += SHORTCUT_BONUS
+  }
 
   return max(degree, 0)
 }

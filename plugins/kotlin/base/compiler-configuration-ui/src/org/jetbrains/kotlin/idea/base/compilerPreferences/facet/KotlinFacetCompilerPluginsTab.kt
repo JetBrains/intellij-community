@@ -14,7 +14,12 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import java.awt.BorderLayout
 import java.awt.Component
-import javax.swing.*
+import javax.swing.AbstractCellEditor
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTable
+import javax.swing.JTextPane
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer

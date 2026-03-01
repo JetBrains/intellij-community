@@ -4,7 +4,13 @@ package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.MethodSignature;
@@ -30,8 +36,9 @@ import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfo;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfoStorage;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberSelectionTable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.List;
 
 /**

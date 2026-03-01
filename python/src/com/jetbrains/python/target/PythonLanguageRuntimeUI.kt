@@ -26,7 +26,11 @@ import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.PythonAddCustomInterpreter
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
+import com.jetbrains.python.sdk.add.v2.PythonLocalAddInterpreterModel
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -63,8 +67,8 @@ class PythonLanguageRuntimeUI(
     mainPanel = PythonAddCustomInterpreter(
       model = model,
       module = module,
-      errorSink = ShowingMessageErrorSync,
-      limitExistingEnvironments = true,
+      errorSink = ShowingMessageErrorSync.withProject(project),
+      limitExistingEnvironments = false,
       bestGuessCreateSdkInfo = CompletableDeferred(value = null)
     )
 
@@ -77,7 +81,7 @@ class PythonLanguageRuntimeUI(
     dialogPanel.launchOnShow(
       debugName = "PythonLanguageRuntimeUI launchOnShow",
       context = TraceContext(
-        title = message("tracecontext.add.remote.python.sdk.dialog", targetEnvironmentConfiguration.getTargetType().displayName),
+        title = message("trace.context.add.remote.python.sdk.dialog", targetEnvironmentConfiguration.getTargetType().displayName),
         parentTraceContext = null
       )
     ) {

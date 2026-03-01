@@ -12,7 +12,11 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog
@@ -20,7 +24,17 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangeS
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureHandlerBase
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.allConstructors
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {

@@ -30,6 +30,19 @@ class SeTextFilter(
     return SeFilterState.Data(map)
   }
 
+  override fun isEqualTo(other: SeFilter): Boolean {
+    if (this === other) return true
+    if (other !is SeTextFilter) return false
+
+    if (selectedScopeId != other.selectedScopeId) return false
+    if (selectedType != other.selectedType) return false
+    if (isCaseSensitive != other.isCaseSensitive) return false
+    if (isWholeWordsOnly != other.isWholeWordsOnly) return false
+    if (isRegex != other.isRegex) return false
+
+    return true
+  }
+
   companion object {
     private const val TEXT_FILTER = "TEXT_FILTER"
     private const val SELECTED_SCOPE_ID = "SELECTED_SCOPE_ID"

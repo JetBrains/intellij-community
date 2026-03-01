@@ -7,7 +7,8 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTabbedPane;
 
 public final class TabbedPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   private final Type myTabbedPaneType = Type.getType(JTabbedPane.class);

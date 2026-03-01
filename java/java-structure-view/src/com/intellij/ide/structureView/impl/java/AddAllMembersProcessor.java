@@ -1,7 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.MethodSignature;

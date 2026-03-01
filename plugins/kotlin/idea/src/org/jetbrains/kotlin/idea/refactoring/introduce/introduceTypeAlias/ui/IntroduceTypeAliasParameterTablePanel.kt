@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.ui
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.TypeParameter
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.AbstractParameterTablePanel
 
+@K1Deprecation
 open class IntroduceTypeAliasParameterTablePanel :
     AbstractParameterTablePanel<TypeParameter, IntroduceTypeAliasParameterTablePanel.TypeParameterInfo>() {
     class TypeParameterInfo(

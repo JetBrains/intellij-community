@@ -12,8 +12,8 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 
 public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
   private final SmartPsiElementPointer myPsiElementPointer;

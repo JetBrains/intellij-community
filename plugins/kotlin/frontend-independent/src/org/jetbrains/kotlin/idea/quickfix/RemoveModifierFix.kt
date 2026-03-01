@@ -17,7 +17,16 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.coMap
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclarationModifierList
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtTypeProjection
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 

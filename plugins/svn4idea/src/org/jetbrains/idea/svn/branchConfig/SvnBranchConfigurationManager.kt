@@ -20,7 +20,7 @@ import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.SvnVcs
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
-import java.util.*
+import java.util.TreeMap
 
 private val LOG = logger<SvnBranchConfigurationManager>()
 

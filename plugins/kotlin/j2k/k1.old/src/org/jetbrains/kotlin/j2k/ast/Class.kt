@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 import org.jetbrains.kotlin.j2k.buildList
 
+@K1Deprecation
 open class Class(
   val name: Identifier,
   annotations: Annotations,
@@ -59,6 +61,7 @@ open class Class(
             = if (modifiers.contains(Modifier.ABSTRACT)) modifiers.without(Modifier.OPEN) else modifiers
 }
 
+@K1Deprecation
 class Object(
         name: Identifier,
         annotations: Annotations,

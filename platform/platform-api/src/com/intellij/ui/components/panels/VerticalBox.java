@@ -17,8 +17,9 @@ package com.intellij.ui.components.panels;
 
 import com.intellij.ui.components.JBBox;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import java.awt.Component;
 
 public class VerticalBox extends JBBox {
 

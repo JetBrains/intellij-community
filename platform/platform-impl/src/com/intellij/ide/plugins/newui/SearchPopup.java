@@ -18,11 +18,15 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.SwingUtilities;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 

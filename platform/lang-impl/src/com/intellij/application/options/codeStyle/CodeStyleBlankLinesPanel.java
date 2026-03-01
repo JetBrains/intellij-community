@@ -17,13 +17,26 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 

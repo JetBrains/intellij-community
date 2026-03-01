@@ -2,25 +2,18 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentSessionRegistry
 
 /**
- * Given that there is some IJent process launched, this extension gets handles to stdin+stdout of the process and returns
- * an [com.intellij.platform.eel.IjentApi] instance for calling procedures on IJent side.
+ * Creates an [IjentApi] session from a deployed IJent instance.
  */
 interface IjentSessionProvider {
   /**
    * Supposed to be used inside [IjentSessionRegistry.register].
    */
-  suspend fun connect(
-    strategy: IjentConnectionStrategy,
-    platform: EelPlatform,
-    binaryPath: String,
-    mediator: IjentSessionMediator,
-  ): IjentSession<*>
+  suspend fun connect(deploymentResult: IjentConnectionContext): IjentSession<*>
 
   companion object {
     suspend fun instanceAsync(): IjentSessionProvider = serviceAsync()
@@ -43,18 +36,17 @@ sealed class IjentStartupError : RuntimeException {
 }
 
 internal class DefaultIjentSessionProvider : IjentSessionProvider {
-  override suspend fun connect(strategy: IjentConnectionStrategy, platform: EelPlatform, binaryPath: String, mediator: IjentSessionMediator): IjentSession<*> {
+  override suspend fun connect(deploymentResult: IjentConnectionContext): IjentSession<*> {
     throw IjentStartupError.MissingImplPlugin()
   }
 }
 
 /**
- * Make [IjentApi] from an already running [process].
- * [ijentName] is used for debugging utilities like logs and thread names.
+ * Creates an [IjentApi] session from deployment result.
  *
- * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
+ * The session terminates when the IDE exits or when [IjentApi.close] is called.
  */
-suspend fun <T : IjentApi> createIjentSession(strategy: IjentConnectionStrategy, binaryPath: String, platform: EelPlatform, mediator: IjentSessionMediator): IjentSession<T> {
+suspend fun <T : IjentApi> createIjentSession(deploymentResult: IjentConnectionContext): IjentSession<T> {
   @Suppress("UNCHECKED_CAST")
-  return IjentSessionProvider.instanceAsync().connect(strategy, platform, binaryPath, mediator) as IjentSession<T>
+  return IjentSessionProvider.instanceAsync().connect(deploymentResult) as IjentSession<T>
 }

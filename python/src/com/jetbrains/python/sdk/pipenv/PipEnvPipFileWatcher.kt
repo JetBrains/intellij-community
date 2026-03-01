@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
@@ -25,7 +24,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.associatedModuleDir
+import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.findAmongRoots
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import com.jetbrains.python.statistics.PipfileWatcherIdsHolder.Companion.RUN_PIPENV_LOCK_SUGGESTION
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -80,7 +82,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
     }
     val content = PyBundle.message("python.sdk.pipenv.pip.file.notification.content")
     val notification = withContext(Dispatchers.EDT) {
-      LOCK_NOTIFICATION_GROUP.createNotification(
+      NotificationGroupManager.getInstance().getNotificationGroup("Pipfile Watcher").createNotification(
         title = title,
         content = content,
         type = NotificationType.INFORMATION,
@@ -135,9 +137,5 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
   private fun VirtualFile.getModule(project: Project): Module? =
     ModuleUtil.findModuleForFile(this, project)
 
-  private val LOCK_NOTIFICATION_GROUP = Cancellation.forceNonCancellableSectionInClassInitializer {
-    NotificationGroupManager.getInstance().getNotificationGroup("Pipfile Watcher")
-  }
-
-  private suspend fun getPipFileLock(module: Module): VirtualFile? = withContext(Dispatchers.IO) { findAmongRoots(module, PipEnvFileHelper.PIP_FILE_LOCK) }
+  private suspend fun getPipFileLock(module: Module): VirtualFile? = findAmongRoots(module, PipEnvFileHelper.PIP_FILE_LOCK)
 }

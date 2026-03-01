@@ -2,7 +2,11 @@
 package com.siyeh.ipp.varargs;
 
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.jdk.VarargParameterInspection;

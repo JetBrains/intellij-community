@@ -11,11 +11,21 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeReference
 
 internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider {
 
@@ -95,9 +105,11 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
     private fun KtCallableDeclaration.getTypeDeclarationFromCallable(callSiteReferenceProvider: (() -> PsiReference?)? = null, typeFromSymbol: (KaCallableSymbol) -> KaType?): Array<PsiElement> {
         analyze(this) {
             val symbol = symbol as? KaCallableSymbol ?: return PsiElement.EMPTY_ARRAY
-            val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
+            val callSiteReferenceElement = callSiteReferenceProvider?.invoke()?.element as? KtElement
+            val smartCastType = (callSiteReferenceElement as? KtExpression)?.smartCastInfo?.smartCastType
+            val type = smartCastType ?: typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
             val targetPsiElement = type.upperBoundIfFlexible().abbreviationOrSelf.symbol?.psi
-                ?: (callSiteReferenceProvider?.invoke()?.element as? KtElement)?.resolvePsiOfTypeAtCallSite()
+                ?: callSiteReferenceElement?.resolvePsiOfTypeAtCallSite()
             targetPsiElement?.let { return arrayOf(it) }
         }
         return PsiElement.EMPTY_ARRAY

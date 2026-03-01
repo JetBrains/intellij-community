@@ -19,7 +19,7 @@ fun IDETestContext.isRemDevContext() = this is IDERemDevTestContext
 fun IDETestContext.asRemDevContext(): IDERemDevTestContext = this as IDERemDevTestContext
 
 /** Returns result or null if the context isn't of RemDev type */
-fun <T> IDETestContext.onRemDevContext(action: (IDERemDevTestContext) -> T): T? {
+inline fun <T> IDETestContext.onRemDevContext(action: IDERemDevTestContext.() -> T): T? {
   val remDevContext = if (this.isRemDevContext()) this.asRemDevContext() else return null
 
   return action(remDevContext)

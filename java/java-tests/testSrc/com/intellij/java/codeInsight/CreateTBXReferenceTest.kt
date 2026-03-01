@@ -3,7 +3,12 @@ package com.intellij.java.codeInsight
 
 import com.intellij.JavaTestUtil
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.PsiElement

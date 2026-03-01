@@ -2,17 +2,21 @@
 package com.intellij.ide.actions.exclusion;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.tree.TreeCollector.TreePathRoots;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Component;
 import java.util.List;
 
 abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {

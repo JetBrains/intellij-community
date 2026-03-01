@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.inlay
 
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
+import com.intellij.codeInsight.hints.declarative.HintFormat
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.OwnBypassCollector
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
@@ -20,6 +24,7 @@ class MavenModelVersionInlayHintCollector(val editor: Editor) : OwnBypassCollect
   override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
     if (file !is XmlFile) return
     val manager = MavenProjectsManager.getInstance(file.project)
+    if (!manager.isInitialized) return
     val vFile = file.virtualFile
     if (manager.findProject(vFile) == null) return
     val modelTag = file.rootTag?.findFirstSubTag("modelVersion") ?: return

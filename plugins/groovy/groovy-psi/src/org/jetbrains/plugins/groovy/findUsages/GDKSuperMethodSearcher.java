@@ -3,7 +3,16 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;

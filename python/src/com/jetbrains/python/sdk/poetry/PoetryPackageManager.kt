@@ -1,21 +1,28 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
+import com.jetbrains.python.packaging.management.resolvePyProjectToml
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.sdk.associatedModulePath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
 
 @ApiStatus.Internal
 class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
@@ -39,8 +46,7 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return reloadPackages().mapSuccess { }
   }
 
-
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> =
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> =
     when (installRequest) {
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications ->
         addPackages(installRequest.specifications, options)
@@ -58,7 +64,7 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return addPackages(specifications.map { it.copy(requirement = pyRequirement(it.name, null)) }, emptyList())
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?): PyResult<Unit> {
     if (pythonPackages.isEmpty()) return PyResult.success(Unit)
 
     val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages).getOr {
@@ -165,6 +171,17 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
 
   private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
     return versionSpec?.let { "$name@${it.presentableText}" } ?: name
+  }
+
+  override fun getDependencyFile(): VirtualFile? {
+    val projectPathStr = sdk.associatedModulePath ?: return null
+    val projectPath = Path.of(projectPathStr)
+    return resolvePyProjectToml(projectPath)
+  }
+
+  override suspend fun addDependencyImpl(requirement: PyRequirement): Boolean {
+    poetryInstallPackage(sdk, listOf(requirement.presentableText), emptyList()).getOr { return false }
+    return true
   }
 }
 

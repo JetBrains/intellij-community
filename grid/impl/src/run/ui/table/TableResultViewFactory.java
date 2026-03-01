@@ -1,7 +1,13 @@
 package com.intellij.database.run.ui.table;
 
 import com.intellij.database.DataGridBundle;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndexSet;
+import com.intellij.database.datagrid.ResultView;
+import com.intellij.database.datagrid.SelectionModel;
+import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.run.ui.ResultViewFactory;
 import com.intellij.database.util.DataGridUIUtil;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -23,10 +29,15 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;

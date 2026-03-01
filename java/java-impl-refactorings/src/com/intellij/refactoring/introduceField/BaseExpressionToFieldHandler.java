@@ -24,9 +24,47 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiMethodReferenceUtil;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.SmartTypePointer;
+import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.FileTypeUtils;
@@ -99,7 +137,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     String switchLabelError = RefactoringUtil.checkEnumConstantInSwitchLabel(selectedExpr);
     if (switchLabelError != null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, switchLabelError, getRefactoringName(), getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(switchLabelError), getRefactoringName(), getHelpID());
       return false;
     }
 
@@ -237,7 +275,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         modifierList.addAfter(annotation, null);
       }
     }
-    JavaCodeStyleManager.getInstance(field.getProject()).shortenClassReferences(field);
   }
 
   public static PsiElement getPhysicalElement(final PsiExpression selectedExpr) {
@@ -393,7 +430,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   private static PsiField createField(String fieldName,
                                       PsiType type,
-                                      PsiExpression initializerExpr,
                                       boolean includeInitializer, final PsiClass parentClass) {
     @NonNls StringBuilder pattern = new StringBuilder();
     pattern.append("private int ");
@@ -409,9 +445,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       final PsiTypeElement typeElement = factory.createTypeElement(type);
       field.getTypeElement().replace(typeElement);
       field = (PsiField)CodeStyleManager.getInstance(psiManager.getProject()).reformat(field);
-      if (includeInitializer) {
-        field.getInitializer().replace(initializerExpr);
-      }
       return field;
     }
     catch (IncorrectOperationException e) {
@@ -719,11 +752,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, destClass.getContainingFile())) return;
 
         ChangeContextUtil.encodeContextInfo(destClass, true);
-
-        myField = mySettings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer) :
-                  createField(myFieldName, type.getType(), initializer,
-                              initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
-                              myParentClass);
+        boolean includeInitializer = initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null;
+        myField = mySettings.isIntroduceEnumConstant()
+                  ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer)
+                  : createField(myFieldName, type.getType(), includeInitializer, myParentClass);
 
         setModifiers(myField, mySettings);
         PsiElement finalAnchorElement = null;
@@ -757,6 +789,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           anchorMember = null;
         }
         myField = appendField(initializer, initializerPlace, destClass, myParentClass, myField, anchorMember);
+        if (includeInitializer) {
+          // It's important that we append field before adding the initializer to make sure that the replacement takes into account the
+          // context of the file
+          LOG.assertTrue(myField.getInitializer() != null);
+          myField.getInitializer().replace(initializer);
+        }
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurrences, myField, mySettings.getFieldVisibility());
         }

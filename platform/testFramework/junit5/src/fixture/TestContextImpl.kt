@@ -18,6 +18,9 @@ internal class TestContextImpl(private val context: ExtensionContext, override v
         else name
       }
 
+  override val extensionContext: ExtensionContext
+    get() = context
+
   override fun <T : Annotation> findAnnotation(clazz: Class<T>): T? {
     var extContext: ExtensionContext? = context
     while (extContext != null) {

@@ -1,21 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.text.matching.MatchingMode;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.List;
 
 public class SpeedSearch extends SpeedSearchSupply implements KeyListener, SpeedSearchActivator {
   public static final String PUNCTUATION_MARKS = "*_-+\"'/.#$>: ,;?!@%^&";
@@ -94,7 +98,9 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
     }
 
     if (!old.equalsIgnoreCase(myString)) {
-      update();
+      WriteIntentReadAction.run(() -> {
+        update();
+      });
     }
   }
 
@@ -168,7 +174,9 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
   @Override
   public @Nullable Iterable<TextRange> matchingFragments(@NotNull String text) {
     if (getMatcher() instanceof MinusculeMatcher matcher) {
-      return matcher.matchingFragments(text);
+      List<@NotNull MatchedFragment> fragments = matcher.match(text);
+      return fragments != null ? ContainerUtil.map(fragments, f -> TextRange.create(f.getStartOffset(), f.getEndOffset()))
+                               : null;
     }
     return null;
   }
@@ -231,7 +239,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
   }
 
   private void fireStateChanged(String prevString) {
-    myChangeSupport.firePropertyChange(SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME, prevString, getEnteredPrefix());
+    myChangeSupport.firePropertyChange(ENTERED_PREFIX_PROPERTY_NAME, prevString, getEnteredPrefix());
   }
 
   @Override

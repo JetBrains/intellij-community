@@ -14,7 +14,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import kotlin.sequences.mapNotNull
 
 @ApiStatus.Internal
 object CoroutineAgentConnector {

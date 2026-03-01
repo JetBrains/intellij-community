@@ -31,4 +31,29 @@ jvm_library(
     "//platform/analysis-impl",
   ]
 )
+
+jvm_library(
+  name = "syntax-core_test_lib",
+  module_name = "intellij.python.syntax.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":syntax-core",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//python/python-parser:parser_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//python/python-ast:ast_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.python.syntax.core` end

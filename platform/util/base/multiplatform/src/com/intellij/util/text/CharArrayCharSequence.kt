@@ -4,9 +4,9 @@ package com.intellij.util.text
 import com.intellij.openapi.util.text.CharSequenceWithStringHash
 import com.intellij.openapi.util.text.stringHashCode
 import com.intellij.util.text.CharArrayUtilKmp.regionMatches
-import kotlin.math.min
 import kotlin.jvm.JvmField
 import kotlin.jvm.Transient
+import kotlin.math.min
 
 open class CharArrayCharSequence(
   @JvmField protected val myChars: CharArray,

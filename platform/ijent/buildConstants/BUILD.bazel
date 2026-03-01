@@ -11,4 +11,12 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "buildConstants_test_lib",
+  module_name = "intellij.platform.ijent.community.buildConstants",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":buildConstants"]
+)
 ### auto-generated section `build intellij.platform.ijent.community.buildConstants` end

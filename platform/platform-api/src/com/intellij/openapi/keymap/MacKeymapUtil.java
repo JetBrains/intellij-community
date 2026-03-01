@@ -6,8 +6,8 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.KeyStroke;
+import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.StringJoiner;

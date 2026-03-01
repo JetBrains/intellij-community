@@ -1,4 +1,5 @@
 // "class org.jetbrains.kotlin.idea.quickfix.MoveWhenElseBranchFix" "false"
+// K2_ACTION: "class org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddWhenRemainingBranchFixFactories$AddRemainingWhenBranchesQuickFix" "false"
 // ERROR: 'else' entry must be the last one in a when-expression
 // ERROR: 'else' entry must be the last one in a when-expression
 // WARNING: Unreachable code

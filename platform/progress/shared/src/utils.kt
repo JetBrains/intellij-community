@@ -4,8 +4,19 @@ package com.intellij.platform.ide.progress
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.util.progress.ProgressState
 import fleet.kernel.onDispose
-import fleet.kernel.rete.*
-import kotlinx.coroutines.flow.*
+import fleet.kernel.rete.Many
+import fleet.kernel.rete.Query
+import fleet.kernel.rete.Rete
+import fleet.kernel.rete.StateQuery
+import fleet.kernel.rete.asQuery
+import fleet.kernel.rete.each
+import fleet.kernel.rete.get
+import fleet.kernel.rete.matchesFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -26,7 +37,7 @@ val activeTasks: Query<Many, TaskInfoEntity>
  */
 val TaskInfoEntity.updates: StateQuery<ProgressState>
   @ApiStatus.Internal
-  get() = asQuery()[TaskInfoEntity.ProgressStateType]
+  get() = asQuery().get(TaskInfoEntity.ProgressStateType)
 
 /**
  * Returns a query to retrieve the statuses of a task.
@@ -36,7 +47,7 @@ val TaskInfoEntity.updates: StateQuery<ProgressState>
  */
 val TaskInfoEntity.statuses: StateQuery<TaskStatus>
   @ApiStatus.Internal
-  get() = asQuery()[TaskInfoEntity.TaskStatusType]
+  get() = asQuery().get(TaskInfoEntity.TaskStatusType)
 
 /**
  * Returns a query that provides changes in the suspendable status of the task.
@@ -44,7 +55,7 @@ val TaskInfoEntity.statuses: StateQuery<TaskStatus>
  */
 val TaskInfoEntity.suspensionState: StateQuery<TaskSuspension>
   @ApiStatus.Internal
-  get() = asQuery()[TaskInfoEntity.TaskSuspensionType]
+  get() = asQuery().get(TaskInfoEntity.TaskSuspensionType)
 
 /**
  * Converts a query result into a finite flow that emits results as long as the specified entity is alive.

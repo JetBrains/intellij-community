@@ -35,21 +35,28 @@ jvm_library(
   associates = [":vcs-github-tracker"],
   deps = [
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/credential-store",
+    "//platform/credential-store:credential-store_test_lib",
     "//plugins/tasks/tasks-api:tasks",
+    "//plugins/tasks/tasks-api:tasks_test_lib",
     "//plugins/github/github-core:vcs-github",
     "//plugins/github/github-core:vcs-github_test_lib",
     "//platform/platform-api:ide",
+    "//platform/platform-api:ide_test_lib",
     "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//platform/collaboration-tools",
     "//platform/collaboration-tools:collaboration-tools_test_lib",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/platform-impl:ide-impl",
     "@lib//:junit5",
-  ]
+  ],
+  runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
 )
 ### auto-generated section `build intellij.vcs.github.tracker` end
 

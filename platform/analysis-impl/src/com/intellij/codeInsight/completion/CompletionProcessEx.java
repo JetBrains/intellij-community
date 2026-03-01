@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
 
@@ -38,6 +38,10 @@ public interface CompletionProcessEx extends CompletionProcessBase, UserDataHold
   @Nullable
   Lookup getLookup();
 
+  /**
+   * Allows registering a child disposable that will be disposed of when the completion process finishes.
+   * {@code child} is called only if the completion process is not already finished and disposed.
+   */
   void registerChildDisposable(@NotNull Supplier<? extends Disposable> child);
 
   /**

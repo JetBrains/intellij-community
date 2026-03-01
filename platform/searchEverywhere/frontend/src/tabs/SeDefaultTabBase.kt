@@ -3,7 +3,11 @@ package com.intellij.platform.searchEverywhere.frontend.tabs
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import kotlinx.coroutines.flow.Flow

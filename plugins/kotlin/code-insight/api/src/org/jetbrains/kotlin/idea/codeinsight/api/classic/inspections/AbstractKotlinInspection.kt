@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement

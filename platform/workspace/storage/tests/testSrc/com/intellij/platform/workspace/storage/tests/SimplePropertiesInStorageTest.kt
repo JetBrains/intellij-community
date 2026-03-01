@@ -3,7 +3,13 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityParentList
+import com.intellij.platform.workspace.storage.testEntities.entities.MainEntityParentList
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ref
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled

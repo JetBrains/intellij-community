@@ -181,7 +181,7 @@ class Child(Parent, extra_items=int): # E: Cannot change 'extra_items' type unle
 class MovieBase2(TypedDict, extra_items=int | None):
     name: str
 
-class MovieRequiredYear(MovieBase2):  # E[MovieRequiredYear]: Required key 'year' is not known to 'MovieBase'
+class MovieRequiredYear(MovieBase2):  # E[MovieRequiredYear]: Required key 'year' is not known to 'MovieBase2'
     year: int | None  # E[MovieRequiredYear]
 
 class MovieNotRequiredYear(MovieBase2):  # E[MovieNotRequiredYear]: 'int | None' is not consistent with 'int'
@@ -219,7 +219,7 @@ class MovieWithYear2(TypedDict, extra_items=int | None):
     year: int | None
 
 details3: MovieWithYear2 = {"name": "Kill Bill Vol. 1", "year": 2003}
-movie3: MovieBase2 = details3  # E:'year' is not required in 'Movie', but it is required in 'MovieWithYear2'
+movie3: MovieBase2 = details3  # E: 'year' is not required in 'MovieBase2', but it is required in 'MovieWithYear2'
 
 # > When ``extra_items`` is specified to be read-only on a TypedDict type, it is
 # > possible for an item to have a :term:`narrower <narrow>` type than the

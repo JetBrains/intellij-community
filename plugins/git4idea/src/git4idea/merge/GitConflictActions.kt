@@ -21,8 +21,8 @@ import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
-private class GitAcceptTheirsAction : GitAcceptConflictSideAction(GitBundle.messagePointer("conflicts.accept.theirs.action.text"), true)
-private class GitAcceptYoursAction : GitAcceptConflictSideAction(GitBundle.messagePointer("conflicts.accept.yours.action.text"), false)
+internal class GitAcceptTheirsAction : GitAcceptConflictSideAction(GitBundle.messagePointer("conflicts.accept.theirs.action.text"), true)
+internal class GitAcceptYoursAction : GitAcceptConflictSideAction(GitBundle.messagePointer("conflicts.accept.yours.action.text"), false)
 
 abstract class GitConflictAction(text: Supplier<@Nls String>) :
   DumbAwareAction(text, Presentation.NULL_STRING) {

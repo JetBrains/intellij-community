@@ -27,7 +27,7 @@ open class MergeDialogCustomizer {
    * @param files the files that have conflicted changes and are shown in the dialog.
    */
   @RequiresBackgroundThread
-  open fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): @NlsContexts.Label String = ""
+  open fun getMultipleFileMergeDescription(files: Collection<VirtualFile>): @NlsContexts.Label String = ""
 
   /**
    * Returns the title of the merge dialog invoked for a 3-way merge of a file (after pressing the "Merge" button).

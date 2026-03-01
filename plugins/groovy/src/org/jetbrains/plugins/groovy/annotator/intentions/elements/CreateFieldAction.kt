@@ -8,7 +8,11 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.CreateConstantActionGroup
+import com.intellij.lang.jvm.actions.CreateFieldActionGroup
+import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.lang.jvm.actions.JvmActionGroup
+import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project

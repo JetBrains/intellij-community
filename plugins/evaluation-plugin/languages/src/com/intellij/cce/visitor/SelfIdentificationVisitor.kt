@@ -1,6 +1,7 @@
 package com.intellij.cce.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 

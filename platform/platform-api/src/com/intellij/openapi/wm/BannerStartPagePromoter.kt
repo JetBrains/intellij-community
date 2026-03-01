@@ -27,7 +27,14 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 abstract class BannerStartPagePromoter : StartPagePromoter {
 

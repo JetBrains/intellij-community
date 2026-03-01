@@ -21,14 +21,23 @@ import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.popup.PopupFactoryImpl
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogExtensionList
 import com.intellij.vcs.commit.CommitNotification
 import git4idea.actions.GitCreateNewBranchAction
 import git4idea.i18n.GitBundle
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.adjustPopupPosition
+import training.dsl.LessonUtil.checkInsideSearchEverywhere
 import training.dsl.LessonUtil.sampleRestoreNotification
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.dropMnemonic
+import training.dsl.gotItStep
+import training.dsl.proceedLink
+import training.dsl.waitAndUsePreviouslyFoundListItem
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickChangeElement
 import training.git.GitLessonsUtil.clickTreeRow
@@ -79,7 +88,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       text(GitLessonsBundle.message("git.quick.start.find.action", strong(StringUtil.removeEllipsisSuffix(cloneActionText)),
                                     LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT), LessonUtil.actionName(it)))
       triggerAndBorderHighlight().component { ui: ExtendableTextField ->
-        UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
+        checkInsideSearchEverywhere(ui)
       }
       test { actions(it) }
     }

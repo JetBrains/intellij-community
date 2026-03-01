@@ -16,7 +16,13 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 

@@ -8,7 +8,11 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 private val sourceRetention = "${StandardNames.FqNames.annotationRetention.asString()}.${AnnotationRetention.SOURCE.name}"
 private val sourceRetentionAnnotation = "@${StandardNames.FqNames.retention.asString()}($sourceRetention)"

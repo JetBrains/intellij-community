@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.rename
 
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesFileBase
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector
 import com.intellij.compose.ide.plugin.resources.withoutExtension
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.RenamePsiFileProcessor

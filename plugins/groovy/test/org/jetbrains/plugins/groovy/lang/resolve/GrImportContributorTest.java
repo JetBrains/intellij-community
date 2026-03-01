@@ -8,7 +8,12 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.resolve.imports.*;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticStarImport;
 
 import java.util.Arrays;
 import java.util.List;

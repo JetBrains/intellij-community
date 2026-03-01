@@ -4,13 +4,22 @@ package com.intellij.xdebugger.memory.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
@@ -30,7 +39,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -138,6 +148,10 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
     myDebugSessionListener = new MyDebuggerSessionListener();
     debugSession.addSessionListener(myDebugSessionListener, this);
+    // In split architecture, the session tab init is asynchronous.
+    // This constructor might be called when the session is already running.
+    // Therefore, the first session pause event might be missed.
+    myTime.incrementAndGet();
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(suspendContext -> {
       ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(true));

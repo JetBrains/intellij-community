@@ -2,8 +2,15 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolQualifiedName
+import com.intellij.polySymbols.PolySymbolsTestsDebugOutputPrinter
+import com.intellij.polySymbols.context.PolyContext
+import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.polySymbolsTestsDataPath
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
@@ -394,16 +401,15 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           params: PolySymbolNameMatchQueryParams,
           stack: PolySymbolQueryStack,
         ): List<PolySymbol> {
-          return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
+          return if (qualifiedName.kind == HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {
-              override val origin: PolySymbolOrigin
-                get() = object : PolySymbolOrigin {
-                  override val framework: FrameworkId get() = "vue"
-                }
-              override val qualifiedKind: PolySymbolQualifiedKind
+              override val kind: PolySymbolKind
                 get() = HTML_ATTRIBUTES
               override val name: String
                 get() = "bar"
+
+              override fun matchContext(context: PolyContext): Boolean =
+                context.framework == "vue"
 
               override fun createPointer(): Pointer<out PolySymbol> = Pointer.hardPointer(this)
 

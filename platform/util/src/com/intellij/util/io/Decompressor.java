@@ -2,7 +2,11 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -13,8 +17,16 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.ArrayDeque;

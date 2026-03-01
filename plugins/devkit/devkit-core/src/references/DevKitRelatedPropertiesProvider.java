@@ -29,7 +29,7 @@ import org.jetbrains.idea.devkit.dom.OverrideText;
 import org.jetbrains.idea.devkit.navigation.DevkitRelatedLineMarkerProviderBase;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
 

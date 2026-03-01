@@ -9,7 +9,15 @@ import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleR
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.runtime.repository.serialization.impl.CompactFileReader
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer
-import org.jetbrains.jps.builders.*
+import org.jetbrains.jps.builders.BuildRootDescriptor
+import org.jetbrains.jps.builders.BuildRootIndex
+import org.jetbrains.jps.builders.BuildTarget
+import org.jetbrains.jps.builders.BuildTargetHashSupplier
+import org.jetbrains.jps.builders.BuildTargetLoader
+import org.jetbrains.jps.builders.BuildTargetRegistry
+import org.jetbrains.jps.builders.BuildTargetType
+import org.jetbrains.jps.builders.ModuleInducedTargetType
+import org.jetbrains.jps.builders.TargetOutputIndex
 import org.jetbrains.jps.builders.impl.BuildRootDescriptorImpl
 import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.cmdline.ProjectDescriptor

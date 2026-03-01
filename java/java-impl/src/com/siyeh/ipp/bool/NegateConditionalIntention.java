@@ -2,7 +2,11 @@
 package com.siyeh.ipp.bool;
 
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;

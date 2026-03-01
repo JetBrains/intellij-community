@@ -19,6 +19,8 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.frontend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />

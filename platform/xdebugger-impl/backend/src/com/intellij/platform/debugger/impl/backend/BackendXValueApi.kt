@@ -1,9 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.PreloadChildrenEvent
+import com.intellij.platform.debugger.impl.rpc.XContainerId
+import com.intellij.platform.debugger.impl.rpc.XDebuggerHyperlinkId
+import com.intellij.platform.debugger.impl.rpc.XDebuggerTreeExpandedNode
+import com.intellij.platform.debugger.impl.rpc.XExpressionDto
+import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorResult
+import com.intellij.platform.debugger.impl.rpc.XInlineDebuggerDataDto
+import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
+import com.intellij.platform.debugger.impl.rpc.XStackFrameId
+import com.intellij.platform.debugger.impl.rpc.XValueApi
+import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
+import com.intellij.platform.debugger.impl.rpc.XValueGroupId
+import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
+import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.awaitCancellationAndInvoke
@@ -11,19 +27,51 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
+import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback
+import com.intellij.xdebugger.frame.XNavigatable
+import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.frame.XValueChildrenList
+import com.intellij.xdebugger.frame.XValueContainer
+import com.intellij.xdebugger.frame.XValueGroup
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rpc.models.*
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
+import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
+import com.intellij.xdebugger.impl.rpc.models.toRpc
+import com.intellij.xdebugger.impl.rpc.models.toXValueDto
 import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.asCompletableFuture
 import java.awt.Font
+import java.awt.event.MouseEvent
 import javax.swing.Icon
+import javax.swing.JPanel
 
 internal class BackendXValueApi : XValueApi {
   override suspend fun computeTooltipPresentation(xValueId: XValueId): Flow<XValueSerializedPresentation> {
@@ -127,6 +175,14 @@ internal class BackendXValueApi : XValueApi {
       }
     })
     return XInlineDebuggerDataDto(state, channel.asColdFlow().toRpc())
+  }
+
+  override suspend fun nodeLinkClicked(linkId: XDebuggerHyperlinkId) {
+    val link = linkId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      val dummyEvent = MouseEvent(JPanel(), 0, 0, 0, 0, 0, 1, false)
+      link.onClick(dummyEvent)
+    }
   }
 }
 
@@ -285,10 +341,20 @@ private sealed interface RawComputeChildrenEvent {
         }
       }
 
+      fun subscribeToAdditionalLinkFlow(model: BackendXValueModel) {
+        parentCoroutineScope.launch {
+          model.additionalLinkFlow.collectLatest {
+            channel.send(XValueComputeChildrenEvent.XValueAdditionalLinkEvent(model.id, it?.toRpc(model.cs)))
+          }
+        }
+      }
+
       childrenXValueEntities.forEach(::subscribeToPresentationsFlow)
       childrenXValueEntities.forEach(::subscribeToFullValueFlow)
+      childrenXValueEntities.forEach(::subscribeToAdditionalLinkFlow)
       topValuesEntities.forEach(::subscribeToPresentationsFlow)
       topValuesEntities.forEach(::subscribeToFullValueFlow)
+      topValuesEntities.forEach(::subscribeToAdditionalLinkFlow)
     }
   }
 
@@ -300,16 +366,13 @@ private sealed interface RawComputeChildrenEvent {
 
   data class SetErrorMessage(val message: String, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
     override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope): XValueComputeChildrenEvent {
-      // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
-      return XValueComputeChildrenEvent.SetErrorMessage(message, link)
+      return XValueComputeChildrenEvent.SetErrorMessage(message, link?.toRpc(parentCoroutineScope))
     }
   }
 
-  data class SetMessage(val message: String, val icon: Icon?, val attributes: SimpleTextAttributes?, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
+  data class SetMessage(val message: String, val icon: Icon?, val attributes: SimpleTextAttributes, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
     override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope): XValueComputeChildrenEvent {
-      // TODO[IJPL-160146]: support SimpleTextAttributes serialization
-      // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
-      return XValueComputeChildrenEvent.SetMessage(message, icon?.rpcId(), attributes, link)
+      return XValueComputeChildrenEvent.SetMessage(message, icon?.rpcId(), attributes.rpcId(), link?.toRpc(parentCoroutineScope))
     }
   }
 

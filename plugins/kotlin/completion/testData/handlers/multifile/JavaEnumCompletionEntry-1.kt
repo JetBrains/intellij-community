@@ -1,8 +1,8 @@
 // IGNORE_K1
 fun foo() {
 
-    FOO<caret>
+    FOO_BAR_ENUM<caret>
 }
 
-// ELEMENT: FOO
+// ELEMENT: FOO_BAR_ENUM_ENTRY
 // INVOCATION_COUNT: 2

@@ -65,6 +65,13 @@ sealed interface XBreakpointEvent {
 
   @Serializable
   data class BreakpointRemoved(val breakpointId: XBreakpointId) : XBreakpointEvent
+
+  @Serializable
+  data class BreakpointPresentationUpdated(
+    val breakpointId: XBreakpointId,
+    val customPresentation: XBreakpointCustomPresentationDto?,
+    val currentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
+  ) : XBreakpointEvent
 }
 
 @ApiStatus.Internal
@@ -119,7 +126,9 @@ sealed interface XDebuggerSessionEvent {
   ) : EventWithState
 
   @Serializable
-  object SettingsChanged : XDebuggerSessionEvent
+  class SettingsChanged(
+    override val state: XDebugSessionState,
+  ) : EventWithState
 
   @Serializable
   data class BreakpointsMuted(val muted: Boolean) : XDebuggerSessionEvent

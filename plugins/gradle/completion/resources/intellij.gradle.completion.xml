@@ -1,0 +1,22 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.gradle"/>
+    <module name="intellij.repository.search.common"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer"
+      serviceImplementation="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerImpl"
+      testServiceImplementation="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl"/>
+    <backgroundPostStartupActivity
+      implementation="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexInitializer"/>
+    <externalSystemTaskNotificationListener
+      implementation="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexUpdater"/>
+    <lookup.charFilter id="GradleCompletionCharFilter" order="first" implementation="com.intellij.gradle.completion.GradleCompletionCharFilter" />
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
+    <contributor implementation="com.intellij.gradle.completion.GradleDependencyCompletionContributor"/>
+  </extensions>
+</idea-plugin>

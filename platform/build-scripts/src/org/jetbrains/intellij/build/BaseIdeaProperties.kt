@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -26,14 +26,12 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.tasks.core",
   "intellij.repository.search",
   "intellij.maven",
-  "intellij.gradle",
+  "intellij.gradle.plugin",
   "intellij.android.gradle.declarative.lang.ide",
   "intellij.android.gradle.dsl",
-  "intellij.gradle.java",
+  "intellij.gradle.java.plugin",
   "intellij.vcs.git",
   "intellij.vcs.git.commit.modal",
-  "intellij.vcs.svn",
-  "intellij.vcs.hg",
   "intellij.vcs.github",
   "intellij.vcs.gitlab",
   "intellij.groovy",
@@ -49,6 +47,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.sh.plugin",
   "intellij.markdown",
   "intellij.mcpserver",
+  "intellij.webp",
   "intellij.grazie",
   "intellij.featuresTrainer",
   "intellij.toml",
@@ -71,8 +70,8 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.8",
   "plugins/junit/lib/junit-rt.jar" to "1.8",
   "plugins/junit/lib/junit5-rt.jar" to "1.8",
-  "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.8",
-  "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.8",
+  "plugins/gradle-plugin/lib/gradle-tooling-extension-api.jar" to "1.8",
+  "plugins/gradle-plugin/lib/gradle-tooling-extension-impl.jar" to "1.8",
   "plugins/maven/lib/maven-server.jar" to "1.8",
   "plugins/maven/lib/intellij.maven.server3/maven3-server-common.jar" to "1.8",
   "plugins/maven/lib/intellij.maven.server3/maven3-server.jar" to "1.8",

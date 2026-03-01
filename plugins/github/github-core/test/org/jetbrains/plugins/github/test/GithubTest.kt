@@ -12,7 +12,10 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import git4idea.test.GitPlatformTest
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.GHRepositoryPath
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager

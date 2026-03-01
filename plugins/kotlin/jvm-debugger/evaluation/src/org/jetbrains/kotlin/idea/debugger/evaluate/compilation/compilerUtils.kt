@@ -10,8 +10,12 @@ import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
-import org.jetbrains.org.objectweb.asm.*
+import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassReader.SKIP_CODE
+import org.jetbrains.org.objectweb.asm.ClassVisitor
+import org.jetbrains.org.objectweb.asm.MethodVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.Type
 
 
 fun getMethodSignature(

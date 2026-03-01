@@ -1,0 +1,9 @@
+import kotlin.enums.enumEntries
+
+enum class EnumClass
+
+fun <T> genericFunction(a: T) {}
+
+fun foo() {
+    genericFunction<Array<*>>(enumEntries<EnumClass>().toTypedArray())
+}

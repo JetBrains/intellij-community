@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.projectTypeStep
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginManagerConfigurableUtils
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.logInstallPluginDialogShowed
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.logInstallPluginPopupShowed
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.logSearchChanged
@@ -16,16 +16,17 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.observable.util.whenTextChangedFromUi
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptor
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getInstallAndEnableTask
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.*
+import com.intellij.ui.JBColor
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.SingleSelectionModel
+import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
@@ -36,7 +37,6 @@ import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.TestOnly
@@ -44,7 +44,12 @@ import java.awt.BorderLayout
 import java.awt.Graphics
 import java.util.function.Consumer
 import java.util.function.Function
-import javax.swing.*
+import javax.swing.AbstractListModel
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListSelectionModel
 
 internal class ProjectTypeList(
   private val context: WizardContext
@@ -152,16 +157,12 @@ internal class ProjectTypeList(
 
   private fun showInstallPluginDialog(plugin: WizardPlugin) {
     logInstallPluginDialogShowed(context, plugin.name)
-    ProgressManager.getInstance().run(
-      getInstallAndEnableTask(null, setOf(PluginId.getId(plugin.id)), true, true, null) { }
-    )
+    installAndEnable(null, setOf(PluginId.getId(plugin.id)), true, true, null) { }
   }
 
   private fun showInstallPluginDialog() {
     logInstallPluginDialogShowed(context)
-    showInstallPluginDialog {
-      openMarketplaceTab(searchTextField.text)
-    }
+    PluginManagerConfigurableUtils.showInstallPluginDialog(component, searchTextField.text)
   }
 
   private fun showInstallPluginPopup() {
@@ -173,27 +174,6 @@ internal class ProjectTypeList(
     }
     else {
       showInstallPluginPopup(additionalLanguagePlugins)
-    }
-  }
-
-  private fun showInstallPluginDialog(configure: PluginManagerConfigurable.() -> Unit) {
-    val configurable = PluginManagerConfigurable()
-    AutoCloseable(configurable::disposeUIResources).use {
-      configurable.configure()
-      val dialogBuilder = DialogBuilder(component)
-      dialogBuilder.title(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.title"))
-      dialogBuilder.centerPanel(
-        JBUI.Panels.simplePanel(configurable.createComponent()!!.apply {
-          border = JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1)
-        }).addToTop(configurable.topComponent.apply {
-          preferredSize = JBDimension(preferredSize.width, 40)
-        })
-      )
-      dialogBuilder.addOkAction()
-      dialogBuilder.addCancelAction()
-      if (dialogBuilder.showAndGet() && configurable.isModified) {
-        configurable.apply()
-      }
     }
   }
 

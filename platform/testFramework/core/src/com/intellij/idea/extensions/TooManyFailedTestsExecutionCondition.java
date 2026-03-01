@@ -2,7 +2,12 @@
 package com.intellij.idea.extensions;
 
 import org.junit.AssumptionViolatedException;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ConditionEvaluationResult;
+import org.junit.jupiter.api.extension.ExecutionCondition;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.TestWatcher;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -30,10 +30,35 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellij.lang.regexp.*;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.RegExpBundle;
+import org.intellij.lang.regexp.RegExpHighlighter;
+import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.RegExpLanguageHosts;
+import org.intellij.lang.regexp.RegExpTT;
+import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpBackref;
+import org.intellij.lang.regexp.psi.RegExpBoundary;
+import org.intellij.lang.regexp.psi.RegExpBranch;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpCharRange;
+import org.intellij.lang.regexp.psi.RegExpClass;
+import org.intellij.lang.regexp.psi.RegExpClosure;
+import org.intellij.lang.regexp.psi.RegExpConditional;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedCharacter;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpNumber;
+import org.intellij.lang.regexp.psi.RegExpOptions;
+import org.intellij.lang.regexp.psi.RegExpPattern;
+import org.intellij.lang.regexp.psi.RegExpPosixBracketExpression;
+import org.intellij.lang.regexp.psi.RegExpProperty;
+import org.intellij.lang.regexp.psi.RegExpQuantifier;
+import org.intellij.lang.regexp.psi.RegExpRecursiveElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpSetOptions;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.intellij.lang.regexp.psi.impl.RegExpGroupImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -100,11 +125,11 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     final int fromCodePoint = from.getValue();
     final int toCodePoint = to.getValue();
-    if (fromCodePoint == -1 || toCodePoint == -1) {
-      return;
-    }
-    if (toCodePoint < fromCodePoint) {
-      myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.illegal.character.range.to.from")).range(range).create();
+    if (fromCodePoint != -1 && toCodePoint != -1 && toCodePoint < fromCodePoint) {
+      myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.illegal.character.range.to.from"))
+        .range(range)
+        .withFix(new CharRangeFix(range))
+        .create();
     }
   }
 
@@ -124,7 +149,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpChar(final RegExpChar ch) {
+  public void visitRegExpChar(RegExpChar ch) {
     final PsiElement child = ch.getFirstChild();
     final IElementType type = child.getNode().getElementType();
     if (type == RegExpTT.CHARACTER) {
@@ -184,15 +209,15 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     final String propertyName = category.getText();
     final ASTNode next = category.getTreeNext();
     if (next == null || next.getElementType() != RegExpTT.EQ) {
-      if(!myLanguageHosts.isValidCategory(category.getPsi(), propertyName)) {
+      if (!myLanguageHosts.isValidCategory(property, propertyName)) {
         myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.unknown.character.category")).range(category)
-        .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
+          .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
       }
     }
     else {
-      if(!myLanguageHosts.isValidPropertyName(category.getPsi(), propertyName)) {
+      if (!myLanguageHosts.isValidPropertyName(category.getPsi(), propertyName)) {
         myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.unknown.property.name")).range(category)
-        .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
+          .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
         return;
       }
       final ASTNode valueNode = property.getValueNode();
@@ -219,7 +244,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpBackref(final RegExpBackref backref) {
+  public void visitRegExpBackref(RegExpBackref backref) {
     final RegExpGroup group = backref.resolve();
     if (group == null) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.unresolved.back.reference"))
@@ -236,14 +261,11 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpGroup(RegExpGroup group) {
     if (RegExpGroupImpl.isPcreConditionalGroup(group.getNode())) {
-      if (RegExpGroupImpl.isPcreDefine(group.getNode())) {
-        RegExpConditional conditional = ObjectUtils.tryCast(group.getParent(), RegExpConditional.class);
-        if (conditional != null) {
-          RegExpBranch[] branches = PsiTreeUtil.getChildrenOfType(conditional, RegExpBranch.class);
-          if (branches != null && branches.length > 1) {
-            myHolder.newAnnotation(HighlightSeverity.ERROR,
-                                   RegExpBundle.message("error.define.subpattern.contains.more.than.one.branch")).create();
-          }
+      if (RegExpGroupImpl.isPcreDefine(group.getNode()) && group.getParent() instanceof RegExpConditional conditional) {
+        final RegExpBranch[] branches = PsiTreeUtil.getChildrenOfType(conditional, RegExpBranch.class);
+        if (branches != null && branches.length > 1) {
+          myHolder.newAnnotation(HighlightSeverity.ERROR,
+                                 RegExpBundle.message("error.define.subpattern.contains.more.than.one.branch")).create();
         }
       }
       return;
@@ -256,10 +278,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     else if (branches.length == 1) {
       final RegExpAtom[] atoms = branches[0].getAtoms();
-      if (atoms.length == 1 && atoms[0] instanceof RegExpGroup) {
+      if (atoms.length == 1 && atoms[0] instanceof RegExpGroup innerGroup) {
         final RegExpGroup.Type type = group.getType();
         if (type == RegExpGroup.Type.CAPTURING_GROUP || type == RegExpGroup.Type.ATOMIC || type == RegExpGroup.Type.NON_CAPTURING) {
-          final RegExpGroup innerGroup = (RegExpGroup)atoms[0];
           if (group.isCapturing() == innerGroup.isCapturing()) {
             myHolder.newAnnotation(HighlightSeverity.WARNING, RegExpBundle.message("error.redundant.group.nesting")).create();
           }
@@ -399,7 +420,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       if (minValue != null && maxValue != null) {
         if (minValue.longValue() > maxValue.longValue() || minValue.doubleValue() > maxValue.doubleValue()) {
           final TextRange range = new TextRange(minElement.getTextOffset(), maxElement.getTextOffset() + maxElement.getTextLength());
-          myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.illegal.repetition.range.min.max")).range(range)
+          myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.illegal.repetition.range.min.max"))
+            .range(range)
+            .withFix(new RepetitionRangeFix(quantifier))
             .create();
         }
       }

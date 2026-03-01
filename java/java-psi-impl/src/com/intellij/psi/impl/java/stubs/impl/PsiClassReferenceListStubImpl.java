@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.cache.ExternalTypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;

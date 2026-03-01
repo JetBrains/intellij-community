@@ -1,6 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
-import com.intellij.ide.starter.coroutine.perTestSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.perTestSupervisorScope
 import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaHelper

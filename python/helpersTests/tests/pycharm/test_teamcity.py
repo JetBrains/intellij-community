@@ -1,9 +1,12 @@
+import sys
+
 import pytest
 
 pytest_plugins = "pytester"
 
 
 # PY-84850
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Python 3 is required")
 def test_teamcity_plugin_with_xdist(pytester):
     pytester.makepyfile("""
         def test_example_1():
@@ -25,6 +28,7 @@ def test_teamcity_plugin_with_xdist(pytester):
 
 
 # PY-84850
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Python 3 is required")
 def test_teamcity_plugin_without_xdist(pytester):
     pytester.makepyfile("""
         def test_basic():

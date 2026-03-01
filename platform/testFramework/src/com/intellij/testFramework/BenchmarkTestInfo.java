@@ -45,7 +45,7 @@ public interface BenchmarkTestInfo {
    * </ul>
    * <br/>
    * By default only OpenTelemetry spans will be published. (from the {@code ./system/test/log/opentelemtry.json} file).<br/>
-   * To enable publishing of meters (from the {@code ./system/test/log/open-telemetry-metrics.*.csv}) use {@link #withTelemetryMeters(OpenTelemetryMeterCollector)}. <br/>
+   * To enable publishing of meters (from the {@code ./system/test/log/open-telemetry-metrics.*.csv}) use {@link #BenchmarkTestInfoImpl#withMetricsCollector(com.intellij.tools.ide.metrics.collector.MetricsCollector)}. <br/>
    * <p/>
    * Considering metrics: better to have a test that produces metrics in seconds, rather milliseconds.<br/>
    * This way degradation will be easier to detect and metric deviation from the baseline will be easier to notice.

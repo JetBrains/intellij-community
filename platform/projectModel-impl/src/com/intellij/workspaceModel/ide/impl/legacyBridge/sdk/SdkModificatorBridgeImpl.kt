@@ -14,7 +14,12 @@ import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getResolvedEelMachine
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
+import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.platform.workspace.jps.entities.SdkRoot
+import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
+import com.intellij.platform.workspace.jps.entities.modifySdkEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.util.concurrency.ThreadingAssertions

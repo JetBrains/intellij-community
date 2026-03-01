@@ -17,8 +17,29 @@
 package org.intellij.plugins.relaxNG.compact;
 
 import com.intellij.psi.tree.IElementType;
-import org.intellij.plugins.relaxNG.compact.psi.*;
-import org.intellij.plugins.relaxNG.compact.psi.impl.*;
+import org.intellij.plugins.relaxNG.compact.psi.RncAnnotation;
+import org.intellij.plugins.relaxNG.compact.psi.RncDecl;
+import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
+import org.intellij.plugins.relaxNG.compact.psi.RncDiv;
+import org.intellij.plugins.relaxNG.compact.psi.RncExternalRef;
+import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
+import org.intellij.plugins.relaxNG.compact.psi.RncInclude;
+import org.intellij.plugins.relaxNG.compact.psi.RncName;
+import org.intellij.plugins.relaxNG.compact.psi.RncNsDecl;
+import org.intellij.plugins.relaxNG.compact.psi.RncParentRef;
+import org.intellij.plugins.relaxNG.compact.psi.RncRef;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncAnnotationImpl;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncDeclImpl;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncDefineImpl;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncDivImpl;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncDocument;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncExternalRefImpl;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncGrammarImpl;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncIncludeImpl;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncNameImpl;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncNsDeclImpl;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncParentRefImpl;
+import org.intellij.plugins.relaxNG.compact.psi.impl.RncRefImpl;
 
 public final class RncElementTypes {
 

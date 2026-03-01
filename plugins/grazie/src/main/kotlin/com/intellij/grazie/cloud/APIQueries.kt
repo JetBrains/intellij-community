@@ -1,6 +1,5 @@
 package com.intellij.grazie.cloud
 
-import ai.grazie.def.WordDefinition
 import ai.grazie.gec.model.CorrectionServiceType
 import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.gen.tasks.text.rewrite.full.RewriteFullTaskDescriptor
@@ -17,7 +16,6 @@ import ai.grazie.ner.model.SentenceWithNERAnnotations
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.utils.englishName
 import ai.grazie.rules.tree.TreeSupport
-import ai.grazie.text.TextRange
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import ai.grazie.tree.model.SentenceWithTreeDependencies
 import ai.grazie.utils.text
@@ -35,15 +33,15 @@ import io.ktor.client.plugins.HttpRequestTimeoutException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import com.intellij.openapi.util.TextRange as IJTextRange
 
 object APIQueries {
-  @JvmField
-  val defLanguages = setOf(Language.ENGLISH, Language.GERMAN)
-
   @Volatile
   @JvmStatic
   var translator: Translator = object : Translator {
@@ -60,36 +58,37 @@ object APIQueries {
   @Volatile
   @JvmStatic
   var rephraser: Rephraser = object : Rephraser {
-    override fun rephrase(text: String, range: IJTextRange, language: Language, project: Project): List<String>? =
+    override fun rephrase(text: String, ranges: List<IJTextRange>, language: Language, project: Project): List<Pair<IJTextRange, List<String>>>? =
       request(project, null) {
-        val taskClient = GrazieCloudConnector.api()?.tasksWithStreamData() ?: return@request null
-        val taskCall = if (text.length < 100) {
-          val contentPrefix = text.take(range.startOffset)
-          val contentSuffix = text.drop(range.endOffset)
-          RewriteSelectionV2TaskDescriptor.createCallData(
-            RewriteSelectionV2TaskParams(
-              contentPrefix, contentSuffix, language.englishName, range.substring(text))
-          )
+        coroutineScope {
+          ranges.map {
+            async { rephrase(text, it, language) }
+          }.awaitAll().filterNotNull()
         }
-        else {
-          RewriteFullTaskDescriptor.createCallData(
-            RewriteFullTaskParams(text, language.englishName)
-          )
-        }
-        taskClient.executeV2(taskCall)
-          .text { it.content }
-          .split("<rephrasing>")
-          .filter { it.isNotBlank() }
-          .map { it.trim() }
       }
-  }
 
-  @JvmStatic
-  fun definitions(
-    text: String, range: IJTextRange, lang: Language, project: Project
-  ): WordDefinition? {
-    return request(project, null) {
-      GrazieCloudConnector.api()?.meta()?.def()?.define(text, TextRange(range.startOffset, range.endOffset), lang)
+    private suspend fun rephrase(text: String, range: IJTextRange, language: Language): Pair<IJTextRange, List<String>>? {
+      val taskClient = GrazieCloudConnector.api()?.tasksWithStreamData() ?: return null
+      val taskCall = if (range.startOffset == 0 && range.length == text.length) {
+        RewriteFullTaskDescriptor.createCallData(
+          RewriteFullTaskParams(text, language.englishName)
+        )
+      }
+      else {
+        val contentPrefix = text.take(range.startOffset)
+        val contentSuffix = text.drop(range.endOffset)
+        RewriteSelectionV2TaskDescriptor.createCallData(
+          RewriteSelectionV2TaskParams(
+            contentPrefix, contentSuffix, language.englishName, range.substring(text))
+        )
+      }
+      return range to taskClient.executeV2(taskCall)
+        .text { it.content }
+        .split("<rephrasing>")
+        .filter { it.isNotBlank() }
+        .map { it.trim() }
+        .distinct()
+        .filter { it != text }
     }
   }
 
@@ -139,7 +138,13 @@ object APIQueries {
       result
     } catch (e: ContinuousSSEException.PrematureEnd) {
       thisLogger().warn(e)
-      throw TranslationUnavailableException()
+      throw PrematureEndException()
+    } catch (e: ContinuousSSEException.Error) {
+      thisLogger().warn(e)
+      throw ErrorException()
+    } catch (e: ContinuousSSEException) {
+      thisLogger().warn(e)
+      throw TaskServerException()
     } catch (e: HTTPStatusException.AccessProhibited) {
       thisLogger().info("Authorisation error in Grazie functionality", e)
       null
@@ -186,7 +191,9 @@ interface Translator {
 }
 
 interface Rephraser {
-  fun rephrase(text: String, range: IJTextRange, language: Language, project: Project): List<String>?
+  fun rephrase(text: String, ranges: List<IJTextRange>, language: Language, project: Project): List<Pair<IJTextRange, List<String>>>?
 }
 
-class TranslationUnavailableException : RuntimeException()
+open class TaskServerException: RuntimeException()
+class PrematureEndException : TaskServerException()
+class ErrorException : TaskServerException()

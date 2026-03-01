@@ -11,16 +11,16 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module-library" scope="TEST">
       <library name="proguard" type="repository">
-        <properties maven-id="com.guardsquare:proguard-base:7.6.1">
+        <properties maven-id="com.guardsquare:proguard-base:7.8.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.6.1/proguard-base-7.6.1.jar">
-              <sha256sum>c2650e666c3443781dc5e9eaee5de8721593f00be44e9d87cec761406357c770</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.8.2/proguard-base-7.8.2.jar">
+              <sha256sum>177b00e0a07a82917d1f9ec7911bcbfc2194faa71cf940debd3bbdd3dcf8f9c0</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7.jar">
-              <sha256sum>db06fa9f6b43bb7d386420f854f41aa55a11023de36bad68e043c3ac3f33b8d5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.2.0/proguard-core-9.2.0.jar">
+              <sha256sum>485fff6cd365ffcd60a433b2108405dab44999901fab6be3197a797eeed1e989</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.0.0/kotlin-metadata-jvm-2.0.0.jar">
-              <sha256sum>ad8f1c7dbc5ac46f5cbd2d2e5de39c56c9db65dd7de716a84e01ce208758aee6</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0/kotlin-metadata-jvm-2.2.0.jar">
+              <sha256sum>501222ae7d63527e55f2e5e645f18d4eff2c19074c85b9bc055866e3ed2b17bf</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.1/annotations-26.0.1.jar">
               <sha256sum>2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297</sha256sum>
@@ -44,9 +44,9 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.6.1/proguard-base-7.6.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.0.0/kotlin-metadata-jvm-2.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.8.2/proguard-base-7.8.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.2.0/proguard-core-9.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0/kotlin-metadata-jvm-2.2.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.1/annotations-26.0.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.24.2/log4j-api-2.24.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-core/2.24.2/log4j-core-2.24.2.jar!/" />
@@ -54,9 +54,9 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.6.1/proguard-base-7.6.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.0.0/kotlin-metadata-jvm-2.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-base/7.8.2/proguard-base-7.8.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/guardsquare/proguard-core/9.2.0/proguard-core-9.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0/kotlin-metadata-jvm-2.2.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.1/annotations-26.0.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.24.2/log4j-api-2.24.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-core/2.24.2/log4j-core-2.24.2-sources.jar!/" />

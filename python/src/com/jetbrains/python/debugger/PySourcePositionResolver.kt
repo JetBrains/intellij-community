@@ -12,10 +12,20 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XStackFrame
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.AccessDirection
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyImportElement
+import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyModuleType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeParser
+import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

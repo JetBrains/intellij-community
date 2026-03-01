@@ -9,10 +9,21 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JRadioButton
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 class KeymapPane(val keymap: Keymap) {
   private val KEY_BACKGROUND = JBColor(0xDFE1E5, 0x4E5157)

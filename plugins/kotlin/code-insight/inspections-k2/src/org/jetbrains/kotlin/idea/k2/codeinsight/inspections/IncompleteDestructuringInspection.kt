@@ -19,7 +19,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
 import org.jetbrains.kotlin.types.Variance
 
 internal class IncompleteDestructuringInspection :
@@ -46,7 +50,7 @@ internal class IncompleteDestructuringInspection :
     override fun KaSession.prepareContext(element: KtDestructuringDeclaration): Context? {
         val primaryParameters = extractPrimaryParameters(element) ?: return null
         val currentEntries = element.entries
-        if (currentEntries.size >= primaryParameters.size) return null
+        if (currentEntries.size == primaryParameters.size) return null
 
         val names = generateNames(element, primaryParameters)
         val types = generateTypesIfNeeded(element, primaryParameters)

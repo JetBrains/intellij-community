@@ -21,4 +21,17 @@ jvm_library(
     "//platform/core-impl",
   ]
 )
+
+jvm_library(
+  name = "pratt_test_lib",
+  module_name = "intellij.platform.pratt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":pratt",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.pratt` end

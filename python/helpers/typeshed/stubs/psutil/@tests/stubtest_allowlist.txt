@@ -9,8 +9,5 @@ psutil._psutil_aix
 psutil._psutil_bsd
 psutil._psutil_sunos
 
-# Test utilities
-psutil.tests.*
-
 # process_iter is enhanced with cache_clear method that's not detected by stubtest
 psutil.process_iter

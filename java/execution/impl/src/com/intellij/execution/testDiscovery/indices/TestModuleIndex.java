@@ -2,7 +2,12 @@
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.PersistentHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;

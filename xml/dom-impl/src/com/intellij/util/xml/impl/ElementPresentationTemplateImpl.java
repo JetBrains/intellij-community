@@ -4,9 +4,15 @@ package com.intellij.util.xml.impl;
 import com.intellij.ide.TypePresentationServiceImpl;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Documentation;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.ElementPresentation;
+import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.ElementPresentationTemplate;
+import com.intellij.util.xml.GenericValue;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class ElementPresentationTemplateImpl extends TypePresentationServiceImpl.PresentationTemplateImpl implements ElementPresentationTemplate {
   public ElementPresentationTemplateImpl(Presentation presentation, Class<?> aClass) {

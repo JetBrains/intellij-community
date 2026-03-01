@@ -9,8 +9,17 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.util.containers.Stack
 import org.editorconfig.language.codeinsight.completion.providers.EditorConfigCompletionProviderUtil.createLookupAndCheckDeprecation
 import org.editorconfig.language.codeinsight.completion.withSuffix
-import org.editorconfig.language.schema.descriptors.*
-import org.editorconfig.language.schema.descriptors.impl.*
+import org.editorconfig.language.schema.descriptors.EditorConfigDescriptorVisitor
+import org.editorconfig.language.schema.descriptors.collectDescriptorMappings
+import org.editorconfig.language.schema.descriptors.getDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigListDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigPairDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnionDescriptor
+import org.editorconfig.language.schema.descriptors.isLeftInPair
+import org.editorconfig.language.schema.descriptors.isRightInPair
 import org.editorconfig.language.util.EditorConfigIdentifierUtil
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.hasParentOfType
 

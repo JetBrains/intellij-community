@@ -3,4 +3,5 @@ f:com.intellij.platform.eel.provider.EelProviderUtil
 - sf:getEelMachine(com.intellij.openapi.project.Project):com.intellij.platform.eel.EelMachine
 f:com.intellij.platform.eel.provider.utils.EelChannelUtilsKt
 f:com.intellij.platform.eel.provider.utils.EelProcessUtilsKt
+f:com.intellij.platform.eel.provider.utils.EelProxyUtilsKt
 f:com.intellij.platform.eel.provider.utils.IjentTunnelsUtil

@@ -7,16 +7,15 @@ import git4idea.repo.GitRepository
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.GitLabRestIdData
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_FILE_LINK_PREFIX
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_MR_LINK_PREFIX
-import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath.Companion.extractProjectPath
 import java.nio.file.Path
 
-private const val IMAGES_API_BASE = """http://base/url/api/v4/projects/test-account%2Fmr-test"""
-private const val WEB_BASE = """http://base/url/-/project/testRestId"""
+private const val IMAGES_API_BASE = """http://base/url/api/v4/projects/1"""
+private const val WEB_BASE = """http://base/url/-/project/1"""
+private const val P_CLASS = """class="custom_image""""
 
 class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
   private val gitRoot = "/tmp/git-repo"
@@ -97,7 +96,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg)
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
   fun `test images rendering with one setting`() {
@@ -105,7 +104,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
   fun `test images rendering with one percent setting`() {
@@ -113,7 +112,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10%}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
   fun `test images rendering with two settings`() {
@@ -121,7 +120,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
   fun `test images rendering with two precent settings`() {
@@ -129,7 +128,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10% height=10%}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
   fun `test images rendering with many settings`() {
@@ -137,7 +136,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10 other=123 other2=123}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
   fun `test images rendering with many percent settings`() {
@@ -145,7 +144,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10% height=10% other=123% other2=123%}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
   fun `test images rendering with different settings`() {
@@ -153,7 +152,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10% other=123 other2=123%}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
   fun `test images rendering with two double quote settings`() {
@@ -161,7 +160,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width="10" height="10"}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p></p></body>""")
   }
 
   fun `test images rendering with two double quote settings and some text`() {
@@ -169,7 +168,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width="10" height="10"} some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /> some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p> some text</p></body>""")
   }
 
   fun `test images rendering with different settings and some text`() {
@@ -177,7 +176,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10% other=123 other2=123%} some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /> some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p> some text</p></body>""")
   }
 
   fun `test images rendering with settings and additional curly braces section`() {
@@ -185,7 +184,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10} {here is the additional section}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /> {here is the additional section}</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p> {here is the additional section}</p></body>""")
   }
 
   fun `test images rendering with settings and immediate symbols after curly braces`() {
@@ -193,7 +192,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10}immediate text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" />immediate text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p>immediate text</p></body>""")
   }
 
   fun `test images rendering with settings and immediate curly braces after curly braces section`() {
@@ -201,7 +200,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10}{here is the additional section}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" />{here is the additional section}</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><p $P_CLASS><a href="$WEB_BASE/uploads/a/b/c.jpg"><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></a></p>{here is the additional section}</p></body>""")
   }
 
   fun `test images rendering with settings reference link`() {
@@ -210,7 +209,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         The picture ![image][link]
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p>The picture <img src="http://url" alt="image" title="label" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p>The picture <p $P_CLASS><a href="http://url"><img src="http://url" alt="image" title="label" /></a></p></p></body>""")
   }
 
   fun `test images rendering with settings reference link with settings`() {
@@ -219,7 +218,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         The picture ![image][link]{width=10 height=10}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p>The picture <img src="http://url" alt="image" title="label" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p>The picture <p $P_CLASS><a href="http://url"><img src="http://url" alt="image" title="label" /></a></p></p></body>""")
   }
 
   fun `test images rendering with settings reference link with settings and immediate text after`() {
@@ -228,7 +227,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         The picture ![image][link]{width=10 height=10}immediate text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p>The picture <img src="http://url" alt="image" title="label" />immediate text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p>The picture <p $P_CLASS><a href="http://url"><img src="http://url" alt="image" title="label" /></a></p>immediate text</p></body>""")
   }
 
   fun `test images rendering with settings reference link and text`() {
@@ -237,7 +236,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         The picture ![image][link] some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p>The picture <img src="http://url" alt="image" title="label" /> some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p>The picture <p $P_CLASS><a href="http://url"><img src="http://url" alt="image" title="label" /></a></p> some text</p></body>""")
   }
 
   fun `test images rendering with settings reference link with settings and text`() {
@@ -246,7 +245,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         The picture ![image][link]{width=10 height=10} some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p>The picture <img src="http://url" alt="image" title="label" /> some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p>The picture <p $P_CLASS><a href="http://url"><img src="http://url" alt="image" title="label" /></a></p> some text</p></body>""")
   }
 
 
@@ -317,10 +316,9 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
 
   private fun convertToHtml(markdownSource: String): @NlsSafe String {
     val serverPath = GitLabServerPath("http://base/url")
-    val projectPath = GitLabProjectPath("test-account", "mr-test")
-    val projectCoordinates = GitLabProjectCoordinates(serverPath, projectPath)
-    val projectId = GitLabRestIdData("testRestId")
-    val converter = GitLabMarkdownToHtmlConverter(project, gitRepository, projectCoordinates, projectId)
+    val projectId = "1"
+    val projectFullPath = extractProjectPath("test-account/mr-test") ?: error("Failed to extract project path")
+    val converter = GitLabMarkdownToHtmlConverter(project, gitRepository, serverPath, projectId, projectFullPath)
     return converter.convertToHtml(markdownSource)
   }
 }

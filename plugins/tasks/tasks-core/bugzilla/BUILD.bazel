@@ -24,4 +24,22 @@ jvm_library(
     "//plugins/tasks/tasks-compatibility:compatibility",
   ]
 )
+
+jvm_library(
+  name = "bugzilla_test_lib",
+  module_name = "intellij.tasks.bugzilla",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":bugzilla",
+    "//platform/core-api:core_test_lib",
+    "//plugins/tasks/tasks-api:tasks_test_lib",
+    "//platform/tasks-platform-impl:tasks-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/xml-rpc:xml-rpc_test_lib",
+    "//plugins/tasks/tasks-core:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//plugins/tasks/tasks-compatibility:compatibility_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tasks.bugzilla` end

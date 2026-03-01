@@ -4,6 +4,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.platform.workspace.jps.entities.SdkEntity;
@@ -227,4 +228,9 @@ public interface ProjectFileIndex extends FileIndex {
    * to an unloaded module.
    */
   @Nullable String getUnloadedModuleNameForFile(@NotNull VirtualFile fileOrDir);
+
+  /// Use [com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex.getContentFileSetRoot] instead
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  @Nullable VirtualFile getWorkspaceContentFileSetRoot(@NotNull VirtualFile fileOrDir);
 }

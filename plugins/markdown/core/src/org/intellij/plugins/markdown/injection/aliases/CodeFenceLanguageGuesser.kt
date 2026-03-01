@@ -5,6 +5,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser.guessLanguageForInjection
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

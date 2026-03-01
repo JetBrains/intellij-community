@@ -21,7 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Eugene Zhuravlev

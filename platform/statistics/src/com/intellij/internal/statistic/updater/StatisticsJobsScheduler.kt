@@ -18,7 +18,14 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.extensions.PluginDescriptor
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
@@ -26,7 +33,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @InternalIgnoreDependencyViolation
-private class StatisticsJobsScheduler : ApplicationActivity {
+internal class StatisticsJobsScheduler : ApplicationActivity {
   private val sendJobs = ConcurrentHashMap<String, Job>()
 
   init {

@@ -14,10 +14,18 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.DECLARATION
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.DELEGATION
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.FAKE_OVERRIDE
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.SYNTHESIZED
+import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -29,13 +37,18 @@ import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.liftToExpected
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
 
+@K1Deprecation
 abstract class CallableRefactoring<out T : CallableDescriptor>(
     val project: Project,
     val editor: Editor?,
@@ -175,6 +188,7 @@ abstract class CallableRefactoring<out T : CallableDescriptor>(
     }
 }
 
+@K1Deprecation
 fun getAffectedCallables(project: Project, descriptorsForChange: Collection<CallableDescriptor>): Collection<PsiElement> {
     val results = hashSetOf<PsiElement>()
     for (descriptor in descriptorsForChange) {
@@ -208,6 +222,7 @@ private fun collectAffectedCallables(declaration: PsiElement, results: MutableCo
     }
 }
 
+@K1Deprecation
 fun DeclarationDescriptor.getContainingScope(): LexicalScope? {
     val declaration = DescriptorToSourceUtils.descriptorToDeclaration(this)
     val block = declaration?.parent as? KtBlockExpression
@@ -224,6 +239,7 @@ fun DeclarationDescriptor.getContainingScope(): LexicalScope? {
     }
 }
 
+@K1Deprecation
 fun KtDeclarationWithBody.getBodyScope(bindingContext: BindingContext): LexicalScope? {
     val expression = bodyExpression?.children?.firstOrNull { it is KtExpression } ?: return null
     return expression.getResolutionScope(bindingContext, getResolutionFacade())

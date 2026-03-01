@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalStartupKt;
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.nio.file.Files;
@@ -50,7 +51,13 @@ public final class LocalOptionsConfigurer {
     String workingDir = requestedWorkingDirectory != null ? requestedWorkingDirectory : getDefaultWorkingDirectory(project);
     List<String> initialCommand = getInitialCommand(baseOptions, project, workingDir, isRequestedWorkingDirectoryInvalid);
     var eelDescriptor = findEelDescriptor(workingDir, initialCommand);
-    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), project, eelDescriptor, initialCommand);
+    Map<String, String> envs = getTerminalEnvironment(
+      baseOptions.getEnvVariables(),
+      baseOptions.getProcessType(),
+      project,
+      eelDescriptor,
+      initialCommand
+    );
 
     TerminalWidget widget = baseOptions.getWidget();
     if (widget != null) {
@@ -114,6 +121,7 @@ public final class LocalOptionsConfigurer {
   }
 
   private static @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs,
+                                                                     @NotNull TerminalProcessType processType,
                                                                      @NotNull Project project,
                                                                      @NotNull EelDescriptor eelDescriptor,
                                                                      @NotNull List<String> shellCommand) {
@@ -122,13 +130,18 @@ public final class LocalOptionsConfigurer {
     Map<String, String> envs = isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEnvData();
     if (envData.isPassParentEnvs()) {
-      envs.putAll(TerminalStartupKt.fetchMinimalEnvironmentVariablesBlocking(eelDescriptor));
+      var parentEnvs = processType == TerminalProcessType.SHELL
+                       ? TerminalStartupKt.fetchMinimalEnvironmentVariablesBlocking(eelDescriptor)
+                       : TerminalStartupKt.fetchDefaultEnvironmentVariablesBlocking(eelDescriptor);
+      envs.putAll(parentEnvs);
       EnvironmentRestorer.restoreOverriddenVars(envs);
       if (envs.isEmpty()) {
-        LOG.warn("Empty parent environment for " + shellCommand + " on (" + eelDescriptor.getName() + ")");
+        LOG.warn("Empty parent environment for process type %s, shell command %s on (%s)"
+                   .formatted(processType, shellCommand, eelDescriptor.getName()));
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Parent environment for " + shellCommand + " on (" + eelDescriptor.getName() + ")" + ": " + envs);
+        LOG.debug("Parent environment for process type %s, shell command %s on (%s): %s"
+                    .formatted(processType, shellCommand, eelDescriptor.getName(), envs));
       }
     }
     else {

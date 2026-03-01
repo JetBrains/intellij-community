@@ -3,13 +3,13 @@ package com.intellij.terminal.completion.spec
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Represents the specification of the Shell option with [names].
+ * Represents the specification of the Shell option with [name].
  *
- * Shell options are also can be named as keys or flags in the shell command.
+ * Shell options also can be named as keys or flags in the shell command.
  * Usually, the option is starting with `-` for a short option or `--` for a long one.
  * For example `-a`, `-l` are the short options, while `--long` is a more verbose option.
  * But generally, any meaningful string can be an option, even without `-`.
- * Shell options can have its own arguments.
+ * Shell options can have their own arguments.
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -40,7 +40,7 @@ interface ShellOptionSpec : ShellCompletionSuggestion {
   val separator: String?
 
   /**
-   * The maximum amount of times this option can be present in the command line.
+   * The maximum number of times this option can be present in the command line.
    * Zero value means that it can be repeated infinitely.
    * If the option is already present this number of times in the command, it won't be shown in the completion popup anymore.
    *

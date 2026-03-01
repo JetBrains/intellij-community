@@ -12,7 +12,13 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.Project
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.wizard.OnUserSettingChangeStatisticsLogger
-import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.*
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.CommentLabel
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.Component
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.ListWithSeparators
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.TitleComponentAlignment
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.addBorder
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.asHtml
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.borderPanel
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.SettingComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.ValidationIndicator
 import java.awt.Dimension

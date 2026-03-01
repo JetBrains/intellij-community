@@ -6,7 +6,11 @@ package org.jetbrains.kotlin.nj2k.tree
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiSwitchExpression
-import org.jetbrains.kotlin.nj2k.symbols.*
+import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKFieldSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKPackageSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.nj2k.types.JKContextType
 import org.jetbrains.kotlin.nj2k.types.JKNoType

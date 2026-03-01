@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.createDirectories
 
 
-/** Constants from [com.intellij.platform.plugins.parser.impl.PluginXmlConst]
+/** Constants from [com.intellij.platform.pluginSystem.parser.impl.PluginXmlConst]
  * We can't access PluginXmlConst directly because it's in an implementation module */
 private object PluginBuilderConsts {
   const val PLUGIN_IMPLEMENTATION_DETAIL_ATTR: String = "implementation-detail"

@@ -2,12 +2,30 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeserializedDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.completion.handlers.BaseDeclarationInsertHandler
@@ -31,6 +49,7 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import java.awt.Font
 import javax.swing.Icon
 
+@K1Deprecation
 class BasicLookupElementFactory(
     private val project: Project,
     val insertHandlerProvider: InsertHandlerProvider

@@ -8,7 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.PomRenameableTarget
-import com.intellij.psi.*
+import com.intellij.psi.NavigatablePsiElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementResolveResult
+import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 
 interface UrlPathReferenceTarget : PomRenameableTarget<Any?> {

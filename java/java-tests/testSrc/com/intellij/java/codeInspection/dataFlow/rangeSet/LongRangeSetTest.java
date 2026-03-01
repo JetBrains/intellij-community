@@ -26,17 +26,33 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.LongBinaryOperator;
 import java.util.function.LongPredicate;
 import java.util.function.LongUnaryOperator;
 import java.util.stream.Collectors;
 
-import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.*;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.all;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.empty;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.fromConstant;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.fromRemainder;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.modRange;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.point;
+import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.range;
 import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType.INT32;
 import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType.INT64;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class LongRangeSetTest {
   @NotNull

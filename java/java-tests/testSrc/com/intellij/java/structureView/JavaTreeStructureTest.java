@@ -15,7 +15,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class JavaTreeStructureTest extends TestSourceBasedTestCase {
   @Override

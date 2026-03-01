@@ -7,7 +7,11 @@ import com.intellij.testFramework.javaCodeInsightFixture
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.RunMethodInEdt
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.junit5.fixture.disposableFixture
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.junit5.fixture.testNameFixture
 import com.intellij.testFramework.setUpJdk
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach

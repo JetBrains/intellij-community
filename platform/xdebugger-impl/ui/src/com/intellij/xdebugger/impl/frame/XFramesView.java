@@ -5,7 +5,12 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.HighlightingPassesCache;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,12 +22,23 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.ui.DebuggerUIUtilShared;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
-import com.intellij.ui.*;
+import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.PopupMenuListenerAdapter;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -42,7 +58,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import one.util.streamex.StreamEx;
@@ -51,17 +66,29 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.basic.ComboPopup;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -195,7 +222,7 @@ public final class XFramesView extends XDebugView {
             XDebugSessionProxy session = getSession();
             if (session != null) {
               myRefresh = false;
-              updateFrames((XExecutionStack)item, session, null, false);
+              updateFrames((XExecutionStack)item, null, false);
               XDebuggerActionsCollector.threadSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
             }
           }
@@ -397,8 +424,8 @@ public final class XFramesView extends XDebugView {
     return toolbar;
   }
 
-  private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack, XDebugSessionProxy sessionProxy) {
-    return myBuilders.computeIfAbsent(executionStack, k -> new StackFramesListBuilder(executionStack, sessionProxy));
+  private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack) {
+    return myBuilders.computeIfAbsent(executionStack, k -> new StackFramesListBuilder(executionStack));
   }
 
   private void withCurrentBuilder(Consumer<? super StackFramesListBuilder> consumer) {
@@ -492,7 +519,6 @@ public final class XFramesView extends XDebugView {
         myThreadsPanel.revalidate();
       }
       updateFrames(activeExecutionStack,
-                   session,
                    event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null,
                    shouldRefresh);
     });
@@ -533,7 +559,6 @@ public final class XFramesView extends XDebugView {
   }
 
   private void updateFrames(XExecutionStack executionStack,
-                            @NotNull XDebugSessionProxy sessionProxy,
                             @Nullable XStackFrame frameToSelect,
                             boolean refresh) {
     if (mySelectedStack != null) {
@@ -543,7 +568,7 @@ public final class XFramesView extends XDebugView {
     mySelectedStack = executionStack;
     if (executionStack != null) {
       mySelectedFrame = myExecutionStacksWithSelection.get(executionStack);
-      StackFramesListBuilder builder = getOrCreateBuilder(executionStack, sessionProxy);
+      StackFramesListBuilder builder = getOrCreateBuilder(executionStack);
       builder.setRefresh(refresh);
       builder.setToSelect(frameToSelect != null ? frameToSelect : mySelectedFrame);
       myListenersEnabled = false;
@@ -580,7 +605,7 @@ public final class XFramesView extends XDebugView {
     withCurrentBuilder(b -> b.setToSelect(null));
 
     if (myFramesList.getSelectedValue() instanceof XStackFrame frame && sessionProxy != null) {
-      if (force || (!refresh && sessionProxy.getCurrentStackFrame() != myFramesList.getSelectedValue())) {
+      if (force || (!refresh && sessionProxy.getCurrentStackFrame() != frame)) {
         int selectedIndex = myFramesList.getSelectedIndex();
         sessionProxy.setCurrentStackFrame(mySelectedStack, frame, selectedIndex == 0);
         if (force) {
@@ -598,13 +623,11 @@ public final class XFramesView extends XDebugView {
     private volatile boolean myRunning;
     private long myStartTimeMs;
     private boolean myAllFramesLoaded;
-    private final XDebugSessionProxy mySessionProxy;
     private Object myToSelect;
     private boolean myRefresh;
 
-    private StackFramesListBuilder(final XExecutionStack executionStack, XDebugSessionProxy sessionProxy) {
+    private StackFramesListBuilder(final XExecutionStack executionStack) {
       myExecutionStack = executionStack;
-      mySessionProxy = sessionProxy;
       myStackFrames = new ArrayList<>();
     }
 
@@ -728,7 +751,7 @@ public final class XFramesView extends XDebugView {
     private boolean selectCurrentFrame() {
       if (selectFrame(myToSelect)) {
         myListenersEnabled = true;
-        processFrameSelection(mySessionProxy, false, myRefresh);
+        processFrameSelection(getSession(), false, myRefresh);
         return true;
       }
       return false;

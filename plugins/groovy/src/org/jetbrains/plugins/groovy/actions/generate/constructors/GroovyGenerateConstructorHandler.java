@@ -1,10 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.actions.generate.constructors;
 
-import com.intellij.codeInsight.generation.*;
+import com.intellij.codeInsight.generation.ClassMember;
+import com.intellij.codeInsight.generation.GenerateConstructorHandler;
+import com.intellij.codeInsight.generation.GenerationInfo;
+import com.intellij.codeInsight.generation.PsiFieldMember;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;

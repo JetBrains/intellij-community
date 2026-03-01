@@ -4,10 +4,23 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
+import com.intellij.codeInsight.hints.declarative.HintFormat
+import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiCall
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNewExpression
 
 public class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
 
@@ -159,5 +172,34 @@ public class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
 
   override fun getProperty(key: String): String {
     return JavaBundle.message(key)
+  }
+
+  public fun asInlayHintsProvider(): InlayHintsProvider {
+    return Adapter()
+  }
+
+  private inner class Adapter : InlayHintsProvider {
+    override fun createCollector(
+      file: PsiFile,
+      editor: Editor,
+    ): InlayHintsCollector {
+      return object : SharedBypassCollector {
+        override fun collectFromElement(
+          element: PsiElement,
+          sink: InlayTreeSink,
+        ) {
+          getParameterHints(element).forEach { hint ->
+            sink.addPresentation(
+              position = InlineInlayPosition(hint.offset, false),
+              hintFormat = HintFormat.default,
+              builder = {
+                text(hint.text)
+                text(":")
+              }
+            )
+          }
+        }
+      }
+    }
   }
 }

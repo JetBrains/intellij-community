@@ -5,7 +5,15 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastFacade
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.convertOpt
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinLazyUBlockExpression(

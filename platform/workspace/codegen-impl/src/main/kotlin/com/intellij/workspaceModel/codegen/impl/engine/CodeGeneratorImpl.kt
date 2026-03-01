@@ -21,23 +21,25 @@ class CodeGeneratorImpl : CodeGenerator {
       return failedGenerationResult(reporter)
     }
 
-    val objClassToTopLevelCode = module.types.associateWith {
-      val topLevelCode = it.generateTopLevelCode(reporter)
-      topLevelCode
-    }
-
-    if (reporter.hasErrors()) {
-      return failedGenerationResult(reporter)
-    }
-
-
-    val generatedCode = objClassToTopLevelCode.map { (objClass, topLevelCode) ->
-      ObjClassGeneratedCode(
-        target = objClass,
-        builderInterface = objClass.generateCompatabilityBuilder(),
-        companionObject = objClass.generateCompatibilityCompanion(),
-        topLevelCode = topLevelCode,
-        implementationClass = objClass.implWsCode()
+    val generatedCode: MutableList<GeneratedCode> = arrayListOf()
+    for (type in module.types) {
+      checkSuperTypes(type, reporter)
+      checkSymbolicId(type, reporter)
+      if (reporter.hasErrors()) return failedGenerationResult(reporter)
+      val topLevelCode = type.generateTopLevelCode(reporter)
+      if (reporter.hasErrors()) return failedGenerationResult(reporter)
+      val compatibilityBuilder = type.generateCompatabilityBuilder()
+      val compatibilityCompanion = type.generateCompatibilityCompanion()
+      val implementationClass = type.implWsCode(reporter)
+      if (reporter.hasErrors()) return failedGenerationResult(reporter)
+      generatedCode.add(
+        ObjClassGeneratedCode(
+          target = type,
+          builderInterface = compatibilityBuilder,
+          companionObject = compatibilityCompanion,
+          topLevelCode = topLevelCode,
+          implementationClass = implementationClass
+        )
       )
     }
 
@@ -62,17 +64,15 @@ class CodeGeneratorImpl : CodeGenerator {
 
     val generatedCode = arrayListOf<GeneratedCode>()
 
-    addMetadataStorageCode(
-      generatedCode, metadataStorageImplModule,
-      implWsMetadataStorageCode(metadataStorageImplModule, notEmptyModules.flatMap { it.types }, notEmptyModules.flatMap { it.abstractTypes })
-    )
+    addMetadataStorageCode(generatedCode,
+                           metadataStorageImplModule,
+                           implWsMetadataStorageCode(metadataStorageImplModule,
+                                                     notEmptyModules.flatMap { it.types },
+                                                     notEmptyModules.flatMap { it.abstractTypes }))
 
     val metadataStorageImplFqn = fqn(metadataStorageImplModule.implPackage, MetadataStorage.IMPL_NAME)
     metadataStorageBridgeModules.forEach {
-      addMetadataStorageCode(
-        generatedCode, it,
-        it.implWsMetadataStorageBridgeCode(metadataStorageImplFqn)
-      )
+      addMetadataStorageCode(generatedCode, it, it.implWsMetadataStorageBridgeCode(metadataStorageImplFqn))
     }
 
     return GenerationResult(generatedCode, emptyList())

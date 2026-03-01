@@ -1,5 +1,9 @@
 package com.intellij.execution.multilaunch.design
 
+import com.intellij.execution.multilaunch.design.actions.ManageExecutableAction
+import com.intellij.execution.multilaunch.design.popups.TableSelectorPopupController
+import com.intellij.execution.multilaunch.design.tooltips.TableTooltipsController
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -10,10 +14,6 @@ import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.JBUI
-import com.intellij.execution.multilaunch.design.actions.ManageExecutableAction
-import com.intellij.execution.multilaunch.design.popups.TableSelectorPopupController
-import com.intellij.execution.multilaunch.design.tooltips.TableTooltipsController
-import com.intellij.icons.AllIcons
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component

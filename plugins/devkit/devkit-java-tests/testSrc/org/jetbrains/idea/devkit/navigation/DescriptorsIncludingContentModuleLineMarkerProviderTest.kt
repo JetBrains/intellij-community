@@ -9,7 +9,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
-import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 

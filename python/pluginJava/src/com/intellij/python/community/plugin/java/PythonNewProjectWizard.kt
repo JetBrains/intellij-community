@@ -13,7 +13,7 @@ import javax.swing.Icon
  *
  * It suggests creating a new Python virtual environment for your new project to follow Python best practices.
  */
-private class PythonNewProjectWizard : LanguageGeneratorNewProjectWizard {
+internal class PythonNewProjectWizard : LanguageGeneratorNewProjectWizard {
   override val name: String
     get() = NewProjectWizardConstants.Language.PYTHON
 

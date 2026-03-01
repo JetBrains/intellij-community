@@ -1,6 +1,11 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.pycharm.community.ide.impl"/>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

@@ -2,8 +2,15 @@
 package com.intellij.python.featuresTrainer.ift.lesson.completion
 
 import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.createFromTemplate
+import training.dsl.defaultRestoreDelay
+import training.dsl.parseLessonSample
+import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.course.KLesson
 import training.util.isToStringContains
 import javax.swing.JList

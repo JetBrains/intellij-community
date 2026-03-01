@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.progress.suspender
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.flow.Flow
@@ -45,6 +46,17 @@ interface TaskSuspender {
   fun resume()
 
   companion object {
+
+    /**
+     * Returns a suspender corresponding to the calling computaiton if it was installed previously.
+     *
+     * @return a previously installed instance of [TaskSuspender], or `null` if there was no suspender
+     */
+    @JvmStatic
+    fun getContextSuspender(): TaskSuspender? {
+      return currentThreadContext()[TaskSuspenderElementKey]?.taskSuspender
+    }
+
     /**
      * Creates a new instance of [TaskSuspender] which can be used to suspend and resume tasks.
      *

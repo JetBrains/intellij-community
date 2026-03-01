@@ -45,7 +45,6 @@ fun createBuildOptionsForTest(
   skipDependencySetup: Boolean = false,
   testInfo: TestInfo? = null,
 ): BuildOptions {
-  
   val outDir = createTestBuildOutDir(productProperties)
   val options = BuildOptions(
     cleanOutDir = false,
@@ -61,12 +60,6 @@ fun createBuildOptionsForTest(
 
 fun createTestBuildOutDir(productProperties: ProductProperties): Path {
   return Files.createTempDirectory("test-build-${productProperties.baseFileName}")
-}
-
-internal inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, customizer: (BuildOptions) -> Unit): BuildOptions {
-  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo)
-  customizer(options)
-  return options
 }
 
 fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDependencySetup: Boolean = false, testInfo: TestInfo?) {
@@ -143,12 +136,8 @@ fun runTestBuild(
             productProperties = productProperties,
             setupTracer = false,
             proprietaryBuildTools = buildTools,
-            options = createBuildOptionsForTest(
-              productProperties = productProperties,
-              homeDir = homeDir,
-              testInfo = testInfo,
-              customizer = buildOptionsCustomizer,
-            ).also {
+            options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo).also {
+              buildOptionsCustomizer(it)
               reproducibilityTest.configure(it)
             },
           ),
@@ -173,12 +162,8 @@ fun runTestBuild(
         productProperties = productProperties,
         setupTracer = false,
         proprietaryBuildTools = buildTools,
-        options = createBuildOptionsForTest(
-          productProperties = productProperties,
-          homeDir = homeDir,
-          testInfo = testInfo,
-          customizer = buildOptionsCustomizer,
-        ),
+        options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo).also { buildOptionsCustomizer(it) },
+        scope = this@runBlocking,
       ),
       writeTelemetry = true,
       checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,

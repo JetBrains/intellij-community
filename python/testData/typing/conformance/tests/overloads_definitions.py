@@ -114,7 +114,8 @@ class Base:
     def final_method(self, x: str) -> str: ...
 
     @final
-    def final_method(self, x: int | str) -> int | str: ...
+    def final_method(self, x: int | str) -> int | str:
+        raise NotImplementedError
 
     # The @final decorator should not be on one of the overloads:
 
@@ -127,7 +128,8 @@ class Base:
     def invalid_final(self, x: str) -> str:  # E[invalid_final]
         ...
 
-    def invalid_final(self, x: int | str) -> int | str: ...
+    def invalid_final(self, x: int | str) -> int | str:
+        raise NotImplementedError
 
     # The @final decorator should not be on multiple overloads and
     # implementation:
@@ -143,7 +145,8 @@ class Base:
         ...
 
     @final
-    def invalid_final_2(self, x: int | str) -> int | str: ...
+    def invalid_final_2(self, x: int | str) -> int | str:
+        raise NotImplementedError
 
     # These methods are just here for the @override test below. We use an
     # overload because mypy doesn't like overriding a non-overloaded method
@@ -156,7 +159,8 @@ class Base:
     @overload
     def good_override(self, x: str) -> str: ...
 
-    def good_override(self, x: int | str) -> int | str: ...
+    def good_override(self, x: int | str) -> int | str:
+        raise NotImplementedError
 
     @overload
     def to_override(self, x: int) -> int: ...
@@ -164,7 +168,8 @@ class Base:
     @overload
     def to_override(self, x: str) -> str: ...
 
-    def to_override(self, x: int | str) -> int | str: ...
+    def to_override(self, x: int | str) -> int | str:
+        raise NotImplementedError
 
 
 class Child(Base):  # E[override-final]
@@ -181,7 +186,7 @@ class Child(Base):  # E[override-final]
     def final_method(  # E[override-final] can't override final method
         self, x: int | str
     ) -> int | str:  # E[override-final] can't override final method
-        ...
+        raise NotImplementedError
 
     # This is the right way to mark an overload as @override (decorate
     # implementation only), so the use of @override should cause an error
@@ -196,7 +201,7 @@ class Child(Base):  # E[override-final]
 
     @override  # E[bad_override]
     def bad_override(self, x: int | str) -> int | str:  # E[bad_override]
-        ...
+        raise NotImplementedError
 
     # This is also a correctly-decorated overloaded @override, which is
     # overriding a method that does exist in the base, so there should be no
@@ -212,7 +217,8 @@ class Child(Base):  # E[override-final]
     def good_override(self, x: str) -> str: ...
 
     @override
-    def good_override(self, x: int | str) -> int | str: ...
+    def good_override(self, x: int | str) -> int | str:
+        raise NotImplementedError
 
     # This is the wrong way to use @override with an overloaded method, and
     # should emit an error:
@@ -226,4 +232,5 @@ class Child(Base):  # E[override-final]
     def to_override(self, x: str) -> str: ...  # E[override_impl+]
 
     @override
-    def to_override(self, x: int | str) -> int | str: ...
+    def to_override(self, x: int | str) -> int | str:
+        raise NotImplementedError

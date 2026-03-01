@@ -11,7 +11,11 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.PositionTracker
-import training.dsl.*
+import training.dsl.HighlightTriggerParametersContext
+import training.dsl.HighlightingTriggerMethods
+import training.dsl.LearningBalloonConfig
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
 import training.learn.ActionsRecorder
 import training.ui.LearningUiHighlightingManager
 import training.ui.MessageFactory

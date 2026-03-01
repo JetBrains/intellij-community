@@ -35,7 +35,7 @@ class TestPackageManagerProvider : PythonPackageManagerProvider {
   }
 
 
-  override suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager {
+  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager {
     return TestPythonPackageManager(project, sdk)
       .withPackageNames(packageNames)
       .withPackageDetails(packageDetails)

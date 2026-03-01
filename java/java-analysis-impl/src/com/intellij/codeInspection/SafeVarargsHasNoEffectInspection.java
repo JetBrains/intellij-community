@@ -3,7 +3,13 @@ package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 

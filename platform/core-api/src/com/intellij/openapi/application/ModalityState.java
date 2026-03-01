@@ -6,8 +6,8 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
 
 /**
  * Represents the stack of active modal dialogs. Used in calls to {@link Application#invokeLater} to specify

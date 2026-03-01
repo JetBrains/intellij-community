@@ -9,7 +9,12 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor
@@ -21,7 +26,12 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDe
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.asJava.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
+import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.asJava.toPsiParameters
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -42,15 +52,44 @@ import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
 import org.jetbrains.kotlin.idea.util.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtSuperTypeEntry
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.allConstructors
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isPrivateNestedClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.ifEmpty
-import java.util.*
+import java.util.Collections
 
+@K1Deprecation
 class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
 
     override fun handlesElement(element: PsiElement): Boolean = element.canDeleteElement()

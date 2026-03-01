@@ -23,4 +23,25 @@ jvm_library(
     "//plugins/grazie/yaml",
   ]
 )
+
+jvm_library(
+  name = "grazie_test_lib",
+  module_name = "intellij.grazie",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/grazie/src:core",
+    "//plugins/grazie/src:core_test_lib",
+  ],
+  runtime_deps = [
+    ":grazie",
+    "//plugins/grazie/src:core_test_lib",
+    "//plugins/grazie/java:java_test_lib",
+    "//plugins/grazie/json:json_test_lib",
+    "//plugins/grazie/markdown:markdown_test_lib",
+    "//plugins/grazie/properties:properties_test_lib",
+    "//plugins/grazie/xml:xml_test_lib",
+    "//plugins/grazie/yaml:yaml_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.grazie` end

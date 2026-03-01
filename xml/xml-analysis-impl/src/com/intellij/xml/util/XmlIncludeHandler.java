@@ -3,7 +3,10 @@ package com.intellij.xml.util;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

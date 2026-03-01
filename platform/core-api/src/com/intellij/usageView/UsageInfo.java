@@ -10,11 +10,19 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiQualifiedReferenceElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartPsiFileRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class UsageInfo {
   public static final UsageInfo[] EMPTY_ARRAY = new UsageInfo[0];

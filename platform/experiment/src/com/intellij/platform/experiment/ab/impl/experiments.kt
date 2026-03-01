@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.experiment.ab.impl
 
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
@@ -6,12 +6,12 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.platform.experiment.ab.impl.ABExperimentOption.TYPESCRIPT_SERVICE_TYPES
 import com.intellij.platform.experiment.ab.impl.ABExperimentOption.UNASSIGNED
 import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.EnumSet
 import kotlin.math.absoluteValue
 
 /**
@@ -24,7 +24,7 @@ enum class ABExperimentOption {
   FUZZY_FILE_SEARCH,
   SHOW_TRIAL_SURVEY,
   NEW_USERS_ONBOARDING,
-  TYPESCRIPT_SERVICE_TYPES,
+  SPLIT_SEARCH_EVERYWHERE,
 
   /**
    * A group for users which are not assigned to any experiment.
@@ -63,11 +63,13 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
   //  majorVersion = "2025.2"
   //),
   ExperimentAssignment(
-    experiment = TYPESCRIPT_SERVICE_TYPES,
+    experiment = ABExperimentOption.SPLIT_SEARCH_EVERYWHERE,
     experimentBuckets = (0 until 512).toSet(),
     controlBuckets = (512 until 1024).toSet(),
-    majorVersion = "2025.3 EAP",
-    products = EnumSet.of(IntelliJPlatformProduct.WEBSTORM),
+    majorVersion = "2026.1 EAP",
+    products = EnumSet.of(IntelliJPlatformProduct.IDEA,
+                          IntelliJPlatformProduct.PYCHARM,
+                          IntelliJPlatformProduct.RIDER),
   ),
   // the rest belongs to the "unassigned" experiment
 )
@@ -75,8 +77,9 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
 /**
  * This method can be configured to allow options only in particular IDEs.
  */
-fun isAllowed(option: ABExperimentOption): Boolean {
-  return true
+fun isAllowed(option: ABExperimentOption): Boolean = when (option) {
+  ABExperimentOption.SPLIT_SEARCH_EVERYWHERE -> IdeProductMode.isMonolith
+  else -> true
 }
 
 // ================= IMPLEMENTATION ====================
@@ -133,6 +136,9 @@ private val LOG = logger<ABExperimentOption>()
  */
 internal enum class IntelliJPlatformProduct {
   WEBSTORM,
+  IDEA,
+  PYCHARM,
+  RIDER,
   OTHER,
   ;
 
@@ -140,6 +146,9 @@ internal enum class IntelliJPlatformProduct {
     fun get(): IntelliJPlatformProduct =
       when {
         PlatformUtils.isWebStorm() -> WEBSTORM
+        PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate() -> IDEA
+        PlatformUtils.isPyCharm() -> PYCHARM
+        PlatformUtils.isRider() -> RIDER
         else -> OTHER
       }
   }

@@ -1,10 +1,10 @@
 package com.intellij.execution.multilaunch.execution.conditions
 
+import com.intellij.execution.multilaunch.execution.conditions.impl.ImmediatelyConditionTemplate
+import com.intellij.execution.multilaunch.state.ConditionSnapshot
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.execution.multilaunch.execution.conditions.impl.ImmediatelyConditionTemplate
-import com.intellij.execution.multilaunch.state.ConditionSnapshot
 import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)

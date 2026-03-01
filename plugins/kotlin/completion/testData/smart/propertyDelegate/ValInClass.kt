@@ -53,3 +53,5 @@ class C {
 // ABSENT: Y3
 
 // EXIST: { itemText:"X1.create", tailText:"() (<root>)", typeText:"X1", attributes:"" }
+
+// IGNORE_K2

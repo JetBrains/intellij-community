@@ -2,8 +2,8 @@
 package git4idea.stash.ui
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vcs.changes.ui.BranchPresentation
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getBackground
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ExperimentalUI
@@ -22,7 +22,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.JPanel
 
-class GitStashBranchComponent(val tree: ChangesTree, iconCache: LabelIconCache) : JPanel() {
+internal class GitStashBranchComponent(val tree: ChangesTree, iconCache: LabelIconCache) : JPanel() {
   private val labelPainter = LabelPainter(tree, iconCache)
 
   private val rightGap get() = UIUtil.getScrollBarWidth()
@@ -46,9 +46,9 @@ class GitStashBranchComponent(val tree: ChangesTree, iconCache: LabelIconCache) 
   private fun getLabelForeground(selected: Boolean): Color {
     if (selected) return UIUtil.getLabelForeground()
     if (ExperimentalUI.isNewUI()) {
-      return JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground", CurrentBranchComponent.TEXT_COLOR)
+      return JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground", BranchPresentation.TEXT_COLOR)
     }
-    return CurrentBranchComponent.TEXT_COLOR
+      return BranchPresentation.TEXT_COLOR
   }
 
   override fun paintComponent(g: Graphics?) {
@@ -66,7 +66,6 @@ class GitStashBranchComponent(val tree: ChangesTree, iconCache: LabelIconCache) 
   private class StashRefGroup(private val branchName: @NlsSafe String, private val isCurrent: Boolean) : RefGroup {
     override fun getName() = branchName
     override fun getRefs() = mutableListOf<VcsRef>()
-    override fun isExpanded() = false
     override fun getColors(): List<Color> {
       if (isCurrent) return listOf(GitRefManager.HEAD.backgroundColor)
       return listOf(GitRefManager.LOCAL_BRANCH.backgroundColor)

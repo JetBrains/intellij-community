@@ -3,8 +3,13 @@ package com.intellij.module;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.EmptyModuleType;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.module.ModulePointerManager;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.module.impl.ModulePointerManagerImpl;
 import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;

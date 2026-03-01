@@ -12,9 +12,13 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
-import org.jetbrains.plugins.terminal.view.shellIntegration.*
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
+import org.jetbrains.plugins.terminal.view.shellIntegration.getOutputText
+import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalCommandBlockImpl
+import org.jetbrains.plugins.terminal.view.shellIntegration.wasExecuted
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -6,9 +6,10 @@ import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

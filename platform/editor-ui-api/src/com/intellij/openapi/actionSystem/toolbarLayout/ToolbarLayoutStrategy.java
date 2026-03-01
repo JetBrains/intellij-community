@@ -4,7 +4,8 @@ package com.intellij.openapi.actionSystem.toolbarLayout;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.util.List;
 
 public interface ToolbarLayoutStrategy {

@@ -25,7 +25,7 @@ import net.miginfocom.swing.MigLayout
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.buildEmptyTable
-import org.intellij.plugins.markdown.lang.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.jetbrains.annotations.ApiStatus
@@ -36,7 +36,12 @@ import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 import kotlin.math.floor
 
 /**
@@ -76,7 +81,7 @@ class InsertEmptyTableAction: DumbAwareAction() {
     val project = event.project
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
-    event.presentation.isEnabledAndVisible = project != null && editor != null && file?.language?.isMarkdownLanguage() == true
+    event.presentation.isEnabledAndVisible = project != null && editor != null && file?.language?.supportsMarkdown(event.dataContext) == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

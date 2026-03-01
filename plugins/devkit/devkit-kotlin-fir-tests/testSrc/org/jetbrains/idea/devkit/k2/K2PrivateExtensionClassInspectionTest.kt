@@ -16,4 +16,8 @@ class K2PrivateExtensionClassInspectionTest : K2PrivateExtensionClassInspectionT
   fun testActionClassWithPrivateModifier() {
     doTest()
   }
+
+  fun testServiceImplWithPrivateModifier() {
+    doTest()
+  }
 }

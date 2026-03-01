@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle.message
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSettingsCache
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.exists

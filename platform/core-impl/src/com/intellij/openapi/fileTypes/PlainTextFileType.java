@@ -6,7 +6,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class PlainTextFileType extends LanguageFileType implements PlainTextLikeFileType, OSFileIdeAssociation {
   public static final PlainTextFileType INSTANCE = new PlainTextFileType();

@@ -4,7 +4,13 @@ package com.intellij.psi.impl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.HintedReferenceHost;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.ArrayUtil;
@@ -110,9 +116,10 @@ public final class SharedPsiElementImplUtil {
     if (i != -1) {
       return i;
     }
+    PsiElement parent = child.getParent();
     LOG.error("Cannot find element among its parent' children." +
-              " element: '" + child + "';" +
-              " parent: '" + child.getParent() + "';" +
+              " element: '" + child + "'" + " isPhysical=" + child.isPhysical() + " isValid=" + child.isValid() + ";" +
+              " parent: '" + parent + "'" + " isPhysical=" + parent.isPhysical() + " isValid=" + parent.isValid() + ";" +
               " children: " + Arrays.asList(children) + "; " +
               " file:" + child.getContainingFile());
     return -1;

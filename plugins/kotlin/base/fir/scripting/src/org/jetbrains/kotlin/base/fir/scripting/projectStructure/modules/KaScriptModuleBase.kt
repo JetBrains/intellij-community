@@ -18,17 +18,18 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
-import java.util.*
+import java.util.Objects
 
 abstract class KaScriptModuleBase(
     override val project: Project,
-    open val virtualFile: VirtualFile,
+    protected open val virtualFile: VirtualFile,
 ) : KaScriptModule, KaModuleBase() {
+    protected open val snapshot: ImmutableEntityStorage by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        project.workspaceModel.currentSnapshot
+    }
+
     protected val virtualFileUrlManager: VirtualFileUrlManager
         get() = project.workspaceModel.getVirtualFileUrlManager()
-
-    protected val currentSnapshot: ImmutableEntityStorage
-        get() = project.workspaceModel.currentSnapshot
 
     private val scriptDefinition: ScriptDefinition by lazy {
         findScriptDefinition(project, KtFileScriptSource(file))

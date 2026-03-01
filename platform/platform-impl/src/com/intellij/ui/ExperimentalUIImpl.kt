@@ -8,10 +8,13 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.ui.*
+import com.intellij.ide.ui.IconMapLoader
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.NotPatchedIconRegistry
+import com.intellij.ide.ui.NotRoamableUiSettings
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -29,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 private val LOG: Logger
   get() = logger<ExperimentalUI>()
 
-private class ExperimentalUIImpl : ExperimentalUI() {
+internal class ExperimentalUIImpl : ExperimentalUI() {
   private val epIconMapperSuppressor = ExtensionPointName<Any>("com.intellij.iconMapperSuppressor")
   private var shouldUnsetNewUiSwitchKey: Boolean = true
   private val isIconPatcherSet = AtomicBoolean()
@@ -124,8 +127,8 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   fun appStarted() {
     if (isNewUI()) {
-      val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
-      PropertiesComponent.getInstance().setValue(NEW_UI_USED_VERSION, version)
+      cleanUpClassicUIFromDisabled?.run()
+      cleanUpClassicUIFromDisabled = null
     }
   }
 
@@ -141,12 +144,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   private fun setNewUiUsed() {
     val propertyComponent = PropertiesComponent.getInstance()
-    if (isNewUiUsedOnce) {
-      propertyComponent.unsetValue(NEW_UI_FIRST_SWITCH)
-    }
-    else {
-      propertyComponent.setValue(NEW_UI_FIRST_SWITCH, true)
-    }
     propertyComponent.setValue(NEW_UI_SWITCH, true)
     shouldUnsetNewUiSwitchKey = false
   }
@@ -157,6 +154,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
  * because it would create another instance of ExperimentalUiImpl
  */
 private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
+
   override fun appStarted() {
     (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.appStarted()
   }
@@ -205,6 +203,7 @@ private const val iconPathPrefix = "expui/"
 private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): IconPathPatcher {
   return object : IconPathPatcher() {
     private val dumpNotPatchedIcons = System.getProperty("ide.experimental.ui.dump.not.patched.icons").toBoolean()
+
     // https://youtrack.jetbrains.com/issue/IDEA-335974
     private val useReflectivePath
       get() = System.getProperty("ide.experimental.ui.use.reflective.path", "true").toBoolean()

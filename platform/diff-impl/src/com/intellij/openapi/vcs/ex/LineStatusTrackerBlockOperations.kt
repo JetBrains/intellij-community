@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.LineNumberConstants
-import java.util.*
+import java.util.BitSet
 
 abstract class LineStatusTrackerBlockOperations<R : Range, B : BlockI>(private val LOCK: DocumentTracker.Lock) {
   protected abstract fun getBlocks(): List<B>?

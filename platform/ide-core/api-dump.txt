@@ -36,6 +36,8 @@ f:com.intellij.ide.RecentProjectsManager$Companion
 - f:getLAST_PROJECTS_TOPIC():com.intellij.util.messages.Topic
 com.intellij.ide.RecentProjectsManager$LastProjectsListener
 - a:lastProjectsReopened(com.intellij.openapi.project.Project):V
+a:com.intellij.ide.caches.CachesInvalidator
+- isVisible():Z
 com.intellij.ide.dnd.DnDDropHandler
 - a:drop(com.intellij.ide.dnd.DnDEvent):V
 com.intellij.ide.dnd.DnDDropHandler$WithResult
@@ -149,6 +151,7 @@ com.intellij.notification.Notifications
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,Z):V
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,Z,java.lang.String):V
 a:com.intellij.openapi.actionSystem.ActionPlaces
+- sf:CHANGES_TREE_POPUP:java.lang.String
 - sf:FIND_IN_FILES_POPUP:java.lang.String
 - sf:XDEBUGGER_TREE_POPUP:java.lang.String
 com.intellij.openapi.actionSystem.ActionWithDelegate
@@ -250,6 +253,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:ACTION_EDITOR_REFORMAT:java.lang.String
 - sf:ACTION_EDITOR_REVERSE_LINES:java.lang.String
 - sf:ACTION_EDITOR_SELECT_WORD_AT_CARET:java.lang.String
+- sf:ACTION_EDITOR_SELECT_WORD_AT_CURRENT_CARET:java.lang.String
 - sf:ACTION_EDITOR_SHOW_PARAMETER_INFO:java.lang.String
 - sf:ACTION_EDITOR_SORT_LINES:java.lang.String
 - sf:ACTION_EDITOR_SPLIT:java.lang.String
@@ -661,6 +665,7 @@ com.intellij.openapi.ui.popup.ListPopupStep
 - a:getSeparatorAbove(java.lang.Object):com.intellij.openapi.ui.popup.ListSeparator
 - a:getTextFor(java.lang.Object):java.lang.String
 - a:getValues():java.util.List
+- isClosableOnExecute(java.lang.Object):Z
 - isFinal(java.lang.Object):Z
 - a:isSelectable(java.lang.Object):Z
 - removeListener(com.intellij.openapi.ui.popup.ListPopupStep$ListPopupModelListener):V
@@ -823,7 +828,6 @@ com.intellij.openapi.wm.ToolWindowId
 - sf:FIND:java.lang.String
 - sf:HIERARCHY:java.lang.String
 - sf:INSPECTION:java.lang.String
-- sf:MEET_NEW_UI:java.lang.String
 - sf:MESSAGES_WINDOW:java.lang.String
 - sf:MODULES_DEPENDENCIES:java.lang.String
 - sf:PREVIEW:java.lang.String

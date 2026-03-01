@@ -83,11 +83,14 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   class Request private constructor(@JvmField internal val html: String?, @JvmField internal val url: String?) {
+    internal var currentUrl: String? = url
     internal var timeoutHtml: String? = null
       private set
     internal var queryHandler: JsQueryHandler? = null
       private set
     internal var requestHandler: ResourceHandler? = null; private set
+    internal var onUrlChanged: (String?, String) -> Unit = { _, _ -> }
+      private set
 
     companion object {
       @JvmOverloads
@@ -120,6 +123,12 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     @ApiStatus.Internal
     fun withResourceHandler(requestHandler: ResourceHandler?): Request {
       this.requestHandler = requestHandler
+      return this
+    }
+
+    @ApiStatus.Internal
+    fun withOnUrlChanged(onUrlChanged: (String?, String) -> Unit): Request {
+      this.onUrlChanged = onUrlChanged
       return this
     }
   }

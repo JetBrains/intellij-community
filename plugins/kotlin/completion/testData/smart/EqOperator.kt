@@ -15,3 +15,5 @@ fun f(e1: E, e2: E?, x: Any) {
 // ABSENT: { itemText:"!! e2" }
 // ABSENT: e1
 // ABSENT: x
+
+// IGNORE_K2

@@ -230,10 +230,7 @@ class ModuleRedeclarator(object):
         if isinstance(p_value, SIMPLEST_TYPES):
             out(indent, prefix, reliable_repr(p_value), postfix)
         else:
-            if sys.platform == "cli":
-                imported_name = None
-            else:
-                imported_name = self.find_imported_name(p_value)
+            imported_name = self.find_imported_name(p_value)
             if imported_name:
                 out(indent, prefix, imported_name, postfix)
                 # TODO: kind of self.used_imports[imported_name].append(p_value) but split imported_name
@@ -293,9 +290,6 @@ class ModuleRedeclarator(object):
                         out(indent, "}", postfix)
                 else: # something else, maybe representable
                     # look up this value in the module.
-                    if sys.platform == "cli":
-                        out(indent, prefix, "None", postfix)
-                        return
                     found_name = ""
                     for inner_name in self.module.__dict__:
                         if self.module.__dict__[inner_name] is p_value:
@@ -547,17 +541,6 @@ class ModuleRedeclarator(object):
             spec, sig_note = restore_predefined_builtin(classname, p_name)
             out(indent, "def ", spec, ": # ", sig_note)
             out_doc_attr(out, p_func, indent + 1, p_class)
-        elif sys.platform == 'cli' and is_clr_type(p_class):
-            is_static, spec, sig_note = restore_clr(p_name, p_class)
-            if is_static:
-                out(indent, "@staticmethod")
-            if not spec: return
-            if sig_note:
-                out(indent, "def ", spec, ": #", sig_note)
-            else:
-                out(indent, "def ", spec, ":")
-            if not p_name in ['__gt__', '__ge__', '__lt__', '__le__', '__ne__', '__reduce_ex__', '__str__']:
-                out_doc_attr(out, p_func, indent + 1, p_class)
         elif mod_class_method_tuple in PREDEFINED_MOD_CLASS_SIGS:
             sig, ret_literal = PREDEFINED_MOD_CLASS_SIGS[mod_class_method_tuple]
             if classname:
@@ -895,17 +878,14 @@ class ModuleRedeclarator(object):
 
             # unless we're adamantly positive that the name was imported, we assume it is defined here
             mod_name = None # module from which p_name might have been imported
-            # IronPython has non-trivial reexports in System module, but not in others:
-            skip_modname = sys.platform == "cli" and p_name != "System"
             surely_not_imported_mods = KNOWN_FAKE_REEXPORTERS.get(p_name, ())
             ## can't figure weirdness in some modules, assume no reexports:
             #skip_modname =  skip_modname or p_name in self.KNOWN_FAKE_REEXPORTERS
-            if not skip_modname:
-                try:
-                    mod_name = getattr(item, '__module__', None)
-                except:
-                    pass
-                    # we assume that module foo.bar never imports foo; foo may import foo.bar. (see pygame and pygame.rect)
+            try:
+                mod_name = getattr(item, '__module__', None)
+            except:
+                pass
+                # we assume that module foo.bar never imports foo; foo may import foo.bar. (see pygame and pygame.rect)
             maybe_import_mod_name = mod_name if isinstance(mod_name, type(p_name)) else ''
             import_is_from_top = len(p_name) > len(maybe_import_mod_name) and p_name.startswith(maybe_import_mod_name)
             note("mod_name = %s, prospective = %s,  from top = %s", mod_name, maybe_import_mod_name, import_is_from_top)

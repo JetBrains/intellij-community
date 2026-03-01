@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -199,7 +199,6 @@ public final class StubTreeBuilder {
   }
 
   /** Order is deterministic. First element matches {@link FileViewProvider#getStubBindingRoot()} */
-  @ApiStatus.Experimental
   public static @Unmodifiable @NotNull List<Pair<LanguageStubDescriptor, PsiFile>> getStubbedRootDescriptors(@NotNull FileViewProvider viewProvider) {
     List<Trinity<Language, LanguageStubDescriptor, PsiFile>> roots = new SmartList<>();
     PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();

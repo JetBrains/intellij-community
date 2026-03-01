@@ -1,9 +1,23 @@
 package com.intellij.database.run.actions;
 
 import com.intellij.database.DataGridBundle;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.DataGridPomTarget;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridHelper;
+import com.intellij.database.datagrid.GridMutator;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridSortingModel;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.RowSortOrder;
 import com.intellij.database.settings.DataGridSettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Key;

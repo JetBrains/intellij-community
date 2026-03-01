@@ -2,7 +2,7 @@
 package git4idea.remoteApi
 
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import com.intellij.vcs.git.rpc.GitOperationsApi
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
 import git4idea.GitStandardLocalBranch

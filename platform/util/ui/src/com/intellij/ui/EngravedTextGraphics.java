@@ -3,7 +3,9 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.text.AttributedCharacterIterator;
 
 @ApiStatus.Internal

@@ -24,6 +24,8 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.frontend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module" module-name="intellij.java.impl" />
@@ -83,10 +85,11 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.coverage" exported="" />
+    <orderEntry type="module" module-name="intellij.java.backend" exported="" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
@@ -129,7 +132,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.scripts" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="byte-buddy" level="project" />
     <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" scope="TEST" />
@@ -137,5 +139,7 @@
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.java.testFramework.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.live.templates" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.copyright" scope="TEST" />
   </component>
 </module>

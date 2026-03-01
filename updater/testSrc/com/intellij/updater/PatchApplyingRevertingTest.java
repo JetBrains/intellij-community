@@ -16,13 +16,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import static com.intellij.updater.UpdaterTestCase.*;
+import static com.intellij.updater.UpdaterTestCase.BOOTSTRAP_JAR;
+import static com.intellij.updater.UpdaterTestCase.Directories;
+import static com.intellij.updater.UpdaterTestCase.README_TXT;
+import static com.intellij.updater.UpdaterTestCase.createPatchSpec;
+import static com.intellij.updater.UpdaterTestCase.prepareDirectories;
+import static com.intellij.updater.UpdaterTestCase.randomFile;
+import static com.intellij.updater.UpdaterTestCase.setReadOnly;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @UpdaterTest

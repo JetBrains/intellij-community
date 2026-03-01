@@ -120,7 +120,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
 
                 LibrarySourceRoot(
                     libraryName = (split.getOrNull(0) ?: error())
-                        .replace("{{kotlin_version}}", testProperties.kotlinVersion.toString())
+                        .replace("{{kotlin_version}}", testProperties.kotlinVersion.version.toString())
                         .replace("{{space}}", " "),
                     sourcesJar = split.getOrNull(1) ?: error(),
                     testDataPath = split.getOrNull(2) ?: error(),

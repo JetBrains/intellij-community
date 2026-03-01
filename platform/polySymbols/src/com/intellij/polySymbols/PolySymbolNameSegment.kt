@@ -28,7 +28,7 @@ interface PolySymbolNameSegment {
   val priority: PolySymbol.Priority?
 
   @get:ApiStatus.Internal
-  val symbolKinds: Set<PolySymbolQualifiedKind>
+  val symbolKinds: Set<PolySymbolKind>
 
   fun getName(symbol: PolySymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)
@@ -53,7 +53,7 @@ interface PolySymbolNameSegment {
       problem: MatchProblem? = null,
       displayName: @NlsSafe String? = null,
       matchScore: Int = end - start,
-      symbolKinds: Set<PolySymbolQualifiedKind>? = null,
+      symbolKinds: Set<PolySymbolKind>? = null,
       explicitApiStatus: PolySymbolApiStatus? = null,
       explicitPriority: PolySymbol.Priority? = null,
     ): PolySymbolNameSegment =

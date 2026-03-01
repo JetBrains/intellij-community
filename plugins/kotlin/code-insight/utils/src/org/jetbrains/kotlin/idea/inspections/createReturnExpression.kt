@@ -3,7 +3,13 @@ package org.jetbrains.kotlin.idea.inspections
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtThrowExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 /**
  * Creates "return" with an optional label or an empty string depending on the [expression] type.

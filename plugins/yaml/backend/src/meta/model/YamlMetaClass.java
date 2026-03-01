@@ -14,7 +14,12 @@ import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YAMLValue;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal

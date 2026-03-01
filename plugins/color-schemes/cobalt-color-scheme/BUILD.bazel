@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-cobalt_resources"]
 )
+
+jvm_library(
+  name = "color-scheme-cobalt_test_lib",
+  module_name = "intellij.color.scheme.cobalt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":color-scheme-cobalt"]
+)
 ### auto-generated section `build intellij.color.scheme.cobalt` end

@@ -116,7 +116,7 @@ const val ENV_TYPE_VIRTUAL: String = "virtual"
  */
 class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
   companion object {
-    private val SHOW_RESPONSE_REGEX = """^\s+Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s+Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
+    private val SHOW_RESPONSE_REGEX = """^\s*Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s+Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
   }
 
   enum class CreateResult {

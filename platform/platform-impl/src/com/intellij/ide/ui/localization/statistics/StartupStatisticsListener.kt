@@ -4,7 +4,7 @@ package com.intellij.ide.ui.localization.statistics
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
-private class StartupStatisticsListener : ProjectActivity {
+internal class StartupStatisticsListener : ProjectActivity {
   override suspend fun execute(project: Project) {
     unSentEvents.forEach {
       val event = it.first

@@ -6,11 +6,22 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionWrapper;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -34,7 +45,11 @@ import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsProjectLog;
-import com.intellij.vcs.log.ui.*;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.frame.CommitDetailsLoader;
@@ -52,10 +67,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Collections;
@@ -101,7 +119,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
 
     GraphTableModel graphTableModel = new GraphTableModel(
       logData,
-      () -> logUi.requestMore(EmptyRunnable.INSTANCE),
+      () -> logUi.requestMore(),
       logUi.getProperties()
     );
     myGraphTable = new VcsLogGraphTable(logUi.getId(), graphTableModel, logUi.getProperties(), colorManager,

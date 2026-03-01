@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.toml
 
+import com.intellij.gradle.java.toml.findTomlCatalogKey
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory

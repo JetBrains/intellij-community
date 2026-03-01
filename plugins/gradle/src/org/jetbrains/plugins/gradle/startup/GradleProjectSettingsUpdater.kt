@@ -44,7 +44,7 @@ internal class GradleProjectSettingsUpdater(private val cs: CoroutineScope) : Ex
       val gradleJvm = projectSettings.gradleJvm ?: return NOT_UPDATED_STATUS
       return when {
         isInternalSdk(gradleJvm) -> fixupInternalJdk(project, projectSettings)
-        isSdkName(gradleJvm) && isUnknownSdk(gradleJvm) -> fixupUnknownSdk(project, projectSettings)
+        isSdkName(gradleJvm) && isUnknownSdk(project, gradleJvm) -> fixupUnknownSdk(project, projectSettings)
         else -> NOT_UPDATED_STATUS
       }
     }
@@ -74,7 +74,7 @@ internal class GradleProjectSettingsUpdater(private val cs: CoroutineScope) : Ex
         .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
         .withSdkHomeFilter { ExternalSystemJdkUtil.isValidJdk(it) }
         .onSdkNameResolved { sdk ->
-          val fakeSdk = sdk?.let(Util::findRegisteredSdk)
+          val fakeSdk = sdk?.let { findRegisteredSdk(project, it) }
           if (fakeSdk != null && projectSettings.gradleJvm == null) {
             projectSettings.gradleJvm = fakeSdk.name
           }
@@ -90,17 +90,19 @@ internal class GradleProjectSettingsUpdater(private val cs: CoroutineScope) : Ex
       return future
     }
 
-    private fun isUnknownSdk(sdkName: String): Boolean {
-      val projectJdkTable = ProjectJdkTable.getInstance()
+    private fun isUnknownSdk(project: Project, sdkName: String): Boolean {
+      val projectJdkTable = ProjectJdkTable.getInstance(project)
       val sdk = projectJdkTable.findJdk(sdkName)
       return sdk == null
     }
 
     private fun isSdkName(jdkReference: String?) = jdkReference != null && !jdkReference.startsWith('#')
+
     private fun isInternalSdk(jdkReference: String?) = jdkReference == ExternalSystemJdkUtil.USE_INTERNAL_JAVA
-    private fun findRegisteredSdk(sdk: Sdk): Sdk? {
+
+    private fun findRegisteredSdk(project: Project, sdk: Sdk): Sdk? {
       return runReadAction {
-        val projectJdkTable = ProjectJdkTable.getInstance()
+        val projectJdkTable = ProjectJdkTable.getInstance(project)
         projectJdkTable.findJdk(sdk.name, sdk.sdkType.name)
       }
     }

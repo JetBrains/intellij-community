@@ -4,8 +4,13 @@ package com.intellij.java.codeInspection.dataFlow.types;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import org.junit.Test;
 
-import static com.intellij.codeInspection.dataFlow.types.DfStreamStateType.*;
-import static org.junit.Assert.*;
+import static com.intellij.codeInspection.dataFlow.types.DfStreamStateType.BOTTOM;
+import static com.intellij.codeInspection.dataFlow.types.DfStreamStateType.CONSUMED;
+import static com.intellij.codeInspection.dataFlow.types.DfStreamStateType.OPEN;
+import static com.intellij.codeInspection.dataFlow.types.DfStreamStateType.UNKNOWN;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class DfStreamStateTypeTest {

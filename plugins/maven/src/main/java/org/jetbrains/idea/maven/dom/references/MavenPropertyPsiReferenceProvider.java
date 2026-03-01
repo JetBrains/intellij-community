@@ -52,6 +52,7 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
     if (virtualFile == null) return null;
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(element.getProject());
+    if (!manager.isInitialized()) return null;
     return manager.findProject(virtualFile);
   }
 

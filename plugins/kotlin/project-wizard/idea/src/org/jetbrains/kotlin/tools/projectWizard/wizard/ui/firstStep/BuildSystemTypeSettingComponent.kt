@@ -3,7 +3,14 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText

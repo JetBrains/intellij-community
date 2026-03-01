@@ -20,7 +20,15 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ExternalEntityMapping
+import com.intellij.platform.workspace.storage.ExternalMappingKey
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -30,7 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-private class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
+internal class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
 
   override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {

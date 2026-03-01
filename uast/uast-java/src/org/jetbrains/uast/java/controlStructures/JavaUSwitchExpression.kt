@@ -1,12 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiBlockStatement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiSwitchBlock
+import com.intellij.psi.PsiSwitchLabelStatement
+import com.intellij.psi.PsiSwitchLabelStatementBase
+import com.intellij.psi.PsiSwitchLabeledRuleStatement
 import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UExpressionList
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.USwitchClauseExpressionWithBody
+import org.jetbrains.uast.USwitchExpression
+import org.jetbrains.uast.UYieldExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.UastSpecialExpressionKind
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.java.expressions.JavaUExpressionList
 import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
+import org.jetbrains.uast.withMargin
 
 @ApiStatus.Internal
 class JavaUSwitchExpression(

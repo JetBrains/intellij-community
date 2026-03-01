@@ -1,10 +1,36 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -15,7 +41,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -165,7 +197,7 @@ public abstract class FunctionHelper {
               }
             }
             return new VoidBlockLambdaFunctionHelper(block, parameters);
-          } else if (returns.size() == 1 && ArrayUtil.getLastElement(block.getStatements()) == returns.get(0)) {
+          } else if (returns.size() == 1 && ArrayUtil.getLastElement(block.getStatements()) == returns.getFirst()) {
             PsiExpression trivialCall = JavaPsiFacade.getElementFactory(lambda.getProject())
               .createExpressionFromText("((" + type.getCanonicalText() + ")" + lambda.getText() + ")." +
                                         interfaceMethod.getName() + "(" + String.join(",", parameters) + ")", lambda);

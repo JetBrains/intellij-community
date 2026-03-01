@@ -1,4 +1,4 @@
-// "Convert to local variable" "true-preview"
+// "Convert to local variables" "true-preview"
 class Test {
 
     int getFoo1() {

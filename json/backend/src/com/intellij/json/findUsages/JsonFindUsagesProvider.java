@@ -3,27 +3,31 @@ package com.intellij.json.findUsages;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.impl.JsonPropertyMixin;
 import com.intellij.lang.HelpID;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 final class JsonFindUsagesProvider implements FindUsagesProvider {
   @Override
-  public @Nullable WordsScanner getWordsScanner() {
+  public @NotNull WordsScanner getWordsScanner() {
     return new JsonWordScanner();
   }
 
   @Override
   public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
+    if (psiElement instanceof JsonPropertyMixin) {
+      // there are plugins contributed declarations here, disable standard find usages
+      return !((JsonPropertyMixin)psiElement).hasSymbolDeclarations();
+    }
     return psiElement instanceof PsiNamedElement;
   }
 
   @Override
-  public @Nullable String getHelpId(@NotNull PsiElement psiElement) {
+  public @NotNull String getHelpId(@NotNull PsiElement psiElement) {
     return HelpID.FIND_OTHER_USAGES;
   }
 

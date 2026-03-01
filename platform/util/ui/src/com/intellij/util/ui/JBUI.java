@@ -5,7 +5,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.NewUiValue;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.border.NamedBorderKt;
 import com.intellij.ui.scale.DerivedScaleType;
@@ -16,13 +21,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GraphicsConfiguration;
+import java.awt.Insets;
 import java.awt.font.TextAttribute;
 import java.util.HashMap;
 import java.util.Map;
@@ -424,6 +435,10 @@ public final class JBUI {
       public static final Color ERROR_BORDER_COLOR = JBColor.namedColor("Banner.errorBorderColor", 0xFAD4D8, 0x5E3838);
 
       public static final Color FOREGROUND = JBColor.namedColor("Banner.foreground", 0x0, 0xDFE1E5);
+
+      public static @NotNull JBValue arc() {
+        return new JBValue.UIInteger("Banner.arc", 12);
+      }
     }
 
     public static final class Button {
@@ -911,6 +926,10 @@ public final class JBUI {
     }
 
     public interface IconBadge {
+      /**
+       * @deprecated Not needed anymore
+       */
+      @Deprecated(forRemoval = true)
       Color NEW_UI = JBColor.namedColor("IconBadge.newUiBackground", 0x8F5AE5, 0x8F5AE5);
       Color ERROR = JBColor.namedColor("IconBadge.errorBackground", 0xE55765, 0xDB5C5C);
       Color WARNING = JBColor.namedColor("IconBadge.warningBackground", 0xFFAF0F, 0xF2C55C);
@@ -1123,8 +1142,6 @@ public final class JBUI {
       }
 
       public interface DragAndDrop {
-        Color STRIPE_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.stripeBackground",
-                                                     CurrentTheme.DragAndDrop.Area.BACKGROUND);
         Color BUTTON_DROP_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.buttonDropBackground",
                                                           CurrentTheme.DragAndDrop.Area.BACKGROUND);
         Color BUTTON_FLOATING_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.buttonFloatingBackground",
@@ -1627,7 +1644,7 @@ public final class JBUI {
         public static final JBValue ARC = new JBValue.UIInteger("Popup.Selection.arc", 8);
         public static final JBValue LEFT_RIGHT_INSET = new JBValue.UIInteger("Popup.Selection.leftRightInset", 8);
 
-        public static @NotNull Insets innerInsets() {
+        public static @NotNull JBInsets innerInsets() {
           JBInsets result = insets("Popup.Selection.innerInsets", insets(0, 8));
           // Top and bottom values are ignored now
           result.top = 0;
@@ -1664,6 +1681,26 @@ public final class JBUI {
         }
 
         public static final JBValue ARC = new JBValue.UIInteger("PopupMenu.Selection.arc", 8);
+      }
+    }
+
+    public static final class MainMenu {
+      private MainMenu() { }
+
+      public static final class Selection {
+        private Selection() { }
+
+        public static @NotNull JBInsets outerInsets() {
+          return insets("MainMenu.Selection.outerInsets", insets(5, 0));
+        }
+
+        public static @NotNull JBInsets fullScreenOuterInsets() {
+          return insets("MainMenu.Selection.fullScreenOuterInsets", insets(2, 0));
+        }
+
+        public static @NotNull JBValue fullScreenArc() {
+          return new JBValue.UIInteger("MainToolbar.Selection.fullScreenArc", 8);
+        }
       }
     }
 

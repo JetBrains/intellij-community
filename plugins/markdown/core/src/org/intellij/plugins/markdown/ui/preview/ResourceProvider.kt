@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.vfs.VirtualFile
+import org.intellij.plugins.markdown.ui.preview.ResourceProvider.Companion.loadInternalResource
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path

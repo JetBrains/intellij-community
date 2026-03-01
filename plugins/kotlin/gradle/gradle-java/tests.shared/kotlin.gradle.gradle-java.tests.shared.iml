@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
@@ -18,7 +19,6 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
@@ -30,6 +30,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="TEST" />
@@ -40,7 +41,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.highlighting.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" scope="TEST" />
@@ -49,7 +50,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" scope="TEST" />
@@ -70,7 +70,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.externalSystem" scope="TEST" />
@@ -79,5 +78,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
   </component>
 </module>

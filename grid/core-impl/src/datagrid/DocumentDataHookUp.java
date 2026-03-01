@@ -19,7 +19,11 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
@@ -43,7 +47,11 @@ import java.math.BigInteger;
 import java.sql.Types;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 

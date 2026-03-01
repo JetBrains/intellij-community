@@ -1,11 +1,23 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="myStringEP" interface="java.lang.String"/>
+    <!-- Basic interface EP -->
+    <extensionPoint name="myInterfaceEP" interface="MyInterface"/>
+    <!-- Basic class EP -->
+    <extensionPoint name="myClassEP" interface="MyClass"/>
 
+    <!-- with.implements EP -->
+    <extensionPoint name="myWithImplementsEP" beanClass="java.lang.Object">
+      <with attribute="implementationClass" implements="MyWithImplementsInterface"/>
+    </extensionPoint>
 
-    <extensionPoint name="myBeanClassStringEP" beanClass="java.lang.String"/>
-    
-    <!-- wrong EP name -->
+    <!-- beanClass only (negative test - should NOT show gutter) -->
+    <extensionPoint name="myBeanClassEP" beanClass="MyBeanClassInterface"/>
+
+    <!-- Multiple EPs referencing the same interface -->
+    <extensionPoint name="myMultipleEPs1" interface="MyMultipleEPsInterface"/>
+    <extensionPoint name="myMultipleEPs2" interface="MyMultipleEPsInterface"/>
+
+    <!-- Wrong EP name (for testing no match) -->
     <extensionPoint name="myStringEP2" interface="java.lang.String"/>
   </extensionPoints>
 </idea-plugin>

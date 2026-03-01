@@ -6,7 +6,15 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -19,7 +27,11 @@ import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import java.util.Objects;
 
 public class JavaSliceUsage extends SliceUsage {
   private final PsiSubstitutor mySubstitutor;

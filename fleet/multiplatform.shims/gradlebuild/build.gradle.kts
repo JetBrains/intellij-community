@@ -10,7 +10,6 @@ plugins {
   id("fleet.module-publishing-conventions")
   id("fleet.open-source-module-conventions")
   alias(libs.plugins.dokka)
-  id("fleet.sdk-repositories-publishing-conventions")
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   alias(jps.plugins.expects)
@@ -30,8 +29,10 @@ kotlin {
   compilerOptions.freeCompilerArgs = listOf(
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
+    "-Xcontext-parameters",
     "-Xwasm-kclass-fqn",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   wasmJs {

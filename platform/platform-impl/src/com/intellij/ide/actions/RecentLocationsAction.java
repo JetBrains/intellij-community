@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
@@ -25,7 +26,12 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
-import com.intellij.ui.*;
+import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
@@ -42,9 +48,24 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -156,7 +177,9 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     checkBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        updateItems(model, list, checkBox, popup);
+        WriteIntentReadAction.run(() -> {
+          updateItems(model, list, checkBox, popup);
+        });
         titleUpdater.run();
       }
     });

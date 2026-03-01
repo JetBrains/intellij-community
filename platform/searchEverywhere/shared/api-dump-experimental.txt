@@ -213,5 +213,6 @@
 - f:withPresentableTextFgColor(java.awt.Color):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 - f:withPresentableTextMatchedRanges(java.util.List):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 - f:withPresentableTextStrikethrough(Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withShouldKeepLocationVisible(Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 - f:withTargetPresentation(com.intellij.platform.backend.presentation.TargetPresentation,com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 *f:com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder$Companion

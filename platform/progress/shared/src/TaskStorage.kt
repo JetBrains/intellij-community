@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Provides the ability to control how tasks are stored in Rhizome DB
  * The implementation can decide where to store an object - in shared or local DB
- * See [fleet.kernel.change] and [fleet.kernel.shared]
+ * See [fleet.kernel.change] and [fleet.kernel.rebase.shared]
  */
 @ApiStatus.Internal
 abstract class TaskStorage {

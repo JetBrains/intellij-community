@@ -15,4 +15,13 @@ jvm_library(
   exports = ["@lib//:assert_j"],
   runtime_deps = ["@lib//:assert_j"]
 )
+
+jvm_library(
+  name = "assertj-core_test_lib",
+  module_name = "intellij.libraries.assertj.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:assert_j"],
+  runtime_deps = [":assertj-core"]
+)
 ### auto-generated section `build intellij.libraries.assertj.core` end

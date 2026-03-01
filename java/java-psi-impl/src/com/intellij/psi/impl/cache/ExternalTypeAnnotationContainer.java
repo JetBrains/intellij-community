@@ -2,7 +2,10 @@
 package com.intellij.psi.impl.cache;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.TypeAnnotationProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**

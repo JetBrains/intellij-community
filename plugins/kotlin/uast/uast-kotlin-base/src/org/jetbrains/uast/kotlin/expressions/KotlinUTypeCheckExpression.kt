@@ -5,7 +5,14 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtIsExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpressionWithType
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
+import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinUTypeCheckExpression(

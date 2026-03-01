@@ -2,9 +2,19 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;

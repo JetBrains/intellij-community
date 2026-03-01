@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.block.shellSupport.powershell
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.tree.IElementType
 import kotlinx.serialization.Serializable
@@ -17,10 +16,6 @@ internal class PowerShellSupport : TerminalShellSupport {
     get() = serviceOrNull<TerminalShLangService>()?.promptContentElementType
 
   override val lineContinuationChar: Char = '`'
-
-  override fun getCommandTokens(project: Project, command: String): List<String>? {
-    return serviceOrNull<TerminalShLangService>()?.getShellCommandTokens(project, command)
-  }
 
   override fun parseCommandHistory(history: String): List<String> {
     val trimmedHistory = StringUtil.convertLineSeparators(history, "\n").trimEnd()

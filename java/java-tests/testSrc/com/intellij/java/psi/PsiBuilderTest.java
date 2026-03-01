@@ -2,7 +2,11 @@
 package com.intellij.java.psi;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.pom.java.LanguageLevel;

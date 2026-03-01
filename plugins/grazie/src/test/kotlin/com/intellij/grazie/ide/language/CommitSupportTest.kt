@@ -1,3 +1,5 @@
+@file:Suppress("NonAsciiCharacters")
+
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
@@ -28,11 +30,20 @@ class CommitSupportTest : GrazieTestBase() {
     myFixture.findSingleIntention("Configure rule 'Use of 'a' vs. 'an'' in commit messages…")
   }
 
-  fun `test no highlighting in commit message if it's entirely lowercase after prefix`() {
+  fun `test correct highlighting in commit messages`() {
     checkCommitMessage("JIRA-123: add apache commons text dependency")
     checkCommitMessage("JIRA-123: it started - june is here")
     checkCommitMessage("JIRA-123: installation of opera is required")
     checkCommitMessage("JIRA-123: fix bug when system was disabled if temperature is less than 20° celsius")
+    checkCommitMessage("cleanup [Grazie]: june is here")
+    checkCommitMessage("<TYPO descr=\"Typo: In word 'typopo'\">typopo</TYPO> [grazie]: june is here")
+  }
+
+  fun `test mass apply is not available in commit messages`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
+    configureCommit(myFixture, "This is <caret><GRAMMAR_ERROR descr=\"EN_A_VS_AN\">a</GRAMMAR_ERROR> error")
+    myFixture.checkHighlighting()
+    assertNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
   }
 
   private fun checkCommitMessage(text: String) {

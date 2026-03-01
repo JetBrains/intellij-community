@@ -236,6 +236,8 @@ com.intellij.openapi.util.text.CharFilter
 - sf:NOT_WHITESPACE_FILTER:com.intellij.openapi.util.text.CharFilter
 - sf:WHITESPACE_FILTER:com.intellij.openapi.util.text.CharFilter
 - a:accept(C):Z
+Fc:com.intellij.openapi.util.text.StringUtil
+- s:endsWithIgnoreWhitespaces(java.lang.CharSequence,java.lang.CharSequence):Z
 com.intellij.ui.IconManager
 - sf:Companion:com.intellij.ui.IconManager$Companion
 - colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color):javax.swing.Icon
@@ -326,6 +328,8 @@ com.intellij.util.PathMapper
 - a:convertToRemote(java.lang.String):java.lang.String
 - a:convertToRemote(java.util.Collection):java.util.List
 - a:isEmpty():Z
+f:com.intellij.util.PatternUtil
+- s:containsMetaChar(java.lang.String):Z
 com.intellij.util.Producer
 - java.util.function.Supplier
 - get():java.lang.Object
@@ -343,13 +347,19 @@ com.intellij.util.TripleFunction
 com.intellij.util.containers.ConcurrentIntObjectMap
 - com.intellij.util.containers.IntObjectMap
 - a:cacheOrGet(I,java.lang.Object):java.lang.Object
+- a:compute(I,com.intellij.util.containers.ConcurrentIntObjectMap$IntObjectToObjectFunction):java.lang.Object
+- a:computeIfAbsent(I,java.util.function.IntFunction):java.lang.Object
+- a:computeIfPresent(I,com.intellij.util.containers.ConcurrentIntObjectMap$IntObjectToObjectFunction):java.lang.Object
 - a:elements():java.util.Enumeration
 - a:getOrDefault(I,java.lang.Object):java.lang.Object
+- a:merge(I,java.lang.Object,java.util.function.BiFunction):java.lang.Object
 - a:putIfAbsent(I,java.lang.Object):java.lang.Object
 - a:remove(I,java.lang.Object):Z
 - a:replace(I,java.lang.Object):java.lang.Object
 - a:replace(I,java.lang.Object,java.lang.Object):Z
 - a:size():I
+com.intellij.util.containers.ConcurrentIntObjectMap$IntObjectToObjectFunction
+- a:apply(I,java.lang.Object):java.lang.Object
 com.intellij.util.containers.ConcurrentList
 - java.util.List
 - a:addAllAbsent(java.util.Collection):I
@@ -357,6 +367,9 @@ com.intellij.util.containers.ConcurrentList
 com.intellij.util.containers.ConcurrentLongObjectMap
 - a:cacheOrGet(J,java.lang.Object):java.lang.Object
 - a:clear():V
+- a:compute(J,com.intellij.util.containers.ConcurrentLongObjectMap$LongObjectToObjectFunction):java.lang.Object
+- a:computeIfAbsent(J,java.util.function.LongFunction):java.lang.Object
+- a:computeIfPresent(J,com.intellij.util.containers.ConcurrentLongObjectMap$LongObjectToObjectFunction):java.lang.Object
 - a:containsKey(J):Z
 - a:containsValue(java.lang.Object):Z
 - a:elements():java.util.Iterator
@@ -366,6 +379,7 @@ com.intellij.util.containers.ConcurrentLongObjectMap
 - a:getOrDefault(J,java.lang.Object):java.lang.Object
 - a:isEmpty():Z
 - a:keys():J[]
+- a:merge(J,java.lang.Object,java.util.function.BiFunction):java.lang.Object
 - a:put(J,java.lang.Object):java.lang.Object
 - a:putIfAbsent(J,java.lang.Object):java.lang.Object
 - a:remove(J):java.lang.Object
@@ -374,6 +388,8 @@ com.intellij.util.containers.ConcurrentLongObjectMap
 - a:replace(J,java.lang.Object,java.lang.Object):Z
 - a:size():I
 - a:values():java.util.Collection
+com.intellij.util.containers.ConcurrentLongObjectMap$LongObjectToObjectFunction
+- a:apply(J,java.lang.Object):java.lang.Object
 com.intellij.util.containers.Convertor
 - java.util.function.Function
 - sf:SELF:com.intellij.util.containers.Convertor$IntoSelf
@@ -416,6 +432,9 @@ f:com.intellij.util.containers.SmartHashSet
 - java.util.AbstractSet
 - <init>(I):V
 - <init>(I,F):V
+f:com.intellij.util.containers.UtilKt
+- sf:mapValues(com.intellij.util.containers.MultiMap,kotlin.jvm.functions.Function1):com.intellij.util.containers.MultiMap
+- sf:mapValuesTo(com.intellij.util.containers.MultiMap,com.intellij.util.containers.MultiMap,kotlin.jvm.functions.Function1):com.intellij.util.containers.MultiMap
 com.intellij.util.containers.hash.EqualityPolicy
 - sf:CANONICAL:com.intellij.util.containers.hash.EqualityPolicy
 - sf:IDENTITY:com.intellij.util.containers.hash.EqualityPolicy
@@ -539,12 +558,22 @@ com.intellij.util.io.storage.RecordIdIterator
 - a:hasNextId():Z
 - a:nextId():I
 - a:validId():Z
-c:com.intellij.util.io.zip.JBZipFile
+f:com.intellij.util.io.zip.JBZipFile
+- java.io.Closeable
+- <init>(java.io.File):V
+- <init>(java.nio.channels.SeekableByteChannel,java.nio.charset.Charset,Z,com.intellij.util.ThreeState):V
 - <init>(java.nio.file.Path):V
 - <init>(java.nio.file.Path,java.nio.charset.Charset):V
 - <init>(java.nio.file.Path,java.nio.charset.Charset,Z):V
 - <init>(java.nio.file.Path,java.nio.charset.Charset,Z,com.intellij.util.ThreeState):V
 - <init>(java.nio.file.Path,Z):V
+- close():V
+- eraseEntry(com.intellij.util.io.zip.JBZipEntry):V
+- gc():V
+- getEncoding():java.nio.charset.Charset
+- getEntries():java.util.List
+- getEntry(java.lang.String):com.intellij.util.io.zip.JBZipEntry
+- getOrCreateEntry(java.lang.String):com.intellij.util.io.zip.JBZipEntry
 com.intellij.util.keyFMap.KeyFMap
 - sf:EMPTY_MAP:com.intellij.util.keyFMap.KeyFMap
 - a:equalsByReference(com.intellij.util.keyFMap.KeyFMap):Z

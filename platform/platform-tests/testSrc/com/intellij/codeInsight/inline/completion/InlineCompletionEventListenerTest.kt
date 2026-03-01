@@ -14,10 +14,14 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEventListenerT
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventListenerTest.EventAsserter.Companion.variantSwitched
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
+import com.intellij.codeInsight.inline.completion.exception.InlineCompletionTestExceptions
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
-import com.intellij.codeInsight.inline.completion.suggestion.*
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
+import com.intellij.codeInsight.inline.completion.suggestion.invoke
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -183,7 +187,7 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
     registerSuggestion {
       variant { emit(InlineCompletionGrayTextElement("value")) }
       variant { }
-      throw IllegalStateException("expected exception")
+      throw InlineCompletionTestExceptions.createExpectedTestException("expected exception")
       @Suppress("UNREACHABLE_CODE")
       variant { }
     }
@@ -194,7 +198,7 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
     expectEvents(
       request(InlineCompletionEvent.DirectCall::class, GradualMultiSuggestInlineCompletionProvider::class),
       hide(FinishType.ERROR, false),
-      completion(IllegalStateException::class, true)
+      completion(InlineCompletionTestExceptions.getExceptionClass(), true)
     )
   }
 
@@ -203,7 +207,7 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
     registerSuggestion {
       variant { }
       variant { emit(InlineCompletionGrayTextElement("press X")) }
-      variant { throw IllegalArgumentException("expected") }
+      variant { throw InlineCompletionTestExceptions.createExpectedTestException("expected") }
       variant { emit(InlineCompletionGrayTextElement("press F")) }
     }
     callInlineCompletion()
@@ -218,7 +222,7 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
       computed(1, "press X", 0), show(1, "press X", 0),
       variantComputed(1),
       hide(FinishType.ERROR, true),
-      completion(IllegalArgumentException::class, true)
+      completion(InlineCompletionTestExceptions.getExceptionClass(), true)
     )
   }
 

@@ -16,10 +16,15 @@ public abstract class AbstractLombokIntentionAction extends PsiUpdateModCommandA
     super(PsiElement.class);
   }
 
+  public AbstractLombokIntentionAction(@NotNull PsiElement context) {
+    super(context);
+  }
+
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForFile(element.getContainingFile());
     if (!LombokLibraryUtil.hasLombokClasses(module)) return null;
+    if (!LombokLibraryUtil.hasLombokClassesInScopeOfElement(element)) return null;
     return super.getPresentation(context, element);
   }
 }

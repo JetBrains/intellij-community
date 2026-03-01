@@ -8,7 +8,12 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
-import kotlinx.coroutines.*
+import com.intellij.util.xmlb.SettingsInternalApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
@@ -21,7 +26,12 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
-import kotlin.io.path.*
+import kotlin.io.path.createFile
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
@@ -37,6 +47,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit,
     waitForInit: Boolean = true,
   ) {
+    @OptIn(SettingsInternalApi::class)
     SettingsSyncSettings.getInstance().state = SettingsSyncSettings.getInstance().state.withSyncEnabled(true)
     val controls = SettingsSyncMain.init(this, disposable, settingsSyncStorage, configDir, ideMediator)
     updateChecker = controls.updateChecker
@@ -45,7 +56,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     if (waitForInit) {
       timeoutRunBlocking(200.seconds) {
         while (!bridge.isInitialized) {
-          delay(10)
+          delay(10.milliseconds)
         }
       }
     }

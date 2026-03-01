@@ -5,7 +5,19 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaValidation
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
-import com.jetbrains.jsonSchema.impl.light.*
+import com.jetbrains.jsonSchema.impl.light.ADDITIONAL_ITEMS
+import com.jetbrains.jsonSchema.impl.light.DEFS
+import com.jetbrains.jsonSchema.impl.light.DEPENDENT_REQUIRED
+import com.jetbrains.jsonSchema.impl.light.DEPENDENT_SCHEMAS
+import com.jetbrains.jsonSchema.impl.light.ITEMS
+import com.jetbrains.jsonSchema.impl.light.JSON_DOLLAR_ID
+import com.jetbrains.jsonSchema.impl.light.JsonSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.LocalSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.RECURSIVE_ANCHOR
+import com.jetbrains.jsonSchema.impl.light.RECURSIVE_REF
+import com.jetbrains.jsonSchema.impl.light.RemoteSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.UNEVALUATED_ITEMS
+import com.jetbrains.jsonSchema.impl.light.UNEVALUATED_PROPERTIES
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
 import com.jetbrains.jsonSchema.impl.validations.getSchema7AndEarlierValidations
 

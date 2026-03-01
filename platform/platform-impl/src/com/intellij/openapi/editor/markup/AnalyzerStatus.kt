@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.markup
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Collections
 import javax.swing.Icon
 
 /**
@@ -79,6 +79,9 @@ class AnalyzerStatus(
   }
 
   fun isEmpty(): Boolean = this == EMPTY
+  override fun toString(): String {
+    return "AnalyzerStatus(icon=$icon, title='$title', details='$details', inspectionsState=$inspectionsState, passes=$passes, analyzingType=$analyzingType, expandedStatus=$expandedStatus)"
+  }
 
   companion object {
     /**

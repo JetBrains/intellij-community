@@ -5,13 +5,22 @@ package org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.Context
+import org.jetbrains.kotlin.tools.projectWizard.core.Plugin
+import org.jetbrains.kotlin.tools.projectWizard.core.PluginSettingsOwner
+import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
+import org.jetbrains.kotlin.tools.projectWizard.core.Writer
+import org.jetbrains.kotlin.tools.projectWizard.core.andThen
+import org.jetbrains.kotlin.tools.projectWizard.core.asSuccess
+import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.fold
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settingValidator
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
+import org.jetbrains.kotlin.tools.projectWizard.core.mapSequence
+import org.jetbrains.kotlin.tools.projectWizard.core.mapSequenceIgnore
 import org.jetbrains.kotlin.tools.projectWizard.core.service.FileSystemWizardService
 import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionKind
 import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionProviderService
@@ -28,7 +37,15 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.buildSystemT
 import org.jetbrains.kotlin.tools.projectWizard.plugins.pomIR
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectPath
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleReference
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.forEachModule
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.path
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.updateBuildFiles
 
 class KotlinPlugin(context: Context) : Plugin(context) {
     override val path = pluginPath

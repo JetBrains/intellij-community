@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/attributes/v-bind:my-input",
-  origin: "vue@3.0.0 (vue)",
+  origin: "test-lib@2.0.0-rc.24 (vue)",
   attrValue: {
    kind: EXPRESSION,
    type: OF_MATCH,

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -61,8 +62,10 @@ class ChangeJavaSignatureCommand(text: String, line: Int) : PlaybackCommandCorou
     if (args.size > 2) throw IllegalArgumentException("Too many arguments provided")
 
 
-    val editor = readAction { FileEditorManager.getInstance(context.project).selectedTextEditor }
-                 ?: throw IllegalArgumentException("There is no selected editor")
+    val editor = readAction {
+      val fileEditorManager = FileEditorManager.getInstance(context.project)
+      fileEditorManager.selectedTextEditor ?: fileEditorManager.getAllEditors().firstNotNullOfOrNull { it as TextEditor }?.editor
+    } ?: throw IllegalArgumentException("Couldn't get text editor")
 
 
     val elementUnderCaret = readAction {

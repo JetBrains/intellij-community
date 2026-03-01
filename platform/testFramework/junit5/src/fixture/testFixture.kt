@@ -78,6 +78,12 @@ sealed interface TestContext {
   val testName: String
 
   /**
+   * The underlying JUnit5 extension context.
+   * Provides access to the test execution context and allows extensions to interact with the JUnit5 framework.
+   */
+  val extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+
+  /**
    * Returns the annotation with which a test or container is marked or null if there is none.
    */
   fun <T : Annotation> findAnnotation(clazz: Class<T>): T?

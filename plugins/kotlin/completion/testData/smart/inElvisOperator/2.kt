@@ -10,3 +10,5 @@ fun bar() {
 // ABSENT: { itemText:"foo2" }
 // EXIST: { itemText:"!! foo2" }
 // EXIST: { itemText:"?: foo2" }
+
+// IGNORE_K2

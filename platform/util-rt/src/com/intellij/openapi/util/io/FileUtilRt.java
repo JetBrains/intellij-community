@@ -5,16 +5,44 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Queue;
+import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static java.lang.System.getProperty;
@@ -864,8 +892,9 @@ public final class FileUtilRt {
   }
 
   private static void doDelete(@NotNull Path path) throws IOException {
-    //Issues with file removal usually happen on Windows, *nix-type OSes usually don't need >1 attempt:
-    int attemptsCount = SystemInfoRt.isWindows ? MAX_FILE_IO_ATTEMPTS : 1;
+    // Issues with file removal usually happen on Windows
+    // On mac os, .DS_Store files can sporadically appear, so we have to deal with that too.
+    int attemptsCount = SystemInfoRt.isWindows || SystemInfoRt.isMac ? MAX_FILE_IO_ATTEMPTS : 1;
     IOException previousException = null;
     for (int attemptsLeft = attemptsCount - 1; attemptsLeft >= 0; attemptsLeft--) {
       try {

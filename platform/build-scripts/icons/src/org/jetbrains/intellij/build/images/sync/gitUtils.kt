@@ -13,9 +13,9 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.stream.Collectors
 import java.util.stream.Stream
+import kotlin.concurrent.thread
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
-import kotlin.concurrent.thread
 import kotlin.math.max
 
 internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {

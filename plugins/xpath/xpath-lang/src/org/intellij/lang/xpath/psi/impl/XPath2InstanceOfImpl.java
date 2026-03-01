@@ -16,7 +16,11 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
+import org.intellij.lang.xpath.psi.XPath2InstanceOf;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPath2TypeElement;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

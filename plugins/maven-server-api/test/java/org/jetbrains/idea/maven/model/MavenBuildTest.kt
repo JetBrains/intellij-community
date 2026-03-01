@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.model
 import org.assertj.core.api.AssertionsForInterfaceTypes.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import kotlin.io.path.createTempDirectory
 
 class MavenBuildTest {
 
@@ -22,17 +23,22 @@ class MavenBuildTest {
   @Test
   fun `maven sources should present if test resources added`() {
     val build = MavenBuild()
+    val tmp = createTempDirectory()
+    val pom = tmp.resolve("pom.xml")
     build.mavenSources = listOf(
-      MavenSource.fromSourceTag("resDir",
+
+      MavenSource.fromSourceTag(pom, "resDir",
                                 emptyList(),
                                 emptyList(),
+                                null,
                                 "main",
                                 "resources",
                                 "target",
                                 "", false, true),
-      MavenSource.fromSourceTag("testResDir",
+      MavenSource.fromSourceTag(pom, "testResDir",
                                 emptyList(),
                                 emptyList(),
+                                null,
                                 "test",
                                 "resources",
                                 "target",
@@ -40,11 +46,11 @@ class MavenBuildTest {
     assertThat(build.sources).isEmpty()
     assertThat(build.testSources).isEmpty()
     assertThat(build.resources).containsExactly(MavenResource(
-      "resDir", false, "target", emptyList(), emptyList()
+      tmp.resolve("resDir").toString(), false, "target", emptyList(), emptyList()
     ))
 
     assertThat(build.testResources).containsExactly(MavenResource(
-      "testResDir", false, "target", emptyList(), emptyList()
+      tmp.resolve("testResDir").toString(), false, "target", emptyList(), emptyList()
     ))
   }
 
@@ -82,24 +88,46 @@ class MavenBuildTest {
   }
 
   @Test
+  fun `sources present if maven sources added using absolutePath`() {
+    val build = MavenBuild()
+    val tmp = createTempDirectory()
+    val srcDir = createTempDirectory()
+    val pom = tmp.resolve("pom.xml")
+    build.mavenSources = listOf(
+      MavenSource.fromSourceTag(pom, srcDir.toString(),
+                                emptyList(),
+                                emptyList(),
+                                null,
+                                null,
+                                null,
+                                "target",
+                                "", false, true))
+    assertThat(build.sources).containsExactly(srcDir.toString())
+  }
+
+  @Test
   fun `sources present if maven sources added`() {
     val build = MavenBuild()
+    val tmp = createTempDirectory()
+    val pom = tmp.resolve("pom.xml")
     build.mavenSources = listOf(
-      MavenSource.fromSourceTag("srcDir",
+      MavenSource.fromSourceTag(pom, "srcDir",
                                 emptyList(),
                                 emptyList(),
+                                null,
                                 "main",
                                 "java",
                                 "target",
                                 "", false, true),
-      MavenSource.fromSourceTag("testDir",
+      MavenSource.fromSourceTag(pom, "testDir",
                                 emptyList(),
                                 emptyList(),
+                                null,
                                 "test",
                                 "java",
                                 "target",
                                 "", false, true))
-    assertThat(build.sources).containsExactly("srcDir")
-    assertThat(build.testSources).containsExactly("testDir")
+    assertThat(build.sources).containsExactly(tmp.resolve("srcDir").toString())
+    assertThat(build.testSources).containsExactly(tmp.resolve("testDir").toString())
   }
 }

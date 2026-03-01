@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ignore
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
@@ -17,6 +16,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
@@ -51,11 +51,16 @@ import com.intellij.util.Alarm
 import com.intellij.util.messages.impl.subscribeAsFlow
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -314,7 +319,7 @@ class IgnoredToExcludeNotificationProvider : EditorNotificationProvider, DumbAwa
       panel.createActionLabel(message("ignore.to.exclude.notification.action.view")) { showIgnoredAction(project) }
       panel.createActionLabel(message("ignore.to.exclude.notification.action.mute"), muteAction(project))
       panel.createActionLabel(message("ignore.to.exclude.notification.action.details")) {
-        BrowserUtil.browse("https://www.jetbrains.com/help/idea/content-roots.html#folder-categories")
+        HelpManager.getInstance().invokeHelp("help.content.roots.folder.categories")
       }
       panel
     }

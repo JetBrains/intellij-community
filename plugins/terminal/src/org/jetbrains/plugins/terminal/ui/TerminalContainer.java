@@ -21,8 +21,10 @@ import org.jetbrains.plugins.terminal.TerminalBundle;
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
 
 public final class TerminalContainer {
   @ApiStatus.Internal

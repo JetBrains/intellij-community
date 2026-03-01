@@ -14,4 +14,12 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":microba_resources"]
 )
+
+jvm_library(
+  name = "microba_test_lib",
+  module_name = "intellij.libraries.microba",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":microba"]
+)
 ### auto-generated section `build intellij.libraries.microba` end

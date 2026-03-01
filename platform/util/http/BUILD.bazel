@@ -15,4 +15,18 @@ jvm_library(
     "//libraries/io",
   ]
 )
+
+jvm_library(
+  name = "http_test_lib",
+  module_name = "intellij.platform.util.http",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":http",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/ktor/client:client_test_lib",
+    "//libraries/io:io_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.util.http` end

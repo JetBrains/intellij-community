@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.deleteElementAndCleanParent
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeProjection
 
+@K1Deprecation
 class SafeDeleteTypeArgumentListUsageInfo(
     typeProjection: KtTypeProjection, parameter: KtTypeParameter
 ) : SafeDeleteReferenceSimpleDeleteUsageInfo(typeProjection, parameter, true) {

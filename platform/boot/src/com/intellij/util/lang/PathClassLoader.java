@@ -33,16 +33,15 @@ public final class PathClassLoader extends UrlClassLoader {
 
   static {
     boolean defineClassUsingBytes = Boolean.parseBoolean(System.getProperty("idea.define.class.using.byte.array", "false"));
-    ZipFilePool zipPool = ZipFilePool.PATH_CLASSLOADER_POOL;
     if (!defineClassUsingBytes && System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows")) {
       RESOURCE_FILE_FACTORY = file -> {
         String path = file.toString();
-        return new ZipResourceFile(file, path.length() > 2 && path.charAt(0) == '\\' && path.charAt(1) == '\\', zipPool);
+        return new ZipResourceFile(file, path.length() > 2 && path.charAt(0) == '\\' && path.charAt(1) == '\\', ZipFilePool.PATH_CLASSLOADER_POOL);
       };
     }
     else {
       RESOURCE_FILE_FACTORY = file -> {
-        return new ZipResourceFile(file, defineClassUsingBytes, zipPool);
+        return new ZipResourceFile(file, defineClassUsingBytes, ZipFilePool.PATH_CLASSLOADER_POOL);
       };
     }
   }

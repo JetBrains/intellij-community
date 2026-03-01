@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression.eliminate;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;

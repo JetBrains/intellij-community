@@ -19,4 +19,6 @@ abstract class AbstractHighLevelQuickFixMultiFileTest : AbstractQuickFixMultiFil
     override fun checkForUnexpectedErrors(file: KtFile) {}
 
     override fun checkAvailableActionsAreExpected(file: File, actions: Collection<IntentionAction>) {}
+
+    override val actionPrefix: String? = "K2_ACTION:"
 }

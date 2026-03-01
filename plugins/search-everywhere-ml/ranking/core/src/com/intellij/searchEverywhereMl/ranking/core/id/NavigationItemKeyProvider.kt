@@ -8,7 +8,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider
 
-private class NavigationItemKeyProvider : SearchEverywhereElementKeyProvider {
+internal class NavigationItemKeyProvider : SearchEverywhereElementKeyProvider {
   override fun getKeyOrNull(element: Any): Any? {
     return when (element) {
       is PsiElementNavigationItem -> element.targetElement

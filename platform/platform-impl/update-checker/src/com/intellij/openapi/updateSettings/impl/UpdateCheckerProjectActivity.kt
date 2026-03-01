@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-private class UpdateCheckerProjectActivity : ProjectActivity {
+internal class UpdateCheckerProjectActivity : ProjectActivity {
   private val isStarted = AtomicBoolean(false)
 
   init {

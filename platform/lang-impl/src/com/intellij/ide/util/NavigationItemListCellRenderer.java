@@ -30,8 +30,16 @@ import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 
 import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 

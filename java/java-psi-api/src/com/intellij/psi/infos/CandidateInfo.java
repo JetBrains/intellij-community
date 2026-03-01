@@ -3,7 +3,22 @@ package com.intellij.psi.infos;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 

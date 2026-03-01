@@ -5,6 +5,7 @@ import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.vfs.encoding.EncodingManager
+import com.jetbrains.python.run.PythonExecution.Companion.SKIP_ARGUMENT
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.charset.Charset

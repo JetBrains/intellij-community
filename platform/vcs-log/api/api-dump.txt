@@ -8,7 +8,6 @@ com.intellij.vcs.log.RefGroup
 - a:getColors():java.util.List
 - a:getName():java.lang.String
 - a:getRefs():java.util.List
-- a:isExpanded():Z
 com.intellij.vcs.log.TimedVcsCommit
 - com.intellij.vcs.log.graph.GraphCommit
 com.intellij.vcs.log.VcsCommitMetadata
@@ -36,6 +35,10 @@ com.intellij.vcs.log.VcsLog
 - jumpToReference(java.lang.String):java.util.concurrent.Future
 - a:jumpToReference(java.lang.String,Z):java.util.concurrent.Future
 - a:requestSelectedDetails(com.intellij.util.Consumer):V
+f:com.intellij.vcs.log.VcsLogAggregatedStoredRefsKt
+- sf:allRefsStream(com.intellij.vcs.log.VcsLogAggregatedStoredRefs):java.util.stream.Stream
+- sf:getBranches(com.intellij.vcs.log.VcsLogAggregatedStoredRefs):java.util.List
+- sf:refsToCommit(com.intellij.vcs.log.VcsLogAggregatedStoredRefs,com.intellij.openapi.vfs.VirtualFile,I):java.util.List
 com.intellij.vcs.log.VcsLogBranchFilter
 - com.intellij.vcs.log.VcsLogBranchLikeFilter
 - getDisplayText():java.lang.String
@@ -63,7 +66,7 @@ f:com.intellij.vcs.log.VcsLogDataKeys
 com.intellij.vcs.log.VcsLogDataPack
 - a:getFilters():com.intellij.vcs.log.VcsLogFilterCollection
 - a:getLogProviders():java.util.Map
-- a:getRefs():com.intellij.vcs.log.VcsLogRefs
+- a:getRefs():com.intellij.vcs.log.VcsLogAggregatedStoredRefs
 - a:isEmpty():Z
 com.intellij.vcs.log.VcsLogDataProvider
 - a:getCommitId(I):com.intellij.vcs.log.CommitId
@@ -145,7 +148,6 @@ f:com.intellij.vcs.log.VcsLogProperties
 - sf:CASE_INSENSITIVE_REGEX:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:HAS_COMMITTER:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:LIGHTWEIGHT_BRANCHES:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
-- sf:SUPPORTS_INCREMENTAL_REFRESH:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_INDEXING:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_LOG_DIRECTORY_HISTORY:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - sf:SUPPORTS_PARENTS_FILTER:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
@@ -153,6 +155,7 @@ f:com.intellij.vcs.log.VcsLogProperties
 f:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
 - getOrDefault(com.intellij.vcs.log.VcsLogProvider):java.lang.Object
 com.intellij.vcs.log.VcsLogProvider
+- sf:Companion:com.intellij.vcs.log.VcsLogProvider$Companion
 - sf:LOG_PROVIDER_EP:com.intellij.openapi.extensions.ExtensionPointName
 - getCommitsMatchingFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogFilterCollection,I):java.util.List
 - getCommitsMatchingFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.graph.PermanentGraph$Options,I):java.util.List
@@ -166,14 +169,17 @@ com.intellij.vcs.log.VcsLogProvider
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
 - getVcsRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vfs.VirtualFile
 - a:readAllHashes(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Consumer):com.intellij.vcs.log.VcsLogProvider$LogData
-- a:readFirstBlock(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogProvider$Requirements):com.intellij.vcs.log.VcsLogProvider$DetailedLogData
+- readFirstBlock(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogProvider$Requirements):com.intellij.vcs.log.VcsLogProvider$DetailedLogData
 - a:readFullDetails(com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.util.Consumer):V
 - a:readMetadata(com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.util.Consumer):V
+- readRecentCommits(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogProvider$Requirements,com.intellij.vcs.log.VcsLogProvider$RefsLoadingPolicy,kotlin.coroutines.Continuation):java.lang.Object
 - resolveReference(java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.Hash
 - a:subscribeToRootRefreshEvents(java.util.Collection,com.intellij.vcs.log.VcsLogRefresher):com.intellij.openapi.Disposable
+f:com.intellij.vcs.log.VcsLogProvider$Companion
 com.intellij.vcs.log.VcsLogProvider$DetailedLogData
 - a:getCommits():java.util.List
-- a:getRefs():java.util.Set
+- getRefs():java.util.Set
+- getRefsIterable():java.lang.Iterable
 com.intellij.vcs.log.VcsLogProvider$LogData
 - a:getRefs():java.util.Set
 - a:getUsers():java.util.Set
@@ -181,7 +187,7 @@ com.intellij.vcs.log.VcsLogProvider$Requirements
 - a:getCommitCount():I
 com.intellij.vcs.log.VcsLogProviderRequirementsEx
 - com.intellij.vcs.log.VcsLogProvider$Requirements
-- a:getPreviousRefs():java.util.Collection
+- a:getPreviousRefs():com.intellij.vcs.log.VcsRefsContainer
 - a:isRefresh():Z
 - a:isRefreshRefs():Z
 com.intellij.vcs.log.VcsLogRangeFilter
@@ -210,9 +216,6 @@ com.intellij.vcs.log.VcsLogRefManager
 - a:setFavorite(com.intellij.vcs.log.VcsRef,Z):V
 com.intellij.vcs.log.VcsLogRefresher
 - a:refresh(com.intellij.openapi.vfs.VirtualFile):V
-com.intellij.vcs.log.VcsLogRefs
-- a:getBranches():java.util.Collection
-- a:stream():java.util.stream.Stream
 com.intellij.vcs.log.VcsLogRevisionFilter
 - com.intellij.vcs.log.VcsLogBranchLikeFilter
 - getDisplayText():java.lang.String
@@ -257,6 +260,10 @@ com.intellij.vcs.log.VcsRef
 com.intellij.vcs.log.VcsRefType
 - a:getBackgroundColor():java.awt.Color
 - a:isBranch():Z
+com.intellij.vcs.log.VcsRefsContainer
+- allRefs():kotlin.sequences.Sequence
+- a:branches():kotlin.sequences.Sequence
+- a:tags():kotlin.sequences.Sequence
 com.intellij.vcs.log.VcsShortCommitDetails
 - com.intellij.vcs.log.TimedVcsCommit
 - a:getAuthor():com.intellij.vcs.log.VcsUser

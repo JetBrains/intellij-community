@@ -13,7 +13,13 @@ import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 public abstract class CommonSourceRootDetectionUtil<F> {
@@ -79,7 +85,7 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
     @Override
     protected boolean isCaseSensitive(@NotNull File file) {
-      FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
+      FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file.toPath());
       return sensitivity.toBooleanWithDefault(SystemInfo.isFileSystemCaseSensitive);
     }
 

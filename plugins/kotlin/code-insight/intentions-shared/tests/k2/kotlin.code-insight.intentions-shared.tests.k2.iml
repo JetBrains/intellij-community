@@ -25,7 +25,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
@@ -33,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
   </component>
 </module>

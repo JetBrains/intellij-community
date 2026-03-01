@@ -2,25 +2,25 @@
 package git4idea.inMemory.rebase.log.reword
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.Hash
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.chainCommits
 import git4idea.inMemory.rebase.log.GitInMemoryCommitEditingOperation
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 internal class GitInMemoryRewordOperation(
   objectRepo: GitObjectRepository,
-  targetCommitMetadata: VcsCommitMetadata,
+  targetCommit: Hash,
   private val newMessage: String,
-) : GitInMemoryCommitEditingOperation(objectRepo, targetCommitMetadata) {
+) : GitInMemoryCommitEditingOperation(objectRepo, targetCommit) {
   companion object {
     private val LOG = logger<GitInMemoryRewordOperation>()
   }
 
-  @NonNls
-  override val reflogMessage: String = "reword $targetCommitMetadata"
-  override val failureTitle: String = GitBundle.message("in.memory.rebase.log.reword.failed.title")
+  override val operationName: @Nls String = GitBundle.message("action.Git.Reword.Commit.operation.name", targetCommit)
+  override val failureTitle: @NonNls String = GitBundle.message("in.memory.rebase.log.reword.failed.title")
 
   override suspend fun editCommits(): CommitEditingResult {
     val targetCommit = baseToHeadCommitsRange.first()

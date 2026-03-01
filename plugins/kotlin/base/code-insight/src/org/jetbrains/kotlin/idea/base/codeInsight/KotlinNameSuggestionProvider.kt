@@ -12,7 +12,13 @@ import com.intellij.psi.statistics.JavaStatisticsManager
 import com.intellij.refactoring.rename.NameSuggestionProvider
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull

@@ -102,9 +102,9 @@ org.jetbrains.jps.dependency.Graph
 - a:getSources():java.lang.Iterable
 - a:getSources(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
 org.jetbrains.jps.dependency.GraphConfiguration
-- s:create(org.jetbrains.jps.dependency.DependencyGraph,org.jetbrains.jps.dependency.NodeSourcePathMapper):org.jetbrains.jps.dependency.GraphConfiguration
 - a:getGraph():org.jetbrains.jps.dependency.DependencyGraph
 - a:getPathMapper():org.jetbrains.jps.dependency.NodeSourcePathMapper
+- isGraphUpdated():Z
 org.jetbrains.jps.dependency.GraphDataInput
 - java.io.DataInput
 - a:readGraphElement():org.jetbrains.jps.dependency.ExternalizableGraphElement
@@ -146,6 +146,7 @@ org.jetbrains.jps.dependency.NodeBuilder
 - a:addUsage(org.jetbrains.jps.dependency.Usage):V
 - a:getReferenceID():org.jetbrains.jps.dependency.ReferenceID
 - a:getResult():org.jetbrains.jps.dependency.Node
+- a:setHasImplicitTypes():V
 org.jetbrains.jps.dependency.NodeSource
 - org.jetbrains.jps.dependency.ExternalizableGraphElement
 - a:equals(java.lang.Object):Z
@@ -193,3 +194,6 @@ org.jetbrains.jps.dependency.diff.Difference$Specifier
 - changed():java.lang.Iterable
 - removed():java.lang.Iterable
 - unchanged():Z
+c:org.jetbrains.jps.dependency.test.TestJvmDifferentiateStrategy
+- <init>():V
+- p:getTrackedAnnotations():java.lang.Iterable

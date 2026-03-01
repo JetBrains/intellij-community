@@ -10,7 +10,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.psi.PsiElement
 import org.editorconfig.language.util.EditorConfigPresentationUtil
 
-private class EditorConfigGotoTargetRendererProvider : GotoTargetRendererProvider {
+internal class EditorConfigGotoTargetRendererProvider : GotoTargetRendererProvider {
   override fun getRenderer(element: PsiElement, gotoData: GotoTargetHandler.GotoData): PsiElementListCellRenderer<*>? {
     if (element !is EditorConfigHeader && element !is EditorConfigFlatOptionKey) return null
     return object : PsiElementListCellRenderer<PsiElement?>() {

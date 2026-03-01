@@ -14,7 +14,7 @@
   <vendor>JetBrains</vendor>
 
   <dependencies>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
   </dependencies>
 
   <extensionPoints>

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
@@ -19,7 +20,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.UrlClassLoader;
-import junit.framework.*;
+import junit.framework.JUnit4TestAdapter;
+import junit.framework.JUnit4TestAdapterCache;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestFailure;
+import junit.framework.TestListener;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -40,10 +48,18 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.intellij.TestCaseLoader.*;
+import static com.intellij.TestCaseLoader.Builder;
+import static com.intellij.TestCaseLoader.getClassLoader;
+import static com.intellij.TestCaseLoader.isIncludingPerformanceTestsRun;
+import static com.intellij.TestCaseLoader.isPerformanceTest;
+import static com.intellij.TestCaseLoader.isPerformanceTestsRun;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class TestAll implements Test {
@@ -61,9 +77,9 @@ public class TestAll implements Test {
   private static final Filter PERFORMANCE_ONLY = new Filter() {
     @Override
     public boolean shouldRun(Description description) {
-      String className = description.getClassName();
-      String methodName = description.getMethodName();
-      return TestFrameworkUtil.isPerformanceTest(methodName, className);
+      return description.getAnnotation(PerformanceUnitTest.class) != null ||
+             description.getTestClass() != null && description.getTestClass().isAnnotationPresent(PerformanceUnitTest.class) ||  // for methods of classes w/ @PerformanceUnitTest
+             ContainerUtil.exists(description.getChildren(), this::shouldRun);  // recursively
     }
 
     @Override
@@ -125,7 +141,9 @@ public class TestAll implements Test {
 
   public static @Unmodifiable List<Path> getClassRoots() {
     return TeamCityLogger.block("Collecting tests from ...", () -> {
-      return doGetClassRoots();
+      List<Path> paths = doGetClassRoots();
+      saveTestRootsForDebug(paths);
+      return paths;
     });
   }
 
@@ -165,13 +183,13 @@ public class TestAll implements Test {
         })
         .collect(Collectors.toList());
 
-      System.out.println("Collecting tests from roots specified by jar.dependencies.to.tests property: " + testPaths);
+      System.out.println("Collecting tests from roots specified by jar.dependencies.to.tests system property");
       return testPaths;
     }
 
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
-      System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
+      System.out.println("Collecting tests from roots specified by test.roots system property");
       return ContainerUtil.map(testRoots.split(";"), Paths::get);
     }
     List<Path> roots = ExternalClasspathClassLoader.getRoots();
@@ -182,20 +200,21 @@ public class TestAll implements Test {
         roots = new ArrayList<>(roots);
         roots.removeAll(FileCollectionFactory.createCanonicalPathSet(excludeRoots));
       }
-
-      System.out.println("Collecting tests from roots specified by classpath.file property: " + roots);
+      System.out.println("Collecting tests from roots specified by " + ExternalClasspathClassLoader.CLASSPATH_FILE_PROPERTY + " system property");
       return roots;
     }
     else {
       ClassLoader loader = TestAll.class.getClassLoader();
       if (loader instanceof URLClassLoader) {
+        System.out.println("Collecting tests from TestAll class loader (" + URLClassLoader.class.getName() + ")");
         return ContainerUtil.map(getClassRoots(((URLClassLoader)loader).getURLs()), url -> Paths.get(url.toUri()));
       }
       if (loader instanceof UrlClassLoader) {
         List<Path> urls = ((UrlClassLoader)loader).getBaseUrls();
-        System.out.println("Collecting tests from " + urls);
+        System.out.println("Collecting tests from TestAll class loader (" + UrlClassLoader.class.getName() + ")");
         return urls;
       }
+      System.out.println("Collecting tests from java.class.path system property");
       return ContainerUtil.map(System.getProperty("java.class.path").split(File.pathSeparator), Paths::get);
     }
   }
@@ -211,6 +230,17 @@ public class TestAll implements Test {
     });
     System.out.println("Collecting tests from " + classLoaderRoots);
     return classLoaderRoots;
+  }
+
+  private static void saveTestRootsForDebug(@NotNull List<Path> paths) {
+    try {
+      Path tempFile = Files.createTempFile("TestAll-test-roots-path", ".txt");
+      System.out.println("Saving test roots for further debugging to " + tempFile);
+      Files.writeString(tempFile, String.join("\n", ContainerUtil.map(paths, Path::toString)));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -427,7 +457,7 @@ public class TestAll implements Test {
       }
 
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
-        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName());
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return createJUnit4Adapter(testCaseClass);
 
@@ -461,7 +491,7 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass.getSimpleName()))) {
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass))) {
               return;
             }
 
@@ -487,9 +517,7 @@ public class TestAll implements Test {
       return testsCount[0] > 0 ? suite : null;
     }
     catch (Throwable t) {
-      System.err.println("Failed to load test: " + testCaseClass.getName());
-      t.printStackTrace(System.err);
-      return null;
+      throw new RuntimeException("Failed to load test: " + testCaseClass.getName(), t);
     }
   }
 
@@ -505,7 +533,7 @@ public class TestAll implements Test {
 
       // Maybe JUnit 4 test?
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
-        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName());
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return true;
 
@@ -530,9 +558,7 @@ public class TestAll implements Test {
       return Test.class.isAssignableFrom(testCaseClass);
     }
     catch (Throwable t) {
-      System.err.println("Failed to load test: " + testCaseClass.getName());
-      t.printStackTrace(System.err);
-      return false;
+      throw new RuntimeException("Failed to load test: " + testCaseClass.getName(), t);
     }
   }
 
@@ -545,7 +571,7 @@ public class TestAll implements Test {
       JUnit4TestAdapterCache cache;
       if ("junit5".equals(System.getProperty("intellij.build.test.runner"))) {
         try {
-          cache = (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite")
+          cache = (JUnit4TestAdapterCache)Class.forName("com.intellij.tests.JUnit5TeamCityRunner")
             .getMethod("createJUnit4TestAdapterCache")
             .invoke(null);
         }

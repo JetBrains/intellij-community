@@ -4,9 +4,13 @@ package com.intellij.openapi.ui;
 import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import javax.swing.border.LineBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

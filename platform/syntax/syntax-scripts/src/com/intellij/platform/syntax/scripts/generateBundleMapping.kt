@@ -7,8 +7,16 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.Writer
 import java.nio.file.Path
-import java.util.*
-import kotlin.io.path.*
+import java.util.Properties
+import java.util.ResourceBundle
+import kotlin.io.path.Path
+import kotlin.io.path.createFile
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.writer
 import kotlin.system.exitProcess
 
 /**

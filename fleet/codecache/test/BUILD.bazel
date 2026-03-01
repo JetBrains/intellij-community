@@ -17,25 +17,31 @@ create_kotlinc_options(
 jvm_library(
   name = "test",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"])
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "test_test_lib",
   module_name = "fleet.codecache.test",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_test",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//fleet/junit",
+    "//fleet/test-runtime",
+    "//fleet/test-runtime:test-runtime_test_lib",
     "//fleet/codecache",
+    "//fleet/codecache:codecache_test_lib",
     "@lib//:kotlinx-coroutines-core",
     "//fleet/bundles",
+    "//fleet/bundles:bundles_test_lib",
     "//fleet/util/network",
+    "//fleet/util/network:network_test_lib",
     "//fleet/ktor/client/core",
+    "//fleet/ktor/client/core:core_test_lib",
     "@lib//:kotlinx-serialization-core",
-  ]
+  ],
+  runtime_deps = [":test"]
 )
 ### auto-generated section `build fleet.codecache.test` end
 

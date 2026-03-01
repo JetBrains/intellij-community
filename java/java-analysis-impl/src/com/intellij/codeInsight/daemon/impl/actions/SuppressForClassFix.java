@@ -3,7 +3,11 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaDocumentedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

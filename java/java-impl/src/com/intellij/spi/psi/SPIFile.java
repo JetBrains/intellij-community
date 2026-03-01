@@ -2,12 +2,20 @@
 package com.intellij.spi.psi;
 
 import com.intellij.extapi.psi.PsiFileBase;
+import com.intellij.lang.Language;
 import com.intellij.lang.spi.SPILanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.spi.SPIFileType;
@@ -19,8 +27,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SPIFile extends PsiFileBase {
+
+  protected SPIFile(@NotNull FileViewProvider viewProvider, Language language) {
+    super(viewProvider, language);
+  }
+
   public SPIFile(@NotNull FileViewProvider viewProvider) {
-    super(viewProvider, SPILanguage.INSTANCE);
+    this(viewProvider, SPILanguage.INSTANCE);
   }
 
   @Override

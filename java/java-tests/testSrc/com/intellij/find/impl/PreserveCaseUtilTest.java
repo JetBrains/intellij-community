@@ -3,8 +3,9 @@ package com.intellij.find.impl;
 
 import org.junit.Test;
 
-import static com.intellij.find.impl.PreserveCaseUtil.*;
-import static org.junit.Assert.*;
+import static com.intellij.find.impl.PreserveCaseUtil.applyCase;
+import static com.intellij.find.impl.PreserveCaseUtil.replaceWithCaseRespect;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Bas Leijdekkers

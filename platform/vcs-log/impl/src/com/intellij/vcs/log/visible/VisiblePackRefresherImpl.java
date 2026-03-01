@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.visible;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -16,14 +15,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.SingleTaskController;
+import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogGraphData;
+import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import kotlin.Pair;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
@@ -41,7 +45,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   private final @NotNull List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private volatile @NotNull State myState;
-  private volatile @NotNull DataPack myDataPack;
+  private volatile @NotNull VcsLogGraphData myDataPack;
 
   public VisiblePackRefresherImpl(@NotNull Project project,
                                   @NotNull VcsLogData logData,
@@ -50,7 +54,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                   @NotNull VcsLogFilterer filterer,
                                   @NotNull String logId) {
     myLogData = logData;
-    myDataPack = logData.getDataPack();
+    myDataPack = logData.getGraphData();
     myVcsLogFilterer = filterer;
     myLogId = logId;
     myState = new State(filters, options, myVcsLogFilterer.getInitialCommitCount());
@@ -109,7 +113,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   @Override
-  public void setDataPack(boolean validate, @NotNull DataPack dataPack) {
+  public void setDataPack(boolean validate, @NotNull VcsLogGraphData dataPack) {
     myDataPack = dataPack;
     setValid(validate, true);
   }
@@ -125,8 +129,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   @Override
-  public void moreCommitsNeeded(@NotNull Runnable onLoaded) {
-    myTaskController.request(new MoreCommitsRequest(onLoaded));
+  public void moreCommitsNeeded() {
+    myTaskController.request(new MoreCommitsRequest());
   }
 
   @Override
@@ -173,35 +177,24 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           myTaskController.removeRequests(requests);
         }
       }
-
-      List<MoreCommitsRequest> requestsToRun = new ArrayList<>();
-      if (state.getVisiblePack() != myState.getVisiblePack() && state.isValid() &&
-          !(state.getVisiblePack() instanceof VisiblePack.ErrorVisiblePack)) {
-        requestsToRun.addAll(state.getRequestsToRun());
-        state = state.withRequests(new ArrayList<>());
-      }
-
       myTaskController.taskCompleted(state);
-
-      if (!requestsToRun.isEmpty()) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          for (MoreCommitsRequest request : requestsToRun) {
-            request.onLoaded.run();
-          }
-        });
-      }
     }
 
     private @NotNull State computeState(@NotNull State state, @NotNull List<? extends Request> requests) {
-      List<MoreCommitsRequest> moreCommitsRequests = filterMoreCommitsRequests(requests);
-      boolean requestMoreCommits = !moreCommitsRequests.isEmpty();
+      MoreCommitsRequest moreCommitsRequest = ContainerUtil.findLastInstance(requests, MoreCommitsRequest.class);
+      boolean requestMoreCommits = moreCommitsRequest != null && myState.myVisiblePack.getCanRequestMore();
+      if (moreCommitsRequest != null && !myState.myVisiblePack.getCanRequestMore()) {
+        int visibleCommitCount = myState.myVisiblePack.getVisibleGraph().getVisibleCommitCount();
+        int requestCount = myState.myCommitCount.getCount();
+        LOG.debug(String.format("Requested to load more commits, however visible pack indicates that more commits can't be loaded " +
+                                "Displaying %d commits, request count - %d", visibleCommitCount, requestCount));
+      }
 
       ValidateRequest validateRequest = ContainerUtil.findLastInstance(requests, ValidateRequest.class);
       FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
       GraphOptionsRequest graphOptionsRequest = ContainerUtil.findLastInstance(requests, GraphOptionsRequest.class);
       List<IndexingFinishedRequest> indexingRequests = ContainerUtil.findAll(requests, IndexingFinishedRequest.class);
 
-      state = state.withRequests(ContainerUtil.concat(state.getRequestsToRun(), moreCommitsRequests));
       if (filterRequest != null) {
         state = state.withFilters(filterRequest.filters);
       }
@@ -254,24 +247,12 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       }
     }
 
-    private @NotNull List<MoreCommitsRequest> filterMoreCommitsRequests(@NotNull List<? extends Request> requests) {
-      List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
-      if (!moreCommitsRequests.isEmpty() && !myState.myVisiblePack.getCanRequestMore()) {
-        int visibleCommitCount = myState.myVisiblePack.getVisibleGraph().getVisibleCommitCount();
-        int requestCount = myState.myCommitCount.getCount();
-        LOG.debug(String.format("Requested to load more commits, however visible pack indicates that more commits can't be loaded " +
-                                "Displaying %d commits, request count - %d", visibleCommitCount, requestCount));
-        moreCommitsRequests = Collections.emptyList();
-      }
-      return moreCommitsRequests;
-    }
-
     private @NotNull State refresh(@NotNull State state, @NotNull CommitCountUpdate commitCountUpdate) {
-      DataPack dataPack = myDataPack;
+      VcsLogGraphData dataPack = myDataPack;
 
       VcsLogFilterCollection filters = state.getFilters();
 
-      if (dataPack == DataPack.EMPTY && !myVcsLogFilterer.canFilterEmptyPack(filters)) {
+      if (dataPack instanceof VcsLogGraphData.Empty && !myVcsLogFilterer.canFilterEmptyPack(filters)) {
         // when filter is set during initialization, just remember filters
         // unless our builder can do something with an empty pack, for example in file history
         return state;
@@ -292,7 +273,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                                                            filters, state.getCommitCount());
         VisiblePack visiblePack = pair.getFirst();
         CommitCountStage commitCount = pair.getSecond();
-        if (dataPack instanceof SmallDataPack) {
+        if (dataPack instanceof VcsLogGraphData.OverlayData) {
           visiblePack = CompoundVisiblePack.build(visiblePack, state.getVisiblePack());
         }
         return state.withVisiblePack(visiblePack).withCommitCount(commitCount);
@@ -333,24 +314,21 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     private final @NotNull VcsLogFilterCollection myFilters;
     private final @NotNull PermanentGraph.Options myGraphOptions;
     private final @NotNull CommitCountStage myCommitCount;
-    private final @NotNull List<MoreCommitsRequest> myRequestsToRun;
     private final @NotNull VisiblePack myVisiblePack;
     private final boolean myIsValid;
 
     State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.Options graphOptions, @NotNull CommitCountStage initialCount) {
-      this(filters, graphOptions, initialCount, new ArrayList<>(), VisiblePack.EMPTY, true);
+      this(filters, graphOptions, initialCount, VisiblePack.EMPTY, true);
     }
 
     State(@NotNull VcsLogFilterCollection filters,
           @NotNull PermanentGraph.Options graphOptions,
           @NotNull CommitCountStage commitCountStage,
-          @NotNull List<MoreCommitsRequest> requests,
           @NotNull VisiblePack visiblePack,
           boolean isValid) {
       myFilters = filters;
       myGraphOptions = graphOptions;
       myCommitCount = commitCountStage;
-      myRequestsToRun = Collections.unmodifiableList(requests);
       myVisiblePack = visiblePack;
       myIsValid = isValid;
     }
@@ -361,10 +339,6 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
     public @NotNull VisiblePack getVisiblePack() {
       return myVisiblePack;
-    }
-
-    public @NotNull List<MoreCommitsRequest> getRequestsToRun() {
-      return myRequestsToRun;
     }
 
     public @NotNull VcsLogFilterCollection getFilters() {
@@ -380,27 +354,23 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     }
 
     public @NotNull State withValid(boolean valid) {
-      return new State(myFilters, myGraphOptions, myCommitCount, myRequestsToRun, myVisiblePack, valid);
+      return new State(myFilters, myGraphOptions, myCommitCount, myVisiblePack, valid);
     }
 
     public @NotNull State withVisiblePack(@NotNull VisiblePack visiblePack) {
-      return new State(myFilters, myGraphOptions, myCommitCount, myRequestsToRun, visiblePack, myIsValid);
+      return new State(myFilters, myGraphOptions, myCommitCount, visiblePack, myIsValid);
     }
 
     public @NotNull State withCommitCount(@NotNull CommitCountStage commitCount) {
-      return new State(myFilters, myGraphOptions, commitCount, myRequestsToRun, myVisiblePack, myIsValid);
-    }
-
-    public @NotNull State withRequests(@NotNull List<MoreCommitsRequest> requests) {
-      return new State(myFilters, myGraphOptions, myCommitCount, requests, myVisiblePack, myIsValid);
+      return new State(myFilters, myGraphOptions, commitCount, myVisiblePack, myIsValid);
     }
 
     public @NotNull State withFilters(@NotNull VcsLogFilterCollection filters) {
-      return new State(filters, myGraphOptions, myCommitCount, myRequestsToRun, myVisiblePack, myIsValid);
+      return new State(filters, myGraphOptions, myCommitCount, myVisiblePack, myIsValid);
     }
 
     public @NotNull State withGraphOptions(@NotNull PermanentGraph.Options graphOptions) {
-      return new State(myFilters, graphOptions, myCommitCount, myRequestsToRun, myVisiblePack, myIsValid);
+      return new State(myFilters, graphOptions, myCommitCount, myVisiblePack, myIsValid);
     }
 
     @Override
@@ -409,7 +379,6 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
              "myFilters=" + myFilters +
              ", myGraphOptions=" + myGraphOptions +
              ", myCommitCount=" + myCommitCount +
-             ", myRequestsToRun=" + myRequestsToRun +
              ", myVisiblePack=" + myVisiblePack +
              ", myIsValid=" + myIsValid +
              '}';
@@ -466,10 +435,9 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   private static final class MoreCommitsRequest implements Request {
-    private final @NotNull Runnable onLoaded;
-
-    MoreCommitsRequest(@NotNull Runnable onLoaded) {
-      this.onLoaded = onLoaded;
+    @Override
+    public String toString() {
+      return "MoreCommitsRequest";
     }
   }
 

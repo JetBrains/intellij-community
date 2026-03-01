@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -9,7 +9,6 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,18 +20,17 @@ public class MockLocalFileSystem extends LocalFileSystem {
   private final MockVirtualFileSystem myDelegate = new MockVirtualFileSystem();
 
   @Override
-  public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) { }
-
-  @Override
   public void refreshNioFiles(@NotNull Iterable<? extends Path> files, boolean async, boolean recursive, @Nullable Runnable onFinish) { }
 
   @Override
   public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) { }
 
   @Override
-  public @NotNull Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
-                                                        @Nullable Collection<String> recursiveRoots,
-                                                        @Nullable Collection<String> flatRoots) {
+  public @NotNull Set<WatchRequest> replaceWatchedRoots(
+    @NotNull Collection<WatchRequest> watchRequests,
+    @Nullable Collection<String> recursiveRoots,
+    @Nullable Collection<String> flatRoots
+  ) {
     throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
   }
 
@@ -44,7 +42,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
 
   @Override
   public @NotNull String getProtocol() {
-    return LocalFileSystem.PROTOCOL;
+    return PROTOCOL;
   }
 
   @Override
@@ -80,10 +78,12 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  public @NotNull VirtualFile copyFile(Object requestor,
-                                       @NotNull VirtualFile virtualFile,
-                                       @NotNull VirtualFile newParent,
-                                       @NotNull String copyName) throws IOException {
+  public @NotNull VirtualFile copyFile(
+    Object requestor,
+    @NotNull VirtualFile virtualFile,
+    @NotNull VirtualFile newParent,
+    @NotNull String copyName
+  ) throws IOException {
     return myDelegate.copyFile(requestor, virtualFile, newParent, copyName);
   }
 
@@ -152,11 +152,6 @@ public class MockLocalFileSystem extends LocalFileSystem {
 
   @Override
   public void setWritable(@NotNull VirtualFile file, boolean writableFlag) { }
-
-  @Override
-  public int getRank() {
-    return 1;
-  }
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {

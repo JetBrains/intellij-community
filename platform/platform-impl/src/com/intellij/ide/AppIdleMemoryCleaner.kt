@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.isRhizomeProgressEnabled
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.registry.Registry
@@ -33,8 +32,24 @@ import com.jetbrains.JBR
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.tokensFlow
 import fleet.kernel.tryWithEntities
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.lang.management.ManagementFactory
 import kotlin.system.measureNanoTime
@@ -157,9 +172,6 @@ private fun isModal(): Boolean {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun CoroutineScope.hasActiveBackgroundTasksStateFlow(): StateFlow<Boolean> {
-  if (!isRhizomeProgressEnabled) {
-    return MutableStateFlow(false)
-  }
   return activeTasks.asValuesFlow().flatMapMerge { task ->
     flow {
       emit(1)

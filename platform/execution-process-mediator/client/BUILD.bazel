@@ -39,14 +39,21 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//libraries/guava",
+    "//libraries/guava:guava_test_lib",
     "//libraries/protobuf",
+    "//libraries/protobuf:protobuf_test_lib",
     "//platform/execution-process-mediator/daemon",
+    "//platform/execution-process-mediator/daemon:daemon_test_lib",
     "//platform/execution-process-mediator/common",
     "//platform/execution-process-mediator/common:common_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:junit5",
@@ -55,7 +62,13 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:execution-process-mediator-client-grpc-inprocess",
     "//libraries/grpc",
+    "//libraries/grpc:grpc_test_lib",
     "//libraries/grpc-netty-shaded",
+    "//libraries/grpc-netty-shaded:grpc-netty-shaded_test_lib",
+  ],
+  runtime_deps = [
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
 ### auto-generated section `build intellij.execution.process.mediator.client` end

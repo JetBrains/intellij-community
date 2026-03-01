@@ -2,9 +2,10 @@ package com.michaelbaranov.microba.common;
 
 import com.michaelbaranov.microba.Microba;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Color;
 import java.util.Collections;
 import java.util.Map;
 

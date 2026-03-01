@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package andel.intervals
 
-import andel.intervals.impl.AnchorStorageSerializer
 import andel.editor.AnchorId
 import andel.editor.RangeMarkerId
+import andel.intervals.impl.AnchorStorageSerializer
 import andel.operation.NewOffsetProvider
 import andel.operation.Operation
 import andel.operation.Sticky

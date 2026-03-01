@@ -12,7 +12,18 @@ import com.intellij.codeInspection.java19modules.JavaModuleDefinitionInspection
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.INTERNAL_MAIN
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M3
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M5
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M6
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M7
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M8
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MR_JAVA9
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MR_MAIN
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M_TEST
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.mock.MockLocalFileSystem
@@ -1226,10 +1237,10 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
         var path = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath()!!
         if (caseInsensitive) path = breakPath(path)
-        val jdk = ProjectJdkTable.getInstance().findJdk(name)
+        val jdk = ProjectJdkTable.getInstance(project).findJdk(name)
                   ?: createJdk(name, path)
 
-        ProjectJdkTable.getInstance().addJdk(jdk, project)
+        ProjectJdkTable.getInstance(project).addJdk(jdk, project)
         ModuleRootModificationUtil.setModuleSdk(module, jdk)
       })
 
@@ -1241,15 +1252,16 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     finally {
       WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
         ModuleRootModificationUtil.setModuleSdk(module, projectDescriptor.sdk)
-        ProjectJdkTable.getInstance().findJdk(name)?.also { jdk ->
-          ProjectJdkTable.getInstance().removeJdk(jdk)
+        val jdkTable = ProjectJdkTable.getInstance(project)
+        jdkTable.findJdk(name)?.also { jdk ->
+          jdkTable.removeJdk(jdk)
         }
       })
     }
   }
 
   fun createJdk(jdkName: String, home: String): Sdk {
-    val jdk = ProjectJdkTable.getInstance().createSdk(jdkName, JavaSdk.getInstance())
+    val jdk = ProjectJdkTable.getInstance(project).createSdk(jdkName, JavaSdk.getInstance())
     val sdkModificator = jdk.getSdkModificator()
 
     sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home))

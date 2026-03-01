@@ -2,7 +2,22 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAssertStatement;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiYieldStatement;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 

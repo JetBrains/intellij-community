@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.core;
 
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.Objects;
 
 public final class GridConstraints implements Cloneable {

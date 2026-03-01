@@ -10,7 +10,8 @@ import com.jetbrains.python.debugger.containerview.PyDataViewerCommunityPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 
 public class ArrayViewStrategy extends DataViewStrategy {
   private final String myTypeName;

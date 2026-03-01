@@ -7,12 +7,29 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.ActionWithDelegate
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.AnActionWrapper
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.EmptyAction
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.actionSystem.ex.ActionUtil.SHOW_TEXT_IN_TOOLBAR
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil.updateAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -24,8 +41,12 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions.ActionText
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.core.permissions.Permission
@@ -41,7 +62,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
-import java.awt.event.*
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import javax.swing.Action
@@ -239,7 +264,7 @@ object ActionUtil {
    */
   @JvmStatic
   fun updateAction(action: AnAction, e: AnActionEvent): AnActionResult {
-    val checkDumb = Registry.`is`("actionSystem.update.dumb.mode.check.awareness")
+    val checkDumb = Registry.`is`("actionSystem.update.dumb.mode.check.awareness", false)
     val presentation = e.presentation
     if (LightEdit.owns(e.project) && !isActionLightEditCompatible(action)) {
       presentation.isEnabledAndVisible = false
@@ -394,11 +419,9 @@ object ActionUtil {
       return AnActionResult.ignored("action is disabled")
     }
     val actionManager = event.actionManager as ActionManagerEx
-    val result = WriteIntentReadAction.compute(Computable {
-      actionManager.performWithActionCallbacks(action, event) {
-        doPerformActionOrShowPopup(action, event, null)
-      }
-    })
+    val result = actionManager.performWithActionCallbacks(action, event) {
+      doPerformActionOrShowPopup(action, event, null)
+    }
     return result
   }
 

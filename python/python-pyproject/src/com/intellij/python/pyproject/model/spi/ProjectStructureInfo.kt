@@ -7,9 +7,9 @@ data class ProjectStructureInfo(
   /**
    * [project -> its dependencies]
    */
-  val dependencies: Map<ProjectName, Set<ProjectName>>,
+  val dependencies: ProjectDependencies,
   /**
-   * Projects that are memvbers of workspace point to the root of workspace
+   * Projects that are members of workspace point to the root of workspace
    */
   val membersToWorkspace: Map<WorkspaceMember, WorkspaceName>,
 )

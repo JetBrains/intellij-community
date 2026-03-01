@@ -1,0 +1,39 @@
+MODULES
+project
+
+project.commonMain
+    src/commonMain/kotlin
+
+project.commonTest
+    src/commonTest/kotlin (Test)
+
+project.jvmMain
+    src/jvmMain/java (Java)
+    src/jvmMain/kotlin (Java)
+    src/jvmMain/kotlinGen (Java)
+
+project.jvmTest
+    src/jvmTest/java (Java, Test)
+    src/jvmTest/kotlin (Java, Test)
+
+project.linuxMain
+    src/linuxMain/kotlin
+
+project.linuxTest
+    src/linuxTest/kotlin (Test)
+
+project.linuxX64Main
+    src/linuxX64Main/kotlin
+
+project.linuxX64Test
+    src/linuxX64Test/kotlin (Test)
+
+project.nativeMain
+    src/nativeMain/kotlin
+
+project.nativeTest
+    src/nativeTest/kotlin (Test)
+
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated

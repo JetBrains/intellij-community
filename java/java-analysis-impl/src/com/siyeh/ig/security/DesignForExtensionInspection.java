@@ -17,7 +17,12 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;

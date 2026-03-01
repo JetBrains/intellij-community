@@ -4,3 +4,5 @@ fun foo(p1: Boolean, p2: String) {
 
 // EXIST: p1
 // ABSENT: p2
+
+// IGNORE_K2

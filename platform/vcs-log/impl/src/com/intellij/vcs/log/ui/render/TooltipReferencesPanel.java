@@ -21,10 +21,16 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.Icon;
+import javax.swing.UIManager;
+import java.awt.Color;
+import java.awt.Font;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 class TooltipReferencesPanel extends ReferencesPanel {
   private static final int REFS_LIMIT = 10;

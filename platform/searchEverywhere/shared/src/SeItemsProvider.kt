@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.searchEverywhere.SeItemsProvider.Collector
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -72,4 +73,16 @@ interface SeItemsProvider : Disposable {
   fun getPsiElementForItem(item: SeItem): PsiElement? = null
   fun getVirtualFileForItem(item: SeItem): VirtualFile? = null
   fun getNavigatableForItem(item: SeItem): Navigatable? = null
+}
+
+@ApiStatus.Internal
+@ApiStatus.Experimental
+interface SeItemsProviderWithPossibleOperationDisposable : SeItemsProvider {
+  /**
+   * See the comment for [com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider.getRawItemsWithOperationLifetime]
+   */
+  @ApiStatus.Internal
+  suspend fun collectItemsWithOperationLifetime(params: SeParams, operationDisposable: Disposable, collector: Collector) {
+    collectItems(params, collector)
+  }
 }

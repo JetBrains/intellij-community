@@ -18,4 +18,21 @@ jvm_library(
     "@community//build:zip",
   ]
 )
+
+jvm_library(
+  name = "api_test_lib",
+  module_name = "intellij.platform.buildScripts.api",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":api",
+    "//plugins/groovy/rt/classLoader:classLoader_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/util/zip:zip_test_lib",
+    "@community//build:zip_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.buildScripts.api` end

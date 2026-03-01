@@ -10,10 +10,24 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.util.containers.DisposableWrapperList
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
-import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.toOptions
 import org.jetbrains.plugins.terminal.session.impl.dto.toState
 import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
@@ -38,8 +52,10 @@ internal class TerminalSessionController(
   fun handleEvents(session: TerminalSession) {
     coroutineScope.launch {
       val outputFlow = session.getOutputFlow()
-      outputFlow.collect { events ->
-        doHandleEvents(events)
+      withContext(edtContext) {
+        outputFlow.collect { events ->
+          doHandleEvents(events)
+        }
       }
     }
   }
@@ -66,30 +82,27 @@ internal class TerminalSessionController(
     }
   }
 
-  private suspend fun invokeBaseHandler(event: TerminalOutputEvent) {
+  private fun invokeBaseHandler(event: TerminalOutputEvent) {
     when (event) {
       is TerminalInitialStateEvent -> {
         sessionModel.updateTerminalState(event.sessionState.toTerminalState())
         startupOptionsDeferred.complete(event.startupOptions.toOptions())
-        withContext(edtContext) {
-          outputModelController.applyPendingUpdates()
-          alternateBufferModelController.applyPendingUpdates()
 
-          outputModelController.model.restoreFromState(event.outputModelState.toState())
-          alternateBufferModelController.model.restoreFromState(event.alternateBufferState.toState())
-          outputHyperlinkFacade?.restoreFromState(event.outputHyperlinksState)
-          alternateBufferHyperlinkFacade?.restoreFromState(event.alternateBufferHyperlinksState)
-        }
+        outputModelController.applyPendingUpdates()
+        alternateBufferModelController.applyPendingUpdates()
+
+        outputModelController.model.restoreFromState(event.outputModelState.toState())
+        alternateBufferModelController.model.restoreFromState(event.alternateBufferState.toState())
+        outputHyperlinkFacade?.restoreFromState(event.outputHyperlinksState)
+        alternateBufferHyperlinkFacade?.restoreFromState(event.alternateBufferHyperlinksState)
       }
       is TerminalContentUpdatedEvent -> {
-        updateOutputModel { controller ->
-          controller.updateContent(event)
-        }
+        val controller = getCurrentOutputModelController()
+        controller.updateContent(event)
       }
       is TerminalCursorPositionChangedEvent -> {
-        updateOutputModel { controller ->
-          controller.updateCursorPosition(event)
-        }
+        val controller = getCurrentOutputModelController()
+        controller.updateCursorPosition(event)
       }
       is TerminalStateChangedEvent -> {
         val state = event.state.toTerminalState()
@@ -107,9 +120,7 @@ internal class TerminalSessionController(
         LOG.warn("TerminalHyperlinksHeartbeatEvent isn't supposed to reach the frontend")
       }
       is TerminalHyperlinksChangedEvent -> {
-        withContext(edtContext) {
-          getCurrentHyperlinkFacade(event)?.updateHyperlinks(event)
-        }
+        getCurrentHyperlinkFacade(event)?.updateHyperlinks(event)
       }
       else -> {
         // do nothing
@@ -119,13 +130,6 @@ internal class TerminalSessionController(
 
   private fun getCurrentHyperlinkFacade(event: TerminalHyperlinksChangedEvent): FrontendTerminalHyperlinkFacade? {
     return if (event.isInAlternateBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
-  }
-
-  private suspend fun updateOutputModel(block: (TerminalOutputModelController) -> Unit) {
-    withContext(edtContext) {
-      val controller = getCurrentOutputModelController()
-      block(controller)
-    }
   }
 
   private fun getCurrentOutputModelController(): TerminalOutputModelController {

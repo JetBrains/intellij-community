@@ -2,7 +2,19 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 

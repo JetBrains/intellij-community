@@ -1,8 +1,10 @@
 <idea-plugin>
   <dependencies>
-    <plugin id="com.intellij.java"/>
-    <plugin id="com.intellij.gradle"/>
+    <module name="intellij.java.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.gradle"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.cce">
@@ -21,7 +23,9 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaSelfIdentificationVisitor"/>
     <apiCallExtractor implementation="com.intellij.cce.java.chat.JavaApiCallExtractorProvider"/>
     <exposedApiExtractor implementation="com.intellij.cce.java.evaluable.JavaExposedApiExtractor"/>
+    <callGraphBuilder implementation="com.intellij.cce.java.callGraphs.JavaCallGraphBuilder"/>
     <testRunner implementation="com.intellij.cce.java.test.JavaTestRunner"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaSandboxFeatureVisitor"/>
+    <projectSyncInvoker implementation="com.intellij.cce.java.project.JavaProjectSyncInvoker"/>
   </extensions>
 </idea-plugin>

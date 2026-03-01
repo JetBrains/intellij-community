@@ -4,7 +4,13 @@ package com.intellij.platform.uast.testFramework.common
 import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiElement
 import junit.framework.TestCase
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.sourcePsiElement
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.util.IndentedPrintingVisitor
 import kotlin.reflect.KClass
 

@@ -48,6 +48,13 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
     }
   }
 
+  /**
+   * The phase corresponding to IntelliJ Platform data services execution.
+   * This is a temporary, internal API for migration purposes.
+   */
+  @ApiStatus.Internal
+  sealed interface DataServices: GradleSyncPhase
+
   companion object {
 
     /**
@@ -106,6 +113,9 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
      */
     @JvmField
     val ADDITIONAL_MODEL_PHASE: GradleSyncPhase = GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE.asSyncPhase()
+
+    @JvmField
+    val DATA_SERVICES_PHASE: GradleSyncPhase = GradleDataServicesSyncPhase()
   }
 }
 
@@ -122,7 +132,8 @@ private class GradleStaticSyncPhase(
     return when (other) {
       is GradleStaticSyncPhase -> order.compareTo(other.order)
       is GradleBaseScriptSyncPhase -> -1
-      is GradleDynamicSyncPhase -> -1
+      is GradleDynamicSyncPhase,
+      is GradleDataServicesSyncPhase -> -1
     }
   }
 
@@ -153,6 +164,7 @@ private class GradleDynamicSyncPhase(
       is GradleStaticSyncPhase -> 1
       is GradleBaseScriptSyncPhase -> 1
       is GradleDynamicSyncPhase -> modelFetchPhase.compareTo(other.modelFetchPhase)
+      is GradleDataServicesSyncPhase -> -1
     }
   }
 
@@ -178,7 +190,21 @@ private data object GradleBaseScriptSyncPhase: GradleSyncPhase.BaseScript {
     return when (other) {
       is GradleStaticSyncPhase -> 1
       is GradleBaseScriptSyncPhase -> 0
-      is GradleDynamicSyncPhase -> -1
+      is GradleDynamicSyncPhase,
+      is GradleDataServicesSyncPhase -> -1
     }
   }
+}
+
+/**
+ * The implementation of the phase corresponding to IntelliJ Platform data services execution.
+ * This is a temporary, internal API for migration purposes.
+ */
+@ApiStatus.Internal
+private class GradleDataServicesSyncPhase: GradleSyncPhase.DataServices {
+
+  override val name: String = "DATA_SERVICES"
+
+  override fun compareTo(other: GradleSyncPhase): Int =
+    if (other is GradleDataServicesSyncPhase) 0 else 1
 }

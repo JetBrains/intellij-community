@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection
 
 import com.intellij.codeInspection.blockingCallsDetection.ContextType
-import com.intellij.codeInspection.blockingCallsDetection.ContextType.*
+import com.intellij.codeInspection.blockingCallsDetection.ContextType.Blocking
+import com.intellij.codeInspection.blockingCallsDetection.ContextType.NonBlocking
+import com.intellij.codeInspection.blockingCallsDetection.ContextType.Unsure
 import com.intellij.codeInspection.blockingCallsDetection.ElementContext
 import com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker
 import com.intellij.psi.PsiElement
@@ -16,8 +18,17 @@ import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
@@ -41,7 +52,14 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType

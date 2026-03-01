@@ -3,8 +3,9 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.IntObjectCache;
@@ -13,14 +14,23 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.util.*;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Eugene Zhuravlev
  */
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class PersistentMapPerformanceTest extends PersistentMapTestBase {
   interface MapConstructor<T, T2> {
     PersistentHashMap<T, T2> createMap(File file) throws IOException;

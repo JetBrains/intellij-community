@@ -7,7 +7,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 @Deprecated("Please use org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention")
 abstract class SelfTargetingIntention<TElement : PsiElement>(
     elementType: Class<TElement>,

@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_defaultValueAdded-a.kotlin_module
+  test/FunKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/defaultValueAdded/a/fun.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_defaultValueAdded-a.kotlin_module
+  test/UseDefaultKt.class
+  test/UseNonDefaultKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/defaultValueAdded/a/useDefault.kt
+  kotlin/pureKotlin/defaultValueAdded/a/useNonDefault.kt
+End of files
+------------------------------------------
+Exit code: OK

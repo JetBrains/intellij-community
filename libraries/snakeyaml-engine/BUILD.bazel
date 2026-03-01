@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-snakeyaml-engine-snakeyaml-engine"],
   runtime_deps = ["@lib//:libraries-snakeyaml-engine-snakeyaml-engine"]
 )
+
+jvm_library(
+  name = "snakeyaml-engine_test_lib",
+  module_name = "intellij.libraries.snakeyaml.engine",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-snakeyaml-engine-snakeyaml-engine"],
+  runtime_deps = [":snakeyaml-engine"]
+)
 ### auto-generated section `build intellij.libraries.snakeyaml.engine` end

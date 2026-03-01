@@ -7,11 +7,16 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup.IndexingActivityType
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
-import com.intellij.util.indexing.diagnostic.dto.*
+import com.intellij.util.indexing.diagnostic.dto.JsonDuration
+import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnosticAppInfo
+import com.intellij.util.indexing.diagnostic.dto.JsonIndexingActivityDiagnostic
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectDumbIndexingHistory
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistory
+import com.intellij.util.indexing.diagnostic.dto.JsonRuntimeInfo
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Locale
 
 private const val SECTION_PROJECT_NAME_ID = "id-project-name"
 private const val SECTION_PROJECT_NAME_TITLE = "Project name"

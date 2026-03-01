@@ -13,7 +13,11 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 
 class RenameOnSecondaryConstructorHandler : RenameHandler {

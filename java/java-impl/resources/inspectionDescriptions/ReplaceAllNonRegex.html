@@ -1,0 +1,25 @@
+<html>
+<body>
+Reports calls to <code>String.replaceAll()</code> where the first argument is a plain (non-regex) string literal
+and the replacement is also a plain string literal. In such cases using <code>String.replace()</code> is clearer
+and avoids the overhead of regular expressions.
+
+<p><b>Example:</b></p>
+<pre><code>
+  "a,b,c".replaceAll(",", ";");
+</code></pre>
+
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  "a,b,c".replace(",", ";");
+</code></pre>
+
+<p>
+Note: the inspection only suggests the replacement when it is safe, i.e., when the pattern contains no
+regular expression meta-characters and the replacement contains no special characters used by regex replacement
+like <code>$</code> or <code>\</code>.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2026.1</small></p>
+</body>
+</html>

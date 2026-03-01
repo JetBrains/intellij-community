@@ -59,6 +59,7 @@ _frozen_importlib_external.WindowsRegistryFinder.REGISTRY_KEY
 _frozen_importlib_external.WindowsRegistryFinder.REGISTRY_KEY_DEBUG
 
 builtins.OSError.characters_written  # GetSetDescriptor that always raises AttributeError
+builtins.ellipsis  # does not exist at runtime, see https://github.com/python/typeshed/issues/7580
 builtins.float.__getformat__  # Internal method for CPython test suite
 
 # These super() dunders don't seem to be particularly useful,
@@ -180,10 +181,21 @@ sys.tracebacklimit  # Must be set first
 # ==========================================================
 
 # async at runtime, deliberately not in the stub, see #7491
-_collections_abc.AsyncGenerator.asend  # pos-only differences also.
+_collections_abc.AsyncGenerator.asend  # pos-only differences also
 _collections_abc.AsyncGenerator.__anext__
 _collections_abc.AsyncGenerator.aclose
+_collections_abc.AsyncGenerator.athrow  # pos-only differences also
 _collections_abc.AsyncIterator.__anext__
+
+# positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
+_collections_abc.Coroutine.send
+_collections_abc.Coroutine.throw
+_collections_abc.Generator.send
+_collections_abc.Generator.throw
+
+# These are not positional-only at runtime, but we treat them as positional-only to match dict.
+_collections_abc.MutableMapping.pop
+_collections_abc.MutableMapping.setdefault
 
 # Pretend typing.ByteString is a Union, to better match its documented semantics.
 # As a side effect, this changes the definition of collections.abc.ByteString, which is okay,
@@ -192,8 +204,26 @@ _collections_abc\.ByteString
 typing\.ByteString
 
 _collections_abc.Callable  # Typing-related weirdness
-_collections_abc.Mapping.get  # Adding None to the Union messed up mypy
-_collections_abc.Sequence.index  # Supporting None in end is not mandatory
+
+# While the implementation in _collections_abc.py uses positional-or-keyword args,
+# this is unsafe as canonical types list/dict/set etc. only support positional args.
+# See: https://github.com/python/typeshed/issues/14071
+# See: https://github.com/python/cpython/issues/135312
+_collections_abc.Mapping.get
+_collections_abc.MutableSequence.append
+_collections_abc.MutableSequence.extend
+_collections_abc.MutableSequence.insert
+_collections_abc.MutableSequence.pop
+_collections_abc.MutableSequence.remove
+_collections_abc.MutableSet.add
+_collections_abc.MutableSet.discard
+_collections_abc.MutableSet.remove
+_collections_abc.Sequence.count
+_collections_abc.Sequence.index
+_collections_abc.Set.isdisjoint
+_collections_abc.Set._from_iterable
+_collections_abc.ItemsView._from_iterable
+_collections_abc.KeysView._from_iterable
 
 _ctypes.CFuncPtr  # stubtest erroneously thinks it can't be subclassed
 
@@ -217,6 +247,7 @@ argparse.Namespace.__getattr__  # The whole point of this class is its attribute
 _?ast.AST.__init__
 _?ast.excepthandler.__init__
 _?ast.expr.__init__
+_?ast.pattern.__init__
 _?ast.stmt.__init__
 
 _ast.ImportFrom.level  # None on the class, but never None on instances
@@ -235,6 +266,7 @@ asyncio.locks.Condition.locked
 asyncio.locks.Condition.release
 
 builtins.memoryview.__contains__  # C type that implements __getitem__
+builtins.property.__set_name__  # Doesn't actually exist
 builtins.reveal_locals  # Builtins that type checkers pretends exist
 builtins.reveal_type  # Builtins that type checkers pretends exist
 
@@ -251,6 +283,7 @@ codecs.CodecInfo.streamwriter
 codecs.StreamReaderWriter.\w+
 codecs.StreamRecoder.\w+
 
+collections.UserList.index  # ignoring pos-or-keyword parameter
 collections.UserList.sort  # Runtime has *args but will error if any are supplied
 collections.abc.*  # Types are re-exported from _collections_abc, so errors should be fixed there
 configparser.SectionProxy.__getattr__  # SectionProxy can have arbitrary attributes when custom converters are used
@@ -287,6 +320,8 @@ _?ctypes.Union.__setattr__  # doesn't exist, but makes things easy if we pretend
 # These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
 _?ctypes.Array.__iter__
 
+dataclasses.KW_ONLY  # white lies around defaults
+
 # __all__-related weirdness (see #6523)
 email.__all__
 email.base64mime
@@ -317,6 +352,8 @@ http.HTTPStatus.description  # set in __new__; work-around for enum wierdness
 http.HTTPStatus.phrase  # set in __new__; work-around for enum wierdness
 imaplib.IMAP4_SSL.ssl  # Depends on the existence and flags of SSL
 
+importlib._abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
+
 # runtime is *args, **kwargs due to a wrapper; we have more accurate signatures in the stubs
 importlib._bootstrap_external.ExtensionFileLoader.get_filename
 importlib._bootstrap_external.FileLoader.get_filename
@@ -325,6 +362,8 @@ importlib._bootstrap_external.FileLoader.load_module
 importlib.abc.FileLoader.get_filename
 importlib.abc.FileLoader.load_module
 importlib.machinery.ExtensionFileLoader.get_filename
+
+importlib.metadata._meta.SimplePath.joinpath  # Runtime definition of protocol is incorrect
 
 # We can't distinguish not having a default value from having a default value of inspect.Parameter.empty
 inspect.Parameter.__init__
@@ -446,6 +485,8 @@ traceback.TracebackException.from_exception  # explicitly expanding arguments go
 turtle.ScrolledCanvas.find_all  # Dynamically created, has unnecessary *args
 turtle.ScrolledCanvas.select_clear  # Dynamically created, has unnecessary *args
 turtle.ScrolledCanvas.select_item  # Dynamically created, has unnecessary *args
+# this is implemented with *args having a minimum size so arguments before it must be positional (but stubtest doesn't see that)
+tkinter.ttk.Style.element_create
 
 types.GenericAlias.__call__  # Would be complicated to fix properly, Any could silence problems. #6392
 types.GenericAlias.__getattr__
@@ -516,6 +557,17 @@ typing(_extensions)?\.(Async)?ContextManager
 typing(_extensions)?\.IO\.__iter__
 typing(_extensions)?\.IO\.__next__
 
+# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
+# to mark these as positional-only for compatibility with existing sub-classes.
+typing(_extensions)?\.BinaryIO\.write
+typing(_extensions)?\.IO\.read
+typing(_extensions)?\.IO\.readline
+typing(_extensions)?\.IO\.readlines
+typing(_extensions)?\.IO\.seek
+typing(_extensions)?\.IO\.truncate
+typing(_extensions)?\.IO\.write
+typing(_extensions)?\.IO\.writelines
+
 types.MethodType.__closure__  # read-only but not actually a property; stubtest thinks it doesn't exist.
 types.MethodType.__code__  # read-only but not actually a property; stubtest thinks it doesn't exist.
 types.MethodType.__defaults__  # read-only but not actually a property; stubtest thinks it doesn't exist.
@@ -550,3 +602,8 @@ xml.etree.cElementTree.XMLParser.__init__  # Defined in C so has general signatu
 # These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
 xml.etree.ElementTree.Element.__iter__
 xml.etree.cElementTree.Element.__iter__
+
+# These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
+posixpath.join
+ntpath.join
+os.path.join

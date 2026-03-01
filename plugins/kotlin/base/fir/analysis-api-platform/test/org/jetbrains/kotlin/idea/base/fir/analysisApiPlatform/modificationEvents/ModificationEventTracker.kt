@@ -5,7 +5,18 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.*
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinCodeFragmentContextModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalScriptModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
+import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.junit.Assert
 
@@ -134,12 +145,20 @@ open class ModificationEventTracker(
     }
 
     fun assertModifiedOnce(shouldBeRemoval: Boolean = false) {
-        if (expectedEvents.size != 1) {
-            val eventsWithStackTraces = expectedEvents.joinToString("\n\n") { it.toStringWithStackTrace() }
+        assertModifiedExactly(times = 1, shouldBeRemoval = shouldBeRemoval)
+    }
+
+    fun assertModifiedExactly(times: Int, shouldBeRemoval: Boolean = false) {
+        if (expectedEvents.size != times) {
+            val numberText = if (times == 1) "A single" else "Exactly $times"
+            val eventsText = if (times == 1) "event" else "events"
+
             Assert.fail(
-                "A single `$expectedEventName` event for $label should have been published, but ${expectedEvents.size} events were received:\n\n$eventsWithStackTraces"
+                "$numberText `$expectedEventName` $eventsText for $label should have been published," +
+                        " but ${expectedEvents.size} events were received.",
             )
         }
+
         checkShouldBeRemoval(shouldBeRemoval)
         checkForbiddenEvents()
     }

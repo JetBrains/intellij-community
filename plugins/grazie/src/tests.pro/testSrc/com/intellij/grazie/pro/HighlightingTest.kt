@@ -244,14 +244,24 @@ class HighlightingTest : BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test avoid LT false positives where TextExtractor provides no text`() {
-    GrazieConfig.update {
-      it.withDomainEnabledRules(TextStyleDomain.CodeComment, setOf("Grazie.RuleEngine.En.Grammar.MISSING_ARTICLE"))
-    }
     configureByText("a.html",
                     """
                     <b>Hello. I need your <GRAMMAR_ERROR descr="NEED_HELPS">helps</GRAMMAR_ERROR>. Another sentence.</b> <!-- checking works overall -->
-                    <code>public int compareTo(A a) {return s.length() - a.s.length();}</code> <!-- ...but not in <GRAMMAR_ERROR descr="Grazie.MLEC.En.MissingArticle: Missing article">code tag</GRAMMAR_ERROR> -->
+                    <code>public int compareTo(A a) {return s.length() - a.s.length();}</code> <!-- Another sentence! But not in <GRAMMAR_ERROR descr="Grazie.MLEC.En.MissingArticle: Missing article">code tag</GRAMMAR_ERROR> -->
                     """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  @NeedsCloud
+  @Test
+  fun `test missing article are suppressed in single sentence comments`() {
+    configureByText("a.html",
+      """
+      <!-- But not in code tag -->
+                    
+      <!-- this is mistake. -->
+      """.trimIndent()
+    )
     myFixture.checkHighlighting()
   }
 
@@ -423,9 +433,9 @@ class HighlightingTest : BaseTestCase() {
     myFixture.checkHighlighting()
 
     myFixture.configureByText("a.md", """
-      There are some English words and some other cases, e.g. "<STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Typography.VARIANT_QUOTE_PUNCTUATION">h",</STYLE_SUGGESTION> "--help"
+      There are some English words and some other cases, e.g. "h", "--help"
             
-      The quote check is *also* working in fragments "with <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Typography.VARIANT_QUOTE_PUNCTUATION">markup",</STYLE_SUGGESTION> right?
+      The quote check is *also* working in fragments "with markup", right?
      """.trimIndent()
     )
     myFixture.checkHighlighting()
@@ -534,6 +544,30 @@ class HighlightingTest : BaseTestCase() {
       
       Also in this experiment, <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Typography.NUMBERS_WITH_UNITS">2mg</STYLE_SUGGESTION> of the extract was dissolved in water.
     """.trimIndent())
+  }
+
+  @NeedsCloud
+  @Test
+  fun `test aggregator provides relevant suggestions`() {
+    configureByText("a.java", "// <caret>Jim get over here!")
+    myFixture.doHighlighting()
+
+    // Suggestions are reordered by [TextProblemAggregator] starting with the most meaningful ones
+    val intentions = availableIntentions
+    assertEquals(intentions[1].text, "Jim, get")
+    assertEquals(intentions[2].text, "Jim gets")
+  }
+
+  @NeedsCloud
+  @Test
+  fun `test articles before url are ignored`() {
+    checkCloudAndLocal(
+      "a.java",
+      """
+        // If we know that @currentToken is a url, we will strictly use it (--url).
+        // If we know that @currentToken is an url, we will strictly use it (--url).
+      """.trimIndent()
+    )
   }
 
   companion object {

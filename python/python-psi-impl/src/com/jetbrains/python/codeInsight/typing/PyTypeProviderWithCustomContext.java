@@ -2,7 +2,14 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;

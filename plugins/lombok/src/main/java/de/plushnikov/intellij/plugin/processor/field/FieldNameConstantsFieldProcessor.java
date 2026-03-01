@@ -1,6 +1,15 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;

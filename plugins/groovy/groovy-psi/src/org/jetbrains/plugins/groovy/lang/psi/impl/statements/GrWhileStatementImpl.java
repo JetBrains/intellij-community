@@ -3,9 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;

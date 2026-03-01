@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.editor.frontend
 
-import com.intellij.openapi.application.isRhizomeAdEnabled
+import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.editor.EditorEntity
@@ -15,7 +15,7 @@ import kotlinx.coroutines.awaitCancellation
 internal class FrontendEditorHandler : ProjectActivity {
 
   override suspend fun execute(project: Project) {
-    if (!isRhizomeAdEnabled) return
+    if (!isRhizomeAdRebornEnabled) return
     EditorEntity.each().launchOnEach {
       LOG.debug("editor created: $it")
       try {

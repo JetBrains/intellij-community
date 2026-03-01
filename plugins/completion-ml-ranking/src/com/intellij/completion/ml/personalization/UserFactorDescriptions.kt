@@ -16,7 +16,26 @@
 
 package com.intellij.completion.ml.personalization
 
-import com.intellij.completion.ml.personalization.impl.*
+import com.intellij.completion.ml.personalization.impl.CompletionFinishTypeReader
+import com.intellij.completion.ml.personalization.impl.CompletionFinishTypeUpdater
+import com.intellij.completion.ml.personalization.impl.CompletionTypeReader
+import com.intellij.completion.ml.personalization.impl.CompletionTypeUpdater
+import com.intellij.completion.ml.personalization.impl.CompletionUsageReader
+import com.intellij.completion.ml.personalization.impl.CompletionUsageUpdater
+import com.intellij.completion.ml.personalization.impl.DailyAggregatedDoubleFactor
+import com.intellij.completion.ml.personalization.impl.ItemPositionReader
+import com.intellij.completion.ml.personalization.impl.ItemPositionUpdater
+import com.intellij.completion.ml.personalization.impl.MnemonicsUsageReader
+import com.intellij.completion.ml.personalization.impl.MnemonicsUsageUpdater
+import com.intellij.completion.ml.personalization.impl.MutableDoubleFactor
+import com.intellij.completion.ml.personalization.impl.PrefixLengthReader
+import com.intellij.completion.ml.personalization.impl.PrefixLengthUpdater
+import com.intellij.completion.ml.personalization.impl.PrefixMatchingTypeReader
+import com.intellij.completion.ml.personalization.impl.PrefixMatchingTypeUpdater
+import com.intellij.completion.ml.personalization.impl.TemplatesUsageReader
+import com.intellij.completion.ml.personalization.impl.TemplatesUsageUpdater
+import com.intellij.completion.ml.personalization.impl.TimeBetweenTypingReader
+import com.intellij.completion.ml.personalization.impl.TimeBetweenTypingUpdater
 
 /**
  * @author Vitaliy.Bibaev

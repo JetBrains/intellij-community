@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.openapi.components.serviceOrNull
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinFileSelector
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ActualDeclarationProvider
 
 @ApiStatus.Internal

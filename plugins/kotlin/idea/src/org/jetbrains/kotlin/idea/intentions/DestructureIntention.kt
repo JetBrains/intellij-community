@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -26,8 +27,26 @@ import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtUnaryExpression
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
+import org.jetbrains.kotlin.psi.createDestructuringDeclarationByPattern
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
@@ -36,6 +55,7 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 
+@K1Deprecation
 class DestructureInspection : IntentionBasedInspection<KtDeclaration>(
     DestructureIntention::class,
     { element, _ ->
@@ -50,6 +70,7 @@ class DestructureInspection : IntentionBasedInspection<KtDeclaration>(
     }
 )
 
+@K1Deprecation
 class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
     KtDeclaration::class.java,
     KotlinBundle.messagePointer("use.destructuring.declaration")

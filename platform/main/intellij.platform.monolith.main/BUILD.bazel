@@ -19,10 +19,11 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
-    "//platform/main/intellij.platform.frontend.main:frontend-main",
-    "//platform/main/intellij.platform.backend.main:backend-main",
-    "//platform/monolith",
-    "//platform/navbar/monolith",
+    ":monolith-main",
+    "//platform/main/intellij.platform.frontend.main:frontend-main_test_lib",
+    "//platform/main/intellij.platform.backend.main:backend-main_test_lib",
+    "//platform/monolith:monolith_test_lib",
+    "//platform/navbar/monolith:monolith_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.monolith.main` end

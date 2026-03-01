@@ -33,7 +33,7 @@ object EditorConfigNavigationActionsFactory {
       navigationActions
   }
 
-  private class NavigationActionGroup(private val myChildActions: Array<AnAction>) : ActionGroup(
+  internal class NavigationActionGroup(private val myChildActions: Array<AnAction>) : ActionGroup(
     message("action.open.file"), true) {
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       return myChildActions

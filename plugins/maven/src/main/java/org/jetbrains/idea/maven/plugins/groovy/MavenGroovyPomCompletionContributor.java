@@ -2,7 +2,13 @@
 package org.jetbrains.idea.maven.plugins.groovy;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionService;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.impl.NegatingComparable;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -14,7 +20,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;

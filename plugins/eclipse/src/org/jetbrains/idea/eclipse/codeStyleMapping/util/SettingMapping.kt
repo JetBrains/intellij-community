@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.codeStyleMapping.util
 
-import java.lang.IllegalArgumentException
 import kotlin.reflect.KMutableProperty0
 
 interface SettingMapping<External> {

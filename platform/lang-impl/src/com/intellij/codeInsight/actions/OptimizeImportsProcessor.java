@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -17,7 +16,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.HintText;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -79,7 +85,6 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     }
 
     List<Runnable> runnables = collectOptimizers(psiFile);
-
     if (runnables.isEmpty()) {
       return emptyTask();
     }
@@ -154,7 +159,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   static @NotNull List<Runnable> collectOptimizers(@NotNull PsiFile file) {
     FormattingService service = FormattingServiceUtil.findImportsOptimizingService(file);
-    List<Runnable> runnables = new ArrayList<>();
+    List<Runnable> runnables = new SmartList<>();
     List<PsiFile> files = file.getViewProvider().getAllFiles();
     for (ImportOptimizer optimizer : service.getImportOptimizers(file)) {
       for (PsiFile psiFile : files) {
@@ -167,8 +172,8 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   private static @NotNull NotificationInfo getNotificationInfo(@NotNull Runnable runnable) {
-    if (runnable instanceof ImportOptimizer.CollectingInfoRunnable) {
-      String optimizerMessage = ((ImportOptimizer.CollectingInfoRunnable)runnable).getUserNotificationInfo();
+    if (runnable instanceof ImportOptimizer.CollectingInfoRunnable infoRunnable) {
+      String optimizerMessage = infoRunnable.getUserNotificationInfo();
       return optimizerMessage == null ? NOTHING_CHANGED_NOTIFICATION : new NotificationInfo(optimizerMessage);
     }
     if (runnable == EmptyRunnable.getInstance()) {

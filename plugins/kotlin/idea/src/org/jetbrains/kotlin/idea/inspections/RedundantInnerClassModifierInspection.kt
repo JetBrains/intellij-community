@@ -15,6 +15,7 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.containers.OrderedSet
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
@@ -30,8 +31,26 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.getThisReceiverOwner
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.classVisitor
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
@@ -40,6 +59,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
     @Suppress("MemberVisibilityCanBePrivate")
     var ignorableAnnotations = OrderedSet(listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED))

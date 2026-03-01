@@ -5,27 +5,36 @@ import com.intellij.collaboration.async.awaitCancelling
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.codereview.action.AutoDisablingActionGroup
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory
-import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory.CodeReviewActions
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
-import com.intellij.collaboration.ui.util.bindContentIn
+import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.mergerequest.action.*
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCloseAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestMergeAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestPostReviewAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestReRequestReviewAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRebaseAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestReopenAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRequestReviewAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestSetMyselfAsReviewerAction
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestSubmitReviewAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModelImpl.Companion.toReviewState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewPopup
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import java.awt.BorderLayout
+import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
 
@@ -33,7 +42,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
   private const val BUTTONS_GAP = 10
 
   fun create(scope: CoroutineScope, reviewFlowVm: GitLabMergeRequestReviewFlowViewModel): JComponent {
-    val reviewActions = CodeReviewActions(
+    val reviewActions = Actions(
       requestReviewAction = GitLabMergeRequestRequestReviewAction(scope, reviewFlowVm),
       reRequestReviewAction = GitLabMergeRequestReRequestReviewAction(scope, reviewFlowVm),
       closeReviewAction = GitLabMergeRequestCloseAction(scope, reviewFlowVm),
@@ -41,18 +50,15 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
       setMyselfAsReviewerAction = GitLabMergeRequestSetMyselfAsReviewerAction(scope, reviewFlowVm),
       postReviewAction = GitLabMergeRequestPostReviewAction(scope, reviewFlowVm),
       mergeReviewAction = GitLabMergeRequestMergeAction(scope, reviewFlowVm),
-      mergeSquashReviewAction = GitLabMergeRequestSquashAndMergeAction(scope, reviewFlowVm),
       rebaseReviewAction = GitLabMergeRequestRebaseAction(scope, reviewFlowVm)
     )
 
     return Wrapper().apply {
-      bindContentIn(scope, reviewFlowVm.role.distinctUntilChanged()) { role ->
-        val moreActionsGroup = DefaultActionGroup(GitLabBundle.message("merge.request.details.action.review.more.text"), true)
+      bindChildIn(scope, reviewFlowVm.role.distinctUntilChanged(), constraints = BorderLayout.CENTER) { role ->
         val mainPanel = when (role) {
-          ReviewRole.AUTHOR -> createActionsForAuthor(reviewFlowVm, reviewActions, moreActionsGroup)
-          ReviewRole.REVIEWER -> createActionsForReviewer(reviewFlowVm, reviewActions, moreActionsGroup)
-          ReviewRole.GUEST -> CodeReviewDetailsActionsComponentFactory
-            .createActionsForGuest(reviewActions, moreActionsGroup, ::createMergeActionGroup)
+          ReviewRole.AUTHOR -> createActionsForAuthor(reviewFlowVm, reviewActions)
+          ReviewRole.REVIEWER -> createActionsForReviewer(reviewFlowVm, reviewActions)
+          ReviewRole.GUEST -> createActionsForGuest(reviewActions)
         }
 
         CodeReviewDetailsActionsComponentFactory.createActionsComponent(
@@ -63,13 +69,15 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
           CodeReviewDetailsActionsComponentFactory.createActionsForDraftReview(reviewActions.postReviewAction)
         )
       }
+      bindChildIn(scope, reviewFlowVm.isBusy, constraints = BorderLayout.EAST) {
+        if (it) LoadingLabel() else null
+      }
     }
   }
 
   private fun CoroutineScope.createActionsForAuthor(
     vm: GitLabMergeRequestReviewFlowViewModel,
-    reviewActions: CodeReviewActions,
-    moreActionsGroup: DefaultActionGroup
+    reviewActions: Actions,
   ): JComponent {
     val cs = this
     val reviewState = vm.reviewState
@@ -82,16 +90,17 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     val reRequestReviewButton = CodeReviewDetailsActionsComponentFactory.createReRequestReviewButton(
       cs, reviewState, requestedReviewers, reviewActions.reRequestReviewAction
     )
-    val mergeReviewButton = JBOptionButton(reviewActions.mergeReviewAction, arrayOf(reviewActions.mergeSquashReviewAction)).apply {
+    val mergeReviewButton = JButton(reviewActions.mergeReviewAction).apply {
       bindVisibilityIn(cs, reviewState.map { it == ReviewState.ACCEPTED })
     }
+    val moreActionsGroup = createMoreActionGroup()
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
     cs.launchNow {
       reviewState.collect { reviewState ->
         moreActionsGroup.removeAll()
         when (reviewState) {
           ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
-            moreActionsGroup.add(createMergeActionGroup(reviewActions))
+            moreActionsGroup.add(reviewActions.mergeReviewAction.toAnAction())
             moreActionsGroup.add(reviewActions.rebaseReviewAction.toAnAction())
             moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
           }
@@ -114,8 +123,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
 
   private fun CoroutineScope.createActionsForReviewer(
     reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
-    reviewActions: CodeReviewActions,
-    moreActionsGroup: DefaultActionGroup
+    reviewActions: Actions,
   ): JComponent {
     val cs = this
     val submitButton = JButton(GitLabMergeRequestSubmitReviewAction(cs, reviewFlowVm)).apply {
@@ -127,9 +135,12 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
       }.awaitCancelling()
     }
 
-    moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())
-    moreActionsGroup.add(createMergeActionGroup(reviewActions))
-    moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
+    val moreActionsGroup = createMoreActionGroup().apply {
+      add(reviewActions.requestReviewAction.toAnAction())
+      add(reviewActions.mergeReviewAction.toAnAction())
+      add(reviewActions.rebaseReviewAction.toAnAction())
+      add(reviewActions.closeReviewAction.toAnAction())
+    }
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
 
     return HorizontalListPanel(BUTTONS_GAP).apply {
@@ -138,10 +149,36 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     }
   }
 
-  private fun createMergeActionGroup(reviewActions: CodeReviewActions): ActionGroup {
-    return AutoDisablingActionGroup(CollaborationToolsBundle.message("review.details.action.merge.group"), true).apply {
+  private fun createActionsForGuest(reviewActions: Actions): JComponent {
+    val setMyselfAsReviewerButton = JButton(reviewActions.setMyselfAsReviewerAction).apply {
+      isOpaque = false
+    }
+    val moreActionsGroup = createMoreActionGroup()
+    val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
+    moreActionsGroup.apply {
+      removeAll()
+      add(reviewActions.requestReviewAction.toAnAction())
       add(reviewActions.mergeReviewAction.toAnAction())
-      add(reviewActions.mergeSquashReviewAction.toAnAction())
+      add(reviewActions.rebaseReviewAction.toAnAction())
+      add(reviewActions.closeReviewAction.toAnAction())
+    }
+
+    return HorizontalListPanel(CodeReviewDetailsActionsComponentFactory.BUTTONS_GAP).apply {
+      add(setMyselfAsReviewerButton)
+      add(moreActionsButton)
     }
   }
+
+  private fun createMoreActionGroup() = DefaultActionGroup(GitLabBundle.message("merge.request.details.action.review.more.text"), true)
+
+  private data class Actions(
+    val requestReviewAction: Action,
+    val reRequestReviewAction: Action,
+    val closeReviewAction: Action,
+    val reopenReviewAction: Action,
+    val setMyselfAsReviewerAction: Action,
+    val postReviewAction: Action,
+    val mergeReviewAction: Action,
+    val rebaseReviewAction: Action,
+  )
 }

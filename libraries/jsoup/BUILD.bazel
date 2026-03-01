@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:jsoup"],
   runtime_deps = ["@lib//:jsoup"]
 )
+
+jvm_library(
+  name = "jsoup_test_lib",
+  module_name = "intellij.libraries.jsoup",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:jsoup"],
+  runtime_deps = [":jsoup"]
+)
 ### auto-generated section `build intellij.libraries.jsoup` end

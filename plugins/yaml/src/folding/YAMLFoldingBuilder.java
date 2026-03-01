@@ -16,7 +16,13 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLCompoundValue;
+import org.jetbrains.yaml.psi.YAMLDocument;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLScalar;
+import org.jetbrains.yaml.psi.YAMLSequence;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
 import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl;
 

@@ -23,7 +23,7 @@ def model_field(
     default: S | None = None,
     default_factory: Callable[[], S] | None = None,
 ) -> T:
-    ...
+    raise NotImplementedError
 
 
 @dataclass_transform(field_specifiers=(model_field,))

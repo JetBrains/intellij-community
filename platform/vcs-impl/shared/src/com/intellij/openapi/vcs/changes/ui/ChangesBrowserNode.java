@@ -14,11 +14,11 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.platform.vcs.changes.ChangesUtil;
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListDnDSupport;
 import com.intellij.platform.vcs.impl.shared.ui.VcsPresentablePath;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
@@ -28,13 +28,17 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.ToIntFunction;
@@ -319,7 +323,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   @ApiStatus.Internal
-  public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
+  public void acceptDrop(final ChangeListDnDSupport dragOwner, final ChangeListDragBean dragBean) {
   }
 
   /**
@@ -343,7 +347,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {
     if (parentPath != null) {
-      String presentablePath = VcsPresentablePath.getPresentablePathAsParent(renderer.getProject(), parentPath);
+      String presentablePath = VcsPresentablePath.getPresentablePath(renderer.getProject(), parentPath, true);
       if (presentablePath.isEmpty()) return;
       renderer.append(spaceAndThinSpace() + presentablePath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
@@ -352,7 +356,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile parentPath) {
     if (parentPath != null) {
       FilePath parentFilePath = VcsContextFactory.getInstance().createFilePathOn(parentPath);
-      String presentablePath = VcsPresentablePath.getPresentablePathAsParent(renderer.getProject(), parentFilePath);
+      String presentablePath = VcsPresentablePath.getPresentablePath(renderer.getProject(), parentFilePath, true);
       if (presentablePath.isEmpty()) return;
       renderer.append(spaceAndThinSpace() + presentablePath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }

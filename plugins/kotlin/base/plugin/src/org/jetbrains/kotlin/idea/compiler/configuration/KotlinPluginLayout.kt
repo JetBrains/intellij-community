@@ -5,7 +5,16 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.getPluginDistDirByClass
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
@@ -18,40 +27,34 @@ import org.jetbrains.kotlin.idea.testFramework.TestKotlinArtifactsProvider
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.ServiceLoader
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.readText
 
 @get:ApiStatus.Internal
 val isRunningFromSources: Boolean
     get() = KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode == KotlinPluginLayoutMode.SOURCES
 
 object KotlinPluginLayoutModeProvider {
-    @Volatile
-    private var forcedMode: AtomicReference<KotlinPluginLayoutMode?> = AtomicReference(null)
 
     private val lazyMode = lazy {
-        forcedMode.get() ?: computeDefaultMode()
+        computeDefaultMode()
     }
 
     private fun computeDefaultMode(): KotlinPluginLayoutMode {
         val isRunningFromSources =
-          !AppMode.isRunningFromDevBuild() && Files.isDirectory(Path.of(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
-        return if (isRunningFromSources) KotlinPluginLayoutMode.SOURCES else KotlinPluginLayoutMode.INTELLIJ
+            !AppMode.isRunningFromDevBuild() && Files.isDirectory(PathManager.getHomeDir().resolve(Project.DIRECTORY_STORE_FOLDER))
+        return when {
+            System.getProperty("kotlin.plugin.layout", "") == "LSP" -> KotlinPluginLayoutMode.LSP
+            isRunningFromSources -> KotlinPluginLayoutMode.SOURCES
+            else -> KotlinPluginLayoutMode.INTELLIJ
+        }
     }
 
     @get:ApiStatus.Internal
     val kotlinPluginLayoutMode: KotlinPluginLayoutMode by lazyMode
-
-    @ApiStatus.Internal
-    fun setForcedKotlinPluginLayoutMode(mode: KotlinPluginLayoutMode) {
-        if (lazyMode.isInitialized()) {
-            error("Cannot set forced mode after lazy initialization: ${lazyMode.value} -> $mode")
-        }
-        if (!forcedMode.compareAndSet(null, mode)) {
-            error("Forced mode is already set to ${forcedMode.get()}")
-        }
-    }
 }
 
 @ApiStatus.Internal
@@ -68,14 +71,31 @@ object KotlinPluginLayout {
      * with a compatible version.
      */
     @JvmStatic
-    val kotlinc: File
+    val kotlincPath: Path
         get() = kotlincProvider.value
+
+    @Suppress("IO_FILE_USAGE")
+    /**
+     * Directory with the bundled Kotlin compiler distribution. Includes the compiler itself and a set of compiler plugins
+     * with a compatible version.
+     */
+    @Deprecated("Use kotlincPath instead", ReplaceWith("kotlincPath"))
+    @JvmStatic
+    val kotlinc: File
+        get() = kotlincPath.toFile()
 
     /**
      * Location of the JPS plugin and all its dependency jars
      */
-    val jpsPluginClasspath: List<File>
+    val jpsPluginClasspathPath: List<Path>
         get() = jpsPluginClasspathProvider.value
+
+    /**
+     * Location of the JPS plugin and all its dependency jars
+     */
+    @Deprecated("Use jpsPluginClasspathPath instead", ReplaceWith("jpsPluginClasspathPath"))
+    val jpsPluginClasspath: List<File>
+        get() = jpsPluginClasspathPath.map(Path::toFile)
 
     val jsEngines: File? by lazy {
         kotlinc.resolve("lib").resolve("js.engines.jar").takeIf { it.exists() }
@@ -96,14 +116,19 @@ object KotlinPluginLayout {
     @JvmStatic
     val ideCompilerVersion: IdeKotlinVersion = IdeKotlinVersion.get(KotlinCompilerVersion.VERSION)
 
-    private val kotlincProvider: Lazy<File>
-    private val jpsPluginClasspathProvider: Lazy<List<File>>
+    private val kotlincProvider: Lazy<Path>
+    private val jpsPluginClasspathProvider: Lazy<List<Path>>
     private val standaloneCompilerVersionProvider: Lazy<IdeKotlinVersion>
 
     init {
-         val standaloneCompilerVersionDefaultProvider = lazy {
-            val rawVersion = kotlinc.resolve("build.txt").readText().trim()
-            IdeKotlinVersion.get(rawVersion)
+        val standaloneCompilerVersionDefaultProvider = lazy {
+            val buildTxtPath = kotlincPath.resolve("build.txt")
+            if (!buildTxtPath.exists()) {
+                ideCompilerVersion
+            } else {
+                val rawVersion = buildTxtPath.readText().trim()
+                IdeKotlinVersion.get(rawVersion)
+            }
         }
         when (KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode) {
             KotlinPluginLayoutMode.SOURCES -> {
@@ -118,9 +143,9 @@ object KotlinPluginLayout {
                     kotlincProvider = lazy {
                         // NOTE: FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider
                         // requires it should be under KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX
-                        provider.getKotlincCompilerCli().toFile()
+                        provider.getKotlincCompilerCli()
                     }
-                    jpsPluginClasspathProvider = lazy { provider.getJpsPluginClasspath().map { it.toFile() } }
+                    jpsPluginClasspathProvider = lazy { provider.getJpsPluginClasspath() }
                     standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
                 }
                 else {
@@ -135,8 +160,8 @@ object KotlinPluginLayout {
                             bundledJpsVersion
                         ) ?: error("Can't download dist")
                         val unpackedDistDir =
-                            KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")
-                        LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
+                            KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve("kotlinc-dist-for-ide-from-sources")
+                        LazyZipUnpacker(unpackedDistDir.toFile()).lazyUnpack(distJar)
                     }
 
                     jpsPluginClasspathProvider = lazy {
@@ -147,7 +172,7 @@ object KotlinPluginLayout {
                             bundledJpsVersion
                         )
 
-                        listOf(jpsPluginArtifact.toFile())
+                        listOf(jpsPluginArtifact)
                     }
                     standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
                 }
@@ -157,7 +182,7 @@ object KotlinPluginLayout {
                 val kotlinPluginRoot = getPluginDistDirByClass(KotlinPluginLayout::class.java)
                     ?: error("Can't find jar file for ${KotlinPluginLayout::class.simpleName}")
 
-                fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }.toFile()
+                fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }
 
                 kotlincProvider = lazy { resolve("kotlinc") }
                 jpsPluginClasspathProvider = lazy { listOf(resolve("lib/jps/kotlin-jps-plugin.jar")) }
@@ -174,5 +199,52 @@ object KotlinPluginLayout {
         check(standaloneCompilerVersion.kotlinVersion <= ideCompilerVersion.kotlinVersion) {
             "standaloneCompilerVersion: $standaloneCompilerVersion, ideCompilerVersion: $ideCompilerVersion"
         }
+    }
+}
+
+@ApiStatus.Internal
+@Service(Service.Level.PROJECT)
+class KotlinPluginLayoutService(private val project: Project) {
+    companion object {
+        fun getInstance(project: Project): KotlinPluginLayoutService = project.service()
+    }
+
+    private val _remoteKotlincPath: AtomicReference<Path> = AtomicReference(null)
+
+    fun getRemoteKotlincPath(): Path {
+        _remoteKotlincPath.get()?.let { return it }
+
+        val localKotlinc = KotlinPluginLayout.kotlincPath
+        val eelDescriptor = project.getEelDescriptor()
+        if (eelDescriptor == LocalEelDescriptor) return localKotlinc
+
+        val parent = localKotlinc.parent
+
+        val path = runBlockingMaybeCancellable { eelDescriptor.toEelApi().userInfo.home.resolve(".kotlin/kotlinc/") }
+
+        val remote = transferLocalContentToRemote(
+            parent,
+            EelPathUtils.TransferTarget.Explicit(path.asNioPath())
+        )
+
+        val remoteKotlinc = remote.resolve(localKotlinc.name)
+
+        _remoteKotlincPath.getAndSet(remoteKotlinc)?.let { return it }
+        return remoteKotlinc
+    }
+
+
+    fun resolveRelativeToRemoteKotlinc(path: Path): Path {
+        if (KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode == KotlinPluginLayoutMode.LSP) {
+            return path
+        }
+
+        val kotlinc = KotlinPluginLayout.kotlincPath
+        if (!path.startsWith(kotlinc)) return path
+
+        val relativize = kotlinc.relativize(path)
+
+        val resolve = getRemoteKotlincPath().resolve(relativize)
+        return resolve
     }
 }

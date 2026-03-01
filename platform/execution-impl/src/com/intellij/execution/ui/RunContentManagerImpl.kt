@@ -3,7 +3,11 @@
 
 package com.intellij.execution.ui
 
-import com.intellij.execution.*
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.Executor
+import com.intellij.execution.KillableProcess
+import com.intellij.execution.RunContentDescriptorId
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.execution.dashboard.RunDashboardUiManager
@@ -11,10 +15,10 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.rpc.emitLiveIconUpdate
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
-import com.intellij.execution.rpc.emitLiveIconUpdate
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
@@ -35,20 +39,27 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
-import com.intellij.ui.content.*
+import com.intellij.ui.content.Content
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
+import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.awt.KeyboardFocusManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Predicate
+import java.util.function.BiPredicate
 import javax.swing.Icon
 
 @ApiStatus.Internal
@@ -275,7 +286,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
     val contentManager = getContentManagerForRunner(executor, descriptor)
     val toolWindowId = getToolWindowIdForRunner(executor, descriptor)
-    val oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.displayName, getReuseCondition(toolWindowId))
+    val oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, null, executionId, descriptor.displayName, getReuseCondition(toolWindowId))
     val content: Content?
     if (oldDescriptor == null) {
       content = createNewContent(descriptor, executor)
@@ -462,7 +473,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     }
 
     val toolWindowId = getContentDescriptorToolWindowId(executionEnvironment)
-    val reuseCondition: Predicate<Content>?
+    val reuseCondition: BiPredicate<in Content, RunConfiguration?>?
     val contentManager: ContentManager
     if (toolWindowId == null) {
       contentManager = getContentManagerForRunner(executionEnvironment.executor, null)
@@ -472,12 +483,13 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       contentManager = getOrCreateContentManagerForToolWindow(toolWindowId, executionEnvironment.executor)
       reuseCondition = getReuseCondition(toolWindowId)
     }
-    return chooseReuseContentForDescriptor(contentManager, null, executionEnvironment.executionId, executionEnvironment.toString(), reuseCondition)
+    return chooseReuseContentForDescriptor(contentManager, null, executionEnvironment.runnerAndConfigurationSettings?.configuration,
+                                           executionEnvironment.executionId, executionEnvironment.toString(), reuseCondition)
   }
 
-  private fun getReuseCondition(toolWindowId: String): Predicate<Content>? {
+  private fun getReuseCondition(toolWindowId: String): BiPredicate<in Content, RunConfiguration?>? {
     val runDashboardManager = RunDashboardUiManager.getInstance(project)
-    return if (runDashboardManager.toolWindowId == toolWindowId) runDashboardManager.reuseCondition else null
+    return if (runDashboardManager.toolWindowId == toolWindowId) runDashboardManager.getReuseCondition() else null
   }
 
   override fun findContentDescriptor(requestor: Executor, handler: ProcessHandler): RunContentDescriptor? {
@@ -697,9 +709,10 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
 private fun chooseReuseContentForDescriptor(contentManager: ContentManager,
                                             descriptor: RunContentDescriptor?,
+                                            runConfiguration: RunConfiguration?,
                                             executionId: Long,
                                             preferredName: String?,
-                                            reuseCondition: Predicate<in Content>?): RunContentDescriptor? {
+                                            reuseCondition: BiPredicate<in Content, RunConfiguration?>?): RunContentDescriptor? {
   var content: Content? = null
   if (descriptor != null) {
     //Stage one: some specific descriptors (like AnalyzeStacktrace) cannot be reused at all
@@ -718,7 +731,7 @@ private fun chooseReuseContentForDescriptor(contentManager: ContentManager,
 
   // stage three: choose the content with name we prefer
   if (content == null) {
-    content = getContentFromManager(contentManager, preferredName, executionId, reuseCondition)
+    content = getContentFromManager(contentManager, preferredName, executionId, runConfiguration, reuseCondition)
   }
   if (content == null || !RunContentManagerImpl.isTerminated(content) || content.executionId == executionId && executionId != 0L) {
     return null
@@ -737,7 +750,8 @@ private fun chooseReuseContentForDescriptor(contentManager: ContentManager,
 private fun getContentFromManager(contentManager: ContentManager,
                                   preferredName: String?,
                                   executionId: Long,
-                                  reuseCondition: Predicate<in Content>?): Content? {
+                                  runConfiguration: RunConfiguration?,
+                                  reuseCondition: BiPredicate<in Content, RunConfiguration?>?): Content? {
   val contents = contentManager.contentsRecursively.toMutableList()
   val first = contentManager.selectedContent
   if (first != null && contents.remove(first)) {
@@ -755,7 +769,7 @@ private fun getContentFromManager(contentManager: ContentManager,
 
   // return first "good" content
   return contents.firstOrNull {
-    canReuseContent(it, executionId) && (reuseCondition == null || reuseCondition.test(it))
+    canReuseContent(it, executionId) && (reuseCondition == null || reuseCondition.test(it, runConfiguration))
   }
 }
 

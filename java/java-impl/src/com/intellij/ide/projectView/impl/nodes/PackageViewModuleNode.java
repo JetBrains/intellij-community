@@ -12,7 +12,11 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class PackageViewModuleNode extends AbstractModuleNode{
   public PackageViewModuleNode(Project project, @NotNull Module value, ViewSettings viewSettings) {

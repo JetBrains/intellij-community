@@ -5,10 +5,16 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.PlaceProvider;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -16,11 +22,31 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JMenuBar;
+import javax.swing.JPopupMenu;
+import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.plaf.basic.DefaultMenuLayout;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -203,9 +229,18 @@ public class JBPopupMenu extends JPopupMenu {
 
   private static class MyLayout extends DefaultMenuLayout implements ActionListener {
     private final JPopupMenu myTarget;
+    private Point mouseLocation = null;
     int myShift = 0;
     int myScrollDirection = 0;
     Timer myTimer;
+    private final AWTEventListener toolkitListener = new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event instanceof MouseEvent mouseEvent) {
+          mouseLocation = SwingUtilities.convertPoint(mouseEvent.getComponent(), mouseEvent.getPoint(), myTarget);
+        }
+      }
+    };
 
     MyLayout(final JPopupMenu target) {
       super(target, PAGE_AXIS);
@@ -239,33 +274,31 @@ public class JBPopupMenu extends JPopupMenu {
     private void switchTimer(boolean on) {
       if (on && !myTimer.isRunning()) {
         myTimer.start();
+        Toolkit.getDefaultToolkit().addAWTEventListener(toolkitListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
       }
       if (!on && myTimer.isRunning()) {
         myTimer.stop();
+        Toolkit.getDefaultToolkit().removeAWTEventListener(toolkitListener);
       }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
       if (!myTarget.isShowing()) return;
-      PointerInfo info = MouseInfo.getPointerInfo();
-      if (info == null) return;
-      Point mouseLocation = info.getLocation();
-      Point targetLocation = myTarget.getLocationOnScreen();
-      if (mouseLocation.x < targetLocation.x || mouseLocation.x > targetLocation.x + myTarget.getWidth()) {
+      if (mouseLocation == null) return;
+      if (mouseLocation.x < 0 || mouseLocation.x > myTarget.getWidth()) {
         return;
       }
-      if (Math.abs(mouseLocation.y - targetLocation.y - getMaxHeight()) < 10) {
+      if (Math.abs(mouseLocation.y - getMaxHeight()) < 10) {
         myScrollDirection = 1;
       }
-      else if (Math.abs(mouseLocation.y - targetLocation.y) < 10) {
+      else if (Math.abs(mouseLocation.y) < 10) {
         myScrollDirection = -1;
       }
       else {
         return;
       }
 
-      SwingUtilities.convertPointFromScreen(mouseLocation, myTarget);
       myTarget.dispatchEvent(
         new MouseEvent(myTarget, MouseEvent.MOUSE_ENTERED, System.currentTimeMillis(), 0, mouseLocation.x, mouseLocation.y, 0, false));
 
@@ -349,6 +382,15 @@ public class JBPopupMenu extends JPopupMenu {
       }
       if (configuration == null) return Short.MAX_VALUE;
       Rectangle screenRectangle = ScreenUtil.getScreenRectangle(configuration);
+      if (ClientSystemInfo.isWaylandToolkit()) {
+        var screenHeight = WaylandUtilKt.getFakeScreenHeight(invoker);
+        if (screenHeight != null) {
+          screenRectangle.height = screenHeight;
+        }
+        else {
+          screenRectangle.height = 600;
+        }
+      }
 
       if (invoker != null && invoker.getParent() instanceof JMenuBar) {
         var menuItemHeight = invoker.getSize().height;

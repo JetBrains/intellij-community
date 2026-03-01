@@ -16,9 +16,9 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
+import org.jetbrains.kotlin.idea.configuration.KOTLIN_SCRIPTING_SETTINGS_ID
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesDefinitionSource
-import org.jetbrains.kotlin.idea.core.script.shared.KOTLIN_SCRIPTING_SETTINGS_ID
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition

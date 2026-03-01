@@ -6,7 +6,11 @@ import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 

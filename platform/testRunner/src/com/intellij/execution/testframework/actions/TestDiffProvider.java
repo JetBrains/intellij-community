@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -26,10 +27,10 @@ public interface TestDiffProvider {
 
   /**
    * Finds the expected literal for a failed test if it exists and null otherwise. The returned literal must be an injected element.
-   * findExpected can take a long time, so it starts without a read lock and it should take care of the read lock itself.
    * @param stackTrace The stacktrace which can be used to find the expected literal
    */
   @Nullable
+  @RequiresReadLock
   PsiElement findExpected(@NotNull Project project, @NotNull String stackTrace, @NotNull String expected);
 
   /**

@@ -14,4 +14,9 @@ public interface FileStructurePopupLoadingStateUpdater {
     int delayMillis = 300;
     consumer.accept(delayMillis);
   }
+
+  default void installUpdater(@NotNull Consumer<Integer> consumer, @NotNull Project project) {
+    int delayMillis = 300;
+    consumer.accept(delayMillis);
+  }
 }

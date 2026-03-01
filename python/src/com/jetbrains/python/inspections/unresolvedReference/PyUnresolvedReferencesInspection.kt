@@ -10,8 +10,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
@@ -19,13 +20,17 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.intellij.python.externalIndex.PyExternalFilesIndexService
+import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.util.containers.ContainerUtil
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.ast.PyAstFromImportStatement
@@ -38,19 +43,31 @@ import com.jetbrains.python.codeInsight.imports.PythonImportUtils
 import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider
-import com.jetbrains.python.inspections.quickfix.*
+import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix
+import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix
+import com.jetbrains.python.inspections.quickfix.InstallAllPackagesQuickFix
+import com.jetbrains.python.inspections.quickfix.InstallAndImportPackageQuickFix
+import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
+import com.jetbrains.python.inspections.quickfix.PyMarkDirectoryAsSourceRootQuickFix
 import com.jetbrains.python.module.PySourceRootDetectionService
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportStatementBase
+import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.impl.references.PyFromImportNameReference
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.resolve.fromModule
 import com.jetbrains.python.psi.resolve.resolveInRoot
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.isReadOnly
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 /**
  * Marks references that fail to resolve.
@@ -90,7 +107,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       // Don't suggest installing "name" for `import pkg.name` or `from pkg.name import foo`.
       if (node !is PyReferenceExpression || node.isQualified) {
         return emptyList()
-      } 
+      }
 
       val qname = QualifiedName.fromDottedString(refName)
       val components = qname.components
@@ -99,14 +116,16 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       }
       val packageName = PyPsiPackageUtil.moduleToPackageName(components[0])
 
+      val project = node.project
       val module = ModuleUtilCore.findModuleForPsiElement(node)
       val sdk = PythonSdkUtil.findPythonSdk(module)
-      if (module == null || sdk == null || !PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
+                ?: project.service<PyExternalFilesIndexService>().findSdkForExternallyIndexedFile(node.containingFile.virtualFile)
+      if (sdk == null || !PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
         return emptyList()
       }
 
 
-      val packageManager = PythonPackageManager.forSdk(module.project, sdk)
+      val packageManager = PythonPackageManager.forSdk(project, sdk)
 
       val shouldBeSuggest = !sdk.isReadOnly && packageManager.isNotInstalledAndCanBeInstalled(packageName)
       if (!shouldBeSuggest)
@@ -128,6 +147,9 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       val project = node.getProject()
       val scope = GlobalSearchScope.projectScope(project)
       val module = ModuleUtilCore.findModuleForPsiElement(node) ?: return null
+      if (module.isPyProjectTomlBased) {
+        return null
+      }
 
       val importObjectsFQNs = importStatementBase.getFullyQualifiedObjectNames()
 
@@ -152,25 +174,50 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       for (file in filesByName) {
         val containingDirectory = file.getParent() ?: continue
 
-        if (isAlreadySourceRoot(containingDirectory, module)) {
+        val sourceRootStatus = getSourceRootStatus(containingDirectory, module)
+        // Explicit check for all values of enum in case someone adds a new one
+        when (sourceRootStatus) {
+          SourceRootStatus.NOT_SOURCE_ROOT -> Unit
+          SourceRootStatus.ALREADY_SOURCE_ROOT -> continue
+          SourceRootStatus.DOES_NOT_BELONG_TO_CONTENT_OF_PROVIDED_MODULE -> continue
+        }
+
+        val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
+        if (resolveResult.size != 1) {
           continue
         }
-        
-        val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
-        if (!resolveResult.isEmpty()) {
-          if (Registry.`is`("python.source.root.suggest.quickfix.auto.apply")) {
+        if (Registry.`is`("python.source.root.suggest.quickfix.auto.apply")) {
+          val resolvedPsi = resolveResult.first()
+          val isPsiDirectoryWithInitPy = resolvedPsi is PsiDirectory && resolvedPsi.getVirtualFile().findChild(PyNames.INIT_DOT_PY) == null
+          if (!isPsiDirectoryWithInitPy) {
+            // If we resolved to a directory, it must contain "__init__.py". Otherwise, we might have false positives.
+            // See PY-86985
+            // Quick fix remains available in that case
             project.getService(PySourceRootDetectionService::class.java).onSourceRootDetected(containingDirectory)
           }
-          return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory)
+        }
+        return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory).also {
+
         }
       }
       return null
     }
 
-    private fun isAlreadySourceRoot(virtualFile: VirtualFile, module: Module): Boolean {
+    private enum class SourceRootStatus {
+      ALREADY_SOURCE_ROOT,
+      NOT_SOURCE_ROOT,
+      DOES_NOT_BELONG_TO_CONTENT_OF_PROVIDED_MODULE
+    }
+
+    private fun getSourceRootStatus(virtualFile: VirtualFile, module: Module): SourceRootStatus {
       val model = ModuleRootManager.getInstance(module).modifiableModel
-      val entry = MarkRootsManager.findContentEntry(model, virtualFile) ?: return false
-      return entry.getSourceFolders().any { it.file == virtualFile }
+      val entry = MarkRootsManager.findContentEntry(model, virtualFile)
+                  ?: return SourceRootStatus.DOES_NOT_BELONG_TO_CONTENT_OF_PROVIDED_MODULE
+      val hasSourceRoot = entry.getSourceFolders().any { it.file == virtualFile }
+      if (hasSourceRoot) {
+        return SourceRootStatus.ALREADY_SOURCE_ROOT
+      }
+      return SourceRootStatus.NOT_SOURCE_ROOT
     }
 
     override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix> {

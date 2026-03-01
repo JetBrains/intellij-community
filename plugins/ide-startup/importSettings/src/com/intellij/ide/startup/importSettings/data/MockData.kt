@@ -16,7 +16,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.nio.file.Path
 import java.time.LocalDate
-import java.util.*
+import java.util.UUID
 import javax.swing.Icon
 import kotlin.random.Random
 

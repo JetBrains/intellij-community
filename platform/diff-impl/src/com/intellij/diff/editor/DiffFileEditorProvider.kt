@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls
 @NonNls
 private const val DIFF_EDITOR_PROVIDER_ID = "DiffEditor"
 
-private class DiffFileEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileEditorProvider, DumbAware {
+internal class DiffFileEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is DiffViewerVirtualFile
 
   override fun acceptRequiresReadAction() = false

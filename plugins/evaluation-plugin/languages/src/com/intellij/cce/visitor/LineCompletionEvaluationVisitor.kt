@@ -1,10 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeLine
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.SimpleTokenProperties
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.util.CompletionGolfTextUtil.isValuableString
 import com.intellij.cce.visitor.exceptions.PsiConverterException
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
 import kotlin.math.min

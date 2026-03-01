@@ -2,8 +2,11 @@
   <module value="com.intellij.modules.coverage"/>
 
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.coverage.agent"/>
+    <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.vcs"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

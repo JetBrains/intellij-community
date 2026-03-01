@@ -12,7 +12,7 @@ import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 @ApiStatus.Internal
 object ChangesUtil {

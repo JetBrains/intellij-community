@@ -1,7 +1,7 @@
 package com.intellij.ide.starter.runner
 
 import com.intellij.ide.starter.ide.IDETestContext
-import java.util.*
+import java.util.Collections
 
 class TestWatcherActions {
   private val _onFailureActions: MutableList<(IDETestContext) -> Unit> = Collections.synchronizedList(mutableListOf())

@@ -3,7 +3,13 @@
  */
 package com.jetbrains.python.codeInsight.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.AutoCompletionContext
+import com.intellij.codeInsight.completion.AutoCompletionDecision
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.DumbAware
@@ -44,7 +50,7 @@ class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
       if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
         val postInitParameters = mutableListOf(PyNames.CANONICAL_SELF)
 
-        PyDataclassTypeProvider.getInitVars(cls, dataclassParameters, typeEvalContext).orEmpty().forEach {
+        PyDataclassTypeProvider.Helper.getInitVars(cls, dataclassParameters, typeEvalContext).orEmpty().forEach {
           val name = it.targetExpression.name
           val typeHint = PyTypingTypeProvider.getAnnotationValue(it.targetExpression, typeEvalContext)
           if (name != null && typeHint is PySubscriptionExpression) {

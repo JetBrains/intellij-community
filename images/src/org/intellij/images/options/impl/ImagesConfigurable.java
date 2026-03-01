@@ -27,7 +27,7 @@ import org.intellij.images.options.OptionsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 

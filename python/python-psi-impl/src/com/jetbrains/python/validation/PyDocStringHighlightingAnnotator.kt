@@ -18,9 +18,19 @@ package com.jetbrains.python.validation
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.documentation.docstrings.*
+import com.jetbrains.python.documentation.docstrings.DocStringFormat
+import com.jetbrains.python.documentation.docstrings.DocStringParser
+import com.jetbrains.python.documentation.docstrings.DocStringReferenceProvider
+import com.jetbrains.python.documentation.docstrings.DocStringUtil
+import com.jetbrains.python.documentation.docstrings.SphinxDocString
 import com.jetbrains.python.highlighting.PyHighlighter
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElementVisitor
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyStringLiteralExpression
 
 /**
  * Highlights doc strings in classes, functions, and files.

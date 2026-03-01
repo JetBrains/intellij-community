@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest

@@ -15,11 +15,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler
 import com.intellij.ui.ReplacePromptDialog
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.StrictSuccess
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.WeakSuccess
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.ExpressionValue
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.Jump
 import org.jetbrains.kotlin.idea.refactoring.introduce.getPhysicalTextRange

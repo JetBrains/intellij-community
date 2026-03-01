@@ -47,4 +47,39 @@ jvm_library(
     "//plugins/kotlin/base/frontend-agnostic",
   ]
 )
+
+jvm_library(
+  name = "base_test_lib",
+  module_name = "intellij.kotlin.searching.base",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_base",
+  runtime_deps = [
+    ":base",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//platform/usageView-impl:usageView-impl_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//java/java-analysis-api:analysis_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//java/openapi:java_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/indices:indices_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.searching.base` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.customization
 
 import com.intellij.openapi.util.SystemInfo
@@ -6,7 +6,7 @@ import com.intellij.platform.ide.impl.customization.BaseJetBrainsExternalProduct
 import com.intellij.util.Url
 import com.intellij.util.Urls
 
-class PyCharmExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
+internal class PyCharmExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
   override val productPageUrl: Url
     get() = baseWebSiteUrl.resolve("pycharm/")
 

@@ -38,6 +38,11 @@ internal interface NativeFileHandler {
   suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
 }
 
+suspend fun buildUncompressJarWithDirEntries(targetFile: Path, sources: List<Source>) {
+  // addDirEntries=true has no effect when compress=true
+  buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = null, addDirEntries = true, compress = false)
+}
+
 suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
   buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = null, addDirEntries = false, compress = compress)
 }

@@ -3,7 +3,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 

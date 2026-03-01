@@ -216,25 +216,12 @@ f:com.intellij.openapi.application.CoroutinesKt
 - *sf:readAndEdtWriteActionUndispatched(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeIntentReadAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
-a:com.intellij.openapi.application.ReadAction
-- *s:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 *a:com.intellij.openapi.application.WriteIntentReadAction
 - <init>():V
 - *s:compute(com.intellij.openapi.util.Computable):java.lang.Object
 - *s:computeThrowable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - *s:run(java.lang.Runnable):V
 - *s:runThrowable(com.intellij.util.ThrowableRunnable):V
-*f:com.intellij.openapi.client.ClientSystemInfo
-- *sf:Companion:com.intellij.openapi.client.ClientSystemInfo$Companion
-- f:getMacClient():java.lang.Boolean
-- f:getWindowsClient():java.lang.Boolean
-- sf:isMac():Z
-- sf:isWindows():Z
-- f:setMacClient(java.lang.Boolean):V
-- f:setWindowsClient(java.lang.Boolean):V
-*f:com.intellij.openapi.client.ClientSystemInfo$Companion
-- f:isMac():Z
-- f:isWindows():Z
 a:com.intellij.openapi.command.CommandProcessor
 - *a:allowMergeGlobalCommands(java.lang.Runnable):V
 - *a:executeCommand(com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.String,java.lang.Object,com.intellij.openapi.command.UndoConfirmationPolicy,Z,com.intellij.openapi.editor.Document):V
@@ -300,6 +287,12 @@ a:com.intellij.openapi.progress.Task
 - *:getId():java.lang.Object
 f:com.intellij.openapi.project.DumbKt
 - *sf:waitForSmartMode(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.openapi.project.DumbModeListenerBackgroundable
+- *sf:Companion:com.intellij.openapi.project.DumbModeListenerBackgroundable$Companion
+- *sf:TOPIC:com.intellij.util.messages.Topic
+- enteredDumbMode():V
+- exitDumbMode():V
+*f:com.intellij.openapi.project.DumbModeListenerBackgroundable$Companion
 a:com.intellij.openapi.project.DumbService
 - *a:getState():kotlinx.coroutines.flow.StateFlow
 - *a:suspendIndexingAndRun(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
@@ -377,50 +370,6 @@ f:com.intellij.openapi.vfs.VirtualFileUtil
 - *bs:getCachedValue$default(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Key,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
 *:com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 - com.intellij.openapi.vfs.newvfs.BulkFileListener
-f:com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-- com.intellij.openapi.vfs.newvfs.events.VFileEvent
-- *:isRename():Z
-*:com.intellij.platform.backend.navigation.NavigationRequest
-- *sf:Companion:com.intellij.platform.backend.navigation.NavigationRequest$Companion
-- s:directoryNavigationRequest(com.intellij.psi.PsiDirectory):com.intellij.platform.backend.navigation.NavigationRequest
-- s:sourceNavigationRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I):com.intellij.platform.backend.navigation.NavigationRequest
-- s:sourceNavigationRequest(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):com.intellij.platform.backend.navigation.NavigationRequest
-*f:com.intellij.platform.backend.navigation.NavigationRequest$Companion
-- f:directoryNavigationRequest(com.intellij.psi.PsiDirectory):com.intellij.platform.backend.navigation.NavigationRequest
-- f:sourceNavigationRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I):com.intellij.platform.backend.navigation.NavigationRequest
-- f:sourceNavigationRequest(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):com.intellij.platform.backend.navigation.NavigationRequest
-*:com.intellij.platform.backend.navigation.NavigationTarget
-- a:computePresentation():com.intellij.platform.backend.presentation.TargetPresentation
-- a:createPointer():com.intellij.model.Pointer
-- a:equals(java.lang.Object):Z
-- a:hashCode():I
-- a:navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
-*:com.intellij.platform.backend.presentation.TargetPresentation
-- *sf:Companion:com.intellij.platform.backend.presentation.TargetPresentation$Companion
-- s:builder(com.intellij.platform.backend.presentation.TargetPresentation):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- s:builder(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:getBackgroundColor():java.awt.Color
-- a:getContainerText():java.lang.String
-- a:getContainerTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- a:getIcon():javax.swing.Icon
-- a:getLocationIcon():javax.swing.Icon
-- a:getLocationText():java.lang.String
-- a:getPresentableText():java.lang.String
-- a:getPresentableTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
-*f:com.intellij.platform.backend.presentation.TargetPresentation$Companion
-- f:builder(com.intellij.platform.backend.presentation.TargetPresentation):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- f:builder(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-*:com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:backgroundColor(java.awt.Color):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:containerText(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:containerText(java.lang.String,com.intellij.openapi.editor.markup.TextAttributes):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:containerTextAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:icon(javax.swing.Icon):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:locationText(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:locationText(java.lang.String,javax.swing.Icon):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:presentableText(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:presentableTextAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.platform.backend.presentation.TargetPresentationBuilder
-- a:presentation():com.intellij.platform.backend.presentation.TargetPresentation
 com.intellij.pom.Navigatable
 - *:navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
 *f:com.intellij.psi.BasicInspectionVisitorBean
@@ -453,9 +402,6 @@ a:com.intellij.psi.PsiManager
 - getPresentationName():java.lang.String
 *:com.intellij.psi.PsiReferencesWrapper
 - a:getReferences():java.util.List
-com.intellij.psi.StubBasedPsiElement
-- com.intellij.psi.PsiElement
-- *:getIElementType():com.intellij.psi.tree.IElementType
 com.intellij.psi.SyntheticElement
 - *:findSameElementInCopy(com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 *:com.intellij.psi.search.ActualCodeInsightContextInfo
@@ -505,70 +451,6 @@ f:com.intellij.psi.search.PsiSearchScopeUtil
 - hashCode():I
 com.intellij.psi.stubs.BinaryFileStubBuilder
 - *:getFileFilter():com.intellij.openapi.vfs.VirtualFileFilter
-*:com.intellij.psi.stubs.LanguageStubDefinition
-- a:getBuilder():com.intellij.psi.StubBuilder
-- a:getStubVersion():I
-- shouldBuildStubFor(com.intellij.openapi.vfs.VirtualFile):Z
-*:com.intellij.psi.stubs.LanguageStubDescriptor
-- a:getFileElementSerializer():com.intellij.psi.stubs.ObjectStubSerializer
-- a:getFileElementType():com.intellij.psi.tree.IFileElementType
-- a:getLanguage():com.intellij.lang.Language
-- a:getStubDefinition():com.intellij.psi.stubs.LanguageStubDefinition
-*:com.intellij.psi.stubs.LightLanguageStubDefinition
-- com.intellij.psi.stubs.LanguageStubDefinition
-- a:parseContentsLight(com.intellij.lang.ASTNode):com.intellij.util.diff.FlyweightCapableTreeStructure
-*:com.intellij.psi.stubs.LightStubElementFactory
-- com.intellij.psi.stubs.StubElementFactory
-- a:createStub(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
-- shouldCreateStub(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.stubs.StubElement):Z
-com.intellij.psi.stubs.PsiFileStub
-- com.intellij.openapi.util.UserDataHolder
-- com.intellij.psi.stubs.StubElement
-- *:getFileElementType():com.intellij.psi.tree.IElementType
-com.intellij.psi.stubs.Stub
-- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
-a:com.intellij.psi.stubs.StubBase
-- com.intellij.psi.stubs.ObjectStubBase
-- com.intellij.psi.stubs.StubElement
-- *p:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
-- *f:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement
-- *:getElementType():com.intellij.psi.tree.IElementType
-- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
-*f:com.intellij.psi.stubs.StubBuildCachedValuesManager
-- sf:INSTANCE:com.intellij.psi.stubs.StubBuildCachedValuesManager
-- sf:getCachedValueIfBuildingStubs(com.intellij.psi.PsiElement,com.intellij.openapi.util.Key,java.lang.Object,java.util.function.Function):java.lang.Object
-- sf:getCachedValueStubBuildOptimized(com.intellij.lang.ASTNode,com.intellij.openapi.project.Project,com.intellij.openapi.util.Key,com.intellij.openapi.util.Key,com.intellij.psi.util.ParameterizedCachedValueProvider,java.lang.Object):java.lang.Object
-- sf:getCachedValueStubBuildOptimized(com.intellij.psi.PsiElement,com.intellij.openapi.util.Key,com.intellij.openapi.util.Key,com.intellij.psi.util.ParameterizedCachedValueProvider,java.lang.Object):java.lang.Object
-- sf:getCachedValueStubBuildOptimized(com.intellij.psi.PsiElement,com.intellij.openapi.util.Key,com.intellij.psi.util.CachedValueProvider):java.lang.Object
-- sf:isBuildingStubs():Z
-*f:com.intellij.psi.stubs.StubBuildCachedValuesManager$StubBuildCachedValue
-com.intellij.psi.stubs.StubElement
-- com.intellij.psi.stubs.Stub
-- *:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement
-- *a:getElementType():com.intellij.psi.tree.IElementType
-*:com.intellij.psi.stubs.StubElementFactory
-- a:createPsi(com.intellij.psi.stubs.StubElement):com.intellij.psi.PsiElement
-- a:createStub(com.intellij.psi.PsiElement,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
-- shouldCreateStub(com.intellij.lang.ASTNode):Z
-*:com.intellij.psi.stubs.StubElementRegistryService
-- *sf:Companion:com.intellij.psi.stubs.StubElementRegistryService$Companion
-- s:getInstance():com.intellij.psi.stubs.StubElementRegistryService
-- a:getLightStubFactory(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.LightStubElementFactory
-- a:getStubDescriptor(com.intellij.lang.Language):com.intellij.psi.stubs.LanguageStubDescriptor
-- a:getStubFactory(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElementFactory
-- a:getStubSerializer(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.ObjectStubSerializer
-*f:com.intellij.psi.stubs.StubElementRegistryService$Companion
-- f:getInstance():com.intellij.psi.stubs.StubElementRegistryService
-*:com.intellij.psi.stubs.StubRegistry
-- a:registerLightStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.LightStubElementFactory):V
-- a:registerStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.StubElementFactory):V
-- a:registerStubSerializer(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.ObjectStubSerializer):V
-- registerStubSerializingFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.StubSerializingElementFactory):V
-*:com.intellij.psi.stubs.StubRegistryExtension
-- a:register(com.intellij.psi.stubs.StubRegistry):V
-*:com.intellij.psi.stubs.StubSerializingElementFactory
-- com.intellij.psi.stubs.StubElementFactory
-- com.intellij.psi.stubs.StubSerializer
 com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 - com.intellij.psi.FileViewProvider
 - *:getContentElementType(com.intellij.lang.Language):com.intellij.psi.tree.IElementType
@@ -578,6 +460,10 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - *sf:leavesAroundOffset(com.intellij.psi.PsiFile,I):java.lang.Iterable
 - *sf:walkUp(com.intellij.psi.PsiElement,I):java.util.Iterator
 - *sf:walkUp(com.intellij.psi.PsiElement,I,com.intellij.psi.PsiElement):java.util.Iterator
+com.intellij.testIntegration.TestFramework
+- com.intellij.openapi.project.PossiblyDumbAware
+- *:findAfterSuiteMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- *:findBeforeSuiteMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 f:com.intellij.util.CoroutinesKt
 - *sf:awaitCancellationAndInvoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):V
 - *bs:awaitCancellationAndInvoke$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):V

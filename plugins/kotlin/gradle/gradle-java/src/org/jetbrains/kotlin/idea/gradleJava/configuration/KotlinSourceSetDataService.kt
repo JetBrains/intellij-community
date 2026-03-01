@@ -19,13 +19,20 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.ExternalSystemRunTask
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.KotlinModuleKind
+import org.jetbrains.kotlin.config.SourceKotlinRootType
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
-import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.facet.applyCompilerArgumentsToFacetSettings
+import org.jetbrains.kotlin.idea.facet.configureFacet
+import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
+import org.jetbrains.kotlin.idea.facet.noVersionAutoAdvance
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
-import org.jetbrains.kotlin.idea.gradle.configuration.kotlinAndroidSourceSets
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.gradleJava.pathAsUrl
@@ -203,37 +210,11 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             kotlinSourceSet: KotlinSourceSetInfo,
             mainModuleNode: DataNode<ModuleData>,
             ideModule: Module,
-            modelsProvider: IdeModifiableModelsProvider
-        ) {
-            // TODO Review this code after AS Chipmunk released and merged to master
-            // In https://android.googlesource.com/platform/tools/adt/idea/+/ab31cd294775b7914ddefbe417a828b5c18acc81%5E%21/#F1
-            // creation of KotlinAndroidSourceSetData node was dropped, all tasks must be stored in corresponding KotlinSourceSetData nodes
-            val additionalRunTasks = mainModuleNode.kotlinAndroidSourceSets
-                ?.filter { it.isTestModule }
-                ?.flatMap { it.externalSystemRunTasks }
-                ?.toSet()
-            configureFacet(
-                moduleData,
-                kotlinSourceSet,
-                mainModuleNode,
-                ideModule,
-                modelsProvider,
-                enumValues<KotlinPlatform>().toList(),
-                additionalRunTasks
-            )
-        }
-
-        fun configureFacet(
-            moduleData: ModuleData,
-            kotlinSourceSet: KotlinSourceSetInfo,
-            mainModuleNode: DataNode<ModuleData>,
-            ideModule: Module,
             modelsProvider: IdeModifiableModelsProvider,
             projectPlatforms: List<KotlinPlatform>,
             additionalRunTasks: Collection<ExternalSystemRunTask>? = null
         ): KotlinFacet {
             val compilerVersion = KotlinGradleFacade.getInstance()?.findKotlinPluginVersion(mainModuleNode)
-            // ?: return null TODO: Fix in CLion or our plugin KT-27623
 
             val platformKinds = kotlinSourceSet.actualPlatforms.platforms //TODO(auskov): fix calculation of jvm target
                 .map { kotlinPlatform -> kotlinPlatform.tooling.kind }
@@ -329,7 +310,9 @@ private fun populateNonJvmSourceRootTypes(sourceSetNode: DataNode<GradleSourceSe
 
     val externalToKotlinSourceTypes = mapOf(
         ExternalSystemSourceType.SOURCE to SourceKotlinRootType,
-        ExternalSystemSourceType.TEST to TestSourceKotlinRootType
+        ExternalSystemSourceType.SOURCE_GENERATED to SourceKotlinRootType,
+        ExternalSystemSourceType.TEST to TestSourceKotlinRootType,
+        ExternalSystemSourceType.TEST_GENERATED to TestSourceKotlinRootType
     )
     externalToKotlinSourceTypes.forEach { (externalType, kotlinType) ->
         val sourcesRoots = contentRootDataList.flatMap { it.getPaths(externalType) }

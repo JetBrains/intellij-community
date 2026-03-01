@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
@@ -83,7 +83,11 @@ public abstract class TestFrameworks {
 
       if (framework.isTestClass(psiClass) ||
           framework.findSetUpMethod(psiClass) != null ||
-          framework.findTearDownMethod(psiClass) != null) {
+          framework.findTearDownMethod(psiClass) != null ||
+          framework.findBeforeClassMethod(psiClass) != null ||
+          framework.findAfterClassMethod(psiClass) != null ||
+          framework.findBeforeSuiteMethod(psiClass) != null ||
+          framework.findAfterSuiteMethod(psiClass) != null) {
         frameworks.add(framework);
       }
       checkedFrameworksByName.put(frameworkName, frameworkLanguage);

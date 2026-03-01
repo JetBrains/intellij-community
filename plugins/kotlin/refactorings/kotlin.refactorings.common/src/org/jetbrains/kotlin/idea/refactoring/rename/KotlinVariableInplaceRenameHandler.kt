@@ -3,12 +3,19 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReference
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtImportAlias
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtParameter
 
 open class KotlinVariableInplaceRenameHandler : VariableInplaceRenameHandler() {
     companion object {

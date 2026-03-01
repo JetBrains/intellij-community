@@ -2,7 +2,11 @@
 package com.intellij.platform.workspace.storage.impl.containers
 
 import com.intellij.platform.workspace.storage.impl.containers.PersistentBidirectionalMap.Immutable
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.persistentListOf
 
 
 /**

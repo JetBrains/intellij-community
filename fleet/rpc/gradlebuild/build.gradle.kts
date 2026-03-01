@@ -31,8 +31,10 @@ kotlin {
     "-opt-in=kotlin.ExperimentalStdlibApi",
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
+    "-Xcontext-parameters",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   wasmJs {

@@ -26,6 +26,11 @@ class InvalidRequestMethod(ParseException):
 
     def __init__(self, method: str) -> None: ...
 
+class ExpectationFailed(ParseException):
+    expect: str
+
+    def __init__(self, expect: str) -> None: ...
+
 class InvalidHTTPVersion(ParseException):
     version: str | tuple[int, int]
 
@@ -79,6 +84,12 @@ class InvalidProxyLine(ParseException):
     code: int
 
     def __init__(self, line: str) -> None: ...
+
+class InvalidProxyHeader(ParseException):
+    msg: str
+    code: int
+
+    def __init__(self, msg: str) -> None: ...
 
 class ForbiddenProxyRequest(ParseException):
     host: str

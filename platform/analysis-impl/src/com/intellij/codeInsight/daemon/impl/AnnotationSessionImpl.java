@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;

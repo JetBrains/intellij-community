@@ -6,7 +6,14 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -26,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefin
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.code.FileCodeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessMethods;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessProperties;

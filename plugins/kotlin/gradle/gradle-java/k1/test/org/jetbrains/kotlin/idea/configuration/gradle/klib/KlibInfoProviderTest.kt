@@ -8,7 +8,12 @@ import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfo.NativeTargets.CommonizerIdentity
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfoProvider
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.konan.library.*
+import org.jetbrains.kotlin.konan.library.KONAN_DISTRIBUTION_COMMONIZED_LIBS_DIR
+import org.jetbrains.kotlin.konan.library.KONAN_DISTRIBUTION_COMMON_LIBS_DIR
+import org.jetbrains.kotlin.konan.library.KONAN_DISTRIBUTION_KLIB_DIR
+import org.jetbrains.kotlin.konan.library.KONAN_DISTRIBUTION_PLATFORM_LIBS_DIR
+import org.jetbrains.kotlin.konan.library.KONAN_DISTRIBUTION_SOURCES_DIR
+import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
 

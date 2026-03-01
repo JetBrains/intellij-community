@@ -21,4 +21,16 @@ jvm_library(
     "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
   ]
 )
+
+jvm_library(
+  name = "skiko_test_lib",
+  module_name = "intellij.libraries.skiko",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
+    "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
+  ],
+  runtime_deps = [":skiko"]
+)
 ### auto-generated section `build intellij.libraries.skiko` end

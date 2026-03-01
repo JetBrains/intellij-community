@@ -11,10 +11,20 @@ on:
         description: 'artifacts directory'
         type: string
         required: true
+      system_properties:
+        default: ''
+        description: 'any custom system properties'
+        type: string
+        required: false
+      upload_artifacts:
+        default: true
+        description: 'whether to make artifacts available for download'
+        type: boolean
 
 jobs:
   build-linux-x64:
-    runs-on: ubuntu-latest
+    # IDEs cannot be built due to insufficient disk space on standard 'ubuntu-latest' runners
+    runs-on: Large-linux-x64-for-intellij-community
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: ./.github/actions/build_ide
@@ -23,15 +33,17 @@ jobs:
           arch: x64
           extension: tar.gz
           product: ${{inputs.product}}
+          system_properties: ${{inputs.system_properties}}
       - uses: ./.github/actions/upload_ide
+        if: ${{inputs.upload_artifacts}}
         with:
           os: linux
           arch: x64
           extension: tar.gz
           artifacts_dir: ${{inputs.artifacts_dir}}
   build-windows-x64:
-    if: ${{ inputs.product != 'intellij_idea' }} # IDEA-382998
-    runs-on: ubuntu-latest
+    # IDEs cannot be built due to insufficient disk space on standard 'ubuntu-latest' runners
+    runs-on: Large-linux-x64-for-intellij-community
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: ./.github/actions/build_ide
@@ -40,14 +52,17 @@ jobs:
           arch: x64
           extension: exe
           product: ${{inputs.product}}
+          system_properties: ${{inputs.system_properties}}
       - uses: ./.github/actions/upload_ide
+        if: ${{inputs.upload_artifacts}}
         with:
           os: windows
           arch: x64
           extension: exe
           artifacts_dir: ${{inputs.artifacts_dir}}
   build-macos-aarch64:
-    runs-on: ubuntu-latest
+    # IDEs cannot be built due to insufficient disk space on standard 'ubuntu-latest' runners
+    runs-on: Large-linux-x64-for-intellij-community
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: ./.github/actions/build_ide
@@ -56,7 +71,9 @@ jobs:
           arch: aarch64
           extension: sit
           product: ${{inputs.product}}
+          system_properties: ${{inputs.system_properties}}
       - uses: ./.github/actions/upload_ide
+        if: ${{inputs.upload_artifacts}}
         with:
           os: mac
           arch: aarch64
@@ -64,6 +81,7 @@ jobs:
           artifacts_dir: ${{inputs.artifacts_dir}}
       - name: Upload .dmg build scripts
         uses: actions/upload-artifact@v4.4.3
+        if: ${{inputs.upload_artifacts}}
         with:
           name: dmg-build-scripts
           if-no-files-found: 'error'
@@ -72,6 +90,7 @@ jobs:
   build-dmg:
     runs-on: macos-latest
     needs: build-macos-aarch64
+    if: ${{inputs.upload_artifacts}}
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Download .dmg build scripts

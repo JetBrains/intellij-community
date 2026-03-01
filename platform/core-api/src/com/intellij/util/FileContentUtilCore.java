@@ -13,7 +13,13 @@ import com.intellij.util.concurrency.TransferredWriteActionService;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Utility functions to trigger file reparsing programmatically.

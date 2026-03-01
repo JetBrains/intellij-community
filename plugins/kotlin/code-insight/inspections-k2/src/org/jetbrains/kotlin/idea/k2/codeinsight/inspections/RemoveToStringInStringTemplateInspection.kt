@@ -17,7 +17,13 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 import org.jetbrains.kotlin.util.OperatorNameConventions
 

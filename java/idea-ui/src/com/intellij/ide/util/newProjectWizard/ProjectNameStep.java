@@ -4,7 +4,12 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.util.projectWizard.*;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.NamePathComponent;
+import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,8 +17,13 @@ import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.io.File;
 
 /**

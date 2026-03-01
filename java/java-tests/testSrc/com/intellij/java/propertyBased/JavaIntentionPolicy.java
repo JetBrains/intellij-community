@@ -7,7 +7,26 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModShowConflicts;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -23,6 +42,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Generate empty 'private' constructor") || // displays a dialog
            actionText.startsWith("Attach annotations") || // changes project model
+           actionText.startsWith("Deannotate") || // changes local XMLs
            actionText.startsWith("Change class type parameter") || // doesn't change file text (starts live template)
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
            actionText.equals("Reformat file") || // ProblematicWhitespaceInspection: may do nothing when problematic whitespace is inside comment, related to IDEA-305318

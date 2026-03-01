@@ -3,9 +3,11 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.PluginManagerCore.JAVA_PLUGIN_ALIAS_ID
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 
 private val PLATFORM_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.platform")
 private val LANG_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.lang")
@@ -13,7 +15,13 @@ private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
 private val RIDER_MODULE_ID = PluginModuleId("intellij.rider", PluginModuleId.JETBRAINS_NAMESPACE)
 private val JSON_ALIAS_ID = PluginId.getId("com.intellij.modules.json")
+private val CWM_PLUGIN_ID = PluginId.getId("com.jetbrains.codeWithMe")
+private val CWM_RIDER_PLUGIN_ID = PluginId.getId("intellij.rider.plugins.cwm")
 private val JSON_BACKEND_MODULE_ID = PluginModuleId("intellij.json.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+private val JAVA_BACKEND_MODULE_ID = PluginModuleId("intellij.java.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+private val REMOTE_DEVELOPMENT_MODULE_ID = PluginModuleId("intellij.cwm", PluginModuleId.JETBRAINS_NAMESPACE)
+private val REMOTE_DEVELOPMENT_RIDER_MODULE_ID = PluginModuleId("intellij.rider.plugins.cwm", PluginModuleId.JETBRAINS_NAMESPACE)
+
 
 internal class ModulesWithDependencies(
   @JvmField val modules: List<PluginModuleDescriptor>,
@@ -71,6 +79,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
       }
       else {
         dependenciesCollector.add(implicitDep)
+        moduleIdToModule.get(JAVA_BACKEND_MODULE_ID)?.let { dependenciesCollector.add(it) }
       }
     }
 
@@ -92,10 +101,20 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
         if (doesDependOnPluginAlias(module, JSON_ALIAS_ID)) {
           moduleIdToModule.get(JSON_BACKEND_MODULE_ID)?.let { dependenciesCollector.add(it) }
         }
+        if (doesDependOnPluginAlias(module, CWM_PLUGIN_ID)) {
+          moduleIdToModule.get(REMOTE_DEVELOPMENT_MODULE_ID)?.let { dependenciesCollector.add(it) }
+        }
+        if (doesDependOnPluginAlias(module, CWM_RIDER_PLUGIN_ID)) {
+          moduleIdToModule.get(REMOTE_DEVELOPMENT_RIDER_MODULE_ID)?.let { dependenciesCollector.add(it) }
+        }
         moduleIdToModule.get(COLLABORATION_TOOLS_MODULE_ID)?.let { dependenciesCollector.add(it) }
       }
 
       /* Compatibility Layer */
+
+      if (doesDependOnPluginAlias(module, JAVA_PLUGIN_ALIAS_ID)) {
+        moduleIdToModule.get(JAVA_BACKEND_MODULE_ID)?.let { dependenciesCollector.add(it) }
+      }
 
       if (doesDependOnPluginAlias(module, RIDER_ALIAS_ID)) {
         moduleIdToModule.get(RIDER_MODULE_ID)?.let { dependenciesCollector.add(it) }

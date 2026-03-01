@@ -30,7 +30,7 @@ abstract class DslConfigurableBase : UnnamedConfigurable {
   private val panel = object : ClearableLazyValue<DialogPanel>() {
     override fun compute(): DialogPanel {
       if (disposable == null) {
-        disposable = Disposer.newDisposable()
+        disposable = Disposer.newDisposable(this@DslConfigurableBase.javaClass.name)
       }
       val panel = createPanel()
       panel.registerValidators(disposable!!)

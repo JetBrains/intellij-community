@@ -4,7 +4,12 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiIfStatement
 import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class JavaUIfExpression(

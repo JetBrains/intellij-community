@@ -6,7 +6,9 @@ import com.intellij.debugger.engine.SimplePropertyGetterProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.psi.singleExpressionBody
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class KotlinSimpleGetterProvider : SimplePropertyGetterProvider {

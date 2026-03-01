@@ -1,9 +1,27 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.serialization
 
-import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.idea.workspaceModel.*
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.copyOf
+import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
+import org.jetbrains.kotlin.cli.common.arguments.unfrozen
+import org.jetbrains.kotlin.config.CompilerSettings
+import org.jetbrains.kotlin.config.ExternalSystemRunTask
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
+import org.jetbrains.kotlin.config.KotlinModuleKind
+import org.jetbrains.kotlin.config.KotlinMultiplatformVersion
+import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.additionalArgumentsAsList
+import org.jetbrains.kotlin.config.deserializeTargetPlatformByComponentPlatforms
+import org.jetbrains.kotlin.config.serializeComponentPlatforms
+import org.jetbrains.kotlin.idea.workspaceModel.CompilerArgumentsSerializer
+import org.jetbrains.kotlin.idea.workspaceModel.CompilerSettingsData
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntityBuilder
+import org.jetbrains.kotlin.idea.workspaceModel.deserializeExternalSystemTestRunTask
+import org.jetbrains.kotlin.idea.workspaceModel.serializeExternalSystemTestRunTask
+import org.jetbrains.kotlin.idea.workspaceModel.toCompilerSettings
+import org.jetbrains.kotlin.idea.workspaceModel.toCompilerSettingsData
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon

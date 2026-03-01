@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction -Xcontext-parameters -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction -Xcontext-parameters -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -55,6 +55,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

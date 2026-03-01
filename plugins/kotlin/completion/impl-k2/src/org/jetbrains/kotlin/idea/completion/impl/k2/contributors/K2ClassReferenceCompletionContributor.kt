@@ -14,9 +14,9 @@ internal class K2ClassReferenceCompletionContributor : K2SimpleCompletionContrib
     context(_: KaSession, context: K2CompletionSectionContext<KotlinCallableReferencePositionContext>)
     override fun complete() {
         if (context.positionContext.explicitReceiver == null) return
-        context.addElement(createKeywordElement("class"))
+        addElement(createKeywordElement("class"))
         if (context.completionContext.targetPlatform.isJvm()) {
-            context.addElement(createKeywordElement("class", tail = ".java"))
+            addElement(createKeywordElement("class", tail = ".java"))
         }
     }
 }

@@ -17,7 +17,12 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.Java11Shim;
 import kotlinx.collections.immutable.PersistentList;
 import kotlinx.collections.immutable.PersistentSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;

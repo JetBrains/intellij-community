@@ -32,7 +32,7 @@ interface SourceToSinkProvider {
   fun computeConstant(element: PsiElement?): Any?
 }
 
-private class JavaSourceToSinkProvider : SourceToSinkProvider {
+internal class JavaSourceToSinkProvider : SourceToSinkProvider {
   override fun getPhysicalForLightElement(element: PsiElement?): PsiElement? {
     //only records now
     return (element as? LightRecordMember)?.recordComponent

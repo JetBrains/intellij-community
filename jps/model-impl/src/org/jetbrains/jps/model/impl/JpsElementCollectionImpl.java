@@ -4,10 +4,19 @@ package org.jetbrains.jps.model.impl;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementChildRole;
+import org.jetbrains.jps.model.JpsElementCollection;
+import org.jetbrains.jps.model.JpsElementCreator;
+import org.jetbrains.jps.model.JpsElementType;
+import org.jetbrains.jps.model.JpsTypedElement;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
 public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {

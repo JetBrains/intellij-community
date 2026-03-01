@@ -20,7 +20,12 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetStateManager;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**

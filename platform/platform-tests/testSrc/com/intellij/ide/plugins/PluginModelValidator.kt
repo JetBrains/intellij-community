@@ -3,33 +3,31 @@
 
 package com.intellij.ide.plugins
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
-import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
-import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
-import com.intellij.platform.plugins.testFramework.LoadFromSourceXIncludeLoader
-import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
+import com.intellij.platform.pluginSystem.parser.impl.RawPluginDescriptor
+import com.intellij.platform.pluginSystem.parser.impl.ScopedElementsContainer
+import com.intellij.platform.pluginSystem.parser.impl.elements.ContentModuleElement
+import com.intellij.platform.pluginSystem.parser.impl.elements.DependenciesElement
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ServiceElement
 import com.intellij.project.IntelliJProjectConfiguration
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.NamedFailure
 import com.intellij.testFramework.junit5.groupFailures
 import com.intellij.util.io.jackson.array
+import com.intellij.util.io.jackson.createGenerator
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.io.jackson.writeFieldName
+import com.intellij.util.io.jackson.writeStringField
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.util.DefaultPrettyPrinter
 import java.io.StringWriter
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
-import kotlin.io.path.nameWithoutExtension
 
 data class CorePluginDescription(
   val mainModuleName: String,
@@ -52,21 +50,11 @@ data class PluginVariantWithDynamicIncludes(
 
 data class PluginValidationOptions(
   val skipUnresolvedOptionalContentModules: Boolean = false,
+  val skipServicesOverridesCheck: Boolean = false,
   val reportDependsTagInPluginXmlWithPackageAttribute: Boolean = true,
   val referencedPluginIdsOfExternalPlugins: Set<String> = emptySet(),
-  val prefixesOfPathsIncludedFromLibrariesViaXiInclude: List<String> = emptyList(),
 
-  /**
-   * By default, files included via xi:include patterns are searched in 'META-INF', 'idea' and the root directory.
-   * This property allows specifying custom patterns of directories where such files are searched.
-   */
-  val additionalPatternsOfDirectoriesContainingIncludedXmlFiles: List<String> = emptyList(),
-
-  /**
-   * Describes different core plugins (with ID `com.intellij`) located in the project sources. 
-   * All of them are checked, but only the first one is used when checking dependencies from other plugins.  
-   */
-  val corePluginDescriptions: List<CorePluginDescription> = COMMUNITY_CORE_PLUGINS,
+  val pluginModelBuilderOptions: SimplifiedPluginModelBuilderOptions = SimplifiedPluginModelBuilderOptions(),
 
   /**
    * Set of modules containing `plugin.xml` files which should be ignored because they correspond to smaller editions of plugins,
@@ -76,16 +64,21 @@ data class PluginValidationOptions(
   val mainModulesOfAlternativePluginVariants: Set<String> = emptySet(),
 
   /**
-   * Set of modules where a descriptor file named after the module is placed in META-INF directory, not in the resource root.
+   * Mapping from a plugin ID to the list of its content modules which don't have a dedicated JPS module and registered using deprecated
+   * `module.name/subDescriptor` syntax.
    */
-  val modulesWithIncorrectlyPlacedModuleDescriptor: Set<String> = emptySet(),
+  val pluginsToContentModulesWithoutDedicatedJpsModules: Map<String, List<String>> = emptyMap(),
 
   /**
    * Set of implementation classes of existing application-level and project-level components which shouldn't be reported as errors. 
    */
   val componentImplementationClassesToIgnore: Set<String> = emptySet(),
 
-  val pluginVariantsWithDynamicIncludes: List<PluginVariantWithDynamicIncludes> = emptyList(),
+  /**
+   * Names of service interfaces that are overridden by plugins which sources are located outside the current project, and therefore need
+   * to be registered as `open`.
+   */
+  val externallyOverriddenServices: Set<String> = emptySet(),
 )
 
 fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
@@ -100,7 +93,10 @@ fun validatePluginModel(
   project: JpsProject, projectHomePath: Path,
   validationOptions: PluginValidationOptions = PluginValidationOptions(),
 ): PluginValidationResult {
-  return PluginModelValidator(project = project, projectHomePath = projectHomePath, validationOptions = validationOptions).validate()
+  val builder = SimplifiedPluginModelBuilder(project, validationOptions.pluginModelBuilderOptions)
+  return PluginModelValidator(builder.buildSimplifiedPluginModel(),
+                              projectHomePath = projectHomePath,
+                              validationOptions = validationOptions).validate()
 }
 
 class PluginValidationResult internal constructor(
@@ -117,8 +113,7 @@ class PluginValidationResult internal constructor(
 
   fun graphAsString(projectHomePath: Path): CharSequence {
     val stringWriter = StringWriter()
-    val writer = JsonFactory().createGenerator(stringWriter)
-    writer.useDefaultPrettyPrinter()
+    val writer = JsonFactory().createGenerator(stringWriter, DefaultPrettyPrinter())
     writer.use {
       writer.obj {
         val entries = pluginIdToInfo.entries.toMutableList()
@@ -136,10 +131,6 @@ class PluginValidationResult internal constructor(
     }
     return stringWriter.buffer
   }
-
-  fun writeGraph(outFile: Path, projectHomePath: Path) {
-    PluginGraphWriter(pluginIdToInfo, projectHomePath).write(outFile)
-  }
 }
 
 /**
@@ -148,112 +139,23 @@ class PluginValidationResult internal constructor(
  * There is [com.intellij.platform.buildScripts.testFramework.pluginModel.PluginDependenciesValidator] which checks dependencies of plugin
  * modules.
  */
-class PluginModelValidator(
-  private val project: JpsProject,
+internal class PluginModelValidator(
+  private val simplifiedPluginModel: SimplifiedPluginModel,
   private val projectHomePath: Path,
   private val validationOptions: PluginValidationOptions,
 ) {
-  private val pluginIdToInfo = LinkedHashMap<String, ModuleInfo>()
-  private val pluginAliases = HashSet<String>()
+  private val pluginIdToInfo = simplifiedPluginModel.pluginIdToInfo
+  private val pluginAliases = simplifiedPluginModel.pluginAliases
   private val _errors = mutableListOf<PluginValidationError>()
-  private val xIncludeLoader = LoadFromSourceXIncludeLoader(
-    prefixesOfPathsIncludedFromLibrariesViaXiInclude = validationOptions.prefixesOfPathsIncludedFromLibrariesViaXiInclude,
-    project = project,
-    parentDirectoriesPatterns = listOf("META-INF", "idea", "") + validationOptions.additionalPatternsOfDirectoriesContainingIncludedXmlFiles,
-  )
+
+  init {
+    simplifiedPluginModel.errors.forEach { reportError(it.message, it.sourceModule, it.params) }
+  }
 
   fun validate(): PluginValidationResult {
-    // 1. collect plugin and module file info set
-    val descriptorFileInfos = project.modules.flatMap { module ->
-      try {
-        findPluginAndModuleDescriptors(module)
-      }
-      catch (e: Exception) {
-        reportError("Failed to load descriptor for '${module.name}': ${e.message}", sourceModule = module)
-        return@flatMap emptyList()
-      }
-    }
-
-    descriptorFileInfos.flatMapTo(pluginAliases) { it.descriptor.pluginAliases }
-
-    val moduleNameToInfo = HashMap<String, ModuleInfo>()
-
-    descriptorFileInfos.filterIsInstance<ContentModuleDescriptorFileInfo>().forEach { moduleDescriptorFileInfo ->
-      createModuleFileInfo(
-        contentModuleDescriptorFileInfo = moduleDescriptorFileInfo,
-        moduleName = moduleDescriptorFileInfo.sourceModule.name,
-        moduleNameToInfo = moduleNameToInfo,
-      )
-    }
-    val alternativeCorePluginMainModules = validationOptions.corePluginDescriptions.drop(1).mapTo(HashSet()) {
-      it.mainModuleName
-    }
-
-    // 2. process plugins - process content to collect modules
-    val allMainModulesOfPlugins = ArrayList<ModuleInfo>()
-    descriptorFileInfos.filterIsInstance<PluginDescriptorFileInfo>().forEach { pluginDescriptorFileInfo ->
-      val id = pluginDescriptorFileInfo.descriptor.id
-               ?: pluginDescriptorFileInfo.descriptor.name
-      if (id == null) {
-        reportError(
-          message = "Plugin id is not specified",
-          sourceModule = pluginDescriptorFileInfo.sourceModule,
-          params = mapOf(
-            "descriptorFile" to pluginDescriptorFileInfo.descriptorFile,
-          ),
-        )
-        return@forEach
-      }
-
-      val moduleInfo = ModuleInfo(
-        pluginId = id,
-        name = null,
-        sourceModule = pluginDescriptorFileInfo.sourceModule,
-        descriptorFile = pluginDescriptorFileInfo.descriptorFile,
-        packageName = pluginDescriptorFileInfo.descriptor.`package`,
-        descriptor = pluginDescriptorFileInfo.descriptor,
-      )
-      allMainModulesOfPlugins.add(moduleInfo)
-      val sourceModuleName = pluginDescriptorFileInfo.sourceModule.name
-      if (sourceModuleName !in alternativeCorePluginMainModules && sourceModuleName !in validationOptions.mainModulesOfAlternativePluginVariants) {
-        val prev = pluginIdToInfo.put(id, moduleInfo)
-        // todo how do we can exclude it automatically
-        if (prev != null) {
-          reportError(
-            "Duplicated plugin id: $id",
-            pluginDescriptorFileInfo.sourceModule,
-            mapOf(
-              "prev" to prev,
-              "current" to moduleInfo,
-            ),
-          )
-        }
-      }
-    }
-
-    for (pluginVariant in validationOptions.pluginVariantsWithDynamicIncludes) {
-      PlatformTestUtil.withSystemProperty<Throwable>(pluginVariant.systemPropertyName, pluginVariant.systemPropertyValue) {
-        val sourceModule = project.findModuleByName(pluginVariant.mainModuleName)
-                           ?: error("Cannot find source module '${pluginVariant.mainModuleName}' specified in 'pluginVariantsWithDynamicIncludes'")
-        val pluginModuleInfo = findPluginAndModuleDescriptors(sourceModule).filterIsInstance<PluginDescriptorFileInfo>().singleOrNull()
-        if (pluginModuleInfo == null) {
-          reportError("Failed to load descriptor for '${sourceModule.name}'", sourceModule)
-          return@withSystemProperty
-        }
-
-        val pluginDescriptor = pluginModuleInfo.descriptor
-        val pluginDescriptorFile = pluginModuleInfo.descriptorFile
-
-        allMainModulesOfPlugins.add(ModuleInfo(
-          pluginId = pluginDescriptor.id,
-          name = pluginVariant.mainModuleName,
-          sourceModule = sourceModule,
-          descriptorFile = pluginDescriptorFile,
-          packageName = pluginDescriptor.`package`,
-          descriptor = pluginDescriptor,
-        ))
-      }
-    }
+    val descriptorFileInfos = simplifiedPluginModel.descriptorFileInfos
+    val moduleNameToInfo = simplifiedPluginModel.moduleNameToInfo
+    val allMainModulesOfPlugins = simplifiedPluginModel.allMainModulesOfPlugins
 
     val contentModuleNameToFileInfo = descriptorFileInfos.filterIsInstance<ContentModuleDescriptorFileInfo>().associateBy { it.contentModuleName }
     val sourceModuleNameToPluginFileInfo = descriptorFileInfos.filterIsInstance<PluginDescriptorFileInfo>().associateBy { it.sourceModule.name }
@@ -268,12 +170,18 @@ class PluginModelValidator(
       checkModuleElements(moduleDescriptor = pluginInfo.descriptor, sourceModule = pluginInfo.sourceModule, pluginInfo.descriptorFile)
     }
 
+    // additional content check: services overrides
+    if (!validationOptions.skipServicesOverridesCheck) {
+      checkServicesOverrides(descriptorFileInfos, RawPluginDescriptor::projectElementsContainer)
+      checkServicesOverrides(descriptorFileInfos, RawPluginDescriptor::appElementsContainer)
+    }
+
+    // 3. check dependencies - we are aware about all modules now
     val contentModuleToContainingPlugins = HashMap<String, MutableList<ModuleInfo>>()
     for (pluginInfo in allMainModulesOfPlugins) {
       pluginInfo.content.groupByTo(contentModuleToContainingPlugins, { it.name!! }, { pluginInfo })
     }
 
-    // 3. check dependencies - we are aware about all modules now
     for (pluginInfo in allMainModulesOfPlugins) {
       val descriptor = pluginInfo.descriptor
 
@@ -339,6 +247,84 @@ class PluginModelValidator(
     }
 
     return PluginValidationResult(_errors, pluginIdToInfo)
+  }
+
+  private fun getOpenServices(
+    services: List<ServiceElement>,
+    descriptor: DescriptorFileInfo,
+  ): Set<String> {
+    return services
+      .filter { it.open }
+      .mapNotNull { getServiceInterface(it, descriptor) }
+      .toSet()
+  }
+
+  private fun getOverriddenServices(
+    services: List<ServiceElement>,
+    descriptor: DescriptorFileInfo,
+  ): Set<String> {
+    return services
+      .filter { it.overrides }
+      .mapNotNull { getServiceInterface(it, descriptor) }
+      .toSet()
+  }
+
+  private fun getServiceInterface(service: ServiceElement, descriptorForLogging: DescriptorFileInfo): String? {
+    val serviceInterface = service.serviceInterface ?: service.serviceImplementation
+    if (serviceInterface == null) {
+      reportError("Services declared must declare `serviceInterfance` or `serviceImplementation`\n" +
+                  "$service in ${descriptorForLogging.descriptorFile}", descriptorForLogging.sourceModule)
+    }
+    return serviceInterface
+  }
+
+  private fun checkServicesOverrides(descriptors: Collection<DescriptorFileInfo>, containerSelector: (RawPluginDescriptor) -> ScopedElementsContainer) {
+    val allOpenServices = descriptors.flatMapTo(HashSet()) {
+      getOpenServices(containerSelector(it.descriptor).services, it)
+    }
+    val allOverriddenServices = descriptors.flatMapTo(HashSet()) {
+      getOverriddenServices(containerSelector(it.descriptor).services, it)
+    }
+
+    for (descriptor in descriptors) {
+      checkServicesOverridesInSingleScopedContainer(descriptor,
+                                                    containerSelector(descriptor.descriptor).services,
+                                                    allOpenServices,
+                                                    allOverriddenServices)
+    }
+  }
+
+  private fun checkServicesOverridesInSingleScopedContainer(
+    descriptor: DescriptorFileInfo,
+    servicesInContainerAndInDescriptor: List<ServiceElement>,
+    allOpenServicesInContainer: Set<String>,
+    allOverriddenServicesInContainer: Set<String>,
+  ) {
+    getOverriddenServices(servicesInContainerAndInDescriptor, descriptor)
+      .filterNot { allOpenServicesInContainer.contains(it) }
+      .forEach { serviceInterface ->
+        reportError("Service $serviceInterface is not open for override.\n" +
+                    "Please either add `open='true'` to the service declaration you want to override, or remove `overrides='true'` in ${descriptor.descriptorFile}",
+                    descriptor.sourceModule)
+      }
+
+    getOpenServices(servicesInContainerAndInDescriptor, descriptor)
+      .filterNot { allOverriddenServicesInContainer.contains(it) || validationOptions.externallyOverriddenServices.contains(it) }
+      .forEach { serviceInterface ->
+        reportError("Service $serviceInterface is declared as open in ${descriptor.descriptorFile}, but is not overridden anywhere.\n" +
+                    "Please consider making the service non-open, or add this service to `externallyOverriddenServices` if some external override exists.",
+                    descriptor.sourceModule)
+      }
+
+    servicesInContainerAndInDescriptor
+      .filter { !it.overrides && !it.open }
+      .mapNotNull { getServiceInterface(it, descriptor) }
+      .filter { allOpenServicesInContainer.contains(it) }
+      .forEach { serviceInterface ->
+        reportError("Service $serviceInterface is declared as open in some plugins, but not in ${descriptor.descriptorFile}.\n" +
+                    "Please add `open='true'` to the your service declaration.",
+                    descriptor.sourceModule)
+      }
   }
 
   private fun checkDepends(
@@ -598,11 +584,27 @@ class PluginModelValidator(
         continue
       }
 
+      if (moduleName.contains("/")) {
+        val knownViolations = validationOptions.pluginsToContentModulesWithoutDedicatedJpsModules[referencingModuleInfo.pluginId] ?: emptyList()
+        if (moduleName !in knownViolations) {
+          reportError(
+            message = """
+              |Module '$moduleName' is registered in '${referencingModuleInfo.pluginId}' plugin using deprecated module.name/subDescriptor syntax.
+              |Extract it to a separate JPS module using the quick-fix provided by the DevKit plugin as described in https://youtrack.jetbrains.com/issue/IJPL-165543.
+            """.trimMargin(),
+            sourceModule = moduleDescriptorFileInfo.sourceModule,
+            params = mapOf(
+              "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
+            )
+          )
+        }
+      }
+
       val moduleDescriptor = moduleDescriptorFileInfo.descriptor
       if (moduleDescriptor.moduleVisibility != ModuleVisibilityValue.PRIVATE) {
         nonPrivateModules.add(moduleName)
       }
-      val moduleInfo = createModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo)
+      val moduleInfo = SimplifiedPluginModelBuilder.createModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo)
       referencingModuleInfo.content.add(moduleInfo)
 
       // check that not specified using the "depends" tag
@@ -760,108 +762,6 @@ class PluginModelValidator(
     }
   }
 
-  private fun createModuleFileInfo(
-    contentModuleDescriptorFileInfo: ContentModuleDescriptorFileInfo,
-    moduleName: String,
-    moduleNameToInfo: MutableMap<String, ModuleInfo>,
-  ): ModuleInfo {
-    val moduleDescriptor = contentModuleDescriptorFileInfo.descriptor
-
-    val moduleInfo = ModuleInfo(
-      pluginId = null,
-      name = moduleName,
-      sourceModule = contentModuleDescriptorFileInfo.sourceModule,
-      descriptorFile = contentModuleDescriptorFileInfo.descriptorFile,
-      packageName = moduleDescriptor.`package`,
-      descriptor = moduleDescriptor,
-    )
-    moduleNameToInfo.put(moduleName, moduleInfo)
-    return moduleInfo
-  }
-
-  private fun findPluginAndModuleDescriptors(module: JpsModule): List<DescriptorFileInfo> {
-    if (module.name !in validationOptions.modulesWithIncorrectlyPlacedModuleDescriptor) {
-      for (sourceRoot in module.sourceRoots) {
-        val moduleXml = findFile(sourceRoot, "META-INF/${module.name}.xml")
-        if (moduleXml != null) {
-          reportError(
-            "Module descriptor must be in the root of module root",
-            module,
-            mapOf(
-              "module" to module.name,
-              "moduleDescriptor" to moduleXml,
-            ),
-          )
-        }
-      }
-    }
-
-    val customRootPluginXmlFileName = validationOptions.corePluginDescriptions.find { it.mainModuleName == module.name }?.rootPluginXmlName
-    val pluginFileName = customRootPluginXmlFileName ?: "plugin.xml"
-
-    val (productionPluginDescriptors, testPluginDescriptors) =
-      module.sourceRoots.mapNotNull { sourceRoot ->
-        val pluginDescriptorFile = findFile(sourceRoot, "META-INF/$pluginFileName") ?: return@mapNotNull null
-        val descriptor = loadRawPluginDescriptor(pluginDescriptorFile) ?: return@mapNotNull null
-        PluginDescriptorFileInfo(
-          sourceModule = module,
-          descriptorFile = pluginDescriptorFile,
-          descriptor = descriptor,
-          inTests = sourceRoot.rootType.isForTests,
-        )
-      }
-        .partition { !it.inTests }
-
-    if (customRootPluginXmlFileName != null && productionPluginDescriptors.isEmpty()) {
-      reportError(
-        message = "Cannot find $customRootPluginXmlFileName in ${module.name}",
-        sourceModule = module,
-      )
-    }
-
-    val moduleDescriptors = module.sourceRoots.flatMap { sourceRoot ->
-      sourceRoot.path.listDirectoryEntries("*.xml")
-        .filter { it.nameWithoutExtension == module.name || it.nameWithoutExtension.startsWith("${module.name}.") }
-        .mapNotNull { moduleDescriptorFile ->
-          val descriptor = loadRawPluginDescriptor(moduleDescriptorFile) ?: return@mapNotNull null
-          val contentModuleName = when {
-            moduleDescriptorFile.nameWithoutExtension.removeSuffix("._test") == module.name -> moduleDescriptorFile.nameWithoutExtension
-            else -> "${module.name}/${moduleDescriptorFile.nameWithoutExtension.removePrefix("${module.name}.")}"
-          }
-          ContentModuleDescriptorFileInfo(
-            contentModuleName = contentModuleName,
-            sourceModule = module,
-            descriptorFile = moduleDescriptorFile,
-            descriptor = descriptor,
-          )
-        }
-    }
-
-    for (pluginDescriptors in listOf(productionPluginDescriptors, testPluginDescriptors)) {
-      if (pluginDescriptors.size > 1) {
-        reportError(
-          "Duplicated plugin.xml",
-          module,
-          mapOf(
-            "module" to module.name,
-            "firstPluginDescriptor" to pluginDescriptors[0].descriptorFile,
-            "secondPluginDescriptor" to pluginDescriptors[1].descriptorFile,
-          ),
-        )
-      }
-    }
-
-    return productionPluginDescriptors + testPluginDescriptors + moduleDescriptors
-  }
-
-  private fun loadRawPluginDescriptor(file: Path): RawPluginDescriptor? {
-    if (Files.notExists(file)) {
-      return null
-    }
-
-    return loadRawPluginDescriptorInTest(file, xIncludeLoader)
-  }
-
   private fun reportError(
     message: String,
     sourceModule: JpsModule,
@@ -888,7 +788,7 @@ class PluginModelValidator(
   }
 }
 
-internal data class ModuleInfo(
+data class ModuleInfo(
   @JvmField val pluginId: String?,
   @JvmField val name: String?,
   @JvmField val sourceModule: JpsModule,
@@ -907,27 +807,7 @@ internal data class ModuleInfo(
     get() = pluginId != null
 }
 
-internal data class Reference(@JvmField val name: String, @JvmField val isPlugin: Boolean, @JvmField val moduleInfo: ModuleInfo?)
-
-private sealed interface DescriptorFileInfo {
-  val sourceModule: JpsModule
-  val descriptorFile: Path
-  val descriptor: RawPluginDescriptor
-}
-
-private data class ContentModuleDescriptorFileInfo(
-  val contentModuleName: String,
-  override val sourceModule: JpsModule,
-  override val descriptorFile: Path,
-  override val descriptor: RawPluginDescriptor,
-) : DescriptorFileInfo
-
-private data class PluginDescriptorFileInfo(
-  override val sourceModule: JpsModule,
-  override val descriptorFile: Path,
-  override val descriptor: RawPluginDescriptor,
-  val inTests: Boolean,
-) : DescriptorFileInfo
+data class Reference(@JvmField val name: String, @JvmField val isPlugin: Boolean, @JvmField val moduleInfo: ModuleInfo?)
 
 private fun writeModuleInfo(writer: JsonGenerator, item: ModuleInfo, projectHomePath: Path) {
   writer.obj {
@@ -966,8 +846,4 @@ internal class PluginValidationError(message: String, val sourceModule: JpsModul
 
 internal fun hasContentOrDependenciesInV2Format(descriptor: RawPluginDescriptor): Boolean {
   return descriptor.contentModules.isNotEmpty() || descriptor.dependencies.isNotEmpty()
-}
-
-private fun findFile(root: JpsModuleSourceRoot, relativePath: String): Path? {
-  return JpsJavaExtensionService.getInstance().findSourceFile(root, relativePath)
 }

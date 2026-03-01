@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 
-private class ForcePushAction : PushActionBase() {
+internal class ForcePushAction : PushActionBase() {
   override fun actionPerformed(project: Project, ui: VcsPushUi) {
     if (confirmForcePush(project, ui)) {
       ui.push(true)

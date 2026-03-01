@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.platform.wasm.isWasm
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
 
 internal class WasmMultiplatformSupportAvailability : KotlinSupportAvailability {
 

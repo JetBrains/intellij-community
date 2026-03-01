@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections;
 
@@ -146,11 +146,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/declaringClassMigration1_9/inspectionData/inspections.test");
         }
 
-        @TestMetadata("destructuringWrongName/inspectionData/inspections.test")
-        public void testDestructuringWrongName_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/destructuringWrongName/inspectionData/inspections.test");
-        }
-
         @TestMetadata("dynamic/inspectionData/inspections.test")
         public void testDynamic_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/dynamic/inspectionData/inspections.test");
@@ -279,11 +274,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("sealedSubClassCanBeObject/inspectionData/inspections.test")
         public void testSealedSubClassCanBeObject_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/sealedSubClassCanBeObject/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("spelling/inspectionData/inspections.test")
-        public void testSpelling_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/spelling/inspectionData/inspections.test");
         }
 
         @TestMetadata("unusedEquals/inspectionData/inspections.test")

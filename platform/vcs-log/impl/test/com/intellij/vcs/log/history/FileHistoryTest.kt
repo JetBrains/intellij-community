@@ -7,7 +7,10 @@ import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.data.index.ChangeKind
-import com.intellij.vcs.log.data.index.ChangeKind.*
+import com.intellij.vcs.log.data.index.ChangeKind.ADDED
+import com.intellij.vcs.log.data.index.ChangeKind.MODIFIED
+import com.intellij.vcs.log.data.index.ChangeKind.NOT_CHANGED
+import com.intellij.vcs.log.data.index.ChangeKind.REMOVED
 import com.intellij.vcs.log.graph.TestGraphBuilder
 import com.intellij.vcs.log.graph.TestPermanentGraphInfo
 import com.intellij.vcs.log.graph.api.LinearGraph
@@ -25,7 +28,7 @@ class FileHistoryTest {
   fun LinearGraph.assert(startCommit: Int, startPath: FilePath, fileNamesData: FileHistoryData, result: TestGraphBuilder.() -> Unit) {
     val permanentGraphInfo = TestPermanentGraphInfo(this)
     val baseController = BaseController(permanentGraphInfo)
-    val filteredController = FilteredController.create(baseController, permanentGraphInfo, fileNamesData.getCommits())
+    val filteredController = FilteredController.create(baseController, permanentGraphInfo, fileNamesData.commits)
 
     val historyBuilder = FileHistoryBuilder(startCommit, startPath, fileNamesData, FileHistory.EMPTY)
     historyBuilder.accept(filteredController, permanentGraphInfo)

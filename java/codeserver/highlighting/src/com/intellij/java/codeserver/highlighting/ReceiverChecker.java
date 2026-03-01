@@ -3,7 +3,17 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReceiverParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiThisExpression;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;

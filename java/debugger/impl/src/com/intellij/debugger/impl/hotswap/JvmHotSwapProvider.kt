@@ -25,10 +25,12 @@ internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) 
   ): SourceFileChangesCollector<VirtualFile> {
     val jvmExtensions = Language.findInstance(JvmMetaLanguage::class.java).getMatchingLanguages()
       .mapNotNull { it.associatedFileType?.defaultExtension }
+    val filtersFromProviders = HotSwapSourceFileFilterProvider.findSourceFiltersForSession(debuggerSession)
     return SourceFileChangesCollectorImpl(
       coroutineScope, listener,
       FileExtensionFilter(jvmExtensions),
       InProjectFilter(session.project),
+      *filtersFromProviders.toTypedArray(),
     )
   }
 

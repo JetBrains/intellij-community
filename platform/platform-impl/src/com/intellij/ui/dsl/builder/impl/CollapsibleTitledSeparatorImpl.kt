@@ -15,9 +15,11 @@ import java.awt.Cursor
 import java.awt.Insets
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.accessibility.AccessibleAction
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.accessibility.AccessibleState
+import javax.swing.UIManager
 import kotlin.math.max
 
 // todo move to components package, rename into CollapsibleTitledSeparator, make internal
@@ -44,19 +46,36 @@ class CollapsibleTitledSeparatorImpl(@NlsContexts.Separator title: String) : Tit
   override fun createLabel(): JBLabel = object : JBLabel() {
     override fun getAccessibleContext(): AccessibleContext? {
       if (accessibleContext == null) {
-        accessibleContext = object : AccessibleJLabel() {
+        accessibleContext = object : AccessibleJLabel(), AccessibleAction {
           override fun getAccessibleStateSet() = super.getAccessibleStateSet().apply {
             add(AccessibleState.EXPANDABLE)
             add(if (expanded) AccessibleState.EXPANDED else AccessibleState.COLLAPSED)
           }
 
           override fun getAccessibleName(): String? {
-            if (!SystemInfoRt.isMac) return super.getAccessibleName() // VoiceOver doesn't support expanded/collapsed state, so need to provide the state in the name.
+            // VoiceOver doesn't support expanded/collapsed state, so need to provide the state in the name.
+            if (!SystemInfoRt.isMac) return super.getAccessibleName()
             return UIBundle.message(if (expanded) "collapsible.titled.separator.expanded.accessible.name"
                                     else "collapsible.titled.separator.collapsed.accessible.name", super.getAccessibleName())
           }
 
           override fun getAccessibleRole() = if (SystemInfoRt.isMac) AccessibleRole.PUSH_BUTTON else super.getAccessibleRole()
+
+          override fun getAccessibleAction(): AccessibleAction = this
+
+          override fun getAccessibleActionCount(): Int = 1
+
+          override fun getAccessibleActionDescription(i: Int): String? {
+              return if (i == 0) UIManager.getString("AbstractButton.clickText") else null
+          }
+
+          override fun doAccessibleAction(i: Int): Boolean {
+            if (i == 0) {
+              expanded = !expanded
+              return true
+            }
+            return false
+          }
         }
       }
       return accessibleContext

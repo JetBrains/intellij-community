@@ -61,8 +61,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -450,7 +454,7 @@ class InstancesView extends InstancesViewBase {
   }
 
   private void customizeView(@NotNull InstancesView view, @NotNull XDebugSession session, String className, JComponent tree) {
-    final StackFrameList list = new StackFrameList(myDebugProcess);
+    final StackFrameList list = new StackFrameList(myDebugProcess.getProject());
     list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
     new DoubleClickListener() {
       @Override

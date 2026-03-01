@@ -22,7 +22,7 @@ internal class DevKitMnemonicsTokenizer : EscapeSequenceTokenizer<PropertyValueI
 
   override fun tokenize(element: PropertyValueImpl, consumer: TokenConsumer) {
     val module = ModuleUtilCore.findModuleForPsiElement(element)
-    if (module != null && isRelevantModule(module)) {
+    if (isRelevantModule(module)) {
       val text = element.getText()
 
       val unescapedText = StringBuilder(text.length)
@@ -38,7 +38,11 @@ internal class DevKitMnemonicsTokenizer : EscapeSequenceTokenizer<PropertyValueI
 
   override fun ignoredCharacters(): Set<Char> = IGNORED_CHARS
 
-  private fun isRelevantModule(module: Module): Boolean {
+  override fun ignoredCharacters(element: PropertyValueImpl): Set<Char> =
+    if (isRelevantModule(ModuleUtilCore.findModuleForPsiElement(element))) IGNORED_CHARS else emptySet()
+
+  private fun isRelevantModule(module: Module?): Boolean {
+    if (module == null) return false
     return isIntelliJPlatformProject(module.project)
            || isPluginModule(module)
            || PluginModuleType.isOfType(module)

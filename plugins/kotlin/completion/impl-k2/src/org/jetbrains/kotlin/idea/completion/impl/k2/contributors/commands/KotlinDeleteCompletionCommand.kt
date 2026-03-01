@@ -2,14 +2,22 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.codeInsight.completion.command.*
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.CommandProvider
+import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.HighlightInfoLookup
+import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.DumbAware
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinFileType

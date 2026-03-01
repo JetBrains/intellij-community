@@ -254,4 +254,32 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+
+  public void testMatchExceptionNestedDeconstruction() { doTest(); }
+
+  public void testMatchExceptionSealedClass() { doTest(); }
+
+  public void testMatchExceptionSealedClassOnlyNull() {
+    doTestWith((insp, __) -> insp.REPORT_UNSOUND_WARNINGS = false);
+  }
+
+  public void testNoMatchExceptionSealedClassDataFlow() { doTest(); }
+
+  public void testMatchExceptionDoubleNestedDeconstruction() { doTest(); }
+
+  public void testNoMatchExceptionMostNestedDeconstruction() { doTest(); }
+
+  public void testMatchExceptionNestedSealedClass() { doTest(); }
+
+  public void testNoMatchExceptionNestedDeconstructionWithDefault() { doTest(); }
+
+  public void testNoMatchExceptionSealedClassWithNullDefault() { doTest(); }
+
+  public void testNoMatchExceptionDoubleNestedDeconstructionWithDominated() { doTest(); }
+
+  public void testNoMatchExceptionSealedClassWithDominated() { doTest(); }
+
+  public void testOptionalInference() {
+    doTestWith((dfi, cvi) -> dfi.SUGGEST_NULLABLE_ANNOTATIONS = false);
+  }
 }

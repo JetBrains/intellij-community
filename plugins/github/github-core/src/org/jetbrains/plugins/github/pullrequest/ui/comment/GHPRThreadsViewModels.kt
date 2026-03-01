@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.comment
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.computationStateFlow
+import com.intellij.collaboration.async.mapDataToModel
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
@@ -14,7 +20,16 @@ import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.findCumulativeChange
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.mapToLeftSideLine
 import org.jetbrains.plugins.github.api.data.pullrequest.mapToRightSideLine
@@ -24,7 +39,8 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModelImpl
 import java.time.Instant.EPOCH
-import java.util.*
+import java.util.Date
+import java.util.TreeSet
 
 internal interface GHPRThreadsViewModels {
   val canComment: Boolean
@@ -54,6 +70,7 @@ internal class GHPRThreadsViewModelsImpl(
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
+  private val viewModelWithTextCompletion: GHViewModelWithTextCompletion,
 ) : GHPRThreadsViewModels {
   private val cs = parentCs.childScope(javaClass.name)
   override val canComment: Boolean = dataProvider.reviewData.canComment()
@@ -107,7 +124,7 @@ internal class GHPRThreadsViewModelsImpl(
       }
 
   private fun CoroutineScope.createThread(initialData: GHPullRequestReviewThread) =
-    UpdateableGHPRCompactReviewThreadViewModel(project, this, dataContext, dataProvider, initialData)
+    UpdateableGHPRCompactReviewThreadViewModel(project, this, dataContext, dataProvider, initialData, viewModelWithTextCompletion)
 
   override val threadMappingData: StateFlow<Map<String, GHPRThreadsViewModels.ThreadMappingData>> =
     dataProvider.reviewData.threadsComputationFlow
@@ -156,6 +173,7 @@ internal class GHPRThreadsViewModelsImpl(
     GHPRReviewNewCommentEditorViewModelImpl(project, cs, dataProvider,
                                             dataContext.repositoryDataService.remoteCoordinates.repository,
                                             dataContext.securityService.currentUser,
+                                            viewModelWithTextCompletion,
                                             dataContext.avatarIconsProvider,
                                             position) { position ->
       cancelNewComment(position.change, position.location.side, position.location.lineIdx)

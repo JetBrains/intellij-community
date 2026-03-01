@@ -5,7 +5,11 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;

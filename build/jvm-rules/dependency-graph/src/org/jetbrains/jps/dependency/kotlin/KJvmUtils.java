@@ -1,20 +1,36 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
-import kotlin.metadata.*;
+import kotlin.metadata.Attributes;
+import kotlin.metadata.KmClass;
+import kotlin.metadata.KmDeclarationContainer;
+import kotlin.metadata.KmFunction;
+import kotlin.metadata.KmPackage;
+import kotlin.metadata.KmProperty;
+import kotlin.metadata.KmTypeAlias;
+import kotlin.metadata.Modality;
+import kotlin.metadata.Visibility;
 import kotlin.metadata.jvm.JvmExtensionsKt;
 import kotlin.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.ReferenceID;
-import org.jetbrains.jps.dependency.java.*;
+import org.jetbrains.jps.dependency.java.JVMClassNode;
+import org.jetbrains.jps.dependency.java.JvmClass;
+import org.jetbrains.jps.dependency.java.JvmMethod;
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
+import org.jetbrains.jps.dependency.java.KotlinMeta;
+import org.jetbrains.jps.dependency.java.Utils;
 
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.recurse;
 
 final class KJvmUtils {
 
@@ -26,6 +42,14 @@ final class KJvmUtils {
 
   static boolean isSealed(KmDeclarationContainer container) {
     return container instanceof KmClass && Attributes.getModality(((KmClass)container)) == Modality.SEALED;
+  }
+
+  static boolean isFinal(JvmClass cls) {
+    return isFinal(getDeclarationContainer(cls));
+  }
+
+  static boolean isFinal(KmDeclarationContainer container) {
+    return container instanceof KmClass && Attributes.getModality(((KmClass)container)) == Modality.FINAL;
   }
 
   static Iterable<KmFunction> allKmFunctions(Node<?, ?> node) {
@@ -73,6 +97,11 @@ final class KJvmUtils {
     // apart from lookups with actual property name, kotlinc generates lookups with getter/setter bytecode names
     // these lookups, named after property bytecode getter and setter, allow to distinguish between property read and write access usages in .kt file
     return method.getName();
+  }
+
+  static @Nullable String getCompanionObjectName(JvmClass cls) {
+    KotlinMeta meta = getKotlinMeta(cls);
+    return meta != null? meta.getCompanionObject() : null;
   }
 
   static boolean isDeclaresDefaultValue(KmFunction f) {

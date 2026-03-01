@@ -1,4 +1,4 @@
-<fold text='/ Some header .../' expand='~false~'>/*
+<fold text='/ Some header .../' expand='false'>/*
  * Some header
  */</fold>
 
@@ -8,5 +8,4 @@ val a = 12
  * Other
  */</fold>
 
-// SET_TRUE: setCollapseFileHeader
-
+<caret>// SET_TRUE: setCollapseFileHeader

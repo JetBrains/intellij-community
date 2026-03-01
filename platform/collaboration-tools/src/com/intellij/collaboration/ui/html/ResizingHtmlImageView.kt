@@ -4,20 +4,36 @@ package com.intellij.collaboration.ui.html
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.util.containers.ComparatorUtil.min
 import com.intellij.util.ui.JBImageToolkit
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
-import kotlinx.coroutines.*
-import java.awt.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Image
+import java.awt.Rectangle
+import java.awt.Shape
 import java.awt.image.BufferedImage
 import java.awt.image.ImageObserver
 import java.net.URL
-import java.util.*
+import java.util.Base64
 import javax.swing.Icon
 import javax.swing.event.DocumentEvent
-import javax.swing.text.*
+import javax.swing.text.BadLocationException
+import javax.swing.text.Element
+import javax.swing.text.Position
+import javax.swing.text.View
+import javax.swing.text.ViewFactory
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
+import kotlin.math.min
 import kotlin.properties.Delegates.observable
 
 private val loadingIcon: Icon
@@ -25,6 +41,8 @@ private val loadingIcon: Icon
 
 private val notLoadedIcon: Icon
   get() = AllIcons.FileTypes.Image
+
+private const val MAX_IMAGE_HEIGHT = 500
 
 /**
  * Custom image view to be used with [com.intellij.util.ui.ExtendableHTMLViewFactory]
@@ -53,9 +71,6 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
   private var cachedContainer: Container? = null
   private var lastPaintedRectangle: Rectangle? = null
 
-  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String? =
-    element.attributes.getAttribute(HTML.Attribute.ALT) as? String
-
   override fun getPreferredSpan(axis: Int): Float =
     when (val state = loader.state) {
       ImageLoader.State.NotLoaded -> notLoadedIcon.getSpan(axis)
@@ -75,15 +90,20 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
     val state = loader.state
     if (axis == X_AXIS && state is ImageLoader.State.Loaded) {
       preferenceChanged(null, false, true)
-      val imageWidth = state.dimension.width.toFloat()
-      val imageHeight = state.dimension.height.toFloat()
+      val imageWidth = state.dimension.width.toFloat().coerceAtLeast(1f)
+      val imageHeight = state.dimension.height.toFloat().coerceAtLeast(1f)
 
-      val width = min(len, imageWidth).coerceAtLeast(1f)
+      val maxHeight = JBUI.scale(MAX_IMAGE_HEIGHT).toFloat()
+      if (imageWidth <= len && imageHeight <= maxHeight) {
+        return SizedImageView(state.image, imageWidth, imageHeight)
+      }
 
-      val scale = (width / imageWidth).coerceAtMost(1f)
-      val height = (imageHeight * scale).coerceAtLeast(1f)
+      val scale = min(len / imageWidth, maxHeight / imageHeight).coerceAtMost(1f)
 
-      return SizedImageView(state.image, width, height)
+      val newWidth = (imageWidth * scale).coerceAtLeast(1f)
+      val newHeight = (imageHeight * scale).coerceAtLeast(1f)
+
+      return SizedImageView(state.image, newWidth, newHeight)
     }
     else {
       return this
@@ -173,9 +193,6 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
 
     override fun getAlignment(axis: Int): Float =
       this@ResizingHtmlImageView.getAlignment(axis)
-
-    override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String? =
-      element.attributes.getAttribute(HTML.Attribute.ALT) as? String
 
     override fun modelToView(pos: Int, a: Shape, b: Position.Bias?): Shape =
       this@ResizingHtmlImageView.modelToView(pos, a, b)

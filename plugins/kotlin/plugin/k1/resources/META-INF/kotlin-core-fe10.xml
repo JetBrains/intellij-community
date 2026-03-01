@@ -18,6 +18,10 @@
             qualifiedName="org.jetbrains.kotlin.classImportFilter"
             interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
             dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idePlatformKindResolution"
+            interface="org.jetbrains.kotlin.caches.resolve.IdePlatformKindResolution"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -126,8 +130,6 @@
                           implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinExpressionTypeProviderDescriptorsImpl"/>
 
     <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestCreator"/>
-    <testDiffProvider language="kotlin" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
-    <testFinder implementation="org.jetbrains.kotlin.idea.testIntegration.KotlinTestFinder"/>
 
     <lang.jvm.actions.jvmElementActionsFactory
             implementation="org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory"/>

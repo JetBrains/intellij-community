@@ -2,8 +2,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
@@ -31,7 +38,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized;
 
 @SuppressWarnings("StaticFieldReferencedViaSubclass")
 public final class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
@@ -124,15 +137,21 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
       return stub.getModifiersFlags();
     }
     else {
-      return CachedValuesManager.getCachedValue(this, () -> {
-        int flags = 0;
-        for (PsiElement modifier : findChildrenByType(TokenSets.MODIFIERS)) {
-          flags |= NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier.getText());
-        }
-        return Result.create(flags, this);
-      });
+      return getCachedValueStubBuildOptimized(this, GET_MODIFIER_FLAGS_PROVIDER_NEW);
     }
   }
+
+  private static final StubBuildCachedValueProvider<Integer, GrModifierListImpl>
+    GET_MODIFIER_FLAGS_PROVIDER_NEW = new StubBuildCachedValueProvider<>(
+    "groovy.modifierFlags",
+    list -> {
+      int flags = 0;
+      for (PsiElement modifier : list.findChildrenByType(TokenSets.MODIFIERS)) {
+        flags |= NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier.getText());
+      }
+      return Result.create(flags, list);
+    }
+  );
 
   @Override
   public PsiElement @NotNull [] getModifiers() {

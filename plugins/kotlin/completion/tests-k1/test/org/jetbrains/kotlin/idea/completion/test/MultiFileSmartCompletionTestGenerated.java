@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
@@ -43,6 +43,16 @@ public class MultiFileSmartCompletionTestGenerated extends AbstractMultiFileSmar
     @TestMetadata("CallablesInExcludedPackage")
     public void testCallablesInExcludedPackage() throws Exception {
         runTest("../testData/smartMultiFile/CallablesInExcludedPackage/");
+    }
+
+    @TestMetadata("FlexibleType")
+    public void testFlexibleType() throws Exception {
+        runTest("../testData/smartMultiFile/FlexibleType/");
+    }
+
+    @TestMetadata("FlexibleTypeNotNull")
+    public void testFlexibleTypeNotNull() throws Exception {
+        runTest("../testData/smartMultiFile/FlexibleTypeNotNull/");
     }
 
     @TestMetadata("FunctionFromAnotherPackage")

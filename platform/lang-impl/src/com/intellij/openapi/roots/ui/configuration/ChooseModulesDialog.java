@@ -23,8 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
 import java.util.List;
 
 public class ChooseModulesDialog extends ChooseElementsDialog<Module> {

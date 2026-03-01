@@ -26,12 +26,22 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgChange;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileStatusEnum;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.STATUS_CMD_ERROR;
 

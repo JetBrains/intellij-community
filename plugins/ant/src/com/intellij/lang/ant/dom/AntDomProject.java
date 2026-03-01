@@ -22,14 +22,23 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DefinesXml;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.SubTagList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev

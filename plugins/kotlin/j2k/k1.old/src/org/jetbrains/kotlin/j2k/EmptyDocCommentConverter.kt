@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.javadoc.PsiDocComment
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.DocCommentConverter
 
+@K1Deprecation
 object EmptyDocCommentConverter : DocCommentConverter {
     override fun convertDocComment(docComment: PsiDocComment): String = docComment.text
 }

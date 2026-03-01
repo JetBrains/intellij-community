@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface ChangesBrowserSettingsEditor<T extends ChangeBrowserSettings> {
   @NotNull

@@ -10,13 +10,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class FrontendFriendlyParenthesesInsertHandler(
-  private val hasParameters: Boolean
+  private val hasParameters: Boolean,
+  private val isVoidMethod: Boolean,
 ) : FrontendFriendlyInsertHandler {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     // todo FrontendFriendlyParenthInsertHandler differs from ParenthInsertHandler
     //      in that it does not check lookup elements for overloads with `MethodParenthesesHandler.overloadsHaveParameters`
     //      not sure if this can be reliably implemented on frontend
-    insertParenthesesForJavaMethod(item, context, ThreeState.fromBoolean(hasParameters))
+    insertParenthesesForJavaMethod(item, context, ThreeState.fromBoolean(hasParameters), isVoidMethod)
   }
 
   companion object {
@@ -24,8 +25,9 @@ class FrontendFriendlyParenthesesInsertHandler(
       item: LookupElement,
       context: InsertionContext,
       hasParams: ThreeState,
+      isVoidMethod: Boolean,
     ) {
-      JavaFrontendCompletionUtil.insertParentheses(context, item, false, hasParams, false)
+      JavaFrontendCompletionUtil.insertParentheses(context, item, false, hasParams, false, isVoidMethod)
     }
   }
 }

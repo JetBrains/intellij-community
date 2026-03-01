@@ -17,7 +17,12 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.createDeclarationByPattern
+import org.jetbrains.kotlin.psi.getOrCreateBody
 
 private val JAVA_IO_SERIALIZABLE_CLASS_ID = ClassId.fromString("java/io/Serializable")
 private val JAVA_IO_SERIALIZATION_READ_RESOLVE = Name.identifier("readResolve")

@@ -28,7 +28,6 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.asSafely
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
-import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 
@@ -48,10 +47,10 @@ internal class RenameDialog(
   var preview: Boolean = false
     private set
 
-  private val myPreviewAction: Action = object : AbstractAction(RefactoringBundle.message("preview.button")) {
-    override fun actionPerformed(e: ActionEvent) {
+  private val myPreviewAction: Action = object : DialogWrapperAction(RefactoringBundle.message("preview.button")) {
+    override fun doAction(e: ActionEvent) {
       preview = true
-      okAction.actionPerformed(e)
+      doOKAction()
     }
   }
 

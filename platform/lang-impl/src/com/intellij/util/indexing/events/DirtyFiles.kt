@@ -24,7 +24,7 @@ class DirtyFiles {
   private val dirtyFiles = createLockFreeCopyOnWriteList<Pair<Project, ProjectDirtyFiles>>()
   private val dirtyFilesWithoutProject = ProjectDirtyFiles()
 
-  fun addFile(projects: Collection<Project>, fileId: Int) {
+  fun addFile(projects: Iterable<Project>, fileId: Int) {
     var addedToAtLeastOneProject = false
     for (project in projects) {
       val projectDirtyFiles = dirtyFiles.find { it.first == project }?.second

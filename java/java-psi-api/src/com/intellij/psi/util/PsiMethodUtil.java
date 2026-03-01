@@ -13,7 +13,7 @@ public final class PsiMethodUtil {
   /// Returns a predicate that evaluates to true when passed a class that _can be_ a main class, i.e., a class that has a main method.
   ///
   /// It does not check whether the class actually has a main method. For that, use [#hasMainMethod(PsiClass)].
-  public static final Condition<@NotNull PsiClass> MAIN_CLASS = MainMethodSearcherBase.MAIN_CLASS;
+  public static final Condition<@NotNull PsiClass> MAIN_CLASS = JvmMainMethodSearcher.MAIN_CLASS;
 
   private PsiMethodUtil() { }
 

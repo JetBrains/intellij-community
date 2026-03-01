@@ -10,7 +10,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PythonSdkType;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;

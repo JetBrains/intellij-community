@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:commons-io"],
   runtime_deps = ["@lib//:commons-io"]
 )
+
+jvm_library(
+  name = "io_test_lib",
+  module_name = "intellij.libraries.commons.io",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:commons-io"],
+  runtime_deps = [":io"]
+)
 ### auto-generated section `build intellij.libraries.commons.io` end

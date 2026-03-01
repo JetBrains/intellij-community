@@ -14,9 +14,21 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-import static de.plushnikov.intellij.plugin.LombokClassNames.*;
+import static de.plushnikov.intellij.plugin.LombokClassNames.ALL_ARGS_CONSTRUCTOR;
+import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE;
+import static de.plushnikov.intellij.plugin.LombokClassNames.GETTER;
+import static de.plushnikov.intellij.plugin.LombokClassNames.NO_ARGS_CONSTRUCTOR;
+import static de.plushnikov.intellij.plugin.LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR;
+import static de.plushnikov.intellij.plugin.LombokClassNames.SETTER;
+import static de.plushnikov.intellij.plugin.LombokClassNames.WITH;
+import static de.plushnikov.intellij.plugin.LombokClassNames.WITHER;
 
 public final class LombokAnnotationProcessor {
   private static final Map<String, Pair<Collection<String>, Collection<String>>> config = initializeConfig();

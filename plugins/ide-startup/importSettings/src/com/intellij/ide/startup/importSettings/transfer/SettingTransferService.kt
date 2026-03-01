@@ -5,14 +5,19 @@ import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfigurat
 import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.data.ExternalProductService
 import com.intellij.ide.startup.importSettings.data.ExternalService
-import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.transfer.backend.TransferSettingsDataProvider
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

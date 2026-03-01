@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.PlainPrefixMatcher
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vcs.ui.CommitMessage

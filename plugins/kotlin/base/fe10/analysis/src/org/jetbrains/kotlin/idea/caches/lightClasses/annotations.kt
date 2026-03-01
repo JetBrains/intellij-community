@@ -3,10 +3,13 @@
 package org.jetbrains.kotlin.idea.caches.lightClasses.annotations
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.name.FqName
 
+@K1Deprecation
 val KOTLINX_SERIALIZABLE_FQ_NAME = FqName("kotlinx.serialization.Serializable")
     @ApiStatus.Internal get
 
+@K1Deprecation
 val KOTLINX_SERIALIZER_FQ_NAME = FqName("kotlinx.serialization.Serializer")
     @ApiStatus.Internal get

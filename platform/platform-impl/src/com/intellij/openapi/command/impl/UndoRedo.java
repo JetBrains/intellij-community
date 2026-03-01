@@ -1,9 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.AdjustableUndoableAction;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.ImmutableActionChangeRange;
+import com.intellij.openapi.command.undo.MutableActionChangeRange;
+import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
@@ -19,7 +24,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 
 abstract class UndoRedo {
@@ -31,8 +42,7 @@ abstract class UndoRedo {
   private final @NotNull SharedUndoRedoStacksHolder sharedStacksHolderReversed;
   private final @NotNull UndoProblemReport undoProblemReport;
   protected final @NotNull UndoableGroup undoableGroup;
-  private final boolean isConfirmationSupported;
-  private final boolean isEditorStateRestoreSupported;
+  private final UndoCapabilities undoCapabilities;
   private final boolean isRedo;
 
   protected UndoRedo(
@@ -42,8 +52,7 @@ abstract class UndoRedo {
     @NotNull UndoRedoStacksHolder stacksHolderReversed,
     @NotNull SharedUndoRedoStacksHolder sharedStacksHolder,
     @NotNull SharedUndoRedoStacksHolder sharedStacksHolderReversed,
-    boolean isConfirmationSupported,
-    boolean isEditorStateRestoreSupported,
+    @NotNull UndoCapabilities undoCapabilities,
     boolean isRedo
   ) {
     this.project = project;
@@ -52,8 +61,7 @@ abstract class UndoRedo {
     this.stacksHolderReversed = stacksHolderReversed;
     this.sharedStacksHolder = sharedStacksHolder;
     this.sharedStacksHolderReversed = sharedStacksHolderReversed;
-    this.isConfirmationSupported = isConfirmationSupported;
-    this.isEditorStateRestoreSupported = isEditorStateRestoreSupported;
+    this.undoCapabilities = undoCapabilities;
     this.isRedo = isRedo;
     this.undoProblemReport = new UndoProblemReport(project, isRedo);
     this.undoableGroup = Objects.requireNonNull(stacksHolder.getLastAction(getDocRefs()), "undo is not available");
@@ -116,7 +124,7 @@ abstract class UndoRedo {
       }
     }
 
-    if (!(disableConfirmation || !isConfirmationSupported) && undoableGroup.shouldAskConfirmation(isRedo) && !isNeverAskUser()) {
+    if (!(disableConfirmation || !undoCapabilities.isConfirmationSupported()) && undoableGroup.shouldAskConfirmation(isRedo) && !isNeverAskUser()) {
       if (!askUser()) {
         return false;
       }
@@ -307,6 +315,9 @@ abstract class UndoRedo {
   }
 
   boolean confirmSwitchTo(@NotNull UndoRedo other) {
+    if (!undoCapabilities.isConfirmationSupported()) {
+      return true;
+    }
     String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" + getActionName(other.undoableGroup.getCommandName()) + "?";
     return showDialog(message);
   }
@@ -354,7 +365,10 @@ abstract class UndoRedo {
     return (isRedo ? "Redo" : "Undo") + "{" + undoableGroup + "}";
   }
 
-  private static @NotNull Map<DocumentReference, Map<Integer, MutableActionChangeRange>> decompose(@NotNull UndoableGroup group, boolean isRedo) {
+  private @NotNull Map<DocumentReference, Map<Integer, MutableActionChangeRange>> decompose(@NotNull UndoableGroup group, boolean isRedo) {
+    if (!undoCapabilities.isPerClientSupported()) {
+      return Collections.emptyMap();
+    }
     Map<DocumentReference, Map<Integer, MutableActionChangeRange>> reference2Ranges = new HashMap<>();
     for (UndoableAction action : group.getActions()) {
       if (!(action instanceof AdjustableUndoableAction adjustable)) {
@@ -381,6 +395,6 @@ abstract class UndoRedo {
   private boolean isCaretMovementUndoTransparent() {
     return Registry.is("ide.undo.transparent.caret.movement") ||
            AdvancedSettings.getBoolean("editor.undo.transparent.caret.movement") ||
-           !isEditorStateRestoreSupported;
+           !undoCapabilities.isEditorStateRestoreSupported();
   }
 }

@@ -8,7 +8,10 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionEleme
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult.*
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult.Changed
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult.Invalidated
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult.Same
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -95,12 +98,12 @@ interface InlineCompletionSuggestionUpdateManager {
           onBackspace(event, variant)
         }
         is InlineCompletionEvent.InsertNextWord -> {
-          ignoreDocumentAndCaretChanges(event.editor) {
+          doIgnoreDocumentAndCaretChanges(event.editor) {
             onInsertNextWord(event, variant)
           }
         }
         is InlineCompletionEvent.InsertNextLine -> {
-          ignoreDocumentAndCaretChanges(event.editor) {
+          doIgnoreDocumentAndCaretChanges(event.editor) {
             onInsertNextLine(event, variant)
           }
         }
@@ -148,16 +151,6 @@ interface InlineCompletionSuggestionUpdateManager {
     @RequiresEdt
     @Deprecated("Do not extend `InlineCompletionEvent`. Use `ManualCall` instead.")
     fun onCustomEvent(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
-
-    private fun ignoreDocumentAndCaretChanges(editor: Editor, block: () -> UpdateResult): UpdateResult {
-      return InlineCompletion.getHandlerOrNull(editor)?.run {
-        withIgnoringDocumentChanges {
-          withIgnoringCaretMovement {
-            block()
-          }
-        }
-      } ?: Invalidated
-    }
   }
 
   /**
@@ -206,6 +199,12 @@ interface InlineCompletionSuggestionUpdateManager {
       return doPartialAccept(event, variant, InlineCompletionPartialAcceptHandler::insertNextLine)
     }
 
+    @ApiStatus.Experimental
+    @ApiStatus.Internal
+    protected fun ignoreDocumentAndCaretChanges(editor: Editor, block: () -> UpdateResult): UpdateResult {
+      return doIgnoreDocumentAndCaretChanges(editor, block)
+    }
+
     private inline fun doPartialAccept(
       event: InlineCompletionEvent.PartialAccept,
       variant: InlineCompletionVariant.Snapshot,
@@ -251,4 +250,14 @@ interface InlineCompletionSuggestionUpdateManager {
       val INSTANCE: Default = Default()
     }
   }
+}
+
+private fun doIgnoreDocumentAndCaretChanges(editor: Editor, block: () -> UpdateResult): UpdateResult {
+  return InlineCompletion.getHandlerOrNull(editor)?.run {
+    withIgnoringDocumentChanges {
+      withIgnoringCaretMovement {
+        block()
+      }
+    }
+  } ?: Invalidated
 }

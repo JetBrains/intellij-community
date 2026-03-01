@@ -8,13 +8,19 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableBuilderConfiguration
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallablePlacement
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ClassWithPrimaryConstructorInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ParameterInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.createBuilder
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -25,11 +31,13 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.types.typeUtil.isUnit
-import java.util.*
+import java.util.Collections
 
+@K1Deprecation
 val ClassKind.actionPriority: IntentionActionPriority
     get() = if (this == ClassKind.ANNOTATION_CLASS) IntentionActionPriority.LOW else IntentionActionPriority.NORMAL
 
+@K1Deprecation
 data class ClassInfo(
     val kind: ClassKind = ClassKind.DEFAULT,
     val name: String,
@@ -49,6 +57,7 @@ data class ClassInfo(
     }
 }
 
+@K1Deprecation
 open class CreateClassFromUsageFix<E : KtElement> protected constructor(
     element: E,
     private val classInfo: ClassInfo

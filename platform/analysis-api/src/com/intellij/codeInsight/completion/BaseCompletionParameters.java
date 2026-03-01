@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface BaseCompletionParameters {
   /**
@@ -39,7 +40,19 @@ public interface BaseCompletionParameters {
   int getOffset();
 
   /**
+   * @return the leaf element in the original physical file where the completion was invoked.
+   */
+  @Nullable PsiElement getOriginalPosition();
+
+  /**
    * @return the file being edited, possibly injected, where code completion was invoked.
    */
   @NotNull PsiFile getOriginalFile();
+
+  /**
+   * @return 0 for autopopup<br>
+   * 1 for explicitly invoked completion<br>
+   * >1 for next completion invocations when one lookup is already active
+   */
+  int getInvocationCount();
 }

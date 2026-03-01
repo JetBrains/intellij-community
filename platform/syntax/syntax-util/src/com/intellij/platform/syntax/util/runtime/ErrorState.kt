@@ -2,7 +2,6 @@
 package com.intellij.platform.syntax.util.runtime
 
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.SyntaxElementTypeSet
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

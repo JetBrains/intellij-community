@@ -12,7 +12,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent

@@ -3,15 +3,19 @@ package com.intellij.polySymbols.html.attributes
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
+import com.intellij.polySymbols.framework.framework
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.html.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
 import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport
 import com.intellij.polySymbols.html.StandardHtmlSymbol
-import com.intellij.polySymbols.PolySymbolModifier
-import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
-import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
@@ -38,7 +42,7 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
 
     val providedAttributes = tag.attributes.asSequence().mapNotNull { it.name }.toMutableSet()
 
-    val attributesFilter = HtmlFrameworkSymbolsSupport.get(queryExecutor.framework)
+    val attributesFilter = HtmlFrameworkSymbolsSupport.get(queryExecutor.context.framework)
       .getAttributeNameCodeCompletionFilter(tag)
 
     val filteredOutStandardSymbols = getStandardHtmlAttributeDescriptors(tag)
@@ -80,8 +84,9 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
                             .asSingleSymbol() ?: return@runWithTimeoutOrNull null
               HtmlAttributeSymbolInfo.create(fullName, freshRegistry, match, insertionContext.file)
             }
-            if (info != null && info.acceptsValue && !info.acceptsNoValue) {
-              XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)
+            if (info != null && shouldInsertValue(parameters, item, info)) {
+              val handler = selectInsertHandler(parameters, item, info)
+              handler.handleInsert(insertionContext, lookupItem)
             }
           }
         ).addToResult(parameters, patchedResultSet)
@@ -100,5 +105,24 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
       }
     }
 
+  }
+
+  private fun selectInsertHandler(
+    parameters: CompletionParameters,
+    item: PolySymbolCodeCompletionItem,
+    info: HtmlAttributeSymbolInfo,
+  ): InsertHandler<LookupElement> {
+    return HtmlFrameworkSymbolsSupport.get(info.symbol)
+             .createAttributeInsertHandler(parameters, item, info)
+           ?: XmlAttributeInsertHandler.INSTANCE
+  }
+
+  private fun shouldInsertValue(
+    parameters: CompletionParameters,
+    item: PolySymbolCodeCompletionItem,
+    info: HtmlAttributeSymbolInfo,
+  ): Boolean {
+    return HtmlFrameworkSymbolsSupport.get(info.symbol)
+      .shouldInsertAttributeValue(parameters, item, info)
   }
 }

@@ -3,7 +3,12 @@ package org.jetbrains.uast.kotlin
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtWhileExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UWhileExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinUWhileExpression(

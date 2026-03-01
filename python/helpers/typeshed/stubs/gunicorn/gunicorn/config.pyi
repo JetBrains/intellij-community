@@ -2,7 +2,7 @@ import argparse
 from _typeshed import ConvertibleToInt
 from collections.abc import Callable, Container
 from ssl import SSLContext, _SSLMethod
-from typing import Annotated, Any, ClassVar, overload
+from typing import Annotated, Any, ClassVar, Final, overload
 from typing_extensions import TypeAlias
 
 from gunicorn.arbiter import Arbiter
@@ -34,6 +34,10 @@ _WorkerExitHookType: TypeAlias = Callable[[Arbiter, Worker], object]
 _NumWorkersChangedHookType: TypeAlias = Callable[[Arbiter, int, int | None], object]
 _OnExitHookType: TypeAlias = Callable[[Arbiter], object]
 _SSLContextHookType: TypeAlias = Callable[[Config, Callable[[], SSLContext]], SSLContext]
+_OnDirtyStartingHookType: TypeAlias = Callable[[Arbiter], object]
+_DirtyPostForkHookType: TypeAlias = Callable[[Arbiter, Worker], object]
+_DirtyWorkerInitHookType: TypeAlias = Callable[[Worker], object]
+_DirtyWorkerExitHookType: TypeAlias = Callable[[Arbiter, Worker], object]
 
 _HookType: TypeAlias = (
     _OnStartingHookType
@@ -52,17 +56,26 @@ _HookType: TypeAlias = (
     | _NumWorkersChangedHookType
     | _OnExitHookType
     | _SSLContextHookType
+    | _OnDirtyStartingHookType
+    | _DirtyPostForkHookType
+    | _DirtyWorkerInitHookType
+    | _DirtyWorkerExitHookType
 )
 # Validators
 _BoolValidatorType: TypeAlias = Callable[[bool | str | None], bool | None]
 _StringValidatorType: TypeAlias = Callable[[str | None], str | None]
 _ListStringValidatorType: TypeAlias = Callable[[str | list[str] | None], list[str]]
-_IntValidatorType: TypeAlias = Callable[[int | ConvertibleToInt], int]
+_IntValidatorType: TypeAlias = Callable[[ConvertibleToInt], int]
 _DictValidatorType: TypeAlias = Callable[[dict[str, Any]], dict[str, Any]]
 _ClassValidatorType: TypeAlias = Callable[[object | str | None], type[Any] | None]
 _UserGroupValidatorType: TypeAlias = Callable[[str | int | None], int]
 _AddressValidatorType: TypeAlias = Callable[[str | None], _AddressType | None]
 _CallableValidatorType: TypeAlias = Callable[[str | _HookType], _HookType]
+_ProxyProtocolValidatorType: TypeAlias = Callable[[str | bool | None], str]
+_ASGILoopValidatorType: TypeAlias = Callable[[str | None], str]
+_ASGILifespanValidatorType: TypeAlias = Callable[[str | None], str]
+_HTTP2FrameSizeValidatorType: TypeAlias = Callable[[ConvertibleToInt], int]
+_HTTPProtocolsValidatorType: TypeAlias = Callable[[str | None], list[str]]
 
 _ValidatorType: TypeAlias = (  # noqa: Y047
     _BoolValidatorType
@@ -74,6 +87,11 @@ _ValidatorType: TypeAlias = (  # noqa: Y047
     | _UserGroupValidatorType
     | _AddressValidatorType
     | _CallableValidatorType
+    | _ProxyProtocolValidatorType
+    | _ASGILoopValidatorType
+    | _ASGILifespanValidatorType
+    | _HTTP2FrameSizeValidatorType
+    | _HTTPProtocolsValidatorType
 )
 
 KNOWN_SETTINGS: list[Setting]
@@ -138,7 +156,7 @@ class Setting(metaclass=SettingMeta):
     short: ClassVar[str | None]
     desc: ClassVar[str | None]
     nargs: ClassVar[int | str | None]
-    const: ClassVar[bool | None]
+    const: ClassVar[bool | str | None]
     order: ClassVar[int]
 
     def __init__(self) -> None: ...
@@ -157,10 +175,8 @@ def validate_bool(val: None) -> None: ...
 @overload
 def validate_bool(val: Annotated[str, "Case-insensitive boolean string ('true'/'false' in any case)"]) -> bool: ...
 def validate_dict(val: dict[str, Any]) -> dict[str, Any]: ...
-@overload
-def validate_pos_int(val: int) -> int: ...
-@overload
 def validate_pos_int(val: ConvertibleToInt) -> int: ...
+def validate_http2_frame_size(val: ConvertibleToInt) -> int: ...
 def validate_ssl_version(val: _SSLMethod) -> _SSLMethod: ...
 @overload
 def validate_string(val: str) -> str: ...
@@ -170,18 +186,8 @@ def validate_string(val: None) -> None: ...
 def validate_file_exists(val: str) -> str: ...
 @overload
 def validate_file_exists(val: None) -> None: ...
-@overload
-def validate_list_string(val: str) -> list[str]: ...
-@overload
-def validate_list_string(val: list[str]) -> list[str]: ...
-@overload
-def validate_list_string(val: None) -> list[str]: ...
-@overload
-def validate_list_of_existing_files(val: str) -> list[str]: ...
-@overload
-def validate_list_of_existing_files(val: list[str]) -> list[str]: ...
-@overload
-def validate_list_of_existing_files(val: None) -> list[str]: ...
+def validate_list_string(val: str | list[str] | None) -> list[str]: ...
+def validate_list_of_existing_files(val: str | list[str] | None) -> list[str]: ...
 def validate_string_to_addr_list(val: str | None) -> list[str]: ...
 def validate_string_to_list(val: str | None) -> list[str]: ...
 @overload
@@ -649,6 +655,7 @@ class SyslogTo(Setting):
     validator: ClassVar[_StringValidatorType]
     default: ClassVar[str]
     desc: ClassVar[str]
+    default_doc: ClassVar[str]
 
 class Syslog(Setting):
     name: ClassVar[str]
@@ -713,6 +720,15 @@ class StatsdPrefix(Setting):
     validator: ClassVar[_StringValidatorType]
     desc: ClassVar[str]
 
+class BacklogMetric(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    validator: ClassVar[_BoolValidatorType]
+    default: ClassVar[bool]
+    action: ClassVar[str]
+    desc: ClassVar[str]
+
 class Procname(Setting):
     name: ClassVar[str]
     section: ClassVar[str]
@@ -750,7 +766,7 @@ class Paste(Setting):
 class OnStarting(Setting):
     name: ClassVar[str]
     section: ClassVar[str]
-    validator: ClassVar[_CallableValidatorType] = ...
+    validator: ClassVar[_CallableValidatorType]
     type: ClassVar[Callable[..., Any]]
     default: ClassVar[_OnStartingHookType]
     desc: ClassVar[str]
@@ -906,16 +922,37 @@ class NewSSLContext(Setting):
 
     def ssl_context(config: Config, default_ssl_context_factory: Callable[[], SSLContext]) -> SSLContext: ...  # type: ignore[misc] # pyright: ignore[reportGeneralTypeIssues]
 
+def validate_proxy_protocol(val: str | bool | None) -> str: ...
+
 class ProxyProtocol(Setting):
     name: ClassVar[str]
     section: ClassVar[str]
     cli: ClassVar[list[str]]
-    validator: ClassVar[_BoolValidatorType]
-    default: ClassVar[bool]
-    action: ClassVar[str]
+    meta: ClassVar[str]
+    validator: ClassVar[_ProxyProtocolValidatorType]
+    default: ClassVar[str]
+    nargs: ClassVar[str]
+    const: ClassVar[str]
     desc: ClassVar[str]
 
 class ProxyAllowFrom(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    validator: ClassVar[_ListStringValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class Protocol(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_StringValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class UWSGIAllowFrom(Setting):
     name: ClassVar[str]
     section: ClassVar[str]
     cli: ClassVar[list[str]]
@@ -992,6 +1029,60 @@ class Ciphers(Setting):
     default: ClassVar[None]
     desc: ClassVar[str]
 
+VALID_HTTP_PROTOCOLS: Final[frozenset[str]]
+ALPN_PROTOCOL_MAP: Final[dict[str, str]]
+
+def validate_http_protocols(val: str | None) -> list[str]: ...
+
+class HTTPProtocols(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_HTTPProtocolsValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class HTTP2MaxConcurrentStreams(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[type[int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
+class HTTP2InitialWindowSize(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[type[int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
+class HTTP2MaxFrameSize(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_HTTP2FrameSizeValidatorType]
+    type: ClassVar[type[int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
+class HTTP2MaxHeaderListSize(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[type[int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
 class PasteGlobalConf(Setting):
     name: ClassVar[str]
     action: ClassVar[str]
@@ -1061,4 +1152,162 @@ class HeaderMap(Setting):
     cli: ClassVar[list[str]]
     validator: ClassVar[_StringValidatorType]
     default: ClassVar[str]
+    desc: ClassVar[str]
+
+def validate_asgi_loop(val: str | None) -> str: ...
+def validate_asgi_lifespan(val: str | None) -> str: ...
+
+class ASGILoop(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_ASGILoopValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class ASGILifespan(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_ASGILifespanValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class ASGIDisconnectGracePeriod(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[type[int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
+class RootPath(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_StringValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class DirtyApps(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    action: ClassVar[str]
+    meta: ClassVar[str]
+    validator: ClassVar[_ListStringValidatorType]
+    default: ClassVar[list[str]]
+    desc: ClassVar[str]
+
+class DirtyWorkers(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[type[int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
+class DirtyTimeout(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[type[int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
+class DirtyThreads(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[type[int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
+class DirtyGracefulTimeout(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[type[int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
+class OnDirtyStarting(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    validator: ClassVar[_CallableValidatorType]
+    type: ClassVar[Callable[..., Any]]
+    default: ClassVar[_OnDirtyStartingHookType]
+    desc: ClassVar[str]
+
+    def on_dirty_starting(arbiter: Arbiter) -> None: ...  # type: ignore[misc] # pyright: ignore[reportGeneralTypeIssues]
+
+class DirtyPostFork(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    validator: ClassVar[_CallableValidatorType]
+    type: ClassVar[Callable[..., Any]]
+    default: ClassVar[_DirtyPostForkHookType]
+    desc: ClassVar[str]
+
+    def dirty_post_fork(arbiter: Arbiter, worker: Worker) -> None: ...  # type: ignore[misc] # pyright: ignore[reportGeneralTypeIssues]
+
+class DirtyWorkerInit(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    validator: ClassVar[_CallableValidatorType]
+    type: ClassVar[Callable[..., Any]]
+    default: ClassVar[_DirtyWorkerInitHookType]
+    desc: ClassVar[str]
+
+    def dirty_worker_init(worker: Worker) -> None: ...  # type: ignore[misc] # pyright: ignore[reportGeneralTypeIssues]
+
+class DirtyWorkerExit(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    validator: ClassVar[_CallableValidatorType]
+    type: ClassVar[Callable[..., Any]]
+    default: ClassVar[_DirtyWorkerExitHookType]
+    desc: ClassVar[str]
+
+    def dirty_worker_exit(arbiter: Arbiter, worker: Worker) -> None: ...  # type: ignore[misc] # pyright: ignore[reportGeneralTypeIssues]
+
+class ControlSocket(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_StringValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class ControlSocketMode(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_IntValidatorType]
+    type: ClassVar[Callable[[Any, str], int]]
+    default: ClassVar[int]
+    desc: ClassVar[str]
+
+class ControlSocketDisable(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    validator: ClassVar[_BoolValidatorType]
+    action: ClassVar[str]
+    default: ClassVar[bool]
     desc: ClassVar[str]

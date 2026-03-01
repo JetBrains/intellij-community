@@ -89,30 +89,18 @@ a:com.intellij.ide.util.treeView.AbstractTreeStructureBase
 - getParentElement(java.lang.Object):java.lang.Object
 - a:getProviders():java.util.List
 - isValid(java.lang.Object):Z
-a:com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode
+Fa:com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode
 - com.intellij.ide.util.treeView.AbstractTreeNode
-- pf:myTreeModel:com.intellij.ide.util.treeView.smartTree.TreeModel
 - canNavigate():Z
 - canNavigateToSource():Z
-- p:clearChildren():V
-- pa:copyFromNewInstance(com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode):V
-- p:createChildNode(com.intellij.ide.util.treeView.smartTree.TreeElement):com.intellij.ide.util.treeView.smartTree.TreeElementWrapper
-- p:createGroupWrapper(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.smartTree.Group,com.intellij.ide.util.treeView.smartTree.TreeModel):com.intellij.ide.util.treeView.smartTree.GroupWrapper
-- p:filterChildren(com.intellij.ide.util.treeView.smartTree.Filter[]):V
 - getChildren():java.util.Collection
-- pa:initChildren():V
 - isAutoExpandAllowed():Z
 - navigate(Z):V
-- pa:performTreeActions():V
-- p:resetChildren():V
-- p:setChildren(java.util.Collection):V
-- p:sortChildren(com.intellij.ide.util.treeView.smartTree.Sorter[]):V
-c:com.intellij.ide.util.treeView.smartTree.GroupWrapper
+Fc:com.intellij.ide.util.treeView.smartTree.GroupWrapper
 - com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode
 - <init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.smartTree.Group,com.intellij.ide.util.treeView.smartTree.TreeModel):V
 - copyFromNewInstance(com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode):V
 - initChildren():V
-- p:performTreeActions():V
 - update(com.intellij.ide.projectView.PresentationData):V
 c:com.intellij.ide.util.treeView.smartTree.SmartTreeStructure
 - com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -129,13 +117,16 @@ c:com.intellij.ide.util.treeView.smartTree.SmartTreeStructure
 - hasSomethingToCommit():Z
 - isAlwaysLeaf(java.lang.Object):Z
 - rebuildTree():V
-c:com.intellij.ide.util.treeView.smartTree.TreeElementWrapper
+Fc:com.intellij.ide.util.treeView.smartTree.TreeElementWrapper
 - com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode
 - <init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.smartTree.TreeElement,com.intellij.ide.util.treeView.smartTree.TreeModel):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.smartTree.TreeElement,com.intellij.ide.util.treeView.smartTree.TreeModel,com.intellij.ide.util.treeView.smartTree.NodeProvider):V
 - copyFromNewInstance(com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode):V
+- getProvider():com.intellij.ide.util.treeView.smartTree.NodeProvider
 - initChildren():V
-- p:performTreeActions():V
 - update(com.intellij.ide.projectView.PresentationData):V
 f:com.intellij.ide.util.treeView.smartTree.TreeStructureUtil
 - s:getPropertyName(java.lang.String):java.lang.String
 - s:isInStructureViewPopup(com.intellij.ui.PlaceHolder):Z
+com.intellij.platform.structureView.impl.DelegatingNodeProvider
+- com.intellij.ide.util.treeView.smartTree.NodeProvider

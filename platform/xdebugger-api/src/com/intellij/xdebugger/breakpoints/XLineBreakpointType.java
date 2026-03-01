@@ -16,11 +16,15 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 
@@ -161,6 +165,14 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
    * For example, a Java method breakpoint can be hit on any method overriding the one specified.
    */
   public boolean canBeHitInOtherPlaces() {
+    return false;
+  }
+
+  /**
+   * Return {@code true} if breakpoints of this type can be rendered between editor lines.
+   */
+  @ApiStatus.Internal
+  public boolean supportsInterLinePlacement() {
     return false;
   }
 

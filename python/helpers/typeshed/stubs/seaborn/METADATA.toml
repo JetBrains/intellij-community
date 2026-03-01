@@ -1,4 +1,4 @@
 version = "0.13.2"
 # Requires a version of numpy and matplotlib with a `py.typed` file
-requires = ["matplotlib>=3.8", "numpy>=1.20", "pandas-stubs<2.3.3.251201"]
+requires = ["matplotlib>=3.8", "numpy>=1.20", "pandas-stubs"]
 upstream_repository = "https://github.com/mwaskom/seaborn"

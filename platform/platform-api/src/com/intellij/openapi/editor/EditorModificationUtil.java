@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -10,6 +11,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
+import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +77,12 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
 
   /**
    * Inserts given string at each caret's position. Effective caret shift will be equal to {@code caretShift} for each caret.
+   *
+   * @param editor editor to type in
+   * @param str string to type
+   * @param toProcessOverwriteMode whether to process overwrite mode
+   * @param caretShift effective caret shift for each caret, i.e., the number of characters to move the caret after insertion.
+   * @throws ReadOnlyFragmentModificationException if the operation is attempted on a read-only fragment
    */
   public static void typeInStringAtCaretHonorMultipleCarets(@NotNull Editor editor, @NotNull String str, boolean toProcessOverwriteMode, int caretShift)
     throws ReadOnlyFragmentModificationException {
@@ -92,8 +101,9 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
 
   public static @NotNull List<CaretState> calcBlockSelectionState(@NotNull Editor editor,
                                                                   @NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
-    int startLine = Math.max(Math.min(blockStart.line, editor.getDocument().getLineCount() - 1), 0);
-    int endLine = Math.max(Math.min(blockEnd.line, editor.getDocument().getLineCount() - 1), 0);
+    Document document = editor.getUiDocument();
+    int startLine = Math.max(Math.min(blockStart.line, document.getLineCount() - 1), 0);
+    int endLine = Math.max(Math.min(blockEnd.line, document.getLineCount() - 1), 0);
     int step = endLine < startLine ? -1 : 1;
     int count = 1 + Math.abs(endLine - startLine);
     List<CaretState> caretStates = new LinkedList<>();
@@ -101,7 +111,7 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     for (int line = startLine, i = 0; i < count; i++, line += step) {
       int startColumn = blockStart.column;
       int endColumn = blockEnd.column;
-      int lineEndOffset = editor.getDocument().getLineEndOffset(line);
+      int lineEndOffset = document.getLineEndOffset(line);
       LogicalPosition lineEndPosition = editor.offsetToLogicalPosition(lineEndOffset);
       int lineWidth = lineEndPosition.column;
       if (startColumn > lineWidth && endColumn > lineWidth && !editor.isColumnMode()) {
@@ -128,6 +138,25 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     FileDocumentManager.WriteAccessStatus writeAccess =
       FileDocumentManager.getInstance().requestWritingStatus(editor.getDocument(), editor.getProject());
     if (!writeAccess.hasWriteAccess()) {
+      HintManager.getInstance().showInformationHint(editor, writeAccess.getReadOnlyMessage(), writeAccess.getHyperlinkListener());
+      return false;
+    }
+    return true;
+  }
+
+  @ApiStatus.Internal
+  public static boolean requestWriting(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+    FileDocumentManager.WriteAccessStatus writeAccess =
+      FileDocumentManager.getInstance().requestWritingStatus(editor.getDocument(), editor.getProject());
+    if (!writeAccess.hasWriteAccess()) {
+      for (NonWriteAccessTypedHandler nonWritable : NonWriteAccessTypedHandler.EP_NAME.getExtensionList()) {
+        if (nonWritable.isApplicable(editor, charTyped, dataContext)) {
+          try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+            nonWritable.handle(editor, charTyped, dataContext);
+          }
+          return false;
+        }
+      }
       HintManager.getInstance().showInformationHint(editor, writeAccess.getReadOnlyMessage(), writeAccess.getHyperlinkListener());
       return false;
     }

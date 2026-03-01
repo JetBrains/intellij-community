@@ -45,7 +45,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
-import java.util.*
+import java.util.Collections
 
 class MavenProjectModelModifier(private val myProject: Project) : JavaProjectModelModifier() {
   private val myProjectsManager = MavenProjectsManager.getInstance(myProject)

@@ -1,9 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
-import org.jetbrains.kotlin.analysis.api.projectStructure.*
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryFallbackDependenciesModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaLibraryFallbackDependenciesModuleImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 
 object KaModuleStructureMermaidRenderer {
@@ -125,6 +135,8 @@ object KaModuleStructureMermaidRenderer {
             append("<br />")
             append(targetPlatform.getTargetPlatformDescriptionForRendering())
         }
+        is KaLibraryFallbackDependenciesModuleImpl -> null
+        is KaLibraryFallbackDependenciesModule -> null
 
         else -> error("Unknown module type: ${this::class.java}")
     }

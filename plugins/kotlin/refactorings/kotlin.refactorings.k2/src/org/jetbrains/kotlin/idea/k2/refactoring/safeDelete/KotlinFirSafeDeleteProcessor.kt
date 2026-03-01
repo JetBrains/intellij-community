@@ -25,7 +25,12 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.map2Array
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -51,8 +56,29 @@ import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtContextParameterList
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
+import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
 class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     override fun handlesElement(element: PsiElement?): Boolean = element.canDeleteElement()
@@ -84,8 +110,13 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                         //named argument would be deleted with argument
                         return@Processor true
                     }
-                    val importDirective = e.getNonStrictParentOfType<KtImportDirective>()
-                    result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective ?: e, expected, importDirective != null))
+                    val usageInfo = if (element is KtParameter && isPassThroughParameter(e, element)) {
+                        SafeDeleteReferenceSimpleDeleteUsageInfo(e, expected, true)
+                    } else {
+                        val importDirective = e.getNonStrictParentOfType<KtImportDirective>()
+                        SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective ?: e, expected, importDirective != null && importDirective.importedReference == e.parent)
+                    }
+                    result.add(usageInfo)
                 }
                 return@Processor true
             })
@@ -248,6 +279,29 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
             return@Processor true
         })
+    }
+
+    private fun isPassThroughParameter(
+        refElement: PsiElement,
+        parameter: KtParameter
+    ): Boolean {
+        val function = parameter.ownerFunction ?: return false
+
+        val callExpr = refElement.getNonStrictParentOfType<KtCallExpression>() ?: return false
+        val calleeExpression = callExpr.calleeExpression
+        if (calleeExpression?.text != function.name) return false
+
+        analyze(callExpr) {
+            val resolvedCall =
+                callExpr.resolveToCall()?.successfulCallOrNull<KaFunctionCall<*>>() ?: return false
+
+            if (resolvedCall.symbol != function.symbol) {
+                return false
+            }
+
+            val variableSignature = resolvedCall.valueArgumentMapping[refElement]
+            return variableSignature?.symbol == parameter.symbol
+        }
     }
 
     private fun shouldAllowPropagationToExpected(parameter: KtParameter): Boolean {

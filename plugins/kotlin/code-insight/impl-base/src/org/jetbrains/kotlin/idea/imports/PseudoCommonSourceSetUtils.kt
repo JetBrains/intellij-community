@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.imports
 
+import org.jetbrains.kotlin.idea.imports.PseudoCommonSourceSetUtils.PSEUDO_COMMON_SOURCE_SET_MARKER_FILE
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath

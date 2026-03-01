@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 
 interface Profiler {
   companion object {

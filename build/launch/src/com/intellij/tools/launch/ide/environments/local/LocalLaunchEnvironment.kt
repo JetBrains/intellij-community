@@ -2,7 +2,11 @@ package com.intellij.tools.launch.ide.environments.local
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.launch.PathsProvider
-import com.intellij.tools.launch.environments.*
+import com.intellij.tools.launch.environments.AbstractCommandLauncher
+import com.intellij.tools.launch.environments.FsCorrespondence
+import com.intellij.tools.launch.environments.LaunchCommand
+import com.intellij.tools.launch.environments.LaunchEnvironment
+import com.intellij.tools.launch.environments.PathInLaunchEnvironment
 import com.intellij.tools.launch.ide.ClassPathBuilder
 import com.intellij.tools.launch.ide.ClasspathCollector
 import com.intellij.tools.launch.ide.IdeCommandLauncherFactory

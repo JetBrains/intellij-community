@@ -480,11 +480,12 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
         emit(InlineCompletionGrayTextElement("First"))
         currentData.putUserData(key, 1)
         emit(InlineCompletionGrayTextElement("Second"))
+        emit(InlineCompletionGrayTextElement("Third"))
       }
       variant(data) { currentData ->
-        emit(InlineCompletionGrayTextElement("Third"))
-        currentData.putUserData(key, -1)
         emit(InlineCompletionGrayTextElement("Fourth"))
+        currentData.putUserData(key, -1)
+        emit(InlineCompletionGrayTextElement("Fifth"))
       }
     }
 
@@ -498,7 +499,7 @@ internal class GradualMultiSuggestInlineCompletionTest : InlineCompletionTestCas
     }
 
     callInlineCompletion()
-    provider.computeNextElement()
+    provider.computeNextElements(2)
     assertData(1)
     provider.computeNextElements(3)
     delay()

@@ -11,7 +11,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.COMMA;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.NUMBER;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.OPERATION_SIGN;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARENTHESES;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.STRING;
 
 /**
  * @author Mikhail Golubev

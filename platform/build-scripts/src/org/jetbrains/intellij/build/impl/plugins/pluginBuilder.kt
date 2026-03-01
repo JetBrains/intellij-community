@@ -9,12 +9,12 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ScrambleTool
@@ -31,6 +31,7 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.layoutDistribution
 import org.jetbrains.intellij.build.impl.patchPluginXml
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.productLayout.util.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
@@ -38,12 +39,12 @@ import java.nio.file.Path
 private class ScrambleTask(@JvmField val pluginLayout: PluginLayout, @JvmField val pluginDir: Path, @JvmField val targetDir: Path)
 
 internal suspend fun buildPlugins(
-  moduleOutputPatcher: ModuleOutputPatcher,
   plugins: Collection<PluginLayout>,
   os: OsFamily?,
+  arch: JvmArchitecture?,
   targetDir: Path,
   state: DistributionBuilderState,
-  buildPlatformJob: Deferred<List<DistributionFileEntry>>?,
+  platformEntriesProvider: (suspend () -> List<DistributionFileEntry>)?,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
@@ -51,18 +52,19 @@ internal suspend fun buildPlugins(
 ): List<PluginBuildDescriptor> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
-  val results = coroutineScope {
-    plugins.map { pluginLayout ->
+
+  val results = plugins.mapConcurrent { pluginLayout ->
+    withContext(CoroutineName("Build plugin (module=${pluginLayout.mainModule})")) {
       buildPlugin(
         pluginLayout = pluginLayout,
         targetDir = targetDir,
-        moduleOutputPatcher = moduleOutputPatcher,
         state = state,
         descriptorCacheContainer = descriptorCacheContainer,
         searchableOptionSet = searchableOptionSet,
         scrambleTool = scrambleTool,
         isScramblingSkipped = isScramblingSkipped,
         os = os,
+        arch = arch,
         context = context,
         pluginBuilt = pluginBuilt,
       )
@@ -74,8 +76,8 @@ internal suspend fun buildPlugins(
     checkNotNull(scrambleTool)
 
     // scrambling can require classes from the platform
-    val platformEntries = buildPlatformJob?.let { task ->
-      spanBuilder("wait for platform lib for scrambling").use { task.await() }
+    val platformEntries = platformEntriesProvider?.let { provider ->
+      spanBuilder("wait for platform lib for scrambling").use { provider() }
     } ?: emptyList()
     coroutineScope {
       for (scrambleTask in scrambleTasks) {
@@ -99,27 +101,30 @@ internal suspend fun buildPlugins(
 private suspend fun CoroutineScope.buildPlugin(
   pluginLayout: PluginLayout,
   targetDir: Path,
-  moduleOutputPatcher: ModuleOutputPatcher,
   state: DistributionBuilderState,
   descriptorCacheContainer: DescriptorCacheContainer,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   scrambleTool: ScrambleTool?,
   isScramblingSkipped: Boolean,
   os: OsFamily?,
+  arch: JvmArchitecture?,
   context: BuildContext,
   pluginBuilt: (suspend (PluginLayout, Path) -> List<DistributionFileEntry>)?,
 ): Pair<PluginBuildDescriptor, ScrambleTask?> {
   val directoryName = pluginLayout.directoryName
   val pluginDir = targetDir.resolve(directoryName)
+  val moduleOutputPatcher = ModuleOutputPatcher()
 
   if (pluginLayout.mainModule != BUILT_IN_HELP_MODULE_NAME) {
-    launch {
-      checkOutputOfPluginModules(
-        mainPluginModule = pluginLayout.mainModule,
-        includedModules = pluginLayout.includedModules,
-        moduleExcludes = pluginLayout.moduleExcludes,
-        outputProvider = context.outputProvider,
-      )
+    if (context.options.skipCheckOutputOfPluginModules) {
+      launch {
+        checkOutputOfPluginModules(
+          mainPluginModule = pluginLayout.mainModule,
+          includedModules = pluginLayout.includedModules,
+          moduleExcludes = pluginLayout.moduleExcludes,
+          outputProvider = context.outputProvider,
+        )
+      }
     }
 
     patchPluginXml(
@@ -135,26 +140,24 @@ private suspend fun CoroutineScope.buildPlugin(
     )
   }
 
-  val task = async(CoroutineName("Build plugin (module=${pluginLayout.mainModule})")) {
-    spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
-      val (entries, file) = layoutDistribution(
-        layout = pluginLayout,
-        platformLayout = state.platformLayout,
-        targetDir = pluginDir,
-        copyFiles = true,
-        moduleOutputPatcher = moduleOutputPatcher,
-        includedModules = pluginLayout.includedModules,
-        searchableOptionSet = searchableOptionSet,
-        cachedDescriptorWriterProvider = descriptorCacheContainer.forPlugin(pluginDir),
-        context = context,
-      )
+  val task = spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
+    val (entries, file) = layoutDistribution(
+      layout = pluginLayout,
+      platformLayout = state.platformLayout,
+      targetDir = pluginDir,
+      copyFiles = true,
+      moduleOutputPatcher = moduleOutputPatcher,
+      includedModules = pluginLayout.includedModules,
+      searchableOptionSet = searchableOptionSet,
+      cachedDescriptorWriterProvider = descriptorCacheContainer.forPlugin(pluginDir),
+      context = context,
+    )
 
-      if (pluginBuilt == null) {
-        entries
-      }
-      else {
-        entries + pluginBuilt(pluginLayout, file)
-      }
+    if (pluginBuilt == null) {
+      entries
+    }
+    else {
+      entries + pluginBuilt(pluginLayout, file)
     }
   }
 
@@ -172,7 +175,8 @@ private suspend fun CoroutineScope.buildPlugin(
       scrambleTask = ScrambleTask(pluginLayout = pluginLayout, pluginDir = pluginDir, targetDir = targetDir)
     }
   }
-  return PluginBuildDescriptor(dir = pluginDir, os = os, layout = pluginLayout, distribution = task.await()) to scrambleTask
+
+  return PluginBuildDescriptor(dir = pluginDir, os = os, arch = arch, layout = pluginLayout, distribution = task) to scrambleTask
 }
 
 private fun checkOutputOfPluginModules(

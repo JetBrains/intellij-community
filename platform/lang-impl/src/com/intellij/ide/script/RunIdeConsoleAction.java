@@ -15,7 +15,14 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -49,8 +56,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.ref.Reference;
@@ -141,8 +149,8 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
   public static void configureConsole(@NotNull VirtualFile file, @NotNull FileEditorManager source) {
     MyRunAction runAction = new MyRunAction();
     for (FileEditor fileEditor : source.getEditors(file)) {
-      if (!(fileEditor instanceof TextEditor)) continue;
-      Editor editor = ((TextEditor)fileEditor).getEditor();
+      if (!(fileEditor instanceof TextEditor te)) continue;
+      Editor editor = te.getEditor();
       runAction.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), editor.getComponent());
     }
   }

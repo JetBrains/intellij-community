@@ -1,4 +1,8 @@
-<idea-plugin>
+<!--
+  This file contains only v2 dependencies.
+  All new extensions, actions, services, extension points, etc. should go to intellij.platform.debugger.impl.rpc.content.xml
+-->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
@@ -12,4 +16,5 @@
   </dependencies>
   <!-- endregion -->
 
+  <xi:include href="intellij.platform.debugger.impl.rpc.content.xml"/>
 </idea-plugin>

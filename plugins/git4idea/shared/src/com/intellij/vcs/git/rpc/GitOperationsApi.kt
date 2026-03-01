@@ -4,9 +4,9 @@ package com.intellij.vcs.git.rpc
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
-import fleet.rpc.Rpc
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import fleet.rpc.RemoteApi
+import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import git4idea.GitDisposable
 import git4idea.GitStandardLocalBranch

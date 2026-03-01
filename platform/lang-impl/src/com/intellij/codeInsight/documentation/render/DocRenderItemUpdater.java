@@ -13,9 +13,13 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 @Service
 public final class DocRenderItemUpdater implements Runnable {

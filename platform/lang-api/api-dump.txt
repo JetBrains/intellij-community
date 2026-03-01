@@ -186,6 +186,11 @@ com.intellij.codeInsight.codeVision.settings.CodeVisionSettings$CodeVisionSettin
 - visibleMetricsNextToDeclarationCountChanged(I):V
 com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor
 - a:getLookupElements(com.intellij.psi.PsiFile,I,java.lang.String):java.util.Collection
+f:com.intellij.codeInsight.completion.SkipAutopopupInStrings
+- com.intellij.codeInsight.completion.CompletionConfidence
+- <init>():V
+- s:isInStringLiteral(com.intellij.psi.PsiElement):Z
+- shouldSkipAutopopup(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
 com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy
 - a:invoke(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,Z):V
 - a:isValidForFile(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
@@ -804,7 +809,6 @@ com.intellij.lang.surroundWith.Surrounder
 com.intellij.microservices.endpoints.EndpointsFilter
 com.intellij.microservices.endpoints.EndpointsProvider
 - sf:Companion:com.intellij.microservices.endpoints.EndpointsProvider$Companion
-- sf:DOCUMENTATION_ELEMENT:com.intellij.openapi.actionSystem.DataKey
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:URL_TARGET_INFO:com.intellij.openapi.actionSystem.DataKey
 - getDocumentationElement(java.lang.Object,java.lang.Object):com.intellij.psi.PsiElement
@@ -839,7 +843,6 @@ com.intellij.microservices.url.UrlPath$PathSegmentRenderer
 - visitUndefined():java.lang.String
 - visitVariable(com.intellij.microservices.url.UrlPath$PathSegment$Variable):java.lang.String
 com.intellij.microservices.url.UrlResolver
-- getAuthorityHints():java.util.List
 - getAuthorityHints(java.lang.String):java.util.List
 - a:getSupportedSchemes():java.util.List
 - a:getVariants():java.lang.Iterable
@@ -906,6 +909,8 @@ com.intellij.openapi.roots.ui.OrderRootTypeUIFactory
 - a:createPathEditor(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.projectRoots.ui.SdkPathEditor
 - a:getIcon():javax.swing.Icon
 - a:getNodeText():java.lang.String
+c:com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+- <init>():V
 com.intellij.psi.codeStyle.CodeStyleConfigurable
 - com.intellij.openapi.options.Configurable
 - a:apply(com.intellij.psi.codeStyle.CodeStyleSettings):V

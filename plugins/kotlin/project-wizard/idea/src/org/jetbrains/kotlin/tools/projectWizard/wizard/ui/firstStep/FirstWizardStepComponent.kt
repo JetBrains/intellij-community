@@ -29,7 +29,11 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemP
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.wizard.IdeWizard
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
-import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.*
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.DynamicComponent
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.TitledComponent
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.WizardStepComponent
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.addBorder
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.borderPanel
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.PathSettingComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.StringSettingComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.TitledComponentsList

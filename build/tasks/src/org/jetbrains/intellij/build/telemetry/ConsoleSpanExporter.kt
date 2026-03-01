@@ -13,7 +13,9 @@ import it.unimi.dsi.fastutil.longs.LongArrayList
 import org.jetbrains.annotations.Contract
 import org.jetbrains.intellij.build.getMavenRepositoryPath
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
@@ -29,11 +31,51 @@ private fun createPathList(dir: Path): List<String> {
 }
 
 class ConsoleSpanExporter : AsyncSpanExporter {
-  private val isEnabled = System.getProperty("intellij.build.console.exporter.enabled")?.toBoolean() ?: true
 
   companion object {
+    const val IS_ENABLED_PROPERTY: String = "intellij.build.console.exporter.enabled"
+    const val IS_ENABLED_DEFAULT: String = "true"
+    const val TO_TEMP_FILE_PROPERTY: String = "intellij.build.console.exporter.to.temp.file"
+    const val TO_TEMP_FILE_DEFAULT: String = "false"
+
+    private val isEnabled = System.getProperty(IS_ENABLED_PROPERTY, IS_ENABLED_DEFAULT).toBooleanStrict()
+    private val toTempFile = System.getProperty(TO_TEMP_FILE_PROPERTY, TO_TEMP_FILE_DEFAULT).toBooleanStrict()
+
     fun setPathRoot(dir: Path) {
       rootPathsWithEndSlash = createPathList(dir)
+    }
+
+    private val tempFile: Path by lazy {
+      require(toTempFile) {
+        "tempFile could be called only when toTempFile is true ($TO_TEMP_FILE_PROPERTY property, default: $TO_TEMP_FILE_DEFAULT)"
+      }
+
+      val tempFile = Files.createTempFile("build-scripts-console-spans", ".log")
+      System.err.println("Build scripts console spans will be written to $tempFile")
+      tempFile
+    }
+
+    // @Synchronized: sync writing to a file
+    @Synchronized
+    private fun appendSpans(batchDump: StringBuilder) {
+      require(isEnabled) {
+        "appendSpans could be called only when isEnabled is true ($IS_ENABLED_PROPERTY property, default: $IS_ENABLED_DEFAULT)"
+      }
+
+      if (toTempFile) {
+        Files.writeString(tempFile, batchDump, StandardOpenOption.APPEND)
+      }
+      else {
+        System.out.print(batchDump)
+        System.out.flush()
+      }
+    }
+  }
+
+  init {
+    if (isEnabled && toTempFile) {
+      // Force message (Build scripts console spans will be written to), but only once per class
+      tempFile
     }
   }
 
@@ -44,13 +86,12 @@ class ConsoleSpanExporter : AsyncSpanExporter {
       writeSpan(sb, span, span.endEpochNanos - span.startEpochNanos, span.endEpochNanos)
     }
     if (sb.isNotEmpty()) {
-      // System.out.print is synchronized - buffer content to reduce calls
-      print(sb.toString())
+      appendSpans(sb)
     }
   }
 }
 
-private val EXCLUDED_EVENTS_FROM_CONSOLE = java.util.Set.of("include module outputs")
+private val EXCLUDED_EVENTS_FROM_CONSOLE = setOf("include module outputs")
 private val ISO_LOCAL_TIME = DateTimeFormatterBuilder()
   .appendValue(ChronoField.HOUR_OF_DAY, 2)
   .appendLiteral(":").appendValue(ChronoField.MINUTE_OF_HOUR, 2).optionalStart()

@@ -700,6 +700,7 @@
     <inspection_tool class="Java8MapApi" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="Java8MapForEach" enabled="true" level="Strong Warning" enabled_by_default="true" />
     <inspection_tool class="Java8ReplaceMapGet" enabled="true" level="INFORMATION" enabled_by_default="true" />
+    <inspection_tool class="JavaApiUsageInspection" enabled="true" level="Strong Warning" enabled_by_default="true" />
     <inspection_tool class="JavaDoc" enabled="true" level="Strong Warning" enabled_by_default="false">
       <scope name="Tests" level="Strong Warning" enabled="false">
         <option name="TOP_LEVEL_CLASS_OPTIONS">
@@ -1263,8 +1264,6 @@
             <module name="intellij.java.psi.impl" />
             <module name="intellij.java.remoteServers" />
             <module name="intellij.java.remoteServers.impl" />
-            <module name="intellij.java.resources" />
-            <module name="intellij.java.resources.en" />
             <module name="intellij.java.rt" />
             <module name="intellij.java.structuralSearch" />
             <module name="intellij.java.structureView" />
@@ -1508,8 +1507,6 @@
           <module name="intellij.java.psi.impl" />
           <module name="intellij.java.remoteServers" />
           <module name="intellij.java.remoteServers.impl" />
-          <module name="intellij.java.resources" />
-          <module name="intellij.java.resources.en" />
           <module name="intellij.java.rt" />
           <module name="intellij.java.structuralSearch" />
           <module name="intellij.java.structureView" />
@@ -1948,6 +1945,10 @@
         <constraint name="Expression" nameOfExprType="java\.util\.stream\.Stream" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
         <constraint name="params" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Avoid using projectFixture() in CLion tests" description="JUnit5 tests are executed with both the Classic engine, and the R++ backend.&#10;For the latter, we need some special handling that's not present in the basic projectFixture() provided by platform." text="projectFixture($Parameter$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="clionProjectTestFixture($Parameter$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="Call to 'equals()' on KaType" description="Calling `equals` on two types only checks whether the structure of the types is equal, not whether the types are actually equal." suppressId="EqualsOnKaType" text="$lType$ == $rType$" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$lType$.semanticallyEquals($rType$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="lType" nameOfExprType="org\.jetbrains\.kotlin\.analysis\.api\.types\.KaType" within="" contains="" />
@@ -2079,6 +2080,12 @@
       </searchConfiguration>
       <searchConfiguration name="Catch is too broad" uuid="a8f5f167-f44f-3964-a6c9-98dee827110c" text="runCatching" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Catch is too broad" uuid="a8f5f167-f44f-3964-a6c9-98dee827110c" text="try {&#10;    $TryStatement$&#10;} catch($Exception$ : $Class$) {&#10;}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="TryStatement" maxCount="2147483647" within="" contains="" />
+        <constraint name="Exception" within="" contains="" />
+        <constraint name="Class" regexp="(Exception|Throwable|RuntimeException)" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="CefMessageRouter.create" description="Instances of CefMessagerRouter created directly are not supported on the backend in remote development. Use JBCefApp.createMessageRouter or migrate to JBCefJSQuery.  " problemDescriptor="Use JBCefApp.createMessageRouter or migrate to JBCefJSQuery." text="$Instance$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
@@ -2341,6 +2348,9 @@
         <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ClassType" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Do not hardcode &quot;.venv&quot;, use constant" description="It is better to use constant from the suggested class. Moreover, read doc carefully. It could be you do not need it. " suppressId="VENV_IS_OK" problemDescriptor="&quot;.venv&quot; hardcoded instead of a constant" text="&quot;.venv&quot;" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.jetbrains.python.venvReader.VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Do not use jdi mirrorOf directly" problemDescriptor="Do not use jdi mirrorOf directly - use DebuggerUtilsEx.mirrorOfString instead" text="$Instance$.mirrorOf($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.VirtualMachine" exprTypeWithinHierarchy="true" within="" contains="" />
@@ -4019,6 +4029,9 @@
     </inspection_tool>
     <inspection_tool class="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" enabled="true" level="WEAK WARNING" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
       <scope name="Go" level="WEAK WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="e83958b8-8081-30c2-8dc9-48d2d0383511" enabled="true" level="WARNING" enabled_by_default="false">
+      <scope name="Python" level="WARNING" enabled="true" />
     </inspection_tool>
     <inspection_tool class="jol" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="osmorcClassInDefaultPackage" enabled="false" level="ERROR" enabled_by_default="false" />

@@ -32,4 +32,29 @@ jvm_library(
     "//libraries/jbr",
   ]
 )
+
+jvm_library(
+  name = "util-ex_test_lib",
+  module_name = "intellij.platform.util.ex",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":util-ex",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/jcip:jcip_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//platform/util/base:base_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//libraries/lz4:lz4_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//libraries/mvstore:mvstore_test_lib",
+    "//libraries/jbr:jbr_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.util.ex` end

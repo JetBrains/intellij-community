@@ -8,7 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
-import com.jetbrains.python.packaging.toolwindow.model.*
+import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
+import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
+import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
+import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.isReadOnly
@@ -32,8 +37,7 @@ internal class PyPackageTableMouseAdapter(private val treeTable: PyPackagesTreeT
       when (selectedPackage) {
         is InstallablePackage -> installablePackageMouseAdapter(treeTable, selectedPackage, e)
         is InstalledPackage -> installedPackageMouseAdapter(selectedPackage)
-        is ErrorNode -> errorNodeMouseAdapter(selectedPackage)
-        is RequirementPackage, is ExpandResultNode -> null
+        is RequirementPackage, is ExpandResultNode, is WorkspaceMember -> null
       }
     }
   }
@@ -65,11 +69,6 @@ internal class PyPackageTableMouseAdapter(private val treeTable: PyPackagesTreeT
       val pkgToUpdate = PythonPackage(pkg.name, version.presentableText, false)
       service.installPackage(pkgToUpdate)
     }
-  }
-
-  private suspend fun errorNodeMouseAdapter(pkg: ErrorNode) {
-    pkg.quickFix.action.invoke()
-    service.refreshInstalledPackages()
   }
 
   companion object {

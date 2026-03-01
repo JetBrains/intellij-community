@@ -1,7 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.PsiImplUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

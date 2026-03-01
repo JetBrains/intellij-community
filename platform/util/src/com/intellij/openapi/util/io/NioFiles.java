@@ -14,13 +14,36 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.util.*;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystemException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static java.nio.file.attribute.PosixFilePermission.*;
+import static java.nio.file.attribute.PosixFilePermission.GROUP_WRITE;
+import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
 
 /**
  * A utility class that provides pieces missing from {@link Files java.nio.file.Files}.
@@ -238,6 +261,16 @@ public final class NioFiles {
     }
   }
 
+  @ApiStatus.Experimental
+  public static @NotNull FileAttributes.CaseSensitivity readCaseSensitivity(@NotNull Path path, LinkOption... options) throws IOException {
+    BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, options);
+    if (attributes instanceof CaseSensitivityAttribute) {
+      return ((CaseSensitivityAttribute)attributes).getCaseSensitivity();
+    } else {
+      return FileSystemUtil.readDirectoryCaseSensitivity(path);
+    }
+  }
+
   private static boolean isNtfsReparsePoint(Path path) {
     int attrs = Kernel32.INSTANCE.GetFileAttributes(path.toString());
     return attrs != WinBase.INVALID_FILE_ATTRIBUTES && BitUtil.isSet(attrs, WinNT.FILE_ATTRIBUTE_REPARSE_POINT);
@@ -259,7 +292,7 @@ public final class NioFiles {
    * <p>Implementation detail: the method tries to delete a file up to 10 times with 10 ms pause between attempts -
    * usually it's enough to overcome intermittent file lock on Windows.</p>
    */
-  public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<? super Path> callback) throws IOException {
+  public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<Path> callback) throws IOException {
     FileUtilRt.deleteRecursively(fileOrDirectory, callback::accept);
   }
 

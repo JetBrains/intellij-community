@@ -32,7 +32,12 @@ import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.xmlb.annotations.Attribute;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;

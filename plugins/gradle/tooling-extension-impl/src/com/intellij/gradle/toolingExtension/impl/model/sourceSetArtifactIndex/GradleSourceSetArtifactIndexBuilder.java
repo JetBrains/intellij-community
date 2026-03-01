@@ -15,7 +15,9 @@ import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class GradleSourceSetArtifactIndexBuilder extends AbstractModelBuilderService {
 

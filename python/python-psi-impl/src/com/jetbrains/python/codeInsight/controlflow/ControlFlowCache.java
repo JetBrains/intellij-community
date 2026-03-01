@@ -36,7 +36,7 @@ public final class ControlFlowCache {
   private ControlFlowCache() {
   }
 
-  public static void clear(ScopeOwner scopeOwner) {
+  public static void clear(@NotNull ScopeOwner scopeOwner) {
     scopeOwner.putUserData(CONTROL_FLOW_KEY, null);
     scopeOwner.putUserData(SCOPE_KEY, null);
   }

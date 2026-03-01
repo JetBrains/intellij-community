@@ -1,15 +1,28 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDDropHandler;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.DnDTargetChecker;
+import com.intellij.ide.dnd.SmoothAutoScroller;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.TransferHandler;
+import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.Rectangle;
 
-import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
+import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.ABOVE;
+import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.BELOW;
+import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.INTO;
 
 /**
  * @author Konstantin Bulenkov

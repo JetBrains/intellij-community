@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.actions.ToolWindowEmptyStateAction
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -18,12 +19,15 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.ex.VcsActivationListener
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.platform.vcs.impl.shared.ui.ToolWindowLazyContent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.StatusText
+import com.intellij.vcs.commit.CommitModeManager
 import javax.swing.JPanel
 
 private val IS_CONTENT_CREATED = Key.create<Boolean>("ToolWindow.IsContentCreated")
@@ -48,6 +52,9 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       }
     })
     ChangesViewContentEP.EP_NAME.addExtensionPointListener(window.project, ExtensionListener(window), window.disposable)
+    CommitModeManager.subscribeOnCommitModeChange(connection) {
+      updateState(window)
+    }
 
     val vcsManager = ProjectLevelVcsManager.getInstance(window.project)
     if (vcsManager != null && vcsManager.areVcsesActivated()) {
@@ -99,6 +106,14 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   protected open fun setEmptyState(project: Project, state: StatusText) {
+  }
+
+  internal companion object {
+    fun canBeAvailableInProject(project: Project): Boolean {
+      @Suppress("DEPRECATION")
+      return TrustedProjects.isProjectTrusted(project) &&
+             !ProjectFrameCapabilitiesService.getInstanceSync().has(project, ProjectFrameCapability.SUPPRESS_VCS_UI)
+    }
   }
 }
 

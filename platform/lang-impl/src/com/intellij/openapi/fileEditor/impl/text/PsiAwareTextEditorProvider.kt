@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
@@ -20,18 +21,29 @@ import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.editor.impl.EditorGutterLayout
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.zombie.Necropolis
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.psi.PsiDocumentManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.util.function.Supplier
 
 private const val FOLDING_ELEMENT: @NonNls String = "folding"
 
@@ -144,15 +156,16 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
   override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
     val state = super<TextEditorProvider>.readState(element, project, file) as TextEditorState
-    val foldingState = element.getChild(FOLDING_ELEMENT)
-    if (foldingState == null) {
+    val foldingElement = element.getChild(FOLDING_ELEMENT)
+    if (foldingElement == null) {
       return state
     }
-    val document = FileDocumentManager.getInstance().getCachedDocument(file)
+    val document = ReadAction.computeBlocking<Document, RuntimeException> { FileDocumentManager.getInstance().getDocument(file) }
     return if (document != null) {
-      state.withFoldingState(CodeFoldingManager.getInstance(project).readFoldingState(foldingState, document))
+      val foldingState = CodeFoldingManager.getInstance(project).readFoldingState(foldingElement, document)
+      state.withFoldingState(foldingState)
     } else {
-      state.withLazyFoldingState(PsiAwareTextEditorDelayedFoldingState(project, file, foldingState))
+      state
     }
   }
 
@@ -163,13 +176,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
     // foldings
     val foldingState = state.foldingState
-    if (foldingState == null) {
-      val delayedProducer = state.lazyFoldingState
-      if (delayedProducer is PsiAwareTextEditorDelayedFoldingState) {
-        element.addContent(delayedProducer.cloneSerializedState())
-      }
-    }
-    else {
+    if (foldingState != null) {
       val e = Element(FOLDING_ELEMENT)
       try {
         CodeFoldingManager.getInstance(project).writeFoldingState(foldingState, e)
@@ -215,15 +222,4 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
     override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? = backgroundHighlighter
   }
-}
-
-private class PsiAwareTextEditorDelayedFoldingState(private val project: Project,
-                                                    private val file: VirtualFile,
-                                                    private val state: Element) : Supplier<CodeFoldingState?> {
-  override fun get(): CodeFoldingState? {
-    val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return null
-    return CodeFoldingManager.getInstance(project).readFoldingState(state, document)
-  }
-
-  fun cloneSerializedState(): Element = state.clone()
 }

@@ -2,7 +2,18 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.SmartList;
@@ -11,7 +22,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

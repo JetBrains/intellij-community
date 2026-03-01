@@ -18,8 +18,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
 import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorAwareProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*
-import java.util.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.BINDING
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.FIELD
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.PROPERTY
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.VARIABLE
+import java.util.EnumSet
 
 abstract class GrReferenceExpressionReference(ref: GrReferenceExpressionImpl) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
 

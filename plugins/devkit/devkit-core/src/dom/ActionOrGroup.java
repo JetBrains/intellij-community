@@ -2,7 +2,13 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.NameValue;
+import com.intellij.util.xml.Referencing;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

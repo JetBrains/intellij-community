@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl
 
-import com.intellij.ide.fileTemplates.*
+import com.intellij.ide.fileTemplates.CreateFromTemplateHandler
+import com.intellij.ide.fileTemplates.DefaultCreateFromTemplateHandler
+import com.intellij.ide.fileTemplates.FileTemplate
+import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.fileTemplates.FileTemplateUtil
+import com.intellij.ide.fileTemplates.JavaTemplateUtil
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.Disposable
@@ -26,7 +31,8 @@ import java.io.FileReader
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
+import java.util.Properties
 
 internal class FileTemplatesTest : JavaProjectTestCase() {
   private var testConfigDir: Path? = null

@@ -8,7 +8,7 @@ import com.intellij.platform.vcs.impl.shared.ui.RepositoryColors;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Collection;
 
 /**

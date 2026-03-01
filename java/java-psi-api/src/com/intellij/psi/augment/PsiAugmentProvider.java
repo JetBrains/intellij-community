@@ -3,7 +3,6 @@ package com.intellij.psi.augment;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
@@ -11,10 +10,20 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -38,7 +47,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class PsiAugmentProvider implements PossiblyDumbAware {
   private static final Logger LOG = Logger.getInstance(PsiAugmentProvider.class);
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
-  private static final @NotNull NotNullLazyValue<ExtensionPoint<PsiAugmentProvider>> EP = NotNullLazyValue.lazy(() -> EP_NAME.getPoint());
   @SuppressWarnings("rawtypes")
   private /* non-static */ final Key<CachedValue<Map<Class, List>>> myCacheKey = Key.create(getClass().getName());
 
@@ -243,7 +251,7 @@ public abstract class PsiAugmentProvider implements PossiblyDumbAware {
   }
 
   private static void forEach(Project project, Processor<? super PsiAugmentProvider> processor) {
-    for (PsiAugmentProvider provider : EP.getValue().getExtensionList()) {
+    for (PsiAugmentProvider provider : EP_NAME.getExtensionList()) {
       if (DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
         try {
           boolean goOn = processor.process(provider);

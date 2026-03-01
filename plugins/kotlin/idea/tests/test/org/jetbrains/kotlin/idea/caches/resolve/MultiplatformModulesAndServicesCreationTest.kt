@@ -13,15 +13,14 @@ import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.DiagnosticCodeMeta
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.useCompositeAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
 import org.jetbrains.kotlin.idea.caches.project.toDescriptor
 import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractCodeMetaInfoTest
-import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoTestCase
+import org.jetbrains.kotlin.idea.codeMetaInfo.K1CodeMetaInfoTestCase
 import org.jetbrains.kotlin.idea.codeMetaInfo.findCorrespondingFileInTestDir
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.codeMetaInfo.K1CodeMetaInfoTestCase
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.resolve.descriptorUtil.getKotlinTypeRefiner
 import org.jetbrains.kotlin.resolve.descriptorUtil.isTypeRefinementEnabled

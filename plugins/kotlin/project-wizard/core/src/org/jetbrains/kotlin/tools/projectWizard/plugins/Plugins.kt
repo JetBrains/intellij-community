@@ -12,7 +12,14 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.Groov
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.KotlinDslPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesPlugin
-import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.*
+import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.ConsoleJvmApplicationTemplatePlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.JsTemplatesPlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.KtorTemplatesPlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.MobileMppTemplatePlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.NativeConsoleApplicationTemplatePlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.ReactJsTemplatesPlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.SimpleNodeJsTemplatesPlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.TemplatesPlugin
 
 object Plugins {
     val allPlugins: (Context) -> List<Plugin> = { context: Context ->

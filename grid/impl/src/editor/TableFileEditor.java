@@ -1,7 +1,13 @@
 package com.intellij.database.editor;
 
 import com.intellij.database.connection.throwable.info.ErrorInfo;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.DataGridAppearance;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridDataHookUp;
+import com.intellij.database.datagrid.GridRequestSource;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.command.undo.DocumentReference;

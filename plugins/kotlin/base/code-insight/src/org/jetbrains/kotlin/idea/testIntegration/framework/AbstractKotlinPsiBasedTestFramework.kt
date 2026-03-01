@@ -9,15 +9,29 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
-import com.intellij.util.ThreeState.*
+import com.intellij.util.ThreeState.NO
+import com.intellij.util.ThreeState.UNSURE
+import com.intellij.util.ThreeState.YES
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.KOTLIN_TEST_IGNORE
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework {
     protected abstract val markerClassFqns: Collection<String>

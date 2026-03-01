@@ -2,7 +2,11 @@
 package com.intellij.devkit.apiDump.lang.reference
 
 import com.intellij.devkit.apiDump.lang.psi.ADPsiElement
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference

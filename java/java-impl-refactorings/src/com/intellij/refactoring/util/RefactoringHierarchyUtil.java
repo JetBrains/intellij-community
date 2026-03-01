@@ -4,7 +4,16 @@ package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -13,7 +22,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public final class RefactoringHierarchyUtil {
   private static final Logger LOG = Logger.getInstance(RefactoringHierarchyUtil.class);

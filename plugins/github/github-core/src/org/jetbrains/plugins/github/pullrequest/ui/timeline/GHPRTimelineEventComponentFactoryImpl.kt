@@ -9,7 +9,7 @@ import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.openapi.vcs.changes.ui.BranchPresentation
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -19,7 +19,27 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHGitRefName
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
-import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRAssignedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRBaseRefChangedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRBaseRefForcePushedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRConnectedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRConvertToDraftEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRCrossReferencedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRDisconnectedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRHeadRefDeletedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRHeadRefForcePushedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRHeadRefRestoredEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRLabeledEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRMergedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRReadyForReviewEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRReferencedSubject
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRRenamedTitleEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRReviewDismissedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRReviewRequestedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRReviewUnrequestedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRUnassignedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRUnlabeledEvent
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter.Companion.OPEN_PR_LINK_PREFIX
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createDescriptionComponent
@@ -86,9 +106,9 @@ internal class GHPRTimelineEventComponentFactoryImpl(
     override fun createComponent(event: GHPRTimelineEvent.Simple): JComponent {
       return when (event) {
         is GHPRAssignedEvent ->
-          eventItem(event, assigneesText(assigned = listOf(event.user)))
+          eventItem(event, assigneesText(assigned = event.user?.let { listOf(it) } ?: emptyList()))
         is GHPRUnassignedEvent ->
-          eventItem(event, assigneesText(unassigned = listOf(event.user)))
+          eventItem(event, assigneesText(unassigned = event.user?.let { listOf(it) } ?: emptyList()))
 
         is GHPRReviewRequestedEvent ->
           eventItem(event, reviewersText(added = listOf(event.requestedReviewer)))
@@ -249,8 +269,8 @@ internal class GHPRTimelineEventComponentFactoryImpl(
 
   companion object {
     internal fun branchHTML(name: @Nls String): HtmlChunk {
-      val foreground = CurrentBranchComponent.TEXT_COLOR
-      val background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
+      val foreground = BranchPresentation.TEXT_COLOR
+        val background = BranchPresentation.getBranchPresentationBackground(UIUtil.getListBackground())
 
       val iconChunk = HtmlChunk
         .tag("icon-inline")

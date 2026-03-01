@@ -1,0 +1,14 @@
+interface Project
+interface ProjectProvider {
+    val project: Project
+}
+
+class FooBar(
+    val project: Project
+) {
+    private fun foo(project1: Project = this@FooBar.project) {
+        val mockProvider = object : ProblemsProvider {
+            override val project: Project = project1
+        }
+    }
+}

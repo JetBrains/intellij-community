@@ -7,8 +7,11 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.PathElementIdProvider;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleDescription;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -19,7 +22,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ProjectViewProjectNode extends AbstractProjectNode implements PathElementIdProvider {
   public ProjectViewProjectNode(@NotNull Project project, ViewSettings viewSettings) {

@@ -29,7 +29,11 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class BuildTargetConfiguration {
   public static final Key<Set<JpsModule>> MODULES_WITH_TARGET_CONFIG_CHANGED_KEY = GlobalContextKey.create("_modules_with_target_config_changed_");

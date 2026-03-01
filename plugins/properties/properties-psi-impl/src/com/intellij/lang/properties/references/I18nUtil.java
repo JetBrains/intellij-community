@@ -26,7 +26,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public final class I18nUtil {
   public static @NotNull List<PropertiesFile> propertiesFilesByBundleName(@Nullable String resourceBundleName, @NotNull PsiElement context) {

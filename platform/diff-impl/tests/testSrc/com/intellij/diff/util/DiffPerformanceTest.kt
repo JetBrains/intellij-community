@@ -2,6 +2,7 @@
 
 package com.intellij.diff.util
 
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.containers.Interner
@@ -9,8 +10,10 @@ import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
 import com.intellij.util.diff.UniqueLCS
 import junit.framework.TestCase
-import java.util.*
+import java.util.Collections
+import java.util.Random
 
+@PerformanceUnitTest
 class DiffPerformanceTest : TestCase() {
   companion object {
     private var needWarmUp = true

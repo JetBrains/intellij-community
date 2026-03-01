@@ -2,7 +2,13 @@
 package com.intellij.debugger.streams.psi;
 
 import com.intellij.lang.jvm.JvmModifier;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

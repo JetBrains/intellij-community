@@ -22,12 +22,15 @@ import com.jetbrains.python.psi.PyParameterList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 

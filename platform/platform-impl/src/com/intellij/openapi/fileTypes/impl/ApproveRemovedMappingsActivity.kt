@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
-private class ApproveRemovedMappingsActivity : ProjectActivity {
+internal class ApproveRemovedMappingsActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

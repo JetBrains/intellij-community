@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  Server.class
+End of files
+Compiling files:
+  java/common/changeDefinitionToClass2/a/Server.java
+End of files
+Cleaning output files:
+  Client.class
+  Factory$1.class
+  Factory.class
+End of files
+Compiling files:
+  java/common/changeDefinitionToClass2/a/Client.java
+  java/common/changeDefinitionToClass2/a/Factory.java
+End of files
+------------------------------------------
+Exit code: OK

@@ -29,7 +29,7 @@ internal fun createActionExtendedInfo(project: Project?): ExtendedInfo {
   return ExtendedInfo(description, shortcut)
 }
 
-private class AssignShortcutAction(private val project: Project?, private val value: MatchedValue) :
+internal class AssignShortcutAction(private val project: Project?, private val value: MatchedValue) :
   AnAction(Supplier { LangBundle.message("label.assign.shortcut") },
            Supplier {
              LangBundle.message("actions.tab.assign.a.shortcut", KeymapUtil.getFirstKeyboardShortcutText(

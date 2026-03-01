@@ -22,7 +22,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "parcelize",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//plugins/kotlin/plugin/k2"]
 )
 
 jvm_library(
@@ -32,21 +33,32 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
     "//plugins/kotlin/plugin/k2",
+    "//plugins/kotlin/plugin/k2:k2_test_lib",
+    "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/jvm-debugger/test/k2:kotlin-jvm-debugger-test_test_lib",
+    "//plugins/kotlin/jvm-debugger/test/k2/testFramework",
+    "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/lang-core",
-    "//plugins/kotlin/jvm-debugger/test:test_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//plugins/kotlin/jvm-debugger/testFramework",
+    "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//java/openapi:java",
+    "//java/openapi:java_test_lib",
     "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//android/streaming",
-  ]
+    "//plugins/kotlin/jvm-debugger/test/parcelize/testFramework",
+    "//plugins/kotlin/jvm-debugger/test/parcelize/testFramework:testFramework_test_lib",
+  ],
+  runtime_deps = [":parcelize"]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize` end

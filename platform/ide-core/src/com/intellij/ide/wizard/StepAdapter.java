@@ -4,7 +4,8 @@ package com.intellij.ide.wizard;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.util.List;
 
 public class StepAdapter implements Step {

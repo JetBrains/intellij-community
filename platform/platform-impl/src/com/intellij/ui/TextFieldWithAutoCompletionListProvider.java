@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.PlainPrefixMatcher;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -24,7 +28,11 @@ import com.intellij.util.textCompletion.TextCompletionValueDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 

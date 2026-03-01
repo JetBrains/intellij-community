@@ -8,7 +8,11 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.SelectionEvent
+import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.keymap.KeymapUtil
@@ -22,7 +26,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls

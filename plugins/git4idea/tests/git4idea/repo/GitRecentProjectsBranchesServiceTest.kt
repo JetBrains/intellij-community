@@ -57,6 +57,14 @@ class GitRecentProjectsBranchesServiceTest : GitSingleRepoTest() {
     assertEquals(GitRecentProjectCachedBranch.Unknown, actual)
   }
 
+  fun `test branch is invalid in case of reftable format is used`() {
+    git("refs migrate --ref-format=reftable")
+    val actual = runBlocking {
+      GitRecentProjectsBranchesService.loadBranch(previousValue = null, projectPath)
+    }
+    assertEquals(GitRecentProjectCachedBranch.Invalid, actual)
+  }
+
   private fun notOnBranch() = GitRecentProjectCachedBranch.NotOnBranch(repo.repositoryFiles.headFile.path)
 
   private fun masterBranch(): GitRecentProjectCachedBranch.KnownBranch =

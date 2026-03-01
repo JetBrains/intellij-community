@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
-import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
@@ -74,6 +79,7 @@ public class PPandMMHelper {
         lst.set(i, retexpr);
 
         result = true;
+        //noinspection AssignmentToForLoopParameter
         i--; // process the same exprent again
       }
 
@@ -103,15 +109,26 @@ public class PPandMMHelper {
     if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
       AssignmentExprent as = (AssignmentExprent)exprent;
 
-      if (as.getRight().type == Exprent.EXPRENT_FUNCTION) {
-        FunctionExprent func = (FunctionExprent)as.getRight();
+      // Peel off boxing call (e.g., Integer.valueOf(x) -> x)
+      Exprent right = as.getRight();
+      boolean isBoxed = false;
+      if (right.type == Exprent.EXPRENT_INVOCATION) {
+        InvocationExprent invoc = (InvocationExprent)right;
+        if (invoc.isBoxingCall() && invoc.getParameters().size() == 1) {
+          right = invoc.getParameters().getFirst();
+          isBoxed = true;
+        }
+      }
+
+      if (right.type == Exprent.EXPRENT_FUNCTION) {
+        FunctionExprent func = (FunctionExprent)right;
 
         VarType midlayer = null;
         if (func.getFuncType() >= FunctionExprent.FUNCTION_I2L &&
             func.getFuncType() <= FunctionExprent.FUNCTION_I2S) {
           midlayer = func.getSimpleCastType();
-          if (func.getLstOperands().get(0).type == Exprent.EXPRENT_FUNCTION) {
-            func = (FunctionExprent)func.getLstOperands().get(0);
+          if (func.getLstOperands().getFirst().type == Exprent.EXPRENT_FUNCTION) {
+            func = (FunctionExprent)func.getLstOperands().getFirst();
           }
           else {
             return null;
@@ -126,11 +143,19 @@ public class PPandMMHelper {
           if (econst.type != Exprent.EXPRENT_CONST && econd.type == Exprent.EXPRENT_CONST &&
               func.getFuncType() == FunctionExprent.FUNCTION_ADD) {
             econd = econst;
-            econst = func.getLstOperands().get(0);
+            econst = func.getLstOperands().getFirst();
           }
 
           if (econst.type == Exprent.EXPRENT_CONST && ((ConstExprent)econst).hasValueOne()) {
             Exprent left = as.getLeft();
+
+            // Peel off unboxing call (e.g., a.intValue() -> a)
+            if (isBoxed && econd.type == Exprent.EXPRENT_INVOCATION) {
+              InvocationExprent unboxInvoc = (InvocationExprent)econd;
+              if (unboxInvoc.isUnboxingCall() && unboxInvoc.getInstance() != null) {
+                econd = unboxInvoc.getInstance();
+              }
+            }
 
             VarType condtype = left.getExprType();
             if (exprsEqual(left, econd) && (midlayer == null || midlayer.equals(condtype))) {

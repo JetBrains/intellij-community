@@ -13,7 +13,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UAnnotation;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UastLiteralUtils;
 
 @VisibleForTesting
 @ApiStatus.Internal

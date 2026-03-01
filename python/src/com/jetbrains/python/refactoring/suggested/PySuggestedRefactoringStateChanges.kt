@@ -15,7 +15,11 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PySingleStarParameter
+import com.jetbrains.python.psi.PySlashParameter
 import com.jetbrains.python.psi.impl.ParamHelper
 
 internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactoringSupport) : SuggestedRefactoringStateChanges(support) {
@@ -64,7 +68,8 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
         Key.create<Map<RangeMarker, Any>>("PySuggestedRefactoringStateChanges.ChangeSignature.DISAPPEARED_RANGES")
     }
 
-    override fun isApplicable(declaration: PsiElement): Boolean = PySuggestedRefactoringSupport.isAvailableForChangeSignature(declaration)
+    override fun isApplicable(declaration: PsiElement): Boolean =
+      PySuggestedRefactoringSupport.Helper.isAvailableForChangeSignature(declaration)
 
     override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature? {
       val signature = createSignatureData(declaration as PyFunction) ?: return null
@@ -144,7 +149,7 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
 
   private object RenameStateChanges : StateChangesInternal {
 
-    override fun isApplicable(declaration: PsiElement): Boolean = PySuggestedRefactoringSupport.isAvailableForRename(declaration)
+    override fun isApplicable(declaration: PsiElement): Boolean = PySuggestedRefactoringSupport.Helper.isAvailableForRename(declaration)
 
     override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature? {
       val name = (declaration as PsiNameIdentifierOwner).name ?: return null

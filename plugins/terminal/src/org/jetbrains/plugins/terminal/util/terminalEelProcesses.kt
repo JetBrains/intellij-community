@@ -9,31 +9,44 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
+import com.intellij.platform.eel.EelExecApiHelpers
+import com.intellij.platform.eel.EelPathBoundDescriptor
+import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.EelPosixProcess
+import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult.Error
 import com.intellij.platform.eel.EelResult.Ok
+import com.intellij.platform.eel.EelWindowsProcess
+import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.stat
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.asSafely
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.ui.EDT
+import com.jediterm.terminal.TtyConnector
 import com.pty4j.PtyProcess
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
+import org.jetbrains.plugins.terminal.original
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+@RequiresReadLockAbsence
+@RequiresBackgroundThread
 internal fun hasRunningCommandsBlocking(shellEelProcess: ShellEelProcess): Boolean {
   if (EDT.isCurrentThreadEdt()) {
-    LOG.warn(IllegalStateException(
-      "Please call `org.jetbrains.plugins.terminal.TerminalUtil.hasRunningCommands(TtyConnector)` on BGT. " +
-      "Calling it on EDT may show a blicking modal progress dialog."
-    ))
     val project = guessContextProject()
     return runWithModalProgressBlocking(project, "") {
       try {
@@ -189,6 +202,10 @@ class ShellEelProcess(val eelProcess: EelProcess, val eelApi: EelApi, val proces
     return "descriptor=${eelApi.descriptor}$root, platform=${eelApi.platform}, process=${process::class.java.name})"
   }
 }
+
+val TtyConnector.eelDescriptor: EelDescriptor?
+  @ApiStatus.Internal
+  get() = (this.original as? LocalTerminalTtyConnector)?.eelDescriptor
 
 private val LOG: Logger = fileLogger()
 

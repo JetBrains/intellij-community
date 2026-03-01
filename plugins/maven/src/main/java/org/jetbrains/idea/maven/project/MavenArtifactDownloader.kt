@@ -9,7 +9,11 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
-import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenArtifactInfo
+import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenRemoteRepository
 import org.jetbrains.idea.maven.server.MavenArtifactResolutionRequest
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.utils.MavenUtil

@@ -54,7 +54,9 @@ internal object GHPRReviewThreadComponentFactory {
 
     val icon = CommentTextFieldFactory.IconConfig.of(componentType, vm.avatarIconsProvider, replyVm.currentUser.avatarUrl)
 
-    val replyComponent = CodeReviewCommentTextFieldFactory.createIn(cs, replyVm, actions, icon).let {
+    val replyComponent = CodeReviewCommentTextFieldFactory.createIn(cs, replyVm, actions, icon) { editor ->
+      editor.putUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, replyVm)
+    }.let {
       CollaborationToolsUIUtil
         .wrapWithLimitedSize(it, maxWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + componentType.contentLeftShift)
     }.apply {

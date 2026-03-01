@@ -21,7 +21,12 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.JavaDirectoryService
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiPackage
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.util.Query
@@ -78,7 +83,6 @@ fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName? {
 
 fun PsiDirectory.getImplicitPackagePrefix(): FqName? {
     return sourceRoot?.takeIf { !it.hasExplicitPackagePrefix(project) }?.let { sourceRoot ->
-        @OptIn(K1ModeProjectStructureApi::class)
         PerModulePackageCacheService.getInstance(project).getImplicitPackagePrefix(sourceRoot)
     }
 }
@@ -86,7 +90,6 @@ fun PsiDirectory.getImplicitPackagePrefix(): FqName? {
 @TestOnly
 fun PsiDirectory.setImplicitPackagePrefix(fqName: FqName?) {
     sourceRoot?.let {
-        @OptIn(K1ModeProjectStructureApi::class)
         PerModulePackageCacheService.getInstance(project).setImplicitPackagePrefix(it, fqName)
     }
 }

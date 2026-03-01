@@ -7,10 +7,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 
+@K1Deprecation
 class CommentedDeclarationHandler : MatchingHandler() {
     private fun KtDeclaration.getNonKDocCommentChild(): PsiComment? =
         this.getChildrenOfType<PsiComment>().firstOrNull { it !is KDoc }

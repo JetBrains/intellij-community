@@ -26,4 +26,17 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "kotlin.base.serialization_test_lib",
+  module_name = "intellij.kotlin.base.serialization",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin.base.serialization",
+  runtime_deps = [
+    ":kotlin.base.serialization",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.base.serialization` end

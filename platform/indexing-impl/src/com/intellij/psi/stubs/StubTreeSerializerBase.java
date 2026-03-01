@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -232,7 +236,6 @@ public abstract class StubTreeSerializerBase<SerializationState> {
       }
 
       private static @Nullable IElementType serializer2type(ObjectStubSerializer<?, ?> serializer) {
-        // todo IJPL-562 potentially slow call???
         return StubElementRegistryServiceImpl.getInstanceImpl().getElementTypeBySerializer(serializer);
       }
 

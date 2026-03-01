@@ -9,7 +9,7 @@ class PySdkSettingsTest {
   fun testPreferredVirtualEnvBasePath() {
     val settings = PySdkSettings()
 
-    val defaultVenvDir = VirtualEnvReader.Instance.getVEnvRootDir().absolutePathString()
+    val defaultVenvDir = VirtualEnvReader().getVEnvRootDir().absolutePathString()
     var preferredPath = settings.getPreferredVirtualEnvBasePath(null)
     Assert.assertEquals(defaultVenvDir, preferredPath)
 

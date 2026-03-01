@@ -2,7 +2,10 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;

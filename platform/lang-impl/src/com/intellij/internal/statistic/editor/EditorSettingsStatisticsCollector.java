@@ -10,7 +10,13 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.beans.MetricEventUtilKt;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.EnumEventField;
+import com.intellij.internal.statistic.eventLog.events.EventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.IntEventField;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.editor.actions.CaretStopBoundary;
@@ -24,7 +30,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {

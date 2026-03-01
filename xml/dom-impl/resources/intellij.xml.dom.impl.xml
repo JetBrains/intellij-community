@@ -1,12 +1,15 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.xml.dom"/>
-    <module name="intellij.xml.impl"/>
-    <module name="intellij.xml.psi"/>
-    <module name="intellij.xml.structureView"/>
-    <module name="intellij.xml.parser"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.cglib"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.impl"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.structureView"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>
@@ -54,7 +57,7 @@
     <applicationService serviceInterface="com.intellij.util.xml.ElementPresentationManager"
                         serviceImplementation="com.intellij.util.xml.ElementPresentationManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.util.xml.ConverterManager"
+    <applicationService serviceInterface="com.intellij.util.xml.ConverterManager" open="true"
                         serviceImplementation="com.intellij.util.xml.impl.ConverterManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.util.xml.highlighting.DomElementAnnotationsManager"

@@ -2,7 +2,12 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider
-import com.intellij.codeInsight.intention.*
+import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
+import com.intellij.codeInsight.intention.CustomizableIntentionAction
+import com.intellij.codeInsight.intention.EventTrackingIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.codeInsight.intention.IntentionSource
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
@@ -17,7 +22,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.SlowOperations
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.event.InputEvent
-import java.util.*
+import java.util.Objects
 
 class DaemonTooltipActionProvider : TooltipActionProvider {
   override fun getTooltipAction(info: HighlightInfo, editor: Editor, psiFile: PsiFile): TooltipAction? {

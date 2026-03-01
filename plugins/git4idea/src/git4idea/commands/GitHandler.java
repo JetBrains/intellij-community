@@ -22,6 +22,8 @@ import com.intellij.openapi.vcs.VcsEnvCustomizer.VcsExecutableContext;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
@@ -30,6 +32,8 @@ import git4idea.GitVcs;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
+import git4idea.telemetry.GitBackendTelemetrySpan;
+import io.opentelemetry.api.trace.SpanBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +44,14 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * A handler for git commands
@@ -408,22 +419,28 @@ public abstract class GitHandler {
   }
 
   void runInCurrentThread() throws IOException {
-    try {
-      start();
-      if (isStarted()) {
-        try {
-          if (myInputProcessor != null) {
-            myInputProcessor.consume(myProcess.getOutputStream());
+    SpanBuilder spanBuilder = VcsScopeKt.getVcsTracer().spanBuilder(GitBackendTelemetrySpan.Repository.RunGitCommand.getName())
+      .setAttribute("git.command", myCommand.name())
+      .setAttribute("working.directory", getDirectoryPathForLogging());
+
+    TraceUtil.runWithSpanThrows(spanBuilder, span -> {
+      try {
+        start();
+        if (isStarted()) {
+          try {
+            if (myInputProcessor != null) {
+              myInputProcessor.consume(myProcess.getOutputStream());
+            }
+          }
+          finally {
+            waitForProcess();
           }
         }
-        finally {
-          waitForProcess();
-        }
       }
-    }
-    finally {
-      logTime();
-    }
+      finally {
+        logTime();
+      }
+    });
   }
 
   private void logTime() {
@@ -446,6 +463,11 @@ public abstract class GitHandler {
   }
 
   private void start() {
+    if (myProject == null && !TrustedProjects.isProjectTrusted(Objects.requireNonNull(getWorkingDirectory()))) {
+      throw new IllegalStateException("Shouldn't be possible to run a Git command in potentially untrusted project. " +
+                                      "Pass Project to GitHandler constructor if applicable.");
+    }
+
     if (myProject != null && !myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
       throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
     }
@@ -456,9 +478,7 @@ public abstract class GitHandler {
 
     try {
       myStartTime = System.currentTimeMillis();
-      String logDirectoryPath = myProject != null
-                                ? GitImplBase.stringifyWorkingDir(myProject.getBasePath(), myCommandLine.getWorkingDirectory())
-                                : myCommandLine.getWorkDirectory().getPath();
+      String logDirectoryPath = getDirectoryPathForLogging();
       if (!mySilent) {
         LOG.info("[" + logDirectoryPath + "] " + printableCommandLine());
       }
@@ -487,6 +507,12 @@ public abstract class GitHandler {
       }
       myListeners.getMulticaster().startFailed(t);
     }
+  }
+
+  private @NotNull String getDirectoryPathForLogging() {
+    return myProject != null
+           ? GitImplBase.stringifyWorkingDir(myProject.getBasePath(), myCommandLine.getWorkingDirectory())
+           : myCommandLine.getWorkDirectory().getPath();
   }
 
   private void prepareEnvironment() {

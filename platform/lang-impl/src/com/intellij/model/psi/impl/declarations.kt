@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.util.elementsAroundOffsetUp
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -42,11 +43,13 @@ internal fun hasDeclarationsInElement(element: PsiElement, startOffsetInElement:
   return false
 }
 
-internal fun allDeclarationsInElement(element: PsiElement): Collection<PsiSymbolDeclaration> = declarationsInElement(element, -1)
+@ApiStatus.Internal
+fun allDeclarationsInElement(element: PsiElement): Collection<PsiSymbolDeclaration> = declarationsInElement(element, -1)
 
 private val declarationProviderEP = ExtensionPointName<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
 
-private fun declarationsInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
+@ApiStatus.Internal
+fun declarationsInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
   val result = SmartList<PsiSymbolDeclaration>()
   result.addAll(element.ownDeclarations)
   for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.lazySequence()) {

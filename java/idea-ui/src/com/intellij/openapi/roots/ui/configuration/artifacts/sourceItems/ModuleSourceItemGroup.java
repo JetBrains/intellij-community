@@ -12,7 +12,11 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
-import com.intellij.packaging.ui.*;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.PackagingSourceItemsProvider;
+import com.intellij.packaging.ui.SourceItemPresentation;
+import com.intellij.packaging.ui.SourceItemWeights;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 

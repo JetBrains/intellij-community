@@ -8,7 +8,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerationHandler;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -16,7 +22,13 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class ModuleCompileScope extends FileIndexCompileScope {
   private final Project myProject;

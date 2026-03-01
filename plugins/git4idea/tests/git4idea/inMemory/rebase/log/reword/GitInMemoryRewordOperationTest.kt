@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.inMemory.rebase.log.reword
 
+import git4idea.config.GitConfigUtil
 import git4idea.inMemory.rebase.log.GitInMemoryOperationTest
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.test.assertLastMessage
+import git4idea.test.lastMessage
 import git4idea.test.message
 import org.junit.jupiter.api.Assertions.assertNotEquals
-import git4idea.config.GitConfigUtil
-import git4idea.test.lastMessage
 
 internal class GitInMemoryRewordOperationTest : GitInMemoryOperationTest() {
   fun `test reword last commit`() {
@@ -19,7 +19,7 @@ internal class GitInMemoryRewordOperationTest : GitInMemoryOperationTest() {
     refresh()
     updateChangeListManager()
 
-    GitInMemoryRewordOperation(objectRepo, commit, newMessage).run() as GitCommitEditingOperationResult.Complete
+    GitInMemoryRewordOperation(objectRepo, commit.id, newMessage).run() as GitCommitEditingOperationResult.Complete
     assertLastMessage(newMessage)
 
     val newParentCommit = git("rev-parse HEAD~1")
@@ -39,7 +39,7 @@ internal class GitInMemoryRewordOperationTest : GitInMemoryOperationTest() {
     refresh()
     updateChangeListManager()
 
-    GitInMemoryRewordOperation(objectRepo, commit, newMessage).run() as GitCommitEditingOperationResult.Complete
+    GitInMemoryRewordOperation(objectRepo, commit.id, newMessage).run() as GitCommitEditingOperationResult.Complete
 
     val commitMessage = repo.message("HEAD^1")
     assertEquals(newMessage, commitMessage)
@@ -55,7 +55,7 @@ internal class GitInMemoryRewordOperationTest : GitInMemoryOperationTest() {
     refresh()
     updateChangeListManager()
 
-    GitInMemoryRewordOperation(objectRepo, targetCommit, newMessage).run() as GitCommitEditingOperationResult.Complete
+    GitInMemoryRewordOperation(objectRepo, targetCommit.id, newMessage).run() as GitCommitEditingOperationResult.Complete
 
     val childParent = git("rev-parse HEAD^")
     val targetParent = git("rev-parse HEAD^^")
@@ -72,7 +72,7 @@ internal class GitInMemoryRewordOperationTest : GitInMemoryOperationTest() {
     refresh()
     updateChangeListManager()
 
-    GitInMemoryRewordOperation(objectRepo, commit, newMessage).run() as GitCommitEditingOperationResult.Complete
+    GitInMemoryRewordOperation(objectRepo, commit.id, newMessage).run() as GitCommitEditingOperationResult.Complete
 
     assertLastMessage(newMessage)
   }
@@ -85,7 +85,7 @@ internal class GitInMemoryRewordOperationTest : GitInMemoryOperationTest() {
     refresh()
     updateChangeListManager()
 
-    GitInMemoryRewordOperation(objectRepo, commit, newMessage).run() as GitCommitEditingOperationResult.Complete
+    GitInMemoryRewordOperation(objectRepo, commit.id, newMessage).run() as GitCommitEditingOperationResult.Complete
 
     assertLastMessage(newMessage)
   }
@@ -130,7 +130,7 @@ internal class GitInMemoryRewordOperationTest : GitInMemoryOperationTest() {
     val nativeBranch = "native"
 
     git("checkout -B $inBranch")
-    GitInMemoryRewordOperation(objectRepo, commit, message).run() as GitCommitEditingOperationResult.Complete
+    GitInMemoryRewordOperation(objectRepo, commit.id, message).run() as GitCommitEditingOperationResult.Complete
     val inMemMessage = lastMessage()
 
     git("checkout master")

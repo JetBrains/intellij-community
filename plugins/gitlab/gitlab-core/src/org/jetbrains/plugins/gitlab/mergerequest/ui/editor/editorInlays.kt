@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewM
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 
-internal sealed interface GitLabMergeRequestEditorMappedComponentModel : CodeReviewInlayModel {
+internal sealed interface GitLabMergeRequestEditorMappedComponentModel : CodeReviewInlayModel.Ranged {
   val vm: CodeReviewTrackableItemViewModel
 
   abstract class Discussion<VM : GitLabMergeRequestDiscussionViewModel>(override val vm: VM)
@@ -30,8 +30,8 @@ internal sealed interface GitLabMergeRequestEditorMappedComponentModel : CodeRev
     }
   }
 
-  abstract class NewDiscussion<VM : NewGitLabNoteViewModel>(override val vm: VM)
-    : GitLabMergeRequestEditorMappedComponentModel {
+  abstract class NewDiscussion<VM : NewGitLabNoteViewModel>(override val vm: VM) : GitLabMergeRequestEditorMappedComponentModel,
+                                                                                   CodeReviewInlayModel.Ranged.Adjustable {
     abstract fun cancel()
   }
 }

@@ -5,10 +5,15 @@ import com.apple.eawt.event.FullScreenEvent
 import com.intellij.diagnostic.IdeMessagePanel
 import com.intellij.ide.lightEdit.menuBar.getLightEditMainMenuActionGroup
 import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
-import com.intellij.ide.lightEdit.statusBar.*
+import com.intellij.ide.lightEdit.statusBar.LightEditAutosaveWidget
+import com.intellij.ide.lightEdit.statusBar.LightEditEncodingWidgetWrapper
+import com.intellij.ide.lightEdit.statusBar.LightEditLineSeparatorWidgetWrapper
+import com.intellij.ide.lightEdit.statusBar.LightEditModeNotificationWidget
+import com.intellij.ide.lightEdit.statusBar.LightEditPositionWidget
+import com.intellij.ide.lightEdit.statusBar.LightEditStatusBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.LoadingOrder
@@ -20,11 +25,26 @@ import com.intellij.openapi.project.impl.applyBoundsOrDefault
 import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.LightEditFrame
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.WidgetPresentationDataContext
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.FrameBoundsConverter
+import com.intellij.openapi.wm.impl.FrameInfo
+import com.intellij.openapi.wm.impl.FrameStateListener
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
+import com.intellij.openapi.wm.impl.ProjectFrameCustomHeaderHelper
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.TitleInfoProvider
+import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.getFrameInfoByFrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
+import com.intellij.openapi.wm.impl.updateFullScreenState
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -45,7 +65,7 @@ import javax.swing.JFrame
 @RequiresEdt
 internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): LightEditFrameWrapper {
   return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UiWithModelAccess) {
       val wrapper = allocateLightEditFrame(project) { frame ->
         LightEditFrameWrapper(project = project, frame = frame ?: createIdeFrame(frameInfo ?: FrameInfo()))
       } as LightEditFrameWrapper

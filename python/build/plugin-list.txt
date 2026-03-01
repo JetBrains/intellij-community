@@ -20,8 +20,6 @@ intellij.terminal
 intellij.textmate.plugin
 intellij.toml
 intellij.vcs.git
-intellij.vcs.hg
-intellij.vcs.svn
 intellij.json
 intellij.yaml
 intellij.performanceTesting

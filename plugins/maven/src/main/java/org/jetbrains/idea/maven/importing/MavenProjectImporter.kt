@@ -15,7 +15,11 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.workspaceModel.StaticWorkspaceProjectImporter
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenEmbeddersManager
+import org.jetbrains.idea.maven.project.MavenImportingSettings
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
+import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.util.concurrent.TimeUnit

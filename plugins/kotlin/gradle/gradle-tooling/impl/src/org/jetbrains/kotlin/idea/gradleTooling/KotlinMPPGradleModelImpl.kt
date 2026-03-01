@@ -3,7 +3,30 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
-import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinSwiftExportModelImpl
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSwiftPMImportReflection
+import org.jetbrains.kotlin.idea.projectModel.ExtraFeatures
+import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
+import org.jetbrains.kotlin.idea.projectModel.KonanRunConfigurationModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinAndroidSourceSetInfo
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationCoordinates
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
+import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
+import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
+import org.jetbrains.kotlin.idea.projectModel.KotlinLanguageSettings
+import org.jetbrains.kotlin.idea.projectModel.KotlinNativeCompilationExtensions
+import org.jetbrains.kotlin.idea.projectModel.KotlinNativeMainRunTask
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatformContainer
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.projectModel.KotlinTargetJar
+import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
+import org.jetbrains.kotlin.idea.projectModel.KotlinTestRunTask
+import org.jetbrains.kotlin.idea.projectModel.KotlinWasmCompilationExtensions
+import org.jetbrains.kotlin.idea.projectModel.KotlinSwiftExportModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinSwiftPMImportModel
 import java.io.File
 
 class KotlinAndroidSourceSetInfoImpl(
@@ -23,6 +46,7 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
     override val languageSettings: KotlinLanguageSettings,
     override val sourceDirs: Set<File>,
     override val resourceDirs: Set<File>,
+    override val generatedKotlinDirs: Set<File>,
     override val regularDependencies: Array<KotlinDependencyId>,
     override val intransitiveDependencies: Array<KotlinDependencyId>,
     override val declaredDependsOnSourceSets: Set<String>,
@@ -42,6 +66,7 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
         name = kotlinSourceSet.name,
         languageSettings = KotlinLanguageSettingsImpl(kotlinSourceSet.languageSettings),
         sourceDirs = kotlinSourceSet.sourceDirs.toMutableSet(),
+        generatedKotlinDirs = kotlinSourceSet.generatedKotlinDirs.toMutableSet(),
         resourceDirs = kotlinSourceSet.resourceDirs.toMutableSet(),
         regularDependencies = kotlinSourceSet.regularDependencies.clone(),
         intransitiveDependencies = kotlinSourceSet.intransitiveDependencies.clone(),
@@ -54,7 +79,7 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
         isTestComponent = kotlinSourceSet.isTestComponent
     )
 
-    override fun toString() = name
+    override fun toString(): String = name
 
     init {
         require(allDependsOnSourceSets.containsAll(declaredDependsOnSourceSets)) {
@@ -263,6 +288,40 @@ data class ExtraFeaturesImpl(
     override val isHMPPEnabled: Boolean,
 ) : ExtraFeatures
 
+/**
+ * Implementation of [KotlinSwiftExportModel] for serialization during Gradle sync.
+ *
+ * ## KGP Reference
+ *
+ * This class captures data from the Swift Export DSL in the Kotlin Gradle Plugin:
+ * - Extension: `org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension`
+ * - Source: `libraries/tools/kotlin-gradle-plugin/src/common/kotlin/org/jetbrains/kotlin/gradle/plugin/mpp/apple/swiftexport/SwiftExportExtension.kt`
+ *
+ * @see KotlinSwiftExportModel
+ * @see KotlinMPPGradleModelBuilder.buildSwiftExportModel
+ */
+data class KotlinSwiftExportModelImpl(
+    override val moduleName: String?,
+    override val flattenPackage: String?
+) : KotlinSwiftExportModel {
+    constructor(swiftExport: KotlinSwiftExportModel) : this(
+        moduleName = swiftExport.moduleName,
+        flattenPackage = swiftExport.flattenPackage
+    )
+}
+
+data class KotlinSwiftPMImportModelImpl(
+    override val hasSwiftPMDependencies: Boolean,
+    override val integrateLinkagePackageTaskPath: String,
+    override val magicPackageName: String,
+) : KotlinSwiftPMImportModel {
+    constructor(swiftPMImportModel: KotlinSwiftPMImportModel) : this(
+        hasSwiftPMDependencies = swiftPMImportModel.hasSwiftPMDependencies,
+        integrateLinkagePackageTaskPath = swiftPMImportModel.integrateLinkagePackageTaskPath,
+        magicPackageName = swiftPMImportModel.magicPackageName,
+    )
+}
+
 data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) constructor(
     override val sourceSetsByName: Map<String, KotlinSourceSet>,
     override val targets: Collection<KotlinTarget>,
@@ -271,7 +330,9 @@ data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi
     override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
     override val dependencies: IdeaKotlinDependenciesContainer?,
     override val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer = mutableSetOf(),
-    override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
+    override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?,
+    override val swiftExport: KotlinSwiftExportModel? = null,
+    override val swiftPMImportModel: KotlinSwiftPMImportModel? = null,
 ) : KotlinMPPGradleModel {
 
     @OptIn(KotlinGradlePluginVersionDependentApi::class)
@@ -293,7 +354,9 @@ data class KotlinMPPGradleModelImpl @OptIn(KotlinGradlePluginVersionDependentApi
         dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap(),
         dependencies = mppModel.dependencies,
         kotlinImportingDiagnostics = mppModel.kotlinImportingDiagnostics.mapTo(mutableSetOf()) { it.deepCopy(cloningCache) },
-        kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion?.reparse()
+        kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion?.reparse(),
+        swiftExport = mppModel.swiftExport?.let { KotlinSwiftExportModelImpl(it) },
+        swiftPMImportModel = mppModel.swiftPMImportModel?.let { KotlinSwiftPMImportModelImpl(it) },
     )
 }
 

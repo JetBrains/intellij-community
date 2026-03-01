@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.application
 
-private class FormattingNotificationServiceImpl(private val project: Project) : FormattingNotificationService {
+internal class FormattingNotificationServiceImpl(private val project: Project) : FormattingNotificationService {
   override fun reportError(
     groupId: String,
     displayId: String?,

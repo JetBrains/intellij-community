@@ -70,6 +70,20 @@
             "INSPECTIONS"
           ]
         },
+        "parametersJson": {
+          "$ref": "#/definitions/GetTableOptionalParameters"
+        }
+      },
+      "required": [
+        "threadId",
+        "frameId",
+        "commandType"
+      ]
+    },
+    "GetTableOptionalParameters": {
+      "type": "object",
+      "description": "Optional parameters for 'getTable' / 'getTableImage' operations.",
+      "properties": {
         "start": {
           "type": [
             "integer",
@@ -90,13 +104,23 @@
             "null"
           ],
           "description": "Optional backend-specific format hint (e.g., 'json', 'csv', dtype/precision hints)."
+        },
+        "offset": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Optional offset for image operations."
+        },
+        "imageId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional image id for image operations."
         }
       },
-      "required": [
-        "threadId",
-        "frameId",
-        "commandType"
-      ]
+      "additionalProperties": true
     },
     "GetTableResponse": {
       "allOf": [
@@ -119,6 +143,63 @@
                 "result": {
                   "type": "string",
                   "description": "Opaque string payload with the result of the getTable operation."
+                }
+              }
+            }
+          },
+          "required": [
+            "body"
+          ]
+        }
+      ]
+    },
+    "GetTableImageRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Request"
+        },
+        {
+          "type": "object",
+          "description": "Retrieve tabular data as an image",
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "getTableImage"
+              ]
+            },
+            "arguments": {
+              "$ref": "#/definitions/GetTableArguments"
+            }
+          },
+          "required": [
+            "command",
+            "arguments"
+          ]
+        }
+      ]
+    },
+    "GetTableImageResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Response"
+        },
+        {
+          "type": "object",
+          "description": "Response to 'getTableImage' request.",
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "getTableImage"
+              ]
+            },
+            "body": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "string",
+                  "description": "Opaque string payload with the result of the getTableImage operation."
                 }
               }
             }

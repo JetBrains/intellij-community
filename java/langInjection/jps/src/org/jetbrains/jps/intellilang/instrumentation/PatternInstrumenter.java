@@ -6,7 +6,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.FieldVisitor;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

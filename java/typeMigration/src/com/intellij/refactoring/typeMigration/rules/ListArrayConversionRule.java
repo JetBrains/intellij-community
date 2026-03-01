@@ -2,7 +2,21 @@
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;

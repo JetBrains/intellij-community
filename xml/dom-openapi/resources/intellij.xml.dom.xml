@@ -1,7 +1,10 @@
 <idea-plugin visibility="public">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.xml.psi"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

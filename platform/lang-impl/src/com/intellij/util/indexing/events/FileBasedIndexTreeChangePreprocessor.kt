@@ -7,7 +7,7 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 
-private class FileBasedIndexTreeChangePreprocessor : PsiTreeChangePreprocessor {
+internal class FileBasedIndexTreeChangePreprocessor : PsiTreeChangePreprocessor {
   private val vfsEventsMerger by lazy {
     val fileBasedIndex = FileBasedIndex.getInstance()
     if (fileBasedIndex !is FileBasedIndexImpl) return@lazy null

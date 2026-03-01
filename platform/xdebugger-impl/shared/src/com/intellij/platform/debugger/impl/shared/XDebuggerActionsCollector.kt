@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringListValidatedByCustomRule
 import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.ACCEPTED
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
@@ -98,7 +99,7 @@ internal class FrameTypeValidator : CustomValidationRule() {
 
   override fun doValidate(data: String, context: EventContext) = when (data) {
     UNKNOWN_TYPE -> ACCEPTED
-    else -> fileTypeValidator.validate(data, context)
+    else -> ValidationResultType.fromFusApiResultType(fileTypeValidator.validate(data, context))
   }
 }
 

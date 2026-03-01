@@ -23,7 +23,12 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PlainDocString;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 

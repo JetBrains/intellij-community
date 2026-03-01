@@ -4,7 +4,12 @@ package com.intellij.platform.searchEverywhere.providers
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeCommandInfo
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeLegacyItem
+import com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider
+import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import kotlinx.coroutines.Dispatchers
@@ -36,25 +41,27 @@ class SeAdaptedItemsProvider(override val contributor: SearchEverywhereContribut
 
   private val contributorWrapper = SeAsyncContributorWrapper(contributor)
   private val isInSeparateTab = contributor.isShownInSeparateTab
-  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
+  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate.createOrNull(contributorWrapper)
   private val lastIsEverywhereFilter = AtomicReference<Boolean?>(null)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
-    val isEverywhere = SeEverywhereFilter.isEverywhere(params.filter)
+    scopeProviderDelegate?.let { scopeProviderDelegate ->
+      val isEverywhere = SeEverywhereFilter.isEverywhere(params.filter)
 
-    if (isEverywhere != null) {
-      // For adapted providers which are shown in a separate tab,
-      // we should apply isEverywhere filter only if it's changed since the last request from All tab
-      if (!isInSeparateTab || (lastIsEverywhereFilter.load()?.let { it != isEverywhere } ?: false) ) {
-        scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-          if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
-        }?.let {
-          scopeProviderDelegate.applyScope(it, false)
+      if (isEverywhere != null) {
+        // For adapted providers which are shown in a separate tab,
+        // we should apply isEverywhere filter only if it's changed since the last request from All tab
+        if (!isInSeparateTab || (lastIsEverywhereFilter.load()?.let { it != isEverywhere } ?: false)) {
+          scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
+            if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+          }?.let {
+            scopeProviderDelegate.applyScope(it, false)
+          }
         }
-      }
 
-      if (isInSeparateTab) {
-        lastIsEverywhereFilter.store(isEverywhere)
+        if (isInSeparateTab) {
+          lastIsEverywhereFilter.store(isEverywhere)
+        }
       }
     }
 

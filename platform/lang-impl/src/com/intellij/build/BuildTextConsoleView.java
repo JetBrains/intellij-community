@@ -1,7 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
-import com.intellij.build.events.*;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildIssueEvent;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.Failure;
+import com.intellij.build.events.FailureResult;
+import com.intellij.build.events.FileMessageEvent;
+import com.intellij.build.events.FinishEvent;
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.MessageEventResult;
+import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.LazyFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -32,8 +41,11 @@ public final class BuildTextConsoleView extends ConsoleViewImpl implements Build
 
   @Override
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
-    if (event instanceof BuildIssueEvent) {
-      BuildConsoleUtils.print(this, ((BuildIssueEvent)event).getGroup(), ((BuildIssueEvent)event).getIssue());
+    if (event instanceof BuildIssueEvent buildIssueEvent) {
+      final MessageEvent.Kind kind = buildIssueEvent.getResult().getKind();
+      final boolean isErrorOutput = kind == MessageEvent.Kind.ERROR || kind == MessageEvent.Kind.WARNING;
+      final ConsoleViewContentType outputType = isErrorOutput ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT;
+      BuildConsoleUtils.print(this, buildIssueEvent.getGroup(), buildIssueEvent.getIssue(), outputType);
     }
     else if (event instanceof FileMessageEvent) {
       boolean isStdOut = ((FileMessageEvent)event).getResult().getKind() != MessageEvent.Kind.ERROR;

@@ -8,7 +8,6 @@ plugins {
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
   id("fleet.module-publishing-conventions")
-  id("fleet.sdk-repositories-publishing-conventions")
   id("fleet.open-source-module-conventions")
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
@@ -31,7 +30,9 @@ kotlin {
     "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
+    "-Xcontext-parameters",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   wasmJs {

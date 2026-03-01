@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.createCommunityBuildContext
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import kotlin.collections.plus
 
 @ApiStatus.Internal
 object OpenSourceCommunityInstallersBuildTarget {

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.completion.BasicLookupElementFactory
@@ -18,8 +19,8 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
-import java.util.*
 
+@K1Deprecation
 object ClassLiteralItems {
     fun addToCollection(
         collection: MutableCollection<LookupElement>,

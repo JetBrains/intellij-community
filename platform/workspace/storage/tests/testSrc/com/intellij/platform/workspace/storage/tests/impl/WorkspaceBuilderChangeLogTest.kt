@@ -3,14 +3,49 @@ package com.intellij.platform.workspace.storage.tests.impl
 
 import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.ChangeEntry
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildSampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.LeftEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWithNullableParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithExtensionEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.RightEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.testEntities.entities.SourceEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XChildWithOptionalParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.child
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyLeftEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyOoChildWithNullableParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyOoParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentWithExtensionEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySourceEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyXChildWithOptionalParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyXParentEntity
 import com.intellij.platform.workspace.storage.tests.builderFrom
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.platform.workspace.storage.tests.from
@@ -22,7 +57,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class WorkspaceBuilderChangeLogTest {
   internal lateinit var builder: MutableEntityStorageImpl

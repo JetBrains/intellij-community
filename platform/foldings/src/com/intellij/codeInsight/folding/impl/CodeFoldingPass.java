@@ -16,28 +16,28 @@ import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 final class CodeFoldingPass extends EditorBoundHighlightingPass implements PossiblyDumbAware {
-  private static final Key<Boolean> THE_FIRST_TIME = Key.create("FirstFoldingPass");
+  private static final Key<Boolean> THE_FIRST_TIME_KEY = Key.create("FirstFoldingPass");
 
   private volatile Runnable myRunnable;
 
-  CodeFoldingPass(@NotNull Editor editor, @NotNull PsiFile file) {
-    super(editor, file, false);
+  CodeFoldingPass(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+    super(editor, psiFile, false);
   }
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    boolean firstTime = isFirstTime(myFile, myEditor, THE_FIRST_TIME);
+    boolean firstTime = isFirstTime(myFile, myEditor, THE_FIRST_TIME_KEY);
     try (var ignored = runPass()) {
       myRunnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor, firstTime);
     }
   }
 
-  static boolean isFirstTime(PsiFile file, Editor editor, Key<Boolean> key) {
-    return file.getUserData(key) == null || editor.getUserData(key) == null;
+  static boolean isFirstTime(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull Key<Boolean> key) {
+    return psiFile.getUserData(key) == null || editor.getUserData(key) == null;
   }
 
-  static void clearFirstTimeFlag(PsiFile file, Editor editor, Key<? super Boolean> key) {
-    file.putUserData(key, Boolean.FALSE);
+  static void clearFirstTimeFlag(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull Key<? super Boolean> key) {
+    psiFile.putUserData(key, Boolean.FALSE);
     editor.putUserData(key, Boolean.FALSE);
   }
 
@@ -53,7 +53,7 @@ final class CodeFoldingPass extends EditorBoundHighlightingPass implements Possi
     }
 
     if (InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile) == myFile) {
-      clearFirstTimeFlag(myFile, myEditor, THE_FIRST_TIME);
+      clearFirstTimeFlag(myFile, myEditor, THE_FIRST_TIME_KEY);
     }
   }
 

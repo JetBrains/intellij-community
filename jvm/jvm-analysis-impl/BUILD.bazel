@@ -40,4 +40,41 @@ jvm_library(
   ],
   exports = ["//jvm/jvm-analysis-api:analysis"]
 )
+
+jvm_library(
+  name = "analysis-impl_test_lib",
+  module_name = "intellij.jvm.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//jvm/jvm-analysis-api:analysis",
+    "//jvm/jvm-analysis-api:analysis_test_lib",
+  ],
+  runtime_deps = [
+    ":analysis-impl",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//jvm/jvm-analysis-api:analysis_test_lib",
+    "//java/openapi:java_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//jvm/jvm-analysis-refactoring:analysis-refactoring_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//jvm/jvm-analysis-quickFix:analysis-quickFix_test_lib",
+    "//java/codeserver/core:core_test_lib",
+    "//platform/execution:execution_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.jvm.analysis.impl` end

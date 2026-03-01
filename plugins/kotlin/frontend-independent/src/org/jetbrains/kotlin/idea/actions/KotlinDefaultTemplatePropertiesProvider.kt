@@ -5,7 +5,7 @@ import com.intellij.ide.fileTemplates.DefaultTemplatePropertiesProvider
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.psi.PsiDirectory
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
-import java.util.*
+import java.util.Properties
 
 class KotlinDefaultTemplatePropertiesProvider : DefaultTemplatePropertiesProvider {
     override fun fillProperties(directory: PsiDirectory, props: Properties) {

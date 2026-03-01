@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,11 +21,21 @@ final class CompletionItemContributor extends CompletionContributor implements R
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     ModCompletionItemProvider.CompletionContext context = new ModCompletionItemProvider.CompletionContext(
-      parameters.getOriginalFile(), parameters.getOffset(), parameters.getPosition(), 
+      parameters.getOriginalFile(), parameters.getOffset(), parameters.getOriginalPosition(), parameters.getPosition(), 
       result.getPrefixMatcher(), parameters.getInvocationCount(), parameters.getCompletionType());
-    myProvider.provideItems(context, item -> {
-      result.addElement(new CompletionItemLookupElement(item));
-    });
+    ModCompletionResult consumer = new ModCompletionResult() {
+      CompletionResultSet myResultSet = null;
+
+      @Override
+      public void accept(ModCompletionItem item) {
+        CompletionResultSet res = myResultSet;
+        if (res == null) {
+          res = myResultSet = result.withRelevanceSorter(myProvider.getSorter(context));
+        }
+        res.addElement(new CompletionItemLookupElement(item));
+      }
+    };
+    myProvider.provideItems(context, consumer);
   }
 
   @Override

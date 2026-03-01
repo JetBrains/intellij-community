@@ -17,10 +17,6 @@ import javax.swing.JComponent
 @Deprecated("Use Kotlin UI DSL Version 2")
 annotation class CellMarker
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2 and MutableProperty")
-data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
-
 class ValidationInfoBuilder(val component: JComponent) {
   fun error(@DialogMessage message: String): ValidationInfo = ValidationInfo(message, component)
   fun warning(@DialogMessage message: String): ValidationInfo = ValidationInfo(message, component).asWarning().withOKEnabled()
@@ -43,14 +39,6 @@ interface CellBuilder<out T : JComponent> {
   fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
-  fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T>
-
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
 
@@ -69,18 +57,6 @@ abstract class Cell : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   val growX: CCFlags = CCFlags.growX
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  val grow: CCFlags = CCFlags.grow
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun button(text: @Button String, actionListener: (event: ActionEvent) -> Unit): CellBuilder<JButton> {
-    val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
-    button.addActionListener(actionListener)
-    return component(button)
-  }
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")

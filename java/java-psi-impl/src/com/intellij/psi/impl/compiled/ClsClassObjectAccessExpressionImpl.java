@@ -2,7 +2,12 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -11,7 +16,7 @@ import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implements PsiClassObjectAccessExpression {
   private final ClsElementImpl myParent;

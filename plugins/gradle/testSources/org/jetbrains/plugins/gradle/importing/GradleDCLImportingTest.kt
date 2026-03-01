@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
@@ -11,6 +12,12 @@ class GradleDCLImportingTest: GradleImportingTestCase() {
   // TODO: This test uses Internet repositories and is slow in CI environment.
   // references should be updated as soon as syntax is available in DCL
   fun `import basic java app project`() {
+    val jvmEcosystemPluginVersion = when {
+      GradleVersionUtil.isGradleAtLeast(currentGradleVersion, "9.5.0") -> "0.1.54"
+      GradleVersionUtil.isGradleAtLeast(currentGradleVersion, "9.4.0") -> "0.1.50"
+      else -> "0.1.21"
+    }
+    createProjectSubFile("gradle.properties", "org.gradle.kotlin.dsl.dcl=true")
     createProjectSubFile("settings.gradle.dcl", """
       pluginManagement {
           repositories {
@@ -20,7 +27,7 @@ class GradleDCLImportingTest: GradleImportingTestCase() {
       }
       
       plugins {
-          id("org.gradle.experimental.jvm-ecosystem").version("0.1.21")
+          id("org.gradle.experimental.jvm-ecosystem").version("$jvmEcosystemPluginVersion")
       }
       
       rootProject.name = "test-dcl"

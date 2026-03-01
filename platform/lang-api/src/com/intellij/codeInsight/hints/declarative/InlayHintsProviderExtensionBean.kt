@@ -73,7 +73,7 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
    */
   @RequiredElement
   @Attribute
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   var nameKey: String? = null
 
   /**

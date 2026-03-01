@@ -1,16 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.collectReachableInlineDelegatedPropertyAccessors
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.getInlineFunctionAnalyzer
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
+import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.descriptors.ValueDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.scopes.receivers.*
+import org.jetbrains.kotlin.resolve.scopes.receivers.ContextClassReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
+import org.jetbrains.kotlin.resolve.scopes.receivers.ThisClassReceiver
 
 /**
  * This traversal collects the files containing the sources of
@@ -20,6 +37,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.*
  *   - local objects captured by the fragment.
  *   - local classes constructed by the fragment.
  */
+@K1Deprecation
 fun gatherProjectFilesDependedOnByFragment(fragment: KtCodeFragment, bindingContext: BindingContext): Set<KtFile> {
     val result = mutableSetOf<KtFile>()
     analyze(fragment) {

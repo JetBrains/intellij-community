@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
-
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
 import com.intellij.usages.rules.PsiElementUsage;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,24 +52,20 @@ public abstract class UsageViewManager {
 
   public abstract @Nullable UsageView getSelectedUsageView();
 
-  public static boolean isSelfUsage(final @NotNull Usage usage, final UsageTarget @NotNull [] searchForTarget) {
-    if (!(usage instanceof PsiElementUsage)) return false;
+  public static boolean isSelfUsage(@NotNull Usage usage, UsageTarget @NotNull [] searchForTargets) {
+    if (!(usage instanceof PsiElementUsage elementUsage)) return false;
     return ReadAction.compute(() -> {
-      final PsiElement element = ((PsiElementUsage)usage).getElement();
+      final PsiElement element = elementUsage.getElement();
       if (element == null) return false;
+      PsiElement parent = element.getParent();
+      if (parent == null) return false;
+      int offset = element.getTextOffset();
 
-      for (UsageTarget ut : searchForTarget) {
-        if (ut instanceof PsiElementUsageTarget) {
-          if (isSelfUsage(element, ((PsiElementUsageTarget)ut).getElement())) {
-            return true;
-          }
-        }
-      }
-      return false;
+      return ContainerUtil.exists(searchForTargets, ut -> {
+        if (!(ut instanceof PsiElementUsageTarget t)) return false;
+        PsiElement targetElement = t.getElement();
+        return parent == targetElement && offset == targetElement.getTextOffset();
+      });
     });
-  }
-
-  private static boolean isSelfUsage(@NotNull PsiElement element, PsiElement psiElement) {
-    return element.getParent() == psiElement; // self usage might be configurable
   }
 }

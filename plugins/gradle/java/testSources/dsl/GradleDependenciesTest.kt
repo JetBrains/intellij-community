@@ -4,7 +4,16 @@ package org.jetbrains.plugins.gradle.dsl
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.psi.PsiMethod
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_PROJECT_DEPENDENCY
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_SELF_RESOLVING_DEPENDENCY
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_COMPONENT_METADATA_HANDLER
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_COMPONENT_MODULE_METADATA
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan

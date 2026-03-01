@@ -58,13 +58,13 @@ C = TypeVar("C", bound=int)
 
 class Matrix(Generic[A, B]):
     def __add__(self, other: "Matrix[A, B]") -> "Matrix[A, B]":
-        ...
+        raise NotImplementedError
 
     def __matmul__(self, other: "Matrix[B, C]") -> "Matrix[A, C]":
-        ...
+        raise NotImplementedError
 
     def transpose(self) -> "Matrix[B, A]":
-        ...
+        raise NotImplementedError
 
 
 def func2(a: Matrix[Literal[2], Literal[3]], b: Matrix[Literal[3], Literal[7]]):

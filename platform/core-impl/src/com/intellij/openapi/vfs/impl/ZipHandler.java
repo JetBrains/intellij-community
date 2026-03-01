@@ -45,14 +45,19 @@ public class ZipHandler extends ZipHandlerBase {
     try {
       FileAccessorCache.Handle<GenericZipFile> handle = ourZipFileFileAccessorCache.get(this);
 
-      // IDEA-148458, JDK-4425695 (JVM crashes on accessing an open ZipFile after it was modified)
+      // IDEA-148458, JDK-4425695 (JVM crashes on accessing an open ZipFile after it was modified externally).
+      // This only applies to local files opened via native ZipFile (JavaZipFileWrapper).
+      // Remote files use JBZipFileWrapper (pure Java) and are not affected by the JVM crash bug,
+      // so we skip the readAttributes() call to avoid a costly network round-trip on every access.
       Path file = getPath();
-      BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class);
-      if (attrs.lastModifiedTime().toMillis() != myFileStamp || attrs.size() != myFileLength) {
-        // Note that zip_util.c#ZIP_Get_From_Cache will allow us to have duplicated ZipFile instances without a problem
-        clearCaches();
-        handle.release();
-        handle = ourZipFileFileAccessorCache.get(this);
+      if (isFileLocal(file)) {
+        BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class);
+        if (attrs.lastModifiedTime().toMillis() != myFileStamp || attrs.size() != myFileLength) {
+          // Note that zip_util.c#ZIP_Get_From_Cache will allow us to have duplicated ZipFile instances without a problem
+          clearCaches();
+          handle.release();
+          handle = ourZipFileFileAccessorCache.get(this);
+        }
       }
 
       return handle;

@@ -30,4 +30,28 @@ jvm_library(
     "//libraries/jbr",
   ]
 )
+
+jvm_library(
+  name = "editor-ex_test_lib",
+  module_name = "intellij.platform.editor.ex",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":editor-ex",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/jbr:jbr_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.editor.ex` end

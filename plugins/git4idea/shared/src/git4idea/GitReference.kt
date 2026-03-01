@@ -3,6 +3,7 @@ package git4idea
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.openapi.vcs.VcsRefNamesInterner
 import com.intellij.platform.vcs.impl.shared.CaseSensitivityInfoHolder
 import com.intellij.util.containers.HashingStrategy
 import org.jetbrains.annotations.ApiStatus
@@ -16,8 +17,10 @@ abstract class GitReference(
    * The name of the reference, e.g. "origin/master" or "feature".
    * @see [fullName]
    */
-  val name: @NlsSafe String,
+  name: @NlsSafe String,
 ) : Comparable<GitReference?> {
+  val name: @NlsSafe String = VcsRefNamesInterner[name]
+
   /**
    * The full name of the reference, e.g. "refs/remotes/origin/master" or "refs/heads/master".
    */

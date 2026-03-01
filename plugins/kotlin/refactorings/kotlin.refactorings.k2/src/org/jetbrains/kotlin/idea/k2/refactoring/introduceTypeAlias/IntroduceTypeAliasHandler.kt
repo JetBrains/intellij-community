@@ -26,8 +26,17 @@ import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_CONSTRUCTOR
 import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_ELEMENT
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeElement
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getOutermostParentContainedIn
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isDoubleColonReceiver
+import org.jetbrains.kotlin.psi.psiUtil.isTypeConstructorReference
 
 open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
     companion object {

@@ -4,7 +4,11 @@ package com.intellij.java.codeInsight.template;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.codeInsight.template.impl.*;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.EmptyNode;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.impl.MacroParser;
+import com.intellij.codeInsight.template.impl.VariableNode;
 import com.intellij.codeInsight.template.macro.VariableOfTypeMacro;
 import com.intellij.testFramework.LightIdeaTestCase;
 

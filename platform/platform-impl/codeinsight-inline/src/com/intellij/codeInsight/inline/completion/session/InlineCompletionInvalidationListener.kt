@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion.session
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.Internal
 interface InlineCompletionInvalidationListener : EventListener {

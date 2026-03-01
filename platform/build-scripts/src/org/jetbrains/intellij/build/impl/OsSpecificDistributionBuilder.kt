@@ -41,9 +41,9 @@ interface OsSpecificDistributionBuilder {
 
   suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path
 
-  fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> = emptySequence()
+  suspend fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> = emptySequence()
 
-  fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl = targetLibcImpl): Map<PathMatcher, String> {
+  suspend fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl = targetLibcImpl): Map<PathMatcher, String> {
     val fileSystem = FileSystems.getDefault()
     return generateExecutableFilesPatterns(includeRuntime, arch, libc)
       .distinct()
@@ -74,12 +74,15 @@ interface OsSpecificDistributionBuilder {
         .toSet()
       if (unmatchedPatterns.isNotEmpty()) {
         context.messages.warning(matchedFiles.joinToString(prefix = "Matched files ${distribution.name}:\n", separator = "\n"))
-        if (TeamCityHelper.isUnderTeamCity) {
-          context.messages.reportBuildProblem(
-            unmatchedPatterns.joinToString(prefix = "Unmatched executable permissions patterns in ${distribution.name}: ") {
-              patterns.getValue(it)
-            }
-          )
+        unmatchedPatterns.joinToString(prefix = "Unmatched executable permissions patterns in ${distribution.name}: ") {
+          patterns.getValue(it)
+        }.let { message ->
+          if (TeamCityHelper.isUnderTeamCity) {
+            context.messages.reportBuildProblem(message)
+          }
+          else {
+            context.messages.warning(message)
+          }
         }
       }
     }

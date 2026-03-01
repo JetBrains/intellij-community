@@ -24,12 +24,11 @@ def func1(x: int) -> NoReturn:  # E: implicitly returns None
 # > The checkers will also recognize that the code after calls to such functions
 # > is unreachable and will behave accordingly.
 
-
+# No error on implicit None return after stop()
 def func2(x: int) -> int:
     if x > 0:
         return x
     stop()
-    return "whatever works"  # No type error
 
 
 # The spec previously said that NoReturn is only valid in a function return type,

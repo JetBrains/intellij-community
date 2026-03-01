@@ -3,7 +3,7 @@ package andel.lines
 
 import andel.intervals.Interval
 import andel.intervals.IntervalsQuery
-import andel.text.*
+import andel.text.TextRange
 import fleet.codepoints.CodepointClass
 import fleet.codepoints.codepointClass
 import fleet.codepoints.isFullWidth

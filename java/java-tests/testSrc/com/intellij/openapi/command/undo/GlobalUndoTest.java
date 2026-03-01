@@ -12,7 +12,11 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -29,8 +33,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import kotlin.text.Charsets;
@@ -289,8 +298,11 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertEquals("foo", getDocumentText(f[0]));
   }
 
-  public void testDeletionOfNoneJavaFiles() {
+  public void testDeletionOfNoneJavaFiles() throws IOException {
     VirtualFile f = createChildData(myRoot, "f.xxx");
+    // In order to be restored, content should be registered in persistent FS
+    // See StoredContent#acquireContent for details
+    f.contentsToByteArray(true);
 
     deleteInCommand(f);
     assertGlobalUndoIsAvailable();
@@ -997,6 +1009,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertEquals("public class TestClass1 {\n}public class Aaa {}\n", editor.getDocument().getText());
   }
 
+  @PerformanceUnitTest
   public void testPerformance() {
     WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
       @Override

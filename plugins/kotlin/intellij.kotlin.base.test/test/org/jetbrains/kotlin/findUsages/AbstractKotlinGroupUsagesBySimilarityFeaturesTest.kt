@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.kotlin.idea.findUsages.similarity.KotlinUsageSimilarityFeaturesProvider
 import java.io.File
-import kotlin.collections.map
 
 abstract class AbstractKotlinGroupUsagesBySimilarityFeaturesTest : AbstractFindUsagesTest() {
     override fun <T : PsiElement> doTest(path: String) {

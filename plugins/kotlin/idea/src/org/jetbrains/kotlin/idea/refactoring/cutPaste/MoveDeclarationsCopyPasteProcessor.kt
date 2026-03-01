@@ -16,6 +16,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtFile
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import java.awt.datatransfer.Transferable
 
+@K1Deprecation
 class MoveDeclarationsCopyPasteProcessor : CopyPastePostProcessor<MoveDeclarationsTransferableData>() {
     companion object {
         private val LOG = Logger.getInstance(MoveDeclarationsCopyPasteProcessor::class.java)

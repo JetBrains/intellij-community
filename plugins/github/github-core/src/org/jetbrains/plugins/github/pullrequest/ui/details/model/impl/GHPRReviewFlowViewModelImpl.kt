@@ -22,7 +22,17 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -190,7 +200,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   override fun requestReview(parentComponent: JComponent) = runAction {
     val reviewers = requestedReviewers.combine(reviewerReviews) { reviewers, reviews ->
       reviewers + reviews.keys
-    }.first().toHashSet()
+    }.first()
     val selectedReviewers = withContext(Dispatchers.Main) {
       val point = RelativePoint.getNorthWestOf(parentComponent)
 
@@ -204,9 +214,9 @@ class GHPRReviewFlowViewModelImpl internal constructor(
       }
 
       ChooserPopupUtil.showAsyncMultipleChooserPopup(point,
+                                                     reviewers,
                                                      potentialReviewersLoadingFlow,
                                                      GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
-                                                     { reviewers.contains(it) },
                                                      PopupConfig(showDirection = ShowDirection.ABOVE))
     }
     val delta = CollectionDelta(reviewers, selectedReviewers)

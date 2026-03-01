@@ -5,7 +5,15 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +124,7 @@ public abstract class PyInspectionExtension {
    * Checks whether Python interpreter is required for the python file.
    *
    * @param file file being analyzed
-   * @return true if warnings produced by {@link PyInterpreterInspection} should be ignored
+   * @return true if warnings produced by the Python interpreter notification should be ignored
    */
   public boolean ignoreInterpreterWarnings(@NotNull PyFile file) {
     return false;

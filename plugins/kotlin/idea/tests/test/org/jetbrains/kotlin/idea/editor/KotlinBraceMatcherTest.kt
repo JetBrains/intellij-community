@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil
-import org.junit.Assert
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

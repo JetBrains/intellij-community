@@ -9,7 +9,8 @@ import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics;
 
 /**
  * {@link SoftWrapPainter} implementation that draws arrows in soft wrap location.

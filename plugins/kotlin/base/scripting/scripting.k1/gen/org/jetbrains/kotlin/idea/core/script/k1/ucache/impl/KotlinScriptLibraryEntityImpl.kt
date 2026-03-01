@@ -23,14 +23,12 @@ import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRoot
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLibraryEntityData) : KotlinScriptLibraryEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLibraryEntityData) : KotlinScriptLibraryEntity,
+                                                                                                      WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
-
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -41,13 +39,11 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
       readField("name")
       return dataSource.name
     }
-
   override val roots: List<KotlinScriptLibraryRoot>
     get() {
       readField("roots")
       return dataSource.roots
     }
-
   override val indexSourceRoots: Boolean
     get() {
       readField("indexSourceRoots")
@@ -70,8 +66,8 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
   }
 
 
-  internal class Builder(result: KotlinScriptLibraryEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(
-    result), KotlinScriptLibraryEntityBuilder {
+  internal class Builder(result: KotlinScriptLibraryEntityData?) :
+    ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(result), KotlinScriptLibraryEntityBuilder {
     internal constructor() : this(KotlinScriptLibraryEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -84,15 +80,13 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
           error("Entity KotlinScriptLibraryEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -148,7 +142,6 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
         changedProperty.add("entitySource")
 
       }
-
     override var name: String
       get() = getEntityData().name
       set(value) {
@@ -156,7 +149,6 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
         getEntityData(true).name = value
         changedProperty.add("name")
       }
-
     private val rootsUpdater: (value: List<KotlinScriptLibraryRoot>) -> Unit = { value ->
 
       changedProperty.add("roots")
@@ -178,7 +170,6 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
         getEntityData(true).roots = value
         rootsUpdater.invoke(value)
       }
-
     override var indexSourceRoots: Boolean
       get() = getEntityData().indexSourceRoots
       set(value) {
@@ -186,7 +177,6 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
         getEntityData(true).indexSourceRoots = value
         changedProperty.add("indexSourceRoots")
       }
-
     private val usedInScriptsUpdater: (value: Set<KotlinScriptId>) -> Unit = { value ->
 
       changedProperty.add("usedInScripts")
@@ -211,6 +201,7 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
 
     override fun getEntityClass(): Class<KotlinScriptLibraryEntity> = KotlinScriptLibraryEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -244,7 +235,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    // TODO verify logic
+// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in roots) {
     }
@@ -301,8 +292,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntity") as EntityMetadata
   }
 
   override fun clone(): KotlinScriptLibraryEntityData {
@@ -318,8 +308,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return KotlinScriptLibraryEntity(name, roots, indexSourceRoots, usedInScripts, entitySource) {
-    }
+    return KotlinScriptLibraryEntity(name, roots, indexSourceRoots, usedInScripts, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -330,9 +319,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as KotlinScriptLibraryEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.name != other.name) return false
     if (this.roots != other.roots) return false
@@ -344,9 +331,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as KotlinScriptLibraryEntityData
-
     if (this.name != other.name) return false
     if (this.roots != other.roots) return false
     if (this.indexSourceRoots != other.indexSourceRoots) return false

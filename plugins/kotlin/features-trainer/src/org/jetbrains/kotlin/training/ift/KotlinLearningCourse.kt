@@ -24,7 +24,12 @@ import training.learn.NewUsersOnboardingExperimentAccessor
 import training.learn.course.LearningCourseBase
 import training.learn.course.LearningModule
 import training.learn.course.LessonType
-import training.learn.lesson.general.*
+import training.learn.lesson.general.CollapseLesson
+import training.learn.lesson.general.CommentUncommentLesson
+import training.learn.lesson.general.DuplicateLesson
+import training.learn.lesson.general.GotoActionLesson
+import training.learn.lesson.general.MoveLesson
+import training.learn.lesson.general.MultipleSelectionHtmlLesson
 import training.learn.lesson.general.assistance.CodeFormatLesson
 import training.learn.lesson.general.assistance.LocalHistoryLesson
 import training.learn.lesson.general.assistance.ParameterInfoLesson

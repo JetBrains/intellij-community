@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -13,16 +12,13 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId;
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
+
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.scale.JBUIScale;
+
+import com.intellij.xdebugger.DapMode;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
@@ -32,9 +28,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.Unit;
@@ -43,16 +37,20 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.platform.debugger.impl.shared.CoroutineUtilsKt.createMutableSharedFlow;
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt.asProxy;
 import static com.intellij.xdebugger.impl.rpc.models.XBreakpointValueIdKt.storeGlobally;
 import static kotlinx.coroutines.CoroutineScopeKt.cancel;
@@ -136,7 +134,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public final void fireBreakpointPresentationUpdated(@Nullable XDebugSession session) {
     clearIcon();
     myBreakpointManager.fireBreakpointPresentationUpdated(this, session);
-    emitBreakpointChanged();
   }
 
   public final Flow<Unit> breakpointChangedFlow() {
@@ -163,7 +160,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     if (updateNeeded) {
       setter.accept(newValue);
     }
-    boolean requestCompleted = myBreakpointManager.getRequestCounter().setRequestCompleted(requestId);
+    boolean requestCompleted = myBreakpointManager.getRequestCounter().setRequestCompleted(myId, requestId);
     if (updateNeeded || requestCompleted) {
       fireBreakpointChanged();
     }
@@ -196,7 +193,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public void setSuspendPolicy(long requestId, @NotNull SuspendPolicy policy) {
     updateStateIfNeededAndNotify(requestId, policy, myState::getSuspendPolicy, (p) -> {
       myState.setSuspendPolicy(p);
-      if (p == SuspendPolicy.NONE) {
+      if (p == SuspendPolicy.NONE && !DapMode.isDap()) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("debugger.breakpoint.non.suspending");
       }
     });
@@ -398,6 +395,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public final void dispose() {
     myDisposed = true;
+    myBreakpointManager.getRequestCounter().remove(myId);
     cancel(myCoroutineScope, null);
     doDispose();
   }
@@ -524,97 +522,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return builder.toString();
   }
 
-  @ApiStatus.Internal
-  public void updateIcon() {
-    myIcon = calculateIcon(asProxy(this));
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Icon calculateIcon(@NotNull XBreakpointProxy breakpoint) {
-    Icon specialIcon = calculateSpecialIcon(breakpoint);
-    Icon icon = specialIcon != null ? specialIcon : breakpoint.getType().getEnabledIcon();
-    return withQuestionBadgeIfNeeded(icon, breakpoint);
-  }
-
-  private static @NotNull Icon withQuestionBadgeIfNeeded(
-    @NotNull Icon icon,
-    @NotNull XBreakpointProxy breakpoint
-  ) {
-    if (XDebuggerUtilImpl.isEmptyExpression(breakpoint.getConditionExpression())) {
-      return icon;
-    }
-
-    LayeredIcon newIcon = new LayeredIcon(2);
-    newIcon.setIcon(icon, 0);
-    int hShift = ExperimentalUI.isNewUI() ? 7 : 10;
-    newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, hShift, 6);
-    return JBUIScale.scaleIcon(newIcon);
-  }
-
-  private static @Nullable Icon calculateSpecialIcon(
-    @NotNull XBreakpointProxy breakpoint
-  ) {
-    @NotNull XBreakpointTypeProxy type = breakpoint.getType();
-    XDebugManagerProxy debugManager = XDebugManagerProxy.getInstance();
-    XDebugSessionProxy session = debugManager.getCurrentSessionProxy(breakpoint.getProject());
-    XBreakpointManagerProxy breakpointManager = debugManager.getBreakpointManagerProxy(breakpoint.getProject());
-
-    if (!breakpoint.isEnabled()) {
-      if (session != null && session.areBreakpointsMuted()) {
-        return type.getMutedDisabledIcon();
-      }
-      else {
-        return type.getDisabledIcon();
-      }
-    }
-
-    if (session == null) {
-      if (breakpointManager.getDependentBreakpointManager().getMasterBreakpoint(breakpoint) != null) {
-        return type.getInactiveDependentIcon();
-      }
-    }
-    else {
-      if (session.areBreakpointsMuted()) {
-        return type.getMutedEnabledIcon();
-      }
-      if (session.isInactiveSlaveBreakpoint(breakpoint)) {
-        return type.getInactiveDependentIcon();
-      }
-      CustomizedBreakpointPresentation presentation = breakpoint.getCustomizedPresentationForCurrentSession();
-      if (presentation != null) {
-        Icon icon = presentation.getIcon();
-        if (icon != null) {
-          return icon;
-        }
-      }
-    }
-
-    if (breakpoint.getSuspendPolicy() == SuspendPolicy.NONE) {
-      return type.getSuspendNoneIcon();
-    }
-
-    CustomizedBreakpointPresentation presentation = breakpoint.getCustomizedPresentation();
-    if (presentation != null) {
-      final Icon icon = presentation.getIcon();
-      if (icon != null) {
-        return icon;
-      }
-    }
-
-    if (
-      (breakpoint instanceof XLineBreakpointProxy lineBreakpoint) &&
-      lineBreakpoint.isTemporary() &&
-      lineBreakpoint.getType().getTemporaryIcon() != null
-    ) {
-      return lineBreakpoint.getType().getTemporaryIcon();
-    }
-
-    return null;
-  }
-
   public Icon getIcon() {
     if (myIcon == null) {
-      updateIcon();
+      myIcon = XBreakpointUIUtil.calculateIcon(asProxy(this));
     }
     return myIcon;
   }

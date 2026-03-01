@@ -8,7 +8,6 @@ import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
  * Defines information about licenses of libraries located in 'community', 'contrib' and 'android' repositories.
  */
 object CommunityLibraryLicenses {
-  @JvmStatic
   @Suppress("SpellCheckingInspection", "NonAsciiCharacters")
   val LICENSES_LIST: List<LibraryLicense> = listOf(
     LibraryLicense("A fast Java JSON schema validator", libraryName = "json-schema-validator", url = "https://github.com/networknt/json-schema-validator")
@@ -50,6 +49,11 @@ object CommunityLibraryLicenses {
       .newBsd("https://github.com/webmproject/libwebp/blob/main/COPYING"),
 
     androidDependency("Android Studio Platform", libraryName = "studio-platform"),
+
+    LibraryLicense(name = "androidx-collection", libraryName = "androidx-collection", url = "https://source.android.com/")
+      .apache("https://github.com/androidx/androidx/blob/androidx-main/LICENSE.txt")
+      .copyrightText("Copyright (C) The Android Open Source Project")
+      .suppliedByOrganizations(Suppliers.GOOGLE),
 
     LibraryLicense("antlr4-runtime", libraryName = "antlr4-runtime", url = "https://github.com/antlr/antlr4")
       .newBsd("https://github.com/antlr/antlr4/blob/dev/LICENSE.txt"),
@@ -325,6 +329,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("Detekt Compose Rules", libraryName = "io.nlopez.compose.rules.detekt", url = "https://github.com/mrmans0n/compose-rules")
       .apache("https://github.com/mrmans0n/compose-rules/blob/main/LICENSE.md"),
 
+    LibraryLicense("Directory Watcher", libraryName = "directory-watcher", url = "https://github.com/gmethvin/directory-watcher")
+      .apache("https://github.com/gmethvin/directory-watcher/blob/master/LICENSE"),
+
     LibraryLicense("docutils", version = "0.12", attachedTo = "intellij.python", url = "https://docutils.sourceforge.io/")
       .public("https://sourceforge.net/p/docutils/code/HEAD/tree/trunk/docutils/COPYING.rst"),
 
@@ -387,6 +394,10 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/3breadt/dd-plist/blob/master/LICENSE.txt"),
 
     LibraryLicense(libraryName = "Gradle", url = "https://gradle.org/")
+      .apache("https://github.com/gradle/gradle/blob/master/LICENSE")
+      .suppliedByOrganizations("Gradle Inc."),
+
+    LibraryLicense(libraryName = "Gradle Tooling API", url = "https://gradle.org/")
       .apache("https://github.com/gradle/gradle/blob/master/LICENSE")
       .suppliedByOrganizations("Gradle Inc."),
 
@@ -531,14 +542,21 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Asami Tomoharu", "Murata Makoto", "Kohsuke Kawaguchi"),
 
     LibraryLicense("Jackson", libraryName = "jackson", url = "https://github.com/FasterXML/jackson")
+      .additionalLibraryNames("jackson3")
+      .apache("https://github.com/FasterXML/jackson-core/blob/2.14/LICENSE")
+      .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
+
+    LibraryLicense("jackson-annotations", libraryName = "jackson-annotations", url = "https://github.com/FasterXML/jackson")
       .apache("https://github.com/FasterXML/jackson-core/blob/2.14/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense("jackson-jr-objects", libraryName = "jackson-jr-objects", url = "https://github.com/FasterXML/jackson-jr")
+      .additionalLibraryNames("jackson3-jr-objects")
       .apache("https://github.com/FasterXML/jackson-jr/blob/2.16/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense("Jackson Databind", libraryName = "jackson-databind", url = "https://github.com/FasterXML/jackson-databind")
+      .additionalLibraryNames("jackson3-databind")
       .apache("https://github.com/FasterXML/jackson-databind/blob/2.16/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
@@ -551,10 +569,12 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense("Jackson Dataformat YAML", libraryName = "jackson-dataformat-yaml", url = "https://github.com/FasterXML/jackson-dataformats-text")
+      .additionalLibraryNames("jackson3-dataformat-yaml")
       .apache("https://github.com/FasterXML/jackson-dataformats-text/blob/2.16/pom.xml")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense("Jackson Module Kotlin", libraryName = "jackson-module-kotlin", url = "https://github.com/FasterXML/jackson-module-kotlin")
+      .additionalLibraryNames("jackson3-module-kotlin")
       .apache("https://github.com/FasterXML/jackson-module-kotlin/blob/2.16/LICENSE")
       .suppliedByPersons(
         "Tatu Saloranta", "Christopher Currie", "Paul Brown", "Jayson Minard",
@@ -568,9 +588,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("Jakarta ORO", libraryName = "OroMatcher", url = "https://jakarta.apache.org/oro/")
       .apache("https://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE")
       .suppliedByPersons("Daniel Savarese", "Jon S. Stevens", "Takashi Okamoto", "Mark Murphy", "Michael Davey", "Harald Kuhn"),
-
-    LibraryLicense("Jarchivelib", libraryName = "rauschig.jarchivelib", url = "https://github.com/thrau/jarchivelib")
-      .apache("https://github.com/thrau/jarchivelib/blob/master/LICENSE"),
 
     LibraryLicense("Java-WebSocket", libraryName = "Java-WebSocket", url = "https://github.com/TooTallNate/Java-WebSocket")
       .mit("https://github.com/TooTallNate/Java-WebSocket/blob/master/LICENSE"),
@@ -738,6 +755,9 @@ object CommunityLibraryLicenses {
 
     LibraryLicense(libraryName = "jsoup", url = "https://jsoup.org")
       .mit("https://jsoup.org/license"),
+
+    LibraryLicense("jspecify", libraryName = "jspecify", url = "https://github.com/jspecify/jspecify")
+      .apache("https://github.com/jspecify/jspecify/blob/main/LICENSE"),
 
     LibraryLicense(libraryName = "jsr305", url = "https://github.com/amaembo/jsr-305")
       .newBsd("https://github.com/amaembo/jsr-305/blob/master/ri/LICENSE")
@@ -1061,8 +1081,20 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE")
       .suppliedByOrganizations("The OpenTelemetry Authors"),
 
+    LibraryLicense(libraryName = "opentelemetry-exporter-otlp-library", url = "https://opentelemetry.io/")
+      .apache("https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE")
+      .suppliedByOrganizations("The OpenTelemetry Authors"),
+
+    LibraryLicense(libraryName = "opentelemetry-exporter-sender-jdk", url = "https://opentelemetry.io/")
+      .apache("https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE")
+      .suppliedByOrganizations("The OpenTelemetry Authors"),
+
     LibraryLicense(libraryName = "opentelemetry-extension-kotlin", url = "https://opentelemetry.io/")
       .apache("https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE")
+      .suppliedByOrganizations("The OpenTelemetry Authors"),
+
+    LibraryLicense(libraryName = "opentelemetry-sdk-autoconfigure-spi", url = "https://opentelemetry.io/")
+      .apache("https://github.com/open-telemetry/semantic-conventions-java/blob/main/LICENSE")
       .suppliedByOrganizations("The OpenTelemetry Authors"),
 
     LibraryLicense(libraryName = "opentelemetry-semconv", url = "https://opentelemetry.io/")
@@ -1267,6 +1299,10 @@ object CommunityLibraryLicenses {
     LibraryLicense("thriftpy2", version = "0.4.13", attachedTo = "intellij.python", url = "https://github.com/Thriftpy/thriftpy2/")
       .mit("https://github.com/Thriftpy/thriftpy2/blob/master/LICENSE"),
 
+    LibraryLicense("toml4j", libraryName = "toml4j", url = "https://github.com/mwanji/toml4j")
+      .mit("https://github.com/mwanji/toml4j/blob/master/LICENSE")
+      .suppliedByPersons("Moandji Ezana"),
+
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
     LibraryLicense("Trang", libraryName = "trang-core.jar", version = LibraryLicense.CUSTOM_REVISION, url = "https://relaxng.org/jclark/trang.html")
       .newBsd("https://opensource.org/license/bsd-3-clause/"),
@@ -1386,7 +1422,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("ai.grazie.spell.hunspell.en"),
     jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation.all"),
-    jetbrainsLibrary("com.jetbrains.fus.reporting.api"),
+    jetbrainsLibrary("com.jetbrains.fus.reporting.fus-api"),
     jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-performance-kotlin"),
     jetbrainsLibrary("completion-ranking-cpp-exp"),
@@ -1430,6 +1466,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.compose.hot.reload.devtools.api"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
+    jetbrainsLibrary("jetbrains.kotlin.compiler.embeddable"),
     jetbrainsLibrary("jetbrains.kotlin.compose.compiler.plugin"),
     jetbrainsLibrary("jetbrains.kotlin.jps.plugin.classpath"),
     jetbrainsLibrary("jetbrains.ml.models.jetenry.inline.prompt.detection.model"),
@@ -1498,20 +1535,27 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("workspace-model-codegen"),
     jetbrainsLibrary("RMI Stubs").copy(name = "XSLT Debugger RMI Stubs"),
   )
+}
 
-  private fun ffmpegLibraryLicense(name: String): LibraryLicense =
-    LibraryLicense(name, libraryName = name, url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco")
-      .lgpl21plus("https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md")
-      .suppliedByOrganizations(Suppliers.GOOGLE)
+private fun ffmpegLibraryLicense(name: String): LibraryLicense {
+  return LibraryLicense(
+    name = name,
+    libraryName = name,
+    url = "https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco"
+  )
+    .lgpl21plus("https://android.googlesource.com/platform/prebuilts/tools/+/refs/tags/studio-2022.3.1-beta2/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md")
+    .suppliedByOrganizations(Suppliers.GOOGLE)
+}
 
-  private fun androidDependency(name: String, libraryName: String? = name, version: String? = null): LibraryLicense =
-    LibraryLicense(name, libraryName = libraryName, version = version, url = "https://source.android.com/")
-      .apache("https://source.android.com/setup/start/licenses")
-      .copyrightText("Copyright (C) The Android Open Source Project")
-      .suppliedByOrganizations(Suppliers.GOOGLE)
+private fun androidDependency(name: String, libraryName: String? = name, version: String? = null): LibraryLicense {
+  return LibraryLicense(name = name, libraryName = libraryName, version = version, url = "https://source.android.com/")
+    .apache("https://source.android.com/setup/start/licenses")
+    .copyrightText("Copyright (C) The Android Open Source Project")
+    .suppliedByOrganizations(Suppliers.GOOGLE)
+}
 
-  private fun netty(libraryName: String): LibraryLicense =
-    LibraryLicense(libraryName, libraryName = libraryName, url = "https://netty.io")
-      .apache("https://github.com/netty/netty/blob/4.1/LICENSE.txt")
-      .suppliedByOrganizations("The Netty project")
+private fun netty(libraryName: String): LibraryLicense {
+  return LibraryLicense(name = libraryName, libraryName = libraryName, url = "https://netty.io")
+    .apache("https://github.com/netty/netty/blob/4.1/LICENSE.txt")
+    .suppliedByOrganizations("The Netty project")
 }

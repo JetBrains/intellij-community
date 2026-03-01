@@ -13,7 +13,6 @@ import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
-import org.jetbrains.annotations.SystemIndependent
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -42,16 +41,16 @@ internal class ProjectBasePathSynchronizer : ProjectCustomDataSynchronizer<FileP
 internal class ProjectBasePathHolder(private val project: Project) {
   private val presentablePath = AtomicReference<FilePath?>()
 
-  fun getPresentablePath(): @SystemIndependent String? {
+  fun getPresentablePath(): FilePath? {
     val path = presentablePath.get()
-    return path?.presentableUrl ?: guessProjectDirAndCache()
+    return path ?: guessProjectDirAndCache()
   }
 
-  private fun guessProjectDirAndCache(): @NlsSafe String? {
+  private fun guessProjectDirAndCache(): @NlsSafe FilePath? {
     val projectDir = project.guessProjectDir() ?: return null
     val newValue = VcsContextFactory.getInstance().createFilePathOn(projectDir)
     presentablePath.compareAndSet(null, newValue)
-    return newValue.presentableUrl
+    return newValue
   }
 
   fun consumePresentablePath(presentablePath: FilePath) {

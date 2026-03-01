@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil

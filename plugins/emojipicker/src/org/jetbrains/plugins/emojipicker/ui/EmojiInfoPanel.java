@@ -10,8 +10,11 @@ import org.jetbrains.plugins.emojipicker.Emoji;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
 import org.jetbrains.plugins.emojipicker.service.EmojiService;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.font.TextLayout;
 
 public final class EmojiInfoPanel extends JPanel {

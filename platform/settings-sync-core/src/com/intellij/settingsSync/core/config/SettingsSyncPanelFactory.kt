@@ -7,7 +7,13 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.settingsSync.core.SettingsSyncBundle.message
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncLocalSettings
+import com.intellij.settingsSync.core.SettingsSyncLocalState
+import com.intellij.settingsSync.core.SettingsSyncSettings
+import com.intellij.settingsSync.core.SettingsSyncState
+import com.intellij.settingsSync.core.SettingsSyncStateHolder
+import com.intellij.settingsSync.core.SyncSettingsEvent
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.SeparatorComponent

@@ -7,16 +7,17 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.isRange
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-
+@K1Deprecation
 class ReplaceRangeStartEndInclusiveWithFirstLastInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return dotQualifiedExpressionVisitor(fun(expression: KtDotQualifiedExpression) {
@@ -44,6 +45,7 @@ class ReplaceRangeStartEndInclusiveWithFirstLastInspection : AbstractKotlinInspe
     }
 }
 
+@K1Deprecation
 class ReplaceIntRangeStartWithFirstQuickFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("replace.int.range.start.with.first.quick.fix.text")
 
@@ -56,6 +58,7 @@ class ReplaceIntRangeStartWithFirstQuickFix : LocalQuickFix {
     }
 }
 
+@K1Deprecation
 class ReplaceIntRangeEndInclusiveWithLastQuickFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("replace.int.range.end.inclusive.with.last.quick.fix.text")
 

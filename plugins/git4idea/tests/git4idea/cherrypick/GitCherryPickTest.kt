@@ -7,7 +7,18 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.i18n.GitBundle
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.appendAndCommit
+import git4idea.test.assertCommitted
+import git4idea.test.assertLastMessage
+import git4idea.test.assertNoChanges
+import git4idea.test.assertOnlyDefaultChangelist
+import git4idea.test.branch
+import git4idea.test.checkout
+import git4idea.test.checkoutNew
+import git4idea.test.prepareConflict
+import git4idea.test.tac
+import git4idea.test.waitScheduledChangelistDeletions
 
 abstract class GitCherryPickTest : GitSingleRepoTest() {
   protected lateinit var vcsAppSettings: VcsApplicationSettings

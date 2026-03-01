@@ -7,10 +7,14 @@ import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 final class MixedListFactory extends SEResultsListFactory {
 

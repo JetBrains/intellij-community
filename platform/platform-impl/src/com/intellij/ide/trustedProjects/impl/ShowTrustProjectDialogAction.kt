@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareAction
 
-private class ShowTrustProjectDialogAction : DumbAwareAction() {
+internal class ShowTrustProjectDialogAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

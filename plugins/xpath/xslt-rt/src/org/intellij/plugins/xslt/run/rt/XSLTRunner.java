@@ -17,10 +17,23 @@ package org.intellij.plugins.xslt.run.rt;
 
 import org.xml.sax.SAXParseException;
 
-import javax.xml.transform.*;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.SourceLocator;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;

@@ -30,7 +30,7 @@ import java.awt.KeyboardFocusManager
 import java.nio.file.Path
 import java.nio.file.Paths
 
-private class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
+internal class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   override val name = INTELLIJ
 

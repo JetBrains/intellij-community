@@ -8,3 +8,5 @@ fun bar(p: String.() -> Unit) { }
 
 // EXIST: topLevelFun
 // ABSENT: extFun
+
+// IGNORE_K2

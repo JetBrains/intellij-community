@@ -23,7 +23,9 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.SignTool
 import org.jetbrains.intellij.build.ZipSource
-import org.jetbrains.intellij.build.impl.NativeFileArchitecture.*
+import org.jetbrains.intellij.build.impl.NativeFileArchitecture.AARCH_64
+import org.jetbrains.intellij.build.impl.NativeFileArchitecture.UNIVERSAL
+import org.jetbrains.intellij.build.impl.NativeFileArchitecture.X_64
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.isWindows
 import java.nio.channels.FileChannel

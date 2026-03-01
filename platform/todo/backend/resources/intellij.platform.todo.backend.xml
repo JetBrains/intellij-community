@@ -1,0 +1,18 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.todo"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
+    <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager"
+                    serviceImplementation="com.intellij.psi.impl.cache.impl.IndexTodoCacheManagerImpl"
+                    overrides="true"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.todo.backend.rpc.TodoRemoteApiProvider"/>
+  </extensions>
+</idea-plugin>

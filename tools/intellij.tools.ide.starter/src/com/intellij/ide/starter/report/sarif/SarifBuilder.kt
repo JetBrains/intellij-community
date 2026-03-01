@@ -1,7 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starter.report.sarif
 
-import com.jetbrains.qodana.sarif.model.*
+import com.jetbrains.qodana.sarif.model.Invocation
+import com.jetbrains.qodana.sarif.model.ReportingDescriptor
+import com.jetbrains.qodana.sarif.model.Result
+import com.jetbrains.qodana.sarif.model.Run
+import com.jetbrains.qodana.sarif.model.SarifReport
+import com.jetbrains.qodana.sarif.model.ToolComponent
+import com.jetbrains.qodana.sarif.model.VersionControlDetails
 
 fun sarifReport(sarif: SarifReport, init: SarifReport.() -> Unit): SarifReport {
   sarif.init()

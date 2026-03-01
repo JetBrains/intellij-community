@@ -27,11 +27,16 @@ import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.awaitFocusSettlesDown
 import com.intellij.util.EventDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
-import java.util.*
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
+import java.util.EventListener
 
 /**
  * A [DiffRequestProcessor] whose state is controlled externally

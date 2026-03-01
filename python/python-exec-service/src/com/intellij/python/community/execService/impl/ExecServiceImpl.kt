@@ -6,13 +6,28 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ConcurrentProcessWeight
+import com.intellij.python.community.execService.ExecGetProcessOptions
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecOptionsBase
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ExecuteGetProcessError
+import com.intellij.python.community.execService.ProcessInteractiveHandler
 import com.intellij.python.community.execService.impl.processLaunchers.LaunchRequest
 import com.intellij.python.community.execService.impl.processLaunchers.ProcessLauncher
 import com.intellij.python.community.execService.impl.processLaunchers.createProcessLauncherOnEel
 import com.intellij.python.community.execService.impl.processLaunchers.createProcessLauncherOnTarget
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.*
+import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.ExecErrorImpl
+import com.jetbrains.python.errorProcessing.ExecErrorReason
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.failure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
@@ -41,7 +56,8 @@ internal class ExecServiceImpl private constructor() : ExecService {
 
   private suspend fun create(binary: BinaryToExec, args: Args, options: ExecOptionsBase, scopeToBind: CoroutineScope? = null): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> {
     val scope = scopeToBind ?: ApplicationManager.getApplication().service<MyService>().scope
-    val request = LaunchRequest(scope, args, options.env, options.tty)
+    val downloadConfig = (options as? ExecOptions)?.downloadAfterExecution
+    val request = LaunchRequest(scope, args, options.env, options.tty, downloadConfig)
     return Result.success(
       when (binary) {
         is BinOnEel -> createProcessLauncherOnEel(binary, request)
@@ -74,7 +90,7 @@ internal class ExecServiceImpl private constructor() : ExecService {
   ): Result<T, ExecError> {
     val description = options.processDescription
                       ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(processLauncher.exeForError.toString()) + processLauncher.args).joinToString(" "))
-    val process = processLauncher.start().getOr {
+    val process = processLauncher.start(options.weight).getOr {
       val message = PyExecBundle.message("py.exec.start.error", description, it.error.cantExecProcessError, it.error.errNo
                                                                                                             ?: "unknown")
       return processLauncher.createExecError(

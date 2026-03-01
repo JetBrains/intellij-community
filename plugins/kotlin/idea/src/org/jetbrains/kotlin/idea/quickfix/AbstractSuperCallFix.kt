@@ -7,7 +7,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction.Info
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction
@@ -25,7 +30,12 @@ import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyHashCode
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyToString
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -34,6 +44,7 @@ private const val EQUALS = "equals"
 private const val HASH_CODE = "hashCode"
 private const val TO_STRING = "toString"
 
+@K1Deprecation
 class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQuickFixAction<KtNameReferenceExpression>(element) {
 
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {

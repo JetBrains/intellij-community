@@ -26,11 +26,31 @@ import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
-import java.util.zip.*
-import kotlin.io.path.*
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createSymbolicLinkPointingTo
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
+import kotlin.io.path.fileAttributesView
+import kotlin.io.path.getPosixFilePermissions
+import kotlin.io.path.inputStream
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isSymbolicLink
+import kotlin.io.path.moveTo
+import kotlin.io.path.name
+import kotlin.io.path.notExists
 import kotlin.io.path.outputStream
 import kotlin.io.path.pathString
+import kotlin.io.path.readSymbolicLink
+import kotlin.io.path.relativeTo
+import kotlin.io.path.walk
 
 /**
  * Like [org.gradle.kotlin.dsl.support.zipTo] but reproducible

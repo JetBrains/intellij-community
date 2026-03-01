@@ -9,6 +9,8 @@ import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Co
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase.Companion.PROJECT_SOURCE_SET_PHASE
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.LongEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import org.jetbrains.annotations.ApiStatus
@@ -16,7 +18,7 @@ import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContex
 
 
 @ApiStatus.Internal
-internal object GradleSyncCollector : CounterUsagesCollector() {
+object GradleSyncCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -35,7 +37,15 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
   private val PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP = EventFields.Long("project_source_set_dependency_phase_completion_stamp_ms")
   private val ADDITIONAL_MODEL_PHASE_COMPLETION_STAMP = EventFields.Long("additional_model_phase_completion_stamp_ms")
 
-  private val MODEL_FETCH_COMPLETED_EVENT = GROUP.registerVarargEvent(
+  val PHASE_COMPLETION_STAMPS: Array<LongEventField> = arrayOf(
+    PROJECT_LOADED_PHASE_COMPLETION_STAMP,
+    PROJECT_MODEL_PHASE_COMPLETION_STAMP,
+    PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP,
+    PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP,
+    ADDITIONAL_MODEL_PHASE_COMPLETION_STAMP
+  )
+
+  val MODEL_FETCH_COMPLETED_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "gradle.sync.model.fetch.completed",
 
     ACTIVITY_ID,
@@ -44,11 +54,7 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
     MODEL_FETCH_ERROR_COUNT,
     MODEL_FETCH_COMPLETION_STAMP,
 
-    PROJECT_LOADED_PHASE_COMPLETION_STAMP,
-    PROJECT_MODEL_PHASE_COMPLETION_STAMP,
-    PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP,
-    PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP,
-    ADDITIONAL_MODEL_PHASE_COMPLETION_STAMP
+    *PHASE_COMPLETION_STAMPS
   )
 
   class ModelFetchCollector(

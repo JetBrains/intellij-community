@@ -21,7 +21,7 @@ import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.treeConflict.TreeConflictRefreshablePanel;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 

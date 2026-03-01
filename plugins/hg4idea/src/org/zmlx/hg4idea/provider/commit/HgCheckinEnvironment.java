@@ -24,7 +24,11 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,13 +36,23 @@ import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.commit.AmendCommitAware;
+import com.intellij.vcs.commit.CommitToAmend;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgChange;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.command.HgAddCommand;
+import org.zmlx.hg4idea.command.HgCommitCommand;
+import org.zmlx.hg4idea.command.HgCommitTypeCommand;
+import org.zmlx.hg4idea.command.HgRemoveCommand;
+import org.zmlx.hg4idea.command.HgStatusCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.command.mq.HgQNewCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.provider.HgCurrentBinaryContentRevision;
@@ -46,14 +60,23 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
+import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.getCommitToAmend;
 import static com.intellij.vcs.commit.LocalChangesCommitterKt.getCommitWithoutChangesRoots;
 import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptionSupported;
 import static java.util.Collections.emptySet;
 import static org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutorKt.isPushAfterCommit;
-import static org.zmlx.hg4idea.provider.commit.HgCommitOptionsKt.*;
+import static org.zmlx.hg4idea.provider.commit.HgCommitOptionsKt.isCloseBranch;
+import static org.zmlx.hg4idea.provider.commit.HgCommitOptionsKt.isCommitSubrepositories;
+import static org.zmlx.hg4idea.provider.commit.HgCommitOptionsKt.isMqNewPatch;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
@@ -93,13 +116,18 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   }
 
   @Override
+  public boolean isAmendSpecificCommitSupported() {
+    return getAmendService().isAmendSpecificCommitSupported();
+  }
+
+  @Override
   public @Nullable String getLastCommitMessage(@NotNull VirtualFile root) {
     return getAmendService().getLastCommitMessage(root);
   }
 
   @Override
-  public @NotNull CancellablePromise<EditedCommitDetails> getAmendCommitDetails(@NotNull VirtualFile root) {
-    return getAmendService().getAmendCommitDetails(root);
+  public @NotNull CancellablePromise<EditedCommitDetails> getAmendCommitDetails(@NotNull VirtualFile root, @NotNull CommitToAmend commitToAmend) {
+    return getAmendService().getAmendCommitDetails(root, commitToAmend);
   }
 
   private @NotNull HgAmendCommitService getAmendService() {
@@ -114,7 +142,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     List<VcsException> exceptions = new LinkedList<>();
     Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
     addRepositoriesWithoutChanges(repositoriesMap, commitContext);
-    boolean isAmend = isAmendCommitMode(commitContext);
+    CommitToAmend mode = getCommitToAmend(commitContext) ;
+    boolean isAmend = !(mode instanceof CommitToAmend.None);
     for (Map.Entry<HgRepository, Set<HgFile>> entry : repositoriesMap.entrySet()) {
 
       HgRepository repo = entry.getKey();

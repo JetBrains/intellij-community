@@ -7,13 +7,22 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
 import javax.swing.text.View;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 @SuppressWarnings("unused")
 public final class WinOnOffButtonUI extends BasicToggleButtonUI {

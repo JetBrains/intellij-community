@@ -16,7 +16,12 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;

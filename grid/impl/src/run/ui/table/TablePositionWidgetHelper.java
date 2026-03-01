@@ -1,7 +1,11 @@
 package com.intellij.database.run.ui.table;
 
 import com.intellij.database.DataGridBundle;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridWidget;
+import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.impl.status.PositionPanel;

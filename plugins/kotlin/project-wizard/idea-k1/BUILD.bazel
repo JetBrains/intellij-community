@@ -1,5 +1,14 @@
 ### auto-generated section `build kotlin.project-wizard.idea.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_kotlin-project-wizard-idea-k1",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
 
 resourcegroup(
   name = "kotlin-project-wizard-idea-k1_resources",
@@ -13,6 +22,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":kotlin-project-wizard-idea-k1_resources"],
+  kotlinc_opts = ":custom_kotlin-project-wizard-idea-k1",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -24,6 +34,26 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
     "@lib//:kotlin-stdlib",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-project-wizard-idea-k1_test_lib",
+  module_name = "kotlin.project-wizard.idea.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-project-wizard-idea-k1",
+  runtime_deps = [
+    ":kotlin-project-wizard-idea-k1",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/project-wizard/core:core_test_lib",
+    "//plugins/kotlin/project-wizard/idea:idea_test_lib",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.project-wizard.idea.k1` end

@@ -5,10 +5,11 @@ package org.jetbrains.eval4j.test;
 import junit.framework.TestSuite;
 import org.jetbrains.eval4j.jdi.test.JdiTestKt;
 
+// @IJIgnore(issue = "AT-3959")
 public class Eval4jTest extends TestSuite {
 
     @SuppressWarnings({"UnnecessaryFullyQualifiedName", "StaticMethodReferencedViaSubclass"})
-    public static TestSuite suite() {
+    public static TestSuite _suite() {
         TestSuite eval4jSuite = new TestSuite("Eval4j Tests");
         eval4jSuite.addTest(JdiTestKt.suite());
         eval4jSuite.addTest(MainKt.suite());

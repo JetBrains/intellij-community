@@ -8,7 +8,12 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.IconManager
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.IconUtil
 import java.awt.Rectangle

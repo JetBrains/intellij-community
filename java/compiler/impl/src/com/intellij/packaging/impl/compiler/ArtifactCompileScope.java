@@ -17,7 +17,11 @@ import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class ArtifactCompileScope {
   private static final Key<Boolean> FORCE_ARTIFACT_BUILD = Key.create("force_artifact_build");

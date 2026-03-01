@@ -5,7 +5,12 @@ import com.intellij.lang.properties.psi.Property
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 

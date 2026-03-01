@@ -11,7 +11,7 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 @Service
 public final class InvalidArtifactType extends ArtifactType {

@@ -9,7 +9,10 @@ import org.jetbrains.annotations.ApiStatus;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import static com.intellij.util.SystemProperties.*;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.SystemProperties.getFloatProperty;
+import static com.intellij.util.SystemProperties.getIntProperty;
+import static com.intellij.util.SystemProperties.getLongProperty;
 import static com.intellij.util.io.IOUtil.MiB;
 
 /**

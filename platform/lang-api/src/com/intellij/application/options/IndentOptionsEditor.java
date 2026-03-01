@@ -13,9 +13,15 @@ import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
-import static com.intellij.psi.codeStyle.CodeStyleConstraints.*;
+import static com.intellij.psi.codeStyle.CodeStyleConstraints.MAX_INDENT_SIZE;
+import static com.intellij.psi.codeStyle.CodeStyleConstraints.MAX_TAB_SIZE;
+import static com.intellij.psi.codeStyle.CodeStyleConstraints.MIN_INDENT_SIZE;
+import static com.intellij.psi.codeStyle.CodeStyleConstraints.MIN_TAB_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;

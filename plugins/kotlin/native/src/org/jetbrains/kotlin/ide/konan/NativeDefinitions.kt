@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.ide.konan
 
@@ -12,10 +12,20 @@ import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.fileTypes.*
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.fileTypes.SyntaxHighlighter
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.InjectedLanguagePlaces
+import com.intellij.psi.LanguageInjector
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
@@ -61,15 +71,12 @@ class NativeDefinitionsFile(viewProvider: FileViewProvider) : PsiFileBase(viewPr
 
 class NativeDefinitionsLexerAdapter : FlexAdapter(NativeDefinitionsLexer(null as Reader?))
 
-private object NativeDefinitionsTokenSets {
-    val COMMENTS: TokenSet = TokenSet.create(NativeDefinitionsTypes.COMMENT)
-}
+private val COMMENTS: TokenSet = TokenSet.create(NativeDefinitionsTypes.COMMENT)
+private val FILE = IFileElementType(NativeDefinitionsLanguage.INSTANCE)
 
 class NativeDefinitionsParserDefinition : ParserDefinition {
-    private val FILE = IFileElementType(NativeDefinitionsLanguage.INSTANCE)
-
     override fun getWhitespaceTokens(): TokenSet = TokenSet.WHITE_SPACE
-    override fun getCommentTokens(): TokenSet = NativeDefinitionsTokenSets.COMMENTS
+    override fun getCommentTokens(): TokenSet = COMMENTS
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
     override fun getFileNodeType(): IFileElementType = FILE
 

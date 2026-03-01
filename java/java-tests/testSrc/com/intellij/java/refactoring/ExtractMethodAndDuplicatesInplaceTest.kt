@@ -9,7 +9,11 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdePopupManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor

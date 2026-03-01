@@ -22,7 +22,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
@@ -32,8 +36,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.ListCellRenderer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -43,7 +54,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   public static final Logger LOG = Logger.getInstance(ContributorsBasedGotoByModel.class);
 
   protected final Project myProject;
-  private final List<ChooseByNameContributor> myContributors;
+  @ApiStatus.Internal
+  protected final List<ChooseByNameContributor> myContributors;
 
   protected ContributorsBasedGotoByModel(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors) {
     this(project, List.of(contributors));
@@ -97,7 +109,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         return true;
       }
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(contributors, indicator, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(contributors, processor)) {
       throw new ProcessCanceledException();
     }
     if (indicator != null) {
@@ -126,11 +138,11 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   protected void doProcessContributorNames(ChooseByNameContributor contributor,
                                            @NotNull FindSymbolParameters parameters,
                                            Processor<? super String> filterAdderProcessor) {
-    if (contributor instanceof ChooseByNameContributorEx2) {
-      ((ChooseByNameContributorEx2)contributor).processNames(filterAdderProcessor, parameters);
+    if (contributor instanceof ChooseByNameContributorEx2 ex2) {
+      ex2.processNames(filterAdderProcessor, parameters);
     }
-    else if (contributor instanceof ChooseByNameContributorEx) {
-      ((ChooseByNameContributorEx)contributor).processNames(filterAdderProcessor, parameters.getSearchScope(), parameters.getIdFilter());
+    else if (contributor instanceof ChooseByNameContributorEx ex) {
+      ex.processNames(filterAdderProcessor, parameters.getSearchScope(), parameters.getIdFilter());
     }
     else {
       String[] names = contributor.getNames(myProject, parameters.isSearchInLibraries());

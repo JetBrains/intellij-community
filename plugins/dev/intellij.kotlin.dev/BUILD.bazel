@@ -27,4 +27,25 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common-provided",
   ]
 )
+
+jvm_library(
+  name = "kotlin-dev_test_lib",
+  module_name = "intellij.kotlin.dev",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kotlin-dev",
+    "//plugins/dev/intellij.dev.codeInsight:codeInsight_test_lib",
+    "//plugins/dev/intellij.dev.psiViewer:psiViewer_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.dev` end

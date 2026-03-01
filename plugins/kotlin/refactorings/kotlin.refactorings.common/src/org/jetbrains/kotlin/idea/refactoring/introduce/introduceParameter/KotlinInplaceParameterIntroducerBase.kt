@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -24,8 +25,20 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinInplaceIntroducer
 import org.jetbrains.kotlin.idea.refactoring.introduce.TYPE_REFERENCE_VARIABLE_NAME
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createPrimaryConstructorParameterListIfAbsent
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.getValueParameterList
+import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.awt.Color
 import javax.swing.JCheckBox
 
@@ -96,55 +109,57 @@ abstract class KotlinInplaceParameterIntroducerBase<KotlinType, Descriptor>(
 
             val builder = StringBuilder()
 
-            with(descriptor) {
-                (callable as? KtFunction)?.receiverTypeReference?.let { receiverTypeRef ->
-                    builder.append(receiverTypeRef.text).append('.')
-                    if (!descriptor.withDefaultValue && receiverTypeRef in parametersToRemove) {
-                        _rangesToRemove.add(TextRange(0, builder.length))
-                    }
-                }
-
-                builder.append(callable.name)
-
-                val parameters = callable.getValueParameters()
-                builder.append("(")
-                for (i in parameters.indices) {
-                    val parameter = parameters[i]
-
-                    val parameterText = if (parameter == addedParameter) {
-                        val parameterName = currentName ?: parameter.name?.quoteIfNeeded()
-                        val parameterType = currentType ?: parameter.typeReference!!.text
-                        descriptor = descriptor.copy(newParameterName = parameterName!!, newParameterTypeText = parameterType)
-                        val modifier = if (valVar != KotlinValVar.None) "${valVar.keywordName} " else ""
-                        val argumentValue = newArgumentValue
-                        val defaultValue = if (withDefaultValue && argumentValue != null) {
-                            " = ${if (argumentValue is KtProperty) argumentValue.name else argumentValue.text}"
-                        } else ""
-
-                        "$modifier$parameterName: $parameterType$defaultValue"
-                    } else {
-                        parameter.allChildren.toList()
-                            .dropLastWhile { it is PsiComment || it is PsiWhiteSpace }
-                            .joinToString(separator = "") { it.text }
+            runReadAction {
+                with(descriptor) {
+                    (callable as? KtFunction)?.receiverTypeReference?.let { receiverTypeRef ->
+                        builder.append(receiverTypeRef.text).append('.')
+                        if (!descriptor.withDefaultValue && receiverTypeRef in parametersToRemove) {
+                            _rangesToRemove.add(TextRange(0, builder.length))
+                        }
                     }
 
-                    builder.append(parameterText)
+                    builder.append(callable.name)
 
-                    val range = TextRange(builder.length - parameterText.length, builder.length)
-                    if (parameter == addedParameter) {
-                        addedRange = range
-                    } else if (!descriptor.withDefaultValue && parameter in parametersToRemove) {
-                        _rangesToRemove.add(range)
+                    val parameters = callable.getValueParameters()
+                    builder.append("(")
+                    for (i in parameters.indices) {
+                        val parameter = parameters[i]
+
+                        val parameterText = if (parameter == addedParameter) {
+                            val parameterName = currentName ?: parameter.name?.quoteIfNeeded()
+                            val parameterType = currentType ?: parameter.typeReference!!.text
+                            descriptor = descriptor.copy(newParameterName = parameterName!!, newParameterTypeText = parameterType)
+                            val modifier = if (valVar != KotlinValVar.None) "${valVar.keywordName} " else ""
+                            val argumentValue = newArgumentValue
+                            val defaultValue = if (withDefaultValue && argumentValue != null) {
+                                " = ${if (argumentValue is KtProperty) argumentValue.name else argumentValue.text}"
+                            } else ""
+
+                            "$modifier$parameterName: $parameterType$defaultValue"
+                        } else {
+                            parameter.allChildren.toList()
+                                .dropLastWhile { it is PsiComment || it is PsiWhiteSpace }
+                                .joinToString(separator = "") { it.text }
+                        }
+
+                        builder.append(parameterText)
+
+                        val range = TextRange(builder.length - parameterText.length, builder.length)
+                        if (parameter == addedParameter) {
+                            addedRange = range
+                        } else if (!descriptor.withDefaultValue && parameter in parametersToRemove) {
+                            _rangesToRemove.add(range)
+                        }
+
+                        if (i < parameters.lastIndex) {
+                            builder.append(", ")
+                        }
                     }
+                    builder.append(")")
 
-                    if (i < parameters.lastIndex) {
-                        builder.append(", ")
+                    if (addedRange == null) {
+                        LOG.error("Added parameter not found: ${callable.getElementTextWithContext()}")
                     }
-                }
-                builder.append(")")
-
-                if (addedRange == null) {
-                    LOG.error("Added parameter not found: ${callable.getElementTextWithContext()}")
                 }
             }
 
@@ -163,7 +178,7 @@ abstract class KotlinInplaceParameterIntroducerBase<KotlinType, Descriptor>(
             defaultValueCheckBox.isSelected = descriptor.withDefaultValue
             defaultValueCheckBox.addActionListener {
                 descriptor = descriptor.copy(withDefaultValue = defaultValueCheckBox.isSelected)
-                updateTitle(variable)
+                runReadAction { updateTitle(variable ) }
             }
             addComponent(defaultValueCheckBox)
 

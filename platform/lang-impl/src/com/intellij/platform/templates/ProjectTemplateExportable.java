@@ -2,7 +2,11 @@
 package com.intellij.platform.templates;
 
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

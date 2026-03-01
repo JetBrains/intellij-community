@@ -16,7 +16,17 @@
 
 package com.intellij.ide.highlighter.custom;
 
-import com.intellij.ide.highlighter.custom.tokens.*;
+import com.intellij.ide.highlighter.custom.tokens.BraceTokenParser;
+import com.intellij.ide.highlighter.custom.tokens.HexNumberParser;
+import com.intellij.ide.highlighter.custom.tokens.IdentifierParser;
+import com.intellij.ide.highlighter.custom.tokens.KeywordParser;
+import com.intellij.ide.highlighter.custom.tokens.LineCommentParser;
+import com.intellij.ide.highlighter.custom.tokens.MultilineCommentParser;
+import com.intellij.ide.highlighter.custom.tokens.NumberParser;
+import com.intellij.ide.highlighter.custom.tokens.PunctuationParser;
+import com.intellij.ide.highlighter.custom.tokens.QuotedStringParser;
+import com.intellij.ide.highlighter.custom.tokens.TokenParser;
+import com.intellij.ide.highlighter.custom.tokens.WhitespaceParser;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CustomHighlighterTokenType;
 

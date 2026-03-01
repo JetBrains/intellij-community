@@ -5,7 +5,13 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -21,7 +27,9 @@ abstract class ExtractableSubstringInfo(
 
     val template: KtStringTemplateExpression = startEntry.parent as KtStringTemplateExpression
 
-    val content = with(entries.map { it.text }.joinToString(separator = "")) { substring(prefix.length, length - suffix.length) }
+    val content: String = with(entries.joinToString(separator = "") { it.text }) {
+        substring(prefix.length, length - suffix.length)
+    }
 
     val contentRange: TextRange
         get() = TextRange(startEntry.startOffset + prefix.length, endEntry.endOffset - suffix.length)

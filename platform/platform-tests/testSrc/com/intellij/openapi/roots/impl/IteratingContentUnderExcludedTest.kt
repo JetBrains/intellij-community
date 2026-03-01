@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findFileOrDirectory
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.RunInEdt
@@ -170,6 +171,7 @@ class IteratingContentUnderExcludedTest {
     assertIteratedContent(fileIndex, contentRoot, listOf(contentFile), listOf(excludedRoot))
   }
 
+  @PerformanceUnitTest
   @Test
   fun testTraversingNonProjectFilesShouldBeFast() {
     IoTestUtil.assumeSymLinkCreationIsSupported()

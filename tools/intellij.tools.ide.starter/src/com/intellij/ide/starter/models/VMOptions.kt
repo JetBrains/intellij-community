@@ -12,7 +12,11 @@ import com.intellij.tools.ide.util.common.logOutput
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.lang.management.ManagementFactory
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.pathString
+import kotlin.io.path.readLines
+import kotlin.io.path.writeLines
+import kotlin.io.path.writeText
 import kotlin.time.Duration
 
 data class VMOptions(
@@ -173,16 +177,16 @@ data class VMOptions(
    * [categories] - Could be packages, classes ...
    */
   fun configureLoggers(logLevel: LogLevel, vararg categories: String) {
+    configureLoggers(logLevel.name.lowercase(), *categories)
+  }
+
+  fun configureLoggers(logLevel: String, vararg categories: String) {
     if (categories.isNotEmpty()) {
-      val logLevelName = logLevel.name.lowercase()
+      val logLevelName = logLevel.lowercase()
       addSystemPropertyValue("idea.log.${logLevelName}.categories", categories.joinToString(separator = ",") {
         "#" + it.removePrefix("#")
       })
     }
-  }
-
-  fun configureLoggers(logLevel: String, vararg categories: String) {
-    configureLoggers(LogLevel.valueOf(logLevel), *categories)
   }
 
   fun dropDebug() {

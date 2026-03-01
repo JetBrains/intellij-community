@@ -2,7 +2,19 @@
 
 package org.jetbrains.kotlin.nj2k.types
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiCapturedWildcardType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiDisjunctionType
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiLambdaExpressionType
+import com.intellij.psi.PsiLambdaParameterType
+import com.intellij.psi.PsiMethodReferenceType
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -11,7 +23,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.j2k.Nullability
-import org.jetbrains.kotlin.j2k.Nullability.*
+import org.jetbrains.kotlin.j2k.Nullability.Default
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.Nullability.Nullable
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.NullabilityInfo

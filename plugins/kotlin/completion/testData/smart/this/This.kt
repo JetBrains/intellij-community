@@ -29,3 +29,5 @@ fun takeHandler4(handler: Any.() -> Unit){}
 // EXIST: { lookupString: "this@Inner", itemText: "this", tailText: "@Inner", typeText: "Outer.Nested.Inner", attributes: "bold" }
 // EXIST: { lookupString: "this@Nested", itemText: "this", tailText: "@Nested", typeText: "Outer.Nested", attributes: "bold" }
 // ABSENT: "this@Outer"
+
+// IGNORE_K2

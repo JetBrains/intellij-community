@@ -2,8 +2,8 @@
 
 package com.intellij.uiDesigner;
 
-import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 
 
 public class CaptionSelection {

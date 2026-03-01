@@ -2,7 +2,6 @@
 package com.intellij.polySymbols.customElements.impl
 
 import com.intellij.model.Pointer
-import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolProperty
@@ -12,6 +11,7 @@ import com.intellij.polySymbols.customElements.CustomElementsSymbol
 import com.intellij.polySymbols.customElements.json.CustomElementsContribution
 import com.intellij.polySymbols.customElements.json.mapToReferenceList
 import com.intellij.polySymbols.customElements.json.toApiStatus
+import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor

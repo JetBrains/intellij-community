@@ -2,7 +2,11 @@
 package org.jetbrains.jps.javac;
 
 import javax.tools.JavaFileObject;
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 

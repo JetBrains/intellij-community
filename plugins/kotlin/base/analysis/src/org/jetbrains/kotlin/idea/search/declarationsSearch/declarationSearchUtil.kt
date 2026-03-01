@@ -7,9 +7,13 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
-import com.intellij.util.*
+import com.intellij.util.EmptyQuery
+import com.intellij.util.Processor
+import com.intellij.util.Query
+import com.intellij.util.QueryExecutor
+import com.intellij.util.QueryFactory
 import org.jetbrains.kotlin.psi.psiUtil.contains
-import java.util.*
+import java.util.Stack
 
 interface DeclarationSearchRequest<in T> {
     val project: Project

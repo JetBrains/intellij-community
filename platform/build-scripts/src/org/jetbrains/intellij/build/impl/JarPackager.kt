@@ -16,7 +16,6 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -58,6 +57,7 @@ import org.jetbrains.intellij.build.io.writeToFileChannelFully
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
 import org.jetbrains.intellij.build.jarCache.SourceBuilder
+import org.jetbrains.intellij.build.productLayout.util.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -331,6 +331,9 @@ class JarPackager private constructor(
     val moduleSources = asset.includedModules.computeIfAbsent(item) { mutableListOf() }
 
     for ((relativePath, data) in patchedContent) {
+      if (layout is PluginLayout && moduleName != layout.mainModule && relativePath == "META-INF/plugin.xml") {
+        continue
+      }
       moduleSources.add(InMemoryContentSource(relativePath, data))
     }
 
@@ -396,7 +399,7 @@ class JarPackager private constructor(
     }
   }
 
-  private fun addSearchableOptionSources(
+  private suspend fun addSearchableOptionSources(
     layout: BaseLayout?,
     moduleName: String,
     module: JpsModule,
@@ -844,7 +847,8 @@ private fun getLibraryFiles(library: JpsLibrary, copiedFiles: MutableMap<CopiedF
   return files
 }
 
-private fun nameToJarFileName(name: String): String = "${sanitizeFileName(name.lowercase(), replacement = "-")}.jar"
+private fun nameToJarFileName(name: String): String =
+  "${sanitizeFileName(name.lowercase(), replacement = "-") { c -> c == ' '}}.jar"
 
 @Suppress("SpellCheckingInspection", "RedundantSuppression")
 private val excludedFromMergeLibs = setOf(
@@ -925,8 +929,8 @@ private suspend fun buildJars(
   }
 
   val list = withContext(Dispatchers.IO) {
-    assets.map { asset ->
-      async(CoroutineName("build jar for ${asset.relativePath}")) {
+    assets.mapConcurrent { asset ->
+      withContext(CoroutineName("build jar for ${asset.relativePath}")) {
         buildAsset(
           asset = asset,
           isCodesignEnabled = isCodesignEnabled,
@@ -943,8 +947,7 @@ private suspend fun buildJars(
   val sourceToNativeFiles = TreeMap<ZipSource, List<String>>(compareBy { it.file.fileName.toString() })
   val sourceToMetadata = HashMap<Source, SizeAndHash>()
 
-  for (deferred in list) {
-    val item = deferred.getCompleted()
+  for (item in list) {
     sourceToNativeFiles.putAll(item.sourceToNativeFiles)
     sourceToMetadata.putAll(item.sourceToMetadata)
   }
@@ -1081,6 +1084,7 @@ private suspend fun buildAsset(
           override fun updateDigest(digest: HashStream64) {
             if (layout is PluginLayout) {
               digest.putString(layout.mainModule)
+              layout.bundlingRestrictions.updateDigest(digest)
               digest.putUnorderedIterable(layout.pathsToScramble, HashFunnel.forString(), Hashing.xxh3_64())
             }
             else {

@@ -6,7 +6,12 @@ import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAc
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.NlsContexts.ConfigurableName;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.xml.XmlUiBundle;

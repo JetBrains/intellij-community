@@ -13,6 +13,17 @@ class SeEverywhereFilter(val isAllTab: Boolean, val isEverywhere: Boolean, val d
                              KEY_IS_EVERYWHERE to listOf(isEverywhere.toString()),
                              ENABLED_PROVIDER_IDS to disabledProviderIds.map { it.value }))
 
+  override fun isEqualTo(other: SeFilter): Boolean {
+    if (this === other) return true
+    if (other !is SeEverywhereFilter) return false
+
+    if (isAllTab != other.isAllTab) return false
+    if (isEverywhere != other.isEverywhere) return false
+    if (disabledProviderIds != other.disabledProviderIds) return false
+
+    return true
+  }
+
   fun cloneWith(isEverywhere: Boolean): SeEverywhereFilter = SeEverywhereFilter(isAllTab, isEverywhere, disabledProviderIds)
   fun cloneWith(disabledProviderIds: List<SeProviderId>): SeEverywhereFilter = SeEverywhereFilter(isAllTab, isEverywhere, disabledProviderIds)
 

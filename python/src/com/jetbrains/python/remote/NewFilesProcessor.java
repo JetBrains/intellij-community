@@ -37,28 +37,13 @@ public final class NewFilesProcessor {
   public static @NotNull String processNewFiles(final @NotNull Module module, final @NotNull String files) {
     final Sdk sdk = ModuleExtKt.getSdk(module);
     assert sdk != null : String.format("Sdk can't be null on module %s", module);
-    final PyProjectSynchronizer synchronizer = PyProjectSynchronizerProvider.getSynchronizer(sdk);
 
     final String[] fileNames = ArrayUtilRt.toStringArray(StringUtil.split(files, ","));
     if (fileNames.length == 0) {
       return "";
     }
-    if (synchronizer != null) { // We are on remote side, lets pull files from python first
-      synchronizer.syncProject(module, PySyncDirection.REMOTE_TO_LOCAL, success -> {
-        if (!success) {
-          return;
-        }
-        // Convert names to local and add to vcs
-        final String[] localFileNames = Arrays.stream(fileNames)
-          .map(remoteName -> synchronizer.mapFilePath(module.getProject(), PySyncDirection.REMOTE_TO_LOCAL, remoteName))
-          .filter(localFileName -> localFileName != null)
-          .toArray(size -> new String[size]);
-        addToVcsIfNeeded(module, localFileNames);
-      }, fileNames);
-    }
-    else { // Local, simply add
-      addToVcsIfNeeded(module, fileNames);
-    }
+    // Local, simply add
+    addToVcsIfNeeded(module, fileNames);
 
 
     return String.format("Following files were affected \n %s", StringUtil.join(fileNames, "\n"));

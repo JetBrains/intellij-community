@@ -3,7 +3,12 @@ package com.intellij.util.net
 
 import com.intellij.openapi.application.AccessToken
 import java.io.IOException
-import java.net.*
+import java.net.Authenticator
+import java.net.PasswordAuthentication
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.SocketAddress
+import java.net.URI
 
 internal object CustomizedPlatformJdkProxyProvider : JdkProxyProvider, JdkProxyCustomizer {
   override val originalProxySelector: ProxySelector get() = PlatformJdkProxyProvider.proxySelector

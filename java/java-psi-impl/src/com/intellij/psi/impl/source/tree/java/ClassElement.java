@@ -1,14 +1,29 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.JavaSourceUtil;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -80,7 +95,7 @@ public class ClassElement extends CompositeElement implements Constants {
     }
 
     if (isEnum()) {
-      if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.contains(first.getElementType())) {
+      if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.contains(first.getElementType()) && !DOC_COMMENT_TOKENS.contains(first.getElementType())) {
         ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
         boolean commentsOrWhiteSpaces = true;
         for (ASTNode child = first; child != null; child = child.getTreeNext()) {
@@ -90,10 +105,10 @@ public class ClassElement extends CompositeElement implements Constants {
           }
         }
         if (!commentsOrWhiteSpaces && (semicolonPlace == null || semicolonPlace.getElementType() != SEMICOLON)) {
-            final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1,
-                                                                          SharedImplUtil.findCharTableByTree(this), getManager());
-            addInternal(semicolon, semicolon, semicolonPlace, Boolean.FALSE);
-            semicolonPlace = semicolon;
+          final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1,
+                                                                        SharedImplUtil.findCharTableByTree(this), getManager());
+          addInternal(semicolon, semicolon, semicolonPlace, Boolean.FALSE);
+          semicolonPlace = semicolon;
         }
         for (ASTNode run = anchor; run != null; run = run.getTreeNext()) {
           if (run == semicolonPlace) {
@@ -307,6 +322,8 @@ public class ClassElement extends CompositeElement implements Constants {
     return candidate != null && candidate.getElementType() == SEMICOLON ? candidate : null;
   }
 
+  /// Returns the first semicolon node after an enum constant.
+  /// Defaults to the last non whitespace character if not present.
   public @Nullable ASTNode findEnumConstantListDelimiterPlace() {
     final ASTNode first = findChildByRole(ChildRole.LBRACE);
     if (first == null) return null;

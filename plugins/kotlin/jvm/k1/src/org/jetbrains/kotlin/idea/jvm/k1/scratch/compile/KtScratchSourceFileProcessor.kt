@@ -4,14 +4,22 @@
 
 package org.jetbrains.kotlin.idea.jvm.k1.scratch.compile
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.rendering.LegacyRenderingContextApi
 import org.jetbrains.kotlin.diagnostics.rendering.Renderers
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
 
+@K1Deprecation
 class KtScratchSourceFileProcessor {
     companion object {
         const val GENERATED_OUTPUT_PREFIX = "##scratch##generated##"

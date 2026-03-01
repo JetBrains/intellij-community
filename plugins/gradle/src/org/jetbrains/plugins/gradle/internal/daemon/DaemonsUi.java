@@ -27,17 +27,30 @@ import org.jetbrains.plugins.gradle.connection.GradleConnectorService;
 import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.SortOrder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
-import static org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServicesKt.*;
+import static org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServicesKt.getDaemonsStatus;
+import static org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServicesKt.gracefulStopDaemons;
+import static org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServicesKt.stopDaemons;
 
 /**
  * @author Vladislav.Soroka

@@ -7,7 +7,14 @@ import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.identifier
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.isStaticMember
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKCallExpression
+import org.jetbrains.kotlin.nj2k.tree.JKClassAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKExpression
+import org.jetbrains.kotlin.nj2k.tree.JKFieldAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKThisExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 
 class RemoveRedundantQualifiersForCallsConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

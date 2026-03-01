@@ -2,7 +2,13 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.ConstraintType;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.Nullable;
 
 public class DefaultParameterTypeInferencePolicy extends ParameterTypeInferencePolicy {

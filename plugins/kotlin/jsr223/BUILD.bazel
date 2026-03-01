@@ -14,4 +14,15 @@ jvm_library(
     "//plugins/kotlin/base/frontend-agnostic",
   ]
 )
+
+jvm_library(
+  name = "jsr223_test_lib",
+  module_name = "kotlin.jsr223",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":jsr223",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.jsr223` end

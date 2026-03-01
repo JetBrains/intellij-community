@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ExtensionsSupport;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 import java.util.Collection;
 
 public abstract class JavaCompilerToolExtension {

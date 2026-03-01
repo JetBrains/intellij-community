@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.flow.StateFlow;
@@ -14,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -27,7 +26,6 @@ import java.util.List;
 public abstract class FileEditorManager {
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
 
-  @RequiresBlockingContext
   public static FileEditorManager getInstance(@NotNull Project project) {
     return project.getService(FileEditorManager.class);
   }

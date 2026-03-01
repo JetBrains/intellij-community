@@ -6,9 +6,11 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
 import java.util.function.Function;
 
 public interface Control {

@@ -9,7 +9,14 @@ import com.intellij.serialization.ClassUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.ParameterizedTypeImpl;
 import com.intellij.util.xml.impl.DomTestCase;
-import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomExtender;
+import com.intellij.util.xml.reflect.DomExtenderEP;
+import com.intellij.util.xml.reflect.DomExtension;
+import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
+import com.intellij.util.xml.reflect.DomExtensionsRegistrarImpl;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;

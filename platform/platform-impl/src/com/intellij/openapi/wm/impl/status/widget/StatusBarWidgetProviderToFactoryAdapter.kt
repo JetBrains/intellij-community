@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import java.util.*
+import java.util.Objects
 
 internal class StatusBarWidgetProviderToFactoryAdapter(
   private val project: Project,

@@ -5,7 +5,7 @@ import com.intellij.vcs.log.VcsRefType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Objects;
 
 public class SimpleRefType implements VcsRefType {

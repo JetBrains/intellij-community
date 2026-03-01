@@ -1,7 +1,19 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.core.trace.dsl.impl
 
-import com.intellij.debugger.streams.core.trace.dsl.*
+import com.intellij.debugger.streams.core.trace.dsl.ArrayVariable
+import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.CodeContext
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.Lambda
+import com.intellij.debugger.streams.core.trace.dsl.LambdaBody
+import com.intellij.debugger.streams.core.trace.dsl.ListVariable
+import com.intellij.debugger.streams.core.trace.dsl.MapVariable
+import com.intellij.debugger.streams.core.trace.dsl.StatementFactory
+import com.intellij.debugger.streams.core.trace.dsl.Types
+import com.intellij.debugger.streams.core.trace.dsl.Variable
+import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 

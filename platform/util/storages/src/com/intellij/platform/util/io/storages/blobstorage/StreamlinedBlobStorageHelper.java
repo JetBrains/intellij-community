@@ -43,10 +43,6 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   /** First header int32, used to recognize this storage's file type */
   protected static final int MAGIC_WORD = IOUtil.asciiToMagicWord("SBlS");
 
-  //=== FILE_STATUS header field values:
-  protected static final int FILE_STATUS_OPENED = 0;
-  protected static final int FILE_STATUS_PROPERLY_CLOSED = 1;
-
   /* ======== Persistent format: =================================================================== */
 
   // Persistent format: (header) (records)*
@@ -96,10 +92,11 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     /** Encodes storage (file) type */
     public static final int MAGIC_WORD_OFFSET                           = 0;   //int32
 
-    /** Version of this storage persistent format */
+    /** Version of this storage's persistent format */
     public static final int STORAGE_VERSION_OFFSET                      = 4;   //int32
-    /** pageSize is a part of binary layout: records are page-aligned */
+    /** pageSize is a part of a binary layout: records are page-aligned */
     public static final int PAGE_SIZE_OFFSET                            = 8;   //int32
+    /** File status: bitmask from FILE_STATUS_XXX bits */
     public static final int FILE_STATUS_OFFSET                          = 12;  //int32
 
     public static final int NEXT_RECORD_ID_OFFSET                       = 16;  //int32
@@ -111,7 +108,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     public static final int RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET      = 32;  //int64
     public static final int RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET     = 40;  //int64
 
-    /** Version of data, stored in a blobs, managed by client code */
+    /** Version of data, stored in blobs, managed by client code */
     public static final int DATA_FORMAT_VERSION_OFFSET                  = 48;  //int32
 
 
@@ -120,6 +117,11 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
     //Bytes [52..64] is reserved for the generations to come:
     public static final int HEADER_SIZE                                 = 64;
+
+
+    //FILE_STATUS bitmasks:
+    public static final int FILE_STATUS_CLOSED_PROPERLY_MASK        = 0b01;
+    public static final int FILE_STATUS_ALWAYS_CLOSED_PROPERLY_MASK = 0b10;//sticky: once it is set, it is never reset to 0
 
     //@formatter:on
   }
@@ -142,10 +144,10 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   /** To avoid write file header to already closed storage */
   protected final AtomicBoolean closed = new AtomicBoolean(false);
 
-  //TODO RC: don't need atomic boolean, regular value is enough since it is set in ctor only
   /** This property should be assigned in subclass ctors, if the ctor detects that the storage was improperly closed */
-  protected final AtomicBoolean wasClosedProperly = new AtomicBoolean(true);
-  //TODO RC: introduce wasAlwaysClosedProperly too?
+  protected boolean wasClosedProperly = true;
+  /** This property should be assigned in subclass ctors, if the storage was improperly closed somewhere in the past */
+  protected boolean wasAlwaysClosedProperly = true;
 
   protected final @NotNull SpaceAllocationStrategy allocationStrategy;
 
@@ -206,7 +208,12 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   @Override
   public boolean wasClosedProperly() {
-    return wasClosedProperly.get();
+    return wasClosedProperly;
+  }
+
+  @Override
+  public boolean wasAlwaysClosedProperly() {
+    return wasAlwaysClosedProperly;
   }
 
   @Override
@@ -394,8 +401,10 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   protected void checkRecordIdExists(int recordId) throws IllegalArgumentException, IOException {
     if (!isExistingRecordId(recordId)) {
-      throw new IllegalArgumentException("recordId(" + recordId + ") is not valid: allocated ids are in (0, " + nextRecordId() + "), " +
-                                         "(wasClosedProperly: " + wasClosedProperly() + ")");
+      throw new IllegalArgumentException(
+        "recordId(" + recordId + ") is not valid: allocated ids are in (0, " + nextRecordId() + "), " +
+        "(wasClosedProperly: " + wasClosedProperly() + ", wasAlwaysClosedProperly: " + wasAlwaysClosedProperly() + ")"
+      );
     }
   }
 
@@ -403,14 +412,17 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
                                    int currentRecordId,
                                    int redirectToId) throws IOException {
     if (redirectToId == NULL_ID) { //!actual && redirectTo = NULL
-      throw new RecordAlreadyDeletedException("Can't access record[" + startingRecordId + "/" + currentRecordId + "]: it was deleted " +
-                                              "(wasClosedProperly: " + wasClosedProperly() + ")");
+      throw new RecordAlreadyDeletedException(
+        "Can't access record[" + startingRecordId + "/" + currentRecordId + "]: it was deleted " +
+        "(wasClosedProperly: " + wasClosedProperly() + ", wasAlwaysClosedProperly: " + wasAlwaysClosedProperly() + ")"
+      );
     }
     if (!isExistingRecordId(redirectToId)) {
       throw new CorruptedException(
         "record(" + startingRecordId + "/" + currentRecordId + ").redirectToId(=" + redirectToId + ") is not exist: " +
         "allocated ids are in (0, " + nextRecordId() + "), "+
-        "(wasClosedProperly: " + wasClosedProperly() + ")");
+        "(wasClosedProperly: " + wasClosedProperly() + ", wasAlwaysClosedProperly: " + wasAlwaysClosedProperly() + ")"
+      );
     }
   }
 

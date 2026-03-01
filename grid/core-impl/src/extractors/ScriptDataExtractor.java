@@ -3,7 +3,12 @@ package com.intellij.database.extractors;
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.ExtractorHierarchicalGridColumn;
-import com.intellij.database.extensions.*;
+import com.intellij.database.extensions.DataColumn;
+import com.intellij.database.extensions.DataRow;
+import com.intellij.database.extensions.DataStream;
+import com.intellij.database.extensions.ExtensionScriptsUtil;
+import com.intellij.database.extensions.ExtractorScripts;
+import com.intellij.database.extensions.ValueFormatter;
 import com.intellij.database.util.Out;
 import com.intellij.ide.script.IdeScriptEngine;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,11 +21,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import static com.intellij.database.extensions.DataExtractorBindings.*;
+import static com.intellij.database.extensions.DataExtractorBindings.ALL_COLUMNS;
+import static com.intellij.database.extensions.DataExtractorBindings.COLUMNS;
+import static com.intellij.database.extensions.DataExtractorBindings.FORMATTER;
+import static com.intellij.database.extensions.DataExtractorBindings.OUT;
+import static com.intellij.database.extensions.DataExtractorBindings.PROJECT;
+import static com.intellij.database.extensions.DataExtractorBindings.ROWS;
+import static com.intellij.database.extensions.DataExtractorBindings.TRANSPOSED;
 
 public abstract class ScriptDataExtractor implements DataExtractor {
   private final Project myProject;

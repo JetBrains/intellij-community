@@ -22,7 +22,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNewStyleStringFormatParser;
 import com.jetbrains.python.PyNewStyleStringFormatParser.Field;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

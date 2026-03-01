@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.ranking.core
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchAdapter
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
@@ -30,6 +31,7 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
         val searchEverywhereUI = this.provide(project)
         disposables.add(searchEverywhereUI)
 
+        SearchEverywhereMlService.getInstance()?.onSessionStarted(project, searchEverywhereUI.selectedTabID, searchEverywhereUI.mixedListInfo)
         PlatformTestUtil.waitForAlarm(10)  // wait for rebuild list (session started)
 
         testProcedure(searchEverywhereUI)

@@ -5,7 +5,12 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
-import com.intellij.collaboration.ui.codereview.details.*
+import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsBranchComponentFactory
+import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommitInfoComponentFactory
+import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommitsComponentFactory
+import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsTitleComponentFactory
+import com.intellij.collaboration.ui.codereview.details.CommitPresentation
+import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory

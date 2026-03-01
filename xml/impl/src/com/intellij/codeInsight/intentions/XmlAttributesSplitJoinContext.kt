@@ -14,7 +14,7 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.xml.XmlBundle
 
-private class XmlAttributesSplitJoinContext : DefaultListSplitJoinContext() {
+internal class XmlAttributesSplitJoinContext : DefaultListSplitJoinContext() {
   override fun extractData(context: PsiElement): ListWithElements? {
     val attr = PsiTreeUtil.getParentOfType(context, XmlAttribute::class.java) ?: return null
     val tag = PsiTreeUtil.getParentOfType(attr, XmlTag::class.java) ?: return null

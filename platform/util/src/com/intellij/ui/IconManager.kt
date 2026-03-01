@@ -11,7 +11,11 @@ import com.intellij.ui.icons.RowIcon
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Paint
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.util.concurrent.atomic.AtomicBoolean

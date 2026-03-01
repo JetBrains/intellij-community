@@ -2,11 +2,15 @@
 package org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions
 
 import org.jetbrains.idea.eclipse.codeStyleMapping.EclipseJavaCodeStyleMappingDefinitionBuilder
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.*
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.compute
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.const
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.field
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.ignored
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.compute
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.alsoSet
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.convertBoolean
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.convertInt
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.doNotImport
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.invert
 import org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions.convertInsert
 
 internal fun EclipseJavaCodeStyleMappingDefinitionBuilder.addCommentsMapping() {

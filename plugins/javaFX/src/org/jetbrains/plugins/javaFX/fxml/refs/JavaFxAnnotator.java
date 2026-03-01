@@ -15,9 +15,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtilRt;
@@ -33,8 +42,8 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPage
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxWrapWithDefineIntention;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInTagDescriptor;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 import java.util.List;
 
 public final class JavaFxAnnotator implements Annotator {

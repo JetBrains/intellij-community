@@ -79,7 +79,7 @@ _KOPTS = {
         args = dict(
             default = "",
             doc = "Allow using declarations only from the specified version of Kotlin bundled libraries",
-            values = ["2.0", "2.1", "2.2"],
+            values = ["2.0", "2.1", "2.2", "2.3"],
         ),
         type = attr.string,
         value_to_flag = None,
@@ -89,7 +89,7 @@ _KOPTS = {
         args = dict(
             default = "",
             doc = "Provide source compatibility with the specified version of Kotlin",
-            values = ["2.0", "2.1", "2.2"],
+            values = ["2.0", "2.1", "2.2", "2.3"],
         ),
         type = attr.string,
         value_to_flag = None,
@@ -265,6 +265,39 @@ _KOPTS = {
         type = attr.bool,
         value_to_flag = {
             True: ["-Xno-param-assertions"],
+        },
+    ),
+    "progressive": struct(
+        flag = "-progressive",
+        args = dict(
+            default = False,
+            doc = "Enable the progressive mode for the compiler",
+        ),
+        type = attr.bool,
+        value_to_flag = {
+            True: ["-progressive"],
+        },
+    ),
+    "x_render_internal_diagnostic_names": struct(
+        flag = "-Xrender-internal-diagnostic-names",
+        args = dict(
+            default = False,
+            doc = "Render the internal names of warnings and errors.",
+        ),
+        type = attr.bool,
+        value_to_flag = {
+            True: ["-Xrender-internal-diagnostic-names"],
+        },
+    ),
+    "x_report_all_warnings": struct(
+        flag = "-Xreport-all-warnings",
+        args = dict(
+            default = False,
+            doc = "Report all warnings even if errors are found.",
+        ),
+        type = attr.bool,
+        value_to_flag = {
+            True: ["-Xreport-all-warnings"],
         },
     ),
     "x_sam_conversions": struct(

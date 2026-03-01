@@ -13,8 +13,12 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @State(name = "TestHistory", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class TestHistoryConfiguration implements PersistentStateComponent<TestHistoryConfiguration.State> {

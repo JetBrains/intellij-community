@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-jcef-jcef"],
   runtime_deps = ["@lib//:libraries-jcef-jcef"]
 )
+
+jvm_library(
+  name = "jcef_test_lib",
+  module_name = "intellij.libraries.jcef",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-jcef-jcef"],
+  runtime_deps = [":jcef"]
+)
 ### auto-generated section `build intellij.libraries.jcef` end

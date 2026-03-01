@@ -12,7 +12,8 @@ import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.debug.tasks.PyDebuggerTask;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyExceptionBreakpointType;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfiguration;
@@ -22,9 +23,15 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class PythonDebuggerTest extends PyEnvTestCase {
   private static class BreakpointStopAndEvalTask extends PyDebuggerTask {

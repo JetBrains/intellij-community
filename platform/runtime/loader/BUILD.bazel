@@ -14,4 +14,18 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
   ]
 )
+
+jvm_library(
+  name = "loader_test_lib",
+  module_name = "intellij.platform.runtime.loader",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":loader",
+    "//platform/runtime/repository:repository_test_lib",
+    "//platform/boot:boot_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.runtime.loader` end

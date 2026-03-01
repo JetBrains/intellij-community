@@ -10,7 +10,12 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.system.OS
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isExecutable
 import kotlin.time.Duration.Companion.seconds
 
 const val DEFAULT_DISPLAY_ID = "88"

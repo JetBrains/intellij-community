@@ -10,7 +10,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyLiteralStringType
 import com.jetbrains.python.psi.types.PyType

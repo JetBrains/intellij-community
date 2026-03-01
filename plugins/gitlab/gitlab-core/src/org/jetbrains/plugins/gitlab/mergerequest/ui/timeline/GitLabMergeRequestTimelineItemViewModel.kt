@@ -9,18 +9,27 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDraftNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionStateContainer
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModelImpl
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import java.net.URL
-import java.util.*
+import java.util.Date
 
 sealed interface GitLabMergeRequestTimelineItemViewModel {
   sealed class Immutable(
@@ -117,7 +126,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     override val author: GitLabUserDTO = note.author
     override val createdAt: Date? = note.createdAt
     override val isDraft: Boolean = note is GitLabMergeRequestDraftNote
-    override val serverUrl: URL = mr.glProject.serverPath.toURL()
+    override val serverUrl: URL = mr.serverPath.toURL()
 
     override val actionsVm: GitLabNoteAdminActionsViewModel? =
       if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null

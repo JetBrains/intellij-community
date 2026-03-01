@@ -11,10 +11,12 @@ import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.Flags;
 import it.unimi.dsi.fastutil.ints.IntImmutableList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.IntConsumer;
 
 import static com.intellij.vcs.log.graph.api.elements.GraphEdgeType.USUAL;
 
@@ -57,6 +59,23 @@ public class PermanentLinearGraphImpl implements LinearGraph {
     if (mySimpleNodes.get(nodeIndex) && filter.downNormal) result.add(new GraphEdge(nodeIndex, nodeIndex + 1, null, USUAL));
 
     return result;
+  }
+
+  /**
+   * Iterates over node which can be considered as parents (also for {@link GraphEdgeType#NOT_LOAD_COMMIT})
+   * for {@code nodeIndex} passing their index to {@code handler}.
+   */
+  @ApiStatus.Internal
+  public void forEachParentNode(int nodeIndex, IntConsumer handler) {
+    for (int i = myNodeToEdgeIndex.getInt(nodeIndex); i < myNodeToEdgeIndex.getInt(nodeIndex + 1); i++) {
+      int adjacentNode = myLongEdges.getInt(i);
+      if (adjacentNode < 0 || nodeIndex < adjacentNode) {
+        handler.accept(adjacentNode);
+      }
+    }
+    if (mySimpleNodes.get(nodeIndex)) {
+      handler.accept(nodeIndex + 1);
+    }
   }
 
   @Override

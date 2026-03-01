@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -Xopt-in=com.intellij.openapi.util.IntellijInternalApi -Xcontext-parameters -opt-in=org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction -opt-in=org.jetbrains.kotlin.analysis.api.KaIdeApi -opt-in=org.jetbrains.kotlin.analysis.api.KaContextParameterApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -Xopt-in=com.intellij.openapi.util.IntellijInternalApi -Xcontext-parameters -opt-in=org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction -opt-in=org.jetbrains.kotlin.analysis.api.KaIdeApi -opt-in=org.jetbrains.kotlin.analysis.api.KaContextParameterApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -50,7 +50,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
     <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
-    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.base" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" />
@@ -71,5 +70,8 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.kotlin.base.serialization" />
+    <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
+    <orderEntry type="module" module-name="intellij.kotlin.searching" />
   </component>
 </module>

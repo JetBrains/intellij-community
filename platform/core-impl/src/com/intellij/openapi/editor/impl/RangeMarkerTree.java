@@ -11,7 +11,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -166,7 +170,11 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
     @Override
     public String toString() {
-      return (isGreedyToLeft() ? "[" : "(") + intervalStart() + "," + intervalEnd() + (isGreedyToRight() ? "]" : ")");
+      return (isGreedyToLeft() ? "[" : "(")
+             + intervalStart() + "," + intervalEnd()
+             + (isValid() ? "" : "-invalid")
+             + (isGreedyToRight() ? "]" : ")")
+        ;
     }
 
     // return a list of invalidated range markers

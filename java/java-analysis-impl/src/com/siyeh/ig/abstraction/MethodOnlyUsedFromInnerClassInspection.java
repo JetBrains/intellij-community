@@ -3,7 +3,12 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;

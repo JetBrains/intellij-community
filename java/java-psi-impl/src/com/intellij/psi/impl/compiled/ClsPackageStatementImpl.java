@@ -1,13 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiPackageStatementStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageStatementStub> implements PsiPackageStatement {
 
@@ -21,6 +29,11 @@ public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageS
   @Override
   public PsiJavaCodeReferenceElement getPackageReference() {
     throw new UnsupportedOperationException("Method not implemented");
+  }
+
+  @Override
+  public @Nullable PsiDocComment getDocComment() {
+    return null;
   }
 
   @Override

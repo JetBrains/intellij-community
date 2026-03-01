@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
@@ -17,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 
 /**

@@ -25,4 +25,32 @@ jvm_library(
     "@lib//:kodein-di-jvm-provided",
   ]
 )
+
+jvm_library(
+  name = "ide-metrics-collector-starter_test_lib",
+  module_name = "intellij.tools.ide.metrics.collector.starter",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ide-metrics-collector-starter",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
+    "//platform/remote-driver/model:model_test_lib",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:junit5",
+    "//libraries/mockito",
+    "//libraries/mockito:mockito_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "@lib//:mockito-junit-jupiter",
+    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/statistics/uploader:uploader_test_lib",
+    "@lib//:kodein-di-jvm-provided",
+  ]
+)
 ### auto-generated section `build intellij.tools.ide.metrics.collector.starter` end

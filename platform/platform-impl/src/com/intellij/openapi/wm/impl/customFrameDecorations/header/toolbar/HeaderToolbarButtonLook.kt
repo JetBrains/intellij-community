@@ -7,7 +7,12 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.impl.headertoolbar.isDarkHeader
 import com.intellij.ui.JBColor
-import com.intellij.ui.icons.*
+import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.ReplaceableIcon
+import com.intellij.ui.icons.RgbImageFilterSupplier
+import com.intellij.ui.icons.getDisabledIcon
+import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.GrayFilter
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue

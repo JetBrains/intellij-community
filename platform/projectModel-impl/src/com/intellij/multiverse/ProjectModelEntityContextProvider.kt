@@ -12,14 +12,18 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdk
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
@@ -28,6 +32,8 @@ import org.jetbrains.annotations.ApiStatus
 internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
 
   override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext> {
+    if (project.isDefault) return emptyList()
+
     val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
 
     val fileSets = workspaceFileIndex.findFileSets(
@@ -37,6 +43,7 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
       includeContentNonIndexableSets = true,
       includeExternalSets = true,
       includeExternalSourceSets = true,
+      includeExternalNonIndexableSets = true,
       includeCustomKindSets = true
     )
     if (fileSets.isEmpty()) return emptyList()

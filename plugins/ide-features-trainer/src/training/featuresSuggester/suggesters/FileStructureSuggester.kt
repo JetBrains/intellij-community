@@ -15,7 +15,7 @@ import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFindAction
 import training.featuresSuggester.actions.EditorFocusGainedAction
 
-private class FileStructureSuggester : AbstractFeatureSuggester() {
+internal class FileStructureSuggester : AbstractFeatureSuggester() {
   override val id: String = "File structure"
   override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("file.structure.name")
 

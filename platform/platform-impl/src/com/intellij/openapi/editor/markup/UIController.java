@@ -6,7 +6,7 @@ import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Container;
 import java.util.Collections;
 import java.util.List;
 

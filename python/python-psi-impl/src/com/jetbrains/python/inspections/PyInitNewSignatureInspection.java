@@ -13,6 +13,10 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl;
+import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,19 +49,28 @@ public final class PyInitNewSignatureInspection extends PyInspection {
       final List<PyFunction> complementaryMethods = findComplementaryMethods(cls, node);
 
       for (PyFunction complementaryMethod : complementaryMethods) {
-        if (PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) ||
-            PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext)) {
+        if (matchSignatures(node, complementaryMethod) || matchSignatures(complementaryMethod, node)) {
           return;
         }
       }
 
       if (complementaryMethods.size() == 1) {
         registerIncompatibilityProblem(node, PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(
-          node, complementaryMethods.get(0)));
+          node, complementaryMethods.getFirst()));
       }
       else if (!complementaryMethods.isEmpty()) {
         registerIncompatibilityProblem(node, null);
       }
+    }
+
+    private boolean matchSignatures(@NotNull PyFunction current, @NotNull PyFunction other) {
+      List<PyCallableParameter> currentParameters = current.getParameters(myTypeEvalContext);
+      List<PyCallableParameter> otherParameters = other.getParameters(myTypeEvalContext);
+
+      var currentInputSignature = new PyCallableParameterListTypeImpl(ParamHelper.dropSelf(currentParameters));
+      var otherInputSignature = new PyCallableParameterListTypeImpl(ParamHelper.dropSelf(otherParameters));
+
+      return PyTypeChecker.match(currentInputSignature, otherInputSignature, myTypeEvalContext);
     }
 
     private @NotNull List<PyFunction> findComplementaryMethods(@NotNull PyClass cls, @NotNull PyFunction original) {

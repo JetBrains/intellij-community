@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.psi.KtExpression
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.KotlinType
 
 // K1 PostfixTemplateProvider
+@K1Deprecation
 class KtPostfixTemplateProvider : PostfixTemplateProvider {
     private val templateSet: Set<PostfixTemplateWithExpressionSelector> by lazy {
         @Suppress("SpellCheckingInspection")

@@ -23,4 +23,24 @@ jvm_library(
   exports = ["//platform/extensions"],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "analysis_test_lib",
+  module_name = "intellij.xml.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/extensions",
+    "//platform/extensions:extensions_test_lib",
+  ],
+  runtime_deps = [
+    ":analysis",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.xml.analysis` end

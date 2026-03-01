@@ -5,8 +5,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.List;
 

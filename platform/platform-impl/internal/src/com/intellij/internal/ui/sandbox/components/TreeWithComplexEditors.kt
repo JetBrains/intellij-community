@@ -11,9 +11,20 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.BorderLayout
 import java.awt.Component
-import javax.swing.*
+import javax.swing.AbstractCellEditor
+import javax.swing.GroupLayout
 import javax.swing.GroupLayout.Alignment.BASELINE
-import javax.swing.tree.*
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTree
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeCellEditor
+import javax.swing.tree.TreeCellRenderer
+import javax.swing.tree.TreeModel
+import javax.swing.tree.TreeNode
 
 internal class TreeWithComplexEditors : UISandboxPanel {
 

@@ -5,12 +5,15 @@ import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.util.ResultUtil.processErrorAndGet
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.fold
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -42,6 +45,10 @@ class GHPRReviewServiceImpl(private val securityService: GHPRSecurityService,
     }.processErrorAndGet {
       LOG.info("Error occurred while loading review threads", it)
     }
+
+  override fun getReviewParticipantsBatchesFlow(pullRequestId: GHPRIdentifier): Flow<List<GHUser>> = ApiPageUtil.createGQLPagesFlow {
+    requestExecutor.executeSuspend(GHGQLRequests.PullRequest.findParticipants(repository, pullRequestId.number, it))
+  }.map { it.nodes }
 
   override suspend fun createReview(pullRequestId: GHPRIdentifier,
                                     event: GHPullRequestReviewEvent?,
@@ -112,10 +119,10 @@ class GHPRReviewServiceImpl(private val securityService: GHPRSecurityService,
       LOG.info("Error occurred while updating review comment", it)
     }
 
-  override suspend fun addThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, fileName: String)
+  override suspend fun addThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, startSide: Side, fileName: String)
     : GHPullRequestReviewThread = runCatching {
-    requestExecutor.executeSuspend(GHGQLRequests.PullRequest.Review.addThread(repository.serverPath, reviewId, body, line, side, startLine,
-                                                                              fileName))
+    requestExecutor.executeSuspend(GHGQLRequests.PullRequest.Review
+                                     .addThread(repository.serverPath, reviewId, body, line, side, startLine, startSide, fileName))
   }.processErrorAndGet {
     LOG.info("Error occurred while adding review thread", it)
   }

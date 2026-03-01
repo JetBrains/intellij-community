@@ -27,7 +27,15 @@ import com.jetbrains.python.psi.PySliceItem;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyTypedDictType;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,13 +110,33 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
       if (!(subType instanceof PyLiteralType literalType)) {
         return List.of();
       }
-      T val = PyEvaluator.evaluateNoResolve(literalType.getExpression(), indexType);
+      T val = extractValueFromLiteral(literalType, indexType);
       if (val == null) {
         return List.of();
       }
       result.add(val);
     }
     return result;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> @Nullable T extractValueFromLiteral(@NotNull PyLiteralType literalType, @NotNull Class<T> indexType) {
+    if (indexType == Integer.class && literalType.getIntValue() != null) {
+      try {
+        return (T)Integer.valueOf(literalType.getIntValue().intValueExact());
+      }
+      catch (ArithmeticException e) {
+        // If BigInteger does not fit into int
+        return null;
+      }
+    }
+    if (indexType == String.class && literalType.getStringValue() != null) {
+      return (T)literalType.getStringValue();
+    }
+    if (indexType == Boolean.class && literalType.getBoolValue() != null) {
+      return (T)literalType.getBoolValue();
+    }
+    return null;
   }
 
   @Override

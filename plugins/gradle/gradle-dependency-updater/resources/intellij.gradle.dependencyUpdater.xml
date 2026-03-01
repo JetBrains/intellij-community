@@ -1,6 +1,6 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <plugin id="com.intellij.gradle"/>
+    <module name="intellij.gradle"/>
     <plugin id="org.jetbrains.idea.gradle.dsl"/>
   </dependencies>
 

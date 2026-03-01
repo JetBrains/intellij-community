@@ -15,7 +15,11 @@
  */
 package com.intellij.refactoring.chainCall;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;

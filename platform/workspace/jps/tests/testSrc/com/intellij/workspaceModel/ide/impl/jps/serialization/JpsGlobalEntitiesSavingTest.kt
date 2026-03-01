@@ -9,12 +9,22 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.eel.provider.LocalEelMachine
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkRoot
+import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
-import org.junit.*
+import org.junit.Assert
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 class JpsGlobalEntitiesSavingTest {

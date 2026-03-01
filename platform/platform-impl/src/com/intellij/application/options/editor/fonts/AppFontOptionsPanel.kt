@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts
 
 import com.intellij.application.options.colors.AbstractFontOptionsPanel
@@ -15,7 +15,17 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.AbstractFontCombo
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.ButtonsGroup
+import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.actionListener
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.JBUI
 import com.jetbrains.JBR
 import org.jetbrains.annotations.ApiStatus
@@ -37,12 +47,21 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
   private var variantsPlaceholder: Placeholder? = null
   private var currentFont: String? = null
   private val currentFeatures: MutableMap<String, JBCheckBox> = mutableMapOf()
+  private val recentFeatures: MutableMap<String, Set<String>> = mutableMapOf()
   private val fontGlyphCache: FontGlyphHashCache = FontGlyphHashCache()
 
   init {
     addListener(object : ColorAndFontSettingsListener.Abstract() {
       override fun fontChanged() {
+        restoreSelectedVariants()
         updateFontPreferences()
+      }
+
+      override fun schemeReset(fontPreferences: FontPreferences) {
+        recentFeatures[fontPreferences.fontFamily] = fontPreferences.characterVariants
+        if (currentFont == fontPreferences.fontFamily) {
+          currentFeatures.forEach { (string, box) -> box.isSelected = string in fontPreferences.characterVariants }
+        }
       }
     })
 
@@ -174,6 +193,16 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
     }
   }
 
+  private fun restoreSelectedVariants() {
+    // Save previous variants
+    currentFont?.let { font -> recentFeatures[font] = currentFeatures.filter { (_, value) -> value.isSelected }.keys.toSet() }
+    // Restore variants for fontPreferences.fontFamily
+    val previousFeatures = recentFeatures[fontPreferences.fontFamily]
+    if (previousFeatures != null && fontPreferences.characterVariants != previousFeatures) {
+      (fontPreferences as ModifiableFontPreferences).characterVariants = previousFeatures
+    }
+  }
+
   protected open fun createCustomComponent() : JComponent? = null
 
   private fun Panel.createTypographySettings() {
@@ -256,11 +285,11 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
     row {
       val featureCb = checkBox(label)
         .selected(selected)
-        .onChanged { cb ->
+        .actionListener { _, cb ->
           (fontPreferences as ModifiableFontPreferences).apply {
             setCharacterVariant(feature, cb.isSelected)
           }
-          fireSchemeChanged()
+          fireFontChanged()
         }
         .component
 

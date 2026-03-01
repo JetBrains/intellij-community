@@ -9,7 +9,7 @@ import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public abstract class MavenTreeAction extends MavenAction {
   @Override

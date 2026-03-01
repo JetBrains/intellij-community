@@ -75,6 +75,7 @@ public interface GitRepository extends Repository {
   GitUntrackedFilesHolder getUntrackedFilesHolder();
 
   @NotNull
+  @ApiStatus.Internal
   GitResolvedMergeConflictsFilesHolder getResolvedConflictsFilesHolder();
 
 
@@ -125,8 +126,16 @@ public interface GitRepository extends Repository {
   @NotNull
   CoroutineScope getCoroutineScope();
 
+  /**
+   * @deprecated This method is deprecated and marked for removal, as it exposes API which wasn't designed for public use.
+   * Use {@link GitRepositoryTagsHolder} instead.
+   */
   @NotNull
+  @Deprecated(forRemoval = true)
   GitTagHolder getTagHolder();
+
+  @NotNull
+  GitRepositoryTagsHolder getTagsHolder();
 
   @NotNull
   GitWorkingTreeHolder getWorkingTreeHolder();

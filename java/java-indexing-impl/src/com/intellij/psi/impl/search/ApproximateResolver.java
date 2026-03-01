@@ -1,7 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
@@ -10,7 +28,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class ApproximateResolver {
   /**

@@ -10,15 +10,24 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesTreeModel
+import com.intellij.openapi.vcs.changes.ui.TagChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.EventDispatcher
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.history.FileHistoryUtil
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
@@ -32,7 +41,7 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.EventListener
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.tree.DefaultTreeModel
 

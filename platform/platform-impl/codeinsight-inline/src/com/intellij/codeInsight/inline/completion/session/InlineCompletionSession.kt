@@ -32,6 +32,7 @@ class InlineCompletionSession private constructor(
   val request: InlineCompletionRequest
 ) : Disposable {
 
+  @Volatile
   private var job: InlineEditRequestJob? = null
   private var variantsProvider: InlineCompletionVariantsProvider? = null
 
@@ -50,6 +51,17 @@ class InlineCompletionSession private constructor(
   @RequiresEdt
   fun isActive(): Boolean {
     return variantsProvider != null && !context.isDisposed
+  }
+
+  /**
+   * Checks whether the inline completion session has finished its computation.
+   *
+   * Can be called from any thread.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  fun isComputationCompleted(): Boolean {
+    return job.let { it != null && it.isCompleted() }
   }
 
   /**

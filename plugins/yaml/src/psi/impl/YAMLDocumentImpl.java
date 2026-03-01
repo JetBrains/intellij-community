@@ -13,7 +13,7 @@ import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLValue;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class YAMLDocumentImpl extends YAMLPsiElementImpl implements YAMLDocument {
   public YAMLDocumentImpl(final @NotNull ASTNode node) {

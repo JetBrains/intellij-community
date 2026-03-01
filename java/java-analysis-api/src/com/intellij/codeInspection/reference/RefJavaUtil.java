@@ -3,7 +3,11 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;

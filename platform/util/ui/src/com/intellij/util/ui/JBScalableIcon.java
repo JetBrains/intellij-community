@@ -2,14 +2,21 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.ui.scale.*;
+import com.intellij.ui.scale.AbstractScaleContextAware;
+import com.intellij.ui.scale.DerivedScaleType;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleType;
+import com.intellij.ui.scale.Scaler;
+import com.intellij.ui.scale.UserScaleContext;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
 import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
-import static com.intellij.ui.scale.ScaleType.*;
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 /**
  * A scalable icon, {@link UserScaleContext} aware, assuming vector-based painting (system scale independent).

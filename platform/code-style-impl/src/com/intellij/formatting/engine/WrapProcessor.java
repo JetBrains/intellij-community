@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.CoreFormatterUtil;
+import com.intellij.formatting.LeafBlockWrapper;
+import com.intellij.formatting.SpacingImpl;
+import com.intellij.formatting.WhiteSpace;
+import com.intellij.formatting.WrapImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 

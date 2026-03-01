@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.ui.configurable
 
+import ai.grazie.gec.model.problem.ActionSuggestion
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.utils.englishName
 import ai.grazie.nlp.langs.utils.nativeName
@@ -8,6 +9,7 @@ import ai.grazie.rules.settings.Setting
 import ai.grazie.rules.settings.SettingComponent
 import ai.grazie.rules.settings.TextStyle
 import ai.grazie.rules.toolkit.LanguageToolkit
+import ai.grazie.rules.tree.Parameter
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.toLanguage
@@ -16,7 +18,11 @@ import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleE
 import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.GrazieDescriptionComponent
 import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.GrazieTreeComponent
 import com.intellij.grazie.rule.RuleIdeClient
-import com.intellij.grazie.utils.*
+import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.grazie.utils.featuredSettings
+import com.intellij.grazie.utils.getAffectedGlobalRules
+import com.intellij.grazie.utils.getOtherDomainStyles
+import com.intellij.grazie.utils.getTextDomain
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
@@ -30,10 +36,23 @@ import com.intellij.openapi.ui.getParentOfType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.ui.*
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.JBSplitter
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
+import com.intellij.ui.dsl.builder.whenItemSelectedFromUi
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
@@ -46,8 +65,17 @@ import java.awt.Dimension
 import java.awt.Image
 import java.awt.Rectangle
 import java.net.URL
-import javax.swing.*
-import javax.swing.ScrollPaneConstants.*
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
+import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 
@@ -258,8 +286,17 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
     val ruleEngineLanguages: List<Language> = listOf(Language.ENGLISH, Language.GERMAN, Language.RUSSIAN, Language.UKRAINIAN)
 
     @JvmStatic
-    fun focusSetting(setting: Setting, domain: TextStyleDomain, language: Language, project: Project): Boolean {
-      return focusSetting(setting, null, domain, language, project)
+    fun focusSetting(parameter: ActionSuggestion.ChangeParameter, domain: TextStyleDomain, language: Language, project: Project): Boolean {
+      val configurable = StyleConfigurable().apply {
+        createComponent()
+        val style = if (domain == TextStyleDomain.Other) GrazieConfig.get().getTextStyle() else domain.textStyle
+        selectTextStyle(style, language)
+        featuredSettings(language)
+          .filterIsInstance<Parameter>()
+          .find { it.id() == parameter.parameterId }
+          ?.let { focusFeaturedSetting(this, it, style, language, project) }
+      }
+      return ShowSettingsUtil.getInstance().editConfigurable(project, configurable)
     }
 
     @JvmStatic

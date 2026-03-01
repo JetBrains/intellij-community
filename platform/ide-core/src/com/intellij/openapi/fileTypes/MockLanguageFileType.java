@@ -4,7 +4,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class MockLanguageFileType extends LanguageFileType {
   public static final LanguageFileType INSTANCE = new MockLanguageFileType();

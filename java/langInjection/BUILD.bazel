@@ -38,6 +38,40 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt",
     ":plugins_IntelliLang_backend_provided",
   ],
-  runtime_deps = ["//java/langInjection/jps"]
+  runtime_deps = [
+    "//java/langInjection/jps",
+    "//platform/backend",
+  ]
+)
+
+jvm_library(
+  name = "langInjection_test_lib",
+  module_name = "intellij.java.langInjection",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":langInjection",
+    "//java/openapi:java_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/compiler/impl:impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//RegExpSupport:regexp_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/IntelliLang:langInjection_test_lib",
+    "//java/langInjection/jps:jps_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//plugins/IntelliLang/backend",
+    "//plugins/IntelliLang/backend:backend_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.java.langInjection` end

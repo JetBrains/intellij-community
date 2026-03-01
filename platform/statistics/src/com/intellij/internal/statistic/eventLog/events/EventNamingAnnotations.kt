@@ -8,5 +8,6 @@ internal const val VALID_FIELD_NAME = "[a-z0-9_]*[a-z0-9]+"
 
 @Pattern(VALID_EVENT_ID)
 annotation class EventIdName
+
 @Pattern(VALID_FIELD_NAME)
 annotation class EventFieldName

@@ -2,7 +2,11 @@
 
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.NodeSortOrder;
+import com.intellij.ide.projectView.NodeSortSettings;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.actions.MoveModulesToGroupAction;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
@@ -24,7 +28,11 @@ import org.jetbrains.annotations.Unmodifiable;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> implements DropTargetNode {
   public ModuleGroupNode(final Project project, @NotNull ModuleGroup value, final ViewSettings viewSettings) {

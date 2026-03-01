@@ -1,5 +1,4 @@
 // "Specify 'Int' return type for enclosing function 'Derived.explicitFunReturnType'" "true"
-// K2_AFTER_ERROR: Returns are prohibited in functions with expression body. Use block body '{...}'.
 interface Base {
     fun explicitFunReturnType() : Int = 1
 }

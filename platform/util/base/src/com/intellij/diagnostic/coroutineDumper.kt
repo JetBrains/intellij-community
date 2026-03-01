@@ -11,6 +11,8 @@ import kotlinx.coroutines.debug.internal.DebugCoroutineInfo
 import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import kotlinx.coroutines.debug.internal.SUSPENDED
 import kotlinx.coroutines.internal.ScopeCoroutine
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentHashMap

@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
@@ -13,7 +17,13 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPs
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType

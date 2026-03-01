@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization;
 
 import com.intellij.platform.runtime.product.PluginModuleGroup;
@@ -12,6 +12,7 @@ import com.intellij.platform.runtime.repository.MalformedRepositoryException;
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
+import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.stream.XMLStreamException;
@@ -19,7 +20,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class ProductModulesSerialization {
   private ProductModulesSerialization() { }
@@ -59,7 +67,7 @@ public final class ProductModulesSerialization {
       
       Set<RawIncludedRuntimeModule> allMainGroupModules = new LinkedHashSet<>(rawProductModules.getMainGroupModules());
       Set<RuntimeModuleId> allBundledPluginMainModules = new LinkedHashSet<>(rawProductModules.getBundledPluginMainModules());
-      mergeIncludedFiles(rawProductModules, filePath, resolver, allMainGroupModules, allBundledPluginMainModules);
+      mergeIncludedFiles(rawProductModules, filePath, resolver, allMainGroupModules, allBundledPluginMainModules, Collections.emptySet());
       return new RawProductModules(new ArrayList<>(allMainGroupModules), new ArrayList<>(allBundledPluginMainModules), 
                                    Collections.emptyList());
     }
@@ -76,39 +84,44 @@ public final class ProductModulesSerialization {
 
     MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rawProductModules.getMainGroupModules(), currentMode, repository);
     List<PluginModuleGroup> bundledPluginModuleGroups = new ArrayList<>();
+    Map<RuntimeModuleId, List<RuntimeModuleId>> notLoadedBundledPluginModules = new HashMap<>();
     for (RuntimeModuleId pluginMainModule : rawProductModules.getBundledPluginMainModules()) {
-      RuntimeModuleDescriptor module = repository.resolveModule(pluginMainModule).getResolvedModule();
-      /* todo: this check is temporarily added for JetBrains Client; 
-         It includes intellij.performanceTesting.async plugin which dependencies aren't available in all IDEs, so we need to skip it.
-         Plugins should define which modules from them should be included into JetBrains Client instead. */
+      RuntimeModuleRepository.ResolveResult resolveResult = repository.resolveModule(pluginMainModule);
+      RuntimeModuleDescriptor module = resolveResult.getResolvedModule();
       if (module != null) {
         bundledPluginModuleGroups.add(new PluginModuleGroupImpl(module, currentMode, repository, resourceFileResolver));
       }
+      else {
+        notLoadedBundledPluginModules.put(pluginMainModule, resolveResult.getFailedDependencyPath());
+      }
     }
-    return new ProductModulesImpl(debugName, mainGroup, bundledPluginModuleGroups);
+    return new ProductModulesImpl(debugName, mainGroup, bundledPluginModuleGroups, notLoadedBundledPluginModules);
   }
 
   private static void mergeIncludedFiles(@NotNull RawProductModules rawProductModules,
                                          @NotNull String debugName,
                                          @NotNull ResourceFileResolver resolver,
                                          @NotNull Set<RawIncludedRuntimeModule> mainGroupModules,
-                                         @NotNull Set<RuntimeModuleId> bundledPluginMainModules) throws IOException, XMLStreamException {
+                                         @NotNull Set<RuntimeModuleId> bundledPluginMainModules,
+                                         @NotNull Set<RuntimeModuleId> withoutModules) throws IOException, XMLStreamException {
     for (RawIncludedFromData includedFromData : rawProductModules.getIncludedFrom()) {
       RuntimeModuleId includedId = includedFromData.getFromModule();
       InputStream inputStream = resolver.readResourceFile(includedId, "META-INF/" + includedId.getStringId() + "/product-modules.xml");
       if (inputStream == null) {
-        throw new MalformedRepositoryException("'" + includedId.getStringId() + "' included in " +
+        throw new MalformedRepositoryException("'" + includedId.getPresentableName() + "' included in " +
                                                debugName + " doesn't contain product-modules.xml");
       }
       RawProductModules includedModules = ProductModulesXmlSerializer.parseModuleXml(inputStream);
-      mergeIncludedFiles(includedModules, debugName, resolver, mainGroupModules, bundledPluginMainModules);
+      var withoutIncluding = new HashSet<>(withoutModules);
+      withoutIncluding.addAll(includedFromData.getWithoutModules());
+      mergeIncludedFiles(includedModules, debugName, resolver, mainGroupModules, bundledPluginMainModules, withoutIncluding);
       for (RawIncludedRuntimeModule mainGroupModule : includedModules.getMainGroupModules()) {
-        if (!includedFromData.getWithoutModules().contains(mainGroupModule.getModuleId())) {
+        if (!withoutIncluding.contains(mainGroupModule.getModuleId())) {
           mainGroupModules.add(mainGroupModule);
         }
       }
       for (RuntimeModuleId pluginMainModule : includedModules.getBundledPluginMainModules()) {
-        if (!includedFromData.getWithoutModules().contains(pluginMainModule)) {
+        if (!withoutIncluding.contains(pluginMainModule)) {
           bundledPluginMainModules.add(pluginMainModule);
         }
       }

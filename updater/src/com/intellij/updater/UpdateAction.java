@@ -5,7 +5,17 @@ import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 import ie.wombat.jbdiff.JBDiff;
 import ie.wombat.jbdiff.JBPatch;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.Objects;
 import java.util.zip.ZipEntry;

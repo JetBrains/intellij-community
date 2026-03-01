@@ -14,12 +14,12 @@ import com.intellij.platform.vcs.impl.frontend.changes.ChangeList
 import com.intellij.platform.vcs.impl.frontend.changes.ChangesTree
 import com.intellij.platform.vcs.impl.frontend.changes.ExactlySelectedData
 import com.intellij.platform.vcs.impl.frontend.changes.SelectedData
-import com.intellij.ui.TreeSpeedSearch
-import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.platform.vcs.impl.frontend.navigation.FrontendShelfNavigatable
 import com.intellij.platform.vcs.impl.shared.changes.GroupingUpdatePlaces
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
+import com.intellij.ui.TreeSpeedSearch
+import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath

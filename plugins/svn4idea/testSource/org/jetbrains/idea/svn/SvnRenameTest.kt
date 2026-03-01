@@ -19,9 +19,14 @@ import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.FeatureMatcher
 import org.hamcrest.Matcher
-import org.hamcrest.Matchers.*
+import org.hamcrest.Matchers.contains
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.equalToIgnoringCase
+import org.hamcrest.Matchers.startsWith
 import org.jetbrains.annotations.NonNls
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertThat
 import org.junit.Assume
 import org.junit.Test
 import java.io.File

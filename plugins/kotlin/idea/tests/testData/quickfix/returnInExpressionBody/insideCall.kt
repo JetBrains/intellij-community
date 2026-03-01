@@ -1,5 +1,4 @@
 // "Specify 'String' return type for enclosing function 'm'" "true"
-// K2_AFTER_ERROR: Returns are prohibited in functions with expression body. Use block body '{...}'.
 fun foo(s: String): String = s
 
 fun m(a: String?) = foo(a ?: ret<caret>urn "" )

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile

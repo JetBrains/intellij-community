@@ -3,7 +3,8 @@ package com.intellij.ui.plaf.beg;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalTreeUI;
 import java.awt.event.MouseEvent;

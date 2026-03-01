@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 
+@K1Deprecation
 class DummyStringExpression(val string: String) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(string)

@@ -5,7 +5,13 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Classifier;
+import com.intellij.codeInsight.lookup.ClassifierFactory;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementWeigher;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.codeInsight.lookup.WeighingContext;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -14,7 +20,33 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -42,6 +74,17 @@ public final class JavaCompletionSorting {
   }
 
   public static CompletionResultSet addJavaSorting(final CompletionParameters parameters, CompletionResultSet result) {
+    PrefixMatcher matcher = result.getPrefixMatcher();
+    CompletionSorter sorter = getSorter(parameters, matcher);
+    return result.withRelevanceSorter(sorter);
+  }
+
+  /**
+   * @param parameters completion parameters
+   * @param matcher matcher used
+   * @return the sorter that should be used to sort Java completion items
+   */
+  public static @NotNull CompletionSorter getSorter(@NotNull BaseCompletionParameters parameters, @NotNull PrefixMatcher matcher) {
     PsiElement position = parameters.getPosition();
     ExpectedTypeInfo[] expectedTypes = getExpectedTypesWithDfa(parameters, position);
     CompletionType type = parameters.getCompletionType();
@@ -55,7 +98,7 @@ public final class JavaCompletionSorting {
     afterProximity.add(new PreferShorter(project, expectedTypes));
     afterProximity.add(new DispreferTechnicalOverloads(position));
 
-    CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
+    CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, matcher);
     if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes, position));
     } else if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) == null) {
@@ -111,7 +154,7 @@ public final class JavaCompletionSorting {
 
     sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[0]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[0]));
-    return result.withRelevanceSorter(sorter);
+    return sorter;
   }
 
   private static @Nullable PsiClassType getServiceType(PsiElement position) {
@@ -160,7 +203,7 @@ public final class JavaCompletionSorting {
     return ObjectUtils.tryCast(ref.getQualifier(), PsiMethodCallExpression.class);
   }
 
-  private static ExpectedTypeInfo @NotNull [] getExpectedTypesWithDfa(CompletionParameters parameters, PsiElement position) {
+  private static ExpectedTypeInfo @NotNull [] getExpectedTypesWithDfa(BaseCompletionParameters parameters, PsiElement position) {
     if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText(".")).accepts(position)) {
       return ExpectedTypeInfo.EMPTY_ARRAY;
     }
@@ -172,7 +215,7 @@ public final class JavaCompletionSorting {
     return JavaSmartCompletionContributor.getExpectedTypes(parameters);
   }
 
-  private static @Nullable LookupElementWeigher recursion(CompletionParameters parameters, final ExpectedTypeInfo[] expectedInfos) {
+  private static @Nullable LookupElementWeigher recursion(BaseCompletionParameters parameters, final ExpectedTypeInfo[] expectedInfos) {
     final PsiElement position = parameters.getPosition();
     final PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class, true, PsiClass.class);
     final PsiReferenceExpression reference = expression != null ? expression.getMethodExpression() : PsiTreeUtil.getParentOfType(position, PsiReferenceExpression.class);
@@ -344,11 +387,11 @@ public final class JavaCompletionSorting {
   private static class PreferDefaultTypeWeigher extends LookupElementWeigher {
     private final PsiTypeParameter myTypeParameter;
     private final ExpectedTypeInfo[] myExpectedTypes;
-    private final CompletionParameters myParameters;
+    private final BaseCompletionParameters myParameters;
     private final boolean myPreferExact;
     private final CompletionLocation myLocation;
 
-    PreferDefaultTypeWeigher(ExpectedTypeInfo @NotNull [] expectedTypes, CompletionParameters parameters, boolean preferExact) {
+    PreferDefaultTypeWeigher(ExpectedTypeInfo @NotNull [] expectedTypes, BaseCompletionParameters parameters, boolean preferExact) {
       super("defaultType" + (preferExact ? "Exact" : ""));
       myExpectedTypes = ContainerUtil.map2Array(expectedTypes, ExpectedTypeInfo.class, info -> {
         PsiType type = removeClassWildcard(info.getType());

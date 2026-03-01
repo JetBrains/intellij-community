@@ -7,14 +7,20 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.k2.refactoring.util.ConvertReferenceToLambdaUtil
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class ExplicitThisInspection : KotlinApplicableInspectionBase.Simple<KtThisExpression, Unit>() {
     override fun getProblemDescription(element: KtThisExpression, context: Unit): String =
@@ -37,7 +43,7 @@ internal class ExplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         val shortenCommand = collectPossibleReferenceShorteningsForIde(
             el.containingKtFile,
             el.parent.textRange,
-            shortenOptions = ShortenOptions.ALL_ENABLED
+            shortenOptions = ShortenOptionsForIde.ALL_ENABLED
         )
         val hasShortening = shortenCommand.listOfQualifierToShortenInfo.any { it.qualifierToShorten.element?.receiverExpression == el }
         return hasShortening.asUnit

@@ -2,8 +2,10 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class LanguageWordCompletion extends LanguageExtension<WordCompletionElementFilter> {
   public static final LanguageWordCompletion INSTANCE = new LanguageWordCompletion();
 

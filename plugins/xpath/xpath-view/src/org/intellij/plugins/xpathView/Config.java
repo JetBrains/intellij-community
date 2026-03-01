@@ -18,7 +18,8 @@ package org.intellij.plugins.xpathView;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.intellij.plugins.xpathView.search.SearchScope;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 /**
  * Class that holds the plugin's configuration. All customizable settings are accessible via property getters/setters.

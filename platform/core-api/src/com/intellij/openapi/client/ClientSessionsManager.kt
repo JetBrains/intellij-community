@@ -3,7 +3,13 @@ package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -136,6 +142,9 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
     return sessions[clientId]
   }
 
+  /**
+   * [disposable] should be disposed on EDT.
+   */
   fun registerSession(disposable: Disposable, session: T) {
     val clientId = session.clientId
     val oldSession = sessions.put(clientId, session)
@@ -158,8 +167,10 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
     LOG.debug { "Session added '$session'" }
 
     Disposer.register(disposable) {
-      // write intent lock is already here because the disposable takes it when disposing on EDT
-      Disposer.dispose(session)
+      WriteIntentReadAction.run {
+        Disposer.dispose(session)
+      }
+
       LOG.debug { "Session for '$clientId' will be removed after delay" }
       scope.launch {
         delay(disposedRemovalDelay)

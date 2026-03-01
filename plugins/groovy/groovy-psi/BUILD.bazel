@@ -46,4 +46,47 @@ jvm_library(
   ],
   exports = ["@lib//:org-codehaus-groovy-groovy"]
 )
+
+jvm_library(
+  name = "psi_test_lib",
+  module_name = "intellij.groovy.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:org-codehaus-groovy-groovy"],
+  runtime_deps = [
+    ":psi",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//java/openapi:java_test_lib",
+    "//plugins/junit",
+    "//plugins/junit:junit_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//xml/xml-psi-impl:psi-impl_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//java/java-structure-view:structureView_test_lib",
+    "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
+    "//plugins/properties/properties-psi-api:psi_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/asm:asm_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.groovy.psi` end

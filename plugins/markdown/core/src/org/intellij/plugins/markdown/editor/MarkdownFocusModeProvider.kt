@@ -4,7 +4,11 @@ import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider
 import com.intellij.openapi.util.Segment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
-import org.intellij.plugins.markdown.lang.psi.impl.*
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 
 internal class MarkdownFocusModeProvider: FocusModeProvider {
   private val types = listOf(

@@ -14,3 +14,5 @@ fun f(pa: A, pb: B, pc: C, pd: D, pe: E) {
 
 // EXIST: pc, pe
 // ABSENT: pa, pb, pd
+
+// IGNORE_K2

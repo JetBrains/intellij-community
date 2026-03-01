@@ -1,16 +1,22 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.ApplicationInfoProperties
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyFileToDir
+import org.jetbrains.intellij.build.knownMissingModuleDependencies
 import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
 import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.productModules
+import org.jetbrains.intellij.build.windowsCustomizer
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -42,7 +48,7 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
 
     productLayout.skipUnresolvedContentModules = true
-    
+
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 
     mavenArtifacts.forIdeModules = true
@@ -73,7 +79,7 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core-customization.xml")
 
     allowMissingDependencies(knownMissingModuleDependencies)
-    bundledPlugins(productLayout.bundledPluginModules.toList())
+    bundledPlugins(productLayout.bundledPluginModules)
   }
 
   override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
@@ -95,7 +101,7 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     icoPathForEAP = "python/build/resources/PyCharmCore_EAP.ico"
     installerImagesPath = "python/build/resources"
 
-    fileAssociations = listOf("py")
+    fileAssociations = SUPPORTED_FILE_EXTENSIONS
 
     fullName { "PyCharm Community Edition" }
 

@@ -1,11 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.serviceView;
 
-import com.intellij.execution.services.*;
+import com.intellij.execution.services.ServiceViewActionUtils;
+import com.intellij.execution.services.ServiceViewDescriptor;
+import com.intellij.execution.services.ServiceViewOptions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
@@ -15,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.LayoutManager;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -114,22 +115,13 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
     List<ServiceViewItem> selection = getSelectedItems();
     ServiceViewItem onlyItem = ContainerUtil.getOnlyItem(selection);
 
+    sink.set(ServiceViewActionProvider.SERVICE_VIEW, this);
     sink.set(PlatformCoreDataKeys.HELP_ID,
              ServiceViewManagerImpl.getToolWindowContextHelpId());
     sink.set(PlatformCoreDataKeys.SELECTED_ITEM,
              onlyItem != null ? onlyItem.getValue() : null);
     sink.set(ServiceViewActionProvider.SERVICES_SELECTED_ITEMS, selection);
 
-    ServiceViewContributor<?> contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
-    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, ServiceViewDefaultDeleteProvider.getInstance());
-    ServiceViewDescriptor contributorDescriptor = contributor != null ? contributor.getViewDescriptor(myProject) : null;
-    if (contributorDescriptor instanceof UiDataProvider uiDataProvider) {
-      sink.uiDataSnapshot(uiDataProvider);
-    }
-    else {
-      DataSink.uiDataSnapshot(sink, contributorDescriptor != null ? contributorDescriptor.getDataProvider() : null);
-    }
-    sink.set(PlatformDataKeys.COPY_PROVIDER, new ServiceViewCopyProvider(this));
     sink.set(ServiceViewActionUtils.CONTRIBUTORS_KEY,
              getModel().getRoots().stream().map(item -> item.getRootContributor()).collect(Collectors.toSet()));
     sink.set(ServiceViewActionUtils.OPTIONS_KEY, myViewOptions);
@@ -137,14 +129,6 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
     List<ServiceViewDescriptorId> selectedDescriptorIds = ContainerUtil.map(selection,
                                                                             item -> ServiceViewDescriptorIdKt.toId(item, myProject));
     sink.set(ServiceViewActionProvider.SERVICES_SELECTED_DESCRIPTOR_IDS, selectedDescriptorIds);
-
-    ServiceViewDescriptor descriptor = onlyItem == null || onlyItem.isRemoved() ? null : onlyItem.getViewDescriptor();
-    if (descriptor instanceof UiDataProvider uiDataProvider) {
-      sink.uiDataSnapshot(uiDataProvider);
-    }
-    else {
-      DataSink.uiDataSnapshot(sink, descriptor != null ? descriptor.getDataProvider() : null);
-    }
   }
 
   private static void setViewModelState(@NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {

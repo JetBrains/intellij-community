@@ -1,7 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.psi.impl
 
-import com.intellij.editorconfig.common.syntax.psi.*
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigFlatOptionKey
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueIdentifier
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigQualifiedKeyPart
 
 abstract class EditorConfigIdentifierFinderVisitor : EditorConfigRecursiveVisitor() {
   final override fun visitFlatOptionKey(key: EditorConfigFlatOptionKey): Unit = collectIdentifier(key)

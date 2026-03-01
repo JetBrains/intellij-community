@@ -25,7 +25,11 @@ import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -134,13 +138,13 @@ public final class WorkingContextManager {
   private JBZipFile getTasksArchive(String postfix) {
     File file = getArchiveFile(postfix);
     try {
-      return new JBZipFile(file);
+      return new JBZipFile(file.toPath(), false);
     }
     catch (IOException e) {
       file.delete();
       JBZipFile zipFile = null;
       try {
-        zipFile = new JBZipFile(file);
+        zipFile = new JBZipFile(file.toPath(), false);
         Notifications.Bus.notify(new Notification("Tasks", TaskBundle.message("notification.title.context.data.corrupted"),
                                                   TaskBundle.message("notification.content.context.information.history", myProject.getName()), NotificationType.ERROR), myProject);
       }

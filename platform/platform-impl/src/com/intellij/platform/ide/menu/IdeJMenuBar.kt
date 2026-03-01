@@ -22,7 +22,11 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.geom.AffineTransform
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JMenu
+import javax.swing.JMenuBar
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 
 internal enum class IdeMenuBarState {

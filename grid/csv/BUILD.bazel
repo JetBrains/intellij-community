@@ -24,4 +24,21 @@ jvm_library(
     "//libraries/automaton",
   ]
 )
+
+jvm_library(
+  name = "csv-core-impl_test_lib",
+  module_name = "intellij.grid.csv.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":csv-core-impl",
+    "//platform/util:util_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//grid/types:types_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//libraries/automaton:automaton_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.grid.csv.core.impl` end

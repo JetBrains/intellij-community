@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Supplies empty {@link FileTypeRegistry} implementation when {@link com.intellij.openapi.fileTypes.FileTypeManager} is not available

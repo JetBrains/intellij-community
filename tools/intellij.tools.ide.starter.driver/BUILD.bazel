@@ -35,4 +35,22 @@ jvm_library(
     "@lib//:opentelemetry",
   ]
 )
+
+jvm_library(
+  name = "ide-starter-driver_test_lib",
+  module_name = "intellij.tools.ide.starter.driver",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_ide-starter-driver",
+  runtime_deps = [
+    ":ide-starter-driver",
+    "//platform/remote-driver/client:client_test_lib",
+    "//platform/remote-driver/model:model_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
+    "//platform/remote-driver/test-sdk:driver-sdk_test_lib",
+    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
+    "//platform/util:util_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tools.ide.starter.driver` end

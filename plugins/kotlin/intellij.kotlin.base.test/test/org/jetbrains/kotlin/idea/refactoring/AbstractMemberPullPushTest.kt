@@ -1,0 +1,131 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.refactoring
+
+import com.google.gson.JsonParser
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.refactoring.classMembers.MemberInfoBase
+import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.util.findElementsByCommentPrefix
+import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.pathString
+import kotlin.io.path.readText
+
+abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCase() {
+    val fixture: JavaCodeInsightTestFixture get() = myFixture
+
+    protected fun doTest(path: String, action: (mainFile: PsiFile) -> Unit) {
+        val mainFile = Path(path)
+        val afterFile = Path("$path.after")
+        val conflictFile = getConflictFile(path)
+        val dialogFile = getDialogFile(path)
+
+        fixture.testDataPath = mainFile.parent.pathString
+
+        val mainFileName = mainFile.name
+        val mainFileBaseName = mainFile.nameWithoutExtension
+        val extraFiles = mainFile.parent.listDirectoryEntries().filter { file ->
+            val name = file.name
+            name != mainFileName && name.startsWith("$mainFileBaseName.") && (name.endsWith(".kt") || name.endsWith(".java"))
+        }
+        val extraFilesToPsi = extraFiles.associateBy { fixture.configureByFile(it.name) }
+        val file = fixture.configureByFile(mainFileName)
+
+        try {
+            markMembersInfo(file)
+            extraFilesToPsi.keys.forEach(::markMembersInfo)
+
+            val expectedDialogMessage = if (dialogFile.exists()) parseDialogMessage(dialogFile) else null
+            if (expectedDialogMessage != null) {
+                TestDialogManager.setTestDialog { actualDialogMessage ->
+                    assertEquals(expectedDialogMessage, actualDialogMessage)
+                    Messages.OK
+                }
+            }
+
+            action(file)
+
+            assert(!conflictFile.exists()) { "Conflict file $conflictFile should not exist" }
+
+            PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+            KotlinTestUtils.assertEqualsToFile(afterFile, file.text!!)
+            for ((extraPsiFile, extraFile) in extraFilesToPsi) {
+                KotlinTestUtils.assertEqualsToFile(Path("${extraFile.pathString}.after"), extraPsiFile.text)
+            }
+        } catch (e: Exception) {
+            val message = when (e) {
+                is BaseRefactoringProcessor.ConflictsInTestsException -> e.messages.sorted().joinToString("\n")
+                is CommonRefactoringUtil.RefactoringErrorHintException -> e.message!!
+                else -> throw e
+            }
+            KotlinTestUtils.assertEqualsToFile(conflictFile, message)
+        }
+    }
+
+    private object TestFileExtension {
+        const val MESSAGES = "messages"
+        const val DIALOG = "dialog"
+    }
+
+    private fun getConflictFile(path: String): Path =
+        getTestFile(path, TestFileExtension.MESSAGES)
+
+    private fun getDialogFile(path: String): Path =
+        getTestFile(path, TestFileExtension.DIALOG)
+
+    private fun getTestFile(path: String, extension: String): Path {
+        val suffix = getSuffix()
+        val testFile = if (suffix != null) Path("$path.${extension}.$suffix") else null
+        return testFile?.takeIf { it.exists() } ?: Path("$path.${extension}")
+    }
+
+    private fun parseDialogMessage(file: Path): String =
+        file.readText().trim()
+
+    protected open fun getSuffix(): String? {
+        return null
+    }
+}
+
+@ApiStatus.Internal
+fun markMembersInfo(file: PsiFile) {
+    for ((element, info) in file.findElementsByCommentPrefix("// INFO: ")) {
+        val parsedInfo = JsonParser.parseString(info).asJsonObject
+        element.elementInfo = ElementInfo(
+            parsedInfo["checked"]?.asBoolean ?: false,
+            parsedInfo["toAbstract"]?.asBoolean ?: false
+        )
+    }
+}
+
+internal data class ElementInfo(val checked: Boolean, val toAbstract: Boolean)
+
+internal var PsiElement.elementInfo: ElementInfo by NotNullableUserDataProperty(Key.create("ELEMENT_INFO"), ElementInfo(false, false))
+
+@ApiStatus.Internal
+fun <T : MemberInfoBase<*>> chooseMembers(members: List<T>): List<T> {
+    members.forEach {
+        val memberPsi = it.member.let { if (it is KtPsiClassWrapper) it.psiClass else it }
+        val info = memberPsi.elementInfo
+        it.isChecked = info.checked
+        it.isToAbstract = info.toAbstract
+    }
+    return members.filter { it.isChecked }
+}

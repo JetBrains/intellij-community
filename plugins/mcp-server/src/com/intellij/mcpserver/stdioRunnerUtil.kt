@@ -13,7 +13,11 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.util.DebugAttachDetectorArgs
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import io.modelcontextprotocol.kotlin.sdk.shared.AbstractTransport
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.io.File
 import kotlin.io.path.pathString
 import kotlin.reflect.jvm.javaMethod

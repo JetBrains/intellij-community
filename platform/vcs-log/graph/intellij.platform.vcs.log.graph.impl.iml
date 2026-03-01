@@ -17,6 +17,6 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
   </component>
 </module>

@@ -5,7 +5,14 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection

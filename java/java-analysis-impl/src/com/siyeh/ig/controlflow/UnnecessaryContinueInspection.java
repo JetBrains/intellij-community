@@ -17,7 +17,12 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;

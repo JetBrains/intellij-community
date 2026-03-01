@@ -16,7 +16,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.nio.charset.StandardCharsets;
 
 import static com.intellij.history.integration.ui.HistoryDialogModelsKt.createSelectionModel;
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
 
 public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   private VirtualFile f;

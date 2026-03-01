@@ -4,7 +4,19 @@ package com.intellij.toolWindow.xNext.toolbar.actions
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.actions.ToolWindowsGroup
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionWrapper
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
@@ -49,9 +61,9 @@ internal class XNextToolbarToolWindowsGroup : ActionGroup(), DumbAware {
   }
 }
 
-private class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowAction) : AnActionWrapper(toolWindowAction),
-                                                                                      DumbAware, Toggleable,
-                                                                                      CustomComponentAction {
+internal class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowAction) : AnActionWrapper(toolWindowAction),
+                                                                                       DumbAware, Toggleable,
+                                                                                       CustomComponentAction {
   companion object {
     private val toolWindowKey = Key<ToolWindowImpl>("XNextToolWindowAction.toolWindowKey")
   }
@@ -131,7 +143,7 @@ private class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowActi
     }
   }
 
-  private class MyPinAction(val toolWindowId: String) : AnAction() {
+  internal class MyPinAction(val toolWindowId: String) : AnAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {

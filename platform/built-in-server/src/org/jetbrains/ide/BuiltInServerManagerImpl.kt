@@ -18,8 +18,13 @@ import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
@@ -123,7 +128,7 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     }
 
     // extensions may use registry to enable/disable URL handlers
-    RegistryManager.getInstanceAsync().awaitRegistryLoad()
+    RegistryManager.getInstanceAsync()
 
     try {
       server = BuiltInServer.start(firstPort = getDefaultPort(), portsCount = PORTS_COUNT, tryAnyPort = true)
@@ -181,7 +186,7 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
 /**
  * Instead of preloading too early, we explicitly start the server at the end of the application boot sequence.
  */
-private class BuiltInServerManagerLauncher : ApplicationActivity {
+internal class BuiltInServerManagerLauncher : ApplicationActivity {
   override suspend fun execute() {
     serviceAsync<BuiltInServerManager>()
   }

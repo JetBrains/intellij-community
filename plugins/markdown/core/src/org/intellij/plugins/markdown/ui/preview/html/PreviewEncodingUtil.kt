@@ -2,7 +2,7 @@ package org.intellij.plugins.markdown.ui.preview.html
 
 import java.net.URLEncoder
 import java.nio.charset.Charset
-import java.util.*
+import java.util.Base64
 
 internal object PreviewEncodingUtil {
   private val contentCharset: Charset

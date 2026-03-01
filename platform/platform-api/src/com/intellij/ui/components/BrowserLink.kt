@@ -35,7 +35,7 @@ class BrowserLink(icon: Icon?, text: @Nls String?, tooltip: @Nls String?, val ur
   }
 }
 
-private class CopyLinkAction(val url: String)
+internal class CopyLinkAction(val url: String)
   : DumbAwareAction(messagePointer("action.text.copy.link.address"), AllIcons.Actions.Copy) {
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -43,7 +43,7 @@ private class CopyLinkAction(val url: String)
   }
 }
 
-private class OpenLinkInBrowser(val url: String)
+internal class OpenLinkInBrowser(val url: String)
   : DumbAwareAction(messagePointer("action.text.open.link.in.browser"), AllIcons.Nodes.PpWeb) {
 
   override fun actionPerformed(event: AnActionEvent) {

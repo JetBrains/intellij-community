@@ -10,7 +10,11 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileTextField
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.LabeledComponent
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -31,7 +35,7 @@ import javax.swing.JTextArea
 /**
  * @author gregsh
  */
-private class ShowUpdateInfoDialogAction : DumbAwareAction() {
+internal class ShowUpdateInfoDialogAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

@@ -19,8 +19,23 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinArrayToStringInspection.Context
-import org.jetbrains.kotlin.name.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 
 private val IMPLICIT_TO_STRING_METHOD_NAMES: Set<String> = setOf("append", "print", "println")

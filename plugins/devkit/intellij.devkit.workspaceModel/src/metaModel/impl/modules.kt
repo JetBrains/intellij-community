@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl
 
-import com.intellij.workspaceModel.codegen.deft.meta.*
+import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
+import com.intellij.workspaceModel.codegen.deft.meta.ExtProperty
+import com.intellij.workspaceModel.codegen.deft.meta.Obj
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjModule
+import com.intellij.workspaceModel.codegen.deft.meta.ObjType
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 
 val objModuleType: ObjType<ObjModule> = ObjTypeImpl()
 

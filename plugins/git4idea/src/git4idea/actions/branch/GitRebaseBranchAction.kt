@@ -7,7 +7,11 @@ import git4idea.GitBranch
 import git4idea.branch.GitBrancher
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchPopupActions.*
+import git4idea.ui.branch.GitBranchPopupActions.addTooltipText
+import git4idea.ui.branch.GitBranchPopupActions.getCurrentBranchFullPresentation
+import git4idea.ui.branch.GitBranchPopupActions.getCurrentBranchTruncatedPresentation
+import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchFullPresentation
+import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchTruncatedPresentation
 
 class GitRebaseBranchAction : GitSingleBranchAction(GitBundle.messagePointer("branches.rebase.current.onto.selected")) {
 

@@ -6,7 +6,13 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType

@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
-import com.intellij.externalProcessAuthHelper.*;
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService;
+import com.intellij.externalProcessAuthHelper.NativeSshAuthService;
+import com.intellij.externalProcessAuthHelper.NativeSshGuiAuthenticator;
+import com.intellij.externalProcessAuthHelper.PassthroughAuthenticationGate;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +23,11 @@ import externalApp.nativessh.NativeSshAskPassAppHandler;
 import git4idea.GitUtil;
 import git4idea.commit.signing.GpgAgentConfigurator;
 import git4idea.commit.signing.PinentryService;
-import git4idea.config.*;
+import git4idea.config.GitConfigUtil;
+import git4idea.config.GitExecutable;
+import git4idea.config.GitVcsApplicationSettings;
+import git4idea.config.GitVersion;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.config.gpg.GitGpgConfigUtilsKt;
 import git4idea.http.GitAskPassAppHandler;
 import git4idea.repo.GitProjectConfigurationCache;

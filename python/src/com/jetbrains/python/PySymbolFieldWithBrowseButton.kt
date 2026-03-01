@@ -34,8 +34,8 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.extensions.ContextAnchor
 import com.jetbrains.python.extensions.QNameResolveContext
 import com.jetbrains.python.extensions.getQName
-import com.jetbrains.python.extensions.toPsi
 import com.jetbrains.python.extensions.resolveToElement
+import com.jetbrains.python.extensions.toPsi
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyTypedElement

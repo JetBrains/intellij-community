@@ -6,7 +6,11 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.bookmark.BookmarksManager;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -22,7 +26,12 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,8 +39,15 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LoadingDecoratorLayeredPane;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsCommitStyleFactory;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogCommitSelection;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.graph.RowType;
@@ -44,34 +60,72 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
-import com.intellij.vcs.log.ui.table.column.*;
+import com.intellij.vcs.log.ui.table.column.Commit;
+import com.intellij.vcs.log.ui.table.column.Root;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt;
+import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn;
+import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumnListener;
 import com.intellij.vcs.log.ui.table.links.CommitLinksProvider;
 import com.intellij.vcs.log.ui.table.links.NavigateToCommit;
 import com.intellij.vcs.log.ui.table.links.VcsLinksRenderer;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.*;
-import java.awt.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter.CURRENT_BRANCH_BG;
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.getColumnsOrder;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.isValidColumnOrder;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.makeValidColumnOrder;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.setWidth;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.supportsColumnsReordering;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.updateOrder;
 import static java.util.Collections.emptySet;
 
 public class VcsLogGraphTable extends TableWithProgress
@@ -572,12 +626,35 @@ public class VcsLogGraphTable extends TableWithProgress
   public void jumpToGraphRow(int graphRow, boolean focus) {
     int rowIndex = getModel().fromGraphToTableRow(graphRow);
     if (rowIndex >= 0 && rowIndex <= getRowCount() - 1) {
-      scrollRectToVisible(getCellRect(rowIndex, 0, false));
+      scrollToRowIndex(rowIndex);
       setRowSelectionInterval(rowIndex, rowIndex);
       if (focus && !hasFocus()) {
         IdeFocusManager.getInstance(myLogData.getProject()).requestFocus(this, true);
       }
     }
+  }
+
+  private void scrollToRowIndex(int rowIndex) {
+    if (!Registry.is("vcs.log.table.show.centered")) {
+      scrollRectToVisible(getCellRect(rowIndex, 0, false));
+      return;
+    }
+
+    Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
+    int visibleRowCount = visibleRows.second - visibleRows.first + 1;
+    if (visibleRowCount <= 0) {
+      scrollRectToVisible(getCellRect(rowIndex, 0, false));
+      return;
+    }
+
+    int top = Math.max(0, rowIndex - (visibleRowCount - 1) / 2);
+    int bottom = Math.min(getRowCount() - 1, top + visibleRowCount - 1);
+    // Adjust top if we're near the bottom of the table
+    if (bottom == getRowCount() - 1) {
+      top = Math.max(0, bottom - visibleRowCount + 1);
+    }
+    Rectangle bounds = getCellRect(top, 0, true).union(getCellRect(bottom, 0, true));
+    scrollRectToVisible(bounds);
   }
 
   @Override

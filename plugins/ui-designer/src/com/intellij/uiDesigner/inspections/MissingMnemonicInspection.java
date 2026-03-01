@@ -13,7 +13,8 @@ import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JLabel;
 
 
 public final class MissingMnemonicInspection extends BaseFormInspection {

@@ -4,8 +4,6 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EDT;
@@ -43,9 +41,9 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
     Application application = ApplicationManager.getApplication();
     if (application.isWriteIntentLockAcquired()) {
-      try(AccessToken ignored = ApplicationManager.getApplication().acquireWriteActionLock(getClass())) {
+      application.runWriteAction(() -> {
         result.run();
-      }
+      });
       return result;
     }
 
@@ -54,26 +52,13 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     WriteThread.invokeAndWait(() -> {
-      try(AccessToken ignored = ApplicationManager.getApplication().acquireWriteActionLock(getClass())){
+      application.runWriteAction(() -> {
         result.run();
-      }
+      });
     });
 
     result.throwException();
     return result;
-  }
-
-  /**
-   * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   * @see #run(ThrowableRunnable)
-   * @see #compute(ThrowableComputable)
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull AccessToken start() {
-    // get useful information about the write action
-    Class<?> callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
-    return ApplicationManager.getApplication().acquireWriteActionLock(callerClass);
   }
 
   /**

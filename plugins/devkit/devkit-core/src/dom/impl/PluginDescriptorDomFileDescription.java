@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class PluginDescriptorDomFileDescription extends DomFileDescription<IdeaPlugin> {
 

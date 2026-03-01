@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
 
-private class GHPROpenPullRequestAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.open.action"),
+internal class GHPROpenPullRequestAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.open.action"),
                                                   GithubBundle.messagePointer("pull.request.open.action.description")) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

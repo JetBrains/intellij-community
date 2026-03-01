@@ -4,20 +4,16 @@ package org.jetbrains.java.decompiler;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@Timeout(value = 60, unit = TimeUnit.SECONDS)
 public class SingleClassesTest extends SingleClassesTestBase {
-  /*
-   * Set individual test duration time limit to 60 seconds.
-   * This will help us to test bugs hanging decompiler.
-   */
-  @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
-
   @Override
   protected Map<String, Object> getDecompilerOptions() {
     return Map.ofEntries(
@@ -31,7 +27,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
         Map.entry(IFernflowerPreferences.CHECK_CLOSABLE_INTERFACE, "0"),
         Map.entry(IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS, "0"),
         Map.entry(IFernflowerPreferences.MAX_DIRECT_NODES_COUNT, 20000),
-        Map.entry(IFernflowerPreferences.MAX_DIRECT_VARIABLE_NODE_COUNT, 30000)
+        Map.entry(IFernflowerPreferences.MAX_DIRECT_VARIABLE_NODE_COUNT, 30000),
+        Map.entry(IFernflowerPreferences.PARENTHESES_FOR_BITWISE_OPERATIONS, "1")
     );
   }
 
@@ -163,6 +160,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testSuspendLambda() { doTest("pkg/TestSuspendLambdaKt"); }
   @Test public void testNamedSuspendFun2Kt() { doTest("pkg/TestNamedSuspendFun2Kt"); }
   @Test public void testGenericArgs() { doTest("pkg/TestGenericArgs"); }
+  @Test public void testBitwiseParentheses() { doTest("pkg/TestBitwiseParentheses"); }
   @Test public void testRecordEmpty() { doTest("records/TestRecordEmpty"); }
   @Test public void testRecordSimple() { doTest("records/TestRecordSimple"); }
   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
@@ -240,8 +238,10 @@ public class SingleClassesTest extends SingleClassesTestBase {
     doTest("patterns/TestInstanceofPatternNotSupported");
   }
 
-  @Test(expected = ClassFormatException.class)
-  public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
+  @Test
+  public void testUnsupportedConstantPoolEntry() {
+    assertThrows(ClassFormatException.class, () -> doTest("java11/TestUnsupportedConstantPoolEntry"));
+  }
   @Test public void testSwitchOnStatic() { doTest("pkg/SwitchOnStatic"); }
   @Test public void testCompoundAssignment() { doTest("pkg/TestCompoundAssignment"); }
   @Test public void testTryToPreserveCast() { doTest("pkg/TryToPreserveCast"); }
@@ -267,4 +267,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testAnnotationExtendObjectStaticMethods() { doTest("pkg/TestAnnotationExtendObjectStaticMethods"); }
   @Test public void testAnnotationExtendObjectClass() { doTest("pkg/TestAnnotationExtendObjectClass"); }
   @Test public void testAnnotationExtendWildcard() { doTest("pkg/TestAnnotationExtendWildcard"); }
+  @Test public void testTernaryBoxingStatement() { doTest("pkg/TestTernaryBoxingStatement"); }
 }

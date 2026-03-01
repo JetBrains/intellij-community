@@ -1,13 +1,11 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.liveTemplates">
-  <dependencies>
-    <plugin id="org.intellij.groovy.live.templates" />
-  </dependencies>
-
   <extensions defaultExtensionNs="com.intellij">
     <defaultLiveTemplates file="liveTemplates/Kotlin.xml"/>
 
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.FunctionParametersMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.FunctionParametersToStringMacro"/>
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinClassNameMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinClassNameOrTopMacro"/>
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinFunctionNameMacro"/>
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinPackageNameMacro"/>
     <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinMainArgumentsMacro"/>

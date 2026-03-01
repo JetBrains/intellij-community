@@ -3,7 +3,14 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

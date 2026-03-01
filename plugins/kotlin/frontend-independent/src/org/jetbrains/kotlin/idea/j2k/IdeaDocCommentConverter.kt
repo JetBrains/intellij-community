@@ -4,15 +4,23 @@ package org.jetbrains.kotlin.idea.j2k
 
 import com.intellij.ide.highlighter.HtmlFileType
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.JavaDocTokenType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.XmlRecursiveElementVisitor
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.psi.javadoc.PsiDocToken
 import com.intellij.psi.javadoc.PsiInlineDocTag
-import com.intellij.psi.xml.*
-import org.jetbrains.kotlin.util.match
+import com.intellij.psi.xml.XmlFile
+import com.intellij.psi.xml.XmlTag
+import com.intellij.psi.xml.XmlText
+import com.intellij.psi.xml.XmlToken
+import com.intellij.psi.xml.XmlTokenType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.util.match
 
 object IdeaDocCommentConverter : DocCommentConverter {
     override fun convertDocComment(docComment: PsiDocComment): String {

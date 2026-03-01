@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.icons.AllIcons
@@ -6,7 +6,17 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
@@ -20,7 +30,11 @@ import com.intellij.openapi.wm.impl.DockToolWindowAction
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.SingleContentLayout
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.ui.*
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.tabs.impl.SingleHeightTabs
@@ -30,13 +44,22 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.GroupLayout
 import javax.swing.GroupLayout.DEFAULT_SIZE
 import javax.swing.GroupLayout.PREFERRED_SIZE
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 
@@ -97,6 +120,10 @@ abstract class ToolWindowHeader internal constructor(
     toolbar = object : ActionToolbarImpl(
       ActionPlaces.TOOLWINDOW_TITLE,
       object : ActionGroup(), DumbAware {
+        init {
+          getTemplatePresentation().setRWLockRequired(false)
+        }
+
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
         override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -229,7 +256,7 @@ abstract class ToolWindowHeader internal constructor(
     )
   }
 
-  internal fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
+  private fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
     if (init) {
       westPanel.setComponents(contentUi.tabComponent, sideComponent)
       contentUi.connectTabToolbar()

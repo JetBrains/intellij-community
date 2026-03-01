@@ -7,7 +7,8 @@ import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.match
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractK1PsiUnifierTest : AbstractKotlinPsiUnifierTest() {
     override fun KtElement.getMatches(file: KtFile): List<TextRange> {

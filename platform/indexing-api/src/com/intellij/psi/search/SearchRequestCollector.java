@@ -4,7 +4,11 @@ package com.intellij.psi.search;
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 

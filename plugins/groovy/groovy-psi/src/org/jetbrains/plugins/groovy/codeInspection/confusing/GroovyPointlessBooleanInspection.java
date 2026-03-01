@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
@@ -39,7 +38,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_EQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_IMPL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LAND;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LOR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NEQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_XOR;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public final class GroovyPointlessBooleanInspection extends BaseInspection {

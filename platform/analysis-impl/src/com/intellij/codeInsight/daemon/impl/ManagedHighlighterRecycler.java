@@ -48,7 +48,7 @@ public final class ManagedHighlighterRecycler {
     assert info.getHighlighter() != null;
     assert info.getGroup() == HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP: info;
     if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
-      UpdateHighlightersUtil.LOG.debug("recycleHighlighter " + highlighter + HighlightInfoUpdaterImpl.currentProgressInfo());
+      UpdateHighlightersUtil.LOG.debug("MHR.recycleHighlighter " + highlighter + HighlightInfoUpdaterImpl.currentProgressInfo());
     }
     long range = ((RangeMarkerImpl)highlighter).getScalarRange();
     incinerator.computeIfAbsent(range, __ -> new ArrayList<>()).add(new InvalidPsi(psiElement, info));
@@ -86,7 +86,7 @@ public final class ManagedHighlighterRecycler {
       incinerator.remove(range);
     }
     if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
-      UpdateHighlightersUtil.LOG.debug("pickupHighlighterFromGarbageBin pickedup:" + psi.info().getHighlighter() + HighlightInfoUpdaterImpl.currentProgressInfo());
+      UpdateHighlightersUtil.LOG.debug("MHR.pickupHighlighterFromGarbageBin pickedup:" + psi.info().getHighlighter() + HighlightInfoUpdaterImpl.currentProgressInfo());
     }
     return psi;
   }
@@ -100,10 +100,10 @@ public final class ManagedHighlighterRecycler {
    * - run {@code consumer} which usually calls {@link ManagedHighlighterRecycler#recycleHighlighter} and {@link HighlighterRecycler#pickupHighlighterFromGarbageBin}
    * - and then incinerate all remaining highlighters, or in the case of PCE, release them back to recyclable state
    */
-  public static void runWithRecycler(@NotNull HighlightingSession session, @NotNull Consumer<? super ManagedHighlighterRecycler> consumer) {
+  public static void runWithRecycler(@NotNull HighlightingSession session, @NotNull String debugInfo, @NotNull Consumer<? super ManagedHighlighterRecycler> consumer) {
     ManagedHighlighterRecycler recycler = new ManagedHighlighterRecycler(session);
     consumer.accept(recycler);
-    recycler.myHighlightInfoUpdater.incinerateAndRemoveFromDataAtomically(recycler);
+    recycler.myHighlightInfoUpdater.incinerateAndRemoveFromDataAtomically(recycler, "(runWithRecycler finished: " + debugInfo+ ")");
   }
 
   @Override
@@ -116,8 +116,14 @@ public final class ManagedHighlighterRecycler {
     for (InvalidPsi psi : forAllInGarbageBin()) {
       HighlightInfo info = psi.info();
       RangeHighlighterEx highlighter = info.getHighlighter();
-      if (highlighter != null && HighlightInfo.fromRangeHighlighter(highlighter) == info) {
-        UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, myHighlightingSession);
+      if (highlighter != null) {
+        HighlightInfo infoFromHighlighter = HighlightInfo.fromRangeHighlighter(highlighter);
+        if (infoFromHighlighter == info) {
+          UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, myHighlightingSession);
+        }
+        else if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
+          UpdateHighlightersUtil.LOG.debug("MHR.incinerateAndClear: didn't remove because highlighter.info is overwritten, infoFromHighlighter=" + infoFromHighlighter + "; info=" + info);
+        }
       }
     }
     incinerator.clear();

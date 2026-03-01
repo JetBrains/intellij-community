@@ -102,7 +102,7 @@ public final class FindResultUsageInfo extends UsageInfo {
     Long data = myFindModel.getUserData(DOCUMENT_TIMESTAMP_KEY);
     if (data == null || data != myTimestamp) {
       data = myTimestamp;
-      FindManagerImpl.clearPreviousFindData(myFindModel);
+      FindManagerBase.clearPreviousFindData(myFindModel);
     }
     myFindModel.putUserData(DOCUMENT_TIMESTAMP_KEY, data);
     FindResult result;

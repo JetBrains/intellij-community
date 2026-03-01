@@ -14,7 +14,7 @@ import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YAMLValue;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;

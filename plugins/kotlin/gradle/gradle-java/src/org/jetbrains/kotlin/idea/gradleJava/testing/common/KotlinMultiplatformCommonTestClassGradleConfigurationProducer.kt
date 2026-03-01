@@ -6,8 +6,8 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.openapi.module.Module
-import org.jetbrains.kotlin.idea.gradleJava.run.AbstractKotlinMultiplatformTestClassGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.extensions.KotlinMultiplatformCommonProducersProvider
+import org.jetbrains.kotlin.idea.gradleJava.run.AbstractKotlinMultiplatformTestClassGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.run.isProvidedByMultiplatformProducer
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon

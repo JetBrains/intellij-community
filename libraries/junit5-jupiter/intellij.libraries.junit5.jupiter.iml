@@ -10,5 +10,6 @@
     <orderEntry type="library" exported="" name="JUnit5Jupiter" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.vintage" scope="RUNTIME" />
   </component>
 </module>

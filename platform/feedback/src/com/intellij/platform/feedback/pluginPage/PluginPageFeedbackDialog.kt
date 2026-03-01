@@ -10,14 +10,18 @@ import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.dialog.uiBlocks.*
+import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxGroupBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData
+import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import com.intellij.ui.dsl.builder.BottomGap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
-import java.util.*
+import java.util.Locale
 
 internal enum class CaseType {
   DISABLE, UNINSTALL

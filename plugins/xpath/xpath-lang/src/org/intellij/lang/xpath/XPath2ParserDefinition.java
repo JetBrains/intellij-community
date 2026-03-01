@@ -11,7 +11,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.intellij.lang.xpath.psi.impl.*;
+import org.intellij.lang.xpath.psi.impl.XPath2CastImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2CastableImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2ForImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2IfImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2InstanceOfImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2QuantifiedExprImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2RangeExpressionImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2SequenceImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2TreatAsImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2TypeElementImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2VariableDeclarationImpl;
+import org.intellij.lang.xpath.psi.impl.XPath2VariableImpl;
+import org.intellij.lang.xpath.psi.impl.XPathStepImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class XPath2ParserDefinition extends XPathParserDefinition {

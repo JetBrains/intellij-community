@@ -42,7 +42,12 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextField
+import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 
 // Based on com.intellij.codeInsight.intention.impl.CreateClassDialog

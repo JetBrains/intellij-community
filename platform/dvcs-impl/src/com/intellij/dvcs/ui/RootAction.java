@@ -3,7 +3,11 @@ package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.ActionUpdateThreadAware;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nls;

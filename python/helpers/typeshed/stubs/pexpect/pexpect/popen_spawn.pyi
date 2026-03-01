@@ -1,7 +1,6 @@
 import subprocess
 from _typeshed import StrOrBytesPath
 from collections.abc import Callable
-from os import _Environ
 from typing import AnyStr
 
 from .spawnbase import SpawnBase, _Logfile
@@ -17,7 +16,7 @@ class PopenSpawn(SpawnBase[AnyStr]):
         searchwindowsize: int | None = None,
         logfile: _Logfile | None = None,
         cwd: StrOrBytesPath | None = None,
-        env: _Environ[str] | None = None,
+        env: subprocess._ENV | None = None,
         encoding: str | None = None,
         codec_errors: str = "strict",
         preexec_fn: Callable[[], None] | None = None,

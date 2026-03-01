@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 

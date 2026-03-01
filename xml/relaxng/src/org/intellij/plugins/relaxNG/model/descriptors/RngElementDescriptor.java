@@ -34,7 +34,12 @@ import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.PsiCachedValueImpl;
 import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.AstLoadingFilter;
@@ -51,13 +56,21 @@ import org.intellij.plugins.relaxNG.validation.RngSchemaValidator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.kohsuke.rngom.digested.*;
+import org.kohsuke.rngom.digested.DAttributePattern;
+import org.kohsuke.rngom.digested.DElementPattern;
+import org.kohsuke.rngom.digested.DEmptyPattern;
+import org.kohsuke.rngom.digested.DPattern;
+import org.kohsuke.rngom.digested.DTextPattern;
 import org.kohsuke.rngom.nc.NameClass;
 import org.kohsuke.rngom.nc.NameClassVisitor;
 import org.xml.sax.Locator;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 public class RngElementDescriptor implements XmlElementDescriptor {

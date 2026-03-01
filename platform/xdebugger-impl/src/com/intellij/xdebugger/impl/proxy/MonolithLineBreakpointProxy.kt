@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointAttachment
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
@@ -71,4 +72,11 @@ internal class MonolithLineBreakpointProxy @Deprecated("Use breakpoint.asProxy()
   override fun setTemporary(isTemporary: Boolean) {
     breakpoint.isTemporary = isTemporary
   }
+
+  override fun updateIcon() {
+    breakpoint.clearIcon()
+  }
+
+  override val attachments: List<XBreakpointAttachment>
+    get() = emptyList()
 }

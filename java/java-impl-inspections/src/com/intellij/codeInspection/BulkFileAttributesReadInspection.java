@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -8,7 +8,33 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhileStatement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -24,12 +50,21 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -191,7 +226,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
       List<String> names =
         new VariableNameGenerator(anchor, VariableKind.LOCAL_VARIABLE).byType(attributesVariable.myType).byName(attributesVariable.myName)
           .generateAll(true);
-      String name = names.get(0);
+      String name = names.getFirst();
 
       final PsiDeclarationStatement declaration;
       if (!attributesVariable.myNeedsTryCatch) {

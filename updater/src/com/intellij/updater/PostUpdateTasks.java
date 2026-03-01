@@ -3,13 +3,24 @@ package com.intellij.updater;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.*;
+import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.ShlObj;
+import com.sun.jna.platform.win32.Win32Exception;
+import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.WinError;
+import com.sun.jna.platform.win32.WinReg;
 import com.sun.jna.win32.StdCallLibrary;
 import mslinks.ShellLink;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.NotDirectoryException;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -24,6 +35,7 @@ import static java.util.Objects.requireNonNullElse;
 
 final class PostUpdateTasks {
   private static final String[] EMPTY_ARRAY = {};
+  private static final int ERROR_FILE_NOT_FOUND = 0x80070002;  // Severity: FAILURE (1), FACILITY_WIN32 (0x7), Code 0x2
 
   static void refreshAppBundleIcon(Path targetDir) {
     try {
@@ -38,6 +50,7 @@ final class PostUpdateTasks {
 
   static void updateWindowsRegistry(Path targetDir, String nameAndVersion, String buildNumber, boolean united) {
     var targetPath = targetDir.toString();
+    LOG.info("path: " + targetPath + "; name/version: " + nameAndVersion + "; build: " + buildNumber + "; united: " + united);
     updateUninstallerSection(targetPath, nameAndVersion, buildNumber);
     updateManufacturerSection(targetPath, buildNumber, united);
     if (united) {
@@ -47,22 +60,27 @@ final class PostUpdateTasks {
 
   private static void updateUninstallerSection(String targetPath, String nameAndVersion, String buildNumber) {
     try {
-      LOG.info("updateUninstallerSection for: " + targetPath);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
-      var baseKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+      var nodes = List.of("Software", "Software\\WOW6432Node");
       for (var rootKey : rootKeys) {
-        for (var key : getRegistryGetKeys(rootKey, baseKey)) {
-          try {
-            var location = Advapi32Util.registryGetStringValue(rootKey, baseKey + '\\' + key, "InstallLocation");
-            if (targetPath.equalsIgnoreCase(location)) {
-              LOG.info("key: " + formatKey(rootKey, baseKey, key));
-              Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayName", nameAndVersion);
-              Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayVersion", buildNumber);
-              return;
+        for (var node : nodes) {
+          var baseKey = node + "\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+          LOG.info("scanning: " + formatKey(rootKey, baseKey));
+          for (var key : getRegistryGetKeys(rootKey, baseKey)) {
+            try {
+              var location = Advapi32Util.registryGetStringValue(rootKey, baseKey + '\\' + key, "InstallLocation");
+              if (targetPath.equalsIgnoreCase(location)) {
+                LOG.info("found: " + formatKey(rootKey, baseKey, key));
+                Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayName", nameAndVersion);
+                Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayVersion", buildNumber);
+                return;
+              }
             }
-          }
-          catch (Win32Exception e) {
-            LOG.log(Level.FINE, e, () -> "updateUninstallerSection: " + formatKey(rootKey, baseKey, key));
+            catch (Win32Exception e) {
+              if (e.getHR().intValue() != ERROR_FILE_NOT_FOUND) {
+                LOG.log(Level.FINE, e, () -> "updateUninstallerSection: " + formatKey(rootKey, baseKey, key));
+              }
+            }
           }
         }
       }
@@ -74,28 +92,33 @@ final class PostUpdateTasks {
 
   private static void updateManufacturerSection(String targetPath, String buildNumber, boolean united) {
     try {
-      LOG.info("updateManufacturerSection for: " + targetPath);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
-      var baseKey = "Software\\JetBrains";
+      var nodes = List.of("Software", "Software\\WOW6432Node");
       for (var rootKey : rootKeys) {
-        for (var productKey : getRegistryGetKeys(rootKey, baseKey)) {
-          for (var buildKey : getRegistryGetKeys(rootKey, baseKey + '\\' + productKey)) {
-            try {
-              var oldKey = baseKey + '\\' + productKey + '\\' + buildKey;
-              var location = Advapi32Util.registryGetStringValue(rootKey, oldKey, "");
-              if (targetPath.equalsIgnoreCase(location)) {
-                LOG.info("key: " + formatKey(rootKey, oldKey));
-                var newKey = baseKey + '\\' + (united ? stripCeSuffixes(productKey) : productKey) + '\\' + buildNumber;
-                Advapi32Util.registryCreateKey(rootKey, newKey);
-                for (var entry : Advapi32Util.registryGetValues(rootKey, oldKey).entrySet()) {
-                  Advapi32Util.registrySetStringValue(rootKey, newKey, entry.getKey(), entry.getValue().toString());
+        for (var node : nodes) {
+          var baseKey = node + "\\JetBrains";
+          LOG.info("scanning: " + formatKey(rootKey, baseKey));
+          for (var productKey : getRegistryGetKeys(rootKey, baseKey)) {
+            for (var buildKey : getRegistryGetKeys(rootKey, baseKey + '\\' + productKey)) {
+              try {
+                var oldKey = baseKey + '\\' + productKey + '\\' + buildKey;
+                var location = Advapi32Util.registryGetStringValue(rootKey, oldKey, "");
+                if (targetPath.equalsIgnoreCase(location)) {
+                  var newKey = baseKey + '\\' + (united ? stripCeSuffixes(productKey) : productKey) + '\\' + buildNumber;
+                  LOG.info("found: " + formatKey(rootKey, oldKey) + "; moving to: " + formatKey(rootKey, newKey));
+                  Advapi32Util.registryCreateKey(rootKey, newKey);
+                  for (var entry : Advapi32Util.registryGetValues(rootKey, oldKey).entrySet()) {
+                    Advapi32Util.registrySetStringValue(rootKey, newKey, entry.getKey(), entry.getValue().toString());
+                  }
+                  Advapi32Util.registryDeleteKey(rootKey, oldKey);
+                  return;
                 }
-                Advapi32Util.registryDeleteKey(rootKey, oldKey);
-                return;
               }
-            }
-            catch (Win32Exception e) {
-              LOG.log(Level.FINE, e, () -> "updateManufacturerSection: " + formatKey(rootKey, baseKey, productKey, buildKey));
+              catch (Win32Exception e) {
+                if (e.getHR().intValue() != ERROR_FILE_NOT_FOUND) {
+                  LOG.log(Level.FINE, e, () -> "updateManufacturerSection: " + formatKey(rootKey, baseKey, productKey, buildKey));
+                }
+              }
             }
           }
         }
@@ -108,7 +131,6 @@ final class PostUpdateTasks {
 
   private static void updateContextMenuEntries(String targetPath) {
     try {
-      LOG.info("updateContextMenuEntries for: " + targetPath);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
       var updated = false;
       for (var rootKey : rootKeys) {
@@ -131,6 +153,7 @@ final class PostUpdateTasks {
 
   private static boolean processContextMenuKey(WinReg.HKEY rootKey, String baseKey, boolean fileAssociation, String targetPath) {
     var updated = false;
+    LOG.info("scanning: " + formatKey(rootKey, baseKey));
     for (var subKey : getRegistryGetKeys(rootKey, baseKey)) {
       if (fileAssociation && (baseKey.startsWith(".") || baseKey.startsWith("ms-") || baseKey.startsWith("microsoft"))) continue;
       try {
@@ -139,17 +162,20 @@ final class PostUpdateTasks {
           ? Advapi32Util.registryGetStringValue(rootKey, key + "\\DefaultIcon", "")
           : Advapi32Util.registryGetStringValue(rootKey, key, "Icon");
         if (iconPath.regionMatches(true, 0, targetPath, 0, targetPath.length())) {
+          LOG.info("found: " + formatKey(rootKey, key));
           var name = Advapi32Util.registryGetStringValue(rootKey, key, "");
           var newName = stripCeSuffixes(name);
           if (!name.equals(newName)) {
-            LOG.info("key: " + formatKey(rootKey, baseKey, subKey));
+            LOG.info("renaming '" + name + "' to '" + newName + "'");
             Advapi32Util.registrySetStringValue(rootKey, key, "", newName);
             updated = true;
           }
         }
       }
       catch (Win32Exception e) {
-        LOG.log(Level.FINE, e, () -> "processContextMenuKey: " + formatKey(rootKey, baseKey, subKey));
+        if (e.getHR().intValue() != ERROR_FILE_NOT_FOUND) {
+          LOG.log(Level.FINE, e, () -> "processContextMenuKey: " + formatKey(rootKey, baseKey, subKey));
+        }
       }
     }
     return updated;
@@ -160,7 +186,9 @@ final class PostUpdateTasks {
       return Advapi32Util.registryGetKeys(rootKey, key);
     }
     catch (Win32Exception e) {
-      LOG.log(Level.FINE, e, () -> "registryGetKeys(" + formatKey(rootKey, key) + ')');
+      if (e.getHR().intValue() != ERROR_FILE_NOT_FOUND) {
+        LOG.log(Level.FINE, e, () -> "registryGetKeys(" + formatKey(rootKey, key) + ')');
+      }
       return EMPTY_ARRAY;
     }
   }
@@ -194,7 +222,7 @@ final class PostUpdateTasks {
   }
 
   static void updateWindowsShortcuts(Path targetDir, String nameAndVersion) {
-    LOG.info("updateWindowsShortcuts for: " + targetDir);
+    LOG.info("path: " + targetDir + "; name/version: " + nameAndVersion);
     try {
       var desktop = getFolderPath(ShlObj.CSIDL_DESKTOPDIRECTORY, () -> Path.of(System.getProperty("user.home"), "Desktop"));
       var commonDesktop = getFolderPath(ShlObj.CSIDL_COMMON_DESKTOPDIRECTORY, () -> Path.of(System.getenv("PUBLIC"), "Desktop"));
@@ -205,6 +233,7 @@ final class PostUpdateTasks {
       var targetPath = targetDir.toString();
       var versionPattern = Pattern.compile("\\d+\\.\\d+");
       for (var folder : List.of(desktop, commonDesktop, startMenu, commonStartMenu)) {
+        LOG.info("scanning: " + folder);
         if (Files.isDirectory(folder)) {
           Files.walkFileTree(folder, Set.of(), 1, new SimpleFileVisitor<>() {
             @Override
@@ -215,7 +244,7 @@ final class PostUpdateTasks {
                 versionPattern.matcher(shortcutName).find() &&
                 targetPath.equalsIgnoreCase(getLinkTarget(shortcutFile))
               ) {
-                LOG.info("link: " + shortcutFile);
+                LOG.info("found: " + shortcutFile);
                 var newShortcutFile = shortcutFile.resolveSibling(nameAndVersion + ".lnk");
                 if (!Files.exists(newShortcutFile)) {
                   try {

@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  SamInterface.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/samConversions/methodSignatureChanged/a/SamInterface.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_samConversions_methodSignatureChanged-a.kotlin_module
+  UsageWithFunctionExpressionKt$usageWithFunctionExpression$a$1.class
+  UsageWithFunctionExpressionKt.class
+  UsageWithFunctionLiteralKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/samConversions/methodSignatureChanged/a/usageWithFunctionExpression.kt
+  kotlin/withJava/javaUsedInKotlin/samConversions/methodSignatureChanged/a/usageWithFunctionLiteral.kt
+End of files
+------------------------------------------
+Exit code: OK

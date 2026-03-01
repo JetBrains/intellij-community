@@ -32,7 +32,7 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.BitSet
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
@@ -44,7 +44,7 @@ private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::cla
 internal typealias FileId = Int
 private fun FileId.fileInfo(): String = "file id=$this path=${ManagingFS.getInstance().findFileById(this)?.path}"
 
-private class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
+internal class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

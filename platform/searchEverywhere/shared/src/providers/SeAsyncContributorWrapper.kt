@@ -12,12 +12,13 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+import com.intellij.platform.searchEverywhere.SeItemsProviderWithPossibleOperationDisposable
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeAsyncContributorWrapper<I : Any>(val contributor: SearchEverywhereContributor<I>) : Disposable {
-  suspend fun fetchElements(pattern: String, consumer: AsyncProcessor<I>) {
+  suspend fun fetchElements(pattern: String, consumer: AsyncProcessor<I>, operationDisposable: Disposable? = null) {
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
       if (pattern.isEmpty() && !contributor.isEmptyPatternSupported) return@coroutineToIndicator

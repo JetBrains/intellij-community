@@ -1,9 +1,9 @@
 MODULES
 project.commonMain
     fqName: commonMain.main
-    name: CommonMain [jvm]
+    name: commonMain.CommonMain [jvm]
     type: Gradle
-    tasks: [jvmRun]
+    tasks: [:jvmRun]
     scriptParameters: -DmainClass=commonMain.CommonMainKt --quiet
     isDebugAllEnabled: false
     isRunAsTest: false
@@ -13,9 +13,9 @@ project.iosMain
 
 project.jvmMain
     fqName: jvmMain.main
-    name: JvmMain [jvm]
+    name: jvmMain.JvmMain [jvm]
     type: Gradle
-    tasks: [jvmRun]
+    tasks: [:jvmRun]
     scriptParameters: -DmainClass=jvmMain.JvmMainKt --quiet
     isDebugAllEnabled: false
     isRunAsTest: false

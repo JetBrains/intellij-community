@@ -1,13 +1,26 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorBase;
+import com.intellij.codeInspection.ex.DynamicGroupTool;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,9 +43,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.Function;
+
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 
 /**
  * @author Bas Leijdekkers
@@ -41,6 +57,7 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
 
   public static final String SHORT_NAME = "CustomRegExpInspection";
   public final List<RegExpInspectionConfiguration> myConfigurations = new SmartList<>();
+  private volatile @Unmodifiable List<LocalInspectionToolWrapper> myChildrenCached = null;
   private InspectionProfileImpl mySessionProfile;
 
   public static CustomRegExpInspection getCustomRegExpInspection(@NotNull InspectionProfile profile) {
@@ -77,7 +94,7 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
     for (RegExpInspectionConfiguration configuration : myConfigurations) {
       final String uuid = configuration.getUuid();
       final ToolsImpl tools = profile.getToolsOrNull(uuid, project);
-      if (tools != null && !tools.isEnabled(file)) {
+      if (tools == null || !tools.isEnabled(file)) {
         continue;
       }
       addInspectionToProfile(project, profile, configuration); // hack
@@ -85,7 +102,7 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
 
       for (RegExpInspectionConfiguration.InspectionPattern pattern : configuration.getPatterns()) {
         FileType fileType = pattern.fileType();
-        if (UnknownFileType.INSTANCE != fileType && file.getFileType() != fileType) continue;
+        if (fileType != null && fileType != UnknownFileType.INSTANCE && file.getFileType() != fileType) continue;
         final FindModel model = new FindModel();
         model.setRegularExpressions(true);
         model.setRegExpFlags(pattern.flags);
@@ -108,9 +125,15 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
           final int start = result.getStartOffset() - elementRange.getStartOffset();
           final TextRange warningRange = new TextRange(start, result.getEndOffset() - result.getStartOffset() + start);
           final String problemDescriptor = StringUtil.defaultIfEmpty(configuration.getProblemDescriptor(), configuration.getName());
-          final CustomRegExpQuickFix fix = replacement == null ? null : new CustomRegExpQuickFix(findManager, model, text, result);
+          final LocalQuickFix[] fix = replacement == null 
+                                      ? LocalQuickFix.EMPTY_ARRAY 
+                                      : new LocalQuickFix[] {new CustomRegExpQuickFix(findManager, model, text, result)};
           final ProblemDescriptor descriptor =
-            manager.createProblemDescriptor(element, warningRange, problemDescriptor, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, fix);
+            manager.createProblemDescriptor(element, warningRange, problemDescriptor, GENERIC_ERROR_OR_WARNING, isOnTheFly, fix);
+          descriptor.setProblemGroup(new ProblemGroup() {
+            @Override
+            public String getProblemName() { return uuid; }
+          });
           descriptors.add(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, uuid));
           result = findManager.findString(text, result.getEndOffset(), model, vFile);
         }
@@ -131,12 +154,7 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
       }
       final String suppressId = configuration.getSuppressId();
       final String name = configuration.getName();
-      if (suppressId == null) {
-        HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME, null, configuration);
-      }
-      else {
-        HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME, configuration);
-      }
+      HighlightDisplayKey.register(shortName, () -> name, StringUtil.isEmpty(suppressId) ? SHORT_NAME : suppressId, null, configuration);
     }, ModalityState.nonModal());
   }
 
@@ -164,33 +182,37 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
 
   @Override
   public @NotNull List<LocalInspectionToolWrapper> getChildren() {
-    return ContainerUtil.map(myConfigurations, CustomRegExpInspectionToolWrapper::new);
+    if (myChildrenCached == null) {
+      myChildrenCached = ContainerUtil.map(myConfigurations, CustomRegExpInspectionToolWrapper::new);
+    }
+    return myChildrenCached;
   }
 
   public void addConfiguration(RegExpInspectionConfiguration configuration) {
     if (!myConfigurations.contains(configuration)) {
       myConfigurations.add(configuration);
+      myChildrenCached = null;
     }
   }
 
   public void updateConfiguration(RegExpInspectionConfiguration configuration) {
     myConfigurations.remove(configuration);
     myConfigurations.add(configuration);
+    myChildrenCached = null;
   }
 
   public void removeConfigurationWithUuid(String uuid) {
-    myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
+    if (myConfigurations.removeIf(c -> c.getUuid().equals(uuid))) {
+      myChildrenCached = null;
+    }
   }
 
-  public List<RegExpInspectionConfiguration> getConfigurations() {
-    return myConfigurations;
-  }
-
-  public @NotNull InspectionMetaDataDialog createMetaDataDialog(Project project, @NotNull String profileName, @Nullable RegExpInspectionConfiguration configuration) {
+  public @NotNull InspectionMetaDataDialog createMetaDataDialog(@NotNull Project project, 
+                                                                @NotNull String profileName, 
+                                                                @Nullable RegExpInspectionConfiguration configuration) {
     Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator = name -> {
       for (RegExpInspectionConfiguration current : myConfigurations) {
-        if ((configuration == null || !configuration.getUuid().equals(current.getUuid())) &&
-            current.getName().equals(name)) {
+        if ((configuration == null || !configuration.getUuid().equals(current.getUuid())) && current.getName().equals(name)) {
           return RegExpBundle.message("dialog.message.inspection.with.name.exists.warning", name);
         }
       }

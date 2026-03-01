@@ -18,7 +18,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinFileType;
 import org.jetbrains.kotlin.idea.util.FormatterUtilKt;
 import org.jetbrains.kotlin.lexer.KtTokens;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.KtAnnotationEntry;
+import org.jetbrains.kotlin.psi.KtAnnotationUseSiteTarget;
+import org.jetbrains.kotlin.psi.KtBlockExpression;
+import org.jetbrains.kotlin.psi.KtFunctionLiteral;
 
 public abstract class AbstractKotlinUpDownMover extends LineMover {
     protected AbstractKotlinUpDownMover() {

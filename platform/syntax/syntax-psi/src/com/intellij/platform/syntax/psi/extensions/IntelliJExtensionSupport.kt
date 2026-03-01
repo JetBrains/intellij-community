@@ -3,9 +3,9 @@ package com.intellij.platform.syntax.psi.extensions
 
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.syntax.SyntaxLanguage
 import com.intellij.platform.syntax.extensions.ExtensionPointKey
 import com.intellij.platform.syntax.extensions.ExtensionSupport
-import com.intellij.platform.syntax.SyntaxLanguage
 import java.util.concurrent.ConcurrentHashMap
 
 /**

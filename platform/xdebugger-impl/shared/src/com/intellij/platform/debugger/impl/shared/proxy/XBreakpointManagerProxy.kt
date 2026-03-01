@@ -10,6 +10,7 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 interface XBreakpointManagerProxy {
@@ -37,12 +38,13 @@ interface XBreakpointManagerProxy {
   fun subscribeOnBreakpointsChanges(disposable: Disposable, listener: () -> Unit)
   fun getLastRemovedBreakpoint(): XBreakpointProxy?
 
-  fun removeBreakpoint(breakpoint: XBreakpointProxy)
+  fun removeBreakpoint(breakpoint: XBreakpointProxy): CompletableFuture<Void?>
 
   fun rememberRemovedBreakpoint(breakpoint: XBreakpointProxy)
   fun restoreRemovedBreakpoint(breakpoint: XBreakpointProxy)
 
   fun copyLineBreakpoint(breakpoint: XLineBreakpointProxy, file: VirtualFile, line: Int)
+  fun onBreakpointRemoval(breakpoint: XLineBreakpointProxy, session: XDebugSessionProxy)
 
   fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? =
     findBreakpointsAtLine(type, file, line).firstOrNull()

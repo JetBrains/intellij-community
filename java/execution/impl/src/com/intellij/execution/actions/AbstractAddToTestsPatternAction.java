@@ -7,7 +7,13 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -18,8 +24,12 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigurationBase> extends AnAction {
 

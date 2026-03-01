@@ -15,7 +15,33 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -106,14 +132,6 @@ public abstract class LocalToFieldHandler {
   public static boolean isCompileTimeConstant(@Nullable PsiExpression initializer, @Nullable PsiType type) {
     return type != null && (type instanceof PsiPrimitiveType || type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) &&
            PsiUtil.isConstantExpression(initializer);
-  }
-
-  /**
-   * @deprecated Use {@link #isStaticFieldAllowed(PsiClass)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean mayContainConstants(@NotNull PsiClass aClass) {
-    return isStaticFieldAllowed(aClass);
   }
 
   /**

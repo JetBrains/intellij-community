@@ -21,29 +21,25 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSource: ExtractedDirectoryPackagingElementEntityData) : ExtractedDirectoryPackagingElementEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSource: ExtractedDirectoryPackagingElementEntityData) :
+  ExtractedDirectoryPackagingElementEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
                                                                                 PackagingElementEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
-
-    private val connections = listOf<ConnectionId>(
-      PARENTENTITY_CONNECTION_ID,
-    )
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
+                                                                                true)
+    private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID)
 
   }
 
   override val parentEntity: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
-
   override val filePath: VirtualFileUrl
     get() {
       readField("filePath")
       return dataSource.filePath
     }
-
   override val pathInArchive: String
     get() {
       readField("pathInArchive")
@@ -61,8 +57,9 @@ internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSour
   }
 
 
-  internal class Builder(result: ExtractedDirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity, ExtractedDirectoryPackagingElementEntityData>(
-    result), ExtractedDirectoryPackagingElementEntity.Builder {
+  internal class Builder(result: ExtractedDirectoryPackagingElementEntityData?) :
+    ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity, ExtractedDirectoryPackagingElementEntityData>(result),
+    ExtractedDirectoryPackagingElementEntity.Builder {
     internal constructor() : this(ExtractedDirectoryPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -75,15 +72,13 @@ internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSour
           error("Entity ExtractedDirectoryPackagingElementEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -123,7 +118,6 @@ internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSour
         changedProperty.add("entitySource")
 
       }
-
     override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
@@ -143,25 +137,24 @@ internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSour
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
@@ -176,7 +169,6 @@ internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSour
         val _diff = diff
         if (_diff != null) index(this, "filePath", value)
       }
-
     override var pathInArchive: String
       get() = getEntityData().pathInArchive
       set(value) {
@@ -187,6 +179,7 @@ internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSour
 
     override fun getEntityClass(): Class<ExtractedDirectoryPackagingElementEntity> = ExtractedDirectoryPackagingElementEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -216,8 +209,7 @@ internal class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityDat
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -226,7 +218,8 @@ internal class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityDat
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive, entitySource) {
-      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.parentEntity =
+        parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
     }
   }
 
@@ -238,9 +231,7 @@ internal class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityDat
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ExtractedDirectoryPackagingElementEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.filePath != other.filePath) return false
     if (this.pathInArchive != other.pathInArchive) return false
@@ -250,9 +241,7 @@ internal class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityDat
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ExtractedDirectoryPackagingElementEntityData
-
     if (this.filePath != other.filePath) return false
     if (this.pathInArchive != other.pathInArchive) return false
     return true

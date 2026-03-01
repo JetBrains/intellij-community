@@ -12,10 +12,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A class for defining 'command' scopes. Every undoable change should be executed as part of a command. Commands can nest, in such a case
- * only the outer-most command is taken into account. Commands with the same 'group id' are merged for undo/redo purposes. 'Transparent'
- * actions (commands) are similar to usual commands but don't create a separate undo/redo step - they are undone/redone together with a
- * 'adjacent' non-transparent commands.
+ * A class for defining command scopes.
+ * <p>
+ * Every undoable change should be executed as part of a command.
+ * A command is simply a {@link Runnable} wrapped with metadata and executed through a {@link CommandProcessor} to enable proper undo/redo tracking.
+ * <p>
+ * Commands can nest.
+ * In such a case only the outermost command is taken into account when undo is requested.
+ * <p>
+ * Commands with the same "group id" are merged for undo/redo purposes.
+ * <p>
+ * <i>Transparent actions (commands)</i> are similar to usual commands but don't create a separate undo/redo step –
+ * they are undone/redone together with the 'adjacent' non-transparent command.
  */
 public abstract class CommandProcessor {
   public static CommandProcessor getInstance() {

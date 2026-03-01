@@ -4,7 +4,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @see DomUIFactory

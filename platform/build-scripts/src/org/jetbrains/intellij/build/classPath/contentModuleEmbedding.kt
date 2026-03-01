@@ -21,23 +21,25 @@
 package org.jetbrains.intellij.build.classPath
 
 import com.intellij.openapi.util.JDOMUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jdom.CDATA
 import org.jdom.Element
+import org.jdom.Namespace
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.findFileInModuleDependencies
+import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findUnprocessedDescriptorContent
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.LayoutPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
-import org.jetbrains.intellij.build.impl.XIncludeElementResolver
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
-import org.jetbrains.intellij.build.impl.resolveIncludes
 import org.jetbrains.intellij.build.impl.toLoadPath
+import org.jetbrains.jps.model.module.JpsModuleDependency
 
 /**
  * Defines a search scope for resolving XInclude references in plugin descriptors.
@@ -85,7 +87,7 @@ internal data class DescriptorSearchScope(
  * @param xIncludeResolver The resolver for xi:include elements
  * @param context The build context
  */
-internal fun embedContentModules(
+internal suspend fun embedContentModules(
   rootElement: Element,
   pluginLayout: PluginLayout,
   pluginDescriptorContainer: ScopedCachedDescriptorContainer,
@@ -137,21 +139,24 @@ fun deprecatedResolveDescriptor(
         context = context
       )
 
-      resolveIncludes(element = xml, elementResolver = xIncludeResolver)
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking(Dispatchers.IO) {
+        resolveIncludes(element = xml, elementResolver = xIncludeResolver)
 
-      for (contentElement in xml.getChildren("content")) {
-        for (moduleElement in contentElement.getChildren("module")) {
-          val moduleName = moduleElement.getAttributeValue("name") ?: continue
-          embedContentModule(
-            moduleElement = moduleElement,
-            pluginDescriptorContainer = clientDescriptorCache,
-            xIncludeResolver = xIncludeResolver,
-            moduleName = moduleName,
-            dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
-            pluginLayout = PluginLayout.pluginAuto(clientModuleName) {},
-            frontendModuleFilter = context.getFrontendModuleFilter(),
-            outputProvider = context.outputProvider,
-          )
+        for (contentElement in xml.getChildren("content")) {
+          for (moduleElement in contentElement.getChildren("module")) {
+            val moduleName = moduleElement.getAttributeValue("name") ?: continue
+            embedContentModule(
+              moduleElement = moduleElement,
+              pluginDescriptorContainer = clientDescriptorCache,
+              xIncludeResolver = xIncludeResolver,
+              moduleName = moduleName,
+              dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
+              pluginLayout = PluginLayout.pluginAuto(clientModuleName) {},
+              frontendModuleFilter = context.getFrontendModuleFilter(),
+              outputProvider = context.outputProvider,
+            )
+          }
         }
       }
 
@@ -178,29 +183,32 @@ fun deprecatedResolveDescriptor(
       context = context
     )
 
-    resolveIncludes(element = xml, elementResolver = xIncludeResolver)
+    @Suppress("RAW_RUN_BLOCKING")
+    return@withDeprecatedPostProcessor runBlocking(Dispatchers.IO) {
+      resolveIncludes(element = xml, elementResolver = xIncludeResolver)
 
-    for (contentElement in xml.getChildren("content")) {
-      for (moduleElement in contentElement.getChildren("module")) {
-        val moduleName = moduleElement.getAttributeValue("name") ?: continue
-        embedContentModule(
-          moduleElement = moduleElement,
-          pluginDescriptorContainer = pluginCachedDescriptorContainer,
-          xIncludeResolver = xIncludeResolver,
-          moduleName = moduleName,
-          dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
-          pluginLayout = pluginLayout,
-          frontendModuleFilter = context.getFrontendModuleFilter(),
-          outputProvider = context.outputProvider,
-        )
+      for (contentElement in xml.getChildren("content")) {
+        for (moduleElement in contentElement.getChildren("module")) {
+          val moduleName = moduleElement.getAttributeValue("name") ?: continue
+          embedContentModule(
+            moduleElement = moduleElement,
+            pluginDescriptorContainer = pluginCachedDescriptorContainer,
+            xIncludeResolver = xIncludeResolver,
+            moduleName = moduleName,
+            dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
+            pluginLayout = pluginLayout,
+            frontendModuleFilter = context.getFrontendModuleFilter(),
+            outputProvider = context.outputProvider,
+          )
+        }
       }
-    }
 
-    JDOMUtil.write(xml).encodeToByteArray()
+      JDOMUtil.write(xml).encodeToByteArray()
+    }
   }
 }
 
-internal fun embedContentModule(
+internal suspend fun embedContentModule(
   moduleElement: Element,
   pluginDescriptorContainer: ScopedCachedDescriptorContainer,
   xIncludeResolver: XIncludeElementResolverImpl,
@@ -229,34 +237,23 @@ internal fun embedContentModule(
   )
 }
 
-/**
- * Resolves and loads a content module descriptor from cache or source.
- *
- * Cache strategy:
- * 1. Check `cachedDescriptorContainer` for already-processed descriptor
- * 2. If not cached, load from module sources and cache it
- * 3. Resolve xi:include elements
- * 4. Return processed Element
- *
- * Critical: This function reads from the cache **after** scrambling, ensuring scrambled class names are used.
- *
- * @param moduleName The name of the content module (e.g., "my.plugin.core")
- * @param descriptorCache The scoped cache containing descriptors
- * @param xIncludeResolver The resolver for xi:include elements
- * @param context The compilation context
- * @return The resolved descriptor element with xi:includes processed
- */
-private fun resolveContentModuleDescriptor(
+private suspend fun resolveContentModuleDescriptor(
   moduleName: String,
   descriptorCache: ScopedCachedDescriptorContainer,
-  xIncludeResolver: XIncludeElementResolver,
+  xIncludeResolver: XIncludeElementResolverImpl,
   outputProvider: ModuleOutputProvider,
 ): Element {
   val descriptorFilename = contentModuleNameToDescriptorFileName(moduleName)
   val data = descriptorCache.getCachedFileData(descriptorFilename)
   val element = if (data == null) {
     val jpsModuleName = moduleName.substringBeforeLast('/')
-    val data = requireNotNull(findUnprocessedDescriptorContent(module = outputProvider.findRequiredModule(jpsModuleName), path = descriptorFilename, outputProvider = outputProvider)) {
+    val data = requireNotNull(
+      findUnprocessedDescriptorContent(
+        module = outputProvider.findRequiredModule(jpsModuleName),
+        path = descriptorFilename,
+        outputProvider = outputProvider,
+      )
+    ) {
       "Cannot find file $descriptorFilename in module $jpsModuleName"
     }
     descriptorCache.putIfAbsent(descriptorFilename, data)
@@ -269,30 +266,7 @@ private fun resolveContentModuleDescriptor(
   return element
 }
 
-/**
- * Resolves a content module descriptor and embeds it as CDATA in the module element.
- *
- * This is a helper function that combines resolution and embedding into a single operation.
- * It's designed to simplify the common pattern of: extract moduleName → check empty content → resolve → embed.
- *
- * Key features:
- * - Early return if content is already embedded (idempotent)
- * - Resolves descriptor from cache (post-scrambling if applicable)
- * - Supports optional descriptor modifications via callback (e.g., adding attributes)
- * - Embeds result as CDATA, ensuring XML special characters are preserved
- *
- * Critical: This function reads from the cache **after** scrambling has been applied,
- * ensuring that scrambled class names are correctly embedded.
- *
- * See [CONTENT_MODULE_EMBEDDING.md](../../CONTENT_MODULE_EMBEDDING.md) for architecture details.
- *
- * @param moduleElement The `<module>` element to embed content into
- * @param descriptorCache The scoped cache containing post-scrambling descriptors
- * @param xIncludeResolver The resolver for xi:include elements
- * @param context The compilation context
- * @param descriptorModifier Optional callback to modify the resolved descriptor before embedding
- */
-internal fun resolveAndEmbedContentModuleDescriptor(
+internal suspend fun resolveAndEmbedContentModuleDescriptor(
   moduleElement: Element,
   descriptorCache: ScopedCachedDescriptorContainer,
   xIncludeResolver: XIncludeElementResolverImpl,
@@ -318,7 +292,7 @@ internal fun resolveAndEmbedContentModuleDescriptor(
 internal class XIncludeElementResolverImpl(
   private val searchPath: List<DescriptorSearchScope>,
   private val context: BuildContext,
-) : XIncludeElementResolver {
+) {
   fun copyWithExtraSearchPath(moduleName: String, container: ScopedCachedDescriptorContainer): XIncludeElementResolverImpl {
     for (scope in searchPath) {
       if (scope.modules.contains(moduleName)) {
@@ -340,7 +314,7 @@ internal class XIncludeElementResolverImpl(
     )) + searchPath, context)
   }
 
-  override fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element? {
+  suspend fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element? {
     if (isOptional || isDynamic) {
       // It isn't safe to resolve includes at build time if they're optional.
       // This could lead to issues when running another product using this distribution.
@@ -358,7 +332,11 @@ internal class XIncludeElementResolverImpl(
 
       val outputProvider = context.outputProvider
       for (module in searchPath.modules) {
-        findUnprocessedDescriptorContent(outputProvider.findRequiredModule(module), loadPath, outputProvider)?.let { data ->
+        findUnprocessedDescriptorContent(
+          outputProvider.findRequiredModule(module),
+          loadPath,
+          outputProvider,
+        )?.let { data ->
           descriptorCache.putIfAbsent(loadPath, data)
           return JDOMUtil.load(data)
         }
@@ -384,23 +362,199 @@ internal class XIncludeElementResolverImpl(
     }
 
     if (searchPath.singleOrNull()?.searchInDependencies == DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR) {
-      if (badIncludesForPluginCollector.contains(loadPath)) {
-        return null
-      }
-
-      //  run CodeServerBuildTest
-      if (loadPath.startsWith("META-INF/bdide-")) {
-        return null
-      }
       val requestor = searchPath.singleOrNull()?.modules?.singleOrNull()
-      if (requestor != null && (requestor.startsWith("intellij.android.") ||
-                                requestor == "intellij.rustrover.plugin" ||
-                                requestor == "intellij.javascript.plugin")) {
+      if (shouldSkipPluginCollectorInclude(loadPath, requestor)) {
         return null
       }
     }
     throw IllegalStateException("Cannot resolve '$loadPath' in $searchPath")
   }
+}
+
+private fun shouldSkipPluginCollectorInclude(loadPath: String, requestor: String?): Boolean {
+  if (badIncludesForPluginCollector.contains(loadPath)) {
+    return true
+  }
+
+  //  run CodeServerBuildTest
+  if (loadPath.startsWith("META-INF/bdide-")) {
+    return true
+  }
+  return requestor != null && (requestor.startsWith("intellij.android.") ||
+                               requestor == "intellij.rustrover.plugin" ||
+                               requestor == "intellij.javascript.plugin")
+}
+
+private fun isIncludeElementFor(element: Element): Boolean {
+  return element.name == "include" && element.namespace == JDOMUtil.XINCLUDE_NAMESPACE
+}
+
+internal suspend fun resolveIncludes(element: Element, elementResolver: XIncludeElementResolverImpl) {
+  check(!isIncludeElementFor(element))
+  doResolveNonXIncludeElementFromCache(original = element, elementResolver = elementResolver)
+}
+
+@Suppress("DuplicatedCode")
+private suspend fun resolveXIncludeElement(
+  element: Element,
+  elementResolver: XIncludeElementResolverImpl,
+): MutableList<Element>? {
+  val href = requireNotNull(element.getAttributeValue("href")) { "Missing href attribute" }
+
+  val baseAttribute = element.getAttributeValue("base", Namespace.XML_NAMESPACE)
+  if (baseAttribute != null) {
+    throw UnsupportedOperationException("`base` attribute is not supported")
+  }
+
+  val fallbackElement = element.getChild("fallback", element.namespace)
+  val isDynamic = element.getAttribute("includeUnless") != null || element.getAttribute("includeIf") != null
+  val remoteElement = elementResolver.resolveElement(
+    relativePath = href,
+    isOptional = fallbackElement != null,
+    isDynamic = isDynamic,
+  ) ?: return null
+
+  val remoteParsed = extractNeededChildrenFor(element, remoteElement)
+
+  // Process all children, recursively resolving any nested xi:include elements
+  var i = 0
+  while (i < remoteParsed.size) {
+    val child = remoteParsed[i]
+    if (isIncludeElementFor(child)) {
+      val elements = resolveXIncludeElement(element = child, elementResolver = elementResolver)
+      if (elements != null) {
+        if (elements.isEmpty()) {
+          // Remove the xi:include element that resolves to nothing
+          remoteParsed.removeAt(i)
+          i--  // Adjust index since we removed an element
+        }
+        else {
+          // Replace the xi:include element with resolved elements
+          remoteParsed.removeAt(i)
+          remoteParsed.addAll(i, elements)
+          // Skip over the newly inserted elements (loop will increment i by 1)
+          i += elements.size - 1
+        }
+      }
+    }
+    else {
+      doResolveNonXIncludeElementFromCache(original = child, elementResolver = elementResolver)
+    }
+
+    i++
+  }
+
+  for (elementToDetach in remoteParsed) {
+    elementToDetach.detach()
+  }
+  return remoteParsed
+}
+
+private suspend fun doResolveNonXIncludeElementFromCache(original: Element, elementResolver: XIncludeElementResolverImpl) {
+  val contentList = original.content
+  for (i in contentList.size - 1 downTo 0) {
+    val content = contentList[i]
+    if (content is Element) {
+      if (isIncludeElementFor(content)) {
+        val result = resolveXIncludeElement(element = content, elementResolver = elementResolver)
+        if (result != null) {
+          original.setContent(i, result)
+        }
+      }
+      else {
+        // process child element to resolve possible includes
+        doResolveNonXIncludeElementFromCache(original = content, elementResolver = elementResolver)
+      }
+    }
+  }
+}
+
+@Suppress("DuplicatedCode")
+private fun extractNeededChildrenFor(element: Element, remoteElement: Element): MutableList<Element> {
+  val xpointer = element.getAttributeValue("xpointer") ?: "xpointer(/idea-plugin/*)"
+
+  var matcher = JDOMUtil.XPOINTER_PATTERN.matcher(xpointer)
+  if (!matcher.matches()) {
+    throw RuntimeException("Unsupported XPointer: $xpointer")
+  }
+
+  val pointer = matcher.group(1)
+  matcher = JDOMUtil.CHILDREN_PATTERN.matcher(pointer)
+  if (!matcher.matches()) {
+    throw RuntimeException("Unsupported pointer: $pointer")
+  }
+
+  val rootTagName = matcher.group(1)
+
+  var e = remoteElement
+  if (e.name != rootTagName) {
+    return mutableListOf()
+  }
+
+  val subTagName = matcher.group(2)
+  if (subTagName != null) {
+    // cut off the slash
+    e = requireNotNull(e.getChild(subTagName.substring(1))) { "Child element not found: ${subTagName.substring(1)}" }
+  }
+  return e.children.toMutableList()
+}
+
+private suspend fun findFileInModuleDependencies(
+  module: org.jetbrains.jps.model.module.JpsModule,
+  relativePath: String,
+  outputProvider: ModuleOutputProvider,
+  processedModules: MutableSet<String>,
+  recursiveModuleExclude: String? = null,
+): ByteArray? {
+  findFileInModuleLibraryDependencies(module, relativePath, outputProvider)?.let {
+    return it
+  }
+
+  return findFileInModuleDependenciesRecursive(
+    module = module,
+    relativePath = relativePath,
+    provider = outputProvider,
+    processedModules = processedModules,
+    recursiveModuleExclude = recursiveModuleExclude,
+  )
+}
+
+private suspend fun findFileInModuleDependenciesRecursive(
+  module: org.jetbrains.jps.model.module.JpsModule,
+  relativePath: String,
+  provider: ModuleOutputProvider,
+  processedModules: MutableSet<String>,
+  recursiveModuleExclude: String? = null,
+): ByteArray? {
+  for (dependency in module.dependenciesList.dependencies) {
+    if (dependency !is JpsModuleDependency) {
+      continue
+    }
+
+    val moduleName = dependency.moduleReference.moduleName
+    if (!processedModules.add(moduleName)) {
+      continue
+    }
+
+    val dependentModule = provider.findRequiredModule(moduleName)
+    findUnprocessedDescriptorContent(module = dependentModule, path = relativePath, outputProvider = provider)?.let {
+      return it
+    }
+
+    // if recursiveModuleFilter is null, it means that non-direct search not needed
+    if (recursiveModuleExclude != null && !moduleName.startsWith(recursiveModuleExclude)) {
+      findFileInModuleDependenciesRecursive(
+        module = dependentModule,
+        relativePath = relativePath,
+        provider = provider,
+        processedModules = processedModules,
+        recursiveModuleExclude = recursiveModuleExclude,
+      )?.let {
+        return it
+      }
+    }
+  }
+  return null
 }
 
 private val badIncludesForPluginCollector = hashSetOf(

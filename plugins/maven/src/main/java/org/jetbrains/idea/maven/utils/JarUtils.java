@@ -18,7 +18,7 @@ public final class JarUtils {
   public static @Nullable Properties loadProperties(@NotNull Path file, @NotNull String entryName) {
     if (Files.isReadable(file)) {
       try {
-        try (JBZipFile zipFile = new JBZipFile(file.toFile(), true)) {
+        try (JBZipFile zipFile = new JBZipFile(file, true)) {
           JBZipEntry entry = zipFile.getEntry(entryName);
           if (entry != null) {
             Properties properties = new Properties();
@@ -38,7 +38,7 @@ public final class JarUtils {
   public static String getJarAttribute(Path file, String entryName, Attributes.Name attribute) {
     if (Files.isReadable(file)) {
       try (
-        JBZipFile zipFile = new JBZipFile(file.toFile(), true)
+        JBZipFile zipFile = new JBZipFile(file, true)
       ) {
         for (JBZipEntry entry : zipFile.getEntries()) {
           if ("META-INF/MANIFEST.MF".equals(entry.getName())) {

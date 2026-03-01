@@ -31,7 +31,7 @@ import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
   XsltVariableImpl(XmlTag target) {

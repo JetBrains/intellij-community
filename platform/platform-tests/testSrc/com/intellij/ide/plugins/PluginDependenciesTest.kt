@@ -4,9 +4,16 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.testFramework.plugins.appService
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
+import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
+import com.intellij.platform.testFramework.plugins.pluginAlias
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
@@ -588,7 +595,12 @@ internal class PluginDependenciesTest {
     }.buildDir(pluginDirPath.resolve("intellij.java.frontend"))
 
     val pluginSet = buildPluginSet()
-    assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
+    if (System.getProperty("intellij.platform.plugin.modules.use.namespace.in.id") == "true") {
+      assertThat(pluginSet).hasExactlyEnabledPlugins("com.intellij.java")
+    } else {
+      // content module id conflict
+      assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    }
   }
 
   @Test

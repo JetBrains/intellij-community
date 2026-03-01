@@ -31,7 +31,7 @@ public class DuplicateAlternationBranchInspectionTest extends RegExpInspectionTe
   }
 
   public void testBrokenRange() {
-    highlightTest("<warning descr=\"Duplicate branch in alternation\">[a-<error descr=\"Illegal character range\">\\</error>w]</warning>|<warning descr=\"Duplicate branch in alternation\">[a-<error descr=\"Illegal character range\">\\</error>w]</warning>");
+    highlightTest("<warning descr=\"Duplicate branch in alternation\">[a-<error descr=\"'\\w' not allowed as end of range\">\\w</error>]</warning>|<warning descr=\"Duplicate branch in alternation\">[a-<error descr=\"'\\w' not allowed as end of range\">\\w</error>]</warning>");
   }
 
   @NotNull

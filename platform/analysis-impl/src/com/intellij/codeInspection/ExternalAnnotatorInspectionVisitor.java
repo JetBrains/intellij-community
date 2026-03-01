@@ -4,15 +4,12 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotatorInspectionVisitor.class);
@@ -51,7 +48,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       return ReadAction.compute(() -> AnnotationSessionImpl.computeWithSession(file, true, annotator, annotationHolder -> {
         ((AnnotationHolderImpl)annotationHolder).applyExternalAnnotatorWithContext(file, annotationResult);
         ((AnnotationHolderImpl)annotationHolder).assertAllAnnotationsCreated();
-        return ProblemDescriptorUtil.convertToProblemDescriptors((List<? extends Annotation>)annotationHolder, file);
+        return ProblemDescriptorUtil.convertToProblemDescriptors((AnnotationHolderImpl)annotationHolder, file);
       }));
     }
     return ProblemDescriptor.EMPTY_ARRAY;

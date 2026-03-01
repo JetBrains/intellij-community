@@ -189,7 +189,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   public void testTypeAnnotations() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   public void testQualifiedSelfReference() {

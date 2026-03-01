@@ -11,8 +11,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GridBagLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 import static java.lang.Math.abs;

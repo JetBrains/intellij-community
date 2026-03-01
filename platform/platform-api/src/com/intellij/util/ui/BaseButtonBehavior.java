@@ -7,9 +7,16 @@ import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 public abstract class BaseButtonBehavior {
   public static final int MOUSE_PRESSED_RELEASED = -1;

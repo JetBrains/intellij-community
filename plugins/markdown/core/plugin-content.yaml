@@ -18,3 +18,6 @@
 - name: lib/modules/intellij.markdown.frontend.jar
   contentModules:
   - name: intellij.markdown.frontend
+- name: lib/modules/intellij.markdown.frontend.split.jar
+  contentModules:
+  - name: intellij.markdown.frontend.split

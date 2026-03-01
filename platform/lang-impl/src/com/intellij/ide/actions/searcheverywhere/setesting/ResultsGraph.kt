@@ -4,7 +4,11 @@ package com.intellij.ide.actions.searcheverywhere.setesting
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.Dimension
+import java.awt.FontMetrics
+import java.awt.Graphics
+import java.awt.Point
+import java.awt.Rectangle
 import java.util.stream.Collectors
 import javax.swing.JComponent
 import kotlin.math.ceil

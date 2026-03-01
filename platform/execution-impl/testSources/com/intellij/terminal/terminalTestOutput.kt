@@ -9,10 +9,11 @@ import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.util.CharUtils
+import com.pty4j.windows.conpty.WinConPtyProcess
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -81,7 +82,7 @@ private suspend fun awaitTextBufferCondition(
       assertCondition()
     }
   }
-  catch (e: CancellationException) {
+  catch (e: TimeoutCancellationException) {
     System.err.println(e.message)
     assertCondition()
     Assertions.fail(e)
@@ -105,7 +106,9 @@ internal class TerminalOutput(val lines: List<TerminalOutputLine>) {
 
   companion object {
     fun collect(terminalWidget: JBTerminalWidget): TerminalOutput {
-      val trimLineEnds = terminalWidget.ttyConnector.asSafely<ProcessHandlerTtyConnector>() != null
+      val trimLineEnds = terminalWidget.ttyConnector.asSafely<ProcessHandlerTtyConnector>()?.let {
+        it.process is WinConPtyProcess
+      } ?: false
       return collect(terminalWidget.terminalTextBuffer, terminalWidget.terminal, trimLineEnds)
     }
 
@@ -157,19 +160,19 @@ private class TerminalOutputBuilder(
     textBuffer.modify {
       val cursorLineInd = terminal.cursorPosition.y - 1
       for (ind in -textBuffer.historyLinesCount .. cursorLineInd) {
-        addLine(textBuffer.getLine(ind))
+        processLine(textBuffer.getLine(ind))
       }
     }
-    lines.add(TerminalOutputLine(currentLine))
-    return TerminalOutput(if (trimLineEnds) lines.map { trimLineEnd(it) } else lines)
+    addCurrentLine()
+    return TerminalOutput(lines)
   }
 
-  private fun addLine(line: TerminalLine) {
+  private fun processLine(line: TerminalLine) {
     if (!previousLineWrapped) {
-      lines.add(TerminalOutputLine(currentLine))
-      currentLine = mutableListOf()
+      addCurrentLine()
     }
-    line.forEachEntry { entry ->
+    val entries = line.entries.dropLastWhile { it.isNul }
+    for (entry in entries) {
       val text = entry.text.clearDWC()
       if (text.isNotEmpty() && (!entry.isNul || entry.style != TextStyle.EMPTY)) {
         val resultText = if (entry.isNul) " ".repeat(text.length) else text
@@ -177,6 +180,29 @@ private class TerminalOutputBuilder(
       }
     }
     previousLineWrapped = line.isWrapped
+  }
+
+  private fun addCurrentLine() {
+    val mergedChunks = mergeConsecutiveChunksWithSameStyle(currentLine)
+    val line = TerminalOutputLine(mergedChunks)
+    lines.add(if (trimLineEnds) trimLineEnd(line) else line)
+    currentLine = mutableListOf()
+  }
+
+  private fun mergeConsecutiveChunksWithSameStyle(chunks: List<TerminalOutputChunk>): List<TerminalOutputChunk> {
+    var prev = chunks.firstOrNull() ?: return emptyList()
+    return buildList(chunks.size) {
+      for (chunk in chunks.asSequence().drop(1)) {
+        if (prev.style != chunk.style) {
+          add(prev)
+          prev = chunk
+        }
+        else {
+          prev = TerminalOutputChunk(prev.text + chunk.text, chunk.style)
+        }
+      }
+      add(prev)
+    }
   }
 
 }

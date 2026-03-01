@@ -39,4 +39,27 @@ jvm_library(
     "//plugins/kotlin/base/code-insight",
   ]
 )
+
+jvm_library(
+  name = "kotlin-injection_test_lib",
+  module_name = "intellij.kotlin.injection",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-injection",
+  runtime_deps = [
+    ":kotlin-injection",
+    "//plugins/kotlin/injection/base:kotlin-base-injection_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/fir:fir_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//plugins/IntelliLang:langInjection_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.injection` end

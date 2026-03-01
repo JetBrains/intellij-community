@@ -4,7 +4,11 @@ package com.intellij.ide
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.IdeGlassPane
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.Container
+import java.awt.MouseInfo
+import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 import kotlin.math.sqrt

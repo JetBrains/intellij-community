@@ -3,7 +3,11 @@ package com.intellij.diff.statistics
 
 import com.intellij.diff.merge.MergeStatisticsAggregator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
+import com.intellij.internal.statistic.eventLog.events.EnumEventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus.Internal

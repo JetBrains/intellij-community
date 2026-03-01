@@ -20,7 +20,7 @@ import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import java.util.ArrayList;
 import java.util.List;
 

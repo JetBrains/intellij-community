@@ -10,7 +10,12 @@ import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 public final class DuplicatesUtil {
   public static void collectMethodDuplicates(Map<GrMethod, List<GrMethod>> map, HashSet<? super GrMethod> duplicateMethodsWarning, HashSet<? super GrMethod> duplicateMethodsErrors) {

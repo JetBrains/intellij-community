@@ -5,7 +5,13 @@ import org.jetbrains.kotlin.gradle.idea.proto.tcs.IdeaKotlinClasspathSerializer
 import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinBooleanExtrasSerializer
 import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinExtrasSerializationExtensionBuilder
 import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinExtrasSerializer
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.*
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.KlibExtra
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.documentationClasspathKey
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.isIdeaProjectLevelKey
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.isNativeDistributionKey
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.isNativeStdlibKey
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.projectArtifactsClasspathKey
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.sourcesClasspathKey
 import org.jetbrains.kotlin.idea.gradle.configuration.serialize.KotlinExtrasSerializationService
 import org.jetbrains.kotlin.tooling.core.extrasKeyOf
 

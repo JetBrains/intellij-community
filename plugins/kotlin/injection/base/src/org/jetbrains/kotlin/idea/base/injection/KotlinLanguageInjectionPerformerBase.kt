@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.injection
 
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.lang.injection.general.Injection
 import com.intellij.lang.injection.general.LanguageInjectionPerformer
@@ -14,7 +13,14 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.intellij.plugins.intelliLang.inject.registerSupport
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 private const val NO_VALUE_NAME = "missingValue"

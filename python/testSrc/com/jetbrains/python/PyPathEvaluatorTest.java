@@ -3,7 +3,11 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPathEvaluator;
 
 import java.util.List;

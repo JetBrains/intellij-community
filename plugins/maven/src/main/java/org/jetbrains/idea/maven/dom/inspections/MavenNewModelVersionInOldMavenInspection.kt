@@ -13,7 +13,6 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
-import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
@@ -32,7 +31,11 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
+import kotlin.io.path.writeText
 
 
 private val VERSION_TO_UPDATE_TO = "4.0.0-rc-5"
@@ -54,10 +57,12 @@ class MavenNewModelVersionInOldMavenInspection : BasicDomElementsInspection<Mave
     val project = domFileElement.file.project
     val psiFile = domFileElement.file
     val vFile = psiFile.virtualFile
+    val projectsManager = MavenProjectsManager.getInstance(project)
+    if (!projectsManager.isInitialized) return
     val mavenProject =
-      MavenProjectsManager.getInstance(project).findProject(vFile) ?: return
+      projectsManager.findProject(vFile) ?: return
 
-    val rootProject = MavenProjectsManager.getInstance(project).findRootProject(mavenProject) ?: return
+    val rootProject = projectsManager.findRootProject(mavenProject) ?: return
 
     val projectModel = domFileElement.getRootElement()
     if (projectModel.modelVersion.stringValue == MavenConstants.MODEL_VERSION_4_0_0) return
@@ -115,7 +120,7 @@ class UpdateMavenWrapper(@Suppress("ActionIsNotPreviewFriendly") val mavenProjec
             workingDir.refresh(true, true) {
               MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHomeType = MavenWrapper
               MavenDistributionsCache.getInstance(project).cleanCaches()
-              MavenServerManager.getInstance().shutdownMavenConnectors(project){true}
+              MavenServerManager.getInstance().shutdownMavenConnectors(project) { true }
               MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
             }
 

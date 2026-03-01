@@ -15,7 +15,19 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiQualifiedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;

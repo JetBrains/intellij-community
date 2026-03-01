@@ -6,7 +6,17 @@ import com.intellij.ide.IdeBundle
 import com.intellij.java.execution.impl.shared.JavaAutoRunFloatingToolbarApi
 import com.intellij.java.frontback.impl.JavaFrontbackBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.runInEdt
@@ -72,7 +82,7 @@ class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
   }
 }
 
-private class DisableAutoTestAction : AnAction(), CustomComponentAction, DumbAware {
+internal class DisableAutoTestAction : AnAction(), CustomComponentAction, DumbAware {
   override fun actionPerformed(e: AnActionEvent) {}
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent  {
@@ -90,7 +100,7 @@ private class DisableAutoTestAction : AnAction(), CustomComponentAction, DumbAwa
   }
 }
 
-private class DisableAction : AnAction(IdeBundle.message("button.disable"), JavaFrontbackBundle.message("auto.run.floating.toolbar.disable.action"), AllIcons.Actions.RerunAutomatically) {
+internal class DisableAction : AnAction(IdeBundle.message("button.disable"), JavaFrontbackBundle.message("auto.run.floating.toolbar.disable.action"), AllIcons.Actions.RerunAutomatically) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     project.service<AutoRunFloatingToolbarService>().scope.launch {
@@ -99,7 +109,7 @@ private class DisableAction : AnAction(IdeBundle.message("button.disable"), Java
   }
 }
 
-private class HideAction : AnAction() {
+internal class HideAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     project.service<AutoRunFloatingToolbarService>().scope.launch {

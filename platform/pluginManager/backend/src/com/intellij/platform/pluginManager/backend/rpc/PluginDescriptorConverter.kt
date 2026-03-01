@@ -3,10 +3,10 @@ package com.intellij.platform.pluginManager.backend.rpc
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.getTags
+import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
@@ -27,6 +27,7 @@ object PluginDescriptorConverter {
     with(pluginDto) {
       version = descriptor.version
       isBundled = descriptor.isBundled
+      isBundledUpdate = DefaultUiPluginManagerController.isBundledUpdate(descriptor)
       isDeleted = (descriptor as? IdeaPluginDescriptorImpl)?.isDeleted ?: false
       category = descriptor.category
       if (!ignoreDescriptionForNotLoadedPluigns || PluginManagerCore.isLoaded(descriptor.pluginId)) {

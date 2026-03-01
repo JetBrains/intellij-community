@@ -10,7 +10,12 @@ import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttlistDecl;
+import com.intellij.psi.xml.XmlConditionalSection;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -27,9 +27,10 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.table.TableColumnModel;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 
 public class ClasspathModifier<T extends JavaRunConfigurationBase> extends SettingsEditorFragment<T, LabeledComponent<ClasspathModifier.ClasspathComponent>>{

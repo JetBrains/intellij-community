@@ -11,5 +11,5 @@ fun test() {
 // K1_TYPE: Foo -> <html>Foo.Companion</html>
 // K1_TYPE: Foo() -> <html>String</html>
 
-// K2_TYPE: Foo -> Foo.Companion
-// K2_TYPE: Foo() -> String
+// K2_TYPE: Foo -> <b>Foo.Companion</b>
+// K2_TYPE: Foo() -> <b>String</b>

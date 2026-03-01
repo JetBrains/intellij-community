@@ -15,4 +15,16 @@ jvm_library(
     "@lib//:kotlin-metadata",
   ]
 )
+
+jvm_library(
+  name = "apiDump_test_lib",
+  module_name = "intellij.tools.apiDump",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":apiDump",
+    "//libraries/asm-tools:asm-tools_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tools.apiDump` end

@@ -14,9 +14,17 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.BitUtil;
+import com.intellij.util.Functions;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ConcurrentBitSet;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.keyFMap.KeyFMap;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
@@ -25,12 +33,25 @@ import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntFunction;
 import java.util.function.IntUnaryOperator;
@@ -636,7 +657,11 @@ public final class VfsData implements Closeable {
     //          or during indexes lookups -- so we'll rarely/never actually use this VirtualDirectory.children.
     volatile @NotNull ChildrenIds children = ChildrenIds.EMPTY;
 
-    /** assigned under lock(this) only; accessed/modified map contents under lock(adoptedNames) */
+    /**
+     * Children's names known to be absent -- i.e., names that were looked up and not found.
+     * Memorize them, to not repeat the same lookup again. Clear the memorized set on refresh.
+     * Collection is assigned under lock(this) only; accessed/modified set content under lock(adoptedNames).
+     */
     private volatile Set<CharSequence> adoptedNames;
 
     /**

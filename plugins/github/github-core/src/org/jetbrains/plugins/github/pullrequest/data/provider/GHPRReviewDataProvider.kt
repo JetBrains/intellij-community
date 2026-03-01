@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
@@ -23,6 +24,7 @@ interface GHPRReviewDataProvider {
 
   val pendingReviewNeedsReloadSignal: Flow<Unit>
   val threadsNeedReloadSignal: Flow<Unit>
+  val participantsNeedReloadSignal: Flow<Unit>
 
   suspend fun loadPendingReview(): GHPullRequestPendingReview?
   suspend fun loadThreads(): List<GHPullRequestReviewThread>
@@ -60,16 +62,21 @@ interface GHPRReviewDataProvider {
 
   suspend fun updateComment(commentId: String, newText: String): GHPullRequestReviewComment
 
-  suspend fun createThread(reviewId: String,
-                           body: String,
-                           line: Int,
-                           side: Side,
-                           startLine: Int,
-                           fileName: String): GHPullRequestReviewThread
+  suspend fun createThread(
+    reviewId: String,
+    body: String,
+    line: Int,
+    side: Side,
+    startLine: Int,
+    startSide: Side,
+    fileName: String,
+  ): GHPullRequestReviewThread
 
   suspend fun resolveThread(id: String): GHPullRequestReviewThread
 
   suspend fun unresolveThread(id: String): GHPullRequestReviewThread
+
+  fun participantsBatches(): Flow<List<GHUser>>
 }
 
 val GHPRReviewDataProvider.pendingReviewComputationFlow: Flow<ComputedResult<GHPullRequestPendingReview?>>

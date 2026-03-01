@@ -4,7 +4,7 @@ package com.intellij.ide.android
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.buildSuggestionIfNeeded
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.buildSuggestionForFileIfNeeded
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
@@ -20,11 +20,11 @@ internal class AndroidSuggestionProvider : PluginSuggestionProvider {
       return null
     }
 
-    return buildSuggestionIfNeeded(project,
-                                   pluginIds = ANDROID_PLUGIN_IDS,
-                                   pluginName = ANDROID_PLUGIN_NAME,
-                                   fileLabel = "Android",
-                                   suggestionDismissKey = ANDROID_SUGGESTION_DISMISSED_KEY)
+    return buildSuggestionForFileIfNeeded(project,
+                                          pluginIds = ANDROID_PLUGIN_IDS,
+                                          pluginName = ANDROID_PLUGIN_NAME,
+                                          fileLabel = "Android",
+                                          suggestionDismissKey = ANDROID_SUGGESTION_DISMISSED_KEY)
   }
 
   private fun isAndroidXml(file: XmlFile): Boolean {

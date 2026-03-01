@@ -23,7 +23,12 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds.Annotations.ParameterNames
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtAnnotationUseSiteTarget
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 

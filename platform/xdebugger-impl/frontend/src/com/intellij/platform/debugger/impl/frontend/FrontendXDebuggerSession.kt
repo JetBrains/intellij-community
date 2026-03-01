@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.action
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.Disposable
@@ -14,13 +15,39 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
-import com.intellij.platform.debugger.impl.frontend.frame.*
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendDropFrameHandler
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStackGroup
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
+import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.ErrorOccurredEvent
+import com.intellij.platform.debugger.impl.rpc.NewExecutionStackGroupsEvent
+import com.intellij.platform.debugger.impl.rpc.NewExecutionStacksEvent
+import com.intellij.platform.debugger.impl.rpc.SuspendData
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataDto
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionDto
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionState
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionTabApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionEvent
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabDto
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfo
+import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionTabInfoCallback
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackGroupsEvent
+import com.intellij.platform.debugger.impl.rpc.XSuspendContextDto
+import com.intellij.platform.debugger.impl.rpc.XValueMarkerId
+import com.intellij.platform.debugger.impl.rpc.actionIds
+import com.intellij.platform.debugger.impl.rpc.consoleView
+import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
+import com.intellij.platform.debugger.impl.shared.childScopeCancelledOnSessionEvents
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XSmartStepIntoHandlerEntry
 import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -36,20 +63,38 @@ import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.frame.XSuspendContext.XExecutionStackContainer
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import com.intellij.xdebugger.impl.rpc.toRpc
-import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
+import com.intellij.xdebugger.impl.ui.SplitDebuggerDataKeys
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import com.intellij.xdebugger.ui.XDebugTabLayouter
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
@@ -65,13 +110,11 @@ private class StackFrameUpdate private constructor(val frame: FrontendXStackFram
 
 @VisibleForTesting
 @ApiStatus.Internal
-class FrontendXDebuggerSession private constructor(
+class FrontendXDebuggerSession(
   override val project: Project,
   scope: CoroutineScope,
   private val manager: FrontendXDebuggerManager,
   private val sessionDto: XDebugSessionDto,
-  override val processHandler: ProcessHandler,
-  override val consoleView: ConsoleView?,
 ) : XDebugSessionProxy {
   private val cs = scope.childScope("Session ${sessionDto.id}")
   private val tabScope = scope.childScope("Session tab ${sessionDto.id}")
@@ -155,6 +198,16 @@ class FrontendXDebuggerSession private constructor(
   override val sessionName: String = sessionDto.sessionName
   override val sessionData: XDebugSessionData = FrontendXDebugSessionData(sessionDto.sessionDataDto, tabScope, sessionStateFlow)
 
+  override val processHandler: ProcessHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
+
+  private val consoleViewDeferred: Deferred<ConsoleView?> = scope.async {
+    sessionDto.consoleViewData?.consoleView(processHandler)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val consoleView: ConsoleView?
+    get() = if (consoleViewDeferred.isCompleted) consoleViewDeferred.getCompleted() else null
+
   override val restartActions: List<AnAction>
     get() = sessionDto.restartActions.mapNotNull { it.action() }
   override val extraActions: List<AnAction>
@@ -192,6 +245,11 @@ class FrontendXDebuggerSession private constructor(
     DebuggerInlayListener.getInstance(project).startListening()
     sessionDto.initialSuspendData?.applyToCurrents()
     cs.launch {
+      val processDescriptorDeferred = sessionDto.processDescriptor
+      if (processDescriptorDeferred != null) {
+        val processDescriptor = processDescriptorDeferred.await()
+        FrontendDescriptorStateManager.getInstance(project).registerProcessDescriptor(id, processDescriptor, cs)
+      }
       sessionDto.sessionEvents.toFlow().collect { event ->
         with(event) {
           updateCurrents()
@@ -249,7 +307,9 @@ class FrontendXDebuggerSession private constructor(
         currentStackFrame.value = StackFrameUpdate.notifyChanged(newFrame)
       }
       is XDebuggerSessionEvent.BreakpointsMuted -> {}
-      XDebuggerSessionEvent.SettingsChanged -> {}
+      is XDebuggerSessionEvent.SettingsChanged -> {
+        updateState()
+      }
     }
   }
 
@@ -332,25 +392,23 @@ class FrontendXDebuggerSession private constructor(
 
     val proxy = this@FrontendXDebuggerSession
     val tab = withContext(Dispatchers.EDT) {
+      // we need to await for the console view to be initialized before tab is created
+      // so [consoleView] will return an up-to-date result
+      consoleViewDeferred.await()
+
       // TODO restore content to reuse on frontend if needed (it is not used now in create)
       XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, tabScope), null,
                               tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization, tabInfo.defaultFramesViewKey).apply {
         setAdditionalKeysProvider { sink ->
-          sink[SplitDebuggerUIUtil.SPLIT_RUN_CONTENT_DESCRIPTOR_KEY] = backendRunContentDescriptorId
+          sink[SplitDebuggerDataKeys.SPLIT_RUN_CONTENT_DESCRIPTOR_KEY] = backendRunContentDescriptorId
           if (executionEnvironmentId != null) {
-            sink[SplitDebuggerUIUtil.SPLIT_EXECUTION_ENVIRONMENT_KEY] = executionEnvironmentId
+            sink[SplitDebuggerDataKeys.SPLIT_EXECUTION_ENVIRONMENT_KEY] = executionEnvironmentId
           }
         }
         sessionTabDeferred.complete(this)
         proxy.onTabInitialized(this)
       }
     }
-
-    tabScope.launch(Dispatchers.EDT) {
-      tabInfo.showTab.await()
-      tab.showTab()
-    }
-
     val runContentDescriptor = tab.runContentDescriptor
     if (runContentDescriptor == null) {
       onTabClosed()
@@ -360,6 +418,17 @@ class FrontendXDebuggerSession private constructor(
     runContentDescriptor.coroutineScope.awaitCancellationAndInvoke {
       onTabClosed()
     }
+
+    val executionEnvDto = tabInfo.executionEnvironmentProxyDto
+    if (executionEnvDto != null) {
+      runContentDescriptor.executionId = executionEnvDto.executionId
+    }
+
+    tabScope.launch(Dispatchers.EDT) {
+      tabInfo.showTab.await()
+      tab.showTab()
+    }
+
     // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
     if (tabInfo.executionEnvironmentProxyDto?.executionEnvironment == null) {
       subscribeOnAdditionalTabs(tabScope, tab, tabInfo.additionalTabsComponentManagerId)
@@ -410,9 +479,9 @@ class FrontendXDebuggerSession private constructor(
     }
 
     currentStackFrame.value = StackFrameUpdate.notifyChanged(frame)
-    cs.launch {
-      XDebugSessionApi.getInstance().setCurrentStackFrame(id, executionStack.id,
-                                                          frame.id, isTopFrame, changedByUser = true)
+    val suspendContext = getCurrentSuspendContext() ?: return
+    suspendContext.lifetimeScope.launch {
+      XDebugSessionApi.getInstance().setCurrentStackFrame(id, suspendContext.id, executionStack.id, frame.id, isTopFrame)
     }
   }
 
@@ -429,15 +498,23 @@ class FrontendXDebuggerSession private constructor(
     return currentContext.isStepping
   }
 
-  override fun computeExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
+  override fun computeExecutionStacks(container: XExecutionStackContainer) {
     getCurrentSuspendContext()?.computeExecutionStacks(container)
   }
 
-  override fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
-    coroutineScope.launch {
+  override fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackGroupContainer) {
+    val suspendContext = getCurrentSuspendContext()
+    val scope = suspendContext?.lifetimeScope ?: coroutineScope.childScopeForRunningExecutionStack()
+    scope.launch {
       XDebugSessionApi.getInstance()
-        .computeRunningExecutionStacks(id)
-        .collectExecutionStackEvents(project, coroutineScope, container)
+        .computeRunningExecutionStacks(id, suspendContext?.id)
+        .collectExecutionStackGroupEvents(project, scope, container)
+    }
+  }
+
+  private fun CoroutineScope.childScopeForRunningExecutionStack(): CoroutineScope {
+    return coroutineScope.childScopeCancelledOnSessionEvents("FrontendRunningExecutionStacksScope", this@FrontendXDebuggerSession).also {
+      coroutineContext.plus(FrontendXStackFramesStorage())
     }
   }
 
@@ -445,6 +522,10 @@ class FrontendXDebuggerSession private constructor(
 
   override fun createTabLayouter(): XDebugTabLayouter {
     return tabLayouter ?: error("Tab layouter is accessed before tab initialization")
+  }
+
+  override fun addSessionListener(listener: XDebugSessionListener) {
+    eventsDispatcher.addListener(listener)
   }
 
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {
@@ -460,8 +541,22 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
-    // TODO: addittional actions are not registered in RemDev
-    XDebugMonolithUtils.findSessionById(id)?.debugProcess?.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
+    // Only individual actions are currently serialized in RemDev.
+    // As a result, additional actions registered on the backend are added here as a flat list,
+    // and separators e.g. from the original backend structure are not preserved.
+    // We maintain two code paths: one for Monolith (preserving full group structure) and one for RemDev (flat view).
+    val monolithSession = XDebuggerEntityConverter.getSession(this)
+    if (monolithSession != null) {
+      monolithSession.debugProcess.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
+    } else {
+      leftToolbar.addActions(sessionDto.leftToolbarActions)
+      topLeftToolbar.addActions(sessionDto.topToolbarActions)
+      settings.addActions(sessionDto.settingsActions)
+    }
+  }
+
+  private fun DefaultActionGroup.addActions(actionIds: List<AnActionId>) {
+    actionIds.forEach { id -> id.action()?.let { add(it) } }
   }
 
   override fun putKey(sink: DataSink) {
@@ -531,21 +626,6 @@ class FrontendXDebuggerSession private constructor(
   override suspend fun resume() {
     XDebugSessionApi.getInstance().resume(id)
   }
-
-  companion object {
-
-    suspend fun create(
-      project: Project,
-      scope: CoroutineScope,
-      manager: FrontendXDebuggerManager,
-      sessionDto: XDebugSessionDto,
-    ): FrontendXDebuggerSession {
-      val processHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
-      val consoleView = sessionDto.consoleViewData?.consoleView(processHandler)
-
-      return FrontendXDebuggerSession(project, scope, manager, sessionDto, processHandler, consoleView)
-    }
-  }
 }
 
 /**
@@ -588,4 +668,29 @@ private fun <T> CoroutineScope.syncWithLocalFlow(sourceFlow: Flow<T>, localFlowS
     }
   }
 }
+
+private suspend fun Flow<XExecutionStackGroupsEvent>.collectExecutionStackGroupEvents(
+  project: Project,
+  coroutineScope: CoroutineScope,
+  container: XSuspendContext.XExecutionStackGroupContainer
+) {
+  collect { executionStackEvent ->
+    when (executionStackEvent) {
+      is ErrorOccurredEvent -> {
+        container.errorOccurred(executionStackEvent.errorMessage)
+      }
+      is NewExecutionStacksEvent -> {
+        val feStacks = executionStackEvent.stacks.map { FrontendXExecutionStack(it, project, coroutineScope) }
+        container.addExecutionStack(feStacks, executionStackEvent.last)
+      }
+      is NewExecutionStackGroupsEvent -> {
+        val feStackGroups = executionStackEvent.groups.map {
+          FrontendXExecutionStackGroup(it, project, coroutineScope)
+        }
+        container.addExecutionStackGroups(feStackGroups, executionStackEvent.last)
+      }
+    }
+  }
+}
+
 

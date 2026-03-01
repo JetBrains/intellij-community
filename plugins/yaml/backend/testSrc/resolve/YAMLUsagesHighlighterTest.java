@@ -13,7 +13,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 public class YAMLUsagesHighlighterTest extends BasePlatformTestCase {
   @Override

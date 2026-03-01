@@ -3,7 +3,11 @@ package training.learn
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandEvent

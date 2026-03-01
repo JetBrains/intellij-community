@@ -19,8 +19,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
-import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
@@ -28,8 +26,11 @@ import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
@@ -65,7 +66,6 @@ public class PySkeletonRefresher {
   }
 
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
-                                           @Nullable Component ownerComponent,
                                            @Nullable String skeletonsPath,
                                            @NotNull Sdk sdk)
     throws InvalidSdkException {
@@ -76,7 +76,7 @@ public class PySkeletonRefresher {
     }
     else {
       LOG.info("Refreshing skeletons for " + homePath);
-      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator, null);
+      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator, null);
 
       changeGeneratingSkeletons(1);
       try {
@@ -103,7 +103,6 @@ public class PySkeletonRefresher {
    * @param indicator     to report progress of long operations
    */
   public PySkeletonRefresher(@Nullable Project project,
-                             @Nullable Component ownerComponent,
                              @NotNull Sdk sdk,
                              @Nullable String skeletonsPath,
                              @Nullable ProgressIndicator indicator,
@@ -308,15 +307,6 @@ public class PySkeletonRefresher {
       myGeneratorVersion = readGeneratorVersion();
     }
     return myGeneratorVersion;
-  }
-
-  public static @NotNull PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project,
-                                                                           Component ownerComponent,
-                                                                           @NotNull Sdk sdk,
-                                                                           String skeletonsPath) throws ExecutionException {
-    PyRemoteSdkAdditionalDataBase sdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
-    return PyRemoteSkeletonGeneratorFactory.getInstance(sdkAdditionalData)
-      .createRemoteSkeletonGenerator(project, ownerComponent, sdk, skeletonsPath);
   }
 
   public @NotNull PySkeletonGenerator getGenerator() {

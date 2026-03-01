@@ -20,7 +20,7 @@ import org.jetbrains.plugins.emojipicker.ui.EmojiSearchField;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
 import java.util.function.Consumer;
 
 /**

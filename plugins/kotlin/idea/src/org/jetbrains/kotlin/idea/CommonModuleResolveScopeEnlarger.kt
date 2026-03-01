@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ResolveScopeEnlarger
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
+@K1Deprecation
 class CommonModuleResolveScopeEnlarger : ResolveScopeEnlarger() {
     override fun getAdditionalResolveScope(file: VirtualFile, project: Project): SearchScope? {
         val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)

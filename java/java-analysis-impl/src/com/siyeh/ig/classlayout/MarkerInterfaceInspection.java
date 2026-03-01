@@ -15,7 +15,13 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiTypeElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

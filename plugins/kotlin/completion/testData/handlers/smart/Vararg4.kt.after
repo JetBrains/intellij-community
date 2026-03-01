@@ -5,3 +5,5 @@ fun bar(arr: Array<String>){
 }
 
 // ELEMENT: arr
+
+// IGNORE_K2

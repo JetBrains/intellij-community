@@ -30,7 +30,8 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 
 import static com.intellij.pom.Navigatable.EMPTY_NAVIGATABLE_ARRAY;
 

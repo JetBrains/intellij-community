@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
+@K1Deprecation
 class ConvertParameterToReceiverIntention : SelfTargetingIntention<KtParameter>(
     KtParameter::class.java,
     KotlinBundle.messagePointer("convert.parameter.to.receiver")

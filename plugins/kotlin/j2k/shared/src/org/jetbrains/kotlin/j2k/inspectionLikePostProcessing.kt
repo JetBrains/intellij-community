@@ -10,7 +10,9 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.*
+import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.GO_INSIDE
+import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.PROCESS
+import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.SKIP
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile

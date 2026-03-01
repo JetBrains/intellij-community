@@ -8,7 +8,23 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,7 +36,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.codeInsight.ExpectedTypeInfo.*;
+import static com.intellij.codeInsight.ExpectedTypeInfo.TYPE_OR_SUBTYPE;
+import static com.intellij.codeInsight.ExpectedTypeInfo.TYPE_OR_SUPERTYPE;
+import static com.intellij.codeInsight.ExpectedTypeInfo.TYPE_STRICTLY;
+import static com.intellij.codeInsight.ExpectedTypeInfo.Type;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 public class GuessTypeParameters {

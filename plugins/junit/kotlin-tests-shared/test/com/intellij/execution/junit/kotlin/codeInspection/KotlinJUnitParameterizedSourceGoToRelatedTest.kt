@@ -1,34 +1,26 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
+import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.junit.testFramework.JUnitParameterizedSourceGoToRelatedTestBase
+import com.intellij.junit.testFramework.JUnitProjectDescriptor
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.PathUtil
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
-import java.io.File
 
 abstract class KotlinJUnitParameterizedSourceGoToRelatedTest : JUnitParameterizedSourceGoToRelatedTestBase(), ExpectedPluginModeProvider {
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    ConfigLibraryUtil.configureKotlinRuntime(module)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(LanguageLevel.HIGHEST) {
-    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-      super.configureModule(module, model, contentEntry)
-      val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
-      PsiTestUtil.addLibrary(model, "kotlin-stdlib", jar.parent, jar.name)
-    }
-  }
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT5)
 
   fun `test go to method source with explicit name`() {
     myFixture.testGoToRelatedAction(

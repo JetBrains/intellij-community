@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.HintAction
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -33,11 +34,19 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.isOneSegmentFQN
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 
+/**
+ * Note: Avoid instantiating directly, see [KotlinAddImportActionFactory] for that.
+ */
 @ApiStatus.Internal
-class ImportQuickFix(
+class ImportQuickFix internal constructor(
     element: KtElement,
     @IntentionName private val text: String,
     importVariants: List<AutoImportVariant>
@@ -121,62 +130,15 @@ class ImportQuickFix(
             }
         }
     }
-    
-    context(_: KaSession)
-    private fun shouldBeImportedWithShortening(element: KtElement, importVariant: SymbolBasedAutoImportVariant): Boolean {
-        if (element !is KtSimpleNameExpression) return false
-
-        // Declarations from the root package cannot be imported by FQN, hence cannot be shortened
-        if (importVariant.fqName.isOneSegmentFQN()) return false
-        
-        val restoredCandidate = importVariant.candidatePointer.restore() ?: return false
-
-        // for class or enum entry we use ShortenReferences because we do not necessarily add an import but may want to
-        // insert a partially qualified name
-        if (
-            restoredCandidate.symbol !is KaClassLikeSymbol &&
-            restoredCandidate.symbol !is KaEnumEntrySymbol
-        ) {
-            return false
-        }
-
-        if (isTypeAliasedInnerClassUsedInCall(element, restoredCandidate)) {
-            return false
-        }
-        
-        // callable references cannot be fully qualified
-        if (element.parent is KtCallableReferenceExpression) return false
-        
-        return true
-    }
 
     /**
-     * Checks if [candidate] is a type alias that references an inner class and is used in a call context at the [element].
-     * 
-     * For example:
-     * ```
-     * class Outer {
-     *     inner class Inner
-     * }
-     * typealias InnerAlias = Outer.Inner
-     * 
-     * fun usage(outer: Outer) {
-     *     outer.InnerAlias() // equivalent to `outer.Inner()`
-     * }
-     * ```
-     * 
-     * In such cases, it's impossible to insert a fully qualified reference of the type alias
-     * because it will break resolve, and reference shortener would not be able to shorten it.
+     * We cannot provide [AddImportModCommandAction] here, because it would be used in the regular IntelliJ IDEA,
+     * leading to an unfamiliar UX.
+     *
+     * See [KotlinAddImportActionFactory] for details.
      */
-    context(_: KaSession)
-    private fun isTypeAliasedInnerClassUsedInCall(element: KtSimpleNameExpression, candidate: ImportCandidate): Boolean {
-        val typeAliasSymbol = candidate.symbol as? KaTypeAliasSymbol ?: return false
-        val expandedClassSymbol = typeAliasSymbol.expandedType.expandedSymbol as? KaNamedClassSymbol ?: return false
-        
-        val potentialCall = element.getQualifiedElement()
-
-        return expandedClassSymbol.isInner &&
-                (potentialCall is KtQualifiedExpression || potentialCall is KtCallExpression)
+    override fun asModCommandAction(): ModCommandAction? {
+        return null
     }
 
     override fun isClassDefinitelyPositivelyImportedAlready(containingFile: KtFile, classFqName: FqName): Boolean {
@@ -192,5 +154,64 @@ class ImportQuickFix(
             }
         }
         return false
+    }
+
+    internal companion object {
+        context(_: KaSession)
+        fun shouldBeImportedWithShortening(element: KtElement, importVariant: SymbolBasedAutoImportVariant): Boolean {
+            if (element !is KtSimpleNameExpression) return false
+
+            // Declarations from the root package cannot be imported by FQN, hence cannot be shortened
+            if (importVariant.fqName.isOneSegmentFQN()) return false
+
+            val restoredCandidate = importVariant.candidatePointer.restore() ?: return false
+
+            // for class or enum entry we use ShortenReferences because we do not necessarily add an import but may want to
+            // insert a partially qualified name
+            if (
+                restoredCandidate.symbol !is KaClassLikeSymbol &&
+                restoredCandidate.symbol !is KaEnumEntrySymbol
+            ) {
+                return false
+            }
+
+            if (isTypeAliasedInnerClassUsedInCall(element, restoredCandidate)) {
+                return false
+            }
+
+            // callable references cannot be fully qualified
+            if (element.parent is KtCallableReferenceExpression) return false
+
+            return true
+        }
+
+        /**
+         * Checks if [candidate] is a type alias that references an inner class and is used in a call context at the [element].
+         *
+         * For example:
+         * ```
+         * class Outer {
+         *     inner class Inner
+         * }
+         * typealias InnerAlias = Outer.Inner
+         *
+         * fun usage(outer: Outer) {
+         *     outer.InnerAlias() // equivalent to `outer.Inner()`
+         * }
+         * ```
+         *
+         * In such cases, it's impossible to insert a fully qualified reference of the type alias
+         * because it will break resolve, and reference shortener would not be able to shorten it.
+         */
+        context(_: KaSession)
+        private fun isTypeAliasedInnerClassUsedInCall(element: KtSimpleNameExpression, candidate: ImportCandidate): Boolean {
+            val typeAliasSymbol = candidate.symbol as? KaTypeAliasSymbol ?: return false
+            val expandedClassSymbol = typeAliasSymbol.expandedType.expandedSymbol as? KaNamedClassSymbol ?: return false
+
+            val potentialCall = element.getQualifiedElement()
+
+            return expandedClassSymbol.isInner &&
+                    (potentialCall is KtQualifiedExpression || potentialCall is KtCallExpression)
+        }
     }
 }

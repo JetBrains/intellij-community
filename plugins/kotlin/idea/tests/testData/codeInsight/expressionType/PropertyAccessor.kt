@@ -5,4 +5,4 @@ class A {
 
 // K1_TYPE: "abc" -> <html>String</html>
 
-// K2_TYPE: "abc" -> String
+// K2_TYPE: "abc" -> <b>String</b>

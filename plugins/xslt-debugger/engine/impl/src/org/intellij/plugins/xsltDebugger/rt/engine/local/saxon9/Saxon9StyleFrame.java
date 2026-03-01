@@ -16,7 +16,11 @@
 
 package org.intellij.plugins.xsltDebugger.rt.engine.local.saxon9;
 
-import net.sf.saxon.expr.*;
+import net.sf.saxon.expr.ComponentBinding;
+import net.sf.saxon.expr.Expression;
+import net.sf.saxon.expr.PackageData;
+import net.sf.saxon.expr.StackFrame;
+import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.expr.instruct.GlobalVariable;
 import net.sf.saxon.expr.instruct.SlotManager;
 import net.sf.saxon.expr.instruct.TraceExpression;

@@ -3,7 +3,11 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

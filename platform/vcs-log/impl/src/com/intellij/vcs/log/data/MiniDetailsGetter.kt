@@ -5,18 +5,25 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
+import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
-import it.unimi.dsi.fastutil.ints.*
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntConsumer
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
 
 class MiniDetailsGetter internal constructor(
@@ -146,15 +153,9 @@ class MiniDetailsGetter internal constructor(
   }
 
   private fun createPlaceholderCommit(commit: VcsLogCommitStorageIndex, taskNumber: Long): VcsCommitMetadata {
-    val dataGetter = index.dataGetter
-    return if (dataGetter != null && Registry.`is`("vcs.log.use.indexed.details")) {
-      IndexedDetails(dataGetter, storage, commit, taskNumber)
-    }
-    else {
-      logProviders.keys.singleOrNull()?.let {
-        LoadingDetailsWithRoot(storage, commit, it, taskNumber)
-      } ?: LoadingDetailsImpl(storage, commit, taskNumber)
-    }
+    return logProviders.keys.singleOrNull()?.let {
+      LoadingDetailsWithRoot(storage, commit, it, taskNumber)
+    } ?: LoadingDetailsImpl(storage, commit, taskNumber)
   }
 
   /**

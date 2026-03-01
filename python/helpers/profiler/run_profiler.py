@@ -1,15 +1,16 @@
+import argparse
 import os
 import sys
 import time
 import traceback
-import argparse
 from socket import AF_INET
 from socket import SOCK_STREAM
 from socket import socket
 
 from _prof_imports import ProfilerResponse
 from prof_io import ProfWriter, ProfReader
-from prof_util import generate_snapshot_filepath, stats_to_response, get_snapshot_basepath, save_main_module, execfile, get_fullname
+from prof_util import generate_snapshot_filepath, stats_to_response, \
+    get_snapshot_basepath, save_main_module, execfile, get_fullname
 
 base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
 remote_run = bool(os.getenv('PYCHARM_REMOTE_RUN', ''))
@@ -170,17 +171,20 @@ def parse_arguments():
 
     args, remaining_args = parser.parse_known_args()
 
+    if args.module:
+        # When -m is specified, all remaining args go to the module
+        args.file = None
+        return args, remaining_args
+
+    # When -m is not specified, parse file and its arguments
     remaining_parser = argparse.ArgumentParser(add_help=False)
     remaining_parser.add_argument('file', nargs='?', help='Python file to profile')
     remaining_parser.add_argument('args', nargs=argparse.REMAINDER, help='Arguments to pass to the target')
 
     remaining_namespace = remaining_parser.parse_args(remaining_args)
 
-    if not args.module and remaining_args:
-        args.file = remaining_namespace.file
-        remaining_args = remaining_namespace.args
-    else:
-        args.file = None
+    args.file = remaining_namespace.file
+    remaining_args = remaining_namespace.args
 
     return args, remaining_args
 

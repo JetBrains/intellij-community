@@ -2,14 +2,23 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.BreakpointStepMethodFilter;
+import com.intellij.debugger.engine.CompoundPositionManager;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.LambdaMethodFilter;
+import com.intellij.debugger.engine.RequestHint;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.MultiMap;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassNotPreparedException;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

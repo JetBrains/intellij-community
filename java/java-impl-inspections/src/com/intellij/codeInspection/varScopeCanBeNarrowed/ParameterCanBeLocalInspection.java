@@ -1,9 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,8 +15,23 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -25,7 +44,13 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -148,8 +173,13 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
     }
 
     @Override
+    public @NotNull String getName() {
+      return JavaBundle.message("inspection.parameter.can.be.local.quickfix");
+    }
+
+    @Override
     public @NotNull String getFamilyName() {
-      return JavaBundle.message("inspection.convert.to.local.quickfix");
+      return JavaBundle.message("inspection.convert.to.local.family.name");
     }
 
     @Override
@@ -166,7 +196,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
       try {
         final List<PsiElement> newDeclarations = moveDeclaration(project, variable);
         if (newDeclarations.isEmpty()) return;
-        positionCaretToDeclaration(project, myFile, newDeclarations.get(newDeclarations.size() - 1));
+        positionCaretToDeclaration(project, myFile, newDeclarations.getLast());
         newDeclarations.forEach(declaration -> IntentionPreviewUtils.write(() -> ConvertToLocalUtils.inlineRedundant(declaration)));
       }
       catch (IncorrectOperationException e) {

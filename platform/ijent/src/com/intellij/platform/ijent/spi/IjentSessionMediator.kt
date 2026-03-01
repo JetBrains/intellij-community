@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentUnavailableException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -20,3 +21,13 @@ sealed interface IjentSessionMediator {
   val ijentProcessScope: CoroutineScope
   val processExit: Deferred<Unit>
 }
+
+/**
+ * Context for establishing IJent connection, containing the session mediator and deployment metadata.
+ */
+class IjentConnectionContext(
+  val mediator: IjentSessionMediator,
+  val targetPlatform: EelPlatform,
+  val remoteBinaryPath: String,
+  val connectionStrategy: IjentConnectionStrategy,
+)

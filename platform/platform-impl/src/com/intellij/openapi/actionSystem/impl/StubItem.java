@@ -3,8 +3,8 @@ package com.intellij.openapi.actionSystem.impl;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JMenuItem;
+import java.awt.Dimension;
 
 @ApiStatus.Internal
 public final class StubItem extends JMenuItem {

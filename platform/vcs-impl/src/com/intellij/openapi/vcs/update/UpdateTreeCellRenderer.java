@@ -8,7 +8,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 /**
  * author: lesya

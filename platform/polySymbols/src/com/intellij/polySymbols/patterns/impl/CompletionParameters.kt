@@ -13,7 +13,7 @@ internal class CompletionParameters(
     : this(name, params.queryExecutor, params.position)
 
   override fun toString(): String =
-    "complete: $name (position: $position, framework: $framework)"
+    "complete: $name (position: $position, context: ${queryExecutor.context})"
 
   fun withPosition(position: Int): CompletionParameters =
     CompletionParameters(name, queryExecutor, position)

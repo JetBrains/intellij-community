@@ -12,7 +12,11 @@ import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Difference> extends Proto implements Node<T, D> {

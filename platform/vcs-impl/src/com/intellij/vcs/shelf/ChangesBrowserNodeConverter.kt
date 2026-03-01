@@ -17,7 +17,7 @@ import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.TagNodeEntity
 import com.intellij.vcsUtil.VcsUtil
-import fleet.kernel.SharedChangeScope
+import fleet.kernel.rebase.SharedChangeScope
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 

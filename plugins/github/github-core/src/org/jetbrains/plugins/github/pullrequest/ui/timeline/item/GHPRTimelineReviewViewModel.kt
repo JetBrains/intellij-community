@@ -16,7 +16,14 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
@@ -26,7 +33,8 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
-import java.util.*
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
+import java.util.Date
 
 interface GHPRTimelineReviewViewModel {
   val author: GHActor
@@ -51,6 +59,7 @@ internal class UpdateableGHPRTimelineReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
+  private val viewModelWithTextCompletion: GHViewModelWithTextCompletion,
   initialData: GHPullRequestReview
 ) : GHPRTimelineReviewViewModel,
     GHPRTimelineItem.Review {
@@ -69,7 +78,7 @@ internal class UpdateableGHPRTimelineReviewViewModel internal constructor(
     reviewData.createThreadsVmsFlow().stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
 
   override val bodyHtml: StateFlow<String> = dataState.map {
-    it.body.convertToHtml(project)
+    it.body.convertToHtml(project, dataContext.repositoryDataService.repositoryMapping.repository.serverPath)
   }.stateIn(cs, SharingStarted.Eagerly, "")
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
@@ -109,7 +118,7 @@ internal class UpdateableGHPRTimelineReviewViewModel internal constructor(
     }
 
   private fun CoroutineScope.createThread(data: GHPullRequestReviewThread): UpdateableGHPRTimelineThreadViewModel {
-    val threadVm = UpdateableGHPRTimelineThreadViewModel(project, this, dataContext, dataProvider, data)
+    val threadVm = UpdateableGHPRTimelineThreadViewModel(project, this, dataContext, dataProvider, viewModelWithTextCompletion, data)
     launchNow {
       threadVm.showDiffRequests.collect(showDiffRequests)
     }

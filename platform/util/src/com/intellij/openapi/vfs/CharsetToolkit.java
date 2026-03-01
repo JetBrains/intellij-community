@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.ArrayUtil;
@@ -6,10 +6,20 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.*;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -209,14 +219,13 @@ public final class CharsetToolkit {
   /**
    * <p>Guess the encoding of the provided buffer.</p>
    * If Byte Order Markers are encountered at the beginning of the buffer, we immediately
-   * return the charset implied by this BOM. Otherwise, the file would not be a human
-   * readable text file.</p>
+   * return the charset implied by this BOM. Otherwise, the file would not be a human-readable text file.</p>
    *
    * <p>If there is no BOM, this method tries to discern whether the file is UTF-8 or not.
    * If it is not UTF-8, we assume the encoding is the default system encoding
    * (of course, it might be any 8-bit charset, but usually, an 8-bit charset is the default one).</p>
    *
-   * <p>It is possible to discern UTF-8 thanks to the pattern of characters with a multi-byte sequence.</p>
+   * <p>It is possible to discern UTF-8 thanks to the pattern of characters with a multibyte sequence.</p>
    * <pre>
    * UCS-4 range (hex.)        UTF-8 octet sequence (binary)
    * 0000 0000-0000 007F       0.......
@@ -232,7 +241,7 @@ public final class CharsetToolkit {
    */
   public Charset guessEncoding(int startOffset, int endOffset, @NotNull Charset defaultCharset) {
     // if the file has a Byte Order Marker, we can assume the file is in UTF-xx
-    // otherwise, the file would not be human readable
+    // otherwise, the file would not be human-readable
     Charset charset = guessFromBOM();
     if (charset != null) return charset;
     GuessedEncoding encoding = guessFromContent(startOffset, endOffset);
@@ -404,7 +413,7 @@ public final class CharsetToolkit {
     }
 
     // if no invalid UTF-8 were encountered, we can assume the encoding is UTF-8,
-    // otherwise the file would not be human readable
+    // otherwise the file would not be human-readable
     return GuessedEncoding.VALID_UTF8;
   }
 
@@ -423,20 +432,24 @@ public final class CharsetToolkit {
   }
 
   public Charset guessEncoding(int guess_length) {
-    return guessEncoding(0,guess_length, defaultCharset);
+    return guessEncoding(0, guess_length, defaultCharset);
   }
 
-  public static Charset guessEncoding(@NotNull File f, int bufferLength, @NotNull Charset defaultCharset) throws IOException {
-    if (bufferLength == 0) {
-      throw new IllegalArgumentException("Can't analyze empty buffer");
-    }
+  /** @deprecated use {@link #guessEncoding(Path, int, Charset)} */
+  @Deprecated
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName", "DeprecatedIsStillUsed"})
+  public static Charset guessEncoding(@NotNull java.io.File f, int bufferLength, @NotNull Charset defaultCharset) throws IOException {
+    return guessEncoding(f.toPath(), bufferLength, defaultCharset);
+  }
+
+  public static Charset guessEncoding(@NotNull Path f, int bufferLength, @NotNull Charset defaultCharset) throws IOException {
+    if (bufferLength == 0) throw new IllegalArgumentException("Can't analyze empty buffer");
     byte[] buffer = new byte[bufferLength];
     int read;
-    try (FileInputStream fis = new FileInputStream(f)) {
+    try (InputStream fis = Files.newInputStream(f)) {
       read = fis.read(buffer);
     }
-    CharsetToolkit toolkit = new CharsetToolkit(buffer, defaultCharset, false);
-    return toolkit.guessEncoding(read);
+    return new CharsetToolkit(buffer, defaultCharset, false).guessEncoding(read);
   }
 
   /**
@@ -492,8 +505,7 @@ public final class CharsetToolkit {
    * Retrieve the platform charset of the system (determined by "sun.jnu.encoding" property)
    */
   public static @NotNull Charset getPlatformCharset() {
-    String name = System.getProperty("sun.jnu.encoding");
-    Charset value = forName(name);
+    Charset value = forName(System.getProperty("sun.jnu.encoding.sys", System.getProperty("sun.jnu.encoding")));
     return value == null ? getDefaultSystemCharset() : value;
   }
 

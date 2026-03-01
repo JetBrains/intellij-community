@@ -2,10 +2,10 @@
 package com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.emptyProject
 
 import com.intellij.ui.dsl.builder.Panel
-import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
 
 internal object PyV3EmptyProjectUI : PyV3ProjectTypeSpecificUI<PyV3EmptyProjectSettings> {
   override fun configureUpperPanel(settings: PyV3EmptyProjectSettings, checkBoxRow: Row, belowCheckBoxes: Panel) {

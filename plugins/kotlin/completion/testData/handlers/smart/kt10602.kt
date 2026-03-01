@@ -5,3 +5,4 @@ fun f() {
 }
 
 // ELEMENT: String
+// IGNORE_K2

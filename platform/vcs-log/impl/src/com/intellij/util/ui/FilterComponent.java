@@ -16,12 +16,29 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.border.Border;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 import java.util.function.Supplier;
@@ -344,7 +361,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     return accessibleContext;
   }
 
-  private class AccessibleVcsLogPopupComponent extends AccessibleContextDelegate {
+  private class AccessibleVcsLogPopupComponent extends AccessibleContextDelegate implements AccessibleAction {
 
     AccessibleVcsLogPopupComponent(AccessibleContext context) {
       super(context);
@@ -363,6 +380,40 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.POPUP_MENU;
+    }
+
+    @Override
+    public AccessibleAction getAccessibleAction() {
+      return this;
+    }
+
+    @Override
+    public int getAccessibleActionCount() {
+      return 2;
+    }
+
+    @Override
+    public String getAccessibleActionDescription(int i) {
+      return switch (i) {
+        case 0 -> VcsLogBundle.message("vcs.log.filter.accessible.action.show.popup");
+        case 1 -> VcsLogBundle.message("vcs.log.filter.accessible.action.clear");
+        default -> null;
+      };
+    }
+
+    @Override
+    public boolean doAccessibleAction(int i) {
+      return switch (i) {
+        case 0 -> {
+          showPopup();
+          yield true;
+        }
+        case 1 -> {
+          resetFilter();
+          yield true;
+        }
+        default -> false;
+      };
     }
   }
 }

@@ -6,7 +6,13 @@ import com.intellij.lang.jvm.JvmTypeDeclaration;
 import com.intellij.lang.jvm.JvmTypeParameter;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
 import com.intellij.lang.jvm.types.JvmType;
-import com.intellij.psi.*;
+import com.intellij.psi.JvmPsiConversionHelper;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJvmSubstitutor;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

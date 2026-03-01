@@ -3,7 +3,12 @@ package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.*;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesHandlerFactory;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.JavaClassFindUsagesOptions;
+import com.intellij.find.findUsages.JavaFindUsagesHandler;
+import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.java.JavaLanguage;
@@ -20,16 +25,38 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiReferenceProcessorAdapter;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.SearchSession;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -38,13 +65,16 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -121,20 +151,35 @@ public class FindUsagesTest extends JavaPsiTestCase {
   }
   
   public void testFindConstructorUsagesFromClass() {
-    PsiClass aClass = myJavaFacade.findClass("HeadlessHorsewoman", GlobalSearchScope.allScope(myProject));
+    JavaClassFindUsagesOptions options = new JavaClassFindUsagesOptions(getProject());
+    options.isUsages = true;
+    options.isConstructorUsages = true;
+    doTestFindUsages("SomeClass", options, "this()");
+    options.isUsages = false;
+    doTestFindUsages("SomeClass", options, "this()");
+    options.isUsages = true;
+    options.isConstructorUsages = false;
+    doTestFindUsages("SomeClass", options, "");
+  }
+  
+  public void testFindDefaultConstructorUsagesFromClass() {
     JavaClassFindUsagesOptions options = new JavaClassFindUsagesOptions(getProject());
     options.isUsages = false;
     options.isConstructorUsages = true;
+    doTestFindUsages("HeadlessHorsewoman", options, "new HeadlessHorsewoman()");
+  }
+
+  private void doTestFindUsages(String className, JavaClassFindUsagesOptions options, String expected) {
+    PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
     CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager();
     FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(aClass, false);
     assertNotNull(handler);
     handler.processElementUsages(aClass, processor, options);
     Collection<UsageInfo> usages = processor.getResults();
-    assertEquals(1, usages.size());
-    assertEquals("new HeadlessHorsewoman()", StringUtil.join(usages, u -> u.getElement().getParent().getText() , ", "));
-  } 
-  
+    assertEquals(expected, StringUtil.join(usages, u -> u.getElement().getParent().getText() , "\n"));
+  }
+
   public void testDefaultConstructor() {
     PsiClass aClass = myJavaFacade.findClass("Animal", GlobalSearchScope.allScope(myProject));
     PsiMethod main = aClass.findMethodsByName("main", false)[0];
@@ -381,7 +426,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
       );
 
       while(!resolveStarted.get() && !future.isDone()) {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       }
 
       WriteAction.run(() -> toSleepMs.set(0));

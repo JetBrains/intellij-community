@@ -5,12 +5,15 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.testFramework.loadDescriptorInTest
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.testFramework.plugins.ContentModuleSpec
+import com.intellij.platform.testFramework.plugins.PluginPackagingConfig
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -26,10 +29,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
 import java.net.URL
-import java.net.URLClassLoader
 import java.nio.file.Path
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Collections
+import java.util.Enumeration
+import java.util.Locale
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.name
 import kotlin.test.assertEquals
@@ -523,36 +527,6 @@ class PluginDescriptorTest {
     }.buildDir(pluginDirPath)
     val plugin = loadDescriptorInTest(pluginDirPath)
     assertThat(plugin.untilBuild).isEqualTo("253.0")
-  }
-
-  // todo this is rather about plugin set loading, probably needs to be moved out
-  @Test
-  fun `only one instance of a plugin is loaded if it's duplicated`() {
-    val urls = arrayOf(
-      Path.of(testDataPath, "duplicate1.jar").toUri().toURL(),
-      Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
-    )
-    val loader = URLClassLoader(urls, null)
-    val pluginList = loadDescriptorsFromClassPathInTest(loader)
-    val buildNumber = BuildNumber.fromString("2042.42")!!
-    val initContext = PluginInitializationContext.buildForTest(
-      essentialPlugins = emptySet(),
-      disabledPlugins = emptySet(),
-      expiredPlugins = emptySet(),
-      brokenPluginVersions = emptyMap(),
-      getProductBuildNumber = { buildNumber },
-      requirePlatformAliasDependencyForLegacyPlugins = false,
-      checkEssentialPlugins = false,
-      explicitPluginSubsetToLoad = null,
-      disablePluginLoadingCompletely = false,
-      currentProductModeId = ProductMode.MONOLITH.id,
-    )
-    val result = PluginLoadingResult()
-    result.initAndAddAll(
-      descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
-      initContext = initContext
-    )
-    assertThat(result.enabledPlugins).hasSize(1)
   }
 
   // todo this is rather about plugin set loading, probably needs to be moved out

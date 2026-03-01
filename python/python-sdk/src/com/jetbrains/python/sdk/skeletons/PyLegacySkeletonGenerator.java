@@ -11,11 +11,11 @@ import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,19 +45,6 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
       builder.workingDir(myCurrentFolder);
     }
     return builder;
-  }
-
-  /**
-   * @param ensureSuccess throw {@link InvalidSdkException} containing additional diagnostic on process non-zero exit code.
-   *                      You might want to disable it for commands where non-zero exit code is possible for situations other
-   *                      than misconfigured interpreter or execution error in order to inspect the output manually.
-   */
-  protected @NotNull ProcessOutput runProcess(@NotNull Builder builder, boolean ensureSuccess) throws InvalidSdkException {
-    ProcessOutput output = builder.runProcess();
-    if (ensureSuccess && output.getExitCode() != 0) {
-      throw new InvalidSdkException(formatGeneratorFailureMessage(output));
-    }
-    return output;
   }
 
   // [targets-api] this should be left as-is because it deals with non-structured `commandLine`
@@ -96,10 +83,6 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
       commandLine.add(PythonHelpersLocator.findPathStringInHelpers(GENERATOR3));
       commandLine.add("-d");
       commandLine.add(mySkeletonsPath);
-      if (!ContainerUtil.isEmpty(myAssemblyRefs)) {
-        commandLine.add("-c");
-        commandLine.add(StringUtil.join(myAssemblyRefs, ";"));
-      }
       if (!ContainerUtil.isEmpty(myExtraSysPath)) {
         commandLine.add("-s");
         commandLine.add(StringUtil.join(myExtraSysPath, File.pathSeparator));

@@ -1,6 +1,6 @@
 package com.intellij.ide.starter.driver.driver.remoteDev
 
-import com.intellij.ide.starter.coroutine.perClassSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
 import com.intellij.ide.starter.driver.engine.DriverOptions
 import com.intellij.ide.starter.driver.engine.remoteDev.XorgWindowManagerHandler
 import com.intellij.ide.starter.ide.IDETestContext
@@ -16,7 +16,15 @@ import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -57,7 +65,7 @@ internal class IDEFrontendHandler(
     EventsBus.subscribeOnce(process) { event: IdeLaunchEvent ->
       process.complete(event.ideProcess)
     }
-    val result = perClassSupervisorScope.async {
+    val result = scopeForProcesses.async {
       try {
         val thinClientCommand =
           if (frontendContext.ide.vmOptions.data().contains("-Djava.awt.headless=true")) "thinClient-headless" else "thinClient"

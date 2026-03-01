@@ -7,7 +7,7 @@ import com.intellij.usages.TextChunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.util.Objects;
 import java.util.function.BiFunction;
 

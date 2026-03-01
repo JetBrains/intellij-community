@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.service
 import com.intellij.driver.sdk.DriverTestLogger
 import com.intellij.driver.sdk.Project
+import com.intellij.driver.sdk.setupOrDetectSdk
 import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.waitForProjectOpen
 import com.intellij.ide.starter.driver.engine.LogColor
@@ -12,7 +13,9 @@ import com.intellij.ide.starter.report.AllureHelper
 import com.intellij.ide.starter.report.AllureHelper.step
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
+import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 import com.intellij.tools.ide.util.common.logOutput
+import kotlin.io.path.absolutePathString
 
 fun Driver.execute(commands: CommandChain, project: Project? = null) {
   waitForProjectOpen()
@@ -34,6 +37,14 @@ fun Driver.execute(commands: CommandChain, project: Project? = null) {
 
 fun Driver.execute(project: Project? = null, commands: (CommandChain) -> CommandChain) {
   execute(project = project, commands = commands(CommandChain()))
+}
+
+fun Driver.setupOrDetectSdk(sdk: SdkObject) {
+  setupOrDetectSdk(sdk.sdkName, sdk.sdkType, sdk.sdkPath.absolutePathString())
+}
+
+fun Driver.setupOrDetectSdk(project: Project, sdk: SdkObject) {
+  setupOrDetectSdk(project, sdk.sdkName, sdk.sdkType, sdk.sdkPath.absolutePathString())
 }
 
 fun <T> DriverTestLogger.run(text: String, action: () -> T): T = try {

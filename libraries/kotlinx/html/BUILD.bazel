@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-kotlinx-html-kotlinx-html-jvm"],
   runtime_deps = ["@lib//:libraries-kotlinx-html-kotlinx-html-jvm"]
 )
+
+jvm_library(
+  name = "html_test_lib",
+  module_name = "intellij.libraries.kotlinx.html",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-kotlinx-html-kotlinx-html-jvm"],
+  runtime_deps = [":html"]
+)
 ### auto-generated section `build intellij.libraries.kotlinx.html` end

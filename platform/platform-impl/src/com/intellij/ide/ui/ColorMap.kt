@@ -3,12 +3,12 @@
 
 package com.intellij.ide.ui
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
 import java.awt.Color
 
 private val LOG: Logger
@@ -40,7 +40,7 @@ internal fun readColorMapFromJson(parser: JsonParser,
         return result
       }
       JsonToken.VALUE_STRING -> {
-        val text = parser.text
+        val text = parser.string
         val key = parser.currentName()
         if (isColorLike(text)) {
           val color = parseColorOrNull(text, key)
@@ -52,7 +52,7 @@ internal fun readColorMapFromJson(parser: JsonParser,
         }
         result.put(key, NamedColorValue(name = text))
       }
-      JsonToken.FIELD_NAME -> {
+      JsonToken.PROPERTY_NAME -> {
       }
       null -> {
         break
@@ -84,6 +84,8 @@ internal fun initializeNamedColors(theme: UIThemeBean, warn: (String, Throwable?
     return
   }
 
+  val namedNamedValues = mutableListOf<Pair<String, String>>()
+
   // it is critically important to use our JB Color to apply theme on the fly - e.g., dark to light
   val colorMap = HashMap<String, Color>(rawColorMap.size)
   theme.colorMap.map = colorMap
@@ -100,7 +102,24 @@ internal fun initializeNamedColors(theme: UIThemeBean, warn: (String, Throwable?
         colorMap.put(key, Gray.TRANSPARENT)
       }
       is AwtColorValue -> colorMap.put(key, color.color)
-      else -> warn("Can't handle value $color for key '$key'", null)
+      is NamedColorValue -> {
+        if (colorName == color.name) {
+          warn("Can't handle value $color for key '$key'", null)
+        }
+        else {
+          namedNamedValues.add(key to color.name)
+        }
+      }
+    }
+  }
+
+  for (colorInfo in namedNamedValues) {
+    val color = colorMap.get(colorInfo.second)
+    if (color != null) {
+      colorMap.put(colorInfo.first, color)
+    }
+    else {
+      warn("Can't handle value ${colorInfo.second} for key '${colorInfo.first}'", null)
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("GrazieInspection")
 
 package org.jetbrains.intellij.build.productLayout
@@ -26,8 +26,10 @@ import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
  * - IDE: Run configuration "Generate Product Layouts"
  * - Bazel: `bazel run //platform/buildScripts:plugin-model-tool`
  *
+ * For comprehensive documentation:
+ * - [Module Sets](../product-dsl/docs/module-sets.md) - How module sets work and best practices
+ *
  * @see CoreModuleSets for platform infrastructure (libraries, corePlatform, coreIde, coreLang, rpc, fleet)
- * @see <a href="../product-dsl/module-sets.md">Module Sets Documentation</a>
  */
 object CommunityModuleSets {
   // region Essential and Debugger
@@ -46,7 +48,6 @@ object CommunityModuleSets {
    * **Use when:** Building lightweight IDE products that provide code editing functionality
    *
    * **Example products:**
-   * - **GitClient**: Lightweight VCS IDE with editing - uses `essentialMinimal()` + `vcs()`
    * - **Gateway**: Remote development gateway - uses `essentialMinimal()` + `vcs()` + `ssh()`
    *
    * **Don't use for:**
@@ -141,6 +142,9 @@ object CommunityModuleSets {
     module("intellij.platform.navbar.monolith")
     module("intellij.platform.clouds")
 
+    module("intellij.platform.structureView.backend")
+    module("intellij.platform.structureView.frontend")
+
     module("intellij.platform.execution.serviceView")
     module("intellij.platform.execution.serviceView.frontend")
     module("intellij.platform.execution.serviceView.backend")
@@ -157,6 +161,9 @@ object CommunityModuleSets {
     module("intellij.platform.editor.frontend")
     embeddedModule("intellij.platform.managed.cache")
     module("intellij.platform.managed.cache.backend")
+
+    module("intellij.platform.todo")
+    module("intellij.platform.todo.backend")
 
     module("intellij.platform.bookmarks.backend")
     module("intellij.platform.bookmarks.frontend")
@@ -253,7 +260,8 @@ object CommunityModuleSets {
     embeddedModule("intellij.xml.psi")
     embeddedModule("intellij.xml.psi.impl")
     embeddedModule("intellij.xml.analysis")
-    embeddedModule("intellij.xml.emmet")
+    module("intellij.xml.emmet")
+    module("intellij.xml.emmet.backend")
     embeddedModule("intellij.xml.ui.common")
     embeddedModule("intellij.xml.parser")
     embeddedModule("intellij.xml.syntax")
@@ -324,7 +332,35 @@ object CommunityModuleSets {
     module("intellij.grid.csv.core.impl")
     module("intellij.grid.core.impl")
     module("intellij.grid.impl")
+    module("intellij.grid.impl.ide")
   }
+
+  /**
+   * Core platform test framework modules.
+   * These are commonly needed by test plugins and are duplicated across products.
+   */
+  fun platformTestFrameworksCore(): ModuleSet = moduleSet("platform.testFrameworks.core") {
+    module("intellij.platform.testFramework", allowedMissingPluginIds = listOf("com.intellij.java", "com.intellij.platform.images"))
+    module("intellij.platform.testFramework.common")
+    module("intellij.platform.testFramework.core")
+    module("intellij.platform.testFramework.impl")
+    module("intellij.platform.testFramework.teamCity")
+  }
+
+  /**
+   * JUnit 5 test framework modules for test plugins.
+   * Includes the base JUnit 5 integration plus project structure, EEL, and WSL support.
+   */
+  fun platformTestFrameworksJunit5(): ModuleSet = moduleSet("platform.testFrameworks.junit5") {
+    module("intellij.platform.testFramework.junit5")
+    module("intellij.platform.testFramework.junit5.projectStructure")
+    module("intellij.platform.testFramework.junit5.codeInsight")
+    module("intellij.platform.testFramework.junit5._test")
+    module("intellij.platform.testFramework.junit5.eel._test")
+    module("intellij.platform.testFramework.junit5.wsl._test")
+  }
+
+  // endregion
 
   /**
    * Remote development common modules.
@@ -376,12 +412,14 @@ object CommunityModuleSets {
     module("intellij.platform.langInjection.backend")
     module("intellij.libraries.grpc")
     module("intellij.libraries.grpc.netty.shaded")
+    module("intellij.libraries.jspecify")
 
     moduleSet(gridCore())
     moduleSet(vcs())
     moduleSet(xml())
     moduleSet(duplicates())
     module("intellij.platform.structuralSearch")
+    embeddedModule("intellij.libraries.batik")
 
     // Note: rd.common is intentionally NOT included in ide.common
     // Reason: Rider uses custom module loading mode due to early backend startup requirements.

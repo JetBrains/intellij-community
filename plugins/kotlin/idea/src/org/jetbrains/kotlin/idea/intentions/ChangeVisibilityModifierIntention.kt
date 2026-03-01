@@ -5,20 +5,39 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.canBeInternal
+import org.jetbrains.kotlin.idea.core.canBePrivate
+import org.jetbrains.kotlin.idea.core.canBeProtected
+import org.jetbrains.kotlin.idea.core.canBePublic
+import org.jetbrains.kotlin.idea.core.setVisibility
+import org.jetbrains.kotlin.idea.core.toDescriptor
+import org.jetbrains.kotlin.idea.core.toVisibility
 import org.jetbrains.kotlin.idea.util.runCommandOnAllExpectAndActualDeclaration
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
+@K1Deprecation
 open class ChangeVisibilityModifierIntention protected constructor(val modifier: KtModifierKeywordToken) :
   SelfTargetingRangeIntention<KtDeclaration>(KtDeclaration::class.java, KotlinBundle.messagePointer("make.0", modifier.value)) {
     override fun startInWriteAction(): Boolean = false

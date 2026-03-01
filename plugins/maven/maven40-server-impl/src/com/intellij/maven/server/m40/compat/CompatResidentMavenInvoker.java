@@ -1,14 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.compat;
 
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.maven.api.cli.InvokerException;
 import org.apache.maven.api.cli.InvokerRequest;
 import org.apache.maven.api.services.Lookup;
 import org.apache.maven.cling.invoker.mvn.MavenContext;
 import org.apache.maven.cling.invoker.mvn.MavenInvoker;
+
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Resident invoker implementation, specialization of Maven Invoker, but keeps Maven instance resident. This implies, that

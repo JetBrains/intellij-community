@@ -8,7 +8,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 @ApiStatus.Internal
-final class MavenProjectTimestamp {
+public final class MavenProjectTimestamp {
   private final long myPomTimestamp;
   private final long myParentTimestamp;
   private final long myProfilesTimestamp;
@@ -20,7 +20,7 @@ final class MavenProjectTimestamp {
 
   static MavenProjectTimestamp NULL = new MavenProjectTimestamp(0, 0, 0, 0, 0, 0, 0, 0);
 
-  MavenProjectTimestamp(long pomTimestamp,
+  public MavenProjectTimestamp(long pomTimestamp,
                         long parentTimestamp,
                         long profilesTimestamp,
                         long userSettingsTimestamp,

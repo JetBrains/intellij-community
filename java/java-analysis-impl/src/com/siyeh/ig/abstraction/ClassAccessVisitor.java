@@ -16,14 +16,22 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor {

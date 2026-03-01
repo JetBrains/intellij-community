@@ -11,7 +11,7 @@ import icons.LombokIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 
 public final class LombokConfigColorSettingsPage implements ColorSettingsPage {

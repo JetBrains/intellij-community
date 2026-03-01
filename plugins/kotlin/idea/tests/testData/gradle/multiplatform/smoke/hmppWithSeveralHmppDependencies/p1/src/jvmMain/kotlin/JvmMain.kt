@@ -34,7 +34,7 @@ class JvmMain: JvmAndAndroidMain {
             .also { atomicInt -> atomicInt.update { value -> value + 1 } }
     }
 
-    override fun androidSdkIsNotVisible(context: <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: Context'")!>Context<!>) {
+    override fun androidSdkIsNotVisible(context: <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference 'Context'.'")!>Context<!>) {
 
     }
 

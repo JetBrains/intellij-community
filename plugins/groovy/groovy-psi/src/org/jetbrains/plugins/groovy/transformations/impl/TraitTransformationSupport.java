@@ -2,8 +2,12 @@
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.PairConsumer;
@@ -18,7 +22,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class TraitTransformationSupport implements AstTransformationSupport {
 

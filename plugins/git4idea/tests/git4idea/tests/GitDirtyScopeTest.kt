@@ -135,9 +135,11 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertFalse(isDirtyPath(file))
 
     writeAction {
-      DocumentUtil.executeInBulk(file.document) {
-        // do nothing
-      }
+      DocumentUtil.executeInBulk(file.document, object : Runnable {
+        override fun run() {
+          // do nothing
+        }
+      })
     }
 
     assertFalse(isDirtyPath(file))

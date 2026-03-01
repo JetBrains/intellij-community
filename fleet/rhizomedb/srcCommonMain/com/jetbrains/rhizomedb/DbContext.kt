@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb
 
+import fleet.multiplatform.shims.ThreadLocal
 import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.jvm.JvmStatic
-import fleet.multiplatform.shims.ThreadLocal
 
 //fun getStack(): Throwable = Throwable("dbcontext creation stack")
 
@@ -80,8 +80,7 @@ class DbContext<out QQ : Q>(
       threadLocal.set(facade)
       try {
         return facade.f()
-      }
-      finally {
+      } finally {
         threadLocal.set(old)
       }
     }
@@ -92,8 +91,7 @@ class DbContext<out QQ : Q>(
     privateValue = dbContextPrime
     return try {
       (this as DbContext<U>).f()
-    }
-    finally {
+    } finally {
       privateValue = oldContext
     }
   }
@@ -101,8 +99,7 @@ class DbContext<out QQ : Q>(
   inline fun <T> ensureMutable(f: DbContext<Mut>.() -> T): T {
     return if (privateValue is Mut) {
       (this as DbContext<Mut>).f()
-    }
-    else {
+    } else {
       throw OutOfMutableDbContext()
     }
   }

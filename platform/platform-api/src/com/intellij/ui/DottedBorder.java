@@ -19,7 +19,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 public class DottedBorder implements Border {
   private final int myTop, myBottom, myLeft, myRight;

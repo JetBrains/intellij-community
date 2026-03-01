@@ -22,7 +22,11 @@
     <extensionPoint qualifiedName="com.intellij.debugger.dexBytecodeInspector"
                     interface="org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.base.util.classNameCalculator"
-                    interface="org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator" dynamic="true"/>
+                    interface="org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator" dynamic="true"
+                    />
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.core.classNameContributor" dynamic="true"
+                    interface="org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider$ClassNameContributor"
+    />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -68,6 +72,9 @@
     <debuggerEditorTextProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.debugger.core.EnclosingKotlinEditorTextProvider"/>
+    <debugger.evaluationExpressionConverter
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.debugger.core.KotlinEvaluationExpressionConverter"/>
     <registryKey key="debugger.kotlin.analysis.api.editor.text.provider" defaultValue="true"
                  description="Use Analysis API-based implementation of 'EditorTextProvider'"/>
 

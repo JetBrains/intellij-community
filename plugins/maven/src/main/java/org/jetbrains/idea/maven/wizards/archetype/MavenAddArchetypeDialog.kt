@@ -10,7 +10,11 @@ import com.intellij.openapi.ui.emptyText
 import com.intellij.openapi.ui.validation.CHECK_ARTIFACT_ID
 import com.intellij.openapi.ui.validation.CHECK_GROUP_ID
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.trimmedTextValidation
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle.message

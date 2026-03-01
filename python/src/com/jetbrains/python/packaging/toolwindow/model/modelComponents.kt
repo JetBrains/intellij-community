@@ -2,20 +2,37 @@
 package com.jetbrains.python.packaging.toolwindow.model
 
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 sealed class DisplayablePackage(val name: @NlsSafe String, open val repository: PyPackageRepository?) {
-  open fun getRequirements(): List<RequirementPackage> = emptyList()
+  open fun getRequirements(): List<DisplayablePackage> = emptyList()
 }
 
-class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository?, val nextVersion: PyPackageVersion? = null, private val requirements: List<RequirementPackage>) : DisplayablePackage(instance.name, repository) {
+/**
+ * Represents a package that is currently installed in the Python environment.
+ *
+ * @param instance The underlying Python package instance
+ * @param repository The repository where this package can be updated from
+ * @param nextVersion The next available version for update (if any)
+ * @param requirements List of packages that this package depends on
+ * @param isDeclared True if explicitly declared in project files (requirements.txt, pyproject.toml), false if transitive dependency
+ * @param workspaceMember The workspace member this package belongs to (for uv/Poetry workspaces)
+ */
+class InstalledPackage(
+  val instance: PythonPackage,
+  repository: PyPackageRepository?,
+  val nextVersion: PyPackageVersion? = null,
+  private val requirements: List<RequirementPackage>,
+  val isDeclared: Boolean = true,
+  val workspaceMember: PyWorkspaceMember? = null
+) : DisplayablePackage(instance.name, repository) {
   val currentVersion: PyPackageVersion? = PyPackageVersionNormalizer.normalize(instance.version)
 
   val isEditMode: Boolean = instance.isEditableMode
@@ -27,13 +44,28 @@ class InstalledPackage(val instance: PythonPackage, repository: PyPackageReposit
       return nextVersion != null && PyPackageVersionComparator.compare(nextVersion, currentVersion) > 0
     }
 
-  override fun getRequirements(): List<RequirementPackage> = requirements
+  override fun getRequirements(): List<DisplayablePackage> = requirements
 }
 
-class RequirementPackage(val instance: PythonPackage, override val repository: PyPackageRepository, private val requirements: List<RequirementPackage> = emptyList()) : DisplayablePackage(instance.name, repository) {
+@ApiStatus.Internal
+class WorkspaceMember(
+  name: String,
+  private val packages: List<InstalledPackage>,
+) : DisplayablePackage(name, null) {
+  override fun getRequirements(): List<DisplayablePackage> = packages
+}
+
+class RequirementPackage(
+  val instance: PythonPackage,
+  override val repository: PyPackageRepository,
+  private val requirements: List<RequirementPackage> = emptyList(),
+  val group: String? = null,
+  val isDeclared: Boolean = true,
+  val workspaceMember: PyWorkspaceMember? = null
+) : DisplayablePackage(instance.name, repository) {
   val sourceRepoIcon: Icon? = instance.sourceRepoIcon
 
-  override fun getRequirements(): List<RequirementPackage> = requirements
+  override fun getRequirements(): List<DisplayablePackage> = requirements
 }
 
 class InstallablePackage(name: String, override val repository: PyPackageRepository) : DisplayablePackage(name, repository)
@@ -43,13 +75,3 @@ class ExpandResultNode(var more: Int, override val repository: PyPackageReposito
 open class PyPackagesViewData(val repository: PyPackageRepository, val packages: List<DisplayablePackage>, val exactMatch: Int = -1, val moreItems: Int = 0)
 
 class PyInvalidRepositoryViewData(repository: PyPackageRepository) : PyPackagesViewData(repository, emptyList())
-
-data class PackageQuickFix(
-  val name: @Nls String,
-  val action: (suspend () -> PyResult<*>)
-)
-
-class ErrorNode(
-  val description: @Nls String,
-  val quickFix: PackageQuickFix
-) : DisplayablePackage("", null)

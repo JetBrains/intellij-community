@@ -6,7 +6,7 @@ import com.intellij.navigation.ItemPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class SimpleServiceViewDescriptor implements ServiceViewDescriptor {
   private final ItemPresentation myPresentation;

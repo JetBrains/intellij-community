@@ -9,7 +9,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 /**
  * @author Konstantin Bulenkov

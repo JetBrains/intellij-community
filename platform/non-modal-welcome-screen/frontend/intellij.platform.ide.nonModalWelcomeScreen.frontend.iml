@@ -4,20 +4,20 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.0-RC3-0.2/rpc-compiler-plugin-2.3.0-RC3-0.2.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.0-RC3/kotlin-compose-compiler-plugin-2.3.0-RC3.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.10-RC-0.1/rpc-compiler-plugin-2.3.10-RC-0.1.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.10-RC/kotlin-compose-compiler-plugin-2.3.10-RC.jar</arg>
               </args>
             </arrayArg>
           </arrayArguments>
@@ -43,5 +43,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="fleet.rpc" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>

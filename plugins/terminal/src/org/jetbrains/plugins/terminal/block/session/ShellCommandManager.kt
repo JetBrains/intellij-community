@@ -12,7 +12,9 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.clearAllAndMoveCursorToTopLeftCorner
 import org.jetbrains.plugins.terminal.util.ShellIntegration
-import java.util.*
+import java.util.EventListener
+import java.util.HexFormat
+import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource

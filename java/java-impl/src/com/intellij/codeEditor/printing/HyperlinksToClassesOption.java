@@ -7,12 +7,17 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.xml.util.JspFileTypeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import java.util.Map;
 import java.util.TreeMap;
 

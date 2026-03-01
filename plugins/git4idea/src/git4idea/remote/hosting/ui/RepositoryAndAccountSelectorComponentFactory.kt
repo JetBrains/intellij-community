@@ -40,7 +40,11 @@ import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMapping, A : ServerAccount>(
   private val vm: RepositoryAndAccountSelectorViewModel<M, A>

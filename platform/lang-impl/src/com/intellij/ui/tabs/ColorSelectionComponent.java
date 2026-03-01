@@ -14,9 +14,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
+import javax.swing.JPanel;
 import javax.swing.plaf.ButtonUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.LinkedHashMap;
 import java.util.Map;

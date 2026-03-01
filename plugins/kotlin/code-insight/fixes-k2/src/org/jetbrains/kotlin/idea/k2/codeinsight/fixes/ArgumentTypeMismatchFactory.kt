@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.types.Variance
-import java.util.*
+import java.util.Locale
 
 internal object ArgumentTypeMismatchFactory {
 

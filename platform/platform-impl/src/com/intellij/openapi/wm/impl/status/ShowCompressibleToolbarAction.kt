@@ -85,7 +85,7 @@ internal class ShowCompressibleToolbarAction : AnAction(), DumbAware {
 
   }
 
-  private class RightAlignedAction : AnAction(), CustomComponentAction {
+  internal class RightAlignedAction : AnAction(), CustomComponentAction {
     override fun actionPerformed(e: AnActionEvent) {
     }
 

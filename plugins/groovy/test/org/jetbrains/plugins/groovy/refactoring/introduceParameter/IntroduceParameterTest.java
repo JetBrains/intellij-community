@@ -3,7 +3,11 @@ package org.jetbrains.plugins.groovy.refactoring.introduceParameter;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceParameterRefactoring;

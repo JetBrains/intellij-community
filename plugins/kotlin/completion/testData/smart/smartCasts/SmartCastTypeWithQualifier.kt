@@ -8,3 +8,5 @@ class Foo(val prop1 : Any, val prop2 : Any){
 
 // EXIST: { itemText:"prop1" }
 // ABSENT: { itemText:"prop2" }
+
+// IGNORE_K2

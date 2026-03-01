@@ -1,7 +1,10 @@
 <idea-plugin visibility="public">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.shared"/>
+    <!-- endregion -->
   </dependencies>
 
   <actions resource-bundle="messages.LocalHistoryBundle">
@@ -82,6 +85,11 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="lvcs.store.binary.file.content.on.deletion.mb"
+                 defaultValue="0"
+                 restartRequired="false"
+                 description="Maximum file size in megabytes to store binary file content on deletion (0 or negative to disable)"/>
+
     <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
     <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
 
@@ -102,6 +110,9 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter"/>
     <statistics.notificationIdsHolder implementation="com.intellij.history.core.LocalHistoryNotificationIdsHolder"/>
+
+    <registryKey key="lvcs.trace.changes.persistence.limit" defaultValue="100"
+                 description="The maximum number of change entries to log when tracing the local history persistence"/>
   </extensions>
 
   <applicationListeners>

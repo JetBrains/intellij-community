@@ -19,7 +19,12 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.indexing
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.jacksonMapper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.oldVersionIndexingDiagnosticDir
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup.IndexingActivityType
-import com.intellij.util.indexing.diagnostic.dto.*
+import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnosticAppInfo
+import com.intellij.util.indexing.diagnostic.dto.JsonIndexingActivityDiagnostic
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectDumbIndexingHistory
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectIndexingActivityHistory
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistory
+import com.intellij.util.indexing.diagnostic.dto.JsonRuntimeInfo
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateActivityHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
 import com.intellij.util.io.createDirectories
@@ -29,13 +34,21 @@ import com.intellij.util.io.fileSizeSafe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
+import tools.jackson.core.JsonToken
+import tools.jackson.core.ObjectReadContext
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.databind.DeserializationFeature
 import java.io.Reader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
-import kotlin.io.path.*
+import kotlin.io.path.bufferedReader
+import kotlin.io.path.bufferedWriter
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 import kotlin.math.min
 import kotlin.streams.asSequence
 
@@ -177,12 +190,21 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
     private fun <T> fastReadJsonField(bufferedReader: Reader, propertyName: String, type: Class<T>): T? {
       try {
         bufferedReader.use { reader ->
-          jacksonMapper.factory.createParser(reader).use { parser ->
-            while (parser.nextToken() != null) {
-              val property = parser.currentName()
-              if (property == propertyName) {
-                parser.nextToken()
-                return jacksonMapper.readValue(parser, type)
+          JsonFactory().createParser(ObjectReadContext.empty(), reader).use { parser ->
+            if (parser.nextToken() == JsonToken.START_OBJECT) {
+              while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
+                val property = parser.currentName()
+                val token = parser.nextToken()
+                if (property == propertyName) {
+                  return jacksonMapper
+                    .readerFor(type)
+                    .without(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+                    .readValue(parser)
+                }
+
+                if (token == JsonToken.START_OBJECT || token == JsonToken.START_ARRAY) {
+                  parser.skipChildren()
+                }
               }
             }
           }

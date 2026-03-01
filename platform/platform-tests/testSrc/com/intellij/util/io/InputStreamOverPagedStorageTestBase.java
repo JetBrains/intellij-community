@@ -10,7 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 
 public abstract class InputStreamOverPagedStorageTestBase {
 

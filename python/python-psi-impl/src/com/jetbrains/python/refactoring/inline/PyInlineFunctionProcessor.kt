@@ -5,14 +5,14 @@ import com.intellij.history.LocalHistory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
@@ -24,9 +24,30 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.PyDunderAllReference
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyDecorator
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportElement
+import com.jetbrains.python.psi.PyImportStatementBase
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyLambdaExpression
+import com.jetbrains.python.psi.PyLiteralExpression
+import com.jetbrains.python.psi.PyPassStatement
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyReturnStatement
+import com.jetbrains.python.psi.PyStarArgument
+import com.jetbrains.python.psi.PyStatement
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import com.jetbrains.python.psi.impl.mapArguments
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -55,7 +76,10 @@ class PyInlineFunctionProcessor(
     if (refUsages.isNull) return false
     val conflicts = MultiMap.create<PsiElement, String>()
     val usagesAndImports = refUsages.get()
-    val (imports, usages) = usagesAndImports.partition { PsiTreeUtil.getParentOfType(it.element, PyImportStatementBase::class.java) != null }
+    val (imports, usages) = usagesAndImports.partition {
+      PsiTreeUtil.getParentOfType(it.element,
+                                  PyImportStatementBase::class.java) != null
+    }
     val filteredUsages = usages.filter { usage ->
       if (usage.reference is PyDunderAllReference) return@filter true
       val element = usage.element!!
@@ -84,12 +108,17 @@ class PyInlineFunctionProcessor(
     return showConflicts(conflicts, filtered.toTypedArray())
   }
 
-  private fun handleUsageError(element: PsiElement, @PropertyKey(resourceBundle = PyPsiBundle.BUNDLE) error: String, conflicts: MultiMap<PsiElement, String>): Boolean {
+  private fun handleUsageError(
+    element: PsiElement,
+    @PropertyKey(resourceBundle = PyPsiBundle.BUNDLE) error: String,
+    conflicts: MultiMap<PsiElement, String>,
+  ): Boolean {
     val errorText = PyPsiBundle.message(error, myFunction.name)
     if (myInlineThisOnly) {
       // shortcut for inlining single reference: show error hint instead of modal dialog
       CommonRefactoringUtil.showErrorHint(myProject, myEditor, errorText, PyPsiBundle.message("refactoring.inline.function.title"),
-                                          PyInlineFunctionHandler.REFACTORING_ID)
+                                          PyInlineFunctionHandler.Helper.REFACTORING_ID
+      )
       prepareSuccessful()
       return false
     }
@@ -101,7 +130,8 @@ class PyInlineFunctionProcessor(
   protected override fun findUsages(): Array<UsageInfo> {
     if (myInlineThisOnly) {
       val element = myReference!!.element as PyReferenceExpression
-      val localImport = PyResolveUtil.resolveLocally(ScopeUtil.getScopeOwner(element)!!, element.name!!).firstOrNull { it is PyImportElement }
+      val localImport =
+        PyResolveUtil.resolveLocally(ScopeUtil.getScopeOwner(element)!!, element.name!!).firstOrNull { it is PyImportElement }
       return if (localImport != null) arrayOf(UsageInfo(element), UsageInfo(localImport)) else arrayOf(UsageInfo(element))
     }
 
@@ -179,7 +209,8 @@ class PyInlineFunctionProcessor(
       val importAsRefs = MultiMap.create<String, PyReferenceExpression>()
       val returnStatements = mutableListOf<PyReturnStatement>()
 
-      val mappedArguments = prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel, resolveContext, selfUsed)
+      val mappedArguments =
+        prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel, resolveContext, selfUsed)
 
       myFunction.statementList.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -382,10 +413,16 @@ class PyInlineFunctionProcessor(
   }
 
   private fun prepareArguments(
-    callSite: PyCallExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>, scopeAnchor: PsiElement,
-    reference: PyReferenceExpression, languageLevel: LanguageLevel, context: PyResolveContext, selfUsed: Boolean,
+    callSite: PyCallExpression,
+    declarations: MutableList<PyAssignmentStatement>,
+    generatedNames: MutableSet<String>,
+    scopeAnchor: PsiElement,
+    reference: PyReferenceExpression,
+    languageLevel: LanguageLevel,
+    context: PyResolveContext,
+    selfUsed: Boolean,
   ): Map<String, PyExpression> {
-    val mapping = callSite.mapArguments(context).firstOrNull() ?: error("Can't map arguments for ${reference.name}")
+    val mapping = PyCallExpressionHelper.mapArguments(callSite, context).firstOrNull() ?: error("Can't map arguments for ${reference.name}")
     val mappedParams = mapping.mappedParameters
     val firstImplicit = mapping.implicitParameters.firstOrNull()
 
@@ -435,7 +472,12 @@ class PyInlineFunctionProcessor(
     return paramName to statement.targets[0]
   }
 
-  private fun generateUniqueAssignment(level: LanguageLevel, name: String, previouslyGeneratedNames: MutableSet<String>, scopeAnchor: PsiElement): PyAssignmentStatement {
+  private fun generateUniqueAssignment(
+    level: LanguageLevel,
+    name: String,
+    previouslyGeneratedNames: MutableSet<String>,
+    scopeAnchor: PsiElement,
+  ): PyAssignmentStatement {
     val uniqueName = PyRefactoringUtil.selectUniqueName(name, scopeAnchor) { newName, anchor ->
       PyRefactoringUtil.isValidNewName(newName, anchor) && newName !in previouslyGeneratedNames
     }
@@ -444,12 +486,14 @@ class PyInlineFunctionProcessor(
   }
 
   override fun getCommandName() = PyPsiBundle.message("refactoring.inline.function.command.name", myFunction.name)
-  override fun getRefactoringId() = PyInlineFunctionHandler.REFACTORING_ID
+  override fun getRefactoringId() = PyInlineFunctionHandler.Helper.REFACTORING_ID
 
   override fun createUsageViewDescriptor(usages: Array<out UsageInfo>) = object : UsageViewDescriptor {
     override fun getElements(): Array<PsiElement> = arrayOf(myFunction)
     override fun getProcessedElementsHeader(): String = PyPsiBundle.message("refactoring.inline.function.function.to.inline")
-    override fun getCodeReferencesText(usagesCount: Int, filesCount: Int): String = PyPsiBundle.message("refactoring.inline.function.invocations.to.be.inlined", filesCount)
+    override fun getCodeReferencesText(usagesCount: Int, filesCount: Int): String =
+      PyPsiBundle.message("refactoring.inline.function.invocations.to.be.inlined", filesCount)
+
     override fun getCommentReferencesText(usagesCount: Int, filesCount: Int): String = ""
   }
 }

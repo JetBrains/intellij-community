@@ -3,15 +3,16 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.classOrObjectRecursiveVisitor
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-
+@K1Deprecation
 class LateinitVarOverridesLateinitVarInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = classOrObjectRecursiveVisitor(fun(klass) {
         for (declaration in klass.declarations) {

@@ -14,8 +14,9 @@ import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
+import java.awt.Color;
 
 class ProjectStructureElementRenderer extends ColoredTreeCellRenderer {
   private final StructureConfigurableContext myContext;

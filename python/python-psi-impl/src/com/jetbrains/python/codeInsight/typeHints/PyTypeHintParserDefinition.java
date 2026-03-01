@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonParserDefinition;
 import org.jetbrains.annotations.NotNull;
 

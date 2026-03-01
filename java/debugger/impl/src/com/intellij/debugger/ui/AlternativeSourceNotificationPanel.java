@@ -8,6 +8,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.ide.util.ModuleRendererFactory;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -43,24 +44,26 @@ public class AlternativeSourceNotificationPanel extends EditorNotificationPanel 
     switcher.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final DebuggerSession session = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
-        final PsiElement item = ((AlternativeSourceElement)switcher.getSelectedItem()).myElement;
-        final VirtualFile vFile = item.getContainingFile().getVirtualFile();
-        if (session != null && vFile != null) {
-          session.getProcess().getManagerThread().schedule(PrioritizedTask.Priority.LOW, () -> {
-            if (!StringUtil.isEmpty(locationDeclName)) {
-              DebuggerUtilsEx.setAlternativeSourceUrl(locationDeclName, vFile.getUrl(), project);
-            }
-            DebuggerUIUtil.invokeLater(() -> {
-              FileEditorManager.getInstance(project).closeFile(file);
-              session.refresh(true);
+        WriteIntentReadAction.run(() -> {
+          final DebuggerSession session = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
+          final PsiElement item = ((AlternativeSourceElement)switcher.getSelectedItem()).myElement;
+          final VirtualFile vFile = item.getContainingFile().getVirtualFile();
+          if (session != null && vFile != null) {
+            session.getProcess().getManagerThread().schedule(PrioritizedTask.Priority.LOW, () -> {
+              if (!StringUtil.isEmpty(locationDeclName)) {
+                DebuggerUtilsEx.setAlternativeSourceUrl(locationDeclName, vFile.getUrl(), project);
+              }
+              DebuggerUIUtil.invokeLater(() -> {
+                FileEditorManager.getInstance(project).closeFile(file);
+                session.refresh(true);
+              });
             });
-          });
-        }
-        else if (item instanceof Navigatable navigatable) {
-          FileEditorManager.getInstance(project).closeFile(file);
-          navigatable.navigate(true);
-        }
+          }
+          else if (item instanceof Navigatable navigatable) {
+            FileEditorManager.getInstance(project).closeFile(file);
+            navigatable.navigate(true);
+          }
+        });
       }
     });
     myLinksPanel.add(switcher);

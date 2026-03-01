@@ -11,7 +11,11 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers

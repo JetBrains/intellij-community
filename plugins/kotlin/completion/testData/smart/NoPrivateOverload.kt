@@ -13,3 +13,5 @@ class C {
 // ABSENT: expr1
 // EXIST: expr2
 // ABSENT: expr3
+
+// IGNORE_K2

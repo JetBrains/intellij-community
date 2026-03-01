@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
@@ -20,12 +21,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +44,17 @@ import java.util.stream.IntStream;
 public class LazyQuickFixTest extends LightQuickFixTestCase {
   private static final List<Throwable> regFixCalled = Collections.synchronizedList(new ArrayList<>());
   private static volatile boolean ALLOW_UNRESOLVED_REFERENCE_QUICK_FIXES;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+  }
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(myDaemonCodeAnalyzer, () -> super.runTestRunnable(testRunnable));
+  }
+
   private static class MyCountingQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
     @Override
     public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
@@ -72,18 +89,19 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     ALLOW_UNRESOLVED_REFERENCE_QUICK_FIXES = false;
     regFixCalled.clear();
     configureFromFileText("X.java", text);
-    List<HighlightInfo> errors = highlightErrors();
+    List<HighlightInfo> errors = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
     assertSize(N, errors);
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
     assertEmpty(StringUtil.join(regFixCalled, t-> ExceptionUtil.getThrowableText(t), "\n----\n"), regFixCalled);
     Disposer.dispose(resolveInBackground);
     regFixCalled.clear();
 
     getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("UnknownClassNumber15"));
     ALLOW_UNRESOLVED_REFERENCE_QUICK_FIXES = true;
-    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
-    errors = highlightErrors();
-    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
-    UIUtil.dispatchAllInvocationEvents();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
+    errors = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertSize(N, errors);
     assertNotEmpty(regFixCalled);
   }
@@ -102,12 +120,12 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{
       new MyLazyFixAnnotator()}, ()-> {
       getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("MyClass var1"));
-      DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
-      List<HighlightInfo> errors = highlightErrors();
+      myDaemonCodeAnalyzer.restart(getTestName(false));
+      List<HighlightInfo> errors = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
       assertTrue(ContainerUtil.exists(errors, h->"my class".equals(h.getDescription())));
-      CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
+      CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
 
-      IntentionAction fix = findActionWithText("my lazy fix");
+      IntentionAction fix = findActionWithText(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile()), "my lazy fix");
       assertNotNull(fix);
       invoke(fix);
 
@@ -158,8 +176,8 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
     ProperTextRange visibleRange = getEditor().calculateVisibleRange();
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 1000);
-    List<HighlightInfo> infos = highlightErrors();
-    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
     assertTrue(String.valueOf(infos), ContainerUtil.exists(infos, h-> "Cannot resolve method 'fooooo' in 'AClass'".equals(h.getDescription())));
     assertSize(0, regFixCalled); // must not compute
 
@@ -170,13 +188,14 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     assertEquals(visibleRange.toString(), 0, visibleRange.getStartOffset());
     type("x");
     backspace();  // change psi to revalidate cached values
-    infos = highlightErrors();
+    infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
     assertTrue(String.valueOf(infos), ContainerUtil.exists(infos, h-> "Cannot resolve method 'fooooo' in 'AClass'".equals(h.getDescription())));
-    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
     assertSize(1, regFixCalled); // now must compute, since it's close to the caret
     Disposer.dispose(resolveInBackground);
   }
 
+  // warning for all comments, with lazy quick fix
   private static class MyLazyFixHighlightVisitor implements HighlightVisitor {
     private static volatile boolean infoCreated;
     private static volatile boolean fixComputed;
@@ -219,8 +238,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
   }
 
   public void testLazyQuickFixMustNotRecomputeItsExpensiveComputationOnEveryDaemonRestart() {
-    MyLazyFixHighlightVisitor visitor = new MyLazyFixHighlightVisitor();
-    getProject().getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, getTestRootDisposable());
+    getProject().getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(new MyLazyFixHighlightVisitor(), getTestRootDisposable());
     @Language("JAVA")
     String text = """
       class X {
@@ -236,26 +254,31 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     MyLazyFixHighlightVisitor.infoCreated = false;
     MyLazyFixHighlightVisitor.fixComputed = false;
 
-    List<HighlightInfo> myWarns = ContainerUtil.filter(doHighlighting(), h -> MyLazyFixHighlightVisitor.isMy(h));
+    List<HighlightInfo> myWarns = ContainerUtil.filter(
+      myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING), h -> MyLazyFixHighlightVisitor.isMy(h));
     assertOneElement(myWarns);
     assertTrue(MyLazyFixHighlightVisitor.infoCreated);
+
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
     assertTrue(MyLazyFixHighlightVisitor.fixComputed);
 
     MyLazyFixHighlightVisitor.infoCreated = false;
     MyLazyFixHighlightVisitor.fixComputed = false;
-    DaemonCodeAnalyzerImpl.getInstance(getProject()).restart(this);
-    doHighlighting();
+    myDaemonCodeAnalyzer.restart(this);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
     assertTrue(MyLazyFixHighlightVisitor.infoCreated);
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
     assertFalse(MyLazyFixHighlightVisitor.fixComputed); // must not recompute on each restart
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().setText(""));
-    doHighlighting();
+    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
     WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().setText(text));
     getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("<caret>"));
     MyLazyFixHighlightVisitor.infoCreated = false;
     MyLazyFixHighlightVisitor.fixComputed = false;
-    doHighlighting();
+    myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
     assertTrue(MyLazyFixHighlightVisitor.infoCreated);
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getProject(), getEditor());
     assertTrue(MyLazyFixHighlightVisitor.fixComputed); // when text changed too much, it must recompute
   }
 }

@@ -12,8 +12,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.java.parser.JavaParserUtil.*;
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.lang.java.parser.JavaParserUtil.done;
+import static com.intellij.lang.java.parser.JavaParserUtil.emptyElement;
+import static com.intellij.lang.java.parser.JavaParserUtil.error;
+import static com.intellij.lang.java.parser.JavaParserUtil.expectOrError;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECONSTRUCTION_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECONSTRUCTION_PATTERN;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECONSTRUCTION_PATTERN_VARIABLE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PATTERN_VARIABLE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_TEST_PATTERN;
+import static com.intellij.psi.impl.source.tree.JavaElementType.UNNAMED_PATTERN;
 
 /**
  * @deprecated Use the new Java syntax library instead.

@@ -6,7 +6,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.lang.annotation.HighlightSeverity.*
+import com.intellij.lang.annotation.HighlightSeverity.ERROR
+import com.intellij.lang.annotation.HighlightSeverity.INFORMATION
+import com.intellij.lang.annotation.HighlightSeverity.WARNING
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
@@ -135,8 +137,8 @@ class KotlinScriptHighlightingVisitor : HighlightVisitor {
     }
 
     private fun drainScriptReports(file: KtFile): List<ScriptDiagnostic> {
-        val virtualFile = file.originalFile.virtualFile
-        val diagnostics = virtualFile?.scriptDiagnostics  ?: emptyList()
+        val virtualFile = file.originalFile.virtualFile ?: return emptyList()
+        val diagnostics = virtualFile.scriptDiagnostics ?: emptyList()
         virtualFile.scriptDiagnostics = emptyList()
 
         return diagnostics

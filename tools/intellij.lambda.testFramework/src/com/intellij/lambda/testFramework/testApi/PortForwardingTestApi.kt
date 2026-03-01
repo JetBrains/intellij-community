@@ -1,8 +1,8 @@
 package com.intellij.lambda.testFramework.testApi
 
+import com.intellij.lambda.testFramework.frameworkLogger
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
-import com.intellij.lambda.testFramework.frameworkLogger
 import java.net.InetSocketAddress
 
 fun prepareServerWithLightContent(portToOccupy: Int = 0): Pair<Int, HttpServer> {

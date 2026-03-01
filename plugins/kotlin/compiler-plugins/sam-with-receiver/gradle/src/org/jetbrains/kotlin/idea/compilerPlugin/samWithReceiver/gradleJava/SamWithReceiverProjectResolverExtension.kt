@@ -8,9 +8,9 @@ import org.jetbrains.kotlin.idea.gradleTooling.model.samWithReceiver.SamWithRece
 
 class SamWithReceiverProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<SamWithReceiverModel>() {
     companion object {
-        val KEY = Key.create(SamWithReceiverModel::class.java, 1)
+        val KEY: Key<SamWithReceiverModel> = Key.create(SamWithReceiverModel::class.java, 1)
     }
 
     override val modelClass get() = SamWithReceiverModel::class.java
-    override val userDataKey get() = KEY
+    override val userDataKey: Key<SamWithReceiverModel> get() = KEY
 }

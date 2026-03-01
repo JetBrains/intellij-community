@@ -5,10 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.testFramework.loadExtensionWithText
+import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.VoidDataExternalizer
-import com.intellij.util.io.DataExternalizer
 
 internal class TracingIdFilter: IdFilter() {
   override fun containsFileId(id: Int): Boolean {

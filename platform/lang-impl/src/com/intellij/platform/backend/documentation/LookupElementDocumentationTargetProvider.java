@@ -33,7 +33,6 @@ public interface LookupElementDocumentationTargetProvider {
    * @return target to handle documentation actions which are invoked on the given {@code element},
    * or {@code null} if this provider is not aware of the given element
    */
-  @OverrideOnly
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   @Nullable DocumentationTarget documentationTarget(@NotNull PsiFile psiFile, @NotNull LookupElement element, int offset);

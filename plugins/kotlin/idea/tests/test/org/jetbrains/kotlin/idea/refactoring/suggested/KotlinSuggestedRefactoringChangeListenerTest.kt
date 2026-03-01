@@ -8,7 +8,11 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringChangeListenerTest
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset

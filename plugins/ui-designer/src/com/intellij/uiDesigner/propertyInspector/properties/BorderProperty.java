@@ -17,14 +17,18 @@ import com.intellij.uiDesigner.propertyInspector.editors.ColorEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.*;
+import com.intellij.uiDesigner.propertyInspector.renderers.ColorRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.FontRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.shared.BorderType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
 import java.util.function.Supplier;
 
 public final class BorderProperty extends Property<RadContainer, BorderType> {

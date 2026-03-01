@@ -8,7 +8,7 @@ import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.NonExtendable
 abstract class ChangesViewWorkflowManager @ApiStatus.Internal protected constructor() {

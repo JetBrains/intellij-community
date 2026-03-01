@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLabel
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
@@ -33,7 +33,7 @@ interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelViewModel<G
   val labelFilterState: MutableStateFlow<GitLabMergeRequestsFiltersValue.LabelFilterValue?>
 
   val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>>
-  val labels: Flow<Result<List<GitLabLabelDTO>>>
+  val labels: Flow<Result<List<GitLabLabel>>>
 
   fun reloadData()
 }
@@ -87,7 +87,7 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
 
   override val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>> =
     GitLabCoroutineUtil.batchesResultsFlow(projectData.dataReloadSignal, projectData::getMembersBatches)
-  override val labels: Flow<Result<List<GitLabLabelDTO>>> =
+  override val labels: Flow<Result<List<GitLabLabel>>> =
     GitLabCoroutineUtil.batchesResultsFlow(projectData.dataReloadSignal, projectData::getLabelsBatches)
 
   override fun reloadData() {

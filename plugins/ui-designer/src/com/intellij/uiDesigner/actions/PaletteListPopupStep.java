@@ -3,7 +3,11 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.SpeedSearchFilter;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
@@ -14,7 +18,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

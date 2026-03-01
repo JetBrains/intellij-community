@@ -15,7 +15,12 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DNamedElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DRootElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 
 import javax.swing.tree.DefaultMutableTreeNode;

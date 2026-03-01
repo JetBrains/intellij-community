@@ -9,7 +9,11 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -20,7 +24,12 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.compose
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.Icon
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 internal class ComposeSandboxAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

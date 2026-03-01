@@ -13,7 +13,7 @@ import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 class DirectoryElementType extends CompositePackagingElementType<DirectoryPackagingElement> {
 

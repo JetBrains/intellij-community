@@ -5,9 +5,24 @@ import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.GlobalSimpleInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
@@ -19,15 +34,19 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.InspectionsKt;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,7 +85,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
 
     AnalysisScope scope = new AnalysisScope(getFile());
     context.doInspections(scope);
-    UIUtil.dispatchAllInvocationEvents(); // wait for launchInspections in invoke later
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // wait for launchInspections in invoke later
 
     Tools tools = context.getTools().get(shortName);
     GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
@@ -74,7 +93,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
     assertEquals(1, presentation.getProblemDescriptors().size());
 
     context.doInspections(scope);
-    UIUtil.dispatchAllInvocationEvents(); // wait for launchInspections in invoke later
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // wait for launchInspections in invoke later
 
     tools = context.getTools().get(shortName);
     toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
@@ -129,7 +148,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
 
     AnalysisScope scope = new AnalysisScope(getFile());
     context.doInspections(scope);
-    UIUtil.dispatchAllInvocationEvents(); // wait for launchInspections in invoke later
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // wait for launchInspections in invoke later
 
     assertTrue(run.get());
     if (throwable.get() != null) throw throwable.get();
@@ -225,7 +244,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
 
         // have to restart
         while (!inspectionStarted.get()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
 
         doRunInspection.set(false);
@@ -234,7 +253,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
 
     context.doInspections(scope);
 
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     Tools tools = context.getTools().get(shortName);
     GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();

@@ -6,7 +6,7 @@ import com.intellij.json.JsonBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public enum JsonMappingKind {
   File,

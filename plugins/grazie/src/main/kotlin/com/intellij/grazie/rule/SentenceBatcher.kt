@@ -8,8 +8,8 @@ import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.mlec.LanguageHolder
 import com.intellij.grazie.rule.SentenceTokenizer.Sentence
 import com.intellij.grazie.text.TextContent
-import com.intellij.grazie.text.TextExtractor.findAllTextContents
 import com.intellij.grazie.utils.HighlightingUtil
+import com.intellij.grazie.utils.HighlightingUtil.getCheckedFileTexts
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.grazie.utils.getLanguageIfAvailable
 import com.intellij.openapi.Disposable
@@ -27,7 +27,13 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.cancellation.CancellationException
@@ -55,7 +61,7 @@ abstract class SentenceBatcher<T>(val language: Language, private val batchSize:
     val cvManager = CachedValuesManager.getManager(vp.manager.project)
     return cvManager.getCachedValue(vp, key, {
       val textContents: List<TextContent> =
-        findAllTextContents(vp, HighlightingUtil.checkedDomains())
+        getCheckedFileTexts(vp)
           .filterNot { HighlightingUtil.isTooLargeText(listOf(it)) }
           .filter { hasOurLanguage(it) }
       val parser = forSentences(vp.manager.project, allSentences(textContents))
@@ -189,12 +195,8 @@ abstract class SentenceBatcher<T>(val language: Language, private val batchSize:
   @Suppress("UnstableApiUsage")
   protected open fun reportStatus(reporter: RawProgressReporter) {}
 
-  private fun hasOurLanguage(tc: TextContent): Boolean {
-    if (!NaturalTextDetector.seemsNatural(tc)) {
-      return false
-    }
-    return getLanguageIfAvailable(tc.toString().substring(HighlightingUtil.stripPrefix(tc))) == language
-  }
+  private fun hasOurLanguage(tc: TextContent): Boolean =
+    NaturalTextDetector.seemsNatural(tc) && getLanguageIfAvailable(tc) == language
 
   companion object {
     private val LOG = Logger.getInstance(SentenceBatcher::class.java)

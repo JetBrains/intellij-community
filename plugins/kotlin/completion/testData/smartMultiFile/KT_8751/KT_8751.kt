@@ -3,3 +3,5 @@ fun foo(javaClass: JavaClass, p: String) {
 }
 
 // EXIST: p
+
+// IGNORE_K2

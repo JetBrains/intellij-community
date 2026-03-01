@@ -21,8 +21,7 @@ final class Undo extends UndoRedo {
     @NotNull UndoRedoStacksHolder redoStacksHolder,
     @NotNull SharedUndoRedoStacksHolder sharedUndoStacksHolder,
     @NotNull SharedUndoRedoStacksHolder sharedRedoStacksHolder,
-    boolean isConfirmationSupported,
-    boolean isEditorStateRestoreSupported
+    @NotNull UndoCapabilities undoCapabilities
   ) {
     super(
       project,
@@ -31,8 +30,7 @@ final class Undo extends UndoRedo {
       redoStacksHolder,
       sharedUndoStacksHolder,
       sharedRedoStacksHolder,
-      isConfirmationSupported,
-      isEditorStateRestoreSupported,
+      undoCapabilities,
       false
     );
   }

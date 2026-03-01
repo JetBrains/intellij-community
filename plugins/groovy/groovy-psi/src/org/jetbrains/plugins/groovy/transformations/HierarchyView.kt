@@ -1,7 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterList
 import com.intellij.psi.impl.InheritanceImplUtil
 import com.intellij.psi.impl.light.AbstractLightClass
 import com.intellij.psi.search.GlobalSearchScope

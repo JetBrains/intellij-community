@@ -12,9 +12,27 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
-import static git4idea.history.GitLogParser.GitLogOption.*;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_EMAIL;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_NAME;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_TIME;
+import static git4idea.history.GitLogParser.GitLogOption.BODY;
+import static git4idea.history.GitLogParser.GitLogOption.COMMITTER_EMAIL;
+import static git4idea.history.GitLogParser.GitLogOption.COMMITTER_NAME;
+import static git4idea.history.GitLogParser.GitLogOption.COMMIT_TIME;
+import static git4idea.history.GitLogParser.GitLogOption.HASH;
+import static git4idea.history.GitLogParser.GitLogOption.PARENTS;
+import static git4idea.history.GitLogParser.GitLogOption.RAW_BODY;
+import static git4idea.history.GitLogParser.GitLogOption.REF_NAMES;
+import static git4idea.history.GitLogParser.GitLogOption.SHORT_REF_LOG_SELECTOR;
+import static git4idea.history.GitLogParser.GitLogOption.SUBJECT;
+import static git4idea.history.GitLogParser.GitLogOption.TREE;
 
 /**
  * One record (commit information) returned by git log output.

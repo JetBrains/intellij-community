@@ -4,7 +4,12 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 
 public final class GraphicsObjectRenderer extends AbstractImageRenderer {
   @Override

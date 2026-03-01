@@ -161,11 +161,7 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  suspend fun createCopyForProduct(
-    productProperties: ProductProperties,
-    projectHomeForCustomizers: Path,
-    prepareForBuild: Boolean = true,
-  ): BuildContext
+  suspend fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean = true): BuildContext
 
   fun reportDistributionBuildNumber()
 
@@ -243,7 +239,7 @@ sealed interface DistFileContent {
   fun readAsStringForDebug(): String
 }
 
-data class LocalDistFileContent(@JvmField val file: Path, val isExecutable: Boolean = false) : DistFileContent {
+data class LocalDistFileContent(@JvmField val file: Path, @JvmField val isExecutable: Boolean = false) : DistFileContent {
   override fun readAsStringForDebug(): String = Files.newInputStream(file).readNBytes(1024).decodeToString()
 
   override fun toString(): String = "LocalDistFileContent(file=$file, isExecutable=$isExecutable)"

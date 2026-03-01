@@ -12,7 +12,13 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtAnnotation
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtUserType
 
 internal class IdeKotlinAnnotationsResolverFactory(private val project: Project) : KotlinAnnotationsResolverFactory {
     override fun createAnnotationResolver(searchScope: GlobalSearchScope): KotlinAnnotationsResolver {

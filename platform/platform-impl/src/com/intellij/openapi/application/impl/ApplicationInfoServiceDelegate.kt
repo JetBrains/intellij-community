@@ -4,10 +4,10 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import java.util.*
+import java.util.Calendar
 
 @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
-private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
+internal class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   private val delegate = ApplicationInfoImpl.getShadowInstance()
 
   override fun getBuildDate(): Calendar? = delegate.buildDate
@@ -24,10 +24,6 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getCompanyName(): String? = delegate.companyName
   override fun getShortCompanyName(): String? = delegate.shortCompanyName
   override fun getCompanyURL(): String? = delegate.companyURL
-  override fun getProductUrl(): String? = delegate.productUrl
-  override fun getJetBrainsTvUrl(): String? = delegate.jetBrainsTvUrl
-  override fun hasHelp(): Boolean = delegate.hasHelp()
-  override fun hasContextHelp(): Boolean = delegate.hasContextHelp()
   override fun getFullVersion(): String = delegate.fullVersion
   override fun getStrictVersion(): String = delegate.strictVersion
   override fun getFullApplicationName(): String? = delegate.fullApplicationName
@@ -38,21 +34,10 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun isMajorEAP(): Boolean = delegate.isMajorEAP()
   override fun isPreview(): Boolean = delegate.isPreview()
   override fun getFullIdeProductCode(): String? = delegate.fullIdeProductCode
-  override fun getUpdateUrls(): UpdateUrls? = delegate.updateUrls
-  override fun getDocumentationUrl(): String? = delegate.documentationUrl
-  override fun getSupportUrl(): String? = delegate.supportUrl
-  override fun getYoutrackUrl(): String? = delegate.youtrackUrl
-  override fun getFeedbackUrl(): String? = delegate.feedbackUrl
   override fun getPluginManagerUrl(): String = delegate.pluginManagerUrl
   override fun usesJetBrainsPluginRepository(): Boolean = delegate.usesJetBrainsPluginRepository()
   override fun getPluginsListUrl(): String = delegate.pluginsListUrl
   override fun getPluginDownloadUrl(): String = delegate.pluginDownloadUrl
-  override fun getBuiltinPluginsUrl(): String? = delegate.builtinPluginsUrl
-  override fun getWebHelpUrl(): String? = delegate.webHelpUrl
-  override fun getWhatsNewUrl(): String? = delegate.whatsNewUrl
-  override fun isShowWhatsNewOnUpdate(): Boolean = delegate.isShowWhatsNewOnUpdate()
-  override fun getWinKeymapUrl(): String? = delegate.winKeymapUrl
-  override fun getMacKeymapUrl(): String? = delegate.macKeymapUrl
   override fun isEssentialPlugin(pluginId: String): Boolean = delegate.isEssentialPlugin(pluginId)
   override fun isEssentialPlugin(pluginId: PluginId): Boolean = delegate.isEssentialPlugin(pluginId)
   override fun getSubscriptionFormId(): String? = delegate.subscriptionFormId

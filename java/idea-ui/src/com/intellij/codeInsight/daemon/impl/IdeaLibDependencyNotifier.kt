@@ -20,7 +20,11 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.libraryProperties
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.intellij.workspaceModel.ide.toPath
 import org.jetbrains.idea.maven.aether.ArtifactKind
@@ -35,7 +39,7 @@ import kotlin.io.path.name
  * If the library contains only jars from one of the known library, a fix will be suggested.
  * Fix will replace the library with its repository equivalent.
  */
-private class IdeaLibDependencyNotifier : ProjectActivity {
+internal class IdeaLibDependencyNotifier : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()

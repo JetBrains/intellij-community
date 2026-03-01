@@ -19,10 +19,10 @@ object NotebookUtil {
       putUserData(IS_JUPYTER_CONSOLE_EDITOR_KEY, value)
     }
 
-
   val Editor.notebookAppearance: NotebookEditorAppearance
     get() = NOTEBOOK_APPEARANCE_KEY.get(this)!!
 
+  /** If customColor == null, the gutter will get editor.colorsScheme.editorBackgroundColor */
   fun paintNotebookCellBackgroundGutter(
     editor: EditorImpl,
     g: Graphics,
@@ -38,11 +38,12 @@ object NotebookUtil {
     val borderWidth = appearance.getLeftBorderWidth()
     val gutterWidth = editor.gutterComponentEx.width
 
-    val (fillX, fillWidth, fillColor) = if (!presentationModeMasking)
-      Triple(r.width - borderWidth, borderWidth, customColor ?: appearance.codeCellBackgroundColor.get())
-    else
-      Triple(r.width - borderWidth - gutterWidth, gutterWidth, editor.colorsScheme.defaultBackground)
-
+    val (fillX, fillWidth, fillColor) = if (!presentationModeMasking) {
+      Triple(r.width - borderWidth, borderWidth, customColor ?: appearance.codeCellBackgroundColor())
+    }
+    else {
+      Triple(r.width - borderWidth - gutterWidth, gutterWidth, editor.notebookAppearance.editorBackgroundColor())
+    }
     g.color = fillColor
 
     when (editor.editorKind == EditorKind.DIFF) {

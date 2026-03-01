@@ -2,7 +2,7 @@
 package com.intellij.openapi.util.registry
 
 import java.time.LocalDate
-import java.util.*
+import java.util.Properties
 
 private const val statisticsFile = "registryUsageStatistics.csv"
 private const val annotationFile = "registry.properties.annotation"

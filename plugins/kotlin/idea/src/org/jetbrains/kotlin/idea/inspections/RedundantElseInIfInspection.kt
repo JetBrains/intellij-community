@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -16,12 +17,23 @@ import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.adjustLineIndent
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.ifExpressionVisitor
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
+import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
+@K1Deprecation
 class RedundantElseInIfInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         ifExpressionVisitor(fun(ifExpression) {

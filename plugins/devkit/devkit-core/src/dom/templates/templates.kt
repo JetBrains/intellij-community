@@ -5,7 +5,13 @@ package org.jetbrains.idea.devkit.dom.templates
 
 import com.intellij.icons.AllIcons
 import com.intellij.psi.xml.XmlFile
-import com.intellij.util.xml.*
+import com.intellij.util.xml.Attribute
+import com.intellij.util.xml.DefinesXml
+import com.intellij.util.xml.DomElement
+import com.intellij.util.xml.DomFileDescription
+import com.intellij.util.xml.GenericAttributeValue
+import com.intellij.util.xml.JavaNameStrategy
+import com.intellij.util.xml.NameStrategy
 import org.jetbrains.idea.devkit.dom.Option
 import javax.swing.Icon
 

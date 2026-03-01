@@ -21,7 +21,11 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Utility class which holds collection of font families and theirs sizes.

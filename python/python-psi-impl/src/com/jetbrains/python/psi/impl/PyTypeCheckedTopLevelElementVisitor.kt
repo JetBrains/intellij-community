@@ -3,8 +3,10 @@ package com.jetbrains.python.psi.impl
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyComprehensionElement
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -20,6 +22,15 @@ abstract class PyTypeCheckedTopLevelElementVisitor(languageLevel: LanguageLevel)
 
   override fun visitPyFunction(node: PyFunction) {
     checkAddElement(node) // do not recurse into functions
+  }
+
+  override fun visitPyComprehensionElement(node: PyComprehensionElement) {
+    if (PyUtil.isOwnScopeComprehension(node)) {
+      checkAddElement(node)
+    }
+    else {
+      super.visitPyComprehensionElement(node)
+    }
   }
 
   protected abstract fun checkAddElement(node: PsiElement?)

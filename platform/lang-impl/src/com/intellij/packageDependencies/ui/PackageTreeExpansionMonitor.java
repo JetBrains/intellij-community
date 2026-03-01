@@ -2,7 +2,7 @@
 
 package com.intellij.packageDependencies.ui;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;

@@ -16,7 +16,16 @@ import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVAL
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_RESULT_KEY
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_SOURCE_KEY
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -38,7 +47,11 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.*
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -51,10 +64,15 @@ import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.KeyEvent
-import java.util.*
+import java.util.EnumSet
 import java.util.function.Supplier
-import javax.swing.*
-import kotlin.collections.ArrayDeque
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.KeyStroke
 
 internal abstract class JsonPathEvaluateView(protected val project: Project) : SimpleToolWindowPanel(true, true), Disposable {
   companion object {

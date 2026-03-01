@@ -2,8 +2,8 @@
 package com.intellij.pycharm.community.ide.implTraining
 
 import com.intellij.openapi.util.IconLoader
-import com.intellij.util.PlatformUtils
 import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
+import com.intellij.util.PlatformUtils
 import training.ui.welcomeScreen.OnboardingLessonPromoter
 import javax.swing.Icon
 

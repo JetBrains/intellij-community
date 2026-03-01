@@ -5,9 +5,9 @@ import com.intellij.ide.starter.runner.SetupException
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.minutes
 import kotlin.io.path.div
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.minutes
 
 interface JBRDownloader {
   suspend fun downloadJbr(jbrFileName: String): Path

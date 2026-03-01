@@ -2,8 +2,8 @@ package com.jetbrains.python.psi.stubs
 
 import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
-import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyDecorator
+import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.impl.stubs.PyCustomDecoratorStub

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.changeVariableTypeQuickFixProvider
         implementation="com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider"/>

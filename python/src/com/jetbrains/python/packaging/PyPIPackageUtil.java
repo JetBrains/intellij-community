@@ -25,7 +25,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.repository.PyPackageRepositories;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import one.util.streamex.EntryStream;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,10 +144,6 @@ public final class PyPIPackageUtil {
 
   public static boolean isPyPIRepository(@Nullable String repository) {
     return repository != null && repository.startsWith(PYPI_BASE_URL);
-  }
-
-  public @NotNull List<RepoPackage> getAdditionalPackages(@NotNull List<String> repositories) {
-    return StreamEx.of(myAdditionalPackages.getAllPresent(repositories).values()).flatMap(StreamEx::of).toList();
   }
 
   public void loadAdditionalPackages(@NotNull List<String> repositories, boolean alwaysRefresh) {

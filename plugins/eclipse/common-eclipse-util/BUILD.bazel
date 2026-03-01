@@ -13,4 +13,18 @@ jvm_library(
     "//jps/model-serialization",
   ]
 )
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "intellij.eclipse.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":common",
+    "//platform/util:util_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.eclipse.common` end

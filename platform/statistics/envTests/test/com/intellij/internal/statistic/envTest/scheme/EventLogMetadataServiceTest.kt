@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.envTest.scheme
 
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
+import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogBuild.EVENT_LOG_BUILD_PRODUCER
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.BuildRange
@@ -41,7 +42,7 @@ internal class EventLogMetadataServiceTest : StatisticsServiceBaseTest() {
   }
 
   fun `test load and parse metadata`() {
-    val expected = hashMapOf(
+    val expected: MutableMap<String?, EventGroupFilterRules<EventLogBuild>> = hashMapOf(
       "test.group" to EventGroupFilterRules(emptyList(), listOf(VersionRange.create("3", null))),
       "second.test.group" to EventGroupFilterRules(listOf(BuildRange.create("191.12345", null, EVENT_LOG_BUILD_PRODUCER)), emptyList())
     )

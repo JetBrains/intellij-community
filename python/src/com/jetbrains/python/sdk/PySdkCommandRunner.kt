@@ -1,7 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ConcurrentProcessWeight
+import com.intellij.python.community.execService.DownloadConfig
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.community.execService.execute
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -27,9 +36,10 @@ suspend fun <T> runExecutableWithProgress(
   vararg args: String,
   transformer: ProcessOutputTransformer<T>,
   execService: ExecService = ExecService(),
-  processWeight: ConcurrentProcessWeight = ConcurrentProcessWeight.LIGHT
+  processWeight: ConcurrentProcessWeight = ConcurrentProcessWeight.LIGHT,
+  downloadConfig: DownloadConfig? = null,
 ): PyResult<T> {
-  val execOptions = ExecOptions(timeout = timeout, env = env, weight = processWeight)
+  val execOptions = ExecOptions(timeout = timeout, env = env, weight = processWeight, downloadAfterExecution = downloadConfig)
 
   val errorHandlerTransformer: ProcessOutputTransformer<T> = { output ->
     when {

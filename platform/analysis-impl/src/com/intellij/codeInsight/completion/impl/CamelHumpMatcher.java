@@ -7,18 +7,19 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import java.util.List;
 
 public class CamelHumpMatcher extends PrefixMatcher {
   private final MinusculeMatcher myMatcher;
@@ -56,9 +57,9 @@ public class CamelHumpMatcher extends PrefixMatcher {
   @Override
   public boolean isStartMatch(@NotNull LookupElement element) {
     for (String s : CompletionUtil.iterateLookupStrings(element)) {
-      FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
+      @Nullable List<@NotNull MatchedFragment> ranges = myCaseInsensitiveMatcher.match(s);
       if (ranges == null) continue;
-      if (ranges.isEmpty() || skipUnderscores(s) >= ranges.get(0).getStartOffset()) {
+      if (ranges.isEmpty() || skipUnderscores(s) >= ranges.getFirst().getStartOffset()) {
         return true;
       }
     }
@@ -180,16 +181,16 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return matchingDegree(name, matchingFragments(name));
   }
 
-  public @Nullable FList<TextRange> matchingFragments(String string) {
-    return myMatcher.matchingFragments(string);
+  public @Nullable List<MatchedFragment> matchingFragments(String string) {
+    return myMatcher.match(string);
   }
 
-  public int matchingDegree(String string, @Nullable FList<? extends TextRange> fragments) {
+  public int matchingDegree(String string, @Nullable List<MatchedFragment> fragments) {
     int underscoreEnd = skipUnderscores(string);
     if (underscoreEnd > 0) {
-      FList<TextRange> ciRanges = myCaseInsensitiveMatcher.matchingFragments(string);
+      List<MatchedFragment> ciRanges = myCaseInsensitiveMatcher.match(string);
       if (ciRanges != null && !ciRanges.isEmpty()) {
-        int matchStart = ciRanges.get(0).getStartOffset();
+        int matchStart = ciRanges.getFirst().getStartOffset();
         if (matchStart > 0 && matchStart <= underscoreEnd) {
           return myCaseInsensitiveMatcher.matchingDegree(string.substring(matchStart), true) - 1;
         }

@@ -28,7 +28,17 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

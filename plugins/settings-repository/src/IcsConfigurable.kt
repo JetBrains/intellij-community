@@ -14,7 +14,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.cancel
 
-private class IcsConfigurable : BoundSearchableConfigurable(icsMessage("ics.settings"), "reference.settings.ics", "ics"),
+internal class IcsConfigurable : BoundSearchableConfigurable(icsMessage("ics.settings"), "reference.settings.ics", "ics"),
                                  Disposable {
   private val coroutineScope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().childScope()
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.conda.execution
 
+import com.intellij.openapi.util.IntellijInternalApi
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.sdk.conda.execution.models.CondaEnvInfo
@@ -10,6 +11,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
+@OptIn(IntellijInternalApi::class)
 internal object CondaExecutionParser {
   private val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
   fun parseCondaPackageList(text: String): List<CondaPackage> {

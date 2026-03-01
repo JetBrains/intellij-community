@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
-import java.util.*
+import java.util.Locale
 
 fun Class<*>.getMethodOrNull(name: String, vararg parameterTypes: Class<*>) =
     try {

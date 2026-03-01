@@ -10,7 +10,7 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogTableIndex
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.Experimental
 interface CommitLinksProvider {

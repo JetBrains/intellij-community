@@ -32,6 +32,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/eel",
     "//platform/eel-provider",
+    "//platform/execution",
   ],
   exports = [
     "//python/python-psi-api:psi",
@@ -47,23 +48,38 @@ jvm_library(
   associates = [":community"],
   deps = [
     "//python/python-psi-api:psi",
+    "//python/python-psi-api:psi_test_lib",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//libraries/jsoup",
+    "//libraries/jsoup:jsoup_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/extensions",
+    "//platform/extensions:extensions_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "@lib//:junit5",
+    "@lib//:junit5Params",
     "//platform/eel",
+    "//platform/eel:eel_test_lib",
     "//platform/eel-provider",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/execution",
+    "//platform/execution:execution_test_lib",
   ],
   exports = [
     "//python/python-psi-api:psi",
+    "//python/python-psi-api:psi_test_lib",
     "//platform/platform-util-io:ide-util-io",
-  ]
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ],
+  runtime_deps = ["//platform/platform-util-io:ide-util-io_test_lib"]
 )
 ### auto-generated section `build intellij.python.community` end
 

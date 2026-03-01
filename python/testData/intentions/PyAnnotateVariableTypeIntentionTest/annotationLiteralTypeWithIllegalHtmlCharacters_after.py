@@ -1,4 +1,4 @@
-from typing import Literal, Set
+from typing import Literal
 
 HTML_ESCAPES: set[Literal["<", ">", "&"]] = {"<", ">", "&"}
-var: [Set[Literal["<", ">", "&"]]] = HTML_ESCAPES
+var: [set[Literal["<", ">", "&"]]] = HTML_ESCAPES

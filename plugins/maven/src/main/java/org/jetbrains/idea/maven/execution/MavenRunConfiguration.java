@@ -4,7 +4,13 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.RemoteConnectionCreator;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.impl.SingleConfigurationConfigurable;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.LanguageRuntimeType;
@@ -91,6 +97,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   private @Nullable String getRootProjectPath() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(getProject());
+    if (!projectsManager.isInitialized()) return null;
     MavenProject rootProject = ContainerUtil.getFirstItem(projectsManager.getRootProjects());
     return ObjectUtils.doIfNotNull(rootProject, it -> it.getDirectory());
   }

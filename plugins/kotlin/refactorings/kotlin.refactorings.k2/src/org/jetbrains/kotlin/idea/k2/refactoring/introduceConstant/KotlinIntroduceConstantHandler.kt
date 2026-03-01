@@ -33,15 +33,24 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.CONTAINER_KEY
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.INTRODUCE_PROPERTY
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.KotlinInplacePropertyIntroducer
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionOptions
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionEngine
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.propertyTargets
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHintByKey
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 

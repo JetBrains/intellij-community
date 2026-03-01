@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.diff.*;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffEditorTitleCustomizer;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.impl.DiffEditorTitleDetails;
@@ -29,7 +32,11 @@ import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeRequest;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;

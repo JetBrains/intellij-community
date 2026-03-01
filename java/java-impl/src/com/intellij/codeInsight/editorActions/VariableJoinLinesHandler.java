@@ -3,7 +3,14 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;

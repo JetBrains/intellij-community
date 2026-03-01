@@ -7,7 +7,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -15,7 +19,15 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.testFramework.TestJdkAnnotationsFilesProvider;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -28,7 +40,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -39,6 +55,7 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.pom.java.JavaRelease;
+import com.intellij.util.BazelEnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,12 +64,16 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,7 +81,18 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.openapi.projectRoots.impl.JdkPathUtilKt.getJavaPath;
@@ -425,6 +457,17 @@ public final class JavaSdkImpl extends JavaSdk {
       String url = "jar://" + annotationsJarPathString + "!/";
       root = refresh ? vfm.refreshAndFindFileByUrl(url) : vfm.findFileByUrl(url);
       pathsChecked.add(annotationsJarPathString);
+      // if java is modularized,
+      // javaPluginClassesRootPath is "lib/modules", let's try to check "/lib"
+      if (root == null &&
+          javaPluginClassesRootPath.getParent() != null) {
+        Path parentJavaPluginClassesRootPath = javaPluginClassesRootPath.getParent();
+        Path parentAnnotationsJarPath = parentJavaPluginClassesRootPath.resolveSibling(pathInResources);
+        String parentAnnotationsJarPathString = FileUtil.toSystemIndependentName(parentAnnotationsJarPath.toString());
+        String urlParent = "jar://" + parentAnnotationsJarPathString + "!/";
+        root = refresh ? vfm.refreshAndFindFileByUrl(urlParent) : vfm.findFileByUrl(urlParent);
+        pathsChecked.add(parentAnnotationsJarPathString);
+      }
     }
     else {
       // when run against IDEA plugin JDK, something like this comes up: "$IDEA_HOME$/out/classes/production/intellij.java.impl"
@@ -452,9 +495,7 @@ public final class JavaSdkImpl extends JavaSdk {
       pathsChecked.add(path);
     }
     if (root == null) {
-      // Bazel-provided test dependencies, from runfiles tree
-      String testSrcDir = System.getenv("TEST_SRCDIR");
-      if (testSrcDir != null && !testSrcDir.isBlank()) {
+      if (BazelEnvironmentUtil.isBazelTestRun()) {
         ServiceLoader<TestJdkAnnotationsFilesProvider> providerClasses = ServiceLoader.load(TestJdkAnnotationsFilesProvider.class);
         var iterator = providerClasses.iterator();
         if (!iterator.hasNext()) {

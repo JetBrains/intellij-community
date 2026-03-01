@@ -11,7 +11,7 @@ import com.intellij.slicer.SliceUsageCellRendererBase;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.ArrayList;
 
 public class HackedSliceLeafValueClassNode extends SliceLeafValueRootNode {

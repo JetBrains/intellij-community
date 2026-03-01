@@ -16,14 +16,34 @@
 package com.intellij.codeInspection.unusedImport;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportModuleStatement;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.psi.util.ImportsUtil.getAllImplicitImports;
 

@@ -26,7 +26,7 @@ internal class ExternalStorageConfiguration : BaseState() {
  * It shouldn't be used directly, its interface [ExternalStorageConfigurationManager] should be used instead.
  */
 @State(name = "ExternalStorageConfigurationManager")
-private class ExternalStorageConfigurationManagerImpl(private val project: Project, private val coroutineScope: CoroutineScope)
+internal class ExternalStorageConfigurationManagerImpl(private val project: Project, private val coroutineScope: CoroutineScope)
   : SimplePersistentStateComponent<ExternalStorageConfiguration>(ExternalStorageConfiguration()), ExternalStorageConfigurationManager {
   override fun isEnabled(): Boolean {
     return project is ProjectStoreOwner && project.componentStore.isExternalStorageSupported && state.enabled

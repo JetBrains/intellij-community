@@ -21,7 +21,12 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.AdditionalIndexedRootsScope;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -30,8 +35,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.*;
-import java.util.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev

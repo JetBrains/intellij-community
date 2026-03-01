@@ -19,9 +19,18 @@ import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
+import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class BranchInfo {
 

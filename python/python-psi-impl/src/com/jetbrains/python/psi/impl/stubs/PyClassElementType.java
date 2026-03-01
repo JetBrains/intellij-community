@@ -6,25 +6,43 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.*;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyStubElementTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFileElementType;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStubElementType;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.stubs.*;
+import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
+import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
+import com.jetbrains.python.psi.stubs.PyFileStub;
+import com.jetbrains.python.psi.stubs.PySuperClassIndex;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
   implements PyCustomizableStubElementType<PyClass, PyCustomClassStub, PyCustomClassStubType<? extends PyCustomClassStub>> {
@@ -74,23 +92,6 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     }
 
     return result;
-  }
-
-  /**
-   * If the class' stub is present, return expressions in the base classes list, converting
-   * their saved text chunks into {@link PyExpressionCodeFragment} and extracting top-level expressions
-   * from them. Otherwise, get superclass expressions directly from AST.
-   */
-  public static @NotNull List<PyExpression> getSuperClassExpressions(@NotNull PyClass pyClass) {
-    final PyClassStub classStub = pyClass.getStub();
-    if (classStub == null) {
-      return List.of(pyClass.getSuperClassExpressions());
-    }
-    return CachedValuesManager.getCachedValue(pyClass, () -> CachedValueProvider.Result.create(
-      (ContainerUtil.mapNotNull(classStub.getSuperClassesText(),
-                                x -> PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()))),
-      PsiModificationTracker.MODIFICATION_COUNT)
-    );
   }
 
   private static @Nullable QualifiedName resolveOriginalSuperClassQName(@NotNull PyExpression superClassExpression) {

@@ -3,7 +3,12 @@ package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
-import org.jetbrains.java.decompiler.main.extern.*;
+import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.extern.IMemberIdentifierRenamer;
+import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
 import org.jetbrains.java.decompiler.modules.renamer.IdentifierConverter;
 import org.jetbrains.java.decompiler.modules.renamer.MemberConverterHelper;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;

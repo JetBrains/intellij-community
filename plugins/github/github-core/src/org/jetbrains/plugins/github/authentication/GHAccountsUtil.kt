@@ -24,7 +24,11 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.DialogManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHLoginData.Companion.reLogin

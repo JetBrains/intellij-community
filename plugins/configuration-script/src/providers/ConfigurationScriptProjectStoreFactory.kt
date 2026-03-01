@@ -2,11 +2,19 @@ package com.intellij.configurationScript.providers
 
 import com.intellij.configurationScript.ConfigurationFileManager
 import com.intellij.configurationScript.readIntoObject
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.ComponentInfo
+import com.intellij.configurationStore.ProjectStoreFactoryBase
+import com.intellij.configurationStore.ProjectWithModuleStoreImpl
+import com.intellij.configurationStore.SaveSessionProducer
+import com.intellij.configurationStore.SaveSessionProducerBase
+import com.intellij.configurationStore.StateGetter
+import com.intellij.configurationStore.StoreReloadManager
+import com.intellij.configurationStore.deserializeBaseStateWithCustomNameFilter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -15,8 +23,8 @@ import com.intellij.util.ReflectionUtil
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
-private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactoryBase() {
-  override fun createStore(project: Project) = MyProjectStore(project)
+internal class ConfigurationScriptProjectStoreFactory : ProjectStoreFactoryBase() {
+  override fun createStore(project: Project): IProjectStore = MyProjectStore(project)
 }
 
 private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(project) {

@@ -20,10 +20,14 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * Allows word completion for comment tokens
+ */
 public class DefaultWordCompletionFilter implements WordCompletionElementFilter {
   @Override
-  public boolean isWordCompletionEnabledIn(final IElementType element) {
+  public boolean isWordCompletionEnabledIn(@NotNull IElementType element) {
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
     return parserDefinition != null && parserDefinition.getCommentTokens().contains(element);
   }

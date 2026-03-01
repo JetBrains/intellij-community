@@ -19,7 +19,15 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -46,7 +54,7 @@ public final class IterableVariableMacro extends VariableTypeMacroBase {
 
     Project project = context.getProject();
     final int offset = context.getStartOffset();
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
     assert file != null;
     PsiElement place = file.findElementAt(offset);
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

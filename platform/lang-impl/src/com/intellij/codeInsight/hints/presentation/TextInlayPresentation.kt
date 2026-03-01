@@ -32,7 +32,7 @@ class TextInlayPresentation(
       val foreground = attributes.foregroundColor
       if (foreground != null) {
         val metrics = getMetrics()
-        val font = metrics.font
+        val font = metrics.font.deriveFont(attributes.fontType)
         g.font = font
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
         g.color = foreground

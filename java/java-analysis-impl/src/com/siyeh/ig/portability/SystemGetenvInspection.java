@@ -15,7 +15,13 @@
  */
 package com.siyeh.ig.portability;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

@@ -74,7 +74,8 @@ private suspend fun ByteReader.readFrame(): JsonElement? {
         if (key == "Content-Length") {
           contentLength = value.toInt()
         }
-      } catch(x: Throwable) {
+      }
+      catch (x: Throwable) {
         throw IllegalStateException("could not read header: $line", x)
       }
     }

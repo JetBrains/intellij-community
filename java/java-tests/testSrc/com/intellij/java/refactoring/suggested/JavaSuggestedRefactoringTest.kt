@@ -12,9 +12,12 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle.message
-import com.intellij.refactoring.suggested.*
+import com.intellij.refactoring.suggested.BaseSuggestedRefactoringTest
+import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
+import com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import com.intellij.refactoring.suggested._suggestedChangeSignatureNewParameterValuesForTests
 
 class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
   override val fileType: LanguageFileType

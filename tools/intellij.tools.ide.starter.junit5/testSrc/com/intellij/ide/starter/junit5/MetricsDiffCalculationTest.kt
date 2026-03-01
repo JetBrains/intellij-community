@@ -2,6 +2,7 @@ package com.intellij.ide.starter.junit5
 
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.runner.IDERunContext
+import com.intellij.ide.starter.utils.JarUtils
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.starter.collector.StarterTelemetryJsonMeterCollector

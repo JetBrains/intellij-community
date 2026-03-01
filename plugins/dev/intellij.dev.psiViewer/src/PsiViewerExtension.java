@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Allows extending PSI Viewer dialog (<em>Tools | Show PSI Structure</em>) for language-specific variants.

@@ -14,7 +14,9 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

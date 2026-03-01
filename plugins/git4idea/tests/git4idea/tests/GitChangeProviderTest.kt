@@ -6,7 +6,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.VcsTestUtil.*
+import com.intellij.openapi.vcs.VcsTestUtil.copyFileInCommand
+import com.intellij.openapi.vcs.VcsTestUtil.deleteFileInCommand
+import com.intellij.openapi.vcs.VcsTestUtil.editFileInCommand
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ContentRevision

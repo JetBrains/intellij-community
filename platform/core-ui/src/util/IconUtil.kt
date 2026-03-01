@@ -8,17 +8,34 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.fileTypes.DirectoryFileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconLoader.filterIcon
 import com.intellij.openapi.util.IconLoader.getIcon
+import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Iconable.IconFlags
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.LastComputedIconCache
+import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
-import com.intellij.ui.*
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.DeferredIcon
+import com.intellij.ui.IconManager
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.RowIcon
-import com.intellij.ui.icons.*
+import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.ui.icons.CopyableIcon
+import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.PredefinedIconOverlayService
+import com.intellij.ui.icons.ReplaceableIcon
+import com.intellij.ui.icons.RgbImageFilterSupplier
+import com.intellij.ui.icons.TextIcon
+import com.intellij.ui.icons.copyIcon
 import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
@@ -28,21 +45,37 @@ import com.intellij.ui.svg.paintIconWithSelection
 import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
 import com.intellij.util.IconUtil.computeFileIcon
 import com.intellij.util.IconUtil.scale
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.Transparency
 import java.awt.geom.AffineTransform
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.awt.image.RGBImageFilter
-import java.util.*
+import java.util.Objects
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import java.util.function.ToIntFunction
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.ImageIcon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.SwingConstants
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -103,28 +136,45 @@ object IconUtil {
 
   @JvmStatic
   fun flip(icon: Icon, horizontal: Boolean): Icon {
-    return object : Icon {
-      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-        val g2d = g.create() as Graphics2D
-        try {
-          val transform = AffineTransform.getTranslateInstance((if (horizontal) x + iconWidth else x).toDouble(),
-                                                               (if (horizontal) y else y + iconHeight).toDouble())
-          transform.concatenate(AffineTransform.getScaleInstance((if (horizontal) -1 else 1).toDouble(), (if (horizontal) 1 else -1).toDouble()))
-          transform.preConcatenate(g2d.transform)
-          g2d.transform = transform
-          icon.paintIcon(c, g2d, 0, 0)
-        }
-        finally {
-          g2d.dispose()
-        }
-      }
+    return FlippedIcon(icon, horizontal)
+  }
 
-      override fun getIconWidth(): Int = icon.iconWidth
-
-      override fun getIconHeight(): Int = icon.iconHeight
-
-      override fun toString(): String = "IconUtil.flip for $icon"
+  private fun drawFlipped(
+    g: Graphics, x: Int, y: Int, c: Component?,
+    icon: Icon, horizontal: Boolean,
+  ) {
+    val g2d = g.create() as Graphics2D
+    try {
+      val transform = AffineTransform.getTranslateInstance(
+        (if (horizontal) x + icon.iconWidth else x).toDouble(),
+        (if (horizontal) y else y + icon.iconHeight).toDouble())
+      transform.concatenate(AffineTransform.getScaleInstance(
+        (if (horizontal) -1 else 1).toDouble(),
+        (if (horizontal) 1 else -1).toDouble()))
+      transform.preConcatenate(g2d.transform)
+      g2d.transform = transform
+      icon.paintIcon(c, g2d, 0, 0)
     }
+    finally {
+      g2d.dispose()
+    }
+  }
+
+  private class FlippedIcon(private val icon: Icon, private val horizontal: Boolean) : Icon, RetrievableIcon {
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+      drawFlipped(g = g, c = c, x = x, y = y, icon = icon, horizontal = horizontal)
+    }
+
+    override fun getIconWidth() = icon.iconWidth
+    override fun getIconHeight() = icon.iconHeight
+
+    override fun replaceBy(replacer: IconReplacer): Icon {
+      return FlippedIcon(replacer.replaceIcon(icon), horizontal)
+    }
+
+    override fun retrieveIcon(): Icon = icon
+
+    override fun toString() = "IconUtil.flip for $icon"
   }
 
   /**
@@ -267,49 +317,76 @@ object IconUtil {
       return null
     }
 
-    return object : Icon {
-      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-        paintIconWithSelection(icon = iconUnderSelection, c = c, g = g, x = x, y = y)
-      }
-
-      override fun getIconWidth() = iconUnderSelection.iconWidth
-
-      override fun getIconHeight() = iconUnderSelection.iconHeight
-
-      override fun toString() = "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
-    }
+    return SelectionAwareIcon(iconUnderSelection)
   }
 
-  @Deprecated("use {@link #scale(Icon, Component, float)}")
+  private class SelectionAwareIcon(private val iconUnderSelection: Icon) : Icon, RetrievableIcon {
+    override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
+      paintIconWithSelection(icon = iconUnderSelection, c = c, g = g, x = x, y = y)
+    }
+
+    override fun getIconWidth() = iconUnderSelection.iconWidth
+    override fun getIconHeight() = iconUnderSelection.iconHeight
+
+    override fun replaceBy(replacer: IconReplacer): Icon {
+      return SelectionAwareIcon(replacer.replaceIcon(iconUnderSelection))
+    }
+
+    override fun retrieveIcon(): Icon = iconUnderSelection
+
+    override fun toString() = "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
+  }
+
+  @Deprecated("use {@link #scale(Icon, Component?, float)}",
+              replaceWith = ReplaceWith("scale(source, null, scale)", "com.intellij.util.IconUtil"))
   @JvmStatic
   fun scale(source: Icon, scale: Double): Icon {
-    return object : Icon {
-      private val clampedScale = clampScale(scale)
-
-      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-        paintScaled(c = c, g = g, x = x, y = y, scale = clampedScale, source = source)
-      }
-
-      override fun getIconWidth(): Int = (source.iconWidth * clampedScale).toInt()
-      override fun getIconHeight(): Int = (source.iconHeight * clampedScale).toInt()
-      override fun toString(): String = "IconUtil.scale for $source"
-    }
+    return OldScaledIcon(source, scale)
   }
+
+  private class OldScaledIcon(private val icon: Icon, private val scale: Double) : Icon, RetrievableIcon {
+    private val clampedScale = clampScale(scale)
+
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+      paintScaled(c = c, g = g, x = x, y = y, scale = clampedScale, source = icon)
+    }
+
+    override fun getIconWidth() = (icon.iconWidth * clampedScale).toInt()
+    override fun getIconHeight() = (icon.iconHeight * clampedScale).toInt()
+
+    override fun replaceBy(replacer: IconReplacer): Icon {
+      return OldScaledIcon(replacer.replaceIcon(icon), scale)
+    }
+
+    override fun retrieveIcon(): Icon = icon
+
+    override fun toString() = "IconUtil.scale(deprecated) for $icon"
+  }
+
 
   @JvmStatic
   fun resizeSquared(source: Icon, size: Int): Icon {
-    return object : Icon {
-      private val sizeValue = JBUI.uiIntValue("ResizedIcon", size)
+    return ResizeSquareIcon(source, size)
+  }
 
-      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-        val scale = clampScale(sizeValue.get().toDouble() / source.iconWidth.toDouble())
-        paintScaled(c = c, g = g, x = x, y = y, scale = scale, source = source)
-      }
+  private class ResizeSquareIcon(private val icon: Icon, private val size: Int) : Icon, RetrievableIcon {
+    private val sizeValue = JBUI.uiIntValue("ResizedIcon", size)
 
-      override fun getIconWidth(): Int = sizeValue.get()
-      override fun getIconHeight(): Int = sizeValue.get()
-      override fun toString(): String = "IconUtil.resizeSquared for $source"
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+      val scale = clampScale(sizeValue.get().toDouble() / icon.iconWidth.toDouble())
+      paintScaled(c = c, g = g, x = x, y = y, scale = scale, source = icon)
     }
+
+    override fun getIconWidth() = sizeValue.get()
+    override fun getIconHeight() = sizeValue.get()
+
+    override fun replaceBy(replacer: IconReplacer): Icon {
+      return ResizeSquareIcon(replacer.replaceIcon(icon), size)
+    }
+
+    override fun retrieveIcon(): Icon = icon
+
+    override fun toString() = "IconUtil.resizeSquared for $icon"
   }
 
   @JvmStatic
@@ -477,8 +554,8 @@ object IconUtil {
   })
 
   @Internal
-  fun mainColor(source: Icon): Color {
-    val icon = (source as? DeferredIcon)?.evaluate() ?: source
+  fun mainColor(source: Icon, evaluate: Boolean): Color {
+    val icon = if (evaluate) (source as? DeferredIcon)?.evaluate() ?: source else source
 
     val iconImage = toBufferedImage(icon)
     val filter = MainColorFilter()

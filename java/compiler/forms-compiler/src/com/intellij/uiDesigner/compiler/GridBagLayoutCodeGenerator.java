@@ -8,8 +8,10 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 public final class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Type ourGridBagLayoutType = Type.getType(GridBagLayout.class);

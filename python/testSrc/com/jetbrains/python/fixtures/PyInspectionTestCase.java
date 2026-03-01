@@ -1,11 +1,17 @@
 package com.jetbrains.python.fixtures;
 
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.PyInspection;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Helps you to create inspection tests.
@@ -23,6 +29,19 @@ public abstract class PyInspectionTestCase extends PyTestCase {
 
   @NotNull
   protected abstract Class<? extends PyInspection> getInspectionClass();
+
+  @NotNull
+  protected List<Class<? extends LocalInspectionTool>> getAdditionalInspectionClasses() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  protected List<Class<? extends LocalInspectionTool>> getAllInspectionClasses() {
+    Class<? extends PyInspection> inspectionClass = getInspectionClass();
+    assert inspectionClass != null;
+    List<Class<? extends LocalInspectionTool>> additionalInspectionClasses = ContainerUtil.prepend(getAdditionalInspectionClasses(), inspectionClass);
+    return additionalInspectionClasses;
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -70,7 +89,7 @@ public abstract class PyInspectionTestCase extends PyTestCase {
   }
 
   protected void configureInspection() {
-    myFixture.enableInspections(getInspectionClass());
+    myFixture.enableInspections(getAllInspectionClasses());
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 

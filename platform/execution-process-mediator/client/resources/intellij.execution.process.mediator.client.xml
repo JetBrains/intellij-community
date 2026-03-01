@@ -1,8 +1,16 @@
 <idea-plugin package="com.intellij.execution.process.mediator.client">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.execution.process.mediator.common"/>
+    <module name="intellij.execution.process.mediator.daemon"/>
     <module name="intellij.libraries.grpc"/>
     <module name="intellij.libraries.grpc.netty.shaded"/>
-    <module name="intellij.execution.process.mediator.common"/>
-    <module name="intellij.execution.process.mediator.daemon"/> <!-- for launcher and in-process server -->
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.protobuf"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ex"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

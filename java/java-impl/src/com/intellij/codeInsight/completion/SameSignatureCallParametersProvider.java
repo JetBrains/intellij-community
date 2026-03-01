@@ -11,7 +11,18 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,7 +35,11 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 

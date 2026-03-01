@@ -11,7 +11,7 @@ import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class JsonSchemaIconProvider implements FileIconProvider {
   @Override

@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jspecify" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jspecify:jspecify:1.0.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar">
+          <sha256sum>1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

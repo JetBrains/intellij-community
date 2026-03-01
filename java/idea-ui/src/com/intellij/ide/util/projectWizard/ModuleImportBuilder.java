@@ -11,7 +11,7 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 final class ModuleImportBuilder extends ProjectImportBuilder {

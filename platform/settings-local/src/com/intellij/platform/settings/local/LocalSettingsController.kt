@@ -9,7 +9,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.platform.settings.*
+import com.intellij.platform.settings.CacheTag
+import com.intellij.platform.settings.DelegatedSettingsController
+import com.intellij.platform.settings.GetResult
+import com.intellij.platform.settings.NonShareableInternalTag
+import com.intellij.platform.settings.PersistenceStateComponentPropertyTag
+import com.intellij.platform.settings.PropertyManagerAdapterTag
+import com.intellij.platform.settings.SetResult
+import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.annotations.TestOnly
 
@@ -18,7 +25,7 @@ fun clearCacheStore() {
   serviceIfCreated<InternalAndCacheStorageManager>()?.storeManager?.clear()
 }
 
-private class LocalSettingsController : DelegatedSettingsController {
+internal class LocalSettingsController : DelegatedSettingsController {
   private val storageManager = SynchronizedClearableLazy { service<InternalAndCacheStorageManager>() }
 
   override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
@@ -108,7 +115,7 @@ private class InternalAndCacheStorageManager : SettingsSavingComponent {
 private fun getEffectiveKey(key: SettingDescriptor<*>): String = "${key.pluginId.idString}.${key.key}"
 
 @Suppress("unused")
-private class CacheStateStorageInvalidator : CachesInvalidator() {
+internal class CacheStateStorageInvalidator : CachesInvalidator() {
   override fun invalidateCaches() {
     service<InternalAndCacheStorageManager>().invalidateCaches()
   }

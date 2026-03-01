@@ -2,7 +2,11 @@
 package com.intellij.execution.filters;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;

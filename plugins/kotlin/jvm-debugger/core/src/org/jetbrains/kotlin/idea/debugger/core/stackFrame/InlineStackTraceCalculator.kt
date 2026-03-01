@@ -10,13 +10,20 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.StackFrame
-import org.jetbrains.kotlin.codegen.inline.*
-import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.codegen.inline.KOTLIN_DEBUG_STRATA_NAME
+import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
+import org.jetbrains.kotlin.codegen.inline.getInlineScopeInfo
 import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
-import org.jetbrains.kotlin.idea.debugger.core.*
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariables
+import org.jetbrains.kotlin.idea.debugger.core.VariableWithLocation
+import org.jetbrains.kotlin.idea.debugger.core.filterRepeatedVariables
+import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
+import org.jetbrains.kotlin.idea.debugger.core.isInlineLambdaMarkerVariableName
+import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
+import org.jetbrains.kotlin.idea.debugger.core.sortedVariablesWithLocation
 import org.jetbrains.kotlin.load.java.JvmAbi
 
 object InlineStackTraceCalculator {

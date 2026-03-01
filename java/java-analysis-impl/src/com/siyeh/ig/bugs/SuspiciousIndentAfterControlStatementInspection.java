@@ -2,7 +2,15 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiWhileStatement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;

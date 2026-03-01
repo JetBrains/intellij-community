@@ -17,7 +17,8 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.List;
 import java.util.Objects;
 

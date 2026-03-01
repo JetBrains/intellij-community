@@ -1,14 +1,33 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.BatchBuildProcessLogger;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.BuildDiagnosticCollector;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ConfigurationState;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ElementSnapshotDeltaImpl;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.FormsCompiler;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.OutputSinkImpl;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.PostponedDiagnosticSink;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ResourcesSnapshotDelta;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.RunnerRegistry;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.SnapshotDeltaImpl;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.AsyncLibraryGraphLoader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.DeltaView;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.LibraryGraphLoader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputFile;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.CompositeGraph;
+import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.util.Pair;
 import org.jetbrains.jps.util.SystemInfo;
@@ -18,12 +37,26 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.contains;
+import static org.jetbrains.jps.util.Iterators.count;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.map;
 
 /** @noinspection SSBasedInspection*/
 public class BazelIncBuilder {
@@ -34,13 +67,24 @@ public class BazelIncBuilder {
 
   public ExitCode build(BuildContext context) {
     // todo: support cancellation checks
-    // todo: additional diagnostics, if necessary
+
+    Iterable<String> unexpectedInputs = context.getUnexpectedInputs();
+    if (!isEmpty(unexpectedInputs)) {
+      StringBuilder msg = new StringBuilder("Unexpected inputs specified for the worker:");
+      for (String input : unexpectedInputs) {
+        msg.append("\n").append(input);
+      }
+      context.report(Message.error(null, msg.toString()));
+      return ExitCode.ERROR;
+    }
 
     DiagnosticSink diagnostic = context;
     NodeSourceSnapshotDelta srcSnapshotDelta = null;
     ResourcesSnapshotDelta resourcesDelta = null;
     Iterable<NodeSource> modifiedLibraries = List.of();
     Iterable<NodeSource> deletedLibraries = List.of();
+    ConfigurationState pastState = null;
+    ConfigurationState presentState = null;
 
     try (StorageManager storageManager = new StorageManager(context)) {
 
@@ -50,27 +94,31 @@ public class BazelIncBuilder {
 
         LOG.info(() -> "Building " + context.getTargetName() + " (rebuild requested: " + context.isRebuild() + ")");
 
-        if (context.isRebuild() || !storageManager.getOutputBuilder().isInputZipExist()) {
-          // either rebuild is explicitly requested, or there is no previous data, need to compile the whole target
+        if (context.isRebuild()) {
           srcSnapshotDelta = new SnapshotDeltaImpl(context.getSources());
           srcSnapshotDelta.markRecompileAll(); // force rebuild
         }
         else {
-          ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getResources(), context.getBinaryDependencies(), context.getFlags());
+          pastState = ConfigurationState.loadSavedState(context);
+          presentState = new ConfigurationState(
+            context.getPathMapper(), context.getSources(), context.getResources(), context.getBinaryDependencies(), context.getFlags(), context.getUntrackedInputsDigest()
+          );
 
           srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), presentState.getSources());
 
-          if (shouldRecompileAll(srcSnapshotDelta) || pastState.getFlagsDigest() != presentState.getFlagsDigest() || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
+          if (shouldRecompileAll(srcSnapshotDelta) || pastState.digestsDiffer(presentState) || !Files.exists(DataPaths.getJarBackupStoreFile(context, context.getOutputZip()) /*previous output state is missing*/)) {
             int changedPercent = srcSnapshotDelta.getChangedPercent();
             LOG.info(() -> "Marking whole target for recompilation [" + context.getTargetName() + "]. Changed sources: " + changedPercent + "% (threshold " + RECOMPILE_CHANGED_RATIO_PERCENT + "%) ");
             srcSnapshotDelta.markRecompileAll();
           }
           else {
+            if (diagnosticCollector != null) {
+              diagnosticCollector.markLibrariesDifferentiateBegin();
+            }
             Predicate<NodeSource> isLibTracked = ns -> DataPaths.isLibraryTracked(ns.toString());
             ElementSnapshotDeltaImpl<NodeSource> libsSnapshotDelta = new ElementSnapshotDeltaImpl<>(
               ElementSnapshot.derive(pastState.getLibraries(), isLibTracked),
-              ElementSnapshot.derive(context.getBinaryDependencies(), isLibTracked)
+              ElementSnapshot.derive(presentState.getLibraries(), isLibTracked)
             );
             modifiedLibraries = libsSnapshotDelta.getModified();
             deletedLibraries = libsSnapshotDelta.getDeleted();
@@ -81,12 +129,14 @@ public class BazelIncBuilder {
               List<Graph> presentLibGraphs = new ArrayList<>();
               Set<NodeSource> changedLibNodeSources = new HashSet<>();
               Set<NodeSource> deletedLibNodeSources = new HashSet<>();
-              for (NodeSource presentLib : modifiedLibraries) {
-                Path presentLibPath = context.getPathMapper().toPath(presentLib);
-                Path pastLibPath = DataPaths.getJarBackupStoreFile(context, presentLibPath);
+              for (AsyncLibraryGraphLoader.GraphStateChange state : AsyncLibraryGraphLoader.submit(context, modifiedLibraries, pastState.getLibraries(), presentState.getLibraries())) {
+                if (srcSnapshotDelta.isRecompileAll()) {
+                  state.cancel(); // graph analysis not needed anymore
+                  continue;
+                }
                 try {
-                  Pair<NodeSourceSnapshot, Graph> presentGraph = LibraryGraphLoader.getLibraryGraph(presentLib, presentState.getLibraries().getDigest(presentLib), presentLibPath);
-                  Pair<NodeSourceSnapshot, Graph> pastGraph = LibraryGraphLoader.getLibraryGraph(presentLib, pastState.getLibraries().getDigest(presentLib), pastLibPath);
+                  Pair<NodeSourceSnapshot, Graph> pastGraph = state.getPast();
+                  Pair<NodeSourceSnapshot, Graph> presentGraph = state.getPresent();
                   NodeSourceSnapshotDelta delta = new SnapshotDeltaImpl(pastGraph.first, presentGraph.first);
                   if (!isEmpty(delta.getModified()) || !isEmpty(delta.getDeleted())) {
                     collect(delta.getModified(), changedLibNodeSources);
@@ -99,32 +149,40 @@ public class BazelIncBuilder {
                   LOG.log(Level.WARNING, "Problems loading library graphs, recompiling whole target " + context.getTargetName(), e);
                   srcSnapshotDelta.markRecompileAll();
                   context.report(Message.create(null, Message.Kind.WARNING, e));
-                  break;
                 }
               }
 
-              if (!changedLibNodeSources.isEmpty() || !deletedLibNodeSources.isEmpty()) {
+              if (!srcSnapshotDelta.isRecompileAll() && (!changedLibNodeSources.isEmpty() || !deletedLibNodeSources.isEmpty())) {
 
                 // Add to 'pastLibGraphs' all previously available graph parts, even if they are not changed. Reason: need full nodes info for graph node traversals
-                for (NodeSource lib : libsSnapshotDelta.getBaseSnapshot().getElements()) {
-                  if (!contains(libsSnapshotDelta.getModified(), lib)) {
-                    pastLibGraphs.add(
-                      LibraryGraphLoader.getLibraryGraph(lib, presentState.getLibraries().getDigest(lib), context.getPathMapper().toPath(lib)).second
-                    );
+                for (AsyncLibraryGraphLoader.GraphState state : AsyncLibraryGraphLoader.submit(libsSnapshotDelta.getBaseSnapshot(), lib -> !contains(libsSnapshotDelta.getModified(), lib), context.getPathMapper()::toPath)) {
+                  if (srcSnapshotDelta.isRecompileAll()) {
+                    state.cancel(); // graph analysis not needed anymore
+                    continue;
+                  }
+                  try {
+                    pastLibGraphs.add(state.get().second);
+                  }
+                  catch (Exception e) {
+                    LOG.log(Level.WARNING, "Problems loading library graphs, recompiling whole target " + context.getTargetName(), e);
+                    srcSnapshotDelta.markRecompileAll();
+                    context.report(Message.create(null, Message.Kind.WARNING, e));
                   }
                 }
 
-                try {
-                  Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
-                  srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs, diagnosticCollector);
-                  if (shouldRecompileAll(srcSnapshotDelta)) {
-                    srcSnapshotDelta.markRecompileAll();
+                if (!srcSnapshotDelta.isRecompileAll()) {
+                  try {
+                    Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
+                    srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs, diagnosticCollector);
+                    if (shouldRecompileAll(srcSnapshotDelta)) {
+                      srcSnapshotDelta.markRecompileAll();
+                    }
                   }
-                }
-                catch (IOException e) {
-                  LOG.log(Level.WARNING, "Problems loading dependency graph, recompiling whole target " + context.getTargetName(), e);
-                  srcSnapshotDelta.markRecompileAll();
-                  context.report(Message.create(null, Message.Kind.WARNING, e));
+                  catch (IOException e) {
+                    LOG.log(Level.WARNING, "Problems loading dependency graph, recompiling whole target " + context.getTargetName(), e);
+                    srcSnapshotDelta.markRecompileAll();
+                    context.report(Message.create(null, Message.Kind.WARNING, e));
+                  }
                 }
               }
             }
@@ -215,6 +273,9 @@ public class BazelIncBuilder {
           for (CompilerRunner runner : roundCompilers) {
 
             Iterable<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
+            if (context.getBuildLogger() instanceof BatchBuildProcessLogger batchLogger) {
+              batchLogger.startBatch();
+            }
 
             if (!srcSnapshotDelta.isRecompileAll() && !isEmpty(toCompile)) {
               // delete outputs corresponding to recompiled sources before running the compiler
@@ -222,16 +283,20 @@ public class BazelIncBuilder {
               Collection<String> cleaned = deleteCompilerOutputs(
                 storageManager.getGraph(), toCompile, outBuilder, new ArrayList<>()
               );
-              for (String toDelete : runner.getOutputPathsToDelete()) {
-                if (outBuilder.deleteEntry(toDelete)) {
-                  cleaned.add(toDelete);
-                }
-              }
               logDeletedPaths(context, cleaned);
             }
 
             ExitCode code = runner.compile(toCompile, filter(srcSnapshotDelta.getDeleted(), runner::canCompile), diagnostic, outSink);
+
+            if (context.getBuildLogger() instanceof BatchBuildProcessLogger batchLogger) {
+              batchLogger.stopBatch();
+            }
+
             if (code == ExitCode.CANCEL) {
+              if (!srcSnapshotDelta.isRecompileAll()) {
+                // in case of errors, clean partially compiled output to maintain consistent state
+                deleteGeneratedOutputs(outSink, storageManager.getCompositeOutputBuilder());
+              }
               return code;
             }
             if (code == ExitCode.ERROR && !diagnostic.hasErrors()) {
@@ -251,19 +316,26 @@ public class BazelIncBuilder {
             srcSnapshotDelta = nextSnapshotDelta;
           }
           else {
-            if (srcSnapshotDelta.isRecompileAll() || !nextSnapshotDelta.hasChanges()) {
+            if (srcSnapshotDelta.isRecompileAll()) {
+              // no need to clean partial outputs, the next build will start from the clean state anyway
               return ExitCode.ERROR;
             }
-            // keep previous snapshot delta, just augment it with the newly found sources for recompilation
-            if (nextSnapshotDelta.isRecompileAll()) {
-              srcSnapshotDelta.markRecompileAll();
-            }
-            else {
-              for (NodeSource source : nextSnapshotDelta.getModified()) {
-                srcSnapshotDelta.markRecompile(source);
+
+            if (nextSnapshotDelta.hasChanges()) {
+              // keep previous snapshot delta, just augment it with the newly found sources for recompilation
+              if (nextSnapshotDelta.isRecompileAll()) {
+                srcSnapshotDelta.markRecompileAll();
+              }
+              else {
+                for (NodeSource source : nextSnapshotDelta.getModified()) {
+                  srcSnapshotDelta.markRecompile(source);
+                }
               }
             }
-            if (!isInitialRound) {
+
+            if (!isInitialRound || !nextSnapshotDelta.hasChanges()) {
+              // in case of errors, clean partially compiled output to maintain consistent state
+              deleteGeneratedOutputs(outSink, storageManager.getCompositeOutputBuilder());
               return ExitCode.ERROR;
             }
             // for initial round, partial compilation and when analysis has expanded the scope, attempt automatic error recovery by repeating the compilation with the expanded scope
@@ -286,7 +358,7 @@ public class BazelIncBuilder {
           ((PostponedDiagnosticSink) diagnostic).drainTo(context);
         }
         if (diagnosticCollector != null) {
-          diagnosticCollector.writeData();
+          diagnosticCollector.writeData(pastState, presentState);
         }
       }
 
@@ -395,21 +467,17 @@ public class BazelIncBuilder {
       Set<Path> presentPaths = collect(filter(map(modifiedLibraries, context.getPathMapper()::toPath), Files::exists), new HashSet<>());
       Set<Path> deletedPaths = collect(map(deletedLibraries, context.getPathMapper()::toPath), new HashSet<>());
       Path outputZip = context.getOutputZip();
-      if (Files.exists(outputZip)) {
-        presentPaths.add(outputZip);
-      }
-      else {
-        deletedPaths.add(outputZip);
-      }
       Path abiOut = context.getAbiOutputZip();
-      if (abiOut != null) {
-        if (Files.exists(abiOut)) {
-          presentPaths.add(abiOut);
+
+      Stream.of(outputZip, abiOut, context.getKotlinCriStoragePath()).filter(Objects::nonNull).forEach(path -> {
+        if (Files.exists(path)) {
+          presentPaths.add(path);
         }
         else {
-          deletedPaths.add(abiOut);
+          deletedPaths.add(path);
         }
-      }
+      });
+
       StorageManager.backupDependencies(context, deletedPaths, presentPaths);
 
       if (context.hasErrors()) {
@@ -427,7 +495,7 @@ public class BazelIncBuilder {
 
       // at this point saved build state contains all successfully compiled files and classes
       new ConfigurationState(
-        context.getPathMapper(), sourcesState, resourcesState, context.getBinaryDependencies(), context.getFlags()
+        context.getPathMapper(), sourcesState, resourcesState, context.getBinaryDependencies(), context.getFlags(), context.getUntrackedInputsDigest()
       ).save(context);
 
       BuildProcessLogger buildLogger = context.getBuildLogger();
@@ -469,6 +537,12 @@ public class BazelIncBuilder {
       }
     }
     return deletedPathsAcc;
+  }
+
+  private static void deleteGeneratedOutputs(OutputSink sink, ZipOutputBuilder outBuilder) {
+    for (String outputPath : flat(map(EnumSet.allOf(OutputOrigin.Kind.class), origin -> sink.getGeneratedOutputPaths(origin, OutputFile.Kind.bytecode)))) {
+      outBuilder.deleteEntry(outputPath);
+    }
   }
 
   private static void logDeletedPaths(BuildContext context, Iterable<String> deletedPaths) {

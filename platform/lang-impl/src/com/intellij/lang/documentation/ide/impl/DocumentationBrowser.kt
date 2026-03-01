@@ -1,29 +1,34 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.lang.documentation.ide.impl.DocumentationUsageCollector.logDownloadFinished
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.InternalLinkResult
 import com.intellij.platform.ide.documentation.DocumentationBrowserFacade
 import com.intellij.util.lateinitVal
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 internal class DocumentationBrowser private constructor(
@@ -120,11 +125,6 @@ internal class DocumentationBrowser private constructor(
   }
 
   private suspend fun handleLinkRequest(url: String) {
-    if (url.startsWith(DocumentationDownloader.HREF_PREFIX)) {
-      handleDownloadSourcesRequest(url)
-      return
-    }
-
     val targetPointer = this.targetPointer
     val internalResult = try {
       handleLink(project, targetPointer, url, page)
@@ -156,22 +156,6 @@ internal class DocumentationBrowser private constructor(
       is InternalLinkResult.Updater -> {
         page.updatePage(internalResult.updater)
       }
-    }
-  }
-
-  private fun handleDownloadSourcesRequest(href: String) {
-    val filePath = href.replaceFirst(DocumentationDownloader.HREF_PREFIX, "")
-    val file = VirtualFileManager.getInstance().findFileByUrl(filePath)
-    if (file != null) {
-      CoroutineScopeService.getCoroutineScope(project)
-        .launch {
-          val handler = DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }
-          if (handler != null) {
-            val success = handler.download(project, file)
-            logDownloadFinished(project, handler::class.java, success)
-          }
-      }
-      closeTrigger?.invoke()
     }
   }
 
@@ -219,14 +203,5 @@ internal class DocumentationBrowser private constructor(
      * @return `true` if a loaded page has some content, `false` if a loaded page is empty
      */
     suspend fun DocumentationBrowser.waitForContent(): Boolean = pageFlow.first().waitForContent()
-  }
-
-  @Service(Service.Level.PROJECT)
-  private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
-    companion object {
-      fun getCoroutineScope(project: Project): CoroutineScope {
-        return project.service<CoroutineScopeService>().coroutineScope
-      }
-    }
   }
 }

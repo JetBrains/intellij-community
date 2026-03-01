@@ -3,28 +3,27 @@
 
 package com.intellij.polySymbols.js
 
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolProperty
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 
 const val NAMESPACE_JS: String = "js"
 
 @JvmField
-val JS_EVENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "events"]
+val JS_EVENTS: PolySymbolKind = PolySymbolKind[NAMESPACE_JS, "events"]
 
 @JvmField
-val JS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "properties"]
+val JS_PROPERTIES: PolySymbolKind = PolySymbolKind[NAMESPACE_JS, "properties"]
 
 @JvmField
-val JS_KEYWORDS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "keywords"]
+val JS_KEYWORDS: PolySymbolKind = PolySymbolKind[NAMESPACE_JS, "keywords"]
 
 @JvmField
-val JS_SYMBOLS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "symbols"]
+val JS_SYMBOLS: PolySymbolKind = PolySymbolKind[NAMESPACE_JS, "symbols"]
 
 @JvmField
-val JS_STRING_LITERALS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "string-literals"]
+val JS_STRING_LITERALS: PolySymbolKind = PolySymbolKind[NAMESPACE_JS, "string-literals"]
 
 /**
  * One of [JsSymbolSymbolKind] enum values. By default, JS symbol is treated as [JsSymbolSymbolKind.Variable].
  **/
-@JvmField
-val PROP_JS_SYMBOL_KIND: PolySymbolProperty<JsSymbolSymbolKind> = PolySymbolProperty.Companion["js-symbol-kind"]
+object JsSymbolKindProperty : PolySymbolProperty<JsSymbolSymbolKind>("js-symbol-kind", JsSymbolSymbolKind::class.java)

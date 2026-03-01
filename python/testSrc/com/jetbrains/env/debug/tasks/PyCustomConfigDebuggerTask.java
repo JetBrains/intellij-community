@@ -1,9 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.debug.tasks;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
@@ -13,7 +20,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.testFramework.common.ThreadLeakTracker;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebugValueExecutionService;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;

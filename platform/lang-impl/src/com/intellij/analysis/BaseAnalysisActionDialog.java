@@ -21,7 +21,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.ScrollPaneConstants;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

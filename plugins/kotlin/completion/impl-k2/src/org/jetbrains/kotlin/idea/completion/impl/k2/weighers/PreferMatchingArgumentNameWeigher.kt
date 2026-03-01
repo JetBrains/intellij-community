@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.completion.weighers
+package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
@@ -14,7 +14,13 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.LazyCompletionSessionProperty
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
 internal object PreferMatchingArgumentNameWeigher {

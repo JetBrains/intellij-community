@@ -22,7 +22,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.Axis;
+import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
+import org.intellij.lang.xpath.psi.XPathBinaryExpression;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFilterExpression;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathLocationPath;
+import org.intellij.lang.xpath.psi.XPathNumber;
+import org.intellij.lang.xpath.psi.XPathStep;
+import org.intellij.lang.xpath.psi.XPathString;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.context.Xslt2ContextProvider;
 import org.intellij.plugins.xpathView.XPathBundle;
 

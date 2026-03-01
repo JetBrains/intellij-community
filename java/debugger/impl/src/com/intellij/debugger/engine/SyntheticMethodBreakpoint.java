@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint;
 import com.intellij.debugger.ui.breakpoints.WildcardMethodBreakpoint;
 import com.intellij.openapi.project.Project;
@@ -30,7 +31,7 @@ public class SyntheticMethodBreakpoint extends WildcardMethodBreakpoint implemen
 
   @Override
   protected @NotNull Stream<ReferenceType> matchingClasses(DebugProcessImpl debugProcess) {
-    return debugProcess.getVirtualMachineProxy().classesByName(myProperties.myClassPattern).stream();
+    return VirtualMachineProxyImpl.getCurrent().classesByName(myProperties.myClassPattern).stream();
   }
 
   @Override

@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.K2EnableUnsupportedFeatureFix
-import java.util.*
+import java.util.EnumMap
 
 object UnsupportedFeatureFixFactory {
     val unsupportedFeature: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.UnsupportedFeature> =
@@ -35,8 +35,11 @@ object UnsupportedFeatureFixFactory {
             put(LanguageFeature.MultiDollarInterpolation, LanguageVersion.KOTLIN_2_1)
             put(LanguageFeature.WhenGuards, LanguageVersion.KOTLIN_2_1)
             put(LanguageFeature.BreakContinueInInlineLambdas, LanguageVersion.KOTLIN_2_1)
+            // 2.2
             put(LanguageFeature.ContextParameters, LanguageVersion.KOTLIN_2_2) // The -X flag was added in 2.1.20
             put(LanguageFeature.NestedTypeAliases, LanguageVersion.KOTLIN_2_2)
             put(LanguageFeature.AnnotationAllUseSiteTarget, LanguageVersion.KOTLIN_2_2)
+            // 2.3
+            put(LanguageFeature.ExplicitBackingFields, LanguageVersion.KOTLIN_2_3)
         }
 }

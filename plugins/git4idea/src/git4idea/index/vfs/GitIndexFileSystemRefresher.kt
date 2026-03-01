@@ -56,7 +56,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
-class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
+internal class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git index file system refresher", 1)
   private val disposable = Disposer.newDisposable("Git Index File System")
 

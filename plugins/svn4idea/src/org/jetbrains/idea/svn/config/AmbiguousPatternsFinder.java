@@ -4,7 +4,11 @@ package org.jetbrains.idea.svn.config;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.join;

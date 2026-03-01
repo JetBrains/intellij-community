@@ -16,6 +16,7 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,10 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class TokenSetTest {
   private static IElementType T1, T2, T3, T4, T5, T6;
@@ -110,6 +114,7 @@ public class TokenSetTest {
   }
 
 
+  @PerformanceUnitTest
   @Test
   public void performance() {
     final IElementType[] elementTypes = IElementType.enumerate(IElementType.TRUE);

@@ -2,6 +2,7 @@
 
 package noria.plugin
 
+import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.ModuleLoweringPass
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isFunctionOrKFunction
 import org.jetbrains.kotlin.ir.util.isLocal
 import org.jetbrains.kotlin.ir.util.isSuspendFunctionOrKFunction
-import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.utils.exceptions.rethrowIntellijPlatformExceptionIfNeeded
 
@@ -231,46 +231,41 @@ private class ClassContext(override val declaration: IrClass) : DeclarationConte
 class ComposerLambdaMemoization(
   val context: IrPluginContext,
   val moduleFragment: IrModuleFragment,
-) : IrElementTransformerVoid(), ModuleLoweringPass {
+) : IrElementTransformerVoidWithContext(), ModuleLoweringPass {
 
   private val declarationContextStack = mutableListOf<DeclarationContext>()
 
   private var currentFunctionContext: FunctionContext? = null
 
   private var composableSingletonsClass: IrClass? = null
-  private var currentFile: IrFile? = null
 
   private val usedSingletonLambdaNames = hashSetOf<String>()
 
   private var inlineLambdaInfo = ComposeInlineLambdaLocator(context)
 
-  private val rtSuspendClosure by lazy {
+  private fun rtSuspendClosure(from: IrFile) =
     funByName(
       name = NoriaRuntime.RTsuspendClosureFqn.shortName().identifier,
       prefix = NoriaRuntime.RTsuspendClosureFqn.parent(),
       pluginContext = context,
-      moduleFragment = moduleFragment
+      from = from,
     )
-  }
 
-  private val rtClosure by lazy {
-    funByName(
-      name = NoriaRuntime.RTclosureFqn.shortName().identifier,
-      prefix = NoriaRuntime.RTclosureFqn.parent(),
-      pluginContext = context,
-      moduleFragment = moduleFragment
-    )
-  }
 
-  override fun visitFile(declaration: IrFile): IrFile {
+  private fun rtClosure(from: IrFile) = funByName(
+    name = NoriaRuntime.RTclosureFqn.shortName().identifier,
+    prefix = NoriaRuntime.RTclosureFqn.parent(),
+    pluginContext = context,
+    from = from,
+  )
+
+  override fun visitFileNew(declaration: IrFile): IrFile {
     includeFileNameInExceptionTrace(declaration) {
-      val prevFile = currentFile
       val prevClass = composableSingletonsClass
       try {
-        currentFile = declaration
         composableSingletonsClass = null
         usedSingletonLambdaNames.clear()
-        val file = super.visitFile(declaration)
+        val file = super.visitFileNew(declaration)
         // if there were no constants found in the entire file, then we don't need to
         // create this class at all
         val resultingClass = composableSingletonsClass
@@ -278,8 +273,8 @@ class ComposerLambdaMemoization(
           file.addChild(resultingClass)
         }
         return file
-      } finally {
-        currentFile = prevFile
+      }
+      finally {
         composableSingletonsClass = prevClass
       }
     }
@@ -304,10 +299,10 @@ class ComposerLambdaMemoization(
 
   private val IrFunction.allowsComposableCalls: Boolean
     get() = hasComposableAnnotation ||
-            inlineLambdaInfo.preservesComposableScope(this) &&
-            currentFunctionContext?.composable == true
+      inlineLambdaInfo.preservesComposableScope(this) &&
+      currentFunctionContext?.composable == true
 
-  override fun visitFunction(declaration: IrFunction): IrStatement {
+  override fun visitFunctionNew(declaration: IrFunction): IrStatement {
     val composable = declaration.allowsComposableCalls
     val context = FunctionContext(declaration, composable)
     if (declaration.isLocal) {
@@ -317,14 +312,14 @@ class ComposerLambdaMemoization(
     val oldFunctionContext = currentFunctionContext
     currentFunctionContext = context
 
-    val result = super.visitFunction(declaration)
+    val result = super.visitFunctionNew(declaration)
 
     currentFunctionContext = oldFunctionContext
     declarationContextStack.pop()
     return result
   }
 
-  override fun visitClass(declaration: IrClass): IrStatement {
+  override fun visitClassNew(declaration: IrClass): IrStatement {
     val context = ClassContext(declaration)
     if (declaration.isLocal) {
       declarationContextStack.recordLocalDeclaration(context)
@@ -333,18 +328,18 @@ class ComposerLambdaMemoization(
     val oldFunctionContext = currentFunctionContext
     currentFunctionContext = null
 
-    val result = super.visitClass(declaration)
+    val result = super.visitClassNew(declaration)
 
     currentFunctionContext = oldFunctionContext
     declarationContextStack.pop()
     return result
   }
 
-  override fun visitAnonymousInitializer(declaration: IrAnonymousInitializer): IrStatement {
+  override fun visitAnonymousInitializerNew(declaration: IrAnonymousInitializer): IrStatement {
     val context = AnonymousInitializerContext(declaration)
     declarationContextStack.recordLocalDeclaration(context)
     declarationContextStack.push(context)
-    val result = super.visitAnonymousInitializer(declaration)
+    val result = super.visitAnonymousInitializerNew(declaration)
     declarationContextStack.pop()
     return result
   }
@@ -363,10 +358,10 @@ class ComposerLambdaMemoization(
     expression: IrFunctionExpression,
   ): IrExpression {
     val functionContext = currentFunctionContext
-                          ?: return super.visitFunctionExpression(expression)
+      ?: return super.visitFunctionExpression(expression)
 
     if (
-      // Only memoize non-composable lambdas in a composable context or when force wrap annotation is present
+    // Only memoize non-composable lambdas in a composable context or when force wrap annotation is present
       (!functionContext.composable && !expression.function.hasValueLambdaAnnotation) ||
       // Don't memoize inlined lambdas
       inlineLambdaInfo.isInlineLambda(expression.function)
@@ -434,10 +429,11 @@ class ComposerLambdaMemoization(
 
   override fun visitFunctionExpression(expression: IrFunctionExpression): IrExpression {
     val declarationContext = declarationContextStack.peek()
-                             ?: return super.visitFunctionExpression(expression)
+      ?: return super.visitFunctionExpression(expression)
     return if (expression.function.allowsComposableCalls) {
       visitComposableFunctionExpression(expression, declarationContext)
-    } else {
+    }
+    else {
       visitNonComposableFunctionExpression(expression)
     }
   }
@@ -461,23 +457,24 @@ class ComposerLambdaMemoization(
   ): IrCall {
     val captures = collector.captures
     return with(DeclarationIrBuilder(generatorContext = context,
-                              symbol = symbol,
-                              startOffset = expression.startOffset,
-                              endOffset = expression.endOffset)) {
+      symbol = symbol,
+      startOffset = expression.startOffset,
+      endOffset = expression.endOffset)) {
 
-      val closureFun = if (expression.function.isSuspend) rtSuspendClosure else rtClosure
+      val closureFun = if (expression.function.isSuspend) rtSuspendClosure(currentFile) else rtClosure(currentFile)
       irCall(closureFun).apply {
         arguments[0] = IrVarargImpl(startOffset = UNDEFINED_OFFSET,
-                                    endOffset = UNDEFINED_OFFSET,
-                                    type = context.irBuiltIns.arrayClass.typeWith(context.irBuiltIns.anyNType),
-                                    varargElementType = context.irBuiltIns.anyType,
-                                    elements = captures.mapNotNull {
-                                      if (it is IrVariable && it.isVar) {
-                                        null
-                                      } else {
-                                        irGet(it)
-                                      }
-                                    })
+          endOffset = UNDEFINED_OFFSET,
+          type = context.irBuiltIns.arrayClass.typeWith(context.irBuiltIns.anyNType),
+          varargElementType = context.irBuiltIns.anyType,
+          elements = captures.mapNotNull {
+            if (it is IrVariable && it.isVar) {
+              null
+            }
+            else {
+              irGet(it)
+            }
+          })
         arguments[1] = expression
       }
     }
@@ -487,7 +484,8 @@ class ComposerLambdaMemoization(
 inline fun <T> includeFileNameInExceptionTrace(file: IrFile, body: () -> T): T {
   try {
     return body()
-  } catch (e: Exception) {
+  }
+  catch (e: Exception) {
     rethrowIntellijPlatformExceptionIfNeeded(e)
     throw Exception("IR lowering failed at: ${file.name}", e)
   }
@@ -495,11 +493,11 @@ inline fun <T> includeFileNameInExceptionTrace(file: IrFile, body: () -> T): T {
 
 private fun IrValueDeclaration.isInlinedLambda(): Boolean =
   isInlineableFunction() &&
-  this is IrValueParameter &&
-  (parent as? IrFunction)?.isInline == true &&
-  !isNoinline
+    this is IrValueParameter &&
+    (parent as? IrFunction)?.isInline == true &&
+    !isNoinline
 
 private fun IrValueDeclaration.isInlineableFunction(): Boolean =
   type.isFunctionOrKFunction() ||
-  type.isSyntheticComposableFunction() ||
-  type.isSuspendFunctionOrKFunction()
+    type.isSyntheticComposableFunction() ||
+    type.isSuspendFunctionOrKFunction()

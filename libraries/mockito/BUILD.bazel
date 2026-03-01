@@ -11,4 +11,13 @@ jvm_library(
     "@lib//:byte-buddy",
   ]
 )
+
+jvm_library(
+  name = "mockito_test_lib",
+  module_name = "intellij.libraries.mockito",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:mockito"],
+  runtime_deps = [":mockito"]
+)
 ### auto-generated section `build intellij.libraries.mockito` end

@@ -23,7 +23,13 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 /**
  * Use {@link com.intellij.execution.process.OSProcessUtil} wherever possible.
@@ -32,10 +38,12 @@ public final class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
   private static final MethodHandle signalStringToIntConverter;
+
   static {
     try {
       Class<?> signalClass = Class.forName("sun.misc.Signal");
-      MethodHandle signalConstructor = MethodHandles.publicLookup().findConstructor(signalClass, MethodType.methodType(void.class, String.class));
+      MethodHandle signalConstructor =
+        MethodHandles.publicLookup().findConstructor(signalClass, MethodType.methodType(void.class, String.class));
       MethodHandle getNumber = MethodHandles.publicLookup().findVirtual(signalClass, "getNumber", MethodType.methodType(int.class));
       signalStringToIntConverter = MethodHandles.filterReturnValue(signalConstructor, getNumber);
     }
@@ -91,14 +99,22 @@ public final class UnixProcessManager {
    */
   public static int getPortableSignalNumber(@NotNull String signalName) {
     switch (signalName) {
-      case "HUP": return SIGHUP;
-      case "INT": return SIGINT;
-      case "QUIT": return SIGQUIT;
-      case "ABRT": return SIGABRT;
-      case "KILL": return SIGKILL;
-      case "ALRM": return SIGALRM;
-      case "TERM": return SIGTERM;
-      default: return -1;
+      case "HUP":
+        return SIGHUP;
+      case "INT":
+        return SIGINT;
+      case "QUIT":
+        return SIGQUIT;
+      case "ABRT":
+        return SIGABRT;
+      case "KILL":
+        return SIGKILL;
+      case "ALRM":
+        return SIGALRM;
+      case "TERM":
+        return SIGTERM;
+      default:
+        return -1;
     }
   }
 
@@ -242,7 +258,10 @@ public final class UnixProcessManager {
     }
   }
 
-  private static void processCommandOutput(Process process, Processor<? super String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
+  private static void processCommandOutput(Process process,
+                                           Processor<? super String> processor,
+                                           boolean skipFirstLine,
+                                           boolean throwOnError) throws IOException {
     try (BufferedReader stdOutput = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
       try (BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
         if (skipFirstLine) {

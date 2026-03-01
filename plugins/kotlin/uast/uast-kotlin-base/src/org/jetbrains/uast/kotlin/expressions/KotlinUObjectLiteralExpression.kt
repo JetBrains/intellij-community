@@ -9,7 +9,18 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UObjectLiteralExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.convertOpt
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 @ApiStatus.Internal

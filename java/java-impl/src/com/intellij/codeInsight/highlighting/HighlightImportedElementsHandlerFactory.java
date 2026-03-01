@@ -3,7 +3,12 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMember;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

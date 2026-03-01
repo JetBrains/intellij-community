@@ -24,8 +24,13 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.lang3.RandomStringUtils
-import org.junit.*
+import org.junit.After
+import org.junit.Assert
 import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 

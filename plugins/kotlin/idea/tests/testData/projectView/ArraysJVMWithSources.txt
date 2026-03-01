@@ -36,6 +36,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/jvmMain/kotlin/collections/A
       ByteIterator
       CharIterator
       collections.kotlin_builtins
+      DetachedMapEntry.class
       DoubleIterator
       EmptyIterator
       EmptyList

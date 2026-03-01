@@ -1,10 +1,30 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.*
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInsight.ExternalAnnotationsManager
+import com.intellij.codeInsight.InferredAnnotationsManager
+import com.intellij.codeInsight.MakeInferredAnnotationExplicit
+import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
+import com.intellij.codeInsight.hints.declarative.CollapseState
+import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
+import com.intellij.codeInsight.hints.declarative.HintColorKind
+import com.intellij.codeInsight.hints.declarative.HintFontSize
+import com.intellij.codeInsight.hints.declarative.HintFormat
+import com.intellij.codeInsight.hints.declarative.HintMarginPadding
+import com.intellij.codeInsight.hints.declarative.InlayActionData
+import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayPayload
+import com.intellij.codeInsight.hints.declarative.InlayPosition
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
+import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.codeInspection.dataFlow.Mutability
@@ -18,7 +38,23 @@ import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.pom.java.JavaFeature
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReferenceParameterList
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterListOwner
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
@@ -53,6 +89,9 @@ public class AnnotationInlayProvider : InlayHintsProvider {
     val project = file.project
     if (project.isDefault) return null
     return object : SharedBypassCollector {
+      val notNulls = HashSet(NullableNotNullManager.getInstance(project).notNulls)
+      val nullables = HashSet(NullableNotNullManager.getInstance(project).nullables)
+
       override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
         if (element is PsiTypeParameterListOwner) {
           sink.whenOptionEnabled(SHOW_EXTERNAL) {
@@ -115,7 +154,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
                 element.modifierList != null &&
                 (shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(annotation))) {
               val hintPos = (if (isTypeAnno(annotation)) typeHintPos else modifierListHintPos) ?: return
-              val suffixText = getTypeSuffixText(annotation)
+              val suffixText = calculateTypeSuffixText(annotation)
               if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
                 if (!shownAnnotations.add(suffixText)) return // to prevent duplicates when external and inferred annotations use different @NotNull classes
                 val suffixOffset = calculateSuffixOffset(element)
@@ -197,26 +236,33 @@ public class AnnotationInlayProvider : InlayHintsProvider {
               }
           }
       }
-    }
-  }
 
-  private fun showAnnotationInlay(
-    sink: InlayTreeSink,
-    annotation: PsiAnnotation,
-    project: Project,
-    anchor: PsiElement,
-  ) {
-    val suffixText = getTypeSuffixText(annotation)
-    if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
-      val offset = calculateSuffixOffset(anchor)
-      sink.addPresentation(InlineInlayPosition(offset, false), TYPE_ANNOTATION_PAYLOADS,
-                           hintFormat = HintFormat.default, tooltip = "@${annotation.nameReferenceElement?.referenceName}") {
-        text(suffixText, annotation.nameReferenceElement?.resolve()?.createSmartPointer(project)?.toNavigateInlayAction())
+      private fun showAnnotationInlay(
+        sink: InlayTreeSink,
+        annotation: PsiAnnotation,
+        project: Project,
+        anchor: PsiElement,
+      ) {
+        val suffixText = calculateTypeSuffixText(annotation)
+        if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
+          val offset = calculateSuffixOffset(anchor)
+          sink.addPresentation(InlineInlayPosition(offset, false), TYPE_ANNOTATION_PAYLOADS,
+                               hintFormat = HintFormat.default, tooltip = "@${annotation.nameReferenceElement?.referenceName}") {
+            text(suffixText, annotation.nameReferenceElement?.resolve()?.createSmartPointer(project)?.toNavigateInlayAction())
+          }
+        }
+        else {
+          val offset = anchor.textRange.startOffset
+          sink.addAnnotationPresentation(annotation, project, InlineInlayPosition(offset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+        }
       }
-    }
-    else {
-      val offset = anchor.textRange.startOffset
-      sink.addAnnotationPresentation(annotation, project, InlineInlayPosition(offset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+
+      private fun calculateTypeSuffixText(annotation: PsiAnnotation) : String? {
+        val name = annotation.nameReferenceElement?.qualifiedName;
+        if (notNulls.contains(name)) return "!"
+        if (nullables.contains(name)) return "?"
+        return null;
+      }
     }
   }
 
@@ -232,11 +278,6 @@ public class AnnotationInlayProvider : InlayHintsProvider {
       is PsiTypeParameter -> element.textRange.endOffset
       else -> 0
     }
-  }
-  
-  private fun getTypeSuffixText(annotation: PsiAnnotation) : String? {
-    val notNulls = HashSet(NullableNotNullManager.getInstance(annotation.project).notNulls)
-    return if (notNulls.contains(annotation.nameReferenceElement?.qualifiedName)) "!" else null
   }
 }
 

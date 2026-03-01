@@ -1,10 +1,10 @@
+load("//:jvm-args.bzl", "get_jvm_flags")
 load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_java//java:defs.bzl", "java_test")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("//:src/jvm-args.bzl", "get_jvm_flags")
 
-JUNIT5_JVM_FLAGS = [
+ADD_OPENS_JVM_FLAGS = [
     # Core
     "--add-opens=java.base/java.lang=ALL-UNNAMED",
     "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
@@ -19,30 +19,29 @@ JUNIT5_JVM_FLAGS = [
 
 java_test(
   name = "jvm-inc-builder-tests",
-  main_class = "com.intellij.tools.build.bazel.SimpleJUnit5Launcher",
 
   jvm_flags = [
     # Uncomment for debugging
     #"-agentlib:jdwp=transport=dt_socket,server=n,address=127.0.0.1:5008,suspend=y",
 
     # Whether to perform final 'bazel clean --expunge' on test suite completion
-    #"-Djvm-inc-builder.test.cleanup=false",
+    # When run from bazel, all test temp/work files are expected to be handled by the calling environment
+    "-Djvm-inc-builder.test.cleanup=false",
 
-  ] + JUNIT5_JVM_FLAGS,
-
-  args = ["com.intellij.tools.build.bazel.AllTests"],
+    "-Djvm-inc-builder.bazel.executable=$(rlocationpath @test_bazel_tool//:bazel)",
+    "-Djvm-inc-builder.module.bazel.txt=$(rlocationpath :testData/MODULE.bazel.txt)",
+    "-Djvm-inc-builder.rules.jvm.zip=$(rlocationpath //:rules_jvm_zip)",
+  ] + ADD_OPENS_JVM_FLAGS,
+  timeout = "eternal",
   test_class = "com.intellij.tools.build.bazel.AllTests",
-  env_inherit = [
-    # Need these variables for bazel.cmd to function properly in test environment
-    "LOCALAPPDATA",
-    "PROCESSOR_ARCHITECTURE",
-    "USERPROFILE",
-  ],
   runtime_deps = [
     ":jvm-inc-builder-test-lib",
-    "//:junit5Launcher",
   ],
-  data = glob(["testData/**/*"]),
+  data = glob(["testData/**/*"]) +
+   [
+     "//:rules_jvm_zip",
+     "@test_bazel_tool//:bazel",
+  ],
 )
 
 jvm_import(
@@ -73,16 +72,15 @@ kt_jvm_library(
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     visibility = ["//visibility:public"],
     deps = [
-        "//jvm-inc-builder:jvm-inc-builder-lib",
-        "//:asm-all_import",
+        "@bazel_tools//tools/java/runfiles",
         "//:annotations_import",
+        "//:asm-all_import",
+        "//:kotlin-metadata-jvm_import",
+        "//:junit4",
         "//dependency-graph",
         "//jps-builders-6:build-javac-rt",
-        "//:junit5",
-        "//:junit5Launcher",
-        "@bazel_tools//tools/java/runfiles",
+        "//jvm-inc-builder:jvm-inc-builder-lib",
     ],
-    #runtime_deps = ["//jvm-inc-builder:jvm-inc-builder-lib"],
 )
 
 ### skip generation section `build intellij.tools.build.bazel.jvmIncBuilderTests`

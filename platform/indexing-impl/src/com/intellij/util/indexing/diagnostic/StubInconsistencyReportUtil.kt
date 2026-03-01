@@ -7,14 +7,13 @@ import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.psi.stubs.StubInconsistencyReporter.*
+import com.intellij.psi.stubs.StubInconsistencyReporter.InconsistencyType
+import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck
+import com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource
 import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
-object StubInconsistencyReportUtil {
-  val GROUP = EventLogGroup("mismatch.in.stub.indexes", 1, "FUS",
-                            "Collector for breakages of indexes defined in implementation-level terms, " +
-                            "see more at https://youtrack.jetbrains.com/articles/IJPL-A-308")
+internal object StubInconsistencyReportUtil {
+  internal val GROUP = EventLogGroup("mismatch.in.stub.indexes", 1)
 
   private val KOTLIN_DESCRIPTOR_EVENT = GROUP.registerEvent("kotlin.descriptor.not.found")
 
@@ -64,7 +63,6 @@ object StubInconsistencyReportUtil {
     STUB_INCONSISTENCY_EVENT.log(project, parameters)
   }
 }
-
 
 @Internal
 class StubInconsistencyFusCollector : CounterUsagesCollector() {

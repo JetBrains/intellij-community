@@ -1,17 +1,43 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.OccurenceNavigatorSupport;
+import com.intellij.ide.TextCopyProvider;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.lang.Language;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,14 +48,31 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.IntellijInternalApi;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
-import com.intellij.ui.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.SmartExpander;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBTabbedPane;
@@ -39,12 +82,33 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.*;
+import com.intellij.usages.ConfigurableUsageTarget;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageContextPanel;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.actions.MergeSameLineUsagesAction;
 import com.intellij.usages.impl.rules.UsageFilteringRules;
-import com.intellij.usages.rules.*;
+import com.intellij.usages.rules.MergeableUsage;
+import com.intellij.usages.rules.PsiElementUsage;
+import com.intellij.usages.rules.UsageFilteringRule;
+import com.intellij.usages.rules.UsageFilteringRuleProvider;
+import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleProvider;
+import com.intellij.usages.rules.UsageInFile;
+import com.intellij.usages.rules.UsageInFiles;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleAlarm;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -61,21 +125,60 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.JobKt;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeModelEvent;
-import javax.swing.tree.*;
-import java.awt.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -85,6 +188,7 @@ import static com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContex
 import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
 
 public class UsageViewImpl implements UsageViewEx {
+  private static final String DUMB_AWARE_KEY = "DumbAware";
   private final int myUniqueIdentifier;
   private static final GroupNode.NodeComparator COMPARATOR = new GroupNode.NodeComparator();
   private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
@@ -188,7 +292,7 @@ public class UsageViewImpl implements UsageViewEx {
             UsageViewStatisticsCollector.logItemChosen(getProject(), this, CodeNavigateSource.FindToolWindow, psiElement.getLanguage(),
                                                        n instanceof SimilarUsage);
           }
-      });
+        });
     }
   };
 
@@ -260,7 +364,7 @@ public class UsageViewImpl implements UsageViewEx {
         synchronized (parentNode) {
           otherNodes = ContainerUtil.filter(parentNode.getChildren(), n -> n.isExcluded() != almostAllChildrenExcluded);
         }
-        if (otherNodes.size() == 1 && otherNodes.get(0) == node) {
+        if (otherNodes.size() == 1 && otherNodes.getFirst() == node) {
           nodes.add(parentNode);
           collectParentNodes(parentNode, almostAllChildrenExcluded, nodes);
         }
@@ -353,7 +457,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     myTree.setCellRenderer(myUsageViewTreeCellRenderer);
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (!isDisposed()) {
         collapseAll();
       }
@@ -370,7 +474,7 @@ public class UsageViewImpl implements UsageViewEx {
     }, this);
 
     if (myPresentation.isShowCancelButton()) {
-      addButtonToLowerPane(() -> close(), UsageViewBundle.message("usage.view.cancel.button"));
+      addButtonToLowerPane(() -> close(), UsageViewBundle.message("usage.view.cancel.button"), true);
     }
 
     myTree.getSelectionModel().addTreeSelectionListener(__ -> {
@@ -1049,7 +1153,9 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void rulesChanged() {
     try (AccessToken ignore = SlowOperations.knownIssue("IJPL-164976")) {
-      rulesChangedImpl();
+      ReadAction.run(() -> {
+        rulesChangedImpl();
+      });
     }
   }
 
@@ -1734,12 +1840,19 @@ public class UsageViewImpl implements UsageViewEx {
 
   @Override
   public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull @NlsContexts.Button String text) {
-    addButtonToLowerPane(new AbstractAction(UIUtil.replaceMnemonicAmpersand(text)) {
+    addButtonToLowerPane(runnable, text, false);
+  }
+
+  @Override
+  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull @NlsContexts.Button String text, boolean dumbAware) {
+    AbstractAction action = new AbstractAction(UIUtil.replaceMnemonicAmpersand(text)) {
       @Override
       public void actionPerformed(ActionEvent e) {
         WriteIntentReadAction.run(runnable);
       }
-    });
+    };
+    action.putValue(DUMB_AWARE_KEY, dumbAware);
+    addButtonToLowerPane(action);
   }
 
   @Override
@@ -1766,8 +1879,18 @@ public class UsageViewImpl implements UsageViewEx {
                                         @NotNull @NlsContexts.DialogMessage String cannotMakeString,
                                         @NotNull @NlsContexts.Button String shortDescription,
                                         boolean checkReadOnlyStatus) {
+    addPerformOperationAction(processRunnable, commandName, cannotMakeString, shortDescription, checkReadOnlyStatus, false);
+  }
+
+  @Override
+  public void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                        @Nullable @NlsContexts.Command String commandName,
+                                        @NotNull @NlsContexts.DialogMessage String cannotMakeString,
+                                        @NotNull @NlsContexts.Button String shortDescription,
+                                        boolean checkReadOnlyStatus,
+                                        boolean dumbAware) {
     Runnable runnable = new MyPerformOperationRunnable(processRunnable, commandName, cannotMakeString, checkReadOnlyStatus);
-    addButtonToLowerPane(runnable, shortDescription);
+    addButtonToLowerPane(runnable, shortDescription, dumbAware);
   }
 
   private boolean allTargetsAreValid() {
@@ -1874,7 +1997,7 @@ public class UsageViewImpl implements UsageViewEx {
            : ContainerUtil.mapNotNull(selectionPaths, p -> ObjectUtils.tryCast(p.getLastPathComponent(), TreeNode.class));
   }
 
-  private @NotNull JBIterable<TreeNode> traverseNodesRecursively(@NotNull List<? extends TreeNode> roots) {
+  private static @NotNull JBIterable<TreeNode> traverseNodesRecursively(@NotNull List<? extends TreeNode> roots) {
     return TreeUtil.treeNodeTraverser(null).withRoots(roots).traverse();
   }
 
@@ -2156,14 +2279,16 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     void update() {
-      boolean globallyEnabled = !isSearchInProgress() && !DumbService.isDumb(myProject);
+      boolean isSearchInProgress = isSearchInProgress();
+      boolean isDumb = DumbService.isDumb(myProject);
       for (int i = 0; i < getComponentCount(); ++i) {
         Component component = getComponent(i);
         if (component instanceof JButton button) {
           Action action = button.getAction();
           if (action != null) {
             if (myNeedUpdateButtons) {
-              button.setEnabled(globallyEnabled && action.isEnabled());
+              Boolean isDumbAware = (Boolean)action.getValue(DUMB_AWARE_KEY);
+              button.setEnabled(!isSearchInProgress && action.isEnabled() && (!isDumb || isDumbAware));
             }
             Object name = action.getValue(Action.NAME);
             if (name instanceof String string) {
@@ -2171,7 +2296,7 @@ public class UsageViewImpl implements UsageViewEx {
             }
           }
           else {
-            button.setEnabled(globallyEnabled);
+            button.setEnabled(!isSearchInProgress && !isDumb);
           }
         }
       }

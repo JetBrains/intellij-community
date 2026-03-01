@@ -28,13 +28,12 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.awt.Point
 import java.io.File
-import java.util.*
+import java.util.Locale
 
 class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("<7.6")
     fun testExpectClassWithTests() {
-        enableExperimentalMPP(true)
         doTest()
     }
 
@@ -42,7 +41,6 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
     @TargetVersions("<7.6")
     fun testMultiplatformInheritedTests() {
         mockInheritorPopup()
-        enableExperimentalMPP(true)
         doTest()
     }
 

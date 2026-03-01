@@ -40,6 +40,7 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
     doTest(true, false);
   }
   public void testNoArraySuperType() { doTest(true, true);}
+  public void testNoAnnotationAfterArrayBrackets() { doTest(true, true);}
   public void testCaptureItself() { doTest(true, true); }
   public void testNestedConditionalWithOverloads() { doTest(true, true); }
   public void testConditionalWithCompoundAssignment() { doTest(true, true); }

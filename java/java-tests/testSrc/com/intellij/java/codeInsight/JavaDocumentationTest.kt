@@ -7,7 +7,13 @@ import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.openapi.application.ReadAction
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiDocCommentOwner
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiRecordComponent
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -216,7 +222,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
     val doc = JavaDocumentationProvider().generateDoc(method, null)
 
-    val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'>\n  For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code><span style=\"color:#0000ff;\">String</span><span style=\"\">.</span><span style=\"color:#0000ff;\">String</span><span style=\"\">(</span><span style=\"color:#000080;font-weight:bold;\">byte</span><span style=\"\">[],&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;String)</span></code></a>.\n   </div><table class='sections'></table>"
+    val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'>\n For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code><span style=\"color:#0000ff;\">String</span><span style=\"\">.</span><span style=\"color:#0000ff;\">String</span><span style=\"\">(</span><span style=\"color:#000080;font-weight:bold;\">byte</span><span style=\"\">[],&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;String)</span></code></a>.\n   </div><table class='sections'></table>"
     TestCase.assertEquals(expected, doc)
   }
 
@@ -276,7 +282,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
     val doc = JavaDocumentationProvider().generateDoc(method, null)
-    val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://Bar\"><code><span style=\"color:#000000;\">Bar</span></code></a></div><div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><table class=\'sections\'><p><tr><td valign=\'top\' class=\'section\'><p>From class:</td><td valign=\'top\'><p><a href=\"psi_element://Foo\"><code><span style=\"color:#000000;\">Foo</span></code></a><br>\n  Some doc\n  </td></table>"
+    val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://Bar\"><code><span style=\"color:#000000;\">Bar</span></code></a></div><div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><table class=\'sections\'><p><tr><td valign=\'top\' class=\'section\'><p>From class:</td><td valign=\'top\'><p><a href=\"psi_element://Foo\"><code><span style=\"color:#000000;\">Foo</span></code></a><br>\n Some doc\n  </td></table>"
 
     TestCase.assertEquals(expected, doc)
   }
@@ -362,16 +368,16 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val expected = """
       <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://C"><code><span style="color:#000000;">C</span></code></a></div><div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span>&nbsp;<span style="color:#000080;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">m</span><span style="">(</span><span style="">)</span></pre></div><div class='content'> 
-        <p> Examples of expected usage:
-        <blockquote><pre><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></pre></blockquote>
-        <pre><code><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></code></pre>
-        <p> Continuing...
-        <blockquote><pre><span style="">quote&#32;nr&#32;</span><span style="color:#0000ff;">2</span><span style="">;</span></pre></blockquote>
-        <p> Continuing...
-        <blockquote><pre>
+       <p> Examples of expected usage:
+       <blockquote><pre><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></pre></blockquote>
+       <pre><code><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></code></pre>
+       <p> Continuing...
+       <blockquote><pre><span style="">quote&#32;nr&#32;</span><span style="color:#0000ff;">2</span><span style="">;</span></pre></blockquote>
+       <p> Continuing...
+       <blockquote><pre>
           (this.charAt(<i>k</i>) == ch) && (<i>k</i> &lt;= fromIndex)
         </pre></blockquote>
-        <blockquote><pre>
+       <blockquote><pre>
           Unfinished blockquote
         </pre> </blockquote>
         </div><table class='sections'></table>

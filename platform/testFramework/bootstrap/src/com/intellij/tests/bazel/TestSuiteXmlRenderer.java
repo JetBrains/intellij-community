@@ -7,6 +7,10 @@
 package com.intellij.tests.bazel;
 
 
+import org.junit.platform.launcher.TestPlan;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.Duration;
@@ -14,9 +18,6 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Locale;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-import org.junit.platform.launcher.TestPlan;
 
 import static com.intellij.tests.bazel.SafeXml.escapeIllegalCharacters;
 import static com.intellij.tests.bazel.SafeXml.writeTextElement;

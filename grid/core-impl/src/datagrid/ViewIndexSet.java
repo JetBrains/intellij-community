@@ -3,7 +3,10 @@ package com.intellij.database.datagrid;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.database.datagrid.ViewIndex.*;
+import static com.intellij.database.datagrid.ViewIndex.col2Model;
+import static com.intellij.database.datagrid.ViewIndex.forColumn;
+import static com.intellij.database.datagrid.ViewIndex.forRow;
+import static com.intellij.database.datagrid.ViewIndex.row2Model;
 
 public abstract class ViewIndexSet<S> extends IndexSet<ViewIndex<S>> {
   public static <Row> ViewIndexSet<Row> forRows(CoreGrid<Row, ?> grid, int... rows) {

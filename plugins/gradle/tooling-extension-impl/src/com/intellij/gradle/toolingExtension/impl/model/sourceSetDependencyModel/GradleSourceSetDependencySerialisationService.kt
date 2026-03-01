@@ -13,7 +13,16 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.GradleSourceSetDependencyModel
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService
-import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.MAP_KEY_FIELD
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.MAP_VALUE_FIELD
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertNotNull
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readList
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readMap
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeCollection
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeMap
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString
 import org.jetbrains.plugins.gradle.tooling.serialization.step
 import java.io.ByteArrayOutputStream
 

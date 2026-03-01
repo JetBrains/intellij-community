@@ -3,7 +3,6 @@ package com.intellij.platform.rpc.topics
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.platform.rpc.topics.impl.ApplicationRemoteTopicImpl
-import com.intellij.platform.rpc.topics.impl.ProjectRemoteTopicImpl
 import com.intellij.platform.rpc.topics.impl.RemoteTopicSubscribersManager
 import kotlinx.serialization.KSerializer
 import org.jetbrains.annotations.ApiStatus

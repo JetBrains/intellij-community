@@ -9,7 +9,13 @@ import com.intellij.openapi.components.service
 import org.apache.velocity.VelocityContext
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.plugins.gradle.jvmcompat.*
+import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
+import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
+import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataStorage
+import org.jetbrains.plugins.gradle.jvmcompat.asSafeInt
+import org.jetbrains.plugins.gradle.jvmcompat.asSafeJsonArray
+import org.jetbrains.plugins.gradle.jvmcompat.asSafeJsonObject
+import org.jetbrains.plugins.gradle.jvmcompat.asSafeString
 import org.jetbrains.plugins.gradle.util.Ranges
 
 class KotlinGradleVersionMapping() : BaseState() {

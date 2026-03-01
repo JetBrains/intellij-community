@@ -11,7 +11,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.RectangleRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.lang.reflect.Method;
 
 public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle> {

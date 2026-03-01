@@ -26,7 +26,18 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.OBJECT_ID_FIELD;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertFieldName;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertNotNull;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readFile;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readInt;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readList;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeCollection;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeFile;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeInt;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString;
 
 /**
  * @author Vladislav.Soroka

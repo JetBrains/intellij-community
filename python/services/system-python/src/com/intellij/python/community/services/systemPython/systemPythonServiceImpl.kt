@@ -2,8 +2,13 @@
 package com.intellij.python.community.services.systemPython
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.APP
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.eel.EelApi
@@ -15,14 +20,25 @@ import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
+import com.intellij.python.community.services.systemPython.impl.EelDescriptorFilter.Companion.isEphemeral
 import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
+import com.intellij.python.community.services.systemPython.impl.UpdateCacheDelayer
 import com.intellij.python.community.services.systemPython.impl.asSysPythonRegisterError
-import com.jetbrains.python.*
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.getOr
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.sdk.installer.installBinary
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -45,15 +61,24 @@ internal suspend fun getCacheTimeout(): Duration? =
 @State(name = "SystemPythonService", storages = [Storage("systemPythonService.xml", roamingType = RoamingType.LOCAL)],
        allowLoadInTests = true)
 @Internal
-internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
+class SystemPythonServiceImpl internal constructor(
+  scope: CoroutineScope,
+  createUpdateCacheDelayer: suspend () -> UpdateCacheDelayer?,
+) : SystemPythonService,
+    SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
+  constructor(scope: CoroutineScope) : this(scope, {
+    val duration = getCacheTimeout()
+    if (duration != null) UpdateCacheDelayer.TimeBased(duration) else null
+  })
+
   private val findPythonsMutex = Mutex()
   private val _cacheImpl: CompletableDeferred<Cache<EelDescriptor, SystemPython>?> = CompletableDeferred()
   private suspend fun cache() = _cacheImpl.await()
 
   init {
     scope.launch {
-      _cacheImpl.complete(getCacheTimeout()?.let { interval ->
-        Cache<EelDescriptor, SystemPython>(scope, interval) { eelDescriptor ->
+      _cacheImpl.complete(createUpdateCacheDelayer()?.let { delayer ->
+        Cache(scope, delayer) { eelDescriptor ->
           withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
             searchPythonsPhysicallyNoCache(eelDescriptor.toEelApi())
           }
@@ -64,28 +89,43 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
 
   override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, SysPythonRegisterError> {
     val pythonWithLangLevel = VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonPath)
-      .getOr(PySystemPythonBundle.message("py.system.python.service.python.is.broken", pythonPath)) { return Result.failure(it.error.asSysPythonRegisterError()) }
+      .getOr(PySystemPythonBundle.message("py.system.python.service.python.is.broken",
+                                          pythonPath)) { return Result.failure(it.error.asSysPythonRegisterError()) }
     val systemPython = SystemPython.create(pythonWithLangLevel, null).getOr { return it }
-    state.userProvidedPythons.add(pythonPath.pathString)
-    cache()?.get(pythonPath.getEelDescriptor())?.add(systemPython)
+
+    val eelDescriptor = pythonPath.getEelDescriptor()
+    if (!eelDescriptor.isEphemeral) {
+      state.userProvidedPythons.add(pythonPath.pathString)
+      logger.debug("Registering $pythonPath")
+      cache()?.get(eelDescriptor)?.add(systemPython)
+    }
     return Result.success(systemPython)
   }
 
   override fun getInstaller(eelApi: EelApi): PythonInstallerService? =
     if (eelApi == localEel) LocalPythonInstaller else null
 
-  override suspend fun findSystemPythons(eelApi: EelApi, forceRefresh: Boolean): List<SystemPython> =
-    cache()?.let { cache ->
+  override suspend fun findSystemPythons(eelApi: EelApi, forceRefresh: Boolean): List<SystemPython> {
+    val eelDescriptor = eelApi.descriptor
+    val cache = if (!eelDescriptor.isEphemeral) cache() else null
+    return cache?.let { cache ->
       // Cache enabled
       cache.startUpdate()
       if (forceRefresh) {
         logger.info("pythons refresh requested")
-        cache.updateCache(eelApi.descriptor) // Update cache and suspend till update finished
+        cache.updateCache(eelDescriptor) // Update cache and suspend till update finished
       }
       else {
-        cache.get(eelApi.descriptor)
-      }.sorted()
-    } ?: searchPythonsPhysicallyNoCache(eelApi).sorted()
+        cache.get(eelDescriptor)
+      }.sortedSystemPythons()
+    } ?: searchPythonsPhysicallyNoCache(eelApi).sortedSystemPythons()
+  }
+
+  private fun Iterable<SystemPython>.sortedSystemPythons(): List<SystemPython> =
+    sortedWith(
+      // Free-threaded Python is unstable, we don't want to have it selected by default if we have alternatives
+      compareBy<SystemPython> { it.pythonInfo.freeThreaded }.thenByDescending { it.pythonInfo.languageLevel }
+    )
 
 
   class MyServiceState : BaseState() {
@@ -150,11 +190,12 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
 
 
 private object LocalPythonInstaller : PythonInstallerService {
-  override suspend fun installLatestPython(): Result<Unit, String> {
-    val pythonToInstall =
-      withContext(Dispatchers.IO) {
-        PySdkToInstallManager.getAvailableVersionsToInstall().toSortedMap().values.last()
-      }
+  override suspend fun installLatestPython(versionSpecifiers: PyVersionSpecifiers): Result<Unit, String> {
+    val pythonToInstall = withContext(Dispatchers.IO) {
+      PySdkToInstallManager.getAvailableVersionsToInstall()
+        .filterKeys { versionSpecifiers.isValid(it) }
+        .maxByOrNull { it.key }?.value
+    } ?: return Result.Companion.failure("No matching Python version available for installation")
     withContext(Dispatchers.EDT) {
       installBinary(pythonToInstall, null) {
       }

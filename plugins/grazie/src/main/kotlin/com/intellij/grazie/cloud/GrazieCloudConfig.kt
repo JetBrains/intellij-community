@@ -59,7 +59,11 @@ object GrazieCloudConfig {
         grazieAgent = obtainAgent()
       )
     )
-    return SuspendableAPIGatewayClient(apiUrl, v5, AuthType.User)
+    return SuspendableAPIGatewayClient(
+      apiUrl,
+      v5,
+      if (System.getenv("TEAMCITY_VERSION") != null) AuthType.Application else AuthType.User
+    )
   }
 
   fun enterpriseClient(state: EnterpriseState, httpClient: SuspendableHTTPClient): SuspendableAPIGatewayClient {

@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.awt.RelativePoint
 import javax.swing.JComponent
 
-private class AttachZoomIndicator : EditorFactoryListener {
+internal class AttachZoomIndicator : EditorFactoryListener {
   private fun service(project: Project) = project.service<ZoomIndicatorManager>()
 
   private fun shouldSuppressZoomIndicator(editor: Editor): Boolean {

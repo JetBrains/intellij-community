@@ -1,14 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil.isExtensionPointImplementationCandidate
+import org.jetbrains.idea.devkit.inspections.isServiceImplementationRegisteredInPluginXml
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -25,23 +31,29 @@ internal class PrivateExtensionClassInspection : LocalInspectionTool() {
     return object : KtVisitorVoid() {
       override fun visitClass(klass: KtClass) {
         if (!klass.isPrivate()) return
-
         val ktLightClass = klass.toLightClass() ?: return
-        if (!isExtensionOrAction(ktLightClass)) return
 
-        holder.registerProblem(klass.modifierList ?: klass, DevKitKotlinBundle.message("inspection.private.extension.class.text"),
-                               InternalVisibilityFix())
+        if (!isExtensionPointImplementationCandidate(ktLightClass)) return
+
+        if (isExtension(ktLightClass)
+            || isRegisteredAction(ktLightClass)
+            || isServiceImplementationRegisteredInPluginXml(ktLightClass)) {
+          holder.registerProblem(klass.modifierList ?: klass, DevKitKotlinBundle.message("inspection.private.extension.class.text"),
+                                 InternalVisibilityFix())
+        }
 
         super.visitClass(klass)
       }
     }
   }
 
-  private fun isExtensionOrAction(psiClass: PsiClass): Boolean {
-    if (!isExtensionPointImplementationCandidate(psiClass)) return false
-
+  private fun isExtension(psiClass: PsiClass): Boolean {
     return ExtensionUtil.isInstantiatedExtension(psiClass) { ExtensionUtil.hasServiceBeanFqn(it) }
-           || InheritanceUtil.isInheritor(psiClass, "com.intellij.openapi.actionSystem.AnAction")
+  }
+
+  private fun isRegisteredAction(psiClass: PsiClass): Boolean {
+    return InheritanceUtil.isInheritor(psiClass, "com.intellij.openapi.actionSystem.AnAction")
+           && IdeaPluginRegistrationIndex.isRegisteredActionOrGroup(psiClass, psiClass.resolveScope)
   }
 
   private class InternalVisibilityFix : LocalQuickFix {

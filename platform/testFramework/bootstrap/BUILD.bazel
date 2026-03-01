@@ -33,4 +33,23 @@ jvm_library(
     "//libraries/junit5-jupiter",
   ]
 )
+
+jvm_library(
+  name = "tools-testsBootstrap_test_lib",
+  module_name = "intellij.tools.testsBootstrap",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":tools-testsBootstrap",
+    "//platform/boot:boot_test_lib",
+    "//libraries/junit4:junit4_test_lib",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5-provided",
+    "//libraries/junit5-vintage",
+    "//libraries/junit5-vintage:junit5-vintage_test_lib",
+    "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+    "//platform/core-nio-fs:core-nio-fs_test_lib",
+    "//libraries/asm-tools:asm-tools_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tools.testsBootstrap` end

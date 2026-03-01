@@ -2,7 +2,11 @@
 package org.jetbrains.jps.javac;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class ModulePath {
   public interface Builder {

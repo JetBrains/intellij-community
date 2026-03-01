@@ -3,7 +3,14 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;

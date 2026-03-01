@@ -2,15 +2,25 @@ package com.intellij.database.run.actions
 
 import com.intellij.database.DataGridBundle
 import com.intellij.database.DatabaseDataKeys
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.DocumentDataHookUp
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridHelper
+import com.intellij.database.datagrid.GridPagingModel
+import com.intellij.database.datagrid.GridRow
+import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.GridUtilCore
+import com.intellij.database.datagrid.NestedTableGridPagingModel
 import com.intellij.database.run.ui.FloatingPagingManager
 import com.intellij.database.run.ui.FloatingPagingManager.Companion.adjustAction
 import com.intellij.database.settings.DataGridSettings
 import com.intellij.database.util.DataGridUIUtil
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopup
@@ -20,10 +30,8 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.awt.Component
-import java.util.*
+import java.util.Objects
 import javax.swing.JComponent
 
 private val DEFAULT_PAGE_SIZES = mutableListOf(10, 100, 500, 1000)
@@ -79,14 +87,8 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
     }
     else {
       e.presentation.setVisible(true)
-      val updateEdtJob = grid.coroutineScope.launch(Dispatchers.UI) {
+      e.updateSession.compute(this, "updatePresentationUI", ActionUpdateThread.EDT) {
         updatePresentation(state, e.presentation, GridUtil.getSettings(grid))
-      }
-
-      // We wait for it because we need an updated presentation when the function returns,
-      // it's the contract of AnAction.update() method
-      runBlockingMaybeCancellable {
-        updateEdtJob.join()
       }
     }
   }
@@ -231,7 +233,7 @@ private class ChangePageSizeActionState(
   }
 }
 
-private class MyCountRowsAction : DumbAwareAction(
+internal class MyCountRowsAction : DumbAwareAction(
   DataGridBundle.message("action.CountRows.text"),
   DataGridBundle.message("action.CountRows.description"),
   null

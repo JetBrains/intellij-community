@@ -12,13 +12,27 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * For:

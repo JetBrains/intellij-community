@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -19,9 +20,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.Objects;
 
 public class VcsExecutablePathSelector {
@@ -171,7 +176,7 @@ public class VcsExecutablePathSelector {
   }
 
   public interface ExecutableHandler {
-    default @Nullable String patchExecutable(@NotNull String executable) {
+    default @Nullable String patchExecutable(@NotNull @MultiRoutingFileSystemPath String executable) {
       return null;
     }
 

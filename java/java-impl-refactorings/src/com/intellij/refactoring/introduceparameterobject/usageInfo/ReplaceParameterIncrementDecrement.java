@@ -15,7 +15,13 @@
  */
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiUnaryExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;

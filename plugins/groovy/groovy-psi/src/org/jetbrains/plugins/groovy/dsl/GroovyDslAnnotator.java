@@ -20,7 +20,9 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
-import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.*;
+import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.ACTIVE;
+import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.ERROR;
+import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.MODIFIED;
 
 public final class GroovyDslAnnotator implements Annotator {
 

@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.gitlab.authentication.accounts
 
 import com.intellij.collaboration.auth.ObservableAccountsRepository
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.Serializable
 

@@ -56,6 +56,27 @@ public class PyOverloadsInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-86525
+  public void testOverlappingOverloads() {
+    doTest();
+  }
+
+  // PY-86525
+  public void testOverlappingOverloadsDifferentReturnType() {
+    doTest();
+  }
+
+  // PY-86525
+  // See https://github.com/python/typing/issues/253#issuecomment-389262904
+  public void testDunderGetNotReported() {
+    doTest();
+  }
+
+  // PY-86525
+  public void testIncompatibleSelfType() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

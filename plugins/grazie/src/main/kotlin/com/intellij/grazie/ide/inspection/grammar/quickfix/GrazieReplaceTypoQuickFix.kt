@@ -2,8 +2,12 @@
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
-import com.intellij.codeInsight.intention.*
 import com.intellij.codeInsight.intention.CustomizableIntentionAction.RangeToHighlight
+import com.intellij.codeInsight.intention.EventTrackingIntentionAction
+import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -12,6 +16,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.ui.components.dsl.msg
@@ -179,10 +184,10 @@ object GrazieReplaceTypoQuickFix {
 
   @JvmStatic
   fun toRangeReplacements(replacementRange: TextRange, suggestion: CharSequence, problem: TextProblem): List<Pair<TextRange, String>> =
-    if (problem.isSpellingProblem) {
-      listOf(problem.text.textRangeToFile(replacementRange) to suggestion.toString())
-    } else {
+    if (problem is LanguageToolChecker.Problem) {
       toRangeReplacements(replacementRange, suggestion, problem.text)
+    } else {
+      listOf(problem.text.textRangeToFile(replacementRange) to suggestion.toString())
     }
 
   @JvmStatic

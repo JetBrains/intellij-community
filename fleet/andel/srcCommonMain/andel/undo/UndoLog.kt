@@ -3,19 +3,22 @@
 
 package andel.undo
 
-import andel.operation.EditLog
 import andel.editor.CaretPosition
+import andel.operation.EditLog
 import andel.operation.Operation
 import andel.operation.compose
 import andel.operation.normalizeHard
-import fleet.util.*
 import fleet.bifurcan.BifurcanVector
 import fleet.bifurcan.IBifurcanVector
 import fleet.bifurcan.serialization.BifurcanListSerializer
+import fleet.util.UID
 import fleet.util.openmap.SerializableKey
 import fleet.util.openmap.SerializableOpenMap
 import fleet.util.openmap.SerializedValue
-import kotlinx.serialization.*
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlin.jvm.JvmInline

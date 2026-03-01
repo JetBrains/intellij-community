@@ -14,7 +14,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ArtifactElementPresentation extends TreeNodePresentation {
   private final ArtifactPointer myArtifactPointer;

@@ -17,7 +17,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.canExplicitTypeBeRemoved
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class RemoveExplicitTypeArgumentsInspection : KotlinApplicableInspectionBase<KtTypeArgumentList, Unit>() {

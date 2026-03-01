@@ -6,7 +6,10 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class BuildNumberTest {
   @Test
@@ -75,6 +78,11 @@ public class BuildNumberTest {
     assertTrue(b.isSnapshot());
 
     assertEquals(BuildNumber.fromString("__BUILD_NUMBER__"), BuildNumber.fromString("SNAPSHOT"));
+  }
+
+  @Test
+  public void semVerSnapshotVersion() {
+    assertTrue(BuildNumber.fromString("IU-145.1.2-SNAPSHOT").isSnapshot());
   }
 
   @Test

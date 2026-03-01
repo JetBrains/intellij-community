@@ -23,7 +23,12 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.checkin.*
+import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CommitCheck
+import com.intellij.openapi.vcs.checkin.CommitInfo
+import com.intellij.openapi.vcs.checkin.CommitProblem
+import com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.SequentialProgressReporter
 import com.intellij.platform.util.progress.reportSequentialProgress
@@ -47,7 +52,7 @@ import org.jetbrains.annotations.PropertyKey
 
 abstract class GitCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
 
-private class GitUserNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
+internal class GitUserNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitUserNameCheckinHandler(panel.project)
   }
@@ -65,13 +70,13 @@ class GitLargeFileCheckinHandlerFactory : GitCheckinHandlerFactory() {
   }
 }
 
-private class GitDetachedRootCheckinHandlerFactory : GitCheckinHandlerFactory() {
+internal class GitDetachedRootCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitDetachedRootCheckinHandler(panel.project)
   }
 }
 
-private class GitFileNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
+internal class GitFileNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitFileNameCheckinHandler(panel.project)
   }

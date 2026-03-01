@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.shelf
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -10,11 +17,6 @@ import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.platform.vcs.impl.frontend.VcsFrontendConfiguration
 import com.intellij.platform.vcs.impl.frontend.changes.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.platform.vcs.impl.frontend.changes.actions.SHOW_DIFF_ACTION_ID
@@ -22,6 +24,11 @@ import com.intellij.platform.vcs.impl.frontend.navigation.FrontendNavigateToSour
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ShelfTree
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ShelfTreeEditorDiffPreview
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

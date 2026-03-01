@@ -5,3 +5,5 @@ fun bar(sss: String?) {
 }
 
 // ELEMENT_TEXT: "!! sss"
+
+// IGNORE_K2

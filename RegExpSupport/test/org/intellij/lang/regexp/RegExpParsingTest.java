@@ -3,7 +3,11 @@ package org.intellij.lang.regexp;
 
 import com.intellij.mock.MockSmartPointerManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.testFramework.ParsingTestCase;
 
@@ -152,6 +156,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testCharClasses71() throws IOException { doCodeTest("[a-\\Qz\\E]"); }
   public void testCharClasses72() throws IOException { doCodeTest("([\\^])"); }
   public void testCharClasses73() throws IOException { doCodeTest("[i-[:]]*"); }
+  public void testCharClasses74() throws IOException { doCodeTest("[\\w-z]"); }
 
   public void testGroups1() throws IOException { doCodeTest("()ef"); }
   public void testGroups2() throws IOException { doCodeTest("()*"); }

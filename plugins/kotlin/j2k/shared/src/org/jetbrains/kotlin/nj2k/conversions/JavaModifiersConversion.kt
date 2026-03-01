@@ -7,8 +7,18 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.jvmAnnotation
 import org.jetbrains.kotlin.nj2k.moduleApiVersion
-import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.tree.OtherModifier.*
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotation
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationListOwner
+import org.jetbrains.kotlin.nj2k.tree.JKOtherModifiersOwner
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.EXTERNAL
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.NATIVE
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.STRICTFP
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.SYNCHRONIZED
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.TRANSIENT
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.VOLATILE
+import org.jetbrains.kotlin.nj2k.tree.elementByModifier
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 
 /**
  * Converts Java-specific modifiers (for example, "volatile") to a Kotlin equivalent (usually an annotation).

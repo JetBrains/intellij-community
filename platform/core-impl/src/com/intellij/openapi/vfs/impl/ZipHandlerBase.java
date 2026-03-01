@@ -1,8 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
+import com.intellij.openapi.util.io.FileTooBigException;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.impl.GenericZipFile.GenericZipEntry;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.io.ResourceHandle;
@@ -30,7 +33,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
 
   @ApiStatus.Internal
   public static @NotNull GenericZipFile getZipFileWrapper(@NotNull Path file) throws IOException {
-    GenericZipFile wrapper = isFileLocal(file) ? new JavaZipFileWrapper(file.toFile()) : new JBZipFileWrapper(file.toFile());
+    GenericZipFile wrapper = isFileLocal(file) ? new JavaZipFileWrapper(file.toFile()) : new JBZipFileWrapper(file);
     if (LOG.isTraceEnabled()) {
       LOG.trace("Using " + wrapper.getClass().getName() + " to open " + file);
     }
@@ -38,10 +41,15 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   }
 
   /**
-   * Here, a file is considered local if it is accessible by the OS of the IDE.
-   * JVM internals assume that all files are local to it.
+   * Checks whether the file resides on the local OS filesystem (as opposed to being routed
+   * to a remote provider such as IJent/EEL via {@code MultiRoutingFileSystem}).
+   * <p>
+   * Used by {@link #getZipFileWrapper(Path)} to choose between native {@code ZipFile}
+   * ({@link JavaZipFileWrapper}) and pure-Java {@link JBZipFileWrapper}, and by
+   * {@link ZipHandler#acquireZipHandle()} to skip the JDK-4425695 freshness check
+   * for remote files where it doesn't apply.
    */
-  private static boolean isFileLocal(Path file) {
+  static boolean isFileLocal(Path file) {
     FileSystem fileFs = file.getFileSystem();
     if (fileFs.equals(FileSystems.getDefault())) {
       try {
@@ -83,7 +91,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       GenericZipEntry entry = zip.getEntry(relativePath);
       if (entry != null) {
         long length = entry.getSize();
-        if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(entry.getName()))) {
+        if (FileSizeLimit.isTooLargeForContentLoading(length, FileUtilRt.getExtension(entry.getName()))) {
           throw new FileTooBigException(getPath() + "!/" + relativePath);
         }
         try (InputStream stream = entry.getInputStream()) {
@@ -109,7 +117,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
         InputStream stream = entry.getInputStream();
         if (stream != null) {
           long length = entry.getSize();
-          if (!FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(entry.getName()))) {
+          if (!FileSizeLimit.isTooLargeForContentLoading(length, FileUtilRt.getExtension(entry.getName()))) {
             try {
               return new BufferExposingByteArrayInputStream(StreamUtil.readBytes(stream, (int)length));
             }

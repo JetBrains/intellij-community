@@ -9,8 +9,9 @@ import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 
 

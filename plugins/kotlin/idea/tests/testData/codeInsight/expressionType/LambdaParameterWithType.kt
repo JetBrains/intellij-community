@@ -8,4 +8,4 @@ fun test(list: List<Foo>) {
 
 // K1_TYPE: { foo: Foo -> } -> <html>(Foo) -&gt; Unit</html>
 
-// K2_TYPE: { foo: Foo -> } -> (Foo) -&gt; Unit
+// K2_TYPE: { foo: Foo -> } -> <b>(Foo) -&gt; Unit</b>

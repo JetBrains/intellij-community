@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;

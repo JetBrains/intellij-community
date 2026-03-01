@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
+@K1Deprecation
 object RestrictedRetentionForExpressionAnnotationFactory : KotlinIntentionActionsFactory() {
 
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {

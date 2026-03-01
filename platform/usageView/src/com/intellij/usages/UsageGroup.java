@@ -9,7 +9,7 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
 

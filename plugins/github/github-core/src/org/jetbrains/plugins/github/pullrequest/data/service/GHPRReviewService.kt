@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.diff.util.Side
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -33,7 +35,7 @@ interface GHPRReviewService {
 
   suspend fun addComment(reviewId: String, body: String, commitSha: String, fileName: String, diffLine: Int): GHPullRequestReviewComment
 
-  suspend fun addThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, fileName: String): GHPullRequestReviewThread
+  suspend fun addThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, startSide: Side, fileName: String): GHPullRequestReviewThread
 
   suspend fun deleteComment(pullRequestId: GHPRIdentifier, commentId: String): GHPullRequestPendingReviewDTO
 
@@ -42,4 +44,6 @@ interface GHPRReviewService {
   suspend fun resolveThread(pullRequestId: GHPRIdentifier, id: String): GHPullRequestReviewThread
 
   suspend fun unresolveThread(pullRequestId: GHPRIdentifier, id: String): GHPullRequestReviewThread
+
+  fun getReviewParticipantsBatchesFlow(pullRequestId: GHPRIdentifier): Flow<List<GHUser>>
 }

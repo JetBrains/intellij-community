@@ -3,12 +3,14 @@ package org.jetbrains.plugins.gradle.testFramework.configuration
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findDirectory
+import com.intellij.openapi.vfs.findFile
+import com.intellij.openapi.vfs.readText
+import com.intellij.openapi.vfs.writeText
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.testFramework.utils.vfs.createFile
 import org.junit.jupiter.api.Assertions
-import java.util.ArrayList
-import java.util.HashMap
 
 open class TestFilesConfigurationImpl : TestFilesConfiguration {
 

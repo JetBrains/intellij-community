@@ -14,12 +14,29 @@ import org.jetbrains.jps.incremental.LineOutputWriter;
 import org.jetbrains.jps.util.Iterators;
 
 import javax.annotation.processing.Processor;
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileManager;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal

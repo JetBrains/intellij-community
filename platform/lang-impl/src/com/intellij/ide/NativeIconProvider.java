@@ -19,7 +19,8 @@ import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JFileChooser;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;

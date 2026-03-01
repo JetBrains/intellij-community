@@ -1,7 +1,15 @@
 package com.intellij.lambda.testFramework.testApi
 
 import com.intellij.find.actions.ShowUsagesAction
-import com.intellij.openapi.actionSystem.*
+import com.intellij.lambda.testFramework.frameworkLogger
+import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -9,8 +17,6 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.remoteDev.tests.LambdaIdeContext
-import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import kotlinx.coroutines.delay

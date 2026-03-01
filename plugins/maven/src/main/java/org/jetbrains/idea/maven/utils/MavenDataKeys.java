@@ -7,7 +7,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

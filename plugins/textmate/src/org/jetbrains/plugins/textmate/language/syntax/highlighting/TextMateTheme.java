@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

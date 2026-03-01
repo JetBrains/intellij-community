@@ -23,11 +23,22 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.PyParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class PyFunctionBuilder {

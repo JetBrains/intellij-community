@@ -19,9 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.*;
-import static com.intellij.python.community.impl.venv.VenvKt.LEGACY_VIRTUALENV_ZIPAPP_NAME;
-import static com.intellij.python.community.impl.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
+import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.findPathInHelpers;
+import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.findPathInHelpersPossibleNull;
+import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.findPathStringInHelpers;
+import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.getCommunityHelpersRoot;
+import static com.intellij.python.venv.VenvKt.LEGACY_VIRTUALENV_ZIPAPP_NAME;
+import static com.intellij.python.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
 import static com.jetbrains.python.packaging.pip.PipPackageManagerEngine.PACKAGING_TOOL_NAME;
 
 public enum PythonHelper implements HelperPackage {
@@ -171,8 +174,8 @@ public enum PythonHelper implements HelperPackage {
       return cmd;
     }
 
-    @Override
-    public @NotNull GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
+    @NotNull
+    private GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
       final String sdkHomePath = pythonSdk.getHomePath();
       assert sdkHomePath != null;
       final GeneralCommandLine cmd = newCommandLine(sdkHomePath, parameters);
@@ -292,7 +295,6 @@ public enum PythonHelper implements HelperPackage {
     return myModule.newCommandLine(sdkPath, parameters);
   }
 
-  @Override
   public @NotNull GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
     return myModule.newCommandLine(pythonSdk, parameters);
   }

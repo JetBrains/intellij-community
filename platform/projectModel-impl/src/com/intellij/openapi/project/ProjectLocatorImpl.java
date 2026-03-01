@@ -10,8 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 final class ProjectLocatorImpl extends ProjectLocator {
   @Override
@@ -60,12 +61,12 @@ final class ProjectLocatorImpl extends ProjectLocator {
   @Override
   public @NotNull Collection<Project> getProjectsForFile(@NotNull VirtualFile file) {
     ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
-    if (projectManager == null) {
-      return Collections.emptyList();
-    }
+    if (projectManager == null) return emptyList();
 
     List<Project> result = new SmartList<>();
-    ReadAction.run(()-> {
+    ReadAction.runBlocking(()-> {
+      if (!file.isValid()) return;
+
       for (Project project : projectManager.getOpenProjects()) {
         if (isUnder(project, file)) {
           result.add(project);

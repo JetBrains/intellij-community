@@ -13,7 +13,7 @@
             serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.KotlinIdeResolutionAnchorService"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory"
-            serviceImplementation="org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinderFactory"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.vfilefinder.IdeK1VirtualFileFinderFactory"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinderFactory"/>
@@ -28,7 +28,8 @@
             serviceImplementation="org.jetbrains.kotlin.resolve.DummyCodeAnalyzerInitializer"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.kdoc.KDocLinkResolutionService"
-            serviceImplementation="org.jetbrains.kotlin.idea.kdoc.IdeKDocLinkResolutionService"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.kdoc.IdeKDocLinkResolutionService"
+            open="true"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.resolve.lazy.ProbablyNothingCallableNames"
             serviceImplementation="org.jetbrains.kotlin.idea.project.ProbablyNothingCallableNamesImpl"/>

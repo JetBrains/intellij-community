@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.util.ActionTest;
 import org.jetbrains.plugins.groovy.util.Groovy50Test;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
 import org.junit.Test;
 

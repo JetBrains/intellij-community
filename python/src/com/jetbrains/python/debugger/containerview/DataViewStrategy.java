@@ -11,7 +11,7 @@ import com.jetbrains.python.debugger.dataframe.SeriesViewStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.RowSorter;
 import java.util.Set;
 
 

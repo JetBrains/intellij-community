@@ -19,7 +19,11 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,7 +39,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseInspection {
   public static final @NonNls String DEFAULT_QUESTION_WORDS =

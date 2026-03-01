@@ -5,7 +5,11 @@ import com.intellij.codeInsight.hints.JavaTypeHintsFactory
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.util.containers.mapSmart
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration

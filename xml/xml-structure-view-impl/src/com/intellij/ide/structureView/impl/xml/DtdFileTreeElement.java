@@ -6,7 +6,13 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttlistDecl;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.xml.impl.dtd.XmlElementDescriptorImpl;
@@ -14,8 +20,14 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public final class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
   public DtdFileTreeElement(XmlFile file) {

@@ -11,7 +11,11 @@ import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEn
 import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntityBuilder
 import org.jetbrains.plugins.gradle.model.versionCatalogs.versionCatalogs
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import org.jetbrains.plugins.gradle.service.syncAction.*
+import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
+import org.jetbrains.plugins.gradle.service.syncAction.buildEntityId
+import org.jetbrains.plugins.gradle.service.syncAction.virtualFileUrl
 import java.nio.file.Path
 
 internal class GradleVersionCatalogSyncContributor : GradleSyncContributor {

@@ -14,7 +14,11 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author novokrest

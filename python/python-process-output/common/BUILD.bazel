@@ -1,0 +1,66 @@
+### auto-generated section `build intellij.python.processOutput.common` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_common",
+  x_context_parameters = True
+)
+
+resourcegroup(
+  name = "common_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "common",
+  module_name = "intellij.python.processOutput.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":common_resources"],
+  kotlinc_opts = ":custom_common",
+  deps = [
+    "//platform/kernel/rpc",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/platform-impl:ide-impl",
+    "//platform/kernel/shared:kernel",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/platform-impl/rpc",
+    "//platform/execution",
+    "//platform/execution-impl",
+    "//platform/util/coroutines",
+    "//platform/project/shared:project",
+    "//platform/remote-topics/shared:rpc-topics",
+  ]
+)
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "intellij.python.processOutput.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_common",
+  runtime_deps = [
+    ":common",
+    "//platform/kernel/rpc:rpc_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.processOutput.common` end

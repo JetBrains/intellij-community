@@ -1,17 +1,23 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.completion.command.RemDevCommandCompletionHelpers.isCommand
+import com.intellij.codeInsight.completion.command.RemDevCommandCompletionHelpers.isPostfix
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.editorLineStripeHint.EditorLineStripeTextRenderer
 import com.intellij.codeInsight.highlighting.HighlightManager
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.CharFilter.CUSTOM_DEFAULT_CHAR_FILTERS
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeInsight.lookup.impl.LookupCustomizer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateColors
-import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
@@ -29,7 +35,11 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.removeUserData
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -96,7 +106,7 @@ internal class CommandCompletionService(
           !document.immutableCharSequence.substring(offsetOfFullIndex, currentOffset).startsWith(fullSuffix)) {
         if (installed != true) return
         lookup.removeUserData(INSTALLED_ADDITIONAL_MATCHER_KEY)
-        lookup.arranger.registerAdditionalMatcher { true }
+        lookup.arranger.additionalMatcher = null
         lookup.arranger.prefixChanged(lookup)
         lookup.requestResize()
         lookup.refreshUi(false, true)
@@ -109,10 +119,10 @@ internal class CommandCompletionService(
     lookup.showIfMeaningless() // stop hiding
     val showPostfixAsSeparateGroup = PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup
     if (completionFactory.supportFiltersWithDoublePrefix()) {
-      lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter(showPostfixAsSeparateGroup))
+      lookup.arranger.additionalMatcher = CommandCompletionLookupItemMatcher(showPostfixAsSeparateGroup)
     }
     else if (!showPostfixAsSeparateGroup) {
-      lookup.arranger.registerAdditionalMatcher(NotPostfixCompletionLookupItemFilter)
+      lookup.arranger.additionalMatcher = NotPostfixCompletionLookupItemMatcher
     }
     lookup.arranger.prefixChanged(lookup)
     lookup.requestResize()
@@ -127,7 +137,7 @@ internal class CommandCompletionService(
     if (showIfMeaningless) {
       lookup.showIfMeaningless() // stop hiding
     }
-    lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter(PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup))
+    lookup.arranger.additionalMatcher = CommandCompletionLookupItemMatcher(PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup) // todo settings move frontend
     lookup.arranger.prefixChanged(lookup)
     lookup.requestResize()
     lookup.refreshUi(false, true)
@@ -176,17 +186,15 @@ internal class CommandCompletionService(
     lookup.putUserData(INSTALLED_HINT_KEY, true)
   }
 
-  private class CommandCompletionLookupItemFilter(private val showPostfixAsSeparateGroup: Boolean) : Condition<LookupElement> {
-    override fun value(e: LookupElement?): Boolean {
-      return e != null && (e.`as`(CommandCompletionLookupElement::class.java) != null ||
-                           (showPostfixAsSeparateGroup && e.`as`(PostfixTemplateLookupElement::class.java) != null))
-    }
+  private class CommandCompletionLookupItemMatcher(private val showPostfixAsSeparateGroup: Boolean) : Condition<LookupElement> {
+    override fun value(element: LookupElement): Boolean =
+      isCommand(element) ||
+      (showPostfixAsSeparateGroup && isPostfix(element))
   }
 
-  private object NotPostfixCompletionLookupItemFilter : Condition<LookupElement> {
-    override fun value(e: LookupElement?): Boolean {
-      return e != null && e.`as`(PostfixTemplateLookupElement::class.java) == null
-    }
+  private object NotPostfixCompletionLookupItemMatcher : Condition<LookupElement> {
+    override fun value(element: LookupElement): Boolean =
+      !isPostfix(element)
   }
 }
 
@@ -347,7 +355,7 @@ private class CommandCompletionHighlightingListener(
  */
 @ApiStatus.Internal
 internal class CommandCompletionCharFilter : CharFilter() {
-  override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup?): Result? {
+  override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return null
     if (lookup !is LookupImpl) return null
     val completionService = lookup.project.service<CommandCompletionService>()

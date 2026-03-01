@@ -11,7 +11,7 @@ object JdkRootPortableFilePathResolver : PortableFilePathResolver {
   override fun findFileByPath(project: Project, portableFilePath: PortableFilePath): VirtualFile? {
     if (portableFilePath is PortableFilePath.JdkRoot) {
       return runReadAction {
-        val jdk = ProjectJdkTable.getInstance().findJdk(portableFilePath.jdkName) ?: return@runReadAction null
+        val jdk = ProjectJdkTable.getInstance(project).findJdk(portableFilePath.jdkName) ?: return@runReadAction null
         val rootType = if (portableFilePath.inClassFiles) OrderRootType.CLASSES else OrderRootType.SOURCES
         val roots = jdk.rootProvider.getFiles(rootType)
         roots.getOrNull(portableFilePath.jdkRootIndex)

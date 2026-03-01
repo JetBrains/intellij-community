@@ -23,4 +23,20 @@ jvm_library(
   ],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.progress.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//platform/backend:backend_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/core-api:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.progress.backend` end

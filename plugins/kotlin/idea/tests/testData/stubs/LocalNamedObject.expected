@@ -12,6 +12,7 @@ FILE[kind=Facade[packageFqName=<root>, facadeFqName=LocalNamedObjectKt]]
             TYPE_REFERENCE
               USER_TYPE
                 REFERENCE_EXPRESSION[referencedName=A]
+          VALUE_ARGUMENT_LIST
         SUPER_TYPE_ENTRY
           TYPE_REFERENCE
             USER_TYPE

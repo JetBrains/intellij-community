@@ -19,7 +19,11 @@ import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.Anno
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.j2k.k2.preProcessings
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
 import com.intellij.ide.actions.QualifiedNameProviderUtil
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiJavaFile

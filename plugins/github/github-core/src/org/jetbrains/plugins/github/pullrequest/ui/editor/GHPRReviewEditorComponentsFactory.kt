@@ -20,7 +20,11 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.bindEnabledIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -36,6 +40,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThre
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel.CommentItem
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
@@ -164,7 +169,9 @@ internal object GHPRReviewEditorComponentsFactory {
     val itemType = CodeReviewChatItemUIUtil.ComponentType.COMPACT
     val icon = CommentTextFieldFactory.IconConfig.of(itemType, vm.avatarIconsProvider, vm.currentUser.avatarUrl)
 
-    val editor = CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon).apply {
+    val editor = CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon) { editor ->
+      editor.putUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, vm)
+    }.apply {
       border = JBUI.Borders.empty(itemType.inputPaddingInsets)
     }
 

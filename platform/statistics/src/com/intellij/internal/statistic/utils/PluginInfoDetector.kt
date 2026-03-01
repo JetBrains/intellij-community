@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
@@ -167,7 +167,7 @@ enum class PluginType {
 }
 
 fun findPluginTypeByValue(value: String): PluginType? {
-  for (type in PluginType.values()) {
+  for (type in PluginType.entries) {
     if (type.name == value) {
       return type
     }
@@ -187,12 +187,12 @@ data class PluginInfo(val type: PluginType, val id: String?, val version: String
   /**
    * @return true if code is from IntelliJ Platform or JetBrains plugin.
    */
-  fun isDevelopedByJetBrains() = type.isDevelopedByJetBrains()
+  fun isDevelopedByJetBrains(): Boolean = type.isDevelopedByJetBrains()
 
   /**
    * @return true if code is from IntelliJ Platform, JetBrains plugin or plugin from JetBrains Marketplace.
    */
-  fun isSafeToReport() = type.isSafeToReport()
+  fun isSafeToReport(): Boolean = type.isSafeToReport()
 
   fun isAllowedToInjectIntoFUS(): Boolean {
     return (type.isDevelopedByJetBrains() && allowedPlugins.contains(id)) ||

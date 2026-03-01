@@ -1,3 +1,4 @@
+import re
 from _typeshed import Incomplete
 from typing import Final
 
@@ -5,17 +6,17 @@ __version__: Final[str]
 
 def replace(src, sep, rep): ...
 
-keywordsList: Incomplete
+keywordsList: list[str]
 commentPat: str
 pat: str
-quotePat: Incomplete
-tripleQuotePat: Incomplete
+quotePat: str
+tripleQuotePat: str
 nonKeyPat: str
-keyPat: Incomplete
-matchPat: Incomplete
-matchRE: Incomplete
+keyPat: str
+matchPat: str
+matchRE: re.Pattern[str]
 idKeyPat: str
-idRE: Incomplete
+idRE: re.Pattern[str]
 
-def fontify(pytext, searchfrom: int = 0, searchto=None): ...
+def fontify(pytext, searchfrom: int = 0, searchto=None) -> list[tuple[str, int, int, Incomplete]]: ...
 def test(path) -> None: ...

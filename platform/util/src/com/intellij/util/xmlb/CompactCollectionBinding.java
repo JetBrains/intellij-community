@@ -3,7 +3,11 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.serialization.MutableAccessor;
-import kotlinx.serialization.json.*;
+import kotlinx.serialization.json.JsonArray;
+import kotlinx.serialization.json.JsonElement;
+import kotlinx.serialization.json.JsonElementKt;
+import kotlinx.serialization.json.JsonNull;
+import kotlinx.serialization.json.JsonPrimitive;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

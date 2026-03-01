@@ -7,7 +7,7 @@ import com.intellij.openapi.fileChooser.FileSystemTree;
 import org.jetbrains.annotations.NotNull;
 
 abstract sealed class GoToHistoryAction extends FileChooserAction {
-  @SuppressWarnings("FieldMayBeStatic") private final boolean myBackward = this instanceof Backward;
+  private final boolean myBackward = this instanceof Backward;
 
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {

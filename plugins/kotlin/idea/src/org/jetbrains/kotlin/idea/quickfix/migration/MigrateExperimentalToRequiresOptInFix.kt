@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.migration
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.base.fe10.analysis.getEnumValue
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 /**
  * The quick fix to replace a deprecated `@Experimental` annotation with the new `@RequiresOptIn` annotation.
  */
+@K1Deprecation
 class MigrateExperimentalToRequiresOptInFix(
     annotationEntry: KtAnnotationEntry,
     private val requiresOptInInnerText: String?

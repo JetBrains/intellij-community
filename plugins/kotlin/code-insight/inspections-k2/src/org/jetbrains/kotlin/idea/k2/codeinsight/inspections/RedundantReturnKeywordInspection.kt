@@ -11,14 +11,27 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
+import org.jetbrains.kotlin.psi.returnExpressionVisitor
 
 internal class RedundantReturnKeywordInspection : KotlinApplicableInspectionBase.Simple<KtReturnExpression, Unit>() {
 
@@ -67,6 +80,15 @@ internal class RedundantReturnKeywordInspection : KotlinApplicableInspectionBase
         return normalizedTopMostOwner.parent is KtReturnExpression
     }
 
+    /**
+     * When a `return` is unreachable,
+     * [org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.KotlinUnreachableCodeInspection]
+     * already suggests a quick fix removing `return`, so [RedundantReturnKeywordInspection] does not trigger,
+     * avoiding duplicate fixes.
+     *
+     * @see org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.RedundantReturnKeyword.testUnreachableReturn
+     * @see org.jetbrains.kotlin.idea.k2.inspections.tests.K2LocalInspectionTestGenerated.RedundantReturnKeyword.testUnreachableThrow
+     */
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtReturnExpression): Unit? =
         element.diagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
@@ -119,6 +141,14 @@ private fun findOwner(expression: KtExpression): KtExpression? {
                 is KtWhenEntry -> parent.parent as? KtWhenExpression
                 else -> null
             }
+        }
+
+        // Handle Elvis operator: return value ?: return "default"
+        // BUT exclude: return value ?: return null (handled by RedundantElvisReturnNullInspection)
+        is KtBinaryExpression -> container.takeIf {
+            it.operationToken == KtTokens.ELVIS
+                && it.right === normalizedExpression
+                && !(normalizedExpression as? KtReturnExpression)?.returnedExpression.isNullExpression()
         }
 
         else -> null

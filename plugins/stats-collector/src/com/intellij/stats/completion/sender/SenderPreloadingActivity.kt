@@ -23,7 +23,7 @@ internal fun isCompletionLogsSendAllowed(): Boolean =
 
 private val LOG = logger<SenderPreloadingActivity>()
 
-private class SenderPreloadingActivity : ApplicationActivity {
+internal class SenderPreloadingActivity : ApplicationActivity {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {

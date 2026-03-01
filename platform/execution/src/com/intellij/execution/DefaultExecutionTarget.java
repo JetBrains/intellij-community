@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.IdeCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class DefaultExecutionTarget extends ExecutionTarget {
   public static final ExecutionTarget INSTANCE = new DefaultExecutionTarget();

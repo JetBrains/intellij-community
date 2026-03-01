@@ -15,4 +15,13 @@ jvm_library(
   exports = ["@lib//:apache-sshd-osgi"],
   runtime_deps = ["@lib//:apache-sshd-osgi"]
 )
+
+jvm_library(
+  name = "sshd-osgi_test_lib",
+  module_name = "intellij.libraries.sshd.osgi",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:apache-sshd-osgi"],
+  runtime_deps = [":sshd-osgi"]
+)
 ### auto-generated section `build intellij.libraries.sshd.osgi` end

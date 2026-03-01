@@ -9,7 +9,11 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
 import com.intellij.util.ui.JBUI
 import org.jetbrains.kotlin.idea.KotlinLanguage

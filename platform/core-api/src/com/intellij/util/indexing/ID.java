@@ -7,7 +7,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.Java11Shim;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

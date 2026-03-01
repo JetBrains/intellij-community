@@ -20,14 +20,12 @@ import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryId
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntityData) : KotlinScriptEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntityData) : KotlinScriptEntity,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
-
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -38,7 +36,6 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
       readField("path")
       return dataSource.path
     }
-
   override val dependencies: Set<KotlinScriptLibraryId>
     get() {
       readField("dependencies")
@@ -56,8 +53,8 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
   }
 
 
-  internal class Builder(result: KotlinScriptEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptEntity, KotlinScriptEntityData>(
-    result), KotlinScriptEntityBuilder {
+  internal class Builder(result: KotlinScriptEntityData?) :
+    ModifiableWorkspaceEntityBase<KotlinScriptEntity, KotlinScriptEntityData>(result), KotlinScriptEntityBuilder {
     internal constructor() : this(KotlinScriptEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -70,15 +67,13 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
           error("Entity KotlinScriptEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -125,7 +120,6 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
         changedProperty.add("entitySource")
 
       }
-
     override var path: String
       get() = getEntityData().path
       set(value) {
@@ -133,7 +127,6 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
         getEntityData(true).path = value
         changedProperty.add("path")
       }
-
     private val dependenciesUpdater: (value: Set<KotlinScriptLibraryId>) -> Unit = { value ->
 
       changedProperty.add("dependencies")
@@ -158,6 +151,7 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
 
     override fun getEntityClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -183,7 +177,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    // TODO verify logic
+// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in dependencies) {
       val removedItem_item = mutablePreviousSet.remove(item)
@@ -253,8 +247,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return KotlinScriptEntity(path, dependencies, entitySource) {
-    }
+    return KotlinScriptEntity(path, dependencies, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -265,9 +258,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as KotlinScriptEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.path != other.path) return false
     if (this.dependencies != other.dependencies) return false
@@ -277,9 +268,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as KotlinScriptEntityData
-
     if (this.path != other.path) return false
     if (this.dependencies != other.dependencies) return false
     return true

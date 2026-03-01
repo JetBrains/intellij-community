@@ -2,7 +2,11 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

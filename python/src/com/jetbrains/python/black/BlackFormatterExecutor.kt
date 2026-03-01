@@ -5,7 +5,11 @@ import com.intellij.execution.process.CapturingProcessAdapter
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.target.*
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.thisLogger

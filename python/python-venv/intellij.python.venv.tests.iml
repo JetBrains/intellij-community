@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testResources">
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.execService.python" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.venv" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.python.venv" />
+</module>

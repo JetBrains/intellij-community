@@ -2,12 +2,17 @@
 package org.jetbrains.idea.devkit.dom.xml
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
+import com.intellij.codeInsight.completion.XmlAttributeReferenceCompletionProvider
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.XmlPatterns.xmlAttribute
 import com.intellij.psi.impl.source.xml.XmlAttributeReference
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.ProcessingContext
 import com.intellij.util.xml.DomManager

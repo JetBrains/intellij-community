@@ -24,7 +24,7 @@ import javax.swing.Icon
 /**
  * Creates a toolwindow with feature usage statistics event log
  */
-private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware {
+internal class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {
     toolWindow.title = IdeBundle.message("toolwindow.stripe.Statistics_Event_Log")
     toolWindow.stripeTitle = IdeBundle.message("toolwindow.stripe.Statistics_Event_Log")
@@ -71,7 +71,7 @@ private fun createNewSessionActionGroup(project: Project): NonEmptyActionGroup {
   return actionGroup
 }
 
-private class CreateNewSessionAction(private val project: Project, private val recorderId: String) : AnAction(recorderId) {
+internal class CreateNewSessionAction(private val project: Project, private val recorderId: String) : AnAction(recorderId) {
   override fun actionPerformed(e: AnActionEvent) {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(eventLogToolWindowsId) ?: return
     createNewTab(project, toolWindow, recorderId)

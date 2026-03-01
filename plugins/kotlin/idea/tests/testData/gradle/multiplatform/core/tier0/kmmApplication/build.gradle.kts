@@ -11,7 +11,7 @@ repositories {
 
 kotlin {
     {{androidTargetPlaceholder}}
-    ios()
+    {{iosTargetPlaceholder}}
 
     sourceSets {
         val commonTest by getting {

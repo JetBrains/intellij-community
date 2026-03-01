@@ -1,10 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
-import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
@@ -18,7 +16,11 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl
 import org.jetbrains.intellij.build.BuildContext
@@ -68,25 +70,47 @@ import kotlin.time.Duration
 @Suppress("SpellCheckingInspection")
 private val PLUGIN_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
 
+@OptIn(DelicateCoroutinesApi::class)
 suspend fun createBuildContext(
   projectHome: Path,
   productProperties: ProductProperties,
   setupTracer: Boolean = true,
   proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   options: BuildOptions = BuildOptions(),
+  scope: CoroutineScope? = null,
 ): BuildContext {
   val compilationContext = createCompilationContext(
     projectHome = projectHome,
     buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
     options = options,
     setupTracer = setupTracer,
-  ).asBazelIfNeeded
-  return createBuildContext(
+  ).toBazelIfNeeded(scope).toArchivedIfNeeded(scope)
+  val context = createBuildContext(
     compilationContext = compilationContext,
     projectHome = projectHome,
     productProperties = productProperties,
     proprietaryBuildTools = proprietaryBuildTools,
+    scope = scope,
   )
+  context.cleanupJarCache()
+  return context
+}
+
+@Experimental
+@Internal
+suspend fun createCompilationContext(
+  projectHome: Path,
+  productProperties: ProductProperties,
+  options: BuildOptions,
+  scope: CoroutineScope,
+  setupTracer: Boolean,
+): CompilationContext {
+  return createCompilationContext(
+    projectHome = projectHome,
+    buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome, productProperties = productProperties, buildOptions = options),
+    options = options,
+    setupTracer = setupTracer,
+  ).toBazelIfNeeded(scope).toArchivedIfNeeded(scope)
 }
 
 fun createBuildContext(
@@ -94,10 +118,15 @@ fun createBuildContext(
   projectHome: Path,
   productProperties: ProductProperties,
   proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  scope: CoroutineScope? = null,
 ): BuildContextImpl {
   val projectHomeAsString = projectHome.invariantSeparatorsPathString
   val jarCacheManager = compilationContext.options.jarCacheDir?.let {
-    LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"))
+    LocalDiskJarCacheManager(
+      cacheDir = it,
+      productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"),
+      maxAccessTimeAge = compilationContext.options.jarCacheMaxAccessAge,
+    )
   } ?: NonCachingJarCacheManager
   return BuildContextImpl(
     compilationContext = compilationContext.asArchivedIfNeeded,
@@ -380,6 +409,8 @@ class BuildContextImpl internal constructor(
   }
 
   override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean, isQodana: Boolean): List<String> {
+    fun String.quoteIfNeeded(): String = if (isScript) '"' + this + '"' else this
+
     val jvmArgs = ArrayList<String>()
 
     val macroName = when (os) {
@@ -393,7 +424,7 @@ class BuildContextImpl internal constructor(
     if (bcpJarNames.isNotEmpty()) {
       val (pathSeparator, dirSeparator) = if (os == OsFamily.WINDOWS) ";" to "\\" else ":" to "/"
       val bootCp = bcpJarNames.joinToString(pathSeparator) { arrayOf(macroName, "lib", it).joinToString(dirSeparator) }
-      jvmArgs.add("-Xbootclasspath/a:${bootCp}".let { if (isScript) '"' + it + '"' else it })
+      jvmArgs.add("-Xbootclasspath/a:${bootCp}".quoteIfNeeded())
     }
 
     if (productProperties.enableCds) {
@@ -411,17 +442,17 @@ class BuildContextImpl internal constructor(
     jvmArgs.add("-Didea.paths.selector=${systemSelector}")
 
     // require bundled JNA dispatcher lib
-    jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it })
+    jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".quoteIfNeeded())
     jvmArgs.add("-Djna.nosys=true")
     jvmArgs.add("-Djna.noclasspath=true")
-    jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it })
+    jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".quoteIfNeeded())
     jvmArgs.add("-Dio.netty.allocator.type=pooled")
 
     // require bundled Skiko
-    jvmArgs.add("-Dskiko.library.path=${macroName}/lib/skiko-awt-runtime-all")
+    jvmArgs.add("-Dskiko.library.path=${macroName}/lib/skiko-awt-runtime-all".quoteIfNeeded())
 
     if (useModularLoader || generateRuntimeModuleRepository) {
-      jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_COMPACT_PATH}".let { if (isScript) '"' + it + '"' else it })
+      jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_COMPACT_PATH}".quoteIfNeeded())
     }
     if (useModularLoader) {
       jvmArgs.add("-Dintellij.platform.root.module=${productProperties.rootModuleForModularLoader!!}")
@@ -430,13 +461,6 @@ class BuildContextImpl internal constructor(
 
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
-    }
-
-    if (os == OsFamily.WINDOWS) {
-      jvmArgs.add("-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=${useMultiRoutingFs}")
-      if (useMultiRoutingFs) {
-        jvmArgs.addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
-      }
     }
 
     jvmArgs.addAll(productProperties.additionalIdeJvmArguments)

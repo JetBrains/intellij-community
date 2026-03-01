@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.isPackageManagementSupported
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
@@ -78,7 +77,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   fun getTargetModuleResidesOnImpl(module: Module): TargetConfigurationWithLocalFsAccess? = null
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
-    if (!service<Available>().isAvailable(this, pluginDescriptor)) {
+    if (!service<Available>().isAvailable(this)) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -88,11 +87,11 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
    * every [PythonInterpreterTargetEnvironmentFactory].
    */
   interface Available {
-    fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory, pluginDescriptor: PluginDescriptor): Boolean
+    fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory): Boolean
 
     /** It is supposed that PyCharm Pro supports all available Run Target interpreters. */
     class Default : Available {
-      override fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory, pluginDescriptor: PluginDescriptor): Boolean = true
+      override fun isAvailable(factory: PythonInterpreterTargetEnvironmentFactory): Boolean = true
     }
   }
 
@@ -105,7 +104,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     @JvmStatic
     fun findPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest =
       when (sdk.sdkAdditionalData) {
-        is TargetBasedSdkAdditionalData, is PyRemoteSdkAdditionalDataBase ->
+        is TargetBasedSdkAdditionalData ->
           EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdk, project) }
         else -> null
       } ?: HelpersAwareLocalTargetEnvironmentRequest()

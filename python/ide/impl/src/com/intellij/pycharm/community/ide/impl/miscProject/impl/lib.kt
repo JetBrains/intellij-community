@@ -32,8 +32,14 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.pythonSdk
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.FileAlreadyExistsException
@@ -68,10 +74,11 @@ suspend fun createMiscProject(
   systemPythonService: SystemPythonService = SystemPythonService(),
   currentProject: Project? = null,
 ): PyResult<Job> {
-  return createOrOpenProjectAndSdk(projectPath,
-                                   confirmInstallation = confirmInstallation,
-                                   systemPythonService = systemPythonService,
-                                   currentProject = currentProject,
+  return createOrOpenProjectAndSdk(
+    projectPath,
+    confirmInstallation = confirmInstallation,
+    systemPythonService = systemPythonService,
+    currentProject = currentProject,
   ).mapResult { (project, sdk) ->
     Result.Success(scopeProvider(project).launch {
       withBackgroundProgress(project, PyCharmCommunityCustomizationBundle.message("misc.project.filling.file")) {
@@ -149,7 +156,8 @@ private suspend fun createOrOpenProjectAndSdk(
   val isAlreadyMiscOrWelcomeScreenProject = currentProject != null && WelcomeScreenProjectProvider.isWelcomeScreenProject(currentProject)
   val project = if (isAlreadyMiscOrWelcomeScreenProject) {
     currentProject
-  } else {
+  }
+  else {
     openProject(projectPath)
   }
 
@@ -166,7 +174,7 @@ private suspend fun createOrOpenProjectAndSdk(
       title = PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
       cancellation = TaskCancellation.cancellable()
     ) {
-      createVenvAndSdk(project, confirmInstallation, systemPythonService, vfsProjectPath)
+      createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation, systemPythonService, vfsProjectPath)
     }
   }
   val sdk = sdkResult.getOr(PyBundle.message("project.error.cant.venv")) { return it }

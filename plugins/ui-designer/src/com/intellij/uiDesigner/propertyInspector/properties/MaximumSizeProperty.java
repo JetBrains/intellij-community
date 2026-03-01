@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
-import java.awt.*;
+import java.awt.Dimension;
 
 @Service(Service.Level.PROJECT)
 public final class MaximumSizeProperty extends AbstractDimensionProperty<RadComponent> {

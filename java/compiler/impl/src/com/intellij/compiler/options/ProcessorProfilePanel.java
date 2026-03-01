@@ -11,7 +11,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ContextHelpLabel;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBInsets;
@@ -19,17 +24,29 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev

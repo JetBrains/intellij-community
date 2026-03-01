@@ -26,7 +26,10 @@ import org.jetbrains.idea.maven.importing.MavenImportUtil.compilerConfigsForComp
 import org.jetbrains.idea.maven.importing.MavenImportUtil.declaredAnnotationProcessors
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getAnnotationProcessorDirectory
 import org.jetbrains.idea.maven.importing.MavenImportUtil.procMode
-import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.AppliedModelContext
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.MavenProjectWithModules
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.ModuleWithType
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.MutableModelContext
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
@@ -37,7 +40,7 @@ import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Path
-import java.util.*
+import java.util.StringJoiner
 import java.util.function.Function
 
 private const val PROFILE_PREFIX = "Annotation profile for "

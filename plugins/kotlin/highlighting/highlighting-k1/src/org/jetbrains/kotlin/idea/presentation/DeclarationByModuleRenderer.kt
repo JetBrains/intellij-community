@@ -6,7 +6,9 @@ import com.intellij.ide.util.PsiClassRenderingInfo
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class DeclarationByModuleRenderer : KtModuleSpecificListCellRenderer<NavigatablePsiElement>() {
     override fun getContainerText(element: NavigatablePsiElement?, name: String?): String? {
         if (element is PsiClass) {

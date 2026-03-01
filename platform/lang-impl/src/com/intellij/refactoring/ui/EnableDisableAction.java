@@ -5,7 +5,11 @@ package com.intellij.refactoring.ui;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 

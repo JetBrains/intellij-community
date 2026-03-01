@@ -51,12 +51,6 @@
     <item name='java.io.BufferedReader int read(char[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.io.BufferedReader java.lang.String readLine()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.BufferedReader java.lang.String readLine(boolean)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.io.BufferedReader void ensureOpen()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -206,9 +200,6 @@
     <item name='java.io.DataInputStream int read(byte[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.io.DataInputStream java.lang.String readLine()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.io.DataInputStream java.lang.String readUTF()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;-&gt;new&quot;"/>
@@ -299,23 +290,11 @@
     <item name='java.io.File java.io.File getCanonicalFile()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.io.File java.io.File getParentFile()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.File java.io.File[] listFiles()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.File java.io.File[] listFiles(java.io.FilenameFilter)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.io.File java.io.File[] listFiles(java.io.FilenameFilter) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.io.File java.lang.String getName()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.io.File java.lang.String getParent()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.io.File java.lang.String getPath()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -334,9 +313,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='java.io.File java.lang.String[] list()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.io.File java.lang.String[] list(java.io.FilenameFilter) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -518,9 +494,6 @@
     <item name='java.io.ObjectInputStream java.lang.Class&lt;?&gt; resolveProxyClass(java.lang.String[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.io.ObjectInputStream java.lang.Enum readEnum(boolean)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.io.ObjectInputStream java.lang.Object cloneArray(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;_-&gt;new&quot;"/>
@@ -530,26 +503,10 @@
     <item name='java.io.ObjectInputStream java.lang.Object cloneArray(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.io.ObjectInputStream java.lang.Object readArray(boolean)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.ObjectInputStream java.lang.Object readNull()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.ObjectInputStream java.lang.Object readObject()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.ObjectInputStream java.lang.Object readObject0(boolean)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.io.ObjectInputStream java.lang.Object readObjectOverride()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.ObjectInputStream java.lang.Object readUnshared()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.io.ObjectInputStream java.lang.Object resolveObject(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -580,9 +537,6 @@
     </item>
     <item name='java.io.ObjectInputStream.BlockDataInputStream int readUTFChar(java.lang.StringBuilder, long) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.io.ObjectInputStream.BlockDataInputStream java.lang.String readLine()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.io.ObjectInputStream.BlockDataInputStream java.lang.String readLongUTF()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -639,9 +593,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.io.ObjectInputStream.GetFieldImpl java.lang.Object get(java.lang.String, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.io.ObjectInputStream.HandleTable HandleTable(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -656,13 +607,11 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.io.ObjectInputStream.HandleTable java.lang.Object lookupObject(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.io.ObjectInputStream.HandleTable void grow()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -968,9 +917,6 @@
     </item>
     <item name='java.io.RandomAccessFile int read(byte[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.io.RandomAccessFile java.lang.String readLine()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.io.RandomAccessFile java.lang.String readUTF()'>
         <annotation name='org.jetbrains.annotations.Contract'>

@@ -17,7 +17,7 @@ fragment mergeRequest on MergeRequest {
     }
 
     nodes {
-      title
+      ...label
     }
   }
 
@@ -35,7 +35,13 @@ fragment mergeRequest on MergeRequest {
   state
   draft
 
+  squash
+  squashOnMerge
+  squashReadOnly
+  defaultSquashCommitMessage
+  defaultMergeCommitMessage
   shouldRemoveSourceBranch
+  forceRemoveSourceBranch
   shouldBeRebased
   rebaseInProgress
 

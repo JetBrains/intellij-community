@@ -1,11 +1,21 @@
 ### auto-generated section `build kotlin.code-insight.intentions.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kotlin-code-insight-intentions-k1",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
 
 jvm_library(
   name = "kotlin-code-insight-intentions-k1",
   module_name = "kotlin.code-insight.intentions.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-code-insight-intentions-k1",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -21,6 +31,28 @@ jvm_library(
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-code-insight-intentions-k1_test_lib",
+  module_name = "kotlin.code-insight.intentions.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-code-insight-intentions-k1",
+  runtime_deps = [
+    ":kotlin-code-insight-intentions-k1",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/kotlin/base/fe10/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
+    "//plugins/kotlin/code-insight/descriptions:descriptions_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.intentions.k1` end

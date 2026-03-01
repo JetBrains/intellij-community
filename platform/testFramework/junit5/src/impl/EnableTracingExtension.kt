@@ -3,6 +3,7 @@ package com.intellij.testFramework.junit5.impl
 
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.testFramework.common.runAllCatching
 import com.intellij.testFramework.junit5.EnableTracingFor
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -34,7 +35,7 @@ internal class EnableTracingExtension : AbstractInvocationInterceptor() {
       return invocation.proceed()
     }
     finally {
-      valuesBefore.asReversed().forEach { it() }
+      valuesBefore.asReversed().asSequence().runAllCatching()
     }
   }
 

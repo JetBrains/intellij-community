@@ -1,10 +1,10 @@
 package com.intellij.database.datagrid
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.Document
 import com.intellij.database.datagrid.NestedTablesDataGridModel.NestedTableCellCoordinate
 import com.intellij.database.datagrid.nested.NestedTablesAware
 import com.intellij.database.datagrid.nested.NestedTablesAware.NonEmptyStack
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Document
 
 /**
  * Represents a model for sorting nested tables in a grid.

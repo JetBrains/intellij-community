@@ -6,9 +6,14 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.Objects;
 

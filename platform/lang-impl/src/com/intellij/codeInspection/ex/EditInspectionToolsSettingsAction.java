@@ -20,7 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Consumer;
 
 public final class EditInspectionToolsSettingsAction implements IntentionAction, Iconable, HighPriorityAction, DumbAware {

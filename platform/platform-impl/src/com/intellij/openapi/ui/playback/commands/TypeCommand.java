@@ -10,8 +10,8 @@ import com.intellij.util.ui.EDT;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.KeyStroke;
+import java.awt.Robot;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 

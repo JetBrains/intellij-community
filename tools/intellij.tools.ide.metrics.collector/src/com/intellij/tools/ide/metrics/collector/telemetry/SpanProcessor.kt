@@ -42,7 +42,16 @@ fun populateAttributes(metric: MetricWithAttributes, span: SpanElement) {
   span.tags.forEach { tag ->
     val attributeName = tag.first
     tag.second.runCatching { toInt() }.onSuccess {
-      metric.attributes.add(PerformanceMetrics.newCounter((attributeName), it))
+      if (isDurationAttribute(attributeName)) {
+        metric.attributes.add(PerformanceMetrics.newDuration(attributeName, it))
+      }
+      else {
+        metric.attributes.add(PerformanceMetrics.newCounter(attributeName, it))
+      }
     }
   }
+}
+
+private fun isDurationAttribute(attributeName: String): Boolean {
+  return attributeName.contains("delay", true)
 }

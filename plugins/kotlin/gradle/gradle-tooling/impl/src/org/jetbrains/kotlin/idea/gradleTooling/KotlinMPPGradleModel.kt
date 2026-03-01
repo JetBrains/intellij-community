@@ -2,7 +2,13 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
-import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.kotlin.idea.projectModel.ExtraFeatures
+import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
+import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.projectModel.KotlinSwiftExportModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinSwiftPMImportModel
 import java.io.Serializable
 
 interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
@@ -22,6 +28,20 @@ interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
 
     val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer
     val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
+
+    /**
+     * Swift Export configuration if enabled in the project, or null if not configured.
+     *
+     * This field is populated by [KotlinMPPGradleModelBuilder.buildSwiftExportModel] during Gradle sync.
+     *
+     * ## KGP Reference
+     * `org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension`
+     *
+     * @see KotlinSwiftExportModel
+     * @see org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSwiftExportReflection
+     */
+    val swiftExport: KotlinSwiftExportModel?
+    val swiftPMImportModel: KotlinSwiftPMImportModel?
 
     companion object {
         const val NO_KOTLIN_NATIVE_HOME = ""

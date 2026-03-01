@@ -7,11 +7,15 @@ import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
+import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -59,7 +63,14 @@ import com.intellij.mock.MockProgressIndicator;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.model.psi.impl.ReferencesKt;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -85,7 +96,11 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -103,18 +118,35 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -126,28 +158,73 @@ import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
-import com.intellij.refactoring.rename.*;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.api.RenameTarget;
 import com.intellij.refactoring.rename.impl.RenameKt;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.HighlightTestInfo;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.InspectionTestUtil;
+import com.intellij.testFramework.InspectionsKt;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.TestActionEvent;
+import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.TreeNodeTester;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.common.EditorCaretTestUtil;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.testFramework.fixtures.EditorHintFixture;
+import com.intellij.testFramework.fixtures.EditorTestFixture;
+import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.utils.inlays.CaretAndInlaysInfo;
 import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewContentManager;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageViewImpl;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import kotlin.UninitializedPropertyAccessException;
 import org.intellij.lang.annotations.Language;
@@ -162,11 +239,23 @@ import java.io.UncheckedIOException;
 import java.lang.ref.Reference;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -176,7 +265,11 @@ import static com.intellij.find.usages.impl.ImplKt.buildUsageViewQuery;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static com.intellij.util.ObjectUtils.coalesce;
 import static java.util.Objects.requireNonNull;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author Dmitry Avdeev
@@ -209,6 +302,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private LibraryTableTracker myLibraryTableTracker;
   private SelectionAndCaretMarkupApplyPolicy mySelectionAndCaretMarkupApplyPolicy =
     SelectionAndCaretMarkupApplyPolicy.UPDATE_FILE_AND_KEEP_DOCUMENT_CLEAN;
+  private static volatile boolean mustWaitForSmartMode = true;
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -271,12 +365,30 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return instantiateAndRun(file, editor, toIgnore, canChangeDocument, false);
   }
 
+  private static final AtomicInteger disableInstantiateAndRun = new AtomicInteger();
+
+  /**
+   * Prohibits running {@link #instantiateAndRun}.
+   * Needed for avoiding accidentally ruining daemon state in production-only daemon tests, e.g. {@link com.intellij.codeInsight.daemon.ProductionDaemonAnalyzerTestCase}
+   */
+  public static <E extends Throwable> void disableInstantiateAndRunIn(@NotNull ThrowableRunnable<E> runnable) throws E {
+    disableInstantiateAndRun.incrementAndGet();
+    try {
+      runnable.run();
+    }
+    finally {
+      disableInstantiateAndRun.decrementAndGet();
+    }
+  }
   @TestOnly
   public static @NotNull @Unmodifiable List<HighlightInfo> instantiateAndRun(@NotNull PsiFile psiFile,
                                                                              @NotNull Editor editor,
                                                                              int @NotNull [] toIgnore,
                                                                              boolean canChangeDocument,
                                                                              boolean readEditorMarkupModel) {
+    if (disableInstantiateAndRun.get() != 0) {
+      throw new IllegalStateException("This test prohibited direct daemon call, because it checks the production daemon behaviour. use TestDaemonCodeAnalyzerImpl.wait* methods instead");
+    }
     SmartPsiElementPointer<PsiFile> filePointer = ReadAction.compute(() -> SmartPointerManager.createPointer(psiFile));
     Project project = psiFile.getProject();
     ensureIndexesUpToDate(project);
@@ -289,7 +401,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                          ReadAction.compute(() -> Arrays.toString(ProjectRootManager.getInstance(project).getContentSourceRoots())) + ")"));
     }
 
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+    TestDaemonCodeAnalyzerImpl testDaemonCodeAnalyzer = new TestDaemonCodeAnalyzerImpl(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     ProjectInspectionProfileManager.getInstance(project); // avoid "severities changed, restart" event
@@ -298,18 +410,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     int retries = 1000;
     for (int i = 0; i < retries; i++) {
       try {
-        settings.forceUseZeroAutoReparseDelay(true);
         List<HighlightInfo> infos = new ArrayList<>();
         EdtTestUtil.runInEdtAndWait(() -> {
           PsiFile file = filePointer.getElement();
           assertNotNull(file);
-          codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
+          Document document = editor.getDocument();
+          ThreadingAssertions.assertEventDispatchThread();
+          TestDaemonCodeAnalyzerImpl.runWithReparseDelay(0, () ->
+            testDaemonCodeAnalyzer.runPasses(file, document, textEditor, toIgnore, canChangeDocument, mustWaitForSmartMode, null));
           IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
           if (policy != null) {
             policy.waitForHighlighting(project, editor);
           }
           IdentifierHighlighterPassFactory.waitForIdentifierHighlighting(editor);
-          waitForLazyQuickFixesUnderCaret(psiFile, editor);
+          waitForLazyQuickFixesUnderCaret(project, editor);
           NonBlockingReadActionImpl.waitForAsyncTaskCompletion();//auto-imports use non-blocking read actions to compute imports
           NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
@@ -349,9 +463,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       catch (Exception e) {
         exception = e;
       }
-      finally {
-        settings.forceUseZeroAutoReparseDelay(false);
-      }
     }
     ExceptionUtil.rethrow(exception);
     throw new AssertionError("Unable to highlight after " + retries + " retries", exception);
@@ -371,10 +482,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @TestOnly
   public static @NotNull @Unmodifiable List<IntentionAction> getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     IdeaTestExecutionPolicy current = IdeaTestExecutionPolicy.current();
+    Project project = psiFile.getProject();
     if (current != null) {
-      current.waitForHighlighting(psiFile.getProject(), editor);
+      current.waitForHighlighting(project, editor);
     }
-    waitForLazyQuickFixesUnderCaret(psiFile, editor);
+    waitForLazyQuickFixesUnderCaret(project, editor);
     List<IntentionAction> result = new ArrayList<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       IntentionListStep intentionListStep = getIntentionListStep(editor, psiFile);
@@ -387,18 +499,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @RequiresEdt
-  private static @NotNull IntentionListStep getIntentionListStep(@NotNull Editor editor, @NotNull PsiFile file) {
-    CachedIntentions cachedIntentions = ShowIntentionActionsHandler.calcCachedIntentions(file.getProject(), editor, file);
-    return new IntentionListStep(null, editor, file, file.getProject(), cachedIntentions);
+  private static @NotNull IntentionListStep getIntentionListStep(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+    CachedIntentions cachedIntentions = ShowIntentionActionsHandler.calcCachedIntentions(psiFile.getProject(), editor, psiFile);
+    return new IntentionListStep(null, editor, psiFile, psiFile.getProject(), cachedIntentions);
   }
 
-  public static void waitForLazyQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
+  public static void waitForLazyQuickFixesUnderCaret(@NotNull Project project, @NotNull Editor editor) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "must not call under write action";
 
       Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        if (!ReadAction.compute(() -> file.getProject().isDisposed() || editor.isDisposed())) {
-          DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(file, editor);
+        if (!ReadAction.compute(() -> project.isDisposed() || editor.isDisposed())) {
+          DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(project, editor);
         }
       });
       try {
@@ -417,7 +529,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
     else {
-      DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(file, editor);
+      DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(project, editor);
     }
   }
 
@@ -995,7 +1107,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void renameTarget(@NotNull RenameTarget renameTarget, @NotNull String newName) {
-    RenameKt.renameAndWait(getProject(), renameTarget, newName);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      RenameKt.renameAndWait(getProject(), renameTarget, newName);
+    });
   }
 
   @Override
@@ -1403,8 +1517,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       myPsiManager = PsiManagerEx.getInstanceEx(getProject());
       InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), myProjectFixture.getTestRootDisposable());
 
-      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-      daemonCodeAnalyzer.prepareForTest();
+      new TestDaemonCodeAnalyzerImpl(getProject()).prepareForTest();
 
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
       ensureIndexesUpToDate(getProject());
@@ -1470,7 +1583,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
         if (project != null) {
           closeOpenFiles();
-          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+          new TestDaemonCodeAnalyzerImpl(getProject()).cleanupAfterTest();
           // needed for myVirtualFilePointerTracker check below
           ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
           projectRootManagerComponentRef.set(
@@ -1525,6 +1638,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myAllPsiFiles = new PsiFile[filePaths.length];
     for (int i = filePaths.length - 1; i >= 0; i--) {
       myAllPsiFiles[i] = configureByFileInner(filePaths[i]);
+      if (EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      }
     }
     return myAllPsiFiles;
   }
@@ -1953,7 +2069,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myAllowDirt = canI;
   }
 
-  public @NotNull String getFoldingDescription(boolean withCollapseStatus) {
+  public @NotNull String getFoldingDescription(boolean withCollapseStatus, boolean withCaretLocation) {
     Editor topEditor = getHostEditor();
     return EdtTestUtil.runInEdtAndGet(() -> {
       IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
@@ -1961,14 +2077,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         policy.waitForHighlighting(getProject(), topEditor);
       }
       EditorTestUtil.buildInitialFoldingsInBackground(topEditor);
-      return getFoldingData(topEditor, withCollapseStatus);
+      return getFoldingData(topEditor, withCollapseStatus, withCaretLocation);
     });
   }
 
-  public static @NotNull String getFoldingData(Editor topEditor, boolean withCollapseStatus) {
+  public static @NotNull String getFoldingData(@NotNull Editor topEditor, boolean withCollapseStatus, boolean withCaretLocation) {
+    int caretOffset = withCaretLocation ? topEditor.getCaretModel().getOffset() : -1;
     return getTagsFromSegments(topEditor.getDocument().getText(),
                                Arrays.asList(topEditor.getFoldingModel().getAllFoldRegions()),
                                FOLD,
+                               caretOffset,
                                foldRegion -> "text='" + foldRegion.getPlaceholderText() + "'"
                                              + (withCollapseStatus ? " expand='" + foldRegion.isExpanded() + "'" : ""));
   }
@@ -1977,26 +2095,33 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                         @NotNull Collection<? extends T> segments,
                                                                         @NotNull String tagName,
                                                                         @Nullable Function<? super T, String> attrCalculator) {
-    List<Border> borders =
+    return getTagsFromSegments(text, segments, tagName, -1, attrCalculator);
+  }
+  public static @NotNull <T extends Segment> String getTagsFromSegments(@NotNull String text,
+                                                                        @NotNull Collection<? extends T> segments,
+                                                                        @NotNull String tagName,
+                                                                        int caretLocationOffset,
+                                                                        @Nullable Function<? super T, String> attrCalculator) {
+    List<Border> segs =
       segments.stream()
         .flatMap(region -> Stream.of(
-          new Border(true, region.getStartOffset(), attrCalculator == null ? null : attrCalculator.fun(region)),
-          new Border(false, region.getEndOffset(), "")))
-        .sorted()
+          new Border(true, region.getStartOffset(), attrCalculator == null ? null : attrCalculator.fun(region), tagName),
+          new Border(false, region.getEndOffset(), "", tagName)))
         .toList();
-
+    List<Border> caret = caretLocationOffset == -1 ? List.of() : List.of(new Border(true, caretLocationOffset, null, "caret"));
+    Collection<Border> borders = ContainerUtil.sorted(ContainerUtil.concat(segs, caret), Comparator.comparingInt(Border::offset).thenComparing(b -> ObjectUtils.notNull(b.text(),"")).reversed());
     StringBuilder result = new StringBuilder(text);
     for (Border border : borders) {
       StringBuilder info = new StringBuilder();
       info.append('<');
       if (border.isLeftBorder) {
-        info.append(tagName);
+        info.append(border.tagName);
         if (border.text != null) {
           info.append(' ').append(border.text);
         }
       }
       else {
-        info.append('/').append(tagName);
+        info.append('/').append(border.tagName);
       }
       info.append('>');
       result.insert(border.offset, info);
@@ -2004,11 +2129,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return result.toString();
   }
 
-  private record Border(boolean isLeftBorder, int offset, @Nullable String text) implements Comparable<Border> {
-    @Override
-    public int compareTo(@NotNull Border o) {
-      return offset < o.offset ? 1 : -1;
-    }
+  private record Border(boolean isLeftBorder, int offset, @Nullable String text, @NotNull String tagName) {
   }
 
   private void testFoldingRegions(@NotNull String verificationFileName,
@@ -2052,7 +2173,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         throw new RuntimeException(e);
       }
     }
-    String actual = getFoldingDescription(doCheckCollapseStatus);
+    boolean wasCaretTagFoundInTestFile = ReadAction.compute(() -> editor.getCaretModel().getOffset() != 0);
+    String actual = getFoldingDescription(doCheckCollapseStatus, wasCaretTagFoundInTestFile);
     if (!expectedContent.equals(actual)) {
       throw new FileComparisonFailedError(verificationFile.getName(), expectedContent, actual, verificationFile.getPath());
     }
@@ -2228,9 +2350,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     var disposable = Disposer.newDisposable();
     var hintFixture = new EditorHintFixture(disposable);
     try {
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
       performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
       for (int i = 0; i < 10; i++) {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       }
       var hintText = hintFixture.getCurrentHintText();
@@ -2442,5 +2565,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public boolean isOpenedInMyEditor(@NotNull VirtualFile virtualFile) {
     return virtualFile.equals(myVirtualFile) || myAllPsiFiles != null && ContainerUtil.exists(myAllPsiFiles, psiFile -> virtualFile.equals(PsiUtilCore.getVirtualFile(psiFile)));
+  }
+
+  /**
+   * @param mustWait if true then {@link #checkHighlighting} methods will wait for the dumb mode to complete before starting highlighting
+   */
+  @TestOnly
+  public static void mustWaitForSmartMode(boolean mustWait, @NotNull Disposable parent) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    boolean old = mustWaitForSmartMode;
+    mustWaitForSmartMode = mustWait;
+    Disposer.register(parent, () -> mustWaitForSmartMode = old);
   }
 }

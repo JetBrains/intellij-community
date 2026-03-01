@@ -30,7 +30,11 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class RefactoringUtil {
     private RefactoringUtil() {

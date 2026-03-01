@@ -3,7 +3,11 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
+import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.LogLevel;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -21,7 +25,13 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.RandomAccessFile;
+import java.io.StringWriter;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -55,8 +65,8 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final int MAX_BUFFER_LENGTH = Integer.getInteger("idea.single.test.log.max.length", 10_000_000);
 
   private final StringBuilder myBuffer = new StringBuilder();
-  private int myBufferStaticFixturesEndOffset = 0;
-  private int myBufferFixturesEndOffset = 0;
+  private int myBufferStaticFixturesEndOffset;
+  private int myBufferFixturesEndOffset;
   private long myTestStartedMillis;
   private boolean myInitialized;
 
@@ -74,7 +84,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   private static @Nullable TestLoggerFactory getTestLoggerFactory() {
     Logger.Factory factory = Logger.getFactory();
-    return factory instanceof TestLoggerFactory ? (TestLoggerFactory)factory : null;
+    return factory instanceof TestLoggerFactory test ? test : null;
   }
 
   @Override
@@ -461,7 +471,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final class TestLogger extends JulLogger {
     private final TestLoggerFactory myFactory;
 
-    private TestLogger(java.util.logging.Logger julLogger, TestLoggerFactory factory) {
+    private TestLogger(@NotNull java.util.logging.Logger julLogger, @NotNull TestLoggerFactory factory) {
       super(julLogger);
       myFactory = factory;
     }

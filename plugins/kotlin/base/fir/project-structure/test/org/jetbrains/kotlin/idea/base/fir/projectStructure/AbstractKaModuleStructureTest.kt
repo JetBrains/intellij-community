@@ -6,7 +6,11 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.projectStructureTest.*
+import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibrary
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModule
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructure
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructureParser
 import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.div

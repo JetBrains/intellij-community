@@ -3,7 +3,8 @@ package com.intellij.util.ui;
 
 import org.junit.Test;
 
-import javax.swing.*;
+import javax.swing.JEditorPane;
+import javax.swing.SwingUtilities;
 import javax.swing.text.StyledDocument;
 
 import static org.junit.Assert.assertNotNull;

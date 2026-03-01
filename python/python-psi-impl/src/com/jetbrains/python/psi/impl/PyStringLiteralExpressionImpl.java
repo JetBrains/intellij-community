@@ -19,7 +19,18 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.FutureFeature;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFormattedStringElement;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.PyStringElement;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -27,7 +38,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 public class PyStringLiteralExpressionImpl extends PyElementImpl

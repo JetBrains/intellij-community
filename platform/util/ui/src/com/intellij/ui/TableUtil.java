@@ -8,9 +8,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import javax.swing.table.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 

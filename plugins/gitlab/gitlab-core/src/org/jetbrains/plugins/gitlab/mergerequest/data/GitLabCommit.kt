@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import java.util.*
+import java.util.Date
 
 /**
  * Model-level class representing merge-request related commits.

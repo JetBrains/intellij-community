@@ -12,11 +12,30 @@ import com.intellij.collaboration.util.filePath
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import git4idea.changes.GitBranchComparisonResult
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.findLatestCommitWithChangesTo
+import org.jetbrains.plugins.gitlab.mergerequest.data.firstNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import java.util.concurrent.ConcurrentHashMap
 
 interface GitLabMergeRequestChangeListViewModel
@@ -50,11 +69,11 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
       persistentChangesViewedState.updatesFlow.withInitial(Unit),
     ) { discPos, draftsPos, _ ->
       changes.associateWith { change ->
-        val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRepository, change.filePath)
+        val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRemote.repository, change.filePath)
         val isRead = !isOnLatest || sha?.let {
           persistentChangesViewedState.isViewed(
-            mergeRequest.glProject, mergeRequest.iid,
-            mergeRequest.gitRepository,
+            mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
+            mergeRequest.gitRemote.repository,
             change.filePath, it
           )
         } ?: false
@@ -85,13 +104,13 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
     val filePathsWithShas = changes.mapNotNull { change ->
       val path = change.filePath
-      parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRepository, path)?.let {
+      parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRemote.repository, path)?.let {
         path to it
       }
     }
     persistentChangesViewedState.markViewed(
-      mergeRequest.glProject, mergeRequest.iid,
-      mergeRequest.gitRepository,
+      mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
+      mergeRequest.gitRemote.repository,
       filePathsWithShas,
       viewed
     )

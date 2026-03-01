@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.structuralsearch.filters
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
+@K1Deprecation
 class AlsoMatchVarModifier : OneStateFilter(
     KotlinBundle.messagePointer("ssr.modifier.match.var"),
     KotlinBundle.message("ssr.modifier.match.var"),

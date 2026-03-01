@@ -16,7 +16,12 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;

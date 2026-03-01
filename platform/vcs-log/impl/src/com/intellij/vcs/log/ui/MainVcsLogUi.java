@@ -9,7 +9,7 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * A default non-custom VCS Log UI

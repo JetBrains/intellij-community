@@ -11,7 +11,9 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_ELEMENT;
+import static com.intellij.openapi.actionSystem.CommonDataKeys.SYMBOLS;
 import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM;
 
 final class NavigatableRule {

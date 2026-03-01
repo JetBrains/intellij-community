@@ -13,7 +13,7 @@ internal val ObjProperty<*, *>.implWsDataFieldCode: String
   get() = buildString {
     if (hasSetter) {
       if (isOverride && name !in listOf("name", "entitySource")) append(implWsBlockingCodeOverride)
-      else append("$generatedCodeVisibilityModifier $implWsDataBlockingCode")
+      else append("$generatedCodeVisibilityModifier$implWsDataBlockingCode")
     }
     else {
       val expression = when (val kind = valueKind) {
@@ -29,10 +29,10 @@ internal val ObjProperty<*, *>.implWsDataFieldCode: String
         else -> ""
       }
       if (expression.startsWith("=")) {
-        append("$generatedCodeVisibilityModifier var $javaName: $javaType $expression$toMutable")
+        append("${generatedCodeVisibilityModifier}var $javaName: $javaType $expression$toMutable")
       }
       else {
-        append("$generatedCodeVisibilityModifier var $javaName: $javaType = $expression$toMutable")
+        append("${generatedCodeVisibilityModifier}var $javaName: $javaType = $expression$toMutable")
       }
     }
   }

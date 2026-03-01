@@ -12,8 +12,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.CellRendererPane;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;

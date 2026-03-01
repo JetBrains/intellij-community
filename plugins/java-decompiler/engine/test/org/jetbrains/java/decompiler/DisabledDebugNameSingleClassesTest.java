@@ -2,16 +2,14 @@
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+@Timeout(value = 60, unit = TimeUnit.SECONDS)
 public class DisabledDebugNameSingleClassesTest extends SingleClassesTestBase {
-
-  @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
 
   @Override
   protected Map<String, Object> getDecompilerOptions() {

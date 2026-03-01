@@ -5,7 +5,6 @@ import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -76,7 +75,7 @@ object UpdateInstaller {
   fun downloadPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): List<PluginDownloader> {
     indicator.text = IdeBundle.message("update.downloading.plugins.progress")
 
-    val updateChecker = service<UpdateCheckerFacade>()
+    val updateChecker = UpdateCheckerFacade.getInstance()
     updateChecker.saveDisabledToUpdatePlugins()
 
     val disabledToUpdate = updateChecker.disabledToUpdate

@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.ExecutorRegistryImpl;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ExecutorAction;
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -28,7 +32,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;

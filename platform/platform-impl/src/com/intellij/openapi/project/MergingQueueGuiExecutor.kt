@@ -3,7 +3,11 @@ package com.intellij.openapi.project
 
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -150,7 +154,11 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
           // TODO: there seems to be a race between mySingleTaskExecutor.tryStartProcess and FileBasedIndexTumbler. Return now
           if (mySuspended.get()) return@tryStartProcess
           backgroundTasksSubmitted.incrementAndGet()
-          startInBackgroundWithVisibleOrInvisibleProgress { visibleOrInvisibleIndicator ->
+          startInBackgroundWithVisibleOrInvisibleProgress(
+            {
+              task.close()
+              onFinish()
+            }) { visibleOrInvisibleIndicator ->
             try {
               task.use { it.run(visibleOrInvisibleIndicator) }
             }
@@ -161,6 +169,8 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
               LOG.error("Failed to execute background index update task", t)
             }
             finally {
+              // it is important to run onFinish after the task execution and not as a callback to Task.Backgroundable
+              // because these callbacks are executed on EDT in NON_MODAL, while this task can run on background regardless of modality
               onFinish()
             }
           }
@@ -190,10 +200,21 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
   protected open val taskId: Any? = null
 
-  private fun startInBackgroundWithVisibleOrInvisibleProgress(task: (ProgressIndicator) -> Unit) {
+  private fun startInBackgroundWithVisibleOrInvisibleProgress(
+    onCancellation: () -> Unit,
+    task: (ProgressIndicator) -> Unit,
+  ) {
+    val actionStarted = AtomicBoolean(false)
     val backgroundableTask = object : Task.Backgroundable(project, myProgressTitle, false) {
       override fun run(visibleIndicator: ProgressIndicator) {
+        actionStarted.set(true)
         task(visibleIndicator)
+      }
+
+      override fun onCancel() {
+        if (!actionStarted.get()) {
+          onCancellation()
+        }
       }
 
       override fun getId() = taskId

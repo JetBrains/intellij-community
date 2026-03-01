@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.jetbrains.plugins.gitlab.api.GitLabRestId
 import org.jetbrains.plugins.gitlab.api.GitLabRestIdData
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.LineRangeDTO
 
 data class GitLabMergeRequestDraftNoteRestDTO(
   @JsonProperty("id")
@@ -28,6 +29,7 @@ data class GitLabMergeRequestDraftNoteRestDTO(
     val newPath: String?,
     val newLine: Int?,
     val oldPath: String?,
-    val oldLine: Int?
+    val oldLine: Int?,
+    val lineRange: LineRangeDTO? = null,
   )
 }

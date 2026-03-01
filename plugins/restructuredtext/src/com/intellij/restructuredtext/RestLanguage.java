@@ -3,7 +3,11 @@ package com.intellij.restructuredtext;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
-import com.intellij.restructuredtext.validation.*;
+import com.intellij.restructuredtext.validation.RestAnnotator;
+import com.intellij.restructuredtext.validation.RestHyperlinksAnnotator;
+import com.intellij.restructuredtext.validation.RestInlineBlockAnnotator;
+import com.intellij.restructuredtext.validation.RestReferenceTargetAnnotator;
+import com.intellij.restructuredtext.validation.RestTitleAnnotator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;

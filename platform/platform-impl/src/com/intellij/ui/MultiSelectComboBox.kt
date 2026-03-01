@@ -3,7 +3,6 @@ package com.intellij.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.ComboBoxWithWidePopup
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls

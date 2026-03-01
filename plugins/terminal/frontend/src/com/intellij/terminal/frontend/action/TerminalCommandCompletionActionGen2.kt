@@ -1,7 +1,5 @@
 package com.intellij.terminal.frontend.action
 
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
-import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
@@ -9,8 +7,10 @@ import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
-import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionHandler
+import com.intellij.terminal.frontend.view.activeOutputModel
+import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionService
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
@@ -22,15 +22,25 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 
 internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(), ActionPromoter {
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.terminalEditor!!
+    val project = e.project ?: return
+    val editor = e.terminalEditor ?: return
+    val view = e.terminalView ?: return
+    val shellIntegration = view.shellIntegrationDeferred.getNow() ?: return
+
     if (!editor.isSuppressCompletion) {
       val inlineCompletionHandler = InlineCompletion.getHandlerOrNull(editor)
       val inlineCompletionContext = InlineCompletionContext.getOrNull(editor)
       if (inlineCompletionHandler != null && inlineCompletionContext != null) {
         inlineCompletionHandler.hide(inlineCompletionContext)
       }
-      val terminalCodeCompletion = TerminalCommandCompletionHandler(CompletionType.BASIC, true, false, true)
-      terminalCodeCompletion.invokeCompletion(e, 1)
+
+      TerminalCommandCompletionService.getInstance(project).invokeCompletion(
+        view,
+        editor,
+        view.activeOutputModel(),
+        shellIntegration,
+        isAutoPopup = false
+      )
     }
   }
 
@@ -46,16 +56,12 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
                                          && isCommandTypingMode
   }
 
-  override fun createHandler(
-    completionType: CompletionType,
-    invokedExplicitly: Boolean,
-    autopopup: Boolean,
-    synchronous: Boolean,
-  ): CodeCompletionHandlerBase {
-    return TerminalCommandCompletionHandler(completionType, invokedExplicitly, autopopup, synchronous)
-  }
-
   override fun promote(actions: @Unmodifiable List<AnAction?>, context: DataContext): @Unmodifiable List<AnAction?>? {
     return listOf(this)
   }
+
+  override fun getBehavior(): ActionRemoteBehavior? {
+    return null
+  }
+
 }

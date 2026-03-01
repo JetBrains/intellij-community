@@ -3,7 +3,11 @@ package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,8 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
-import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.recursionSafeLazy
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType

@@ -7,7 +7,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -16,7 +27,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance(JavaChangeInfoImpl.class);

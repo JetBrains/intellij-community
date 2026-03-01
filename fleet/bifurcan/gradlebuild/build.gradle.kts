@@ -25,12 +25,14 @@ fleetModule {
 kotlin {
   // KOTLIN__MARKER_START
   compilerOptions.freeCompilerArgs = listOf(
+    "-Xcontext-parameters",
     "-Xjvm-default=all",
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
     "-Xwasm-kclass-fqn",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   wasmJs {

@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileInfoImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 final class HttpFileEditor extends BaseRemoteFileEditor {
   private final RemoteFilePanel myPanel;

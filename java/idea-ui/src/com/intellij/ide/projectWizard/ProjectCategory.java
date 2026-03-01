@@ -6,7 +6,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class ProjectCategory {
   public abstract @NotNull ModuleBuilder createModuleBuilder();

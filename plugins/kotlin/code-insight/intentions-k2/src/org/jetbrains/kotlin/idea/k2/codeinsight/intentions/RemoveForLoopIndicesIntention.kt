@@ -14,7 +14,11 @@ import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 
 class RemoveForLoopIndicesIntention :

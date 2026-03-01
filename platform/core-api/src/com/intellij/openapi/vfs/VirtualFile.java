@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -8,7 +8,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
@@ -17,6 +22,7 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.text.CharArrayUtil;
+import kotlin.coroutines.Continuation;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -29,6 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -317,19 +324,23 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract VirtualFile getParent();
 
   /**
-   * Gets the child files. The returned files are guaranteed to be valid, if the method is called in a read action.
+   * Gets the child files.
+   * The returned files are guaranteed to be valid if the method is called in a read action.
    *
-   * @return array of the child files or {@code null} if this file is not a directory
+   * @return array of the child files.
+   *         If the file is not {@link #isDirectory()}, the method could return either {@code null}, or an empty array.
+   *         New implementations should prefer an empty array, but {@code null} is still legit for backward compatibility.
    * @throws InvalidVirtualFileAccessException if this method is called inside read action on an invalid file
    */
-  public abstract VirtualFile[] getChildren();
+  public abstract VirtualFile /*@Nullable*/ [] getChildren();
 
   /**
-   * {@link #getChildren()} is not formally requires the sorting, but many methods rely on stable sorting provided by it
-   * But sorting is not cheap, hence this method exists for scenarios there order of children doesn't matter.
+   * While {@link #getChildren()} is not formally required to return a sorted result, still many use-cases _rely_ on stable sorting
+   * provided by it. But the sorting is not cheap; hence this method exists for scenarios there order of children doesn't matter,
+   * for implementations that may skip it.
    */
   @ApiStatus.Internal
-  public VirtualFile @NotNull [] getChildren(boolean requireSorting){
+  public VirtualFile @Nullable [] getChildren(boolean requireSorting){
     return getChildren();
   }
 
@@ -680,6 +691,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * <p>When invoking synchronous refresh from a thread other than the event dispatch thread, the current thread must
    * NOT be in a read action, otherwise a deadlock may occur.</p>
+   *
+   * For suspend function of VFS refresh, use {@link com.intellij.openapi.vfs.newvfs.RefreshQueue#refresh(boolean, List, Continuation)}
    *
    * @param asynchronous if {@code true}, the method will return immediately and the refresh will be processed
    *                     in the background. If {@code false}, the method will return only after the refresh

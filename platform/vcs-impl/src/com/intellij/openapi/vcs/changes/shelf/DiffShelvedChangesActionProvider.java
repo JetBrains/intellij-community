@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.diff.*;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffEditorTitleCustomizer;
+import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
@@ -12,9 +15,14 @@ import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -41,7 +49,6 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
-import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;

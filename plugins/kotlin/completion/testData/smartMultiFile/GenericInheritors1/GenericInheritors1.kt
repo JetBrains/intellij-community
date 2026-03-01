@@ -13,3 +13,5 @@ fun foo(): KotlinInterface<I1, I2> {
 // EXIST: { lookupString: "KotlinInheritor6", itemText: "KotlinInheritor6", tailText: "() (p)" }
 // EXIST: { lookupString: "JavaInheritor1", itemText: "JavaInheritor1", tailText: "() (<root>)" }
 // ABSENT: JavaInheritor2
+
+// IGNORE_K2

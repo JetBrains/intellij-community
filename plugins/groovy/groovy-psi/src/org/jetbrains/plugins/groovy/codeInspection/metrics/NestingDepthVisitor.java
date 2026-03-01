@@ -18,7 +18,13 @@ package org.jetbrains.plugins.groovy.codeInspection.metrics;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 
 class NestingDepthVisitor extends GroovyRecursiveElementVisitor {
 

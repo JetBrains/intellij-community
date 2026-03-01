@@ -4,17 +4,23 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
-import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +70,7 @@ public final class CollectionBreakpointUtils {
 
   private static void enableDebugMode(DebugProcessImpl debugProcess) {
     try {
-      setClassBooleanField(debugProcess, INSTRUMENTOR_CLS_NAME, ENABLE_DEBUG_MODE_FIELD, true);
+      DebuggerUtilsEx.setStaticBooleanField(debugProcess, INSTRUMENTOR_CLS_NAME, ENABLE_DEBUG_MODE_FIELD, true);
     }
     catch (Exception e) {
       LOG.warn("Error setting collection breakpoint agent debug mode", e);
@@ -73,38 +79,10 @@ public final class CollectionBreakpointUtils {
 
   public static void setCollectionHistorySavingEnabled(DebugProcessImpl debugProcess, boolean enabled) {
     try {
-      setClassBooleanField(debugProcess, STORAGE_CLASS_NAME, ENABLE_HISTORY_SAVING_FIELD, enabled);
+      DebuggerUtilsEx.setStaticBooleanField(debugProcess, STORAGE_CLASS_NAME, ENABLE_HISTORY_SAVING_FIELD, enabled);
     }
     catch (Exception e) {
       LOG.warn("Error setting collection history saving enabled", e);
-    }
-  }
-
-  private static void setClassBooleanField(DebugProcessImpl debugProcess,
-                                           String clsName,
-                                           String fieldName,
-                                           boolean value) throws EvaluateException {
-    final RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
-    ClassPrepareRequestor requestor = new ClassPrepareRequestor() {
-      @Override
-      public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-        try {
-          requestsManager.deleteRequest(this);
-          Field field = DebuggerUtils.findField(referenceType, fieldName);
-          Value trueValue = referenceType.virtualMachine().mirrorOf(value);
-          ((ClassType)referenceType).setValue(field, trueValue);
-        }
-        catch (Exception e) {
-          LOG.warn("Error setting field " + fieldName + " of class " + clsName, e);
-        }
-      }
-    };
-
-    requestsManager.callbackOnPrepareClasses(requestor, clsName);
-
-    ClassType captureClass = (ClassType)debugProcess.findClass(null, clsName, null);
-    if (captureClass != null) {
-      requestor.processClassPrepare(debugProcess, captureClass);
     }
   }
 

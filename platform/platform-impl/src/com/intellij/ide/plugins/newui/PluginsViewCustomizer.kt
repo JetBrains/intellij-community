@@ -24,7 +24,6 @@ import java.awt.event.KeyEvent
  * like plugin downgrading and update channels can be considered to become a part of IJ platform in the future.
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 interface PluginsViewCustomizer {
 
   interface PluginDetailsCustomizer {

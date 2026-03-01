@@ -6,7 +6,11 @@ import com.intellij.project.IntelliJProjectConfiguration.Companion.loadIntelliJP
 import org.jetbrains.jps.model.JpsProject
 import org.junit.Test
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.extension
+import kotlin.io.path.pathString
+import kotlin.io.path.useLines
+import kotlin.io.path.walk
 import kotlin.test.assertTrue
 
 class ComposePluginLicenseHeaderTest {

@@ -8,8 +8,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
 
 /**
  * This extension is used to implement support for 'Parameter Info' action for a specific language. That action shows a popup with

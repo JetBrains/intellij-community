@@ -18,7 +18,11 @@ import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.function.Supplier;
 
@@ -78,7 +82,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   protected void unregisterInTree() {
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
-    if (!isValid()) return;
+    if (!isValid(node)) {
+      return;
+    }
     IntervalTreeImpl<?> tree = node.getTree();
     tree.checkMax(true);
     DocumentEx document = getCachedDocument();
@@ -87,7 +93,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       myNode = null;
     }
     else {
-      document.removeRangeMarker(this);
+      boolean removed = document.removeRangeMarker(this);
+      if (!removed && LOG.isDebugEnabled()) {
+        LOG.debug("RMI.unregisterInTree: removeRangeMarker=false for "+this);
+      }
     }
     tree.checkMax(true);
   }

@@ -4,7 +4,19 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.tree.java.*;
+import com.intellij.psi.impl.source.tree.java.AnnotationMethodElement;
+import com.intellij.psi.impl.source.tree.java.AnonymousClassElement;
+import com.intellij.psi.impl.source.tree.java.ClassElement;
+import com.intellij.psi.impl.source.tree.java.EnumConstantElement;
+import com.intellij.psi.impl.source.tree.java.EnumConstantInitializerElement;
+import com.intellij.psi.impl.source.tree.java.FieldElement;
+import com.intellij.psi.impl.source.tree.java.ImplicitClassElement;
+import com.intellij.psi.impl.source.tree.java.ImportModuleStatementElement;
+import com.intellij.psi.impl.source.tree.java.ImportStatementElement;
+import com.intellij.psi.impl.source.tree.java.ImportStaticStatementElement;
+import com.intellij.psi.impl.source.tree.java.MethodElement;
+import com.intellij.psi.impl.source.tree.java.ReferenceListElement;
+import com.intellij.psi.impl.source.tree.java.TypeParameterExtendsBoundsListElement;
 import org.jetbrains.annotations.NotNull;
 
 public interface JavaStubElementTypes {

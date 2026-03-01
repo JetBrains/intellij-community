@@ -45,7 +45,7 @@ __jetbrains_intellij_command_precmd() {
   if [[ -z "$__jetbrains_intellij_initialized" ]]; then
     __jetbrains_intellij_install_debug_trap
     __jetbrains_intellij_initialized="1"
-    builtin printf '\e]1341;initialized\a'
+    builtin printf '\e]1341;initialized;current_directory=%s\a' "$(__jetbrains_intellij_encode "$PWD")"
     __jetbrains_intellij_get_aliases
   elif [[ -n "$__jetbrains_intellij_command_running" ]]; then
     builtin local current_directory="$PWD"
@@ -167,7 +167,7 @@ __jetbrains_intellij_append_to_prompt_command() {
 
 __jetbrains_intellij_get_aliases() {
   builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
-  builtin printf '\e]1341;aliases_received;%s\a' "$aliases_mapping"
+  builtin printf '\e]1341;aliases_received;result=%s\a' "$(__jetbrains_intellij_encode "$aliases_mapping")"
 }
 
 __jetbrains_intellij_escape_json() {

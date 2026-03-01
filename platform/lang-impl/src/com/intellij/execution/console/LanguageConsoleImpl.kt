@@ -56,7 +56,8 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Adjustable
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.util.*
+import java.util.Arrays
+import java.util.Objects
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollBar
@@ -394,7 +395,7 @@ open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
     }
 
     open fun getFile(): PsiFile {
-      return ReadAction.compute<PsiFile, RuntimeException> {
+      return ReadAction.computeBlocking<PsiFile, RuntimeException> {
         PsiUtilCore.getPsiFile(project, virtualFile)
       }
     }

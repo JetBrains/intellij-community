@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.openapi.diagnostic.debug
@@ -36,7 +36,7 @@ private val LOG = logger<IdeProxyAuthenticator>()
  */
 @ApiStatus.Internal
 class IdeProxyAuthenticator(private val proxyAuth: ProxyAuthentication): Authenticator() {
-  override fun getPasswordAuthentication(): PasswordAuthentication? = requestPasswordAuthentication(
+  override fun getPasswordAuthentication(): PasswordAuthentication? = requestPasswordAuthenticationInstance(
     requestingHost, requestingSite, requestingPort, requestingProtocol, requestingPrompt, requestingScheme, requestingURL, requestorType
   )
 

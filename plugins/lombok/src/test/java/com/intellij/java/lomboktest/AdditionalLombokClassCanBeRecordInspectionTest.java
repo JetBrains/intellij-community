@@ -3,10 +3,7 @@ package com.intellij.java.lomboktest;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.testFramework.LightProjectDescriptor;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
-import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
 

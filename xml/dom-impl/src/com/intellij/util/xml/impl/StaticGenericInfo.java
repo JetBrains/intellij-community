@@ -7,7 +7,14 @@ import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.util.xml.PropertyAccessor;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -17,7 +24,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public final class StaticGenericInfo extends DomGenericInfoEx {
   private final Class<? extends DomElement> myClass;

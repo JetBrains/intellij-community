@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
-import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder

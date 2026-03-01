@@ -13,7 +13,12 @@ import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspecti
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

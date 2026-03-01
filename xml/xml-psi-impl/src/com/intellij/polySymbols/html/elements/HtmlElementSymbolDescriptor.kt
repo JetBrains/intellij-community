@@ -3,14 +3,14 @@ package com.intellij.polySymbols.html.elements
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolQualifiedName
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport
 import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.polySymbols.html.hasOnlyStandardHtmlSymbolsOrExtensions
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolModifier
-import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.psi.PsiElement
@@ -20,7 +20,12 @@ import com.intellij.psi.impl.source.xml.XmlDescriptorUtil.wrapInDelegating
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
-import com.intellij.xml.*
+import com.intellij.xml.XmlAttributeDescriptor
+import com.intellij.xml.XmlCustomElementDescriptor
+import com.intellij.xml.XmlElementDescriptor
+import com.intellij.xml.XmlElementDescriptorAwareAboutChildren
+import com.intellij.xml.XmlElementsGroup
+import com.intellij.xml.XmlNSDescriptor
 import com.intellij.xml.impl.XmlElementDescriptorEx
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 import org.jetbrains.annotations.NonNls
@@ -52,14 +57,14 @@ open class HtmlElementSymbolDescriptor private constructor(
       }
 
   fun runListSymbolsQuery(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     expandPatterns: Boolean,
     virtualSymbols: Boolean = true,
     abstractSymbols: Boolean = false,
     strictScope: Boolean = false,
   ): List<PolySymbol> =
     PolySymbolQueryExecutorFactory.create(tag)
-      .listSymbolsQuery(qualifiedKind, expandPatterns) {
+      .listSymbolsQuery(kind, expandPatterns) {
         strictScope(strictScope)
         if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
         if (!abstractSymbols) exclude(PolySymbolModifier.ABSTRACT)
@@ -67,14 +72,14 @@ open class HtmlElementSymbolDescriptor private constructor(
       }
 
   fun runCodeCompletionQuery(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     name: String,
     /** Position to complete at in the last segment of the path **/
     position: Int,
     virtualSymbols: Boolean = true,
   ): List<PolySymbolCodeCompletionItem> =
     PolySymbolQueryExecutorFactory.create(tag)
-      .codeCompletionQuery(qualifiedKind, name, position) {
+      .codeCompletionQuery(kind, name, position) {
         if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
         exclude(PolySymbolModifier.ABSTRACT)
         additionalScope(symbol.queryScope)
@@ -174,7 +179,7 @@ open class HtmlElementSymbolDescriptor private constructor(
   companion object {
 
     fun HtmlElementSymbolInfo.toElementDescriptor(tag: XmlTag): HtmlElementSymbolDescriptor =
-      HtmlFrameworkSymbolsSupport.get(this.symbol.origin.framework)
+      HtmlFrameworkSymbolsSupport.get(this.symbol)
         .createHtmlElementDescriptor(this, tag)
 
   }

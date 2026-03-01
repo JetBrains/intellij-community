@@ -11,15 +11,13 @@ final class TextEditorFoldingState {
   private @Nullable CodeFoldingState foldingState;
   private @Nullable Supplier<? extends CodeFoldingState> lazyFoldingState;
 
-  TextEditorFoldingState(
-    @Nullable CodeFoldingState foldingState,
-    @Nullable Supplier<? extends CodeFoldingState> lazyFoldingState
-  ) {
+  TextEditorFoldingState(@Nullable CodeFoldingState foldingState, @Nullable Supplier<? extends CodeFoldingState> lazyFoldingState) {
     this.foldingState = foldingState;
     this.lazyFoldingState = lazyFoldingState;
   }
 
-  @Nullable CodeFoldingState getFoldingState() {
+  @Nullable
+  CodeFoldingState getFoldingState() {
     // Assuming single-thread access here.
     if (foldingState == null && lazyFoldingState != null) {
       foldingState = lazyFoldingState.get();

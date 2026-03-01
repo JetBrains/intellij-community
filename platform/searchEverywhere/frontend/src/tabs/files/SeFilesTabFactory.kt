@@ -25,7 +25,8 @@ class SeFilesTabFactory : SeEssentialTabFactory {
     val delegate = SeTabDelegate(project,
                                  session,
                                  "Files",
-                                 listOf(SeProviderId(SeProviderIdUtils.FILES_ID)),
+                                 listOf(SeProviderId(SeProviderIdUtils.FILES_ID),
+                                        SeProviderId(SeProviderIdUtils.NON_INDEXABLE_FILES_ID)),
                                  initEvent,
                                  scope)
 

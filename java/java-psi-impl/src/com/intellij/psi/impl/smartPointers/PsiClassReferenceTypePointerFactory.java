@@ -3,7 +3,14 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.ClassTypePointerFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;

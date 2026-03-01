@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.core.wrapper.impl;
 
-import com.intellij.debugger.streams.core.wrapper.*;
+import com.intellij.debugger.streams.core.wrapper.CallArgument;
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.core.wrapper.MethodCall;
+import com.intellij.debugger.streams.core.wrapper.QualifierExpression;
+import com.intellij.debugger.streams.core.wrapper.StreamCall;
+import com.intellij.debugger.streams.core.wrapper.StreamChain;
+import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import one.util.streamex.StreamEx;

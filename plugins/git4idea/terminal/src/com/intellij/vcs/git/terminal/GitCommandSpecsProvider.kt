@@ -5,7 +5,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConf
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 
-private class GitCommandSpecsProvider : ShellCommandSpecsProvider {
+internal class GitCommandSpecsProvider : ShellCommandSpecsProvider {
   override fun getCommandSpecs(): List<ShellCommandSpecInfo> = listOf(
     ShellCommandSpecInfo.create(gitOverrideSpec, ShellCommandSpecConflictStrategy.OVERRIDE)
   )

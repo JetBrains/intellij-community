@@ -4,7 +4,15 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.psi.*;
+import com.intellij.psi.AbstractBasicJavaFile;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 

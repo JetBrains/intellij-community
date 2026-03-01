@@ -4,7 +4,7 @@ package com.intellij.debugger.settings
 import com.intellij.ide.settings.RemoteSettingInfo
 import com.intellij.ide.settings.RemoteSettingInfoProvider
 
-private class JavaDebuggerSettingsProvider : RemoteSettingInfoProvider {
+internal class JavaDebuggerSettingsProvider : RemoteSettingInfoProvider {
   override fun getRemoteSettingsInfo() =
     mapOf("DebuggerSettings" to RemoteSettingInfo(RemoteSettingInfo.Direction.InitialFromFrontend))
 

@@ -29,19 +29,24 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.io.File;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
@@ -220,10 +225,10 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
       if (status.errorAnalyzingFinished) {
         break;
       }
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     Collection<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getDocument(psiFile), null, getProject());
     assertEmpty(infos);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 }

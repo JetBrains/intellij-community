@@ -10,7 +10,7 @@ import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSour
 import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 
 public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {

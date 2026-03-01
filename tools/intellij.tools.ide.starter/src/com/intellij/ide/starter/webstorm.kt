@@ -2,14 +2,12 @@ package com.intellij.ide.starter
 
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.path.GlobalPaths
-import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.ide.starter.utils.getUpdateEnvVarsWithPrependedPath
 import com.intellij.ide.starter.utils.updatePathEnvVariable
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.intellij.util.text.SemVer
@@ -53,28 +51,6 @@ fun downloadAndConfigureNodejs(version: String): Path {
   FileSystem.unpack(downloadedFile, dirToDownload)
   enableCorepack(nodePath)
   return nodePath
-}
-
-fun installNodeModules(projectDir: Path, nodeVersion: String, packageManager: String, noFrozenLockFile: Boolean = false) {
-  if (projectDir.resolve("node_modules").exists()) {
-    logOutput("node_modules folder already exists")
-    return
-  }
-
-  val stdout = ExecOutputRedirect.ToString()
-  val nodejsRoot = getNodePathByVersion(nodeVersion)
-  val packageManagerPath = getApplicationExecutablePath(nodejsRoot, packageManager)
-  val args = mutableListOf("$packageManagerPath", "install")
-  if (noFrozenLockFile) args += "--no-frozen-lockfile"
-
-  ProcessExecutor(presentableName = "installing node modules",
-                  projectDir,
-                  timeout = 10.minutes,
-                  args = args,
-                  environmentVariables = getUpdateEnvVarsWithPrependedPath(nodejsRoot),
-                  stdoutRedirect = stdout,
-                  stderrRedirect = ExecOutputRedirect.ToStdOut("${packageManager} install")
-  ).start()
 }
 
 fun IDETestContext.setUseTypesFromServer(value: Boolean): IDETestContext = applyVMOptionsPatch {

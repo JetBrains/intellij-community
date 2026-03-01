@@ -15,7 +15,13 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 

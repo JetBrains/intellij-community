@@ -21,9 +21,7 @@ internal class ProjectRootEntityImpl(private val dataSource: ProjectRootEntityDa
 
   private companion object {
 
-
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -44,8 +42,8 @@ internal class ProjectRootEntityImpl(private val dataSource: ProjectRootEntityDa
   }
 
 
-  internal class Builder(result: ProjectRootEntityData?) : ModifiableWorkspaceEntityBase<ProjectRootEntity, ProjectRootEntityData>(
-    result), ProjectRootEntityBuilder {
+  internal class Builder(result: ProjectRootEntityData?) : ModifiableWorkspaceEntityBase<ProjectRootEntity, ProjectRootEntityData>(result),
+                                                           ProjectRootEntityBuilder {
     internal constructor() : this(ProjectRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -58,16 +56,14 @@ internal class ProjectRootEntityImpl(private val dataSource: ProjectRootEntityDa
           error("Entity ProjectRootEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
       index(this, "root", this.root)
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -103,7 +99,6 @@ internal class ProjectRootEntityImpl(private val dataSource: ProjectRootEntityDa
         changedProperty.add("entitySource")
 
       }
-
     override var root: VirtualFileUrl
       get() = getEntityData().root
       set(value) {
@@ -116,6 +111,7 @@ internal class ProjectRootEntityImpl(private val dataSource: ProjectRootEntityDa
 
     override fun getEntityClass(): Class<ProjectRootEntity> = ProjectRootEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -151,8 +147,7 @@ internal class ProjectRootEntityData : WorkspaceEntityData<ProjectRootEntity>() 
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return ProjectRootEntity(root, entitySource) {
-    }
+    return ProjectRootEntity(root, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
@@ -163,9 +158,7 @@ internal class ProjectRootEntityData : WorkspaceEntityData<ProjectRootEntity>() 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ProjectRootEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.root != other.root) return false
     return true
@@ -174,9 +167,7 @@ internal class ProjectRootEntityData : WorkspaceEntityData<ProjectRootEntity>() 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ProjectRootEntityData
-
     if (this.root != other.root) return false
     return true
   }

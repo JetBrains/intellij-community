@@ -1,20 +1,23 @@
 package com.intellij.terminal.frontend.view.completion
 
-import com.intellij.codeInsight.completion.CompletionPhase
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
@@ -72,18 +75,25 @@ class TerminalLookupPrefixUpdater private constructor(
     val newPrefix = calculateUpdatedPrefix()
     if (newPrefix == null) {
       // The text was changed in some way, so the lookup is not valid now. Let's close it
-      closeLookupOrRestart()
+      lookup.hideLookup(false)
       return
     }
 
     val commonPrefixLength = newPrefix.commonPrefixWith(curPrefix).length
+    if (curPrefix.isNotEmpty() && commonPrefixLength == 0) {
+      // The whole prefix was replaced in a single action - probably it is better to close the lookup
+      // to avoid reopening it in the incorrect context.
+      lookup.hideLookup(false)
+      return
+    }
+
     val truncateTimes = curPrefix.length - commonPrefixLength
     truncatePrefix(truncateTimes)
     val textToAppend = newPrefix.substring(commonPrefixLength, newPrefix.length)
     appendPrefix(textToAppend)
 
     if (!lookup.isLookupDisposed && (truncateTimes > 0 || textToAppend.isNotEmpty())) {
-      closeLookupIfMeaningless()
+      TerminalCommandCompletionService.getInstance(lookup.project).activeProcess?.prefixUpdated()
     }
   }
 
@@ -102,14 +112,14 @@ class TerminalLookupPrefixUpdater private constructor(
   }
 
   private fun truncatePrefix(times: Int) {
-    val preserveSelection = CompletionServiceImpl.currentCompletionProgressIndicator?.isAutopopupCompletion != true
+    val preserveSelection = TerminalCommandCompletionService.getInstance(lookup.project).activeProcess?.isAutopopupCompletion != true
     val hideOffset = lookup.lookupStart
     repeat(times) {
       if (lookup.isLookupDisposed) {
         return
       }
 
-      lookup.truncatePrefix(preserveSelection, hideOffset)
+      lookup.truncatePrefix(preserveSelection, hideOffset, false)
     }
 
     if (!lookup.isLookupDisposed && times > 0) {
@@ -128,45 +138,8 @@ class TerminalLookupPrefixUpdater private constructor(
         return
       }
       lookup.fireBeforeAppendPrefix(c)
-      lookup.appendPrefix(c)
+      lookup.appendPrefix(c, false)
     }
-  }
-
-  private fun closeLookupOrRestart() {
-    // If the cursor was placed right before the lookup start offset, let's restart the completion
-    val cursorOffset = model.cursorOffset.toRelative(model)
-    if (cursorOffset == lookup.lookupOriginalStart - 1) {
-      CompletionServiceImpl.currentCompletionProgressIndicator?.scheduleRestart()
-    }
-    else {
-      lookup.hideLookup(false)
-    }
-  }
-
-  /**
-   * Similar to [com.intellij.codeInsight.completion.CompletionProgressIndicator.hideAutopopupIfMeaningless]
-   * but closes the lookup even if was called manually.
-   */
-  private fun closeLookupIfMeaningless() {
-    if (lookup.isLookupDisposed || lookup.isCalculating) {
-      return
-    }
-
-    lookup.refreshUi(true, false)
-    val noMeaningfulItems = lookup.items.all {
-      isAlreadyTyped(it)
-    }
-    if (noMeaningfulItems) {
-      lookup.hideLookup(false)
-      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion)
-    }
-  }
-
-  /** Similar to [com.intellij.codeInsight.completion.CompletionProgressIndicator.isAlreadyInTheEditor] */
-  private fun isAlreadyTyped(element: LookupElement): Boolean {
-    val startOffset = model.cursorOffset - lookup.itemPattern(element).length.toLong()
-    return startOffset >= model.startOffset
-           && model.getText(startOffset, model.endOffset).startsWith(element.lookupString)
   }
 
   private fun syncEditorCaretWithOutputModel() {

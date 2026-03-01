@@ -4,13 +4,19 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.LocalFilePath;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
+import java.util.TreeSet;
 
 public class HierarchicalFilePathComparatorTest extends TestCase {
   public void testInOneDirectory() {
@@ -274,6 +280,7 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
     assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_INSENSITIVE);
   }
 
+  @PerformanceUnitTest
   public void testNaturalPerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
     Benchmark.newBenchmark("Natural hierarchical comparator", () -> {
@@ -281,6 +288,7 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testCaseInsensitivePerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
     Benchmark.newBenchmark("Case-insensitive hierarchical comparator", () -> {
@@ -288,6 +296,7 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testCaseSensitivePerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
     Benchmark.newBenchmark("Case-sensitive hierarchical comparator", () -> {

@@ -34,7 +34,7 @@ interface GitStashUIHandler {
   fun showStashesNotificationActions(roots: Collection<VirtualFile>): List<NotificationAction>
 }
 
-private class GitStashUIHandlerImpl(
+internal class GitStashUIHandlerImpl(
   private val project: Project
 ) : GitStashUIHandler {
   override fun isStashTabAvailable(): Boolean {

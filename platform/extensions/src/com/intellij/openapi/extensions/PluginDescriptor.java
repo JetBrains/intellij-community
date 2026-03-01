@@ -118,14 +118,4 @@ public interface PluginDescriptor {
    */
   @Deprecated
   boolean isEnabled();
-
-  /**
-   * @deprecated for removal. This method has no immediate effect and is, in fact, an implementation detail of plugin loading.
-   * <br>
-   * Instead, use {@link com.intellij.ide.plugins.PluginManagerCore#disablePlugin(PluginId)} and
-   * {@link com.intellij.ide.plugins.PluginManagerCore#enablePlugin(PluginId)}.
-   * Also, see {@link com.intellij.ide.plugins.PluginEnabler}.
-   */
-  @Deprecated
-  void setEnabled(boolean enabled);
 }

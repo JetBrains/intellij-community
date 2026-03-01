@@ -5,8 +5,10 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.awt.DevicePoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 /**

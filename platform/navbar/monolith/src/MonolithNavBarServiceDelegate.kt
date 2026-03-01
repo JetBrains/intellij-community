@@ -8,14 +8,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
-import com.intellij.platform.navbar.backend.impl.*
+import com.intellij.platform.navbar.backend.impl.IdeNavBarVmItem
+import com.intellij.platform.navbar.backend.impl.ProjectNavBarItem
+import com.intellij.platform.navbar.backend.impl.fireOnFileChanges
+import com.intellij.platform.navbar.backend.impl.pathToItem
+import com.intellij.platform.navbar.backend.impl.toVmItems
 import com.intellij.platform.navbar.frontend.NavBarServiceDelegate
 import com.intellij.platform.navbar.frontend.fireOnIdeActivity
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 
-private class MonolithNavbarServiceDelegate(private val project: Project) : NavBarServiceDelegate {
+internal class MonolithNavbarServiceDelegate(private val project: Project) : NavBarServiceDelegate {
 
   override fun activityFlow(): Flow<Unit> = channelFlow {
     fireOnIdeActivity(project)

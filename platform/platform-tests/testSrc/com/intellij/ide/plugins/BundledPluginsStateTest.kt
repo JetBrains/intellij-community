@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test

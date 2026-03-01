@@ -2,7 +2,14 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
@@ -16,7 +23,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;

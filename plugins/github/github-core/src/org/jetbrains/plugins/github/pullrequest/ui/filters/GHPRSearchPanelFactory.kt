@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 
 internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val avatarIconsProvider: GHAvatarIconsProvider) :
@@ -41,12 +42,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
         ChooserPopupUtil.showAsyncChooserPopup(
           point,
           itemsLoader = flow { emit(runCatching { vm.getAuthors() }) },
-          presenter = {
-            PopupItemPresentation.Simple(
-              it.shortName,
-              avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
-              it.name?.let { fullName -> "(${fullName})" })
-          }
+          presenter = GHUIUtil.SelectionPresenters.Users(avatarIconsProvider)
         )?.login
       },
     DropDownComponentFactory(vm.labelFilterState)
@@ -54,7 +50,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
         ChooserPopupUtil.showAsyncChooserPopup(
           point,
           itemsLoader = flow { emit(runCatching { vm.getLabels() }) },
-          presenter = { PopupItemPresentation.Simple(it.name) }
+          presenter = GHUIUtil.SelectionPresenters.Labels()
         )?.name
       },
     DropDownComponentFactory(vm.assigneeFilterState)
@@ -62,12 +58,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
         ChooserPopupUtil.showAsyncChooserPopup(
           point,
           itemsLoader = flow { emit(runCatching { vm.getAssignees() }) },
-          presenter = {
-            PopupItemPresentation.Simple(
-              it.shortName,
-              avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
-              it.name?.let { fullName -> "($fullName)" })
-          }
+          presenter = GHUIUtil.SelectionPresenters.Users(avatarIconsProvider)
         )?.login
       },
     DropDownComponentFactory(vm.reviewFilterState)

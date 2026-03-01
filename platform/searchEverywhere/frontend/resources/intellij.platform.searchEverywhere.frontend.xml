@@ -1,18 +1,24 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.searchEverywhere.frontend">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
-  <actions>
-    <action id="SeNewSearchToggleAction"
-            class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"
-            text="Use Split Search Everywhere"
-            internal="true"/>
+  <!-- endregion -->
+
+  <actions resource-bundle="messages.searchEverywhereFrontendBundle">
+    <action id="SeNewSearchToggleAction" class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"/>
   </actions>
 
   <extensionPoints>
     <extensionPoint name="searchEverywhere.tabFactory"
                     interface="com.intellij.platform.searchEverywhere.frontend.SeTabFactory"
+                    dynamic="true"/>
+
+    <extensionPoint name="searchEverywhere.mlService"
+                    interface="com.intellij.platform.searchEverywhere.frontend.ml.SeMlService"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -29,6 +35,7 @@
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextTabFactory"/>
 
     <applicationService serviceInterface="com.intellij.platform.searchEverywhere.frontend.SeTabsCustomizer"
-                        serviceImplementation="com.intellij.platform.searchEverywhere.frontend.SeDefaultTabsCustomizer"/>"
+                        serviceImplementation="com.intellij.platform.searchEverywhere.frontend.SeDefaultTabsCustomizer"
+                        open="true"/>"
   </extensions>
 </idea-plugin>

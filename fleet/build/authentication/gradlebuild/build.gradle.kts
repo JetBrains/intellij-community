@@ -9,7 +9,6 @@ plugins {
   id("fleet.toolchain-conventions")
   alias(libs.plugins.dokka)
   id("fleet.module-publishing-conventions")
-  id("fleet.sdk-repositories-publishing-conventions")
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   alias(jps.plugins.kotlin.serialization)
@@ -31,9 +30,12 @@ kotlin {
     "-opt-in=kotlin.ExperimentalStdlibApi",
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
+    "-Xcontext-parameters",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
+  sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
   sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest")) }
@@ -58,12 +60,10 @@ kotlin {
       isTransitive = false
       exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
-  }
-  sourceSets.jvmMain.dependencies {
-    implementation(jps.io.github.pdvrieze.xmlutil.serialization.jvm796850685.get().let { "${it.group}:${it.name}:${it.version}" }) {
+    implementation(jps.io.github.pdvrieze.xmlutil.serialization.jvm796850685.get().let { "${it.group}:serialization:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.io.github.pdvrieze.xmlutil.core.jvm535986330.get().let { "${it.group}:${it.name}:${it.version}" }) {
+    implementation(jps.io.github.pdvrieze.xmlutil.core514653626.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
   }

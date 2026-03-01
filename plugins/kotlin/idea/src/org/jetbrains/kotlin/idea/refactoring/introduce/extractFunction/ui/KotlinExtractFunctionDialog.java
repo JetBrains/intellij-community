@@ -7,7 +7,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ui.NameSuggestionsField;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import kotlin.Unit;
@@ -17,7 +21,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinFileType;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractUtilKt;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractableAnalysisUtilKt;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractableCodeDescriptor;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractableCodeDescriptorKt;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractableCodeDescriptorWithConflicts;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractableCodeDescriptorWithException;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorConfiguration;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractorUtilKt;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.Parameter;
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent;
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers;
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken;
@@ -25,265 +38,431 @@ import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 import org.jetbrains.kotlin.types.KotlinType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import static org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt.checkConflictsInteractively;
 import static org.jetbrains.kotlin.idea.util.NonblockingKt.nonBlocking;
 
 public class KotlinExtractFunctionDialog extends DialogWrapper {
-    private JPanel contentPane;
-    private TitledSeparator inputParametersPanel;
-    private JComboBox visibilityBox;
-    private KotlinSignatureComponent signaturePreviewField;
-    private JPanel functionNamePanel;
-    private NameSuggestionsField functionNameField;
-    private JLabel functionNameLabel;
-    private JComboBox<KotlinType> returnTypeBox;
-    private JPanel returnTypePanel;
-    private ExtractFunctionParameterTablePanel parameterTablePanel;
+  private final JPanel contentPane;
+  private final TitledSeparator inputParametersPanel;
+  private final JComboBox visibilityBox;
+  private final KotlinSignatureComponent signaturePreviewField;
+  private final JPanel functionNamePanel;
+  private NameSuggestionsField functionNameField;
+  private final JLabel functionNameLabel;
+  private final JComboBox<KotlinType> returnTypeBox;
+  private final JPanel returnTypePanel;
+  private ExtractFunctionParameterTablePanel parameterTablePanel;
 
-    private final Project project;
+  private final Project project;
 
-    private final ExtractableCodeDescriptorWithConflicts originalDescriptor;
-    private ExtractableCodeDescriptor currentDescriptor;
+  private final ExtractableCodeDescriptorWithConflicts originalDescriptor;
+  private ExtractableCodeDescriptor currentDescriptor;
 
-    private final Function1<KotlinExtractFunctionDialog, Unit> onAccept;
+  private final Function1<KotlinExtractFunctionDialog, Unit> onAccept;
 
-    public KotlinExtractFunctionDialog(
-            @NotNull Project project,
-            @NotNull ExtractableCodeDescriptorWithConflicts originalDescriptor,
-            @NotNull Function1<KotlinExtractFunctionDialog, Unit> onAccept) {
-        super(project, true);
+  @SuppressWarnings("HardCodedStringLiteral")
+  public KotlinExtractFunctionDialog(
+    @NotNull Project project,
+    @NotNull ExtractableCodeDescriptorWithConflicts originalDescriptor,
+    @NotNull Function1<KotlinExtractFunctionDialog, Unit> onAccept) {
+    super(project, true);
 
-        this.project = project;
-        this.originalDescriptor = originalDescriptor;
-        this.currentDescriptor = originalDescriptor.getDescriptor();
-        this.onAccept = onAccept;
-
-        setModal(true);
-        setTitle(KotlinBundle.message("extract.function"));
-        init();
-        update();
+    this.project = project;
+    this.originalDescriptor = originalDescriptor;
+    {
+      this.signaturePreviewField = new KotlinSignatureComponent("", project);
     }
-
-    private void createUIComponents() {
-        this.signaturePreviewField = new KotlinSignatureComponent("", project);
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      contentPane = new JPanel();
+      contentPane.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      contentPane.add(panel1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new BorderLayout(0, 0));
+      panel1.add(panel2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      inputParametersPanel = new TitledSeparator();
+      inputParametersPanel.setLayout(new BorderLayout(0, 0));
+      inputParametersPanel.setText("");
+      inputParametersPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      panel2.add(inputParametersPanel, BorderLayout.CENTER);
+      inputParametersPanel.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$(
+        "messages/KotlinBundle", "title.parameters"), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+      final JPanel panel3 = new JPanel();
+      panel3.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      contentPane.add(panel3, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 200), null, 0, false));
+      final JPanel panel4 = new JPanel();
+      panel4.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      panel4.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      panel3.add(panel4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                             0, false));
+      panel4.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null,
+                                                                                this.$$$getMessageFromBundle$$$("messages/KotlinBundle",
+                                                                                                                "signature.preview"),
+                                                                                TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                TitledBorder.DEFAULT_POSITION, null, null));
+      signaturePreviewField.setText("");
+      panel4.add(signaturePreviewField, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            new Dimension(500, 100), new Dimension(500, 100), null, 0, false));
+      final JPanel panel5 = new JPanel();
+      panel5.setLayout(new GridLayoutManager(4, 2, new Insets(0, 0, 0, 0), -1, -1));
+      panel5.setEnabled(true);
+      panel5.setVisible(true);
+      contentPane.add(panel5, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      panel5.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), null, TitledBorder.DEFAULT_JUSTIFICATION,
+                                                        TitledBorder.DEFAULT_POSITION, null, null));
+      functionNameLabel = new JLabel();
+      this.$$$loadLabelText$$$(functionNameLabel, this.$$$getMessageFromBundle$$$("messages/KotlinBundle", "name"));
+      panel5.add(functionNameLabel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/KotlinBundle", "visibility"));
+      label1.setVisible(true);
+      panel5.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(114, 16), null, 0, false));
+      functionNamePanel = new JPanel();
+      functionNamePanel.setLayout(new BorderLayout(0, 0));
+      panel5.add(functionNamePanel, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                        GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                        new Dimension(150, -1), null, 0, false));
+      visibilityBox = new JComboBox();
+      final DefaultComboBoxModel defaultComboBoxModel1 = new DefaultComboBoxModel();
+      defaultComboBoxModel1.addElement("private");
+      defaultComboBoxModel1.addElement("protected");
+      defaultComboBoxModel1.addElement("internal");
+      defaultComboBoxModel1.addElement("public");
+      visibilityBox.setModel(defaultComboBoxModel1);
+      visibilityBox.setVisible(true);
+      panel5.add(visibilityBox, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                    GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                    new Dimension(114, 26), null, 0, false));
+      returnTypePanel = new JPanel();
+      returnTypePanel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+      panel5.add(returnTypePanel, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                      null, null, 0, false));
+      final JLabel label2 = new JLabel();
+      this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages/KotlinBundle", "return.type"));
+      returnTypePanel.add(label2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      returnTypePanel.add(spacer1, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      returnTypeBox = new JComboBox();
+      returnTypePanel.add(returnTypeBox, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                             GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                             null, null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      contentPane.add(spacer2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      label1.setLabelFor(visibilityBox);
+      label2.setLabelFor(returnTypeBox);
     }
+    this.currentDescriptor = originalDescriptor.getDescriptor();
+    this.onAccept = onAccept;
 
-    private boolean isVisibilitySectionAvailable() {
-        return ExtractUtilKt.isVisibilityApplicable(originalDescriptor.getDescriptor().getExtractionData());
+    setModal(true);
+    setTitle(KotlinBundle.message("extract.function"));
+    init();
+    update();
+  }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
     }
-
-    private String getFunctionName() {
-        return KtPsiUtilKt.quoteIfNeeded(functionNameField.getEnteredName());
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
     }
+    return bundle.getString(key);
+  }
 
-    private @Nullable KtModifierKeywordToken getVisibility() {
-        if (!isVisibilitySectionAvailable()) return null;
-
-        KtModifierKeywordToken value = (KtModifierKeywordToken) visibilityBox.getSelectedItem();
-        return KtTokens.DEFAULT_VISIBILITY_KEYWORD.equals(value) ? null : value;
-    }
-
-    private boolean checkNames() {
-        if (!KtPsiUtilKt.isIdentifier(getFunctionName())) return false;
-        for (ExtractFunctionParameterTablePanel.ParameterInfo parameterInfo : parameterTablePanel.getSelectedParameterInfos()) {
-            if (!KtPsiUtilKt.isIdentifier(parameterInfo.getName())) return false;
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
         }
-        return true;
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return contentPane; }
+
+  private boolean isVisibilitySectionAvailable() {
+    return ExtractUtilKt.isVisibilityApplicable(originalDescriptor.getDescriptor().getExtractionData());
+  }
+
+  private String getFunctionName() {
+    return KtPsiUtilKt.quoteIfNeeded(functionNameField.getEnteredName());
+  }
+
+  private @Nullable KtModifierKeywordToken getVisibility() {
+    if (!isVisibilitySectionAvailable()) return null;
+
+    KtModifierKeywordToken value = (KtModifierKeywordToken)visibilityBox.getSelectedItem();
+    return KtTokens.DEFAULT_VISIBILITY_KEYWORD.equals(value) ? null : value;
+  }
+
+  private boolean checkNames() {
+    if (!KtPsiUtilKt.isIdentifier(getFunctionName())) return false;
+    for (ExtractFunctionParameterTablePanel.ParameterInfo parameterInfo : parameterTablePanel.getSelectedParameterInfos()) {
+      if (!KtPsiUtilKt.isIdentifier(parameterInfo.getName())) return false;
+    }
+    return true;
+  }
+
+  private void update() {
+    this.currentDescriptor = createDescriptor();
+
+    setOKActionEnabled(checkNames());
+    signaturePreviewField.setText(
+      ExtractorUtilKt.getSignaturePreview(getCurrentConfiguration())
+    );
+  }
+
+  @Override
+  protected void init() {
+    super.init();
+
+    ExtractableCodeDescriptor extractableCodeDescriptor = originalDescriptor.getDescriptor();
+
+    functionNameField = new NameSuggestionsField(
+      ArrayUtil.toStringArray(extractableCodeDescriptor.getSuggestedNames()),
+      project,
+      KotlinFileType.INSTANCE
+    );
+    functionNameField.addDataChangedListener(() -> update());
+    functionNamePanel.add(functionNameField, BorderLayout.CENTER);
+    functionNameLabel.setLabelFor(functionNameField);
+
+    List<KotlinType> possibleReturnTypes = ExtractableCodeDescriptorKt.getPossibleReturnTypes(extractableCodeDescriptor.getControlFlow());
+    if (possibleReturnTypes.size() > 1) {
+      DefaultComboBoxModel<KotlinType> returnTypeBoxModel = new DefaultComboBoxModel<>(possibleReturnTypes.toArray(new KotlinType[0]));
+      returnTypeBox.setModel(returnTypeBoxModel);
+      returnTypeBox.setRenderer(
+        new DefaultListCellRenderer() {
+          @Override
+          public @NotNull Component getListCellRendererComponent(
+            JList list,
+            Object value,
+            int index,
+            boolean isSelected,
+            boolean cellHasFocus
+          ) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            @NlsSafe
+            String text = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType((KotlinType)value);
+            setText(text);
+            return this;
+          }
+        }
+      );
+      returnTypeBox.addItemListener(
+        new ItemListener() {
+          @Override
+          public void itemStateChanged(@NotNull ItemEvent e) {
+            update();
+          }
+        }
+      );
+    }
+    else {
+      returnTypePanel.getParent().remove(returnTypePanel);
     }
 
-    private void update() {
-        this.currentDescriptor = createDescriptor();
+    visibilityBox.setModel(new DefaultComboBoxModel(KtTokens.VISIBILITY_MODIFIERS.getTypes()));
 
-        setOKActionEnabled(checkNames());
-        signaturePreviewField.setText(
-                ExtractorUtilKt.getSignaturePreview(getCurrentConfiguration())
-        );
+    boolean enableVisibility = isVisibilitySectionAvailable();
+    visibilityBox.setEnabled(enableVisibility);
+    if (enableVisibility) {
+      KtModifierKeywordToken defaultVisibility = extractableCodeDescriptor.getVisibility();
+      visibilityBox.setSelectedItem(defaultVisibility);
     }
-
-    @Override
-    protected void init() {
-        super.init();
-
-        ExtractableCodeDescriptor extractableCodeDescriptor = originalDescriptor.getDescriptor();
-
-        functionNameField = new NameSuggestionsField(
-                ArrayUtil.toStringArray(extractableCodeDescriptor.getSuggestedNames()),
-                project,
-                KotlinFileType.INSTANCE
-        );
-        functionNameField.addDataChangedListener(() -> update());
-        functionNamePanel.add(functionNameField, BorderLayout.CENTER);
-        functionNameLabel.setLabelFor(functionNameField);
-
-        List<KotlinType> possibleReturnTypes = ExtractableCodeDescriptorKt.getPossibleReturnTypes(extractableCodeDescriptor.getControlFlow());
-        if (possibleReturnTypes.size() > 1) {
-            DefaultComboBoxModel<KotlinType> returnTypeBoxModel = new DefaultComboBoxModel<>(possibleReturnTypes.toArray(new KotlinType[0]));
-            returnTypeBox.setModel(returnTypeBoxModel);
-            returnTypeBox.setRenderer(
-                    new DefaultListCellRenderer() {
-                        @Override
-                        public @NotNull Component getListCellRendererComponent(
-                                JList list,
-                                Object value,
-                                int index,
-                                boolean isSelected,
-                                boolean cellHasFocus
-                        ) {
-                            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                            @NlsSafe
-                            String text = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType((KotlinType) value);
-                            setText(text);
-                            return this;
-                        }
-                    }
-            );
-            returnTypeBox.addItemListener(
-                    new ItemListener() {
-                        @Override
-                        public void itemStateChanged(@NotNull ItemEvent e) {
-                            update();
-                        }
-                    }
-            );
+    visibilityBox.addItemListener(
+      new ItemListener() {
+        @Override
+        public void itemStateChanged(@NotNull ItemEvent e) {
+          update();
         }
-        else {
-            returnTypePanel.getParent().remove(returnTypePanel);
+      }
+    );
+
+    parameterTablePanel = new ExtractFunctionParameterTablePanel() {
+      @Override
+      protected void updateSignature() {
+        KotlinExtractFunctionDialog.this.update();
+      }
+
+      @Override
+      protected void onEnterAction() {
+        doOKAction();
+      }
+
+      @Override
+      protected void onCancelAction() {
+        doCancelAction();
+      }
+    };
+    parameterTablePanel.init(extractableCodeDescriptor.getReceiverParameter(), extractableCodeDescriptor.getParameters());
+
+    inputParametersPanel.setText(KotlinBundle.message("text.parameters"));
+    inputParametersPanel.setLabelFor(parameterTablePanel.getTable());
+    inputParametersPanel.add(parameterTablePanel);
+  }
+
+  @Override
+  protected void doOKAction() {
+    nonBlocking(
+      project,
+      () -> {
+        try {
+          return ExtractableAnalysisUtilKt.validate(currentDescriptor);
         }
-
-        visibilityBox.setModel(new DefaultComboBoxModel(KtTokens.VISIBILITY_MODIFIERS.getTypes()));
-
-        boolean enableVisibility = isVisibilitySectionAvailable();
-        visibilityBox.setEnabled(enableVisibility);
-        if (enableVisibility) {
-            KtModifierKeywordToken defaultVisibility = extractableCodeDescriptor.getVisibility();
-            visibilityBox.setSelectedItem(defaultVisibility);
+        catch (RuntimeException e) {
+          return new ExtractableCodeDescriptorWithException(e);
         }
-        visibilityBox.addItemListener(
-                new ItemListener() {
-                    @Override
-                    public void itemStateChanged(@NotNull ItemEvent e) {
-                        update();
-                    }
-                }
-        );
+      },
+      result -> {
+        if (result instanceof ExtractableCodeDescriptorWithException) {
+          throw ((ExtractableCodeDescriptorWithException)result).getException();
+        }
+        MultiMap<PsiElement, String> conflicts = ((ExtractableCodeDescriptorWithConflicts)result).getConflicts();
+        conflicts.values().removeAll(originalDescriptor.getConflicts().values());
 
-        parameterTablePanel = new ExtractFunctionParameterTablePanel() {
+        checkConflictsInteractively(
+          project,
+          conflicts,
+          new Function0<>() {
             @Override
-            protected void updateSignature() {
-                KotlinExtractFunctionDialog.this.update();
+            public Unit invoke() {
+              close(OK_EXIT_CODE);
+              return Unit.INSTANCE;
             }
-
+          },
+          new Function0<>() {
             @Override
-            protected void onEnterAction() {
-                doOKAction();
+            public Unit invoke() {
+              KotlinExtractFunctionDialog.super.doOKAction();
+              return onAccept.invoke(KotlinExtractFunctionDialog.this);
             }
+          }
+        );
+        return Unit.INSTANCE;
+      });
+  }
 
-            @Override
-            protected void onCancelAction() {
-                doCancelAction();
-            }
-        };
-        parameterTablePanel.init(extractableCodeDescriptor.getReceiverParameter(), extractableCodeDescriptor.getParameters());
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return functionNameField.getFocusableComponent();
+  }
 
-        inputParametersPanel.setText(KotlinBundle.message("text.parameters"));
-        inputParametersPanel.setLabelFor(parameterTablePanel.getTable());
-        inputParametersPanel.add(parameterTablePanel);
+  @Override
+  protected JComponent createCenterPanel() {
+    return contentPane;
+  }
+
+  @Override
+  protected @NotNull JComponent createContentPane() {
+    return contentPane;
+  }
+
+  private @NotNull ExtractableCodeDescriptor createDescriptor() {
+    return createNewDescriptor(originalDescriptor.getDescriptor(),
+                               getFunctionName(),
+                               getVisibility(),
+                               parameterTablePanel.getSelectedReceiverInfo(),
+                               parameterTablePanel.getSelectedParameterInfos(),
+                               (KotlinType)returnTypeBox.getSelectedItem());
+  }
+
+  public @NotNull ExtractionGeneratorConfiguration getCurrentConfiguration() {
+    return new ExtractionGeneratorConfiguration(currentDescriptor, ExtractionGeneratorOptions.DEFAULT);
+  }
+
+  public static ExtractableCodeDescriptor createNewDescriptor(
+    @NotNull ExtractableCodeDescriptor originalDescriptor,
+    @NotNull String newName,
+    @Nullable KtModifierKeywordToken newVisibility,
+    @Nullable ExtractFunctionParameterTablePanel.ParameterInfo newReceiverInfo,
+    @NotNull List<ExtractFunctionParameterTablePanel.ParameterInfo> newParameterInfos,
+    @Nullable KotlinType returnType
+  ) {
+    Map<Parameter, Parameter> oldToNewParameters = new LinkedHashMap<>();
+    for (ExtractFunctionParameterTablePanel.ParameterInfo parameterInfo : newParameterInfos) {
+      oldToNewParameters.put(parameterInfo.getOriginalParameter(), parameterInfo.toParameter());
+    }
+    Parameter originalReceiver = originalDescriptor.getReceiverParameter();
+    Parameter newReceiver = newReceiverInfo != null ? newReceiverInfo.toParameter() : null;
+    if (originalReceiver != null && newReceiver != null) {
+      oldToNewParameters.put(originalReceiver, newReceiver);
     }
 
-    @Override
-    protected void doOKAction() {
-        nonBlocking(
-                project,
-                () -> {
-                    try {
-                        return ExtractableAnalysisUtilKt.validate(currentDescriptor);
-                    } catch (RuntimeException e) {
-                        return new ExtractableCodeDescriptorWithException(e);
-                    }
-                },
-                result -> {
-                    if (result instanceof ExtractableCodeDescriptorWithException) {
-                        throw ((ExtractableCodeDescriptorWithException) result).getException();
-                    }
-                    MultiMap<PsiElement, String> conflicts = ((ExtractableCodeDescriptorWithConflicts) result).getConflicts();
-                    conflicts.values().removeAll(originalDescriptor.getConflicts().values());
-
-                    checkConflictsInteractively(
-                            project,
-                            conflicts,
-                            new Function0<>() {
-                                @Override
-                                public Unit invoke() {
-                                    close(OK_EXIT_CODE);
-                                    return Unit.INSTANCE;
-                                }
-                            },
-                            new Function0<>() {
-                                @Override
-                                public Unit invoke() {
-                                    KotlinExtractFunctionDialog.super.doOKAction();
-                                    return onAccept.invoke(KotlinExtractFunctionDialog.this);
-                                }
-                            }
-                    );
-                    return Unit.INSTANCE;
-                });
-    }
-
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-        return functionNameField.getFocusableComponent();
-    }
-
-    @Override
-    protected JComponent createCenterPanel() {
-        return contentPane;
-    }
-
-    @Override
-    protected @NotNull JComponent createContentPane() {
-        return contentPane;
-    }
-
-    private @NotNull ExtractableCodeDescriptor createDescriptor() {
-        return createNewDescriptor(originalDescriptor.getDescriptor(),
-                                   getFunctionName(),
-                                   getVisibility(),
-                                   parameterTablePanel.getSelectedReceiverInfo(),
-                                   parameterTablePanel.getSelectedParameterInfos(),
-                                   (KotlinType) returnTypeBox.getSelectedItem());
-    }
-
-    public @NotNull ExtractionGeneratorConfiguration getCurrentConfiguration() {
-        return new ExtractionGeneratorConfiguration(currentDescriptor, ExtractionGeneratorOptions.DEFAULT);
-    }
-
-    public static ExtractableCodeDescriptor createNewDescriptor(
-            @NotNull ExtractableCodeDescriptor originalDescriptor,
-            @NotNull String newName,
-            @Nullable KtModifierKeywordToken newVisibility,
-            @Nullable ExtractFunctionParameterTablePanel.ParameterInfo newReceiverInfo,
-            @NotNull List<ExtractFunctionParameterTablePanel.ParameterInfo> newParameterInfos,
-            @Nullable KotlinType returnType
-    ) {
-        Map<Parameter, Parameter> oldToNewParameters = new LinkedHashMap<>();
-        for (ExtractFunctionParameterTablePanel.ParameterInfo parameterInfo : newParameterInfos) {
-            oldToNewParameters.put(parameterInfo.getOriginalParameter(), parameterInfo.toParameter());
-        }
-        Parameter originalReceiver = originalDescriptor.getReceiverParameter();
-        Parameter newReceiver = newReceiverInfo != null ? newReceiverInfo.toParameter() : null;
-        if (originalReceiver != null && newReceiver != null) {
-            oldToNewParameters.put(originalReceiver, newReceiver);
-        }
-
-        return ExtractableCodeDescriptorKt.copy(originalDescriptor, newName, newVisibility, oldToNewParameters, newReceiver, returnType);
-    }
+    return ExtractableCodeDescriptorKt.copy(originalDescriptor, newName, newVisibility, oldToNewParameters, newReceiver, returnType);
+  }
 }

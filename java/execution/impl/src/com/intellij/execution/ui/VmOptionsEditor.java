@@ -6,13 +6,18 @@ import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorCustomization;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.Expandable;
+import com.intellij.ui.ExpandableEditorSupport;
+import com.intellij.ui.LanguageTextField;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.Objects;
 
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;

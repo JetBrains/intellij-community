@@ -11,3 +11,5 @@ class B() {
 }
 
 // EXIST: ::B
+
+// IGNORE_K2

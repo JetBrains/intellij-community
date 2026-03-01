@@ -10,12 +10,16 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.containers.ContainerUtil.getFirstItem
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
-import git4idea.test.*
+import git4idea.test.GitPlatformTest
+import git4idea.test.TestDataUtil
+import git4idea.test.createRepository
+import git4idea.test.git
+import git4idea.test.tac
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.*
+import java.util.Locale
 
 class GitConfigTest : GitPlatformTest() {
   private val HOOK_FAILURE_MESSAGE = "IJ_TEST_GIT_HOOK_FAILED"

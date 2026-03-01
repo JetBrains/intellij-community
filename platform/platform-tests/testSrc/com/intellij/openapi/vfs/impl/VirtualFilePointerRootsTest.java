@@ -15,7 +15,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.AsyncFileListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
@@ -25,7 +31,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
@@ -38,7 +48,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@RunFirst
 @SkipSlowTestLocally
 public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
   private final Disposable disposable = Disposer.newDisposable();
@@ -70,6 +79,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testContainerCreateDeletePerformance() {
     Benchmark.newBenchmark(getTestName(false), () -> {
       Disposable parent = Disposer.newDisposable();
@@ -80,6 +90,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testMultipleCreatePointerWithTheSameUrlPerformance() throws IOException {
     VirtualFilePointerListener listener = new VirtualFilePointerListener() {
     };
@@ -98,6 +109,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
       .start();
   }
 
+  @PerformanceUnitTest
   public void testMultipleCreatePointerWithTheSameFilePerformance() throws IOException {
     VirtualFilePointerListener listener = new VirtualFilePointerListener() {
     };
@@ -117,6 +129,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
       .start();
   }
 
+  @PerformanceUnitTest
   public void testManyPointersUpdatePerformance() throws IOException {
     VirtualFilePointerListener listener = new VirtualFilePointerListener() {
     };
@@ -146,6 +159,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     });
   }
 
+  @PerformanceUnitTest
   public void testUpdatePerformanceOfFewLongPointers() throws IOException {
     VirtualFile root = TempFileSystem.getInstance().findFileByPath("/");
     for (int i = 0; i < 20; i++) {

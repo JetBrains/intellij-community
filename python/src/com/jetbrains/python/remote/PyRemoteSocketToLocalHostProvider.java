@@ -9,7 +9,6 @@ import java.io.Closeable;
 /**
  * A new instance should be created for every new process. Should be closed when process terminates.
  *
- * See also {@link PyRemoteInterpreterUtil#closeOnProcessTermination(com.intellij.execution.process.ProcessHandler, Closeable)}.
  */
 public interface PyRemoteSocketToLocalHostProvider extends Closeable {
   /**

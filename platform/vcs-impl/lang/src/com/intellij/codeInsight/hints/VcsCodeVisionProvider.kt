@@ -2,7 +2,13 @@
 
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.codeVision.*
+import com.intellij.codeInsight.codeVision.BypassBasedPlaceholderCollector
+import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionPlaceholderCollector
+import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
+import com.intellij.codeInsight.codeVision.CodeVisionState
 import com.intellij.codeInsight.codeVision.CodeVisionState.Companion.READY_EMPTY
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.icons.AllIcons
@@ -34,7 +40,11 @@ import com.intellij.openapi.vcs.annotate.LineAnnotationAspect.AUTHOR
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.DocumentUtil
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider

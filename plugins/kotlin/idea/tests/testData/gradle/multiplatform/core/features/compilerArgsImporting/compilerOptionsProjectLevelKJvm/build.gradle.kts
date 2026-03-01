@@ -10,8 +10,8 @@ repositories {
 
 kotlin {
     compilerOptions {
-        apiVersion.set(KotlinVersion.KOTLIN_1_7)
-        languageVersion.set(KotlinVersion.KOTLIN_1_7)
+        apiVersion.set({{minimalSupportedKotlinVersion}})
+        languageVersion.set({{minimalSupportedKotlinVersion}})
         freeCompilerArgs.add("-opt-in=OptInAnnotation")
     }
 }

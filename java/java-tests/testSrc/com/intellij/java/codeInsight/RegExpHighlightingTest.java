@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -31,7 +31,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
     // needs only partial escaping
     @NonNls String code = "<weak_warning descr=\"'\\\\P{IsBlank}' can be simplified to '[^ \\\\t]'\">\\\\P{IsBlank}</weak_warning>";
     myFixture.enableInspections(new RegExpSimplifiableInspection());
-    myFixture.configureByText(JavaFileType.INSTANCE, "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}");
+    myFixture.configureByText(JavaFileType.INSTANCE, wrap(code));
     myFixture.testHighlighting();
   }
 
@@ -108,7 +108,9 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testIllegalCharacterRange3() {
-    doTest("[<error descr=\"Illegal character range (to < from)\">z-a</error>]");
+    doTest("[<error descr=\"Illegal character range (to < from)\">z-a</error>]",
+           "Swap ",
+           "[a-z]");
   }
 
   public void testIllegalCharacterRange4() {
@@ -194,7 +196,9 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
   public void testCountedQuantifier() {
     doTest("a{2147483647}");
     doTest("a{<error descr=\"Repetition value too large\">2147483648</error>}");
-    doTest("a{<error descr=\"Illegal repetition range (min > max)\">1,0</error>}");
+    doTest("a{<error descr=\"Illegal repetition range (min > max)\">1,0</error>}",
+           "Swap ",
+           "a{0,1}");
   }
 
   public void testOptions() {
@@ -261,8 +265,19 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
 
   private void doTest(@NonNls String code) {
     code = StringUtil.escapeBackSlashes(code);
-    myFixture.configureByText(JavaFileType.INSTANCE, "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}");
+    myFixture.configureByText(JavaFileType.INSTANCE, wrap(code));
     myFixture.testHighlighting();
+  }
+  
+  private void doTest(@NonNls String code, @NonNls String fixPrefix, @NonNls String result) {
+    myFixture.configureByText(JavaFileType.INSTANCE, wrap(StringUtil.escapeBackSlashes(code)));
+    myFixture.testHighlighting();
+    myFixture.launchAction(myFixture.findSingleIntention(fixPrefix));
+    myFixture.checkResult(wrap(result));
+  }
+
+  private static @NonNls @NotNull String wrap(@NonNls String code) {
+    return "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}";
   }
 
   private void doTestUnexpectedAnchor(@NonNls String code) {

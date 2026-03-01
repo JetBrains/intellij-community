@@ -1,7 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation
 
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.ContributorDefinedTabsCustomizationStrategy
+import com.intellij.ide.actions.searcheverywhere.FixedTabsListCustomizationStrategy
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.actions.searcheverywhere.TabsCustomizationStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
@@ -33,19 +40,18 @@ class SearchEverywhereTabsCustomizationTest : LightJavaCodeInsightFixtureTestCas
 
   fun testFixedTabsListStrategy() {
     val strategy = object : FixedTabsListCustomizationStrategy(listOf("c1", "c3", "c5")) {}
-    ApplicationManager.getApplication().replaceService(TabsCustomizationStrategy::class.java, strategy, testRootDisposable)
-    val header = SearchEverywhereHeader(project, contributors, Runnable {  }, Function { _ -> null }, null, ui)
-    val tabIDs = header.tabs.map { it.id }
-    val expected = listOf(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, "c1", "c3")
-    Assert.assertEquals(expected, tabIDs)
+    doTest(strategy, listOf(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, "c1", "c3"))
   }
 
   fun testContributorDefinedStrategy() {
     val strategy = ContributorDefinedTabsCustomizationStrategy()
+    doTest(strategy, listOf(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, "c1", "c2", "c3"))
+  }
+
+  private fun doTest(strategy: TabsCustomizationStrategy, expected: List<String>) {
     ApplicationManager.getApplication().replaceService(TabsCustomizationStrategy::class.java, strategy, testRootDisposable)
     val header = SearchEverywhereHeader(project, contributors, Runnable {  }, Function { _ -> null }, null, ui)
     val tabIDs = header.tabs.map { it.id }
-    val expected = listOf(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, "c1", "c2", "c3")
     Assert.assertEquals(expected, tabIDs)
   }
 

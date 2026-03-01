@@ -8,6 +8,13 @@ import org.jetbrains.annotations.ApiStatus
 interface XLineBreakpointProxy : XBreakpointProxy, XLightLineBreakpointProxy {
   override val type: XLineBreakpointTypeProxy
 
+  /**
+   * IDE components that depend on the breakpoint's current state.
+   *
+   * @see XBreakpointAttachment
+   */
+  val attachments: List<XBreakpointAttachment>
+
   fun isTemporary(): Boolean
   fun setTemporary(isTemporary: Boolean)
 

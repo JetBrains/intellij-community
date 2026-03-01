@@ -24,8 +24,14 @@ import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 

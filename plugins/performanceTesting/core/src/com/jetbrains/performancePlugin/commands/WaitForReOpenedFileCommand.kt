@@ -6,9 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.HighlightingTestUtil
-import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.NonNls
 
 open class WaitForReOpenedFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
@@ -27,9 +25,19 @@ open class WaitForReOpenedFileCommand(text: String, line: Int) : PerformanceComm
 
 }
 
-internal class FileOpenLoggerListener : FileEditorManagerListener.Before {
+internal class BeforeFileOpenLoggerListener : FileEditorManagerListener.Before {
   override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
-    logger<FileOpenLoggerListener>().info("beforeFileOpened ${file.name}")
+    logger<BeforeFileOpenLoggerListener>().info("beforeFileOpened ${file.name}")
     HighlightingTestUtil.storeProcessFinishedTime("beforeFileOpened", "reopenFileAfterIdeRestart")
+  }
+}
+
+internal class FileOpenLoggerListener : FileEditorManagerListener {
+  override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+    logger<BeforeFileOpenLoggerListener>().info("fileOpened ${file.name}")
+  }
+
+  override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+    logger<BeforeFileOpenLoggerListener>().info("fileClosed ${file.name}")
   }
 }

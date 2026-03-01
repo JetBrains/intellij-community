@@ -16,7 +16,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
 
 public final class FileFinder {
   public static List<VirtualFile> findPomFiles(VirtualFile[] roots,

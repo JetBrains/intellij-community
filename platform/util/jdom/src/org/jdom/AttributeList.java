@@ -57,7 +57,14 @@ package org.jdom;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.AbstractList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.RandomAccess;
 
 /**
  * <code>AttributeList</code> represents legal JDOM

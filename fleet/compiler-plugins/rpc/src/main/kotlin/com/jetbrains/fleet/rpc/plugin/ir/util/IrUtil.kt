@@ -1,12 +1,11 @@
 package com.jetbrains.fleet.rpc.plugin.ir.util
 
-import com.jetbrains.fleet.rpc.plugin.ir.CompilerPluginContext
-import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.backend.common.ir.addDispatchReceiver
-import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
+import com.jetbrains.fleet.rpc.plugin.ir.FileContext
+import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
@@ -20,27 +19,20 @@ import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.symbols.impl.IrAnonymousInitializerSymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
-import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeOrFail
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
+import org.jetbrains.kotlin.ir.util.addChild
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.isAnnotationWithEqualFqName
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
-
-val RPC_FQN = FqName.fromSegments(listOf("fleet", "rpc"))
-val RPC_ANNOTATION_FQN = RPC_FQN.child("Rpc".name)
-
-val RPC_CORE_FQN: FqName = RPC_FQN.child("core".name)
-val REMOTE_RESOURCE_FQN: FqName = RPC_CORE_FQN.child("RemoteResource".name)
 
 val String.name: Name
   get() = Name.identifier(this)
@@ -59,6 +51,16 @@ fun irGet(variable: IrValueDeclaration, origin: IrStatementOrigin? = null): IrEx
   return irGet(variable.type, variable.symbol, origin)
 }
 
+fun irGetObject(irClass: IrClass): IrExpression {
+  return IrGetObjectValueImpl(
+    startOffset = UNDEFINED_OFFSET,
+    endOffset = UNDEFINED_OFFSET,
+    type = irClass.defaultType,
+    symbol = irClass.symbol,
+  )
+}
+
+@UnsafeDuringIrConstructionAPI
 fun irCall(symbol: IrFunctionSymbol, origin: IrStatementOrigin? = null): IrCallImpl {
   return IrCallImpl.fromSymbolOwner(
     startOffset = UNDEFINED_OFFSET,
@@ -69,26 +71,32 @@ fun irCall(symbol: IrFunctionSymbol, origin: IrStatementOrigin? = null): IrCallI
   )
 }
 
-fun IrClass.hasRpcAnnotation() =
-  this.annotations.any { it.isAnnotationWithEqualFqName(RPC_ANNOTATION_FQN) }
+val RPC_PLUGIN_ORIGIN = IrDeclarationOriginImpl("FLEET_RPC", true)
 
-
-fun IrPluginContext.buildClassBase(customizer: IrClassBuilder.() -> Unit) =
+@UnsafeDuringIrConstructionAPI
+fun FileContext.buildClassBase(customizer: IrClassBuilder.() -> Unit) =
   irFactory.buildClass {
     startOffset = SYNTHETIC_OFFSET
     endOffset = SYNTHETIC_OFFSET
-    origin = IrDeclarationOrigin.DEFINED
+    origin = RPC_PLUGIN_ORIGIN
     kind = ClassKind.CLASS
     modality = Modality.FINAL
     customizer()
   }.also {
-    thisReceiver(it)
-    constructor(it)
-    initializer(it)
+    initClassBase(this, it)
   }
 
-private fun IrPluginContext.thisReceiver(irClass: IrClass): IrValueParameter =
-  irFactory.createValueParameter(
+@UnsafeDuringIrConstructionAPI
+fun initClassBase(context: FileContext, irClass: IrClass) {
+  with(context) {
+    irFactory.thisReceiver(irClass)
+    irFactory.constructor(irBuiltIns, irClass)
+    irFactory.initializer(irClass)
+  }
+}
+
+private fun IrFactory.thisReceiver(irClass: IrClass): IrValueParameter =
+  createValueParameter(
     startOffset = SYNTHETIC_OFFSET,
     endOffset = SYNTHETIC_OFFSET,
     origin = IrDeclarationOrigin.INSTANCE_RECEIVER,
@@ -106,14 +114,15 @@ private fun IrPluginContext.thisReceiver(irClass: IrClass): IrValueParameter =
     irClass.thisReceiver = it
   }
 
-private fun IrPluginContext.constructor(irClass: IrClass): IrConstructor =
+@UnsafeDuringIrConstructionAPI
+private fun IrFactory.constructor(irBuiltIns: IrBuiltIns, irClass: IrClass): IrConstructor =
   irClass.addConstructor {
     isPrimary = true
     returnType = irClass.defaultType
   }.apply {
     parent = irClass
 
-    body = irFactory.createBlockBody(SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).apply {
+    body = createBlockBody(SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).apply {
       statements += IrDelegatingConstructorCallImpl.fromSymbolOwner(
         SYNTHETIC_OFFSET,
         SYNTHETIC_OFFSET,
@@ -131,50 +140,43 @@ private fun IrPluginContext.constructor(irClass: IrClass): IrConstructor =
     }
   }
 
-private fun IrPluginContext.initializer(irClass: IrClass): IrAnonymousInitializer =
-  irFactory.createAnonymousInitializer(
+private fun IrFactory.initializer(irClass: IrClass): IrAnonymousInitializer =
+  createAnonymousInitializer(
     SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-    origin = IrDeclarationOrigin.DEFINED,
+    origin = RPC_PLUGIN_ORIGIN,
     symbol = IrAnonymousInitializerSymbolImpl(),
     isStatic = false
   ).apply {
     parent = irClass
   }
 
-fun IrPluginContext.getProxyType(): IrSimpleType { // typealias Proxy = suspend (String, Array<Any?>) -> Any?
-  val stringType = irBuiltIns.stringType
-  val nullableAnyType = irBuiltIns.anyNType.makeNullable()
-  val anyArrayType = irBuiltIns.arrayClass.typeWith(nullableAnyType)
-
-  return irBuiltIns.suspendFunctionN(2)
-    .typeWith(/*thisType, */stringType, anyArrayType, nullableAnyType)
-}
-
 fun IrBuilderWithScope.createArrayOfExpression(
   arrayElementType: IrType,
   arrayElements: List<IrExpression>,
-  pluginContext: IrPluginContext
+  irBuiltIns: IrBuiltIns,
 ): IrExpression {
-  val arrayType = pluginContext.irBuiltIns.arrayClass.typeWith(arrayElementType)
+  val arrayType = irBuiltIns.arrayClass.typeWith(arrayElementType)
   val varargOfElements = IrVarargImpl(startOffset, endOffset, arrayType, arrayElementType, arrayElements)
   val typeArguments = listOf(arrayElementType)
 
-  return irCall(pluginContext.irBuiltIns.arrayOf, arrayType, typeArguments = typeArguments).apply {
+  return irCall(irBuiltIns.arrayOf, arrayType, typeArguments = typeArguments).apply {
     arguments[0] = varargOfElements
   }
 }
 
-fun IrPluginContext.addFunctionOverride(originalFunction: IrSimpleFunction,
-                                        parentClass: IrClass,
-                                        block: (IrSimpleFunction) -> Unit) {
-  irFactory.buildFun {
+@UnsafeDuringIrConstructionAPI
+fun IrFactory.addFunctionOverride(
+  originalFunction: IrSimpleFunction,
+  parentClass: IrClass,
+  block: (IrSimpleFunction) -> Unit,
+) {
+  buildFun {
     name = originalFunction.name
     returnType = originalFunction.returnType
     modality = Modality.FINAL
   }.also { function ->
     function.isSuspend = originalFunction.isSuspend
     function.overriddenSymbols = listOf(originalFunction.symbol)
-    function.parent = parentClass
 
     for (typeParameter in originalFunction.typeParameters) {
       function.addTypeParameter {
@@ -201,14 +203,12 @@ fun IrPluginContext.addFunctionOverride(originalFunction: IrSimpleFunction,
 
     block(function)
 
-    parentClass.declarations += function
+    parentClass.addChild(function)
   }
 }
 
-fun IrFunction.generateBody(context: CompilerPluginContext, block: IrBlockBodyBuilder.() -> Unit) {
-  body = DeclarationIrBuilder(context.pluginContext, symbol).irBlockBody {
-    block()
-  }
+fun IrFunction.generateBody(context: FileContext, block: IrBlockBodyBuilder.() -> Unit) {
+  body = context.irBuiltIns.createIrBuilder(symbol).irBlockBody { block() }
 }
 
 /**
@@ -216,7 +216,7 @@ fun IrFunction.generateBody(context: CompilerPluginContext, block: IrBlockBodyBu
  *
  * @param type type of the function
  */
-internal fun IrPluginContext.irLambda(
+internal fun FileContext.irLambda(
   symbol: IrSymbolOwner,
   parent: IrDeclarationParent,
   type: IrSimpleType,

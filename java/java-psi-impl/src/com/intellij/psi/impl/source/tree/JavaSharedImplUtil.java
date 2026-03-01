@@ -5,7 +5,37 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiConditionalLoopStatement;
+import com.intellij.psi.PsiDeconstructionList;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForeachStatementBase;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -24,7 +54,8 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 public final class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance(JavaSharedImplUtil.class);
@@ -89,43 +120,12 @@ public final class JavaSharedImplUtil {
 
   public static @NotNull PsiType createTypeFromStub(@NotNull PsiModifierListOwner owner, @NotNull TypeInfo typeInfo) {
     String typeText = typeInfo.annotatedText();
-    PsiType type = JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeFromText(typeText, owner);
-    return applyAnnotations(type, owner.getModifierList());
+    return JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeElementFromText(typeText, owner).getType();
   }
 
-  public static @NotNull PsiType applyAnnotations(@NotNull PsiType type, @Nullable PsiModifierList modifierList) {
-    if (modifierList != null) {
-      PsiAnnotation[] annotations = modifierList.getAnnotations();
-      if (annotations.length > 0) {
-        if (type instanceof PsiArrayType) {
-          Deque<PsiArrayType> types = new ArrayDeque<>();
-          do {
-            types.push((PsiArrayType)type);
-            type = ((PsiArrayType)type).getComponentType();
-          }
-          while (type instanceof PsiArrayType);
-          type = annotate(type, modifierList, annotations);
-          while (!types.isEmpty()) {
-            PsiArrayType t = types.pop();
-            type = t instanceof PsiEllipsisType ? new PsiEllipsisType(type, t.getAnnotations()) : new PsiArrayType(type, t.getAnnotations());
-          }
-          return type;
-        }
-        else if (type instanceof PsiDisjunctionType) {
-          List<PsiType> components = new ArrayList<>(((PsiDisjunctionType)type).getDisjunctions());
-          components.set(0, annotate(components.get(0), modifierList, annotations));
-          return ((PsiDisjunctionType)type).newDisjunctionType(components);
-        }
-        else {
-          return annotate(type, modifierList, annotations);
-        }
-      }
-    }
-
-    return type;
-  }
-
-  private static @NotNull PsiType annotate(@NotNull PsiType type, @NotNull PsiModifierList modifierList, PsiAnnotation @NotNull [] annotations) {
+  public static @NotNull PsiType annotate(@NotNull PsiType type,
+                                          @NotNull PsiModifierList modifierList,
+                                          PsiAnnotation @NotNull [] annotations) {
     TypeAnnotationProvider original =
       modifierList.getParent() instanceof PsiMethod ? type.getAnnotationProvider() : TypeAnnotationProvider.EMPTY;
     TypeAnnotationProvider provider = new FilteringTypeAnnotationProvider(annotations, original);
@@ -284,6 +284,12 @@ public final class JavaSharedImplUtil {
       assert eq != null : variable;
     }
     variable.addAfter(initializer, eq.getPsi());
+  }
+
+  public static @NotNull TypeAnnotationProvider filteringTypeAnnotationProvider(@NotNull PsiAnnotation @NotNull [] candidates,
+                                                                                @NotNull TypeAnnotationProvider originalProvider) {
+    if (candidates.length == 0) return originalProvider;
+    return new FilteringTypeAnnotationProvider(candidates, originalProvider);
   }
 
   private static final class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {

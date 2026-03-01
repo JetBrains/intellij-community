@@ -23,7 +23,7 @@ import org.intellij.lang.xpath.xslt.util.QNameUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.xml.namespace.QName;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;

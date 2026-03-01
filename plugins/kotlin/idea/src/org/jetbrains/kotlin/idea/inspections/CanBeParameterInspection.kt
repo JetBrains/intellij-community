@@ -13,13 +13,37 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfTypes
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.getScopeToSearchParameterReferences
 import org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.lexer.KtTokens.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.lexer.KtTokens.ACTUAL_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.FINAL_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.INTERNAL_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.LATEINIT_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.OPEN_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.PRIVATE_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.PROTECTED_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.PUBLIC_KEYWORD
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassInitializer
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.parameterVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -33,6 +57,7 @@ internal val CONSTRUCTOR_VAL_VAR_MODIFIERS = listOf(
 )
 
 
+@K1Deprecation
 class CanBeParameterInspection : AbstractKotlinInspection() {
     private fun PsiReference.usedAsPropertyIn(klass: KtClass): Boolean {
         if (this !is KtSimpleNameReference) return true

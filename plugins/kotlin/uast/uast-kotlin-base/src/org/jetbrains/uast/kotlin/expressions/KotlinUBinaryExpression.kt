@@ -7,7 +7,15 @@ import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UArrayAccessExpression
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
 
 @ApiStatus.Internal

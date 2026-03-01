@@ -4,7 +4,12 @@ package org.jetbrains.kotlin.idea.actions.internal.refactoringTesting
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileCopyEvent
+import com.intellij.openapi.vfs.VirtualFileEvent
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileMoveEvent
 
 internal class FileSystemChangesTracker : Disposable {
 

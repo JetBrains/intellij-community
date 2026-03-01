@@ -9,7 +9,12 @@ import org.jetbrains.idea.svn.SvnUtil.resolvePath
 import org.jetbrains.idea.svn.api.BaseNodeDescription
 import org.jetbrains.idea.svn.api.NodeKind
 import java.io.File
-import javax.xml.bind.annotation.*
+import javax.xml.bind.annotation.XmlAccessType
+import javax.xml.bind.annotation.XmlAccessorType
+import javax.xml.bind.annotation.XmlAttribute
+import javax.xml.bind.annotation.XmlElement
+import javax.xml.bind.annotation.XmlRootElement
+import javax.xml.bind.annotation.XmlType
 
 @Nls
 private fun ConflictReason.getDisplayName(): String =

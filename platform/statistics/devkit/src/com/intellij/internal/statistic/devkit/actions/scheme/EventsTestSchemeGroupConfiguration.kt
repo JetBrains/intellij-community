@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions.scheme
 
-import com.fasterxml.jackson.core.JacksonException
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
@@ -35,7 +33,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.selected
 import com.intellij.util.IncorrectOperationException
@@ -46,7 +48,9 @@ import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBDimension
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection
-import java.util.*
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.ObjectMapper
+import java.util.Collections
 import javax.swing.JComponent
 import javax.swing.JPanel
 

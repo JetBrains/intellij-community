@@ -1,12 +1,12 @@
 package com.intellij.platform.whatsNew.reaction
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.ThreadingAssertions
 
-class FUSReactionChecker(private val stateKey: String): ReactionChecker {
+open class FUSReactionChecker(private val stateKey: String) : ReactionChecker {
   override fun onLike(project: Project?, place: String?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val value = if (getLikenessState() == ReactionChecker.State.Liked) {
       0
     }
@@ -15,11 +15,11 @@ class FUSReactionChecker(private val stateKey: String): ReactionChecker {
     putValue(value)
     ReactionCollector.reactedPerformed(project, place, ReactionType.Like,
                                        if (value == 0) ReationAction.Unset
-                                                    else ReationAction.Set)
+                                       else ReationAction.Set)
   }
 
   override fun onDislike(project: Project?, place: String?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val value = if (getLikenessState() == ReactionChecker.State.Disliked) {
       0
     }
@@ -28,16 +28,16 @@ class FUSReactionChecker(private val stateKey: String): ReactionChecker {
     putValue(value)
     ReactionCollector.reactedPerformed(project, place, ReactionType.Dislike,
                                        if (value == 0) ReationAction.Unset
-                                                    else ReationAction.Set)
+                                       else ReationAction.Set)
   }
 
-  internal fun putValue(value: Int) {
+  fun putValue(value: Int) {
     val propertiesComponent = PropertiesComponent.getInstance()
     propertiesComponent.setValue(stateKey, value, 0)
   }
 
-  private fun getLikenessState(): ReactionChecker.State {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+  fun getLikenessState(): ReactionChecker.State {
+    ThreadingAssertions.assertEventDispatchThread()
     val propertiesComponent = PropertiesComponent.getInstance()
 
     return ReactionChecker.State.stateByIndex(propertiesComponent.getInt(stateKey, 0))

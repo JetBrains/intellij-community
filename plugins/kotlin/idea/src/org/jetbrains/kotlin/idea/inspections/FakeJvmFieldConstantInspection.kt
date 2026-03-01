@@ -5,17 +5,34 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.*
+import com.intellij.psi.JavaElementVisitor
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiAnnotationParameterList
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiSwitchLabelStatement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeCastExpression
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightFieldForSourceDeclarationSupport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.*
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.JVM_FIELD_MIGHT_BE_CONST
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.JVM_FIELD_MIGHT_BE_CONST_ERRONEOUS
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.JVM_FIELD_MIGHT_BE_CONST_NO_INITIALIZER
 import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
+@K1Deprecation
 class FakeJvmFieldConstantInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : JavaElementVisitor() {

@@ -10,7 +10,7 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.system.OS
 import kotlinx.coroutines.launch
 
-private class ResetWindowsDefenderNotification : AnAction() {
+internal class ResetWindowsDefenderNotification : AnAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

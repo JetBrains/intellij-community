@@ -14,7 +14,12 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtWhenConditionIsPattern
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.types.Variance
 

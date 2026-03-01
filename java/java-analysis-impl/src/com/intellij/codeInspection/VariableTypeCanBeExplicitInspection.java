@@ -4,7 +4,13 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 

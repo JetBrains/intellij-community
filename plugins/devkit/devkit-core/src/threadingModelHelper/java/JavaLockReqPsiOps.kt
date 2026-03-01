@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper.java
 
 import com.intellij.openapi.progress.blockingContextToIndicator
@@ -23,6 +23,7 @@ import org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
 import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -96,8 +97,8 @@ class JavaLockReqPsiOps : LockReqPsiOps {
       handler(method)
     }
     val counter = AtomicInteger(1)
-    val query = OverridingMethodsSearch.search(method, scope, true)
-    val list = ArrayList<PsiMethod>()
+    val query = OverridingMethodsSearch.search(method, scope, true).allowParallelProcessing()
+    val list = Collections.synchronizedList(ArrayList<PsiMethod>())
     val abruptEnd = AtomicBoolean(false)
     blockingContextToIndicator {
       query.forEach(Processor { overridden ->
@@ -111,6 +112,7 @@ class JavaLockReqPsiOps : LockReqPsiOps {
       })
     }
     if (!abruptEnd.get()) {
+      list.sortBy { it.name }
       for (method in list) {
         handler(method)
       }
@@ -118,10 +120,10 @@ class JavaLockReqPsiOps : LockReqPsiOps {
   }
 
   override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiClass) -> Unit) {
-    val query = ClassInheritorsSearch.search(interfaceClass, scope, true)
+    val query = ClassInheritorsSearch.search(interfaceClass, scope, true).allowParallelProcessing()
     val counter = AtomicInteger(1)
     val abruptEnd = AtomicBoolean(false)
-    val list = mutableListOf<PsiClass>()
+    val list = Collections.synchronizedList(mutableListOf<PsiClass>())
     query.forEach(Processor { implementor ->
       if (counter.incrementAndGet() >= maxImpl) {
         abruptEnd.set(true)
@@ -131,6 +133,7 @@ class JavaLockReqPsiOps : LockReqPsiOps {
       true
     })
     if (!abruptEnd.get()) {
+      list.sortBy { it.qualifiedName }
       for (clazz in list) {
         handler(clazz)
       }

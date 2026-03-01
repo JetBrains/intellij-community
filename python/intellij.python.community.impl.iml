@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
+    <orderEntry type="module" module-name="intellij.platform.welcomeScreen.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.macro" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
@@ -164,8 +165,6 @@
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
-    <orderEntry type="module" module-name="intellij.platform.feedback" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.datetime" />
     <orderEntry type="module" module-name="intellij.platform.ide.remote" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
@@ -173,7 +172,7 @@
     <orderEntry type="module" module-name="intellij.python.community.impl.installer" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.venv" />
+    <orderEntry type="module" module-name="intellij.python.venv" />
     <orderEntry type="module" module-name="intellij.python.community.execService" />
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" />
     <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" />
@@ -192,11 +191,13 @@
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
     <orderEntry type="module" module-name="intellij.python.community.impl.uv.common" />
     <orderEntry type="module" module-name="intellij.python.common" />
-    <orderEntry type="module" module-name="intellij.python.processOutput" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.python.processOutput.common" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.python.externalIndex" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.conda" />
   </component>
 </module>

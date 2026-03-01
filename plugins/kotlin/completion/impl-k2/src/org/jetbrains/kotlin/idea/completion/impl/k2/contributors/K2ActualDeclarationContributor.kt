@@ -38,7 +38,7 @@ internal class K2ActualDeclarationContributor : K2SimpleCompletionContributor<Ko
             importStrategyDetector = context.importStrategyDetector,
             declaration = declaration,
         ).createActualLookups(context.parameters, context.project)
-        context.addElements(elements)
+        addElements(elements)
     }
 
     private fun KtTypeReference.getDeclaration(): KtCallableDeclaration? {

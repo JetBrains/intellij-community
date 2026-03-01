@@ -3,7 +3,17 @@ package org.jetbrains.plugins.gradle.nativeplatform.tooling.model
 
 import org.jetbrains.plugins.gradle.model.DefaultExternalTask
 import org.jetbrains.plugins.gradle.model.ExternalTask
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CompilationDetailsImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppBinaryImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppComponentImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppExecutableImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppProjectImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppSharedLibraryImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppStaticLibraryImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppTestSuiteImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.LinkageDetailsImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.MacroDirectiveImpl
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.SourceFileImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.io.File

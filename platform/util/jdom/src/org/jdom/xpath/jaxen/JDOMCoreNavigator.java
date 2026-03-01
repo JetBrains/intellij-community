@@ -54,10 +54,24 @@
 
 package org.jdom.xpath.jaxen;
 
-import org.jaxen.*;
+import org.jaxen.BaseXPath;
+import org.jaxen.DefaultNavigator;
+import org.jaxen.FunctionCallException;
+import org.jaxen.JaxenConstants;
+import org.jaxen.UnsupportedAxisException;
+import org.jaxen.XPath;
 import org.jaxen.saxpath.SAXPathException;
 import org.jaxen.util.SingleObjectIterator;
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.Comment;
+import org.jdom.Content;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.Namespace;
+import org.jdom.Parent;
+import org.jdom.ProcessingInstruction;
+import org.jdom.Text;
 import org.jdom.input.SAXBuilder;
 
 import java.io.IOException;

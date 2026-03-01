@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;

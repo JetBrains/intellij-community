@@ -1,23 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.PluginResolutionException;
 import org.apache.maven.plugin.internal.DefaultPluginDependenciesResolver;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
-import org.apache.maven.model.Plugin;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.DependencyFilter;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.DependencyResult;
+import org.eclipse.sisu.Priority;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.List;
-import org.eclipse.sisu.Priority;
 
 @Named
 @Singleton

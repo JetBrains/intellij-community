@@ -2,7 +2,12 @@
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.DifferentiateParameters;
+import org.jetbrains.jps.dependency.DifferentiateResult;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.NodeSource;
 
 import java.io.IOException;
 import java.time.Duration;

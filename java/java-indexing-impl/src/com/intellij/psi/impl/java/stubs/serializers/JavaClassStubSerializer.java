@@ -10,7 +10,11 @@ import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.factories.JavaClassStubFactory;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubSerializer;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.JavaImplicitClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,9 +71,9 @@ public class JavaClassStubSerializer implements StubSerializer<PsiClassStub<PsiC
   @Override
   public void indexStub(@NotNull PsiClassStub<PsiClass> stub, @NotNull IndexSink sink) {
     if (stub.isImplicit()) {
-      StubElement<?> parent = stub.getParentStub();
-      if (parent instanceof PsiJavaFileStub) {
-        sink.occurrence(JavaStubIndexKeys.IMPLICIT_CLASSES, JavaImplicitClassUtil.getJvmName(((PsiJavaFileStub)parent).getPsi().getName()));
+      String name = stub.getName();
+      if (name != null) {
+        sink.occurrence(JavaStubIndexKeys.IMPLICIT_CLASSES, name);
       }
       return;
     }

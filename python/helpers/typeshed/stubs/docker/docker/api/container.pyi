@@ -24,15 +24,49 @@ class _TopResult(TypedDict):
 _Container: TypeAlias = _HasId | _HasID | str
 
 class ContainerApiMixin:
+    @overload
     def attach(
         self,
         container: _Container,
         stdout: bool = True,
         stderr: bool = True,
-        stream: bool = False,
+        stream: Literal[False] = False,
         logs: bool = False,
-        demux: bool = False,
-    ): ...
+        demux: Literal[False] = False,
+    ) -> bytes: ...
+    @overload
+    def attach(
+        self,
+        container: _Container,
+        stdout: bool = True,
+        stderr: bool = True,
+        stream: Literal[False] = False,
+        logs: bool = False,
+        *,
+        demux: Literal[True],
+    ) -> tuple[bytes | None, bytes | None]: ...
+    @overload
+    def attach(
+        self,
+        container: _Container,
+        stdout: bool = True,
+        stderr: bool = True,
+        *,
+        stream: Literal[True],
+        logs: bool = False,
+        demux: Literal[False] = False,
+    ) -> CancellableStream[bytes]: ...
+    @overload
+    def attach(
+        self,
+        container: _Container,
+        stdout: bool = True,
+        stderr: bool = True,
+        *,
+        stream: Literal[True],
+        logs: bool = False,
+        demux: Literal[True],
+    ) -> CancellableStream[tuple[bytes | None, bytes | None]]: ...
     def attach_socket(self, container: _Container, params=None, ws: bool = False): ...
     def commit(
         self,

@@ -11,7 +11,7 @@ import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 
 public abstract class TabbedModuleEditor extends ModuleEditor {

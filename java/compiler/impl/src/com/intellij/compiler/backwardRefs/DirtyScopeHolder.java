@@ -24,7 +24,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
@@ -42,9 +48,18 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileListener {

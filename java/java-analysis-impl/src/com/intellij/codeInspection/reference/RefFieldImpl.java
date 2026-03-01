@@ -9,7 +9,16 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UClassInitializer;
+import org.jetbrains.uast.UElementKt;
+import org.jetbrains.uast.UEnumConstant;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UThisExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastUtils;
 
 public final class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK             = 0b1_00000000_00000000; // 17th bit

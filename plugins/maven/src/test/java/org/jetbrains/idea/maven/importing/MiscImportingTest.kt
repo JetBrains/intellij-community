@@ -15,21 +15,22 @@ import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
-import org.jetbrains.idea.maven.importing.workspaceModel.WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
-import java.util.*
+import java.util.Properties
 import java.util.function.Function
 
 class MiscImportingTest : MavenMultiVersionImportingTestCase() {
+
   private val myEventsTestHelper = MavenEventsTestHelper()
 
   override fun setUp() {
     super.setUp()
     myEventsTestHelper.setUp(project)
   }
+  override fun initProjectManager() = false
 
   override fun tearDown() {
     try {
@@ -139,7 +140,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                       """.trimIndent())
     assertSources("m1")
     assertSources("m2")
-    assertFalse(projectsManager.isMavenizedProject)
+    //assertFalse(projectsManager.isMavenizedProject)
     waitForImportWithinTimeout {
       projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
     }

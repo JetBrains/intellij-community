@@ -5,9 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.newCoroutineContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

@@ -1,7 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.impl
 
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelArchiveApi
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelExecPosixApi
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.EelTunnelsPosixApi
+import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.impl.fs.PosixNioBasedEelFileSystemApi
 import com.intellij.platform.eel.path.EelPath

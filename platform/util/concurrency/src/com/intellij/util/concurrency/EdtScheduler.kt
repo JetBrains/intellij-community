@@ -1,11 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
-import com.intellij.openapi.application.*
-import com.intellij.openapi.application.CoroutineSupport.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import kotlin.time.Duration

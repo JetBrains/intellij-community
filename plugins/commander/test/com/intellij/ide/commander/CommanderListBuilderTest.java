@@ -16,7 +16,7 @@ import com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.TestCase;
 
-import javax.swing.*;
+import javax.swing.ListModel;
 
 public class CommanderListBuilderTest extends BaseProjectViewTestCase {
   private Commander myCommander;

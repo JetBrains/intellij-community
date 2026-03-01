@@ -35,16 +35,25 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "@lib//:junit5",
     "//libraries/jackson/jackson",
+    "//libraries/jackson/jackson:jackson_test_lib",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
     "//libraries/jackson/databind",
+    "//libraries/jackson/databind:databind_test_lib",
     "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
     "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
     "//libraries/netty/buffer",
+    "//libraries/netty/buffer:buffer_test_lib",
     "//platform/platform-util-netty:ide-util-netty",
     "//libraries/netty/codec-compression:libraries-netty-codec-compression",
-  ]
+    "//libraries/netty/codec-compression:libraries-netty-codec-compression_test_lib",
+  ],
+  runtime_deps = ["//platform/platform-util-netty:ide-util-netty_test_lib"]
 )
 ### auto-generated section `build intellij.tools.ide.starter.bus` end
 

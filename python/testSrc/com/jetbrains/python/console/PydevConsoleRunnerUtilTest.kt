@@ -2,7 +2,12 @@
 package com.jetbrains.python.console
 
 import com.intellij.execution.Platform
-import com.intellij.execution.target.*
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.progress.ProgressIndicator
 import org.assertj.core.api.SoftAssertions

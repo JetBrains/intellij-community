@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
  * This class doesn't push any file properties, it is used for scanning the project for `*.run.xml` files - files with run configurations.
  * This is to handle run configurations stored in arbitrary files within project content (not in .idea/runConfigurations or project.ipr file).
  */
-private class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
+internal class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
   override fun startSession(project: Project): IndexableFileScanner.ScanSession {
     val runManager by lazy(LazyThreadSafetyMode.NONE) { RunManagerImpl.getInstanceImpl(project) }
     return IndexableFileScanner.ScanSession {

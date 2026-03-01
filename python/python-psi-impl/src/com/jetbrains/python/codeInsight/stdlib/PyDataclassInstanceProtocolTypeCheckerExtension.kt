@@ -17,7 +17,7 @@ class PyDataclassInstanceProtocolTypeCheckerExtension : PyTypeCheckerExtension {
     context: TypeEvalContext,
     substitutions: PyTypeChecker.GenericSubstitutions,
   ): Optional<Boolean> {
-    if (expected is PyClassType && actual is PyClassType && expected.pyClass.name == "DataclassInstance" && isProtocol(expected, context)) {
+    if (expected is PyClassType && actual is PyClassType && expected.pyClass.name == "DataclassInstance" && expected.isProtocol(context)) {
       return Optional.of(parseDataclassParameters(actual.pyClass, context)?.type == PyDataclassParameters.PredefinedType.STD)
     }
     return Optional.empty()

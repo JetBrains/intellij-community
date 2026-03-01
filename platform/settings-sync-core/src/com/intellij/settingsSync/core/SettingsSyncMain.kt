@@ -5,10 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus

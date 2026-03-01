@@ -34,8 +34,9 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     if (!isStagingAreaAvailable(project)) return false
     if (!stageLineStatusTrackerRegistryOption().asBoolean()) return false
 
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file)
-    return repository != null
+    GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file) ?: return false
+    val status = GitStageTracker.getInstance(project).status(file) ?: return false
+    return status.isTracked()
   }
 
   override fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
@@ -55,7 +56,8 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
 
   override fun getContentInfo(project: Project, file: VirtualFile): ContentInfo? {
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return null
-    return StagedContentInfo(repository.currentRevision, file.charset, file)
+    val status = GitStageTracker.getInstance(project).status(file) ?: return null
+    return StagedContentInfo(repository.currentRevision, status, file.charset, file)
   }
 
   override fun shouldBeUpdated(oldInfo: ContentInfo?, newInfo: ContentInfo): Boolean {
@@ -63,7 +65,8 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     return oldInfo == null ||
            oldInfo !is StagedContentInfo ||
            oldInfo.currentRevision != newInfo.currentRevision ||
-           oldInfo.charset != newInfo.charset
+           oldInfo.charset != newInfo.charset ||
+           oldInfo.status.has(ContentVersion.HEAD) != newInfo.status.has(ContentVersion.HEAD)
   }
 
   override fun loadContent(project: Project, info: ContentInfo): TrackerContent? {
@@ -71,11 +74,11 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
 
     val file = info.virtualFile
     val filePath = VcsUtil.getFilePath(file)
-    val status = GitStageTracker.getInstance(project).status(file) ?: return null
     if (GitContentRevision.getRepositoryIfSubmodule(project, filePath) != null) return null
 
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return null
 
+    val status = info.status
     val indexFileRefresher = GitIndexFileSystemRefresher.getInstance(project)
     val indexFile = indexFileRefresher.createFile(repository.root, status.path(ContentVersion.STAGED)) ?: return null
     val indexDocument = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile) } ?: return null
@@ -92,7 +95,8 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
       return StagedTrackerContent(correctedText, indexDocument)
     }
     catch (e: VcsException) {
-      LOG.warn("Can't load base revision content for ${file.path} with status $status", e)
+      val message = "Can't load base revision content for ${file.path} with status $status"
+      if (status.isNotChanged()) LOG.debug(message, e) else LOG.warnWithDebug(message, e)
       return null
     }
   }
@@ -108,7 +112,11 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     tracker.dropBaseRevision()
   }
 
-  private class StagedContentInfo(val currentRevision: String?, val charset: Charset, val virtualFile: VirtualFile) : ContentInfo
+  private class StagedContentInfo(
+    val currentRevision: String?, val status: GitFileStatus,
+    val charset: Charset, val virtualFile: VirtualFile,
+  ) : ContentInfo
+
   private class StagedTrackerContent(val vcsContent: CharSequence, val stagedDocument: Document) : TrackerContent
 
   companion object {

@@ -4,11 +4,24 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.intellij.psi.PsiType.*;
+import static com.intellij.psi.PsiType.BOOLEAN;
+import static com.intellij.psi.PsiType.BYTE;
+import static com.intellij.psi.PsiType.CHAR;
+import static com.intellij.psi.PsiType.DOUBLE;
+import static com.intellij.psi.PsiType.FLOAT;
+import static com.intellij.psi.PsiType.INT;
+import static com.intellij.psi.PsiType.LONG;
+import static com.intellij.psi.PsiType.NULL;
+import static com.intellij.psi.PsiType.SHORT;
+import static com.intellij.psi.PsiType.VOID;
 
 @SuppressWarnings("deprecation")
 public final class PsiTypes {

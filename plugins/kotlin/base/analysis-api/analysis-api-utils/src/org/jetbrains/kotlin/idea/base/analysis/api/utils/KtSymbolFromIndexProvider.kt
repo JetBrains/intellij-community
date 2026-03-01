@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
@@ -26,15 +27,50 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.namedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinExtensionsByReceiverTypeStubIndexHelper
+import org.jetbrains.kotlin.idea.stubindex.KotlinExtensionsInObjectsByReceiverTypeIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinSubclassObjectNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExtensionsByReceiverTypeIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.cancelableCollectFilterProcessor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isMultiPlatform
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.serialization.deserialization.METADATA_FILE_EXTENSION
@@ -248,6 +284,48 @@ class KtSymbolFromIndexProvider(
             resolveExtensionScopeWithTopLevelDeclarations.callables(name)
 
     context(_: KaSession)
+    fun getJavaMethodsByName(
+        name: Name,
+        scope: GlobalSearchScope = analysisScope,
+        psiFilter: (PsiMethod) -> Boolean = { true },
+    ): Sequence<KaCallableSymbol> = getNonKotlinNamesCaches(useSiteModule.project).flatMap {
+        it.getMethodsByName(name.asString(), scope).asSequence()
+    }.filter {
+        ProgressManager.checkCanceled()
+        it.isAcceptable(psiFilter)
+    }.mapNotNull { it.callableSymbol }
+
+    context(_: KaSession)
+    fun getJavaMethodsByNameFilter(
+        nameFilter: (Name) -> Boolean,
+        scope: GlobalSearchScope = analysisScope,
+        psiFilter: (PsiMethod) -> Boolean = { true }
+    ): Sequence<KaCallableSymbol> {
+        val names = buildSet {
+            val processor = createNamesProcessor(nameFilter)
+
+            getNonKotlinNamesCaches(useSiteModule.project).forEach {
+                it.processAllMethodNames(processor, scope, null)
+            }
+        }
+
+        return names.asSequence()
+            .flatMap { getJavaMethodsByName(it, scope, psiFilter) }
+    }
+
+    context(_: KaSession)
+    fun getJavaFieldsByName(
+        name: Name,
+        scope: GlobalSearchScope = analysisScope,
+        psiFilter: (PsiField) -> Boolean = { true },
+    ): Sequence<KaCallableSymbol> = getNonKotlinNamesCaches(useSiteModule.project).flatMap {
+        it.getFieldsByName(name.asString(), scope).asSequence()
+    }.filter {
+        ProgressManager.checkCanceled()
+        it.isAcceptable(psiFilter)
+    }.mapNotNull { it.callableSymbol }
+
+    context(_: KaSession)
     fun getJavaFieldsByNameFilter(
         nameFilter: (Name) -> Boolean,
         scope: GlobalSearchScope = analysisScope,
@@ -265,29 +343,27 @@ class KtSymbolFromIndexProvider(
             .flatMap { getJavaFieldsByName(it, scope, psiFilter) }
     }
 
+    /**
+     * Returns all Java callables (methods and fields) matching the given [nameFilter] and [psiFilter].
+     */
     context(_: KaSession)
-    fun getJavaMethodsByName(
-        name: Name,
+    fun getJavaCallablesByNameFilter(
+        nameFilter: (Name) -> Boolean,
         scope: GlobalSearchScope = analysisScope,
-        psiFilter: (PsiMethod) -> Boolean = { true },
-    ): Sequence<KaCallableSymbol> = getNonKotlinNamesCaches(useSiteModule.project).flatMap {
-        it.getMethodsByName(name.asString(), scope).asSequence()
-    }.filter {
-        ProgressManager.checkCanceled()
-        it.isAcceptable(psiFilter)
-    }.mapNotNull { it.callableSymbol }
+        psiFilter: (PsiMember) -> Boolean = { true }
+    ): Sequence<KaCallableSymbol> {
+        val names = buildSet {
+            val processor = createNamesProcessor(nameFilter)
 
-    context(_: KaSession)
-    fun getJavaFieldsByName(
-        name: Name,
-        scope: GlobalSearchScope = analysisScope,
-        psiFilter: (PsiField) -> Boolean = { true },
-    ): Sequence<KaCallableSymbol> = getNonKotlinNamesCaches(useSiteModule.project).flatMap {
-        it.getFieldsByName(name.asString(), scope).asSequence()
-    }.filter {
-        ProgressManager.checkCanceled()
-        it.isAcceptable(psiFilter)
-    }.mapNotNull { it.callableSymbol }
+            getNonKotlinNamesCaches(useSiteModule.project).forEach {
+                it.processAllMethodNames(processor, scope, null)
+                it.processAllFieldNames(processor, scope, null)
+            }
+        }
+
+        return names.asSequence()
+            .flatMap {  getJavaMethodsByName(it, scope, psiFilter) + getJavaFieldsByName(it, scope, psiFilter) }
+    }
 
     /**
      *  Returns top-level callables, excluding extensions. To obtain extensions use [getExtensionCallableSymbolsByNameFilter].
@@ -542,10 +618,10 @@ private fun MutableSet<Name>.createNamesProcessor(
 /**
  * Returns whether the module can declare expect declarations that could be implemented by an implementing module.
  */
+@OptIn(KaPlatformInterface::class)
 private fun KaModule.canHaveExpectDeclarations(): Boolean {
     if (targetPlatform.isMultiPlatform()) return true
 
-    @OptIn(KaPlatformInterface::class)
     val contextModule = (this as? KaDanglingFileModule)?.contextModule ?: this
     // We return true in this case out of caution, because we do not know for sure.
     if (contextModule !is KaSourceModule) return true

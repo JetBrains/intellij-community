@@ -14,7 +14,7 @@ import com.intellij.util.PathUtilRt
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.io.InputStream
-import java.util.*
+import java.util.Locale
 
 object LocalizationUtil {
   private const val LOCALIZATION_FOLDER_NAME: String = "localization"

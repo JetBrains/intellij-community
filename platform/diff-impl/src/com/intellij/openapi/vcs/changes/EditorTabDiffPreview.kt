@@ -3,7 +3,12 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.chains.DiffRequestProducer
-import com.intellij.diff.editor.*
+import com.intellij.diff.editor.DiffEditorEscapeAction
+import com.intellij.diff.editor.DiffEditorTabFilesManager
+import com.intellij.diff.editor.DiffEditorViewerFileEditor
+import com.intellij.diff.editor.DiffViewerVirtualFile
+import com.intellij.diff.editor.DiffVirtualFileWithProducers
+import com.intellij.diff.editor.DiffVirtualFileWithTabName
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.ListSelection
@@ -120,7 +125,7 @@ abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, D
     }
   }
 
-  private class DiffEditorPreviewEscapeAction(preview: EditorTabDiffPreview) : DumbAwareAction(), DiffEditorEscapeAction {
+  internal class DiffEditorPreviewEscapeAction(preview: EditorTabDiffPreview) : DumbAwareAction(), DiffEditorEscapeAction {
     private val previewRef: WeakReference<EditorTabDiffPreview> = WeakReference(preview)
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

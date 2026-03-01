@@ -6,6 +6,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.JavaReferringObjectsValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -18,10 +19,29 @@ import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.agent.MemoryAgentPathsToClosestGCRootsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
-import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.ui.tree.*;
-import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
+import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
+import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
+import com.intellij.debugger.ui.impl.watch.ThisDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
+import com.intellij.debugger.ui.tree.ArrayElementDescriptor;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.debugger.ui.tree.FieldDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
+import com.intellij.debugger.ui.tree.NodeManager;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.render.ArrayRenderer;
+import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
+import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.OnDemandRenderer;
 import com.intellij.debugger.ui.tree.render.Renderer;
+import com.intellij.debugger.ui.tree.render.XValuePresentationProvider;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,7 +55,21 @@ import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.XDescriptor;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback;
+import com.intellij.xdebugger.frame.XNamedValue;
+import com.intellij.xdebugger.frame.XNavigatable;
+import com.intellij.xdebugger.frame.XPinToTopData;
+import com.intellij.xdebugger.frame.XReferrersProvider;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -44,7 +78,15 @@ import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassNotPreparedException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -54,7 +96,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -578,7 +620,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                 }
                 else if (psiExpression != null) {
                   ReadAction.nonBlocking(() -> {
-                    XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
+                    SourcePosition sourcePosition = getDebuggerContext().getSourcePosition();
+                    Language language = (sourcePosition != null) ? sourcePosition.getFile().getLanguage() : psiExpression.getLanguage();
+                    TextWithImports convertedTextWithImports = TextWithImportsImpl.convertToLanguage(psiExpression, language);
+                    XExpression res = TextWithImportsImpl.toXExpression(convertedTextWithImports);
                     // add runtime imports if any
                     Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
                     if (imports != null && res != null) {
@@ -678,6 +723,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         });
       }
     };
+  }
+
+  @ApiStatus.Internal
+  public void setRenderer(NodeRenderer nodeRenderer) {
+    setRenderer(nodeRenderer, null);
   }
 
   public void setRenderer(NodeRenderer nodeRenderer, @Nullable final XValueNodeImpl node) {

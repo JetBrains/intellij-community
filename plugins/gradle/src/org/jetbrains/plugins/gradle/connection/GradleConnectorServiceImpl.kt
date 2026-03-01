@@ -37,7 +37,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Function

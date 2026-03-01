@@ -4,21 +4,37 @@ package com.intellij.testFramework;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomFoldRegionRenderer;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayProperties;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -35,25 +51,30 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManage
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.testFramework.common.EditorCaretTestUtil;
-import com.intellij.testFramework.common.EditorCaretTestUtil.CaretInfo;
-import com.intellij.testFramework.common.EditorCaretTestUtil.CaretAndSelectionState;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
+import com.intellij.testFramework.common.EditorCaretTestUtil.CaretAndSelectionState;
+import com.intellij.testFramework.common.EditorCaretTestUtil.CaretInfo;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
@@ -63,20 +84,30 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import kotlin.Unit;
+import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.ActionsKt.invokeAndWaitIfNeeded;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 /**
  * @author Maxim.Mossienko
@@ -346,13 +377,13 @@ public final class EditorTestUtil {
     });
   }
 
-  public static void setEditorVisibleSize(Editor editor, int widthInChars, int heightInChars) {
+  public static void setEditorVisibleSize(@NotNull Editor editor, int widthInChars, int heightInChars) {
     setEditorVisibleSizeInPixels(editor,
                                  widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor),
                                  heightInChars * editor.getLineHeight());
   }
 
-  public static void setEditorVisibleSizeInPixels(Editor editor, int widthInPixels, int heightInPixels) {
+  public static void setEditorVisibleSizeInPixels(@NotNull Editor editor, int widthInPixels, int heightInPixels) {
     Dimension size = new Dimension(widthInPixels, heightInPixels);
     ((EditorEx)editor).getScrollPane().getViewport().setExtentSize(size);
   }
@@ -383,19 +414,19 @@ public final class EditorTestUtil {
   /**
    * Applies given caret/selection state to the editor. Editor text must have been set up previously.
    */
-  public static void setCaretsAndSelection(Editor editor, CaretAndSelectionState caretsState) {
+  public static void setCaretsAndSelection(@NotNull Editor editor, @NotNull CaretAndSelectionState caretsState) {
     EditorCaretTestUtil.setCaretsAndSelection(editor, caretsState);
   }
 
-  public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState) {
+  public static void verifyCaretAndSelectionState(Editor editor, @NotNull CaretAndSelectionState caretState) {
     verifyCaretAndSelectionState(editor, caretState, null);
   }
 
-  public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState, String message) {
+  public static void verifyCaretAndSelectionState(Editor editor, @NotNull CaretAndSelectionState caretState, @Nullable String message) {
     verifyCaretAndSelectionState(editor, caretState, message, null);
   }
 
-  public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState, String message, String expectedFilePath) {
+  public static void verifyCaretAndSelectionState(Editor editor, @NotNull CaretAndSelectionState caretState, @Nullable String message, String expectedFilePath) {
     boolean hasChecks = false;
     for (int i = 0; i < caretState.carets().size(); i++) {
       CaretInfo expected = caretState.carets().get(i);
@@ -431,7 +462,7 @@ public final class EditorTestUtil {
     }
   }
 
-  private static void doVerifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState, String message) {
+  private static void doVerifyCaretAndSelectionState(@NotNull Editor editor, @NotNull CaretAndSelectionState caretState, @Nullable String message) {
     String messageSuffix = message == null ? "" : (message + ": ");
     CaretModel caretModel = editor.getCaretModel();
     List<Caret> allCarets = new ArrayList<>(caretModel.getAllCarets());
@@ -663,8 +694,12 @@ public final class EditorTestUtil {
     return result[0];
   }
 
+  /**
+   * @see AsyncEditorLoader#start(TextEditorImpl, Deferred)
+   */
   @RequiresEdt
   public static void waitForLoading(@SuppressWarnings("unused") Editor editor) {
+    // editors in the test mode are loaded synchronously
   }
 
   public static void testUndoInEditor(@NotNull Editor editor, @NotNull Runnable runnable) {
@@ -674,7 +709,7 @@ public final class EditorTestUtil {
     UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
     undoManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
       @Override
-      public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+      public FileEditor getCurrentEditor(@Nullable Project project) {
         return fileEditor;
       }
     });
@@ -883,28 +918,27 @@ public final class EditorTestUtil {
       }
     }
   }
-
+  @RequiresEdt
   public static void buildInitialFoldingsInBackground(@NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    CodeFoldingState foldingState = PlatformTestUtil.waitForFuture(ReadAction.nonBlocking(() -> {
-        Project project = editor.getProject();
-        if (project == null || editor.isDisposed()) {
-          return null;
-        }
-        if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
-          return null;
-        }
-        Document document = editor.getDocument();
-        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-        if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
-          return null;
-        }
-        return CodeFoldingManager.getInstance(project).buildInitialFoldings(document);
-      })
-                                                                     .submit(AppExecutorUtil.getAppExecutorService()));
+    Runnable foldingState = PlatformTestUtil.waitForFuture(ReadAction.nonBlocking(() -> {
+      Project project = editor.getProject();
+      if (project == null || editor.isDisposed()) {
+        return null;
+      }
+      if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
+        return null;
+      }
+      Document document = editor.getDocument();
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
+        return null;
+      }
+      return ((CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project)).updateFoldRegionsAsync(editor, true, true);
+    }).submit(AppExecutorUtil.getAppExecutorService()));
     if (foldingState != null) {
-      foldingState.setToEditor(editor);
+      foldingState.run();
     }
   }
   private static boolean supportsDumbModeFolding(@NotNull PsiFile file) {

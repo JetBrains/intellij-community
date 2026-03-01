@@ -1,8 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildView.frontend
 
-import com.intellij.build.*
+import com.intellij.build.BUILD_TREE_SELECTED_NODE
+import com.intellij.build.BuildDuration
+import com.intellij.build.BuildNodesUpdate
+import com.intellij.build.BuildTreeEvent
+import com.intellij.build.BuildTreeExposeRequest
+import com.intellij.build.BuildTreeFilteringState
+import com.intellij.build.BuildTreeNavigationContext
+import com.intellij.build.BuildTreeNode
+import com.intellij.build.BuildViewId
+import com.intellij.build.SelectedBuildTreeNode
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.OccurenceNavigatorSupport
 import com.intellij.ide.actions.OccurenceNavigatorActionBase
 import com.intellij.ide.nls.NlsMessages
@@ -15,7 +25,11 @@ import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
@@ -28,8 +42,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
-import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.RelativeFont
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SideBorder
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.SpeedSearchComparator
+import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.tree.TreePathUtil
 import com.intellij.ui.tree.ui.DefaultTreeUI
@@ -45,19 +67,33 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.awt.*
-import java.util.*
+import java.awt.CardLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.util.Collections
+import java.util.Enumeration
+import java.util.Vector
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.Timer
 import javax.swing.event.TreeSelectionEvent
-import javax.swing.tree.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.MutableTreeNode
+import javax.swing.tree.TreeNode
+import javax.swing.tree.TreePath
 
 private val LOG = fileLogger()
 
-internal class BuildTreeView(private val project: Project, parentScope: CoroutineScope, private val buildViewId: BuildViewId)
-  : JPanel(), UiDataProvider, ComponentContainer {
+internal class BuildTreeView(
+  private val project: Project,
+  parentScope: CoroutineScope,
+  private val buildViewId: BuildViewId,
+  private val backendNavigationAndFiltering: Boolean = true,
+) : JPanel(), UiDataProvider, ComponentContainer {
   private val uiScope = parentScope.childScope("BuildTreeView", Dispatchers.UI + ModalityState.any().asContextElement())
   private val model = BuildTreeViewModelProxy.getInstance(buildViewId)
 
@@ -80,6 +116,18 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
 
   private val occurenceNavigatorSupport = MyOccurenceNavigatorSupport(tree)
 
+  internal var showingSuccessful: Boolean
+    get() = filteringState.showSuccessful
+    set(value) {
+      handleFilteringStateChange(filteringState.copy(showSuccessful = value))
+    }
+
+  internal var showingWarnings: Boolean
+    get() = filteringState.showWarnings
+    set(value) {
+      handleFilteringStateChange(filteringState.copy(showWarnings = value))
+    }
+
   // A factor which can correct for the difference between frontend's and backend's clocks,
   // in case we need to display a duration of a process, for which we know the start timestamp on the backend.
   // It doesn't include the connection latency, but that seems acceptable in our case.
@@ -98,15 +146,17 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
         handleTreeEvent(event, nodeMap)
       }
     }
-    uiScope.launch(Dispatchers.EDT /* Navigatable-s might expect WIL to be taken */) {
-      model.getNavigationFlow().collect {
-        handleNavigation(it.forward)
+    if (backendNavigationAndFiltering) {
+      uiScope.launch(Dispatchers.EDT /* Navigatable-s might expect WIL to be taken */) {
+        model.getNavigationFlow().collect {
+          handleNavigation(it.forward)
+        }
       }
-    }
-    uiScope.launch {
-      navigationContext.collect {
-        LOG.debug { "Navigation context: $it" }
-        model.onNavigationContextChange(it)
+      uiScope.launch {
+        navigationContext.collect {
+          LOG.debug { "Navigation context: $it" }
+          model.onNavigationContextChange(it)
+        }
       }
     }
   }
@@ -219,7 +269,7 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
         val nodeId = event.nodeId
         if (nodeId == null) {
           LOG.debug { "Clearing selection" }
-          tree.clearSelection()
+          clearTreeSelection()
         }
         else {
           val node = nodeMap[nodeId]
@@ -239,7 +289,9 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
         }
       }
       is BuildTreeFilteringState -> {
-        handleFilteringStateChange(event)
+        if (backendNavigationAndFiltering) {
+          handleFilteringStateChange(event)
+        }
       }
     }
   }
@@ -292,10 +344,12 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
   }
 
   private fun updateNavigationContext() {
-    val hasPrevNode = occurenceNavigatorSupport.hasPreviousOccurence()
-    val hasNextNode = occurenceNavigatorSupport.hasNextOccurence()
-    val hasAnyNode = hasNextNode || hasPrevNode || (tree.selectionPath?.lastPathComponent as? MyNode)?.occurrenceNavigatable != null
-    navigationContext.value = BuildTreeNavigationContext(hasPrevNode, hasNextNode, hasAnyNode)
+    if (backendNavigationAndFiltering) {
+      val hasPrevNode = occurenceNavigatorSupport.hasPreviousOccurence()
+      val hasNextNode = occurenceNavigatorSupport.hasNextOccurence()
+      val hasAnyNode = hasNextNode || hasPrevNode || (tree.selectionPath?.lastPathComponent as? MyNode)?.occurrenceNavigatable != null
+      navigationContext.value = BuildTreeNavigationContext(hasPrevNode, hasNextNode, hasAnyNode)
+    }
   }
 
   fun maybeExpand(path: TreePath?): Boolean {
@@ -335,6 +389,26 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
     val selectedNodes = TreeUtil.collectSelectedObjects(tree) { (it?.lastPathComponent as? MyNode)?.content }.filterNotNull()
     val navigatables = selectedNodes.flatMap { it.navigatables }.map { it.navigatable() }
     return if (navigatables.isEmpty()) null else navigatables.toTypedArray()
+  }
+
+  internal fun clearTreeSelection() {
+    tree.clearSelection()
+  }
+
+  internal fun hasNextOccurence(): Boolean {
+    return occurenceNavigatorSupport.hasNextOccurence()
+  }
+
+  internal fun hasPreviousOccurence(): Boolean {
+    return occurenceNavigatorSupport.hasPreviousOccurence()
+  }
+
+  internal fun goNextOccurence(): OccurenceNavigator.OccurenceInfo? {
+    return occurenceNavigatorSupport.goNextOccurence()
+  }
+
+  internal fun goPreviousOccurence(): OccurenceNavigator.OccurenceInfo? {
+    return occurenceNavigatorSupport.goPreviousOccurence()
   }
 
   private class MyOccurenceNavigatorSupport(tree: JTree) : OccurenceNavigatorSupport(tree) {

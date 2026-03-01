@@ -22,4 +22,19 @@ jvm_library(
     "//platform/util-ex",
   ]
 )
+
+jvm_library(
+  name = "markdown_test_lib",
+  module_name = "intellij.grazie.markdown",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":markdown",
+    "//plugins/grazie/src:core_test_lib",
+    "//plugins/markdown/core:markdown_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.grazie.markdown` end

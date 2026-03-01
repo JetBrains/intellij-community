@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/codeInsight/hints/values")
-public class KotlinValuesHintsProviderTestGenerated extends AbstractKotlinValuesHintsProviderTest {
+public class KotlinValuesHintsProviderTestGenerated extends AbstractK1KotlinValuesHintsProviderTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

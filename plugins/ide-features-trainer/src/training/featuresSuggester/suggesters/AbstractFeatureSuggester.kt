@@ -7,7 +7,11 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.KeymapUtil
 import org.jetbrains.annotations.Nls
-import training.featuresSuggester.*
+import training.featuresSuggester.DocumentationSuggestion
+import training.featuresSuggester.FeatureSuggesterBundle
+import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.Suggestion
+import training.featuresSuggester.TipSuggestion
 import training.featuresSuggester.settings.FeatureSuggesterSettings
 import training.featuresSuggester.statistics.FeatureSuggesterStatistics
 import java.util.concurrent.TimeUnit

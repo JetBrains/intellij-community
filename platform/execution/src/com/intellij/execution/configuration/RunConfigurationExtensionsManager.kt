@@ -22,7 +22,7 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.util.SmartList
 import org.jdom.Element
 import org.jdom.output.XMLOutputter
-import java.util.*
+import java.util.TreeMap
 
 private const val EXTENSION_ID_ATTR = "ID"
 private const val EXTENSION_ROOT_ATTR = "EXTENSION"

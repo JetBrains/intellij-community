@@ -5,7 +5,11 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import kotlinx.serialization.json.JsonObjectBuilder

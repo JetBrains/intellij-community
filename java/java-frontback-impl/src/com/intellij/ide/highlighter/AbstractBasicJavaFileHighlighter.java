@@ -16,7 +16,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.psi.impl.source.tree.ElementType.*;
+import static com.intellij.psi.impl.source.tree.ElementType.DOC_COMMENT;
+import static com.intellij.psi.impl.source.tree.ElementType.KEYWORD_BIT_SET;
+import static com.intellij.psi.impl.source.tree.ElementType.LITERAL_BIT_SET;
+import static com.intellij.psi.impl.source.tree.ElementType.OPERATION_BIT_SET;
 
 //suppress to be clear, what type is used
 @SuppressWarnings("UnnecessarilyQualifiedStaticUsage")

@@ -2,10 +2,10 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInspection.util.InspectionMessage;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IProperty;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public abstract class FormErrorCollector {

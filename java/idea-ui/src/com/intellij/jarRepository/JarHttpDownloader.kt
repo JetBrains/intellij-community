@@ -19,8 +19,12 @@ import org.jetbrains.idea.maven.aether.Retry
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.*
-import kotlin.io.path.*
+import java.util.Base64
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 object JarHttpDownloader {

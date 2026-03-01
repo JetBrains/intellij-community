@@ -27,7 +27,7 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
   suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> = coroutineScope {
     val project = module.project
     if (createGitRepository) {
-      launch(TraceContext(PyBundle.message("tracecontext.generating.git")) + Dispatchers.IO) {
+      launch(TraceContext(PyBundle.message("trace.context.generating.git")) + Dispatchers.IO) {
         withBackgroundProgress(project, PyBundle.message("new.project.git")) {
           GitRepositoryInitializer.getInstance()?.initRepository(project, baseDir, true) ?: error("No git service available")
         }

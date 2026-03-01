@@ -6,7 +6,11 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
 class GroovyAnnotatorPre17(private val holder: AnnotationHolder, private val version: @NlsSafe String) : GroovyElementVisitor() {
 

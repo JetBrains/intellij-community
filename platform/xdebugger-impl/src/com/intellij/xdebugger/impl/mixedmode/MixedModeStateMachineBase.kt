@@ -8,7 +8,6 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XSuspendContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -61,6 +60,8 @@ abstract class MixedModeStateMachineBase(
   object Exited : State
   abstract class BothRunningBase(val highLevelSteppingActive: Boolean = false) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
+  // We need ExitingInProgress state to not skip to HighRun/LowRun events on detaching
+  object ExitingInProgress : State
 
   protected val mainDispatcher = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1).asCoroutineDispatcher()
 

@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     `java-gradle-plugin`
-    `kotlin-dsl`
 }
 
 group = "org.example.my-plugin"

@@ -2,7 +2,26 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiConstantEvaluationHelper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;

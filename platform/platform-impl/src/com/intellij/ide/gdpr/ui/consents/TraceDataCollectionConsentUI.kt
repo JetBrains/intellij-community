@@ -22,15 +22,17 @@ internal class TraceDataCollectionConsentUI(
     if (LOG.isDebugEnabled) {
       LOG.debug("AiDataCollectionExternalSettings: $externalSettings")
     }
-    if (externalSettings != null) {
-      val isForciblyDisabled = externalSettings.isForciblyDisabled()
-      if (LOG.isDebugEnabled) {
-        LOG.debug("AiDataCollectionExternalSettings: isForciblyDisabled: ${isForciblyDisabled}")
-      }
-      if (isForciblyDisabled) {
-        return ConsentForcedState.ExternallyDisabled(externalSettings.getForciblyDisabledDescription()
-                                                     ?: IdeBundle.message("gdpr.consent.externally.disabled.warning"))
-      }
+    if (externalSettings == null) {
+      // AIA plugin is required for TRACE data collection
+      return ConsentForcedState.ExternallyDisabled(IdeBundle.message("gdpr.consent.trace.requires.ai.assistant"))
+    }
+    val isForciblyDisabled = externalSettings.isForciblyDisabled()
+    if (LOG.isDebugEnabled) {
+      LOG.debug("AiDataCollectionExternalSettings: isForciblyDisabled: $isForciblyDisabled")
+    }
+    if (isForciblyDisabled) {
+      return ConsentForcedState.ExternallyDisabled(externalSettings.getForciblyDisabledDescription()
+                                                   ?: IdeBundle.message("gdpr.consent.externally.disabled.warning"))
     }
     val dataCollectionAgreement = DataCollectionAgreement.getInstance()
     return when (dataCollectionAgreement) {

@@ -31,18 +31,28 @@ import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesW
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
-import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
+import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
+import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import java.util.*
+import java.util.Locale
 
 object DebuggerUtils {
     @set:TestOnly
@@ -189,7 +199,7 @@ object DebuggerUtils {
     }
 
     private fun isApplicable(file: KtFile, className: JvmClassName): Boolean {
-        val classNames = ClassNameCalculator.getInstance().getTopLevelNames(file).map(String::fqnToInternalName)
+        val classNames = ClassNameProvider().getTopLevelNames(file).map { it.fqnToInternalName() }
         return className.internalName.isInnerClassOfAny(classNames)
     }
 

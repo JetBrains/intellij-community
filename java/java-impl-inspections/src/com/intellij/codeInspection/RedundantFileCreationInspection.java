@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -6,7 +6,17 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -89,7 +99,7 @@ public final class RedundantFileCreationInspection extends AbstractBaseJavaLocal
       if (!candidate.isConstructor() || candidate.equals(method)) continue;
       List<PsiType> candidateParams = ContainerUtil.map(candidate.getParameterList().getParameters(), param -> param.getType());
       if (candidateParams.size() != methodParams.size()) continue;
-      if (TypeUtils.isJavaLangString(candidateParams.get(0)) &&
+      if (TypeUtils.isJavaLangString(candidateParams.getFirst()) &&
           methodParams.subList(1, methodParams.size()).equals(candidateParams.subList(1, candidateParams.size()))) {
         return true;
       }

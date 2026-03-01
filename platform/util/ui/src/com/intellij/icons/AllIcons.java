@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.icons;
 
 import com.intellij.ui.IconManager;
@@ -26,6 +26,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AddList = load("expui/bookmarks/addBookmarksList.svg", "actions/addList.svg", 687312006, 2);
     /** 16x16 */ public static final @NotNull Icon AddMulticaret = load("expui/general/add.svg", "actions/AddMulticaret.svg", 14246848, 2);
     /** 16x16 */ public static final @NotNull Icon AddToDictionary = load("expui/actions/addToDictionary.svg", "actions/addToDictionary.svg", -854911886, 2);
+    /** 16x16 */ public static final @NotNull Icon AiIntentionBulb = load("expui/actions/aiIntentionBulb.svg", -2142579745, 2);
     /** 16x16 */ public static final @NotNull Icon Annotate = load("expui/general/listFiles.svg", "actions/annotate.svg", -264543398, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowCollapse = load("expui/general/chevronLeft.svg", "actions/arrowCollapse.svg", -296923721, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowExpand = load("expui/general/chevronRight.svg", "actions/arrowExpand.svg", 2111993468, 2);
@@ -60,8 +61,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Edit = load("expui/general/edit.svg", "actions/edit.svg", -483863471, 2);
     /** 16x16 */ public static final @NotNull Icon EditScheme = load("expui/general/edit.svg", "actions/editScheme.svg", -2140024882, 2);
     /** 16x16 */ public static final @NotNull Icon EditSource = load("expui/general/edit.svg", "actions/editSource.svg", 1733514533, 2);
-    /** 16x16 */ public static final @NotNull Icon EnableNewUi = load("actions/enableNewUi.svg", 944382817, 0);
-    /** 16x16 */ public static final @NotNull Icon EnableNewUiSelected = load("actions/enableNewUiSelected.svg", 1993898906, 0);
     /** 16x16 */ public static final @NotNull Icon Execute = load("expui/run/run.svg", "actions/execute.svg", 917793291, 10);
     /** 16x16 */ public static final @NotNull Icon Exit = load("expui/general/exit.svg", "actions/exit.svg", -83756038, 2);
     /** 16x16 */ public static final @NotNull Icon Expandall = load("expui/general/expandAll.svg", "actions/expandall.svg", 879771216, 2);
@@ -235,6 +234,12 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon WordsHovered = load("expui/inline/exactWords.svg", "actions/wordsHovered.svg", 1488302022, 0);
     /** 16x16 */ public static final @NotNull Icon WordsSelected = load("expui/inline/exactWords.svg", "actions/wordsSelected.svg", 128086410, 0);
 
+    /** @deprecated to be removed without replacement */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    public static final @NotNull Icon EnableNewUi = load("actions/enableNewUi.svg", 0, 0);
+
     /** @deprecated to be removed (use expandable text field instead, see https://plugins.jetbrains.com/docs/intellij/built-in-button.html) */
     @SuppressWarnings("unused")
     @Deprecated
@@ -246,6 +251,8 @@ public class AllIcons {
     /** 14x14 */ public static final @NotNull Icon BreakpointFieldUnsuspendentDisabled = load("expui/breakpoints/breakpointFieldUnsuspendentDisabled.svg", -1363984560, 2);
     /** 14x14 */ public static final @NotNull Icon BreakpointMethodUnsuspendentDisabled = load("expui/breakpoints/breakpointMethodUnsuspendentDisabled.svg", 2054364640, 2);
     /** 14x14 */ public static final @NotNull Icon BreakpointUnsuspendentDisabled = load("expui/breakpoints/breakpointUnsuspendentDisabled.svg", 1020097126, 2);
+    /** 14x14 */ public static final @NotNull Icon ConditionalInstrumentation = load("expui/breakpoints/conditionalInstrumentation.svg", -814054787, 2);
+    /** 14x14 */ public static final @NotNull Icon LoggingInstrumentation = load("expui/breakpoints/loggingInstrumentation.svg", -1997548618, 2);
     /** 14x14 */ public static final @NotNull Icon MultipleBreakpointsDisabled = load("expui/breakpoints/multipleBreakpointsDisabled.svg", -358532645, 2);
     /** 14x14 */ public static final @NotNull Icon MultipleBreakpointsMuted = load("expui/breakpoints/multipleBreakpointsMuted.svg", -1544664600, 2);
   }
@@ -366,6 +373,12 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon MuteBreakpoints = load("expui/run/muteBreakpoints.svg", "debugger/muteBreakpoints.svg", 896463102, 2);
     /** 12x12 */ public static final @NotNull Icon NextStatement = load("expui/debugger/nextStatement.svg", "debugger/nextStatement.svg", -1096276944, 2);
     /** 16x16 */ public static final @NotNull Icon Overhead = load("expui/debugger/overhead.svg", "debugger/overhead.svg", -837590875, 2);
+
+    public static final class PinToTop {
+      /** 16x16 */ public static final @NotNull Icon PinnedItem = load("expui/debugger/pinToTop/pinnedItem.svg", -570469980, 0);
+      /** 16x16 */ public static final @NotNull Icon UnpinnedItem = load("expui/debugger/pinToTop/unpinnedItem.svg", -531132107, 0);
+    }
+
     /** 16x16 */ public static final @NotNull Icon PromptInput = load("expui/debugger/promptInput.svg", "debugger/promptInput.svg", -1485755492, 2);
     /** 16x16 */ public static final @NotNull Icon PromptInputHistory = load("expui/debugger/promptInputHistory.svg", "debugger/promptInputHistory.svg", -526772481, 2);
     /** 7x9 */ public static final @NotNull Icon Question_badge = load("expui/breakpoints/questionBadge.svg", "debugger/question_badge.svg", -1174769014, 2);
@@ -589,6 +602,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Learn = load("expui/general/learn.svg", 735868097, 2);
     /** 14x14 */ public static final @NotNull Icon LinkDropTriangle = load("expui/general/chevronDown.svg", "general/linkDropTriangle.svg", -2144062286, 2);
     /** 16x16 */ public static final @NotNull Icon Locate = load("expui/general/locate.svg", "general/locate.svg", 1990903521, 2);
+    /** 16x16 */ public static final @NotNull Icon LockedUltimate = load("expui/general/lockedUltimate.svg", 1559721955, 2);
     /** 16x16 */ public static final @NotNull Icon Menu = load("expui/general/menu.svg", -687974999, 2);
     /** 13x13 */ public static final @NotNull Icon Modified = load("expui/fileTypes/modified.svg", "general/modified.svg", 1281377481, 2);
     /** 13x13 */ public static final @NotNull Icon ModifiedSelected = load("general/modifiedSelected.svg", 251018616, 0);
@@ -724,6 +738,7 @@ public class AllIcons {
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOn = load("expui/ide/feedbackRatingOn.svg", "ide/feedbackRatingOn.svg", 1102075748, 0);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOnFocused = load("ide/feedbackRatingOnFocused.svg", -1692491005, 0);
     /** 16x16 */ public static final @NotNull Icon Gift = load("expui/ide/gift.svg", "ide/gift.svg", -1423934596, 2);
+    /** 16x16 */ public static final @NotNull Icon GrayDot = load("ide/grayDot.svg", -408879099, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOff = load("ide/hectorOff.svg", 756397077, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOn = load("ide/hectorOn.svg", 1387966645, 2);
     /** 16x16 */ public static final @NotNull Icon HectorSyntax = load("ide/hectorSyntax.svg", -415840178, 2);
@@ -883,17 +898,11 @@ public class AllIcons {
 
   public static final class MeetNewUi {
     /** 16x16 */ public static final @NotNull Icon DarkTheme = load("expui/meetNewUi/darkTheme.svg", -1512620599, 2);
-    /** 16x16 */ public static final @NotNull Icon DarkThemeSelected = load("expui/meetNewUi/darkThemeSelected.svg", -462276083, 2);
-    /** 88x48 */ public static final @NotNull Icon DensityCompact = load("expui/meetNewUi/densityCompact.svg", -103938576, 2);
-    /** 88x48 */ public static final @NotNull Icon DensityDefault = load("expui/meetNewUi/densityDefault.svg", 691969220, 2);
     /** 16x16 */ public static final @NotNull Icon LightTheme = load("expui/meetNewUi/lightTheme.svg", -1581474989, 2);
-    /** 16x16 */ public static final @NotNull Icon LightThemeSelected = load("expui/meetNewUi/lightThemeSelected.svg", -475397519, 2);
-    /** 16x16 */ public static final @NotNull Icon SystemTheme = load("expui/meetNewUi/systemTheme.svg", -924931239, 2);
-    /** 16x16 */ public static final @NotNull Icon SystemThemeSelected = load("expui/meetNewUi/systemThemeSelected.svg", -1377130003, 2);
   }
 
   public static final class Modules {
-    /** 16x16 */ public static final @NotNull Icon AddExcludedRoot = load("modules/addExcludedRoot.svg", -551171712, 2);
+    /** 16x16 */ public static final @NotNull Icon AddExcludedRoot = load("expui/actions/addExcludedRoot.svg", "modules/addExcludedRoot.svg", -551171712, 2);
     /** 16x16 */ public static final @NotNull Icon Annotation = load("expui/nodes/annotationFolder.svg", "modules/annotation.svg", 394273456, 0);
     /** 16x16 */ public static final @NotNull Icon EditFolder = load("expui/nodes/editFolder.svg", "modules/editFolder.svg", -260654478, 0);
     /** 16x16 */ public static final @NotNull Icon ExcludedGeneratedRoot = load("expui/nodes/excludedGenerated.svg", "modules/excludedGeneratedRoot.svg", -1551632995, 0);
@@ -967,7 +976,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Include = load("expui/nodes/include.svg", "nodes/include.svg", -1043076621, 0);
     /** 16x16 */ public static final @NotNull Icon Interface = load("expui/nodes/interface.svg", "nodes/interface.svg", -371611298, 1);
     /** 16x16 */ public static final @NotNull Icon JarDirectory = load("nodes/jarDirectory.svg", -692661187, 0);
-    /** 16x16 */ public static final @NotNull Icon JavaDocFolder = load("nodes/javaDocFolder.svg", 135532303, 0);
+    /** 16x16 */ public static final @NotNull Icon JavaDocFolder = load("expui/nodes/javaDocFolder.svg", "nodes/javaDocFolder.svg", 135532303, 0);
     /** 16x16 */ public static final @NotNull Icon JavaModule = load("expui/nodes/moduleJava.svg", "nodes/javaModule.svg", 2003423238, 0);
     /** 16x16 */ public static final @NotNull Icon JunitTestMark = load("expui/nodes/junitTestMark.svg", "nodes/junitTestMark.svg", -1344036663, 0);
     /** 16x16 */ public static final @NotNull Icon KeymapAnt = load("expui/nodes/folder.svg", "nodes/keymapAnt.svg", 1301975081, 0);
@@ -1096,7 +1105,8 @@ public class AllIcons {
     /** 40x40 */ public static final @NotNull Icon PluginLogo = load("expui/nodes/pluginLogo.svg", "plugins/pluginLogo.svg", 899855946, 0);
     /** 40x40 */ public static final @NotNull Icon PluginLogoDisabled = load("expui/nodes/pluginLogoDisabled.svg", "plugins/pluginLogoDisabled.svg", 1569910218, 0);
     /** 12x12 */ public static final @NotNull Icon Rating = load("plugins/rating.svg", 1714785539, 2);
-    /** 12x12 */ public static final @NotNull Icon Updated = load("plugins/updated.svg", 1725310914, 2);
+    /** 12x12 */ public static final @NotNull Icon Refresh = load("plugins/refresh.svg", -649384412, 2);
+    /** 12x12 */ public static final @NotNull Icon Updated = load("plugins/updated.svg", -191512259, 2);
   }
 
   public static final class Process {
@@ -1356,7 +1366,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AddFolder = load("toolbarDecorator/addFolder.svg", 395130952, 2);
     /** 16x16 */ public static final @NotNull Icon AddIcon = load("toolbarDecorator/addIcon.svg", 928060610, 2);
     /** 16x16 */ public static final @NotNull Icon AddJira = load("toolbarDecorator/addJira.svg", -1559078405, 2);
-    /** 16x16 */ public static final @NotNull Icon AddLink = load("toolbarDecorator/addLink.svg", 740343788, 2);
+    /** 16x16 */ public static final @NotNull Icon AddLink = load("expui/actions/addLink.svg", "toolbarDecorator/addLink.svg", 740343788, 2);
     /** 16x16 */ public static final @NotNull Icon AddPattern = load("toolbarDecorator/addPattern.svg", 1133058713, 2);
     /** 16x16 */ public static final @NotNull Icon AddRemoteDatasource = load("toolbarDecorator/addRemoteDatasource.svg", -1532941571, 2);
     /** 16x16 */ public static final @NotNull Icon AddYouTrack = load("toolbarDecorator/addYouTrack.svg", -1383628266, 2);
@@ -1372,7 +1382,6 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ErrorEvents = load("toolwindows/errorEvents.svg", 544961938, 2);
     /** 13x13 */ public static final @NotNull Icon InfoEvents = load("toolwindows/infoEvents.svg", 2005038383, 2);
     /** 13x13 */ public static final @NotNull Icon Learn = load("expui/toolwindows/learn.svg", "toolwindows/learn.svg", 1964715395, 2);
-    /** 16x16 */ public static final @NotNull Icon MeetNewUi = load("expui/toolwindows/meetNewUi.svg", -215928280, 2);
     /** 13x13 */ public static final @NotNull Icon NoEvents = load("toolwindows/noEvents.svg", 1510437398, 2);
     /** 13x13 */ public static final @NotNull Icon Notifications = load("expui/toolwindows/notifications.svg", "toolwindows/notifications.svg", 158984276, 2);
     /** 13x13 */ public static final @NotNull Icon NotificationsNew = load("toolwindows/notificationsNew.svg", -1220587603, 2);
@@ -1419,6 +1428,12 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowVariableView = load("expui/toolwindows/toolWindowVariableView.svg", "toolwindows/toolWindowVariableView.svg", 684149723, 2);
     /** 13x13 */ public static final @NotNull Icon WarningEvents = load("toolwindows/warningEvents.svg", 249706562, 2);
     /** 13x13 */ public static final @NotNull Icon WebToolWindow = load("expui/toolwindows/web.svg", "toolwindows/webToolWindow.svg", -1935851554, 2);
+
+    /** @deprecated to be removed without replacement */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    public static final @NotNull Icon MeetNewUi = load("expui/toolwindows/meetNewUi.svg", 0, 0);
 
     /** @deprecated to be removed without replacement */
     @SuppressWarnings("unused")

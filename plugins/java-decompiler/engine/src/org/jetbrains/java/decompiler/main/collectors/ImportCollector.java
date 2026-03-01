@@ -10,7 +10,13 @@ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ImportCollector {

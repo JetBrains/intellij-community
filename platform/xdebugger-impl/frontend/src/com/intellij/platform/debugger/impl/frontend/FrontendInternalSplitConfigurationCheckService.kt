@@ -21,7 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-private class EnabledSplitDebuggerAction : DumbAwareToggleAction() {
+internal class EnabledSplitDebuggerAction : DumbAwareToggleAction() {
   override fun isSelected(e: AnActionEvent): Boolean {
     return SplitDebuggerMode.isSplitDebugger()
   }

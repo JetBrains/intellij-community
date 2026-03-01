@@ -20,7 +20,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class ContentsUtil {
   public static void addOrReplaceContent(ContentManager manager, Content content, boolean select) {

@@ -5,10 +5,12 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
+import com.intellij.platform.debugger.impl.rpc.XStackFrameId
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.shared.XDebuggerExecutionPointManager
 import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XValue
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -48,6 +50,8 @@ interface XDebugManagerProxy {
    * Use with care, ensure that [hasBackendCounterpart] returns `true` for the given [value].
    */
   suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T
+
+  suspend fun <T> withId(frame: XStackFrame, session: XDebugSessionProxy, block: suspend (XStackFrameId) -> T): T
 
   fun findSessionProxy(project: Project, sessionId: XDebugSessionId): XDebugSessionProxy? {
     return getSessions(project).firstOrNull { it.id == sessionId }

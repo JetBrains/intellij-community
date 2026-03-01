@@ -18,4 +18,17 @@ jvm_library(
     "//libraries/plexus-utils",
   ]
 )
+
+jvm_library(
+  name = "maven-resolver-provider_test_lib",
+  module_name = "intellij.libraries.maven.resolver.provider",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:maven-resolver-provider"],
+  runtime_deps = [
+    ":maven-resolver-provider",
+    "//libraries/plexus-utils:plexus-utils_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.maven.resolver.provider` end

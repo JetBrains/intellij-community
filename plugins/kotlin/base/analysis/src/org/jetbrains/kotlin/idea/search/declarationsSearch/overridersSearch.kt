@@ -3,7 +3,12 @@
 package org.jetbrains.kotlin.idea.search.declarationsSearch
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
@@ -28,7 +33,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import java.util.*
+import java.util.Collections
 
 fun PsiElement.isOverridableElement(): Boolean = when (this) {
     is PsiMethod -> PsiUtil.canBeOverridden(this)

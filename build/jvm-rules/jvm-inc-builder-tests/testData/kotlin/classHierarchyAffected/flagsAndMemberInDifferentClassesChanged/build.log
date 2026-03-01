@@ -1,0 +1,20 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_flagsAndMemberInDifferentClassesChanged-a.kotlin_module
+  foo/A.class
+  foo/B.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/flagsAndMemberInDifferentClassesChanged/a/A.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInDifferentClassesChanged/a/AParent.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInDifferentClassesChanged/a/B.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_flagsAndMemberInDifferentClassesChanged-a.kotlin_module
+  foo/AChild.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/flagsAndMemberInDifferentClassesChanged/a/AChild.kt
+End of files
+------------------------------------------
+Exit code: OK

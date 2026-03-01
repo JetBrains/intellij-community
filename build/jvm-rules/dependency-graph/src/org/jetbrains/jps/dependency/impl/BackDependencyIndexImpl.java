@@ -2,11 +2,19 @@
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.ComparableTypeExternalizer;
+import org.jetbrains.jps.dependency.MapletFactory;
+import org.jetbrains.jps.dependency.MultiMaplet;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.util.Iterators;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   private final String myName;
@@ -65,18 +73,20 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
     }
 
     for (ReferenceID id : Iterators.unique(Iterators.flat(deltaIndex.getKeys(), depsToRemove.keySet()))) {
-      Set<ReferenceID> toRemove = depsToRemove.get(id);
-      Iterable<ReferenceID> toAdd = deltaIndex.getDependencies(id);
-      if (!Iterators.isEmpty(toRemove)) {
-        if (toAdd instanceof Set) {
-          toRemove.removeAll((Set<?>)toAdd);
+      Set<ReferenceID> outdated = depsToRemove.get(id);
+      Iterable<ReferenceID> current = deltaIndex.getDependencies(id);
+      Iterable<ReferenceID> toAdd = current;
+      if (!Iterators.isEmpty(outdated)) {
+        toAdd = Iterators.collect(Iterators.filter(current, refId -> !outdated.contains(refId)), new HashSet<>());
+        if (current instanceof Set) {
+          outdated.removeAll((Set<?>) current);
         }
         else {
-          for (ReferenceID refId : toAdd) {
-            toRemove.remove(refId);
+          for (ReferenceID refId : current) {
+            outdated.remove(refId);
           }
         }
-        myMap.removeValues(id, toRemove);
+        myMap.removeValues(id, outdated);
       }
       myMap.appendValues(id, toAdd);
     }

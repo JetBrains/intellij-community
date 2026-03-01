@@ -4,12 +4,20 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents
 import com.google.gson.JsonObject
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.projectStructureTest.*
+import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectEntityReference
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectEntityReferenceParser
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibrary
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibraryReference
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModule
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModuleReference
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructure
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructureParser
 import java.io.File
 import kotlin.io.path.Path
 

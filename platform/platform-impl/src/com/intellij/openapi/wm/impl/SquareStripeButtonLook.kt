@@ -9,8 +9,11 @@ import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Insets
+import java.awt.Point
+import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.UIManager

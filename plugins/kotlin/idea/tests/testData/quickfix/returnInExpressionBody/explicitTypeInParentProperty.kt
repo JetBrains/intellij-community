@@ -1,5 +1,4 @@
 // "Specify 'Int' type for enclosing property 'Derived.explicitPropertyReturnType'" "true"
-// K2_AFTER_ERROR: Returns are prohibited in functions with expression body. Use block body '{...}'.
 
 interface Base {
     val explicitPropertyReturnType: Int

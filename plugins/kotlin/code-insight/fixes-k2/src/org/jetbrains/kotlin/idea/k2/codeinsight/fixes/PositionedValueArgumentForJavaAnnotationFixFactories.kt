@@ -17,7 +17,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtValueArgument
 
 internal object PositionedValueArgumentForJavaAnnotationFixFactories {
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.editor
 
-import com.intellij.application.options.editor.WebEditorOptions
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.EDT
@@ -15,6 +14,7 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -26,6 +26,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSyncListener
 import kotlin.streams.asSequence
 
 @Service(Service.Level.PROJECT)
@@ -68,6 +69,7 @@ class MavenModelVersionSynchronizerService(private val project: Project, val cs:
     if (editor.getUserData(SYNCHRONIZER_KEY) != null) return
 
     val mavenProjectManager = MavenProjectsManager.getInstanceIfCreated(project) ?: return
+    if (!mavenProjectManager.isInitialized) return
     val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return
     if (mavenProjectManager.findProject(file) == null) return
     withContext(Dispatchers.EDT) {
@@ -108,11 +110,17 @@ class MavenModelVersionSynchronizerService(private val project: Project, val cs:
   }
 }
 
-class MavenModelVersionEditorFactoryListener : EditorFactoryListener {
+class MavenModelVersionEditorFactoryListener : EditorFactoryListener, MavenSyncListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
     val project = editor.project
     project?.service<MavenModelVersionSynchronizerService>()?.scheduleEnsureSynchronizerCreated(editor as? EditorImpl ?: return)
+  }
+
+  override fun syncFinished(project: Project) {
+    FileEditorManager.getInstance(project).getAllEditors().forEach {
+      project?.service<MavenModelVersionSynchronizerService>()?.scheduleEnsureSynchronizerCreated(it as? EditorImpl ?: return)
+    }
   }
 }
 

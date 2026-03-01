@@ -4,7 +4,7 @@ package com.intellij.execution.testframework;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.LayeredIcon;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface PoolOfTestIcons {
   Icon SKIPPED_ICON = AllIcons.RunConfigurations.TestSkipped;

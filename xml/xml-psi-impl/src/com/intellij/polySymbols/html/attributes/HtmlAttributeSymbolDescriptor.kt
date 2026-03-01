@@ -2,12 +2,12 @@
 package com.intellij.polySymbols.html.attributes
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.psi.PsiElement
@@ -33,8 +33,7 @@ open class HtmlAttributeSymbolDescriptor private constructor(
   private val icon: Icon?,
   private val isRequired: Boolean,
   private val defaultValue: String?,
-)
-  : BasicXmlAttributeDescriptor(), XmlAttributeDescriptorEx, PsiPresentableMetaData {
+) : BasicXmlAttributeDescriptor(), XmlAttributeDescriptorEx, PsiPresentableMetaData {
 
   constructor(info: HtmlAttributeSymbolInfo, tag: XmlTag?)
     : this(tag, info.name, info.symbol, info.acceptsNoValue, info.acceptsValue, info.enumValues,
@@ -134,7 +133,7 @@ open class HtmlAttributeSymbolDescriptor private constructor(
   companion object {
 
     fun HtmlAttributeSymbolInfo.toAttributeDescriptor(tag: XmlTag?): HtmlAttributeSymbolDescriptor =
-      HtmlFrameworkSymbolsSupport.get(this.symbol.origin.framework)
+      HtmlFrameworkSymbolsSupport.get(this.symbol)
         .createHtmlAttributeDescriptor(this, tag)
 
   }

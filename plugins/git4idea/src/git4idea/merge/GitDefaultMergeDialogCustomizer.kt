@@ -32,7 +32,13 @@ import com.intellij.vcs.log.ui.details.MultipleCommitInfoDialog
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitBranch
 import git4idea.GitRevisionNumber
-import git4idea.GitUtil.*
+import git4idea.GitUtil.CHERRY_PICK_HEAD
+import git4idea.GitUtil.HEAD
+import git4idea.GitUtil.MERGE_HEAD
+import git4idea.GitUtil.REBASE_HEAD
+import git4idea.GitUtil.getHead
+import git4idea.GitUtil.getRepositories
+import git4idea.GitUtil.getRepositoriesForFiles
 import git4idea.changes.GitChangeUtils
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitHistoryUtils
@@ -50,7 +56,7 @@ import javax.swing.JPanel
 internal open class GitDefaultMergeDialogCustomizer(
   private val project: Project
 ) : MergeDialogCustomizer() {
-  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): @NlsContexts.Label String {
+  override fun getMultipleFileMergeDescription(files: Collection<VirtualFile>): @NlsContexts.Label String {
     val repos = getRepositoriesForFiles(project, files)
       .ifEmpty { getRepositories(project).filter { it.stagingAreaHolder.allConflicts.isNotEmpty() } }
 
@@ -185,7 +191,7 @@ internal open class GitDefaultMergeDialogCustomizer(
   }
 
   private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {
-    val result = GitLogUtil.collectMetadata(project, repository.root, listOf(CHERRY_PICK_HEAD)).singleOrNull() ?: return null
+    val result = GitLogUtil.collectMetadataForCommit(project, repository.root, CHERRY_PICK_HEAD) ?: return null
     return CherryPickDetails(result.id.toShortString(), result.author.name, result.fullMessage)
   }
 
@@ -213,7 +219,7 @@ internal fun getDescriptionForRebase(repository: GitRepository?, @NlsSafe rebasi
   }
 
   val conflictOnCommit =
-    if (repository != null) GitLogUtil.collectMetadata(repository.project, repository.root, listOf(REBASE_HEAD)).singleOrNull()
+    if (repository != null) GitLogUtil.collectMetadataForCommit(repository.project, repository.root, REBASE_HEAD)
     else null
 
   return if (conflictOnCommit == null) HtmlChunk.raw(description).toString()

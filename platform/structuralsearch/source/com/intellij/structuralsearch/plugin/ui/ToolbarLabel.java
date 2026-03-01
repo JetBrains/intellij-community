@@ -8,7 +8,8 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 
 /**
  * @author Bas Leijdekkers

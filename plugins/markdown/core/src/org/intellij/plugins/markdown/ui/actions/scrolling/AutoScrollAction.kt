@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAware
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 
-private class AutoScrollAction : ToggleAction(), DumbAware {
+internal class AutoScrollAction : ToggleAction(), DumbAware {
   override fun isSelected(e: AnActionEvent): Boolean {
     val splitFileEditor = MarkdownActionUtil.findSplitEditor(e)
     if (splitFileEditor == null) return false

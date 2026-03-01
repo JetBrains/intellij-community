@@ -7,9 +7,13 @@ import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;

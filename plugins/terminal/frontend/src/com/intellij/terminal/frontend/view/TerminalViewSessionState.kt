@@ -10,15 +10,27 @@ sealed interface TerminalViewSessionState {
   /**
    * The [TerminalView] component is created, but the shell process is not started yet.
    */
-  object NotStarted : TerminalViewSessionState
+  object NotStarted : TerminalViewSessionState {
+    override fun toString(): String {
+      return "NotStarted"
+    }
+  }
 
   /**
    * The [TerminalView] was connected to the shell process and can send input and receive output.
    */
-  object Running : TerminalViewSessionState
+  object Running : TerminalViewSessionState {
+    override fun toString(): String {
+      return "Running"
+    }
+  }
 
   /**
    * The underlying shell process was terminated, so the [TerminalView] no more can send input or receive output.
    */
-  object Terminated : TerminalViewSessionState
+  object Terminated : TerminalViewSessionState {
+    override fun toString(): String {
+      return "Terminated"
+    }
+  }
 }

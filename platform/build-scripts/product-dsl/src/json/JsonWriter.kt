@@ -1,17 +1,23 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.productLayout.json
 
-import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.platform.pluginGraph.PluginGraph
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.intellij.build.productLayout.ModuleSet
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversalCache
-import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
-import org.jetbrains.intellij.build.productLayout.visitAllModules
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
+import org.jetbrains.intellij.build.productLayout.traversal.collectDirectProductModuleNames
+import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetDirectModuleNames
+import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetDirectNestedNames
+import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetModuleNames
+import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
+import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleSetNames
+import tools.jackson.core.JsonGenerator
 
 // kotlinx.serialization Json instance for serializing data structures
 internal val kotlinxJson = Json {
@@ -19,35 +25,83 @@ internal val kotlinxJson = Json {
   encodeDefaults = true
 }
 
+private data class ModuleUsageMaps<S, P>(
+  val moduleSets: Map<String, Set<S>>,
+  val products: Map<String, Set<P>>,
+)
+
+private fun <S, P> collectModuleUsageMaps(
+  allModuleSets: List<ModuleSetMetadata>,
+  products: List<ProductSpec>,
+  pluginGraph: PluginGraph,
+  moduleSetEntry: (ModuleSetMetadata) -> S,
+  productEntry: (ProductSpec) -> P,
+): ModuleUsageMaps<S, P> {
+  val moduleSetsMap = LinkedHashMap<String, LinkedHashSet<S>>()
+  val productsMap = LinkedHashMap<String, LinkedHashSet<P>>()
+
+  for (entry in allModuleSets) {
+    val modules = collectModuleSetModuleNames(pluginGraph, entry.moduleSet.name)
+    val moduleSetValue = moduleSetEntry(entry)
+    for (moduleName in modules) {
+      moduleSetsMap.computeIfAbsent(moduleName.value) { LinkedHashSet() }.add(moduleSetValue)
+    }
+  }
+
+  for (product in products) {
+    if (product.contentSpec == null) continue
+    val productValue = productEntry(product)
+    for (moduleName in collectProductModuleNames(pluginGraph, product.name)) {
+      productsMap.computeIfAbsent(moduleName.value) { LinkedHashSet() }.add(productValue)
+    }
+  }
+
+  return ModuleUsageMaps(moduleSetsMap, productsMap)
+}
+
 /**
  * Enriches products with calculated metrics (parallelized).
  * Calculates totalModuleCount, directModuleCount, and moduleSetCount for each product.
- *
- * Uses cache for O(1) module name lookups instead of repeated traversals.
  */
 internal suspend fun enrichProductsWithMetrics(
   products: List<ProductSpec>,
-  moduleSets: List<ModuleSet>
-): List<ProductSpec> = coroutineScope {
-  // Build cache for O(1) module name lookups
-  val cache = ModuleSetTraversalCache(moduleSets)
-
-  products.map { product ->
-    async {
-      val contentSpec = product.contentSpec
-      if (contentSpec == null) {
-        product // Return as-is if no contentSpec
+  pluginGraph: PluginGraph
+): List<ProductSpec> {
+  return coroutineScope {
+    products.map { product ->
+      async {
+        val contentSpec = product.contentSpec
+        if (contentSpec == null) {
+          product // Return as-is if no contentSpec
+        }
+        else if (!pluginGraph.query { product(product.name) != null }) {
+          product
+        }
+        else {
+          val totalModules = collectProductModuleNames(pluginGraph, product.name)
+          val directModules = collectDirectProductModuleNames(pluginGraph, product.name)
+          val moduleSets = collectProductModuleSetNames(pluginGraph, product.name)
+          val aliasValues = contentSpec.productModuleAliases.map { it.value }.sorted()
+          val compositionCounts = contentSpec.compositionGraph
+            .groupingBy { it.type.name.lowercase() }
+            .eachCount()
+          product.copy(
+            totalModuleCount = totalModules.size,
+            directModuleCount = directModules.size,
+            moduleSetCount = moduleSets.size,
+            moduleSets = moduleSets.sorted(),
+            directModules = directModules.map { it.value }.sorted(),
+            aliasCount = aliasValues.size,
+            aliases = aliasValues,
+            compositionSummary = org.jetbrains.intellij.build.productLayout.tooling.CompositionSummary(
+              totalOperations = contentSpec.compositionGraph.size,
+              operationsByType = compositionCounts
+            )
+          )
+        }
       }
-      else {
-        val allModules = cache.collectProductModuleNames(contentSpec)
-        product.copy(
-          totalModuleCount = allModules.size,
-          directModuleCount = contentSpec.additionalModules.size,
-          moduleSetCount = contentSpec.moduleSets.size
-        )
-      }
-    }
-  }.awaitAll()
+    }.awaitAll()
+  }
 }
 
 /**
@@ -60,8 +114,8 @@ internal fun writeModuleDistribution(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
-  moduleLocations: Map<String, org.jetbrains.intellij.build.productLayout.analysis.ModuleLocationInfo>,
-  cache: ModuleSetTraversalCache
+  moduleLocations: Map<String, org.jetbrains.intellij.build.productLayout.tooling.ModuleLocationInfo>,
+  pluginGraph: PluginGraph
 ) {
   @Serializable
   data class Entry(
@@ -71,33 +125,22 @@ internal fun writeModuleDistribution(
     val imlPath: String? = null
   )
 
-  // Build module → sets/products mapping
-  val inModuleSets = mutableMapOf<String, MutableSet<String>>()
-  val inProducts = mutableMapOf<String, MutableSet<String>>()
-
-  // Collect modules from module sets
-  for ((moduleSet, _, _) in allModuleSets) {
-    visitAllModules(moduleSet) { module ->
-      inModuleSets.computeIfAbsent(module.name) { mutableSetOf() }.add(moduleSet.name)
-    }
-  }
-
-  // Collect modules from products (using cache for O(1) lookups)
-  for (product in products) {
-    val contentSpec = product.contentSpec ?: continue
-    for (moduleName in cache.collectProductModuleNames(contentSpec)) {
-      inProducts.computeIfAbsent(moduleName) { mutableSetOf() }.add(product.name)
-    }
-  }
+  val usageMaps = collectModuleUsageMaps(
+    allModuleSets = allModuleSets,
+    products = products,
+    pluginGraph = pluginGraph,
+    moduleSetEntry = { it.moduleSet.name },
+    productEntry = { it.name },
+  )
 
   // Build result map
-  val allModuleNames = (inModuleSets.keys + inProducts.keys).sorted()
+  val allModuleNames = (usageMaps.moduleSets.keys + usageMaps.products.keys).sorted()
   val result = allModuleNames.associateWith { moduleName ->
     val locationInfo = moduleLocations[moduleName]
     Entry(
-      inModuleSets = inModuleSets[moduleName]?.sorted() ?: emptyList(),
-      inProducts = inProducts[moduleName]?.sorted() ?: emptyList(),
-      location = locationInfo?.location ?: "unknown",
+      inModuleSets = usageMaps.moduleSets[moduleName]?.sorted() ?: emptyList(),
+      inProducts = usageMaps.products[moduleName]?.sorted() ?: emptyList(),
+      location = locationInfo?.location?.name ?: "UNKNOWN",
       imlPath = locationInfo?.imlPath
     )
   }
@@ -113,7 +156,8 @@ internal fun writeModuleDistribution(
  */
 internal fun writeModuleSetHierarchy(
   gen: JsonGenerator,
-  allModuleSets: List<ModuleSetMetadata>
+  allModuleSets: List<ModuleSetMetadata>,
+  pluginGraph: PluginGraph
 ) {
   @Serializable
   data class Entry(
@@ -123,28 +167,30 @@ internal fun writeModuleSetHierarchy(
   )
 
   // Build includes map
-  val includes = mutableMapOf<String, List<String>>()
-  val moduleCounts = mutableMapOf<String, Int>()
-  val includedBy = mutableMapOf<String, MutableList<String>>()
+  val includes = LinkedHashMap<String, List<String>>()
+  val moduleCounts = LinkedHashMap<String, Int>()
+  val includedBy = LinkedHashMap<String, MutableList<String>>()
 
-  for ((moduleSet, _, _) in allModuleSets) {
-    includes[moduleSet.name] = moduleSet.nestedSets.map { it.name }.sorted()
-    moduleCounts[moduleSet.name] = moduleSet.modules.size
-    includedBy.computeIfAbsent(moduleSet.name) { mutableListOf() }
+  for (entry in allModuleSets) {
+    val setName = entry.moduleSet.name
+    includes.put(setName, collectModuleSetDirectNestedNames(pluginGraph, setName).sorted())
+    moduleCounts.put(setName, collectModuleSetDirectModuleNames(pluginGraph, setName).size)
+    includedBy.computeIfAbsent(setName) { mutableListOf() }
   }
 
   // Build reverse references
-  for ((moduleSet, _, _) in allModuleSets) {
-    for (nestedSet in moduleSet.nestedSets) {
-      includedBy.computeIfAbsent(nestedSet.name) { mutableListOf() }.add(moduleSet.name)
+  for (entry in allModuleSets) {
+    val setName = entry.moduleSet.name
+    for (nestedSet in collectModuleSetDirectNestedNames(pluginGraph, setName)) {
+      includedBy.computeIfAbsent(nestedSet) { mutableListOf() }.add(setName)
     }
   }
 
   val result = includes.keys.sorted().associateWith { setName ->
     Entry(
-      includes = includes[setName] ?: emptyList(),
-      includedBy = includedBy[setName]?.sorted() ?: emptyList(),
-      moduleCount = moduleCounts[setName] ?: 0
+      includes = includes.get(setName) ?: emptyList(),
+      includedBy = includedBy.get(setName)?.sorted() ?: emptyList(),
+      moduleCount = moduleCounts.get(setName) ?: 0
     )
   }
 
@@ -159,7 +205,7 @@ internal fun writeModuleUsageIndex(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
-  cache: ModuleSetTraversalCache
+  pluginGraph: PluginGraph
 ) {
   @Serializable
   data class ModuleSetRef(@JvmField val name: String, @JvmField val location: String, @JvmField val sourceFile: String)
@@ -173,31 +219,19 @@ internal fun writeModuleUsageIndex(
   @Serializable
   data class Wrapper(@JvmField val modules: Map<String, ModuleEntry>)
 
-  val moduleSetsMap = mutableMapOf<String, MutableList<ModuleSetRef>>()
-  val productsMap = mutableMapOf<String, MutableList<ProductRef>>()
+  val usageMaps = collectModuleUsageMaps(
+    allModuleSets = allModuleSets,
+    products = products,
+    pluginGraph = pluginGraph,
+    moduleSetEntry = { ModuleSetRef(it.moduleSet.name, it.location.name, it.sourceFile) },
+    productEntry = { ProductRef(it.name, it.sourceFile) },
+  )
 
-  // Collect from module sets
-  for ((moduleSet, location, sourceFile) in allModuleSets) {
-    visitAllModules(moduleSet) { module ->
-      moduleSetsMap.computeIfAbsent(module.name) { mutableListOf() }
-        .add(ModuleSetRef(moduleSet.name, location, sourceFile))
-    }
-  }
-
-  // Collect from products (using cache for O(1) lookups)
-  for (product in products) {
-    val contentSpec = product.contentSpec ?: continue
-    for (moduleName in cache.collectProductModuleNames(contentSpec)) {
-      productsMap.computeIfAbsent(moduleName) { mutableListOf() }
-        .add(ProductRef(product.name, product.sourceFile))
-    }
-  }
-
-  val allModuleNames = (moduleSetsMap.keys + productsMap.keys).sorted()
+  val allModuleNames = (usageMaps.moduleSets.keys + usageMaps.products.keys).sorted()
   val modules = allModuleNames.associateWith { moduleName ->
     ModuleEntry(
-      moduleSets = moduleSetsMap[moduleName]?.sortedBy { it.name } ?: emptyList(),
-      products = productsMap[moduleName]?.sortedBy { it.name } ?: emptyList()
+      moduleSets = usageMaps.moduleSets[moduleName]?.sortedBy { it.name } ?: emptyList(),
+      products = usageMaps.products[moduleName]?.sortedBy { it.name } ?: emptyList()
     )
   }
 

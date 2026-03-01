@@ -4,9 +4,14 @@ package org.jetbrains.intellij.build.dependencies
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.time.LocalDateTime
-import java.util.*
+import java.util.EnumSet
+import java.util.UUID
 import java.util.logging.Logger
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively

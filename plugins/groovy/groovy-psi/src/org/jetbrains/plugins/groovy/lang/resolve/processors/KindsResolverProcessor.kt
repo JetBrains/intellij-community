@@ -10,7 +10,12 @@ import com.intellij.util.containers.enumMapOf
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
-import org.jetbrains.plugins.groovy.lang.resolve.*
+import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.getName
+import org.jetbrains.plugins.groovy.lang.resolve.getResolveKind
+import org.jetbrains.plugins.groovy.lang.resolve.isReferenceResolveTarget
+import org.jetbrains.plugins.groovy.lang.resolve.log
+import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 open class KindsResolverProcessor(
   protected val name: String,

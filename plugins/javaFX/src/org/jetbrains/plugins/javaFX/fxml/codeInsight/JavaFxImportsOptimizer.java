@@ -10,11 +10,22 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProcessingInstruction;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +37,13 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxRootTagDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttributeDescriptor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class JavaFxImportsOptimizer implements ImportOptimizer {
   @Override

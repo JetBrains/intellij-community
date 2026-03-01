@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_kotlinUsedInJava_propertyRenamed-a.kotlin_module
+  test/PropKt.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/propertyRenamed/a/prop.kt
+End of files
+Cleaning output files:
+  WillBeUnresolved.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/propertyRenamed/a/WillBeUnresolved.java
+End of files
+------------------------------------------
+Exit code: ERROR

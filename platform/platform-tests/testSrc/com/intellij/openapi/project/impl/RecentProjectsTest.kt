@@ -1,56 +1,62 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.project.impl
 
-import com.intellij.ide.*
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.ProjectGroup
+import com.intellij.ide.ProjectGroupActionGroup
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.project.stateStore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TemporaryDirectoryExtension
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.DeferredIconImpl
+import com.intellij.ui.JBColor
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.AvatarUtils
 import com.intellij.util.ui.EmptyIcon
-import kotlinx.coroutines.runBlocking
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ExternalResource
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.awt.Color
 import java.nio.file.Path
 import kotlin.test.assertEquals
 
+@TestApplication
 class RecentProjectsTest {
-  companion object {
-    @ClassRule
-    @JvmField
-    val appRule = ApplicationRule()
+  private var connection: SimpleMessageBusConnection? = null
 
-    @ClassRule
-    @JvmField
-    val edtRule = EdtRule()
+  @JvmField
+  @RegisterExtension
+  val tempDir = TemporaryDirectoryExtension()
+
+  @BeforeEach
+  fun setUp() {
+    connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+    connection!!.subscribe(ProjectCloseListener.TOPIC, RecentProjectsManagerBase.MyProjectListener())
+    connection!!.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
   }
 
-  @Rule
-  @JvmField
-  val disposableRule = DisposableRule()
-
-  @Rule
-  @JvmField
-  internal val busConnection = RecentProjectManagerListenerRule()
-
-  @Rule
-  @JvmField
-  val tempDir = TemporaryDirectory()
+  @AfterEach
+  fun tearDown() {
+    connection?.disconnect()
+    connection = null
+  }
 
   @Test
-  fun mostRecentOnTop() = runBlocking {
+  fun mostRecentOnTop() = timeoutRunBlocking {
     val p1 = createAndOpenProject("p1")
     val p2 = createAndOpenProject("p2")
     val p3 = createAndOpenProject("p3")
@@ -63,7 +69,7 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun groupOrder() = runBlocking {
+  fun groupOrder() = timeoutRunBlocking {
     val p1 = createAndOpenProject("p1")
     val p2 = createAndOpenProject("p2")
     val p3 = createAndOpenProject("p3")
@@ -72,22 +78,25 @@ class RecentProjectsTest {
     val manager = RecentProjectsManager.getInstance()
     val g1 = ProjectGroup("g1")
     val g2 = ProjectGroup("g2")
+    val g3 = ProjectGroup("g3")
     manager.addGroup(g1)
     manager.addGroup(g2)
+    manager.addGroup(g3)
 
     g1.addProject(p1.toString())
     g1.addProject(p2.toString())
     g2.addProject(p3.toString())
+    g3.addProject("/project/that/is/not/in/recents")
 
-    checkGroups(listOf("g2", "g1"))
+    checkGroups(listOf("g2", "g1", "g3"))
 
-    doReopenCloseAndCheckGroups(p4, listOf("g2", "g1"))
-    doReopenCloseAndCheckGroups(p1, listOf("g1", "g2"))
-    doReopenCloseAndCheckGroups(p3, listOf("g2", "g1"))
+    doReopenCloseAndCheckGroups(p4, listOf("g2", "g1", "g3"))
+    doReopenCloseAndCheckGroups(p1, listOf("g1", "g2", "g3"))
+    doReopenCloseAndCheckGroups(p3, listOf("g2", "g1", "g3"))
   }
 
   @Test
-  fun timestampForOpenProjectUpdatesWhenGetStateCalled(): Unit = runBlocking {
+  fun timestampForOpenProjectUpdatesWhenGetStateCalled(): Unit = timeoutRunBlocking {
     val z1 = tempDir.newPath("z1")
     val projectManager = ProjectManagerEx.getInstanceEx()
     var project = projectManager.openProjectAsync(z1, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
@@ -109,7 +118,17 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun solutionLikeProjectIcon() = timeoutRunBlocking {
+  fun solutionLikeProjectIcon() {
+    doSolutionLikeProjectIcon()
+  }
+
+  @Test
+  fun solutionLikeProjectIconForDarkTheme() {
+    JBColor.setDark(true)
+    doSolutionLikeProjectIcon()
+  }
+
+  private fun doSolutionLikeProjectIcon() = timeoutRunBlocking {
     // For Rider
     val rpm = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
 
@@ -131,7 +150,7 @@ class RecentProjectsTest {
 
         if (x >= emptyBorderWidth && x < (iconSize - emptyBorderWidth) &&
             y >= emptyBorderWidth && y < (iconSize - emptyBorderWidth)) {
-          assertThat(color).isEqualTo(Color.BLUE.rgb)
+          assertThat(color).isEqualTo(if (JBColor.isBright()) Color.BLUE.rgb else Color.RED.rgb)
         }
         else {
           assertThat(color).isEqualTo(0)
@@ -229,19 +248,5 @@ class RecentProjectsTest {
     finally {
       projectManager.forceCloseProjectAsync(project)
     }
-  }
-}
-
-internal class RecentProjectManagerListenerRule : ExternalResource() {
-  private var connection: SimpleMessageBusConnection? = null
-
-  override fun before() {
-    connection = ApplicationManager.getApplication().messageBus.simpleConnect()
-    connection!!.subscribe(ProjectCloseListener.TOPIC, RecentProjectsManagerBase.MyProjectListener())
-    connection!!.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
-  }
-
-  override fun after() {
-    connection?.disconnect()
   }
 }

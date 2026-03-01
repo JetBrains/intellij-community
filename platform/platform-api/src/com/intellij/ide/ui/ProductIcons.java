@@ -4,7 +4,7 @@ package com.intellij.ide.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Provides icons which can be used to represent this IDE in different contexts.

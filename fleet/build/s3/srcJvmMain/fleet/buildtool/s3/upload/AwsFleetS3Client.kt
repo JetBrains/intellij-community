@@ -6,7 +6,6 @@ import aws.smithy.kotlin.runtime.content.asByteStream
 import aws.smithy.kotlin.runtime.content.toByteArray
 import fleet.buildtool.s3.objectExists
 import java.nio.file.Path
-import kotlin.io.path.createFile
 import kotlin.io.path.createTempFile
 import kotlin.io.path.outputStream
 import aws.sdk.kotlin.services.s3.S3Client as AwsClient

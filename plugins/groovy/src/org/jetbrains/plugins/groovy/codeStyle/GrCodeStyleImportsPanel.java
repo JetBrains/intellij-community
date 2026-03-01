@@ -20,7 +20,8 @@ import com.intellij.application.options.CodeStyleImportsPanelBase;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 
 /**
  * @author Max Medvedev

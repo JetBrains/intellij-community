@@ -4,33 +4,42 @@
 package com.intellij.polySymbols.html
 
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolProperty
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.utils.merge
+import com.intellij.psi.PsiElement
 
 const val NAMESPACE_HTML: String = "html"
 
 @JvmField
-val HTML_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind.Companion[NAMESPACE_HTML, "elements"]
+val HTML_ELEMENTS: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_HTML, "elements"]
 
 @JvmField
-val HTML_ATTRIBUTES: PolySymbolQualifiedKind = PolySymbolQualifiedKind.Companion[NAMESPACE_HTML, "attributes"]
+val HTML_ATTRIBUTES: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_HTML, "attributes"]
 
 @JvmField
-val HTML_ATTRIBUTE_VALUES: PolySymbolQualifiedKind = PolySymbolQualifiedKind.Companion[NAMESPACE_HTML, "values"]
+val HTML_ATTRIBUTE_VALUES: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_HTML, "values"]
 
 @JvmField
-val HTML_SLOTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind.Companion[NAMESPACE_HTML, "slots"]
-
-val PolySymbol.htmlAttributeValue: PolySymbolHtmlAttributeValue?
-  get() = if (this is PolySymbolMatchBase)
-    this.reversedSegments().flatMap { it.symbols }.map { it[PROP_HTML_ATTRIBUTE_VALUE] }.merge()
-  else
-    this[PROP_HTML_ATTRIBUTE_VALUE]
+val HTML_SLOTS: PolySymbolKind = PolySymbolKind.Companion[NAMESPACE_HTML, "slots"]
 
 /**
  * A special property to support symbols representing HTML attributes.
  **/
-@JvmField
-val PROP_HTML_ATTRIBUTE_VALUE: PolySymbolProperty<PolySymbolHtmlAttributeValue> = PolySymbolProperty.Companion["html-attribute-value"]
+object HtmlAttributeValueProperty :
+  PolySymbolProperty<PolySymbolHtmlAttributeValue>("html-attribute-value", PolySymbolHtmlAttributeValue::class.java)
+
+fun PolySymbol.getHtmlAttributeValue(context: PsiElement?): PolySymbolHtmlAttributeValue? =
+  if (this is PolySymbolMatchBase)
+    this.reversedSegments().flatMap { it.symbols }.map { it.getHtmlAttributeValue(context) }.merge()
+  else {
+    val typeSupport = this[PolySymbolTypeSupport.TypeSupportProperty]
+    if (typeSupport != null)
+      typeSupport.withEvaluationLocation(context) {
+        this[HtmlAttributeValueProperty]
+      }
+    else
+      this[HtmlAttributeValueProperty]
+  }

@@ -15,10 +15,31 @@ class NonIndexableKindFileSetTestContributor : WorkspaceFileIndexContributor<Non
   }
 }
 
+class ExcludedKindFileSetTestContributor : WorkspaceFileIndexContributor<ExcludedTestEntity> {
+  override val entityClass: Class<ExcludedTestEntity> = ExcludedTestEntity::class.java
+
+  override fun registerFileSets(entity: ExcludedTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    registrar.registerExcludedRoot(entity.root, entity)
+  }
+}
+
 class IndexableKindFileSetTestContributor : WorkspaceFileIndexContributor<IndexingTestEntity> {
   override val entityClass: Class<IndexingTestEntity> = IndexingTestEntity::class.java
 
   override fun registerFileSets(entity: IndexingTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    for (root in entity.roots) {
+      registrar.registerFileSet(root, WorkspaceFileKind.CONTENT, entity, null)
+    }
+    for (excludedRoot in entity.excludedRoots) {
+      registrar.registerExcludedRoot(excludedRoot, entity)
+    }
+  }
+}
+
+class IndexableKind2FileSetTestContributor : WorkspaceFileIndexContributor<IndexingTestEntity2> {
+  override val entityClass: Class<IndexingTestEntity2> = IndexingTestEntity2::class.java
+
+  override fun registerFileSets(entity: IndexingTestEntity2, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
     for (root in entity.roots) {
       registrar.registerFileSet(root, WorkspaceFileKind.CONTENT, entity, null)
     }

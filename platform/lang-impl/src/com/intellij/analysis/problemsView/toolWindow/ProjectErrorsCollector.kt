@@ -1,7 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
-import com.intellij.analysis.problemsView.*
+import com.intellij.analysis.problemsView.FileProblem
+import com.intellij.analysis.problemsView.HighlightingDuplicateProblem
+import com.intellij.analysis.problemsView.Problem
+import com.intellij.analysis.problemsView.ProblemsCollector
+import com.intellij.analysis.problemsView.ProblemsListener
+import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -12,7 +17,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import java.util.concurrent.atomic.AtomicInteger
 
-private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
+internal class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   private val providerClassFilter = Registry.stringValue("ide.problems.view.provider.class.filter").split(" ,/|").toSet()
   private val fileProblems = mutableMapOf<VirtualFile, MutableSet<FileProblem>>()
   private val otherProblems = mutableSetOf<Problem>()

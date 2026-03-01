@@ -22,7 +22,28 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
@@ -111,7 +132,8 @@ public final class VarargParameterInspection extends BaseInspection {
       }
       PsiTypeElement typeElement = lastParameter.getTypeElement();
       assert typeElement != null;
-      new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
+      PsiElement result = new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
+      JavaCodeStyleManager.getInstance(method.getProject()).shortenClassReferences(result);
     }
 
     private static void modifyJavadoc(int indexOfFirstVarargArgument, @NotNull PsiElement reference) {

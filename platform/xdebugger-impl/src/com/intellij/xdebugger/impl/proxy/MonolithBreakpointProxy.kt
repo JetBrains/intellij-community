@@ -5,10 +5,12 @@ import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.debugger.impl.shared.XBreakpointInterLinePlacementDetector
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XExpression
@@ -19,7 +21,11 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.breakpoints.*
+import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -78,6 +84,12 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
 
   override fun setSuspendPolicy(suspendPolicy: SuspendPolicy) {
     breakpoint.suspendPolicy = suspendPolicy
+  }
+
+  override fun supportsInterLinePlacement(): Boolean {
+    val lineType = type as? XLineBreakpointTypeProxy ?: return false
+    if (!lineType.supportsInterLinePlacement()) return false
+    return XBreakpointInterLinePlacementDetector.shouldBePlacedBetweenLines(this)
   }
 
   override fun getTimestamp(): Long = breakpoint.timeStamp
@@ -146,10 +158,6 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
 
   override fun isDisposed(): Boolean = breakpoint.isDisposed
 
-  override fun updateIcon() {
-    breakpoint.updateIcon()
-  }
-
   override fun dispose() {
     breakpoint.dispose()
   }
@@ -202,8 +210,7 @@ fun <B : XBreakpoint<P>, P : XBreakpointProperties<*>> getEditorsProvider(
 ): XDebuggerEditorsProvider? = breakpointType.getEditorsProvider(breakpoint as B, project)
 
 @Suppress("DEPRECATION")
-@ApiStatus.Internal
-fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy {
+internal fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy {
   return if (this is XLineBreakpointImpl<*>) {
     this.asProxy()
   }
@@ -213,5 +220,4 @@ fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy {
 }
 
 @Suppress("DEPRECATION")
-@ApiStatus.Internal
-fun <T : XLineBreakpointImpl<*>> T.asProxy(): XLineBreakpointProxy = MonolithLineBreakpointProxy(this)
+internal fun <T : XLineBreakpointImpl<*>> T.asProxy(): XLineBreakpointProxy = MonolithLineBreakpointProxy(this)

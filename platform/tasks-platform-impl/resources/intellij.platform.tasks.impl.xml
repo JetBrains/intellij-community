@@ -1,8 +1,11 @@
 <idea-plugin visibility="public">
   <module value="com.intellij.modules.tasks"/>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.debugger.impl.ui"/>
     <module name="intellij.platform.tasks"/>
     <module name="intellij.platform.vcs.impl"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.tasks.TaskManager" serviceImplementation="com.intellij.tasks.impl.TaskManagerImpl"/>

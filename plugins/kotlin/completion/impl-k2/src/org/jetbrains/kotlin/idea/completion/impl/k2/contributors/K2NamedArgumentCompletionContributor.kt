@@ -4,6 +4,7 @@
  */
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.codeInsight.completion.CompletionType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
@@ -16,10 +17,11 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -28,7 +30,8 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContributor<KotlinExpressionNameReferencePositionContext>(
-    KotlinExpressionNameReferencePositionContext::class
+    positionContextClass = KotlinExpressionNameReferencePositionContext::class,
+    priority = K2ContributorSectionPriority.HEURISTIC,
 ) {
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)
@@ -46,6 +49,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
         val callElement = valueArgumentList.parent as? KtCallElement ?: return
 
         if (valueArgument.getArgumentName() != null) return
+        val completionType = context.completionContext.parameters.completionType
 
         // with `analyze` invoked on `fakeKtFile`:
         // - use-site is `fakeKtFile`;
@@ -74,22 +78,29 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
             buildList {
                 for ((name, indexedTypes) in namedArgumentInfos) {
                     with(KotlinFirLookupElementFactory) {
-                        add(createNamedArgumentLookupElement(name, indexedTypes.map { it.value }))
+                        if (completionType != CompletionType.SMART) {
+                            // For smart completion, we do not want to show incomplete named argument items
+                            add(createNamedArgumentLookupElement(name, indexedTypes))
+                        }
 
                         // suggest default values only for types from parameters with matching positions to not clutter completion
-                        val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }.map { it.value }
-                        if (typesAtCurrentPosition.any { it.isBooleanType }) {
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value))
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value))
+                        val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }
+
+                        val booleanPosition = typesAtCurrentPosition.firstOrNull { it.value.isBooleanType }
+                        if (booleanPosition != null) {
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value, booleanPosition.index))
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value, booleanPosition.index))
                         }
-                        if (typesAtCurrentPosition.any { it.isMarkedNullable }) {
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value))
+
+                        val nullablePosition = typesAtCurrentPosition.firstOrNull { it.value.isMarkedNullable }
+                        if (nullablePosition != null) {
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value, nullablePosition.index))
                         }
                     }
                 }
             }
         }.map { it.applyWeighs() }
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     /**

@@ -16,7 +16,12 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
@@ -65,7 +70,16 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
 
   public static void parseTestResults(Supplier<? extends Reader> readerSupplier, GeneralTestEventsProcessor processor) throws IOException {
     try (Reader reader = readerSupplier.get()) {
-      SAXParser parser = SAXParserFactory.newDefaultInstance().newSAXParser();
+      SAXParserFactory factory = SAXParserFactory.newDefaultInstance();
+      try {
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+      }
+      catch (Exception ignored) {
+      }
+
+      SAXParser parser = factory.newSAXParser();
       parser.parse(new InputSource(reader), ImportTestOutputExtension.findHandler(readerSupplier, processor));
     }
     catch (ParserConfigurationException | SAXException e) {

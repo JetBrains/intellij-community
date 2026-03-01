@@ -6,7 +6,9 @@ import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
 import com.intellij.debugger.streams.core.trace.dsl.Expression
 import com.intellij.debugger.streams.core.trace.dsl.StatementFactory
 import com.intellij.debugger.streams.core.trace.dsl.impl.common.IfBranchBase
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinIfBranch(condition: Expression, thenBlock: CodeBlock, statementFactory: StatementFactory) :
     IfBranchBase(condition, thenBlock, statementFactory) {
     override fun toCode(indent: Int): String {

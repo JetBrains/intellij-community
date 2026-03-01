@@ -15,7 +15,14 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThisExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;

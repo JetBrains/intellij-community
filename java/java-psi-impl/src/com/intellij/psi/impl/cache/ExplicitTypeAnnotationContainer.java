@@ -3,7 +3,18 @@ package com.intellij.psi.impl.cache;
 
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationOwner;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.compiled.ClsAnnotationParameterListImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
@@ -340,6 +351,7 @@ public final class ExplicitTypeAnnotationContainer implements TypeAnnotationCont
   private class TypeAnnotationContainerProvider implements TypeAnnotationProvider {
     private final PsiElement myParent;
     private final @Nullable PsiAnnotationOwner myOwner;
+    private final NotNullLazyValue<PsiAnnotation[]> myAnnotations = NotNullLazyValue.createValue(this::computeAnnotations);
 
     private TypeAnnotationContainerProvider(PsiElement parent, @Nullable PsiAnnotationOwner owner) { 
       myParent = parent;
@@ -351,8 +363,7 @@ public final class ExplicitTypeAnnotationContainer implements TypeAnnotationCont
       return new TypeAnnotationContainerProvider(myParent, owner);
     }
 
-    @Override
-    public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
+    private @NotNull PsiAnnotation @NotNull [] computeAnnotations() {
       List<PsiAnnotation> result = new ArrayList<>();
       for (TypeAnnotationEntry entry : myList) {
         if (entry.myPath.length == 0) {
@@ -362,6 +373,11 @@ public final class ExplicitTypeAnnotationContainer implements TypeAnnotationCont
         }
       }
       return result.toArray(PsiAnnotation.EMPTY_ARRAY);
+    }
+
+    @Override
+    public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
+      return myAnnotations.getValue();
     }
   }
 }

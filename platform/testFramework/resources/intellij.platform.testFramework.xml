@@ -1,11 +1,16 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5.launcher"/>
+    <module name="intellij.platform.testFramework.impl"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.testFramework.common"/>
     <module name="intellij.platform.testFramework.core"/>
-    <module name="intellij.platform.testFramework.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"

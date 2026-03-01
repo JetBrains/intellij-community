@@ -11,14 +11,14 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.configuration.notifications.showNewKotlinCompilerAvailableNotificationIfNeeded
-import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
 
 class KotlinMavenImportListener(private val project: Project) : MavenImportListener {
 
     override fun importStarted() {
         // If the SDK is null, then the module was not loaded yet
         val allModulesLoaded = project.modules.all { it.sdk != null }
-        KotlinJ2KOnboardingFUSCollector.logProjectSyncStarted(project, allModulesLoaded)
+        KotlinProjectSetupFUSCollector.logProjectSyncStarted(project, allModulesLoaded)
     }
 
     override fun importFinished(importedProjects: Collection<MavenProject>, newModules: List<Module>) {
@@ -32,6 +32,6 @@ class KotlinMavenImportListener(private val project: Project) : MavenImportListe
                 showNewKotlinCompilerAvailableNotificationIfNeeded(project)
             }
         }
-        KotlinJ2KOnboardingFUSCollector.logProjectSyncCompleted(project)
+        KotlinProjectSetupFUSCollector.logProjectSyncCompleted(project)
     }
 }

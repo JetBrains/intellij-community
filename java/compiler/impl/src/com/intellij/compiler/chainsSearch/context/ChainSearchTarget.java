@@ -3,7 +3,12 @@ package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;

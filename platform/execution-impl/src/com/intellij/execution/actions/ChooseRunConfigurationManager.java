@@ -2,7 +2,15 @@
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionTarget;
+import com.intellij.execution.ExecutionTargetManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistryImpl;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerConfig;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.EditConfigurationsDialog;
@@ -37,8 +45,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 

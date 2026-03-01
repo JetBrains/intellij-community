@@ -7,7 +7,13 @@ import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.BookmarksManagerImpl
 import com.intellij.ide.bookmark.providers.FileBookmarkImpl
 import com.intellij.ide.bookmark.providers.LineBookmarkImpl
-import com.intellij.ide.dnd.*
+import com.intellij.ide.dnd.DnDActionInfo
+import com.intellij.ide.dnd.DnDDragStartBean
+import com.intellij.ide.dnd.DnDDropHandler
+import com.intellij.ide.dnd.DnDEvent
+import com.intellij.ide.dnd.DnDNativeTarget
+import com.intellij.ide.dnd.DnDTargetChecker
+import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativeRectangle

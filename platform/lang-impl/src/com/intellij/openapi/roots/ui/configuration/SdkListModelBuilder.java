@@ -16,7 +16,15 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderLogger;
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener;
-import com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.ActionItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.ActionRole;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.InvalidSdkItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.NoneSdkItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.ProjectSdkItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.SuggestedItem;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
 import com.intellij.openapi.util.Condition;
@@ -29,9 +37,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 public final class SdkListModelBuilder {

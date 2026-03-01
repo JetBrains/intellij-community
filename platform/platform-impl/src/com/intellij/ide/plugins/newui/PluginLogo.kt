@@ -27,7 +27,11 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.ui.JBImageIcon
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.GraphicsEnvironment
 import java.io.File
@@ -381,6 +385,7 @@ private fun tryLoadIcon(iconFile: Path): PluginLogoIconProvider? {
 private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
   @JvmField
   var prepareToLoad: MutableList<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>>? = null
+  private val dispatcher = Dispatchers.IO.limitedParallelism(4)
 
   fun startBatchMode() {
     assert(prepareToLoad == null)
@@ -400,7 +405,7 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
       return
     }
 
-    coroutineScope.launch(Dispatchers.IO) {
+    coroutineScope.launch(dispatcher) {
       for (info in loadInfo) {
         launch {
           val idPlugin = getIdForKey(descriptor = info.first)

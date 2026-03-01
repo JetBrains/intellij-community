@@ -17,7 +17,7 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 /**
  * Startup activity that updates external annotations of IDEA JDKs configured in the project.
  */
-private class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectActivity {
+internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : ProjectActivity {
   init {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) {

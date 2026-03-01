@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.findAnnotations
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.isJUnit4InScope

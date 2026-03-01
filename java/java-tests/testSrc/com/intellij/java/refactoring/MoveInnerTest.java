@@ -17,7 +17,11 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;

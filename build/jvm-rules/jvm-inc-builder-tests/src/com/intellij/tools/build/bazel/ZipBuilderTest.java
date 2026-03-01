@@ -4,9 +4,9 @@ package com.intellij.tools.build.bazel;
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
 import org.jetbrains.jps.util.Iterators;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,17 +21,17 @@ import java.util.stream.Collectors;
 import static com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder.isDirectoryName;
 import static org.jetbrains.jps.util.Iterators.collect;
 import static org.jetbrains.jps.util.Iterators.isEmpty;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
 public class ZipBuilderTest {
   private Path myRootDir;
 
-  @BeforeEach
+  @Before
   public void setUp() throws Exception {
     myRootDir = Files.createTempDirectory("zip-builder-test");
   }
 
-  @AfterEach
+  @After
   public void tearDown() throws Exception {
     Files.deleteIfExists(myRootDir);
   }

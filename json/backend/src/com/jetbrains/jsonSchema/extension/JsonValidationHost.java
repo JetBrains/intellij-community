@@ -3,7 +3,11 @@ package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
-import com.jetbrains.jsonSchema.impl.*;
+import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaType;
+import com.jetbrains.jsonSchema.impl.JsonValidationError;
+import com.jetbrains.jsonSchema.impl.MatchResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -1,0 +1,21 @@
+================ Step #1 =================
+Cleaning output files:
+  Service.class
+End of files
+Compiling files:
+  java/membersChange/hierarchy2/a/Service.java
+End of files
+Cleaning output files:
+  Client1$1.class
+  Client1.class
+  Client2$1.class
+  Client2.class
+  ServiceAdapter.class
+End of files
+Compiling files:
+  java/membersChange/hierarchy2/a/Client1.java
+  java/membersChange/hierarchy2/a/Client2.java
+  java/membersChange/hierarchy2/a/ServiceAdapter.java
+End of files
+------------------------------------------
+Exit code: ERROR

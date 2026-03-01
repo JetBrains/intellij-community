@@ -17,7 +17,23 @@ package org.jetbrains.java.generate.psi;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -31,7 +47,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_THROWABLE;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SET;
 
 /**
  * Basic PSI Adapter with common function that works in all supported versions of IDEA.

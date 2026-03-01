@@ -6,11 +6,20 @@ import com.intellij.util.asSafely
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedEvent
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.JsonSharedIndexDiagnosticEvent
-import com.intellij.util.indexing.diagnostic.dto.*
+import com.intellij.util.indexing.diagnostic.dto.IndexingMetric
+import com.intellij.util.indexing.diagnostic.dto.IndexingMetrics
+import com.intellij.util.indexing.diagnostic.dto.JsonDuration
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectDumbIndexingFileCount
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectDumbIndexingHistoryTimes
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectIndexingActivityFileCount
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectIndexingActivityHistoryTimes
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningFileCount
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
+import com.intellij.util.indexing.diagnostic.dto.getListOfIndexingMetrics
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Locale
 
 internal fun createAggregateActivityHtml(
   target: Appendable,

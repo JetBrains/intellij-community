@@ -12,7 +12,15 @@ import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
+import com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner;
+import com.intellij.openapi.vcs.history.VcsBaseRevisionAdviser;
+import com.intellij.openapi.vcs.history.VcsCacheableHistorySessionFactory;
+import com.intellij.openapi.vcs.history.VcsDependentHistoryComponents;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
@@ -30,7 +38,7 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Collections;
 import java.util.List;
 

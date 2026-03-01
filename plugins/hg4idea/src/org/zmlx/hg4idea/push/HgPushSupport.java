@@ -2,7 +2,12 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.push.OutgoingCommitsProvider;
+import com.intellij.dvcs.push.PushSettings;
+import com.intellij.dvcs.push.PushSupport;
+import com.intellij.dvcs.push.PushTargetPanel;
+import com.intellij.dvcs.push.Pusher;
+import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;

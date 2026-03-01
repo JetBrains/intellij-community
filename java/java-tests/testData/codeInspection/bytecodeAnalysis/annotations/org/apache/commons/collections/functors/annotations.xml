@@ -126,7 +126,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.functors.CloneTransformer java.lang.Object transform(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -399,7 +398,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.functors.FunctorUtils org.apache.commons.collections.Closure[] copy(org.apache.commons.collections.Closure[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -408,7 +406,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.functors.FunctorUtils org.apache.commons.collections.Predicate[] copy(org.apache.commons.collections.Predicate[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -425,7 +422,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.functors.FunctorUtils org.apache.commons.collections.Transformer[] copy(org.apache.commons.collections.Transformer[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -588,7 +584,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.functors.InvokerTransformer java.lang.Object transform(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -922,9 +917,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.functors.PrototypeFactory.PrototypeSerializationFactory java.lang.Object create()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.functors.StringValueTransformer INSTANCE'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

@@ -11,7 +11,7 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 /**
- * Draws a vertical gray rectangle in the gutter
+ * Draws a vertical colored rectangle in the gutter
  * between the line numbers and the text.
  */
 class NotebookCodeCellBackgroundGutterRenderer(
@@ -21,8 +21,7 @@ class NotebookCodeCellBackgroundGutterRenderer(
     editor as EditorImpl
     val (top, height) = controller.getOrCalculateBounds() ?: return
 
-    val isPresentingMode = UISettings.Companion.getInstance().presentationMode || DistractionFreeModeController.isDistractionFreeModeEnabled()
+    val isPresentingMode = UISettings.getInstance().presentationMode || DistractionFreeModeController.isDistractionFreeModeEnabled()
     NotebookUtil.paintNotebookCellBackgroundGutter(editor, g, r, top, height, isPresentingMode)
   }
-
 }

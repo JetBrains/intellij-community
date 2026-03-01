@@ -17,13 +17,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
 
 public class AddModuleWizard extends AbstractProjectWizard {
 

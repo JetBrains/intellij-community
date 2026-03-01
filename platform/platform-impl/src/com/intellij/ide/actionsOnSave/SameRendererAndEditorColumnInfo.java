@@ -8,10 +8,11 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 abstract class SameRendererAndEditorColumnInfo<T> extends ColumnInfo<T, T> {
 

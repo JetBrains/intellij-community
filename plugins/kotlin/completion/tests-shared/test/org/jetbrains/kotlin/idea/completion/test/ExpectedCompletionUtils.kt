@@ -131,6 +131,7 @@ object ExpectedCompletionUtils {
     private const val RUN_HIGHLIGHTING_BEFORE_PREFIX = "RUN_HIGHLIGHTING_BEFORE"
 
     private const val INVOCATION_COUNT_PREFIX = "INVOCATION_COUNT:"
+    private const val WITH_LIVE_TEMPLATES = "WITH_LIVE_TEMPLATES"
     private const val WITH_ORDER_PREFIX = "WITH_ORDER"
     private const val AUTOCOMPLETE_SETTING_PREFIX = "AUTOCOMPLETE_SETTING:"
 
@@ -159,6 +160,7 @@ object ExpectedCompletionUtils {
         NUMBER_NATIVE_LINE_PREFIX,
         NUMBER_COMMON_LINE_PREFIX,
         INVOCATION_COUNT_PREFIX,
+        WITH_LIVE_TEMPLATES,
         WITH_ORDER_PREFIX,
         AUTOCOMPLETE_SETTING_PREFIX,
         NOTHING_ELSE_PREFIX,
@@ -272,6 +274,9 @@ object ExpectedCompletionUtils {
         }
 
     fun getAutocompleteSetting(fileText: String): Boolean? = InTextDirectivesUtils.getPrefixedBoolean(fileText, AUTOCOMPLETE_SETTING_PREFIX)
+
+    fun isWithLiveTemplates(fileText: String): Boolean =
+        InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, WITH_LIVE_TEMPLATES).isNotEmpty()
 
     fun isWithOrder(fileText: String): Boolean =
         InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, WITH_ORDER_PREFIX).isNotEmpty()

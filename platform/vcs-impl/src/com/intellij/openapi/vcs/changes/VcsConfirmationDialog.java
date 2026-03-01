@@ -9,8 +9,12 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 
 /**

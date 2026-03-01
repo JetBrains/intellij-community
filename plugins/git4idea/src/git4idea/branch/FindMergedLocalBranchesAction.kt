@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import kotlin.coroutines.cancellation.CancellationException
@@ -95,7 +95,7 @@ internal class FindMergedLocalBranchesAction : DumbAwareAction() {
               indicator.checkCanceled()
 
               val (repo, candidateName) = branchToProcess
-              val result = DeepComparator(project, dataProvider, dataProvider.dataPack, reposWithTarget, candidateName).compare()
+              val result = DeepComparator(project, dataProvider, dataProvider.graphData, reposWithTarget, candidateName).compare()
               result.exception?.let { throw it }
 
               val merged = result.nonPickedCommits.isEmpty()

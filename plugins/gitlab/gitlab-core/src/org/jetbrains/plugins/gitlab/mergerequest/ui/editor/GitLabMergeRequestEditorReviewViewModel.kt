@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.combineStates
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
@@ -25,11 +30,34 @@ import com.intellij.util.EventDispatcher
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
+import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.localCommitsSyncStatus
+import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitCurrentBranchPresenter
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
@@ -38,9 +66,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.createDiffDataFlow
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
-import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
-import java.util.*
+import java.util.EventListener
 
 private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 
@@ -48,7 +75,8 @@ private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
-  private val projectMapping: GitLabProjectMapping,
+  gitRemote: GitRemoteUrlCoordinates,
+  private val actualProjectCoordinates: GitLabProjectCoordinates,
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   private val discussionsVms: GitLabMergeRequestDiscussionsViewModels,
@@ -62,6 +90,8 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   if (project.service<GitLabMergeRequestsPreferences>().editorReviewEnabled) DiscussionsViewOption.UNRESOLVED_ONLY else DiscussionsViewOption.DONT_SHOW
 ), CodeReviewInEditorViewModel {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
+
+  private val gitRepository: GitRepository = gitRemote.repository
 
   val mergeRequestIid: String = mergeRequest.iid
 
@@ -113,7 +143,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?> by lazy {
-    val repository = projectMapping.remote.repository
+    val repository = gitRepository
     _actualChangesState.map {
       (it as? ChangesState.Loaded)?.changes?.commits?.map { it.sha }
     }.distinctUntilChanged().transformLatest {
@@ -163,7 +193,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   override fun updateBranch() {
     cs.launch {
       val details = mergeRequest.refreshDataNow()
-      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(projectMapping, details)
+      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(gitRepository, actualProjectCoordinates.serverPath, details)
     }
   }
 
@@ -213,7 +243,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
    */
   fun getFileStateFlow(virtualFile: VirtualFile): Flow<FileReviewState> {
     if (!virtualFile.isValid || virtualFile.isDirectory ||
-        !VfsUtilCore.isAncestor(projectMapping.remote.repository.root, virtualFile, true)) {
+        !VfsUtilCore.isAncestor(gitRepository.root, virtualFile, true)) {
       return flowOf(FileReviewState.NotInReview)
     }
     val filePath = VcsContextFactory.getInstance().createFilePathOn(virtualFile)

@@ -15,8 +15,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.Collection;
 import java.util.List;
 

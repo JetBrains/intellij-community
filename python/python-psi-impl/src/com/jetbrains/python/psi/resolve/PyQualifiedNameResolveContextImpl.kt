@@ -32,6 +32,7 @@ data class PyQualifiedNameResolveContextImpl(
   private val relativeLevel: Int = -1,
   private val withoutRoots: Boolean = false,
   private val withoutForeign: Boolean = false,
+  // withMembers means that re-imports from __init__.py file will be handled correctly.
   private val withMembers: Boolean = false,
   private val withPlainDirectories: Boolean = false,
   private val withoutStubs: Boolean = false,

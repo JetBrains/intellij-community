@@ -1,15 +1,26 @@
+load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag")
+load("@protobuf//bazel/toolchains:proto_lang_toolchain.bzl", "proto_lang_toolchain")
 load("@rules_java//java:defs.bzl", "java_import")
 load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
-load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
+load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
+
+
+jvm_import(
+  name = "protobuf_java",
+  jar = "@protobuf-java_http//file",
+  source_jar = "@protobuf-java-sources_http//file",
+  visibility = ["//visibility:public"],
+)
 
 _kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
     include_stdlibs = "none",
-    jvm_target = "17",
-    visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
-    x_jdk_release = "17",
+    jvm_target = "21",
+    visibility = ["//visibility:public"],
+    x_jdk_release = "21",
 )
 
 # --@rules_jvm//:trace
@@ -57,6 +68,12 @@ jvm_import(
 )
 
 jvm_import(
+    name = "forms_import",
+    jar = "@forms_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "h2-mvstore_import",
     jar = "@h2-mvstore_http//file",
     source_jar = "@h2-mvstore-sources_http//file",
@@ -91,50 +108,74 @@ jvm_import(
 )
 
 jvm_import(
+    name = "jaxen_import",
+    jar = "@jaxen_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "jps-javac-extension_import",
     jar = "@jps-javac-extension_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
-    name = "kotlin-compiler_import",
+    name = "jvm-abi-gen-embeddable_import",
+    jar = "@jvm-abi-gen-embeddable_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-compiler-embeddable_import",
     jar = "@kotlin-compiler-embeddable_http//file",
-    source_jar = "@kotlin-compiler-embeddable_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-compose-compiler-plugin-embeddable_import",
     jar = "@kotlin-compose-compiler-plugin-embeddable_http//file",
-    source_jar = "@kotlin-compose-compiler-plugin-embeddable-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-metadata-jvm_import",
     jar = "@kotlin-metadata-jvm_http//file",
-    source_jar = "@kotlin-metadata-jvm-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-reflect_import",
     jar = "@kotlin-reflect_http//file",
-    source_jar = "@kotlin-reflect-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-serialization-compiler-plugin-embeddable_import",
     jar = "@kotlin-serialization-compiler-plugin-embeddable_http//file",
-    source_jar = "@kotlin-serialization-compiler-plugin-embeddable-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-script-runtime_import",
+    jar = "@kotlin-script-runtime_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-stdlib_import",
     jar = "@kotlin-stdlib_http//file",
-    source_jar = "@kotlin-stdlib-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-stdlib-jdk7_import",
+    jar = "@kotlin-stdlib-jdk7_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-stdlib-jdk8_import",
+    jar = "@kotlin-stdlib-jdk8_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -306,19 +347,11 @@ jvm_import(
 )
 
 java_library(
-  name = "junit5",
+  name = "junit4",
   exports = [
-    ":org_junit_jupiter-junit-jupiter-api-5_13_4_http_import",
-    ":org_opentest4j-opentest4j-1_3_0_http_import",
-    ":org_junit_platform-junit-platform-commons-1_13_4_http_import",
-    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+    ":junit-junit-4_13_2_http_import",
   ],
   visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_junit_jupiter-junit-jupiter-api-5_13_4_http_import",
-  jar = "@org_junit_jupiter-junit-jupiter-api-5_13_4_http//file",
 )
 
 jvm_import(
@@ -327,44 +360,8 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_junit_platform-junit-platform-commons-1_13_4_http_import",
-  jar = "@org_junit_platform-junit-platform-commons-1_13_4_http//file",
-)
-
-jvm_import(
-  name = "org_apiguardian-apiguardian-api-1_1_2_http_import",
-  jar = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
-)
-
-java_library(
-  name = "junit5Launcher",
-  exports = [
-    ":org_junit_platform-junit-platform-launcher-1_13_4_http_import",
-    ":org_junit_platform-junit-platform-engine-1_13_4_http_import",
-    ":org_junit_platform-junit-platform-reporting-1_12_2_http_import",
-    ":org_junit_jupiter-junit-jupiter-engine-5_13_4_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_junit_platform-junit-platform-launcher-1_13_4_http_import",
-  jar = "@org_junit_platform-junit-platform-launcher-1_13_4_http//file",
-)
-
-jvm_import(
-  name = "org_junit_jupiter-junit-jupiter-engine-5_13_4_http_import",
-  jar = "@org_junit_jupiter-junit-jupiter-engine-5_13_4_http//file",
-)
-
-jvm_import(
-  name = "org_junit_platform-junit-platform-engine-1_13_4_http_import",
-  jar = "@org_junit_platform-junit-platform-engine-1_13_4_http//file",
-)
-
-jvm_import(
-  name = "org_junit_platform-junit-platform-reporting-1_12_2_http_import",
-  jar = "@org_junit_platform-junit-platform-reporting-1_12_2_http//file",
+  name = "junit-junit-4_13_2_http_import",
+  jar = "@junit-junit-4_13_2_http//file",
 )
 
 kt_javac_options(
@@ -398,5 +395,29 @@ label_flag(
 label_flag(
     name = "jvm-builder-jvm_flags",
     build_setting_default = "//jvm-inc-builder:jvm-inc-builder-jvm_flags",
+    visibility = ["//visibility:public"],
+)
+
+pkg_files(
+  name = "rules_to_zip",
+  srcs = glob(["rules/**/*"]),
+  strip_prefix = strip_prefix.from_pkg(),
+)
+
+pkg_zip(
+    name = "rules_jvm_zip",
+    srcs = glob([
+      "*.bzl",
+      "*.bazel",
+      "*.bazel.lock",
+    ]) + [
+      ":rules_to_zip",
+       "//dependency-graph:files_to_zip",
+       "//jps-builders-6:files_to_zip",
+       "//jvm-inc-builder:files_to_zip",
+       "//rules/impl/platforms:files_to_zip",
+       "//worker-framework:files_to_zip",
+       "//zip:files_to_zip",
+    ],
     visibility = ["//visibility:public"],
 )

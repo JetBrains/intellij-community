@@ -1,7 +1,11 @@
 package com.intellij.findUsagesMl
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.mlapi.feature.*
+import com.jetbrains.mlapi.feature.Feature
+import com.jetbrains.mlapi.feature.FeatureContainer
+import com.jetbrains.mlapi.feature.FeatureDeclaration
+import com.jetbrains.mlapi.feature.FeatureProvider
+import com.jetbrains.mlapi.feature.FeatureSet
 import org.apache.commons.text.similarity.JaroWinklerSimilarity
 
 

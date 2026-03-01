@@ -21,7 +21,7 @@ class Desc1:
         ...
 
     def __get__(self, __obj: object | None, __owner: Any) -> "int | Desc1":
-        ...
+        raise NotImplementedError
 
     def __set__(self, __obj: object, __value: int) -> None:
         ...
@@ -48,7 +48,7 @@ class Desc2(Generic[T]):
         ...
 
     def __get__(self, instance: object | None, owner: Any) -> list[T] | T:
-        ...
+        raise NotImplementedError
 
 
 @dataclass

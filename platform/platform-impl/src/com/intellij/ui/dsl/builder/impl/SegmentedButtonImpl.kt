@@ -14,6 +14,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.SpacingConfiguration
@@ -34,8 +35,11 @@ import javax.swing.Icon
 import javax.swing.JList
 
 @ApiStatus.Internal
-internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig, parent: RowImpl,
-                                      private val renderer: SegmentedButton.ItemPresentation.(T) -> Unit) : PlaceholderBaseImpl<SegmentedButton<T>>(
+internal class SegmentedButtonImpl<T>(
+  private val dialogPanelConfig: DialogPanelConfig,
+  parent: RowImpl,
+  private val renderer: SegmentedButton.ItemPresentation.(T) -> Unit,
+) : PlaceholderBaseImpl<SegmentedButton<T>>(
   parent), SegmentedButton<T> {
 
   override var items: Collection<T> = emptyList()
@@ -164,6 +168,22 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig, pare
     comboBox.bind(property)
     segmentedButtonComponent.bind(property)
     rebuildUI()
+    return this
+  }
+
+  override fun bind(prop: MutableProperty<T>): SegmentedButton<T> {
+    selectedItem = prop.get()
+
+    dialogPanelConfig.applyCallbacks.list(null).add {
+      selectedItem?.let { prop.set(it) }
+    }
+    dialogPanelConfig.resetCallbacks.list(null).add {
+      selectedItem = prop.get()
+    }
+    dialogPanelConfig.isModifiedCallbacks.list(null).add {
+      selectedItem != prop.get()
+    }
+
     return this
   }
 

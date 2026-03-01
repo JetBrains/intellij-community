@@ -32,4 +32,27 @@ jvm_library(
     "//android/gradle-dsl-groovy",
   ]
 )
+
+jvm_library(
+  name = "dependencyUpdater_test_lib",
+  module_name = "intellij.gradle.dependencyUpdater",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":dependencyUpdater",
+    "//plugins/gradle:gradle_test_lib",
+    "//plugins/gradle:gradle-common_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/external-system-api/dependency-updater:dependency-updater_test_lib",
+    "//android/gradle-dsl:gradle-dsl_test_lib",
+    "//android/gradle-dsl-kotlin:gradle-dsl-kotlin_test_lib",
+    "//android/gradle-dsl-toml:gradle-dsl-toml_test_lib",
+    "//android/gradle-dsl-declarative:gradle-dsl-declarative_test_lib",
+    "//android/gradle-dsl-groovy:gradle-dsl-groovy_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.gradle.dependencyUpdater` end

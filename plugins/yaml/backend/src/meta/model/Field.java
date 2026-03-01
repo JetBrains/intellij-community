@@ -6,12 +6,20 @@ import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import kotlin.Pair;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLValue;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 

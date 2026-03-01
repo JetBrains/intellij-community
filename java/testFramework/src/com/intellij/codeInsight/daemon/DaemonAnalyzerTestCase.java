@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -34,14 +35,28 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.search.IndexPatternBuilder;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.FileTreeAccessFilter;
+import com.intellij.testFramework.HighlightTestInfo;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.InspectionTestUtil;
+import com.intellij.testFramework.InspectionsKt;
+import com.intellij.testFramework.StartupActivityTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,6 +81,8 @@ import java.util.List;
 
 public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
+  protected DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
+  protected TestDaemonCodeAnalyzerImpl myTestDaemonCodeAnalyzer;
 
   @Override
   protected void setUp() throws Exception {
@@ -75,9 +92,10 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
     InspectionsKt.configureInspections(tools, getProject(), getTestRootDisposable());
 
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    daemonCodeAnalyzer.prepareForTest();
+    myTestDaemonCodeAnalyzer = new TestDaemonCodeAnalyzerImpl(getProject());
+    myTestDaemonCodeAnalyzer.prepareForTest();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+    myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
 
     if (isStressTest()) {
       IntentionManager.getInstance().getAvailableIntentions();  // hack to avoid slowdowns in PyExtensionFactory
@@ -111,17 +129,20 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
           ((StartupManagerImpl)startupManager).checkCleared();
         }
-        DaemonCodeAnalyzer daemonCodeAnalyzer = project.getServiceIfCreated(DaemonCodeAnalyzer.class);
-        if (daemonCodeAnalyzer != null) {
-          ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).cleanupAfterTest();
-        }
+        myTestDaemonCodeAnalyzer.cleanupAfterTest();
       }
     }
     catch (Throwable e) {
       addSuppressedException(e);
     }
     finally {
-      super.tearDown();
+      try {
+        super.tearDown();
+      }
+      finally {
+        myDaemonCodeAnalyzer = null;
+        myTestDaemonCodeAnalyzer = null;
+      }
     }
   }
 

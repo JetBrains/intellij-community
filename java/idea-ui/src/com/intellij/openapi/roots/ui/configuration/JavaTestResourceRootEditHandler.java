@@ -6,8 +6,8 @@ import com.intellij.ide.JavaUiBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 
 public final class JavaTestResourceRootEditHandler extends JavaResourceRootEditHandlerBase {
   public JavaTestResourceRootEditHandler() {

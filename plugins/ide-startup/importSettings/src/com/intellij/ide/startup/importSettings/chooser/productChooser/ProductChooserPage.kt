@@ -22,8 +22,18 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.intersect
-import java.awt.*
-import javax.swing.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import java.awt.Image
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 internal class ProductChooserPage(val controller: ImportSettingsController, override val backgroundImage: Image?) : OnboardingPage {
   override val stage = StartupWizardStage.ProductChoicePage

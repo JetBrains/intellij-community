@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ComboBoxModel;
 import java.util.Collection;
 import java.util.Comparator;
 

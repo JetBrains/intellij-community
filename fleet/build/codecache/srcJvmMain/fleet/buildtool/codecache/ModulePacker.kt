@@ -1,28 +1,41 @@
 package fleet.buildtool.codecache
 
 import com.intellij.util.lang.ImmutableZipFile
+import fleet.buildtool.codecache.shadowing.ShadowedJarSpec
 import fleet.buildtool.fs.extractZip
 import fleet.buildtool.platform.Arch
 import fleet.buildtool.platform.Platform
 import fleet.buildtool.platform.toS3DistributionSlug
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
+import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.io.writeZipUsingTempFile
+import org.jetbrains.intellij.build.io.zip
 import org.slf4j.Logger
-import org.jetbrains.intellij.build.io.*
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.moveTo
+import kotlin.io.path.name
 
-const val allowedLicenseClientConsumerModule: String = "fleet.plugins.ship.common"
-private fun allowedLicenseClientConsumerJar(version: String) = "fleet.common-$version.jar" // fleet.common jar
-const val licenseClientApiJpmsModuleName: String = "ls.client.api"
-private const val licenseClientApiJarName = "ls-client-api.jar"
 private val jnaJarNamePattern = Regex("jna-\\d.*\\.jar")
-private val kotlinStdlibJarNamePattern = Regex("kotlin-stdlib-\\d.*\\.jar")
-const val allowedDockCoroutinesConsumerModule: String = "fleet.dock.runtime"
-const val dockCoroutinesJpmsModuleName: String = "fleet.dock.coroutines"
-private fun dockCoroutinesJarName(version: String) = "fleet.dock.coroutines-$version.jar"
+val kotlinStdlibJarNamePattern = Regex("kotlin-stdlib-\\d.*\\.jar")
 
 private typealias Jar = Path
 
@@ -62,6 +75,7 @@ class ModulePacker(
   private val nativeLibraryExtractor: NativeLibraryExtractor,
   private val version: String,
   private val logger: Logger,
+  private val shadowedJarSpecs: List<ShadowedJarSpec>,
 ) {
   private val cache = ConcurrentHashMap<Path, CacheEntry>()
 
@@ -71,39 +85,18 @@ class ModulePacker(
   )
 
   fun packModule(module: ModuleToPack): PackedModule {
-    val licenseClientApiJar = module.filesToPack.singleOrNullOrThrow { // direct dependency on license client?
-      it.name.contains(licenseClientApiJarName)
+    val resolvedShadowedJars = shadowedJarSpecs.mapNotNull { it.resolve(module) }
+    require(resolvedShadowedJars.size <= 1) {
+      "Module '${module.name}' tries to shadow '${resolvedShadowedJars.map { it.shadowedJar.name }}', this is not allowed by our build tool, contact #fleet-platform"
     }
-    require(licenseClientApiJar == null || module.name == allowedLicenseClientConsumerModule) {
-      "module '${module.name} is not allowed to pack '$licenseClientApiJarName'"
-    }
-    val allowedLicenseClientConsumerJarName = allowedLicenseClientConsumerJar(version)
-    require(licenseClientApiJar == null || module.filesToPack.singleOrNull { it.name == allowedLicenseClientConsumerJarName } != null) {
-      "module '${module.name} shadows '$licenseClientApiJar' so it must want to pack a jar '$allowedLicenseClientConsumerJarName'"
-    }
-
-    val dockCoroutinesHackJar = module.filesToPack.singleOrNullOrThrow { it.name == dockCoroutinesJarName(version) }
-    require(dockCoroutinesHackJar == null || module.name == allowedDockCoroutinesConsumerModule) {
-      "module '${module.name} is not allowed to pack '$dockCoroutinesHackJar'"
-    }
-    require(dockCoroutinesHackJar == null || module.filesToPack.singleOrNull { f -> kotlinStdlibJarNamePattern.matches(f.name) } != null) {
-      "Module '${module.name}' tries to shadow '$dockCoroutinesHackJar' but is not containing only a single jar matching '$kotlinStdlibJarNamePattern'"
-    }
-
-    require(licenseClientApiJar == null || dockCoroutinesHackJar == null) {
-      "Module '${module.name}' tries to shadow both '$licenseClientApiJar' and '$dockCoroutinesHackJar', this is not allowed by our build tool, contact #fleet-platform"
-    }
-
-    val toPack = module.filesToPack.filter { it != licenseClientApiJar && it != dockCoroutinesHackJar } // never pack the shadowed jar
+    val shadowing = resolvedShadowedJars.singleOrNull()
+    val toPack = module.filesToPack.filter { it != shadowing?.shadowedJar } // never pack the shadowed jar
     val jars = runBlocking(Dispatchers.IO) {
       toPack.mapConcurrent { path ->
-        val (shadowed, needsScrambling) = when {
-          licenseClientApiJar == null && dockCoroutinesHackJar == null -> null to false
-          dockCoroutinesHackJar != null && kotlinStdlibJarNamePattern.matches(path.name) -> dockCoroutinesHackJar to false
-          licenseClientApiJar != null && path.name == allowedLicenseClientConsumerJarName -> licenseClientApiJar to true
-          else -> null to false
+        when (path == shadowing?.consumerJar) {
+          true -> pack(path, needsScrambling = shadowing.needsScrambling, shadowed = shadowing.shadowedJar)
+          false -> pack(path, needsScrambling = false, shadowed = null)
         }
-        pack(path, needsScrambling = needsScrambling, shadowed = shadowed)
       }
     }
     return PackedModule(
@@ -124,8 +117,8 @@ class ModulePacker(
   @OptIn(ExperimentalPathApi::class)
   private fun pack(file: Path, needsScrambling: Boolean, shadowed: Path?): PackedJar {
     logger.info("Packing/repacking '$file' (needsScrambling=$needsScrambling, shadowing=$shadowed)")
-    require(!file.absolutePathString().contains(licenseClientApiJarName)) {
-      "$licenseClientApiJarName should have been shadowed, contact #fleet-support"
+    require(shadowedJarSpecs.none { file.name.matches(it.shadowedJarPattern) }) {
+      "${file.name} should have been shadowed, contact #fleet-support"
     }
     return cache.compute(file) { fileToPack, existing ->
       when (existing) {
@@ -202,10 +195,13 @@ fun packToImmutableJar(path: Path, needsScrambling: Boolean, shadowed: Path?, ta
   target.deleteIfExists()
   target.parent.createDirectories()
   val intermediateJar = when {
-    path.isDirectory() -> packDirectoriesToImmutableJar(target, listOf(path)) // TODO: add direct support for directories packing in `packToImmutableJar` instead
+    path.isDirectory() -> packDirectoriesToImmutableJar(target,
+                                                        listOf(path)) // TODO: add direct support for directories packing in `packToImmutableJar` instead
     else -> path
   }
-  val jar = packToImmutableJar(target, listOfNotNull(shadowed, intermediateJar), logger) // order of jars list matters, shadowed content overrides original content (reason: DebugProbes.kt of shadowed `:dock-coroutines` subproject must override `kotlin-stdlib` ones)
+  val jar = packToImmutableJar(target,
+                               listOfNotNull(shadowed, intermediateJar),
+                               logger) // order of jars list matters, shadowed content overrides original content (reason: DebugProbes.kt of shadowed `:dock-coroutines` subproject must override `kotlin-stdlib` ones)
   return PackedJar(
     path = jar,
     needsScrambling = needsScrambling,
@@ -215,7 +211,14 @@ fun packToImmutableJar(path: Path, needsScrambling: Boolean, shadowed: Path?, ta
 
 // TODO: make it more generic, not only for JNA
 @OptIn(ExperimentalPathApi::class)
-private fun repackToImmutableJarExtractingNativeFiles(jar: Path, needsScrambling: Boolean, shadowed: Path?, targetDirectory: Path, nativeLibrariesTargetDirectory: Path, logger: Logger): PackedJar {
+private fun repackToImmutableJarExtractingNativeFiles(
+  jar: Path,
+  needsScrambling: Boolean,
+  shadowed: Path?,
+  targetDirectory: Path,
+  nativeLibrariesTargetDirectory: Path,
+  logger: Logger,
+): PackedJar {
   require(shadowed == null) { "shadowing not supported" }
   val tmp = Files.createTempDirectory("repacking").resolve(jar.name)
   extractZip(archive = jar, destination = tmp, stripTopLevelFolder = false, cleanDestination = false, temporaryDir = tmp, logger = logger)
@@ -246,7 +249,14 @@ private fun repackToImmutableJarExtractingNativeFiles(jar: Path, needsScrambling
 
 // TODO: delete once `repackToImmutableJarExtractingNativeFiles` is generic
 @OptIn(ExperimentalPathApi::class)
-private fun repackToImmutableJarExtractingNativeFiles2(jar: Path, needsScrambling: Boolean, shadowed: Path?, targetDirectory: Path, nativeLibrariesTargetDirectory: Path, logger: Logger): PackedJar {
+private fun repackToImmutableJarExtractingNativeFiles2(
+  jar: Path,
+  needsScrambling: Boolean,
+  shadowed: Path?,
+  targetDirectory: Path,
+  nativeLibrariesTargetDirectory: Path,
+  logger: Logger,
+): PackedJar {
   require(shadowed == null) { "shadowing not supported" }
   val tmp = Files.createTempDirectory("repacking").resolve(jar.name)
   extractZip(archive = jar, destination = tmp, cleanDestination = false, stripTopLevelFolder = false, temporaryDir = tmp, logger = logger)
@@ -278,7 +288,8 @@ private fun packToImmutableJar(destinationJar: Path, jars: List<Path>, logger: L
   require(jars.map { it.extension }.all { it == "jar" }) { "only jars are supported, got '$jars'" }
   val uniqueJar = jars.singleOrNull()
   when {
-    uniqueJar != null && ImmutableZipFile.load(uniqueJar).use { it is ImmutableZipFile } -> uniqueJar.copyTo(destinationJar) // already an immutable jar, not repacking
+    uniqueJar != null && ImmutableZipFile.load(uniqueJar)
+      .use { it is ImmutableZipFile } -> uniqueJar.copyTo(destinationJar) // already an immutable jar, not repacking
     else -> {
       val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE)
       destinationJar.parent.createDirectories()
@@ -325,7 +336,7 @@ private suspend inline fun <T, U> Iterable<T>.mapConcurrent(crossinline transfor
     }.awaitAll()
   }
 
-private fun <T> Iterable<T>.singleOrNullOrThrow(p: (T) -> Boolean = { true }): T? {
+internal fun <T> Iterable<T>.singleOrNullOrThrow(p: (T) -> Boolean = { true }): T? {
   var single: T? = null
   var found = false
   for (element in this) {

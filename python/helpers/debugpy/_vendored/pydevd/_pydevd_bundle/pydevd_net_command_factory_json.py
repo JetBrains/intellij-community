@@ -16,7 +16,7 @@ from _pydevd_bundle._debug_adapter.pydevd_schema import (
     OutputEvent,
     ContinuedEventBody,
     ExitedEventBody,
-    ExitedEvent,
+    ExitedEvent, GetTableImageResponseBody,
 )
 from _pydevd_bundle.pydevd_comm_constants import (
     CMD_THREAD_CREATE,
@@ -596,14 +596,20 @@ This may mean a number of things:
     def make_get_table_message(self, seq, res):
         try:
             body = GetTableResponseBody(result=res)
-            pydev_log.info(f"RESPONSE BODY: {body}")
             response = pydevd_schema.GetTableResponse(request_seq=seq, success=True, body=body)
-            pydev_log.info(f"RESPONSE: {response}")
             return NetCommand(CMD_RETURN, 0, response, is_json=True)
         except Exception as e:
-            pydev_log.exception(f"Error while building getTable response: {e}")
             err_response = pydevd_schema.GetTableResponse(request_seq=seq, success=False, body={})
             return NetCommand(CMD_RETURN, 0, err_response, is_json=True)
+
+    def make_get_table_image_message(self, seq, res, int_cmd):
+        try:
+            body = GetTableImageResponseBody(result=res)
+            response = pydevd_schema.GetTableImageResponse(request_seq=seq, success=True, body=body)
+            return NetCommand(int_cmd, 0, response, is_json=True)
+        except Exception as e:
+            err_response = pydevd_schema.GetTableResponse(request_seq=seq, success=False, body={})
+            return NetCommand(int_cmd, 0, err_response, is_json=True)
 
     @overrides(NetCommandFactory.make_get_array_message)
     def make_get_array_message(self, seq, res):
@@ -612,6 +618,5 @@ This may mean a number of things:
             response = pydevd_schema.GetArrayResponse(request_seq=seq, success=True, body=body)
             return NetCommand(CMD_RETURN, 0, response, is_json=True)
         except Exception as e:
-            pydev_log.exception(f"Error while building getTable response: {e}")
             err_response = pydevd_schema.GetArrayResponse(request_seq=seq, success=False, body={})
             return NetCommand(CMD_RETURN, 0, err_response, is_json=True)

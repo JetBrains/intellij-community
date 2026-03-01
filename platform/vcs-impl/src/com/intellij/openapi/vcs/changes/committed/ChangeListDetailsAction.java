@@ -19,9 +19,13 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JEditorPane;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,7 +37,9 @@ import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.containers.ContainerUtil.packNullables;
 import static com.intellij.util.text.DateFormatUtil.formatPrettyDateTime;
-import static com.intellij.util.ui.UIUtil.*;
+import static com.intellij.util.ui.UIUtil.BR;
+import static com.intellij.util.ui.UIUtil.HTML_MIME;
+import static com.intellij.util.ui.UIUtil.getCssFontDeclaration;
 import static java.lang.String.format;
 
 @ApiStatus.Internal

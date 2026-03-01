@@ -5,14 +5,41 @@ package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
-import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.AttachmentFactory
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.util.coroutines.mapConcurrent
-import com.intellij.platform.workspace.jps.*
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.CustomModuleEntitySource
+import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.JpsMetrics
+import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.contentRoot
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.impl.ConsistencyCheckingDisabler
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -31,7 +58,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Locale
 import java.util.stream.Collectors
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,

@@ -11,8 +11,12 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
@@ -23,7 +27,16 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.TransformToJavaUtil
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 /**
  * Information of new callable to create. Since we want to avoid the use of AA on EDT i.e., [CreateKotlinCallablePsiEditor],

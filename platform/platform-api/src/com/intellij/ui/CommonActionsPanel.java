@@ -3,7 +3,21 @@ package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.ActionWithDelegate;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionHolder;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CompositeShortcutSet;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
@@ -17,10 +31,22 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**

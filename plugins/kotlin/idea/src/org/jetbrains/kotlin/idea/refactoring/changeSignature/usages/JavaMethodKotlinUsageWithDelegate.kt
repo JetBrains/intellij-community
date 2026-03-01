@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 
+@K1Deprecation
 abstract class JavaMethodKotlinUsageWithDelegate<T : PsiElement>(
     val psiElement: T,
     var javaMethodChangeInfo: KotlinChangeInfo
@@ -17,6 +19,7 @@ abstract class JavaMethodKotlinUsageWithDelegate<T : PsiElement>(
     fun processUsage(allUsages: Array<UsageInfo>): Boolean = delegateUsage.processUsage(javaMethodChangeInfo, psiElement, allUsages)
 }
 
+@K1Deprecation
 class JavaMethodKotlinCallUsage(
     callElement: KtCallElement,
     javaMethodChangeInfo: KotlinChangeInfo,

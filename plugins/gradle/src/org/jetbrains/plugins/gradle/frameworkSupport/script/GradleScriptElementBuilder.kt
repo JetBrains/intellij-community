@@ -3,8 +3,19 @@ package org.jetbrains.plugins.gradle.frameworkSupport.script
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.ArgumentElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.*
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.*
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.AssignElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BooleanElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.CallElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.CodeElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.InfixCall
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.IntElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.ListElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.StringElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.NewLineElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.PlusAssignElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.PropertyElement
 import java.util.function.Consumer
 
 @ApiStatus.NonExtendable

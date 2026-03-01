@@ -6,10 +6,20 @@ import com.intellij.patterns.uast.UDeclarationPattern
 import com.intellij.patterns.uast.UExpressionPattern
 import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.patterns.uast.uExpression
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceRegistrar
+import com.intellij.psi.registerUastReferenceProvider
+import com.intellij.psi.uastInjectionHostReferenceProvider
 import com.intellij.util.ThreeState
 import org.jetbrains.idea.devkit.util.PsiUtil
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.evaluateString
+import org.jetbrains.uast.getAsJavaPsiElement
+import org.jetbrains.uast.getContainingUClass
 
 internal class ActionOrGroupIdReferenceContributor : PsiReferenceContributor() {
 

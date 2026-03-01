@@ -9,7 +9,6 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.dsl.builder.panel
-import org.jetbrains.kotlin.idea.core.script.shared.KOTLIN_SCRIPTING_SETTINGS_ID
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent

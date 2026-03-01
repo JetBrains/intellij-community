@@ -7,7 +7,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.task.*;
+import com.intellij.task.ModuleBuildTask;
+import com.intellij.task.ModuleFilesBuildTask;
+import com.intellij.task.ModuleResourcesBuildTask;
+import com.intellij.task.ProjectModelBuildTask;
+import com.intellij.task.ProjectTask;
 import com.intellij.task.impl.JpsProjectTaskRunner;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.SmartList;
@@ -25,10 +29,20 @@ import org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScript;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleModuleData;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalModuleType;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectId;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectPath;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.trimEnd;
+import static com.intellij.openapi.util.text.StringUtil.trimStart;
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.resolveProjectPath;
 
 @ApiStatus.Internal

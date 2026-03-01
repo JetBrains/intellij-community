@@ -22,7 +22,7 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.util.*
+import java.util.TreeSet
 
 private val TELEMETRY: Tracer
   get() = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
@@ -119,7 +119,7 @@ private class GradleSyncActionRunner {
     context: ProjectResolverContext,
     phase: GradleSyncPhase,
   ) {
-    TELEMETRY.spanBuilder(phase.name).use {
+    TELEMETRY.spanBuilder(phase.name + "-idea").use {
       GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { contributor ->
         if (contributor.phase == phase) {
           TELEMETRY.spanBuilder(contributor.name).use {

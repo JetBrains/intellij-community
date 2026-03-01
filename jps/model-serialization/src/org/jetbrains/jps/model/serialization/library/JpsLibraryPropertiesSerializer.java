@@ -14,15 +14,5 @@ public abstract class JpsLibraryPropertiesSerializer<P extends JpsElement> exten
     super(type, typeId);
   }
 
-  /**
-   * @deprecated Override {@link #loadProperties(Element, JpsPathMapper)} instead of this method.
-   */
-  @Deprecated(forRemoval = true)
-  public P loadProperties(@Nullable Element propertiesElement) {
-    throw new AbstractMethodError();
-  }
-
-  public P loadProperties(@Nullable Element propertiesElement, @NotNull JpsPathMapper pathMapper) {
-    return loadProperties(propertiesElement);
-  }
+  public abstract P loadProperties(@Nullable Element propertiesElement, @NotNull JpsPathMapper pathMapper);
 }

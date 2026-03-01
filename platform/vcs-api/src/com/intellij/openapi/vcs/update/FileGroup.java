@@ -5,14 +5,26 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class FileGroup {
   public @Nls String myUpdateName;

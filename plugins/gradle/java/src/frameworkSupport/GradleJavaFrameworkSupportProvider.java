@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Vladislav.Soroka

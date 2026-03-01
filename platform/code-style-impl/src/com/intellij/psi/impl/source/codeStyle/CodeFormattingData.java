@@ -14,7 +14,14 @@ import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class CodeFormattingData {
@@ -57,7 +64,7 @@ public final class CodeFormattingData {
     myPsiFile.putUserData(CODE_FORMATTING_DATA_KEY, null);
   }
 
-  public @NotNull Set<TextRange> getInjectedRanges(@NotNull TextRange range) {
+  @NotNull Set<TextRange> getInjectedRanges(@NotNull TextRange range) {
     if (myPsiFile.getProject().isDefault() || range.isEmpty()) return Collections.emptySet();
     if ("Rust".equals(myPsiFile.getLanguage().getID())) return Collections.emptySet();
     Set<TextRange> injectedRanges = injectedFileRangesMap.get(range.getStartOffset());
@@ -88,7 +95,7 @@ public final class CodeFormattingData {
         for (PsiLanguageInjectionHost.Shred place : places) {
           Segment rangeMarker = place.getHostRangeMarker();
           if (rangeMarker != null) {
-            injectedFileRangesSet.add(TextRange.create(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+            injectedFileRangesSet.add(TextRange.create(rangeMarker));
           }
         }
       };

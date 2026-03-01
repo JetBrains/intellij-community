@@ -4,12 +4,12 @@ package com.intellij.testFramework.common
 import com.intellij.openapi.diagnostic.logger
 import java.lang.reflect.InaccessibleObjectException
 import java.nio.file.spi.FileSystemProvider
-import java.util.*
+import java.util.ServiceLoader
 
 private object FileSystemProviderInjector
 
 /**
- * Workaround for the case that happens at least in `com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite`.
+ * Workaround for the case that happens at least in `com.intellij.tests.JUnit5TeamCityRunner`.
  *
  * The test runner starts _without_ modules related to tests in the classpath.
  * Later an appropriate classpath is built during test discovery.

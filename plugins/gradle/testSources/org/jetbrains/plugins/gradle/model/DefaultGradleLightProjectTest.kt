@@ -1,14 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
 import com.intellij.idea.IJIgnore
 import com.intellij.testFramework.common.mock.NotMockedMemberError
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
-import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
-import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -20,7 +20,7 @@ import java.io.File
 class DefaultGradleLightProjectTest {
 
   @ParameterizedTest
-  @GradleTestSource("8.1, 8.2")
+  @GradleTestSource("8.1.1, 8.2.1")
   fun `test identity path is not calculated when buildTreePath is available`(gradleVersion: GradleVersion) {
     val build = mock<DefaultGradleLightBuild> {
       on { name } doReturn "project"
@@ -76,13 +76,13 @@ class DefaultGradleLightProjectTest {
    */
   @IJIgnore(issue = "IDEA-375500")
   @ParameterizedTest
-  @GradleTestSource("7.6")
+  @GradleTestSource("7.6.6")
   fun `test identity path for buildSrc of the root build BEFORE 8,0`(gradleVersion: GradleVersion) {
     testIdentityPathForBuildSrcOfRootBuild(gradleVersion)
   }
 
   @ParameterizedTest
-  @GradleTestSource("8.0")
+  @GradleTestSource("8.0.2")
   fun `test identity path for buildSrc of the root build AFTER 8,0`(gradleVersion: GradleVersion) {
     testIdentityPathForBuildSrcOfRootBuild(gradleVersion)
   }
@@ -111,13 +111,13 @@ class DefaultGradleLightProjectTest {
    */
   @IJIgnore(issue = "IDEA-375500")
   @ParameterizedTest
-  @GradleTestSource("7.6")
+  @GradleTestSource("7.6.6")
   fun `test identity path for buildSrc of an included build BEFORE 8,0`(gradleVersion: GradleVersion) {
     testCalculationForBuildSrcOfIncluded(gradleVersion)
   }
 
   @ParameterizedTest
-  @GradleTestSource("8.0")
+  @GradleTestSource("8.0.2")
   fun `test identity path for buildSrc of an included build AFTER 8,0`(gradleVersion: GradleVersion) {
     testCalculationForBuildSrcOfIncluded(gradleVersion)
   }

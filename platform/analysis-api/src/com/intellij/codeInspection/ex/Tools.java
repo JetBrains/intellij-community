@@ -28,8 +28,26 @@ public interface Tools {
   @NotNull
   ScopeToolState getDefaultState();
 
+  /**
+   * Checks if the inspection tool is enabled.
+   * <p>
+   * If this method returns {@code false}, the tool is considered
+   * disabled for all files and scopes, and {@link #isEnabled(PsiElement)} will also return
+   * {@code false} for any element.
+   *
+   * @return {@code true} if the tool is enabled, {@code false} otherwise.
+   */
   boolean isEnabled();
 
+  /**
+   * Checks if the inspection tool is enabled for the specific {@link PsiElement}.
+   * <p>
+   * This method correctly considers the provided {@link PsiElement element}'s context
+   * and the overall profile configuration, including any custom scopes
+   * ({@code Settings | Appearance & Behavior | Scopes}) where the inspection might be specifically enabled or disabled.
+   *
+   * @return {@code true} if the tool is enabled for the given element, {@code false} otherwise.
+   */
   boolean isEnabled(@Nullable PsiElement element);
 
   @Nullable

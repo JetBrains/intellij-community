@@ -1,4 +1,4 @@
-// "Replace with 'compute' method call" "true"
+// "Replace with 'compute()' call" "true"
 import java.util.Map;
 
 public class Main {

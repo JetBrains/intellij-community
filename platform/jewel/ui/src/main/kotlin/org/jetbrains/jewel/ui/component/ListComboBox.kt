@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
@@ -874,17 +873,15 @@ private fun <T : Any> PopupContent(
     VerticallyScrollableContainer(scrollState = listState.lazyListState as ScrollableState) {
         SelectableLazyColumn(
             modifier =
-                Modifier.fillMaxWidth()
-                    .testTag("Jewel.ComboBox.List")
-                    .thenIf(items.isNotEmpty()) { padding(contentPadding) }
-                    .thenIf(items.isEmpty()) {
-                        heightIn(
-                            min =
-                                comboBoxSize.height +
-                                    contentPadding.calculateTopPadding() +
-                                    contentPadding.calculateBottomPadding()
-                        )
-                    },
+                Modifier.fillMaxWidth().testTag("Jewel.ComboBox.List").thenIf(items.isEmpty()) {
+                    heightIn(
+                        min =
+                            comboBoxSize.height +
+                                contentPadding.calculateTopPadding() +
+                                contentPadding.calculateBottomPadding()
+                    )
+                },
+            contentPadding = if (items.isNotEmpty()) contentPadding else PaddingValues(),
             selectionMode = SelectionMode.Single,
             state = listState,
             onSelectedIndexesChange = { selectedItemsIndexes ->

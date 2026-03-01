@@ -32,6 +32,7 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
     prepareCheckFramework()
     myFixture.testHighlighting("Sink.java")
   }
+
   fun testSinkJsr() {
     prepareJsr()
     myFixture.testHighlighting("SinkJsr.java")
@@ -51,6 +52,12 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
     prepareCheckFramework()
     myFixture.testHighlighting("EnumAnnotations.java")
   }
+
+  fun testEnumCallAnnotations() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("EnumCallAnnotations.java")
+  }
+
   fun testFields() {
     prepareCheckFramework()
     myFixture.testHighlighting("Fields.java")

@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git
 
+import com.intellij.dvcs.ui.VcsRepositoryIconsProvider
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.application
 import com.intellij.vcs.git.branch.GitInOutStateHolder
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
-import com.intellij.vcs.git.repo.GitRepositoryIconsProvider
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -17,10 +17,10 @@ internal class GitDataHoldersInitializer : ProjectActivity {
 
     coroutineScope {
       launch {
-        GitRepositoriesHolder.getInstance(project).init()
+        GitRepositoriesHolder.getInstance(project).awaitInitialization()
       }
     }
     GitInOutStateHolder.getInstance(project)
-    GitRepositoryIconsProvider.getInstance(project)
+    VcsRepositoryIconsProvider.getInstance(project)
   }
 }

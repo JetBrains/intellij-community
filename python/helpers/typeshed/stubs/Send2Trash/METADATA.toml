@@ -1,2 +1,2 @@
-version = "1.8.*"
+version = "2.1.*"
 upstream_repository = "https://github.com/arsenetar/send2trash"

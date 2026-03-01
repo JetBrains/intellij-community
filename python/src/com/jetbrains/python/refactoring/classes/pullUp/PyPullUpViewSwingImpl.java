@@ -9,8 +9,12 @@ import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedVi
 import com.jetbrains.python.refactoring.classes.ui.PyClassCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JLabel;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 

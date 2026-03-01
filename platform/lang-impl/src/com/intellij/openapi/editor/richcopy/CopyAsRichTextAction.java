@@ -2,7 +2,12 @@
 
 package com.intellij.openapi.editor.richcopy;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.fileEditor.FileDocumentManager;

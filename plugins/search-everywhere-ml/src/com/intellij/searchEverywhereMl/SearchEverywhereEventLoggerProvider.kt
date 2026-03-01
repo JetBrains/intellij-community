@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 const val MLSE_RECORDER_ID: String = "MLSE"
 
-private class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider(
+internal class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider(
   MLSE_RECORDER_ID,
   9,
   TimeUnit.MINUTES.toMillis(10),

@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Registers {@link ProjectTemplate}s.

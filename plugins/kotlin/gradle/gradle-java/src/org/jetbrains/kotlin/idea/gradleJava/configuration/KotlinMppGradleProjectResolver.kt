@@ -20,7 +20,16 @@ import org.jetbrains.kotlin.idea.gradle.configuration.ResolveModulesPerSourceSet
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
 import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
-import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.*
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.Context
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.buildInstance
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.doCreateSourceSetInfo
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.kotlinMppGradleProjectResolverContext
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateContentRoots
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateExternalSystemRunTasks
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleCompileOutputSettings
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependencies
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateMppModuleDataNode
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
@@ -34,7 +43,7 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.lang.reflect.Proxy
-import java.util.*
+import java.util.WeakHashMap
 
 @Suppress("unused") // Can be removed once AS rebased on 23.1
 @Deprecated("Use KotlinMppGradleProjectResolver instead", replaceWith = ReplaceWith("KotlinMppGradleProjectResolver"))
@@ -194,3 +203,6 @@ internal val KotlinComponent.sourceType
 
 internal val KotlinComponent.resourceType
     get() = if (isTestComponent) ExternalSystemSourceType.TEST_RESOURCE else ExternalSystemSourceType.RESOURCE
+
+internal val KotlinComponent.generatedSourceType
+    get() = if (isTestComponent) ExternalSystemSourceType.TEST_GENERATED else ExternalSystemSourceType.SOURCE_GENERATED

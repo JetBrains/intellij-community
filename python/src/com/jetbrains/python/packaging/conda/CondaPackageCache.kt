@@ -16,7 +16,6 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.add.v2.conda.getCondaVersion
 import com.jetbrains.python.sdk.conda.execution.getCondaBinToExecute
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity

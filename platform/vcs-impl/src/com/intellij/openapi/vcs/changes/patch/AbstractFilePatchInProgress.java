@@ -20,7 +20,11 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 public abstract class AbstractFilePatchInProgress<T extends FilePatch> implements Strippable {
   protected final T myPatch;

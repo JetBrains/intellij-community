@@ -16,7 +16,7 @@ internal class EnableAutopopupInUrlPathReferences : CompletionConfidence() {
   override fun shouldSkipAutopopup(editor: Editor, contextElement: PsiElement, psiFile: PsiFile, offset: Int): ThreeState {
     if (hasUsageUrlPathReferences(contextElement, offset)) return ThreeState.NO
 
-    return super.shouldSkipAutopopup(editor, contextElement, psiFile, offset)
+    return ThreeState.UNSURE
   }
 }
 

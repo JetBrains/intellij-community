@@ -24,8 +24,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,7 +37,9 @@ import java.nio.file.Paths;
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getDefaultShelfPath;
 import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurable.getDefaultShelfPresentationPath;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static com.intellij.util.ui.UIUtil.*;
+import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+import static com.intellij.util.ui.UIUtil.isUnderWin10LookAndFeel;
 
 @ApiStatus.Internal
 public class ShelfStorageConfigurationDialog extends DialogWrapper {

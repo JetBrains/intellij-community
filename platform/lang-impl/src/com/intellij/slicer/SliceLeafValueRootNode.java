@@ -15,7 +15,7 @@ import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

@@ -1,4 +1,9 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.indexing"/>
+  </dependencies>
+  <!-- endregion -->
   <module value="com.intellij.modules.regexp"/>
 
   <extensionPoints>
@@ -42,7 +47,7 @@
     </intentionAction>
     <intentionAction>
       <language>RegExp</language>
-      <className>org.intellij.lang.regexp.intention.FlipAlternationIntention</className>
+      <className>org.intellij.lang.regexp.intention.FlipElementsIntention</className>
       <bundleName>messages.RegExpBundle</bundleName>
       <categoryKey>inspection.group.name.regexp</categoryKey>
     </intentionAction>

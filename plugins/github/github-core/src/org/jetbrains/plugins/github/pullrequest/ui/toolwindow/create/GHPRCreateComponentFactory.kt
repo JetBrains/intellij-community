@@ -5,9 +5,16 @@ import com.intellij.collaboration.async.awaitCancelling
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.extensionListFlow
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.*
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.moveToCenter
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.LabeledListComponentsFactory
+import com.intellij.collaboration.ui.LoadingLabel
+import com.intellij.collaboration.ui.LoadingTextLabel
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil
@@ -18,20 +25,39 @@ import com.intellij.collaboration.ui.codereview.details.CommitPresentation
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
+import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
+import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
+import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.gap
+import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.collaboration.ui.util.swingAction
-import com.intellij.collaboration.util.*
+import com.intellij.collaboration.util.fold
+import com.intellij.collaboration.util.getOrNull
+import com.intellij.collaboration.util.onFailure
+import com.intellij.collaboration.util.onInProgress
+import com.intellij.collaboration.util.onSuccess
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.*
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.JBColor
+import com.intellij.ui.JBSplitter
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.ScrollableContentBorder
+import com.intellij.ui.Side
+import com.intellij.ui.SideBorder
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.IconLabelButton
 import com.intellij.ui.components.JBOptionButton
@@ -45,11 +71,23 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.showAbove
 import git4idea.ui.branch.MergeDirectionComponentFactory
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -62,7 +100,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel.BranchesCheckResult
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel.CreationState
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
-import org.jetbrains.plugins.github.ui.component.LabeledListPanelHandle
 import org.jetbrains.plugins.github.ui.component.LabeledListPanelViewModel
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -71,7 +108,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
-import java.util.*
+import java.util.Date
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -306,28 +343,16 @@ internal object GHPRCreateComponentFactory {
     }
 
   private fun CoroutineScope.metadataPanel(vm: GHPRCreateViewModel): JComponent {
-    val reviewersHandle = createReviewersListPanelHandle(vm.reviewersVm, vm.avatarIconsProvider)
-    val assigneesHandle = createAssigneesListPanelHandle(vm.assigneesVm, vm.avatarIconsProvider)
-    val labelsHandle = createLabelsListPanelHandle(vm.labelsVm)
+    val lists = buildList {
+      add(createReviewersListPanelHandle(vm.reviewersVm, vm.avatarIconsProvider))
+      add(createAssigneesListPanelHandle(vm.assigneesVm, vm.avatarIconsProvider))
+      add(createLabelsListPanelHandle(vm.labelsVm))
+    }
 
-    return JPanel().apply {
+    return LabeledListComponentsFactory.createGrid(lists).apply {
       isOpaque = true
       background = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.defaultBackground }
       border = JBUI.Borders.empty(SIDE_GAPS_M, SIDE_GAPS_L)
-
-      layout = MigLayout(LC()
-                           .fillX()
-                           .gridGap("0", "0")
-                           .insets("0", "0", "0", "0"))
-
-      fun addListPanel(handle: LabeledListPanelHandle<*>) {
-        add(handle.label, CC().alignY("top").width(":${handle.preferredLabelWidth}px:"))
-        add(handle.panel, CC().minWidth("0").growX().pushX().wrap())
-      }
-
-      addListPanel(reviewersHandle)
-      addListPanel(assigneesHandle)
-      addListPanel(labelsHandle)
     }
   }
 
@@ -443,32 +468,59 @@ private fun createCommitsPopupPresenter(commit: VcsCommitMetadata) = CommitPrese
   committedDate = Date(commit.authorTime)
 )
 
-private fun CoroutineScope.createReviewersListPanelHandle(
+private fun createReviewersListPanelHandle(
   vm: LabeledListPanelViewModel<GHPullRequestRequestedReviewer>,
   avatarIconsProvider: GHAvatarIconsProvider,
-) =
-  LabeledListPanelHandle(this, vm,
-                         message("pull.request.no.reviewers"),
-                         message("pull.request.reviewers"),
-                         { UserLabel(it, avatarIconsProvider) },
-                         GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider))
+): Pair<JComponent, JComponent> {
+  val label = LabeledListComponentsFactory.createLabelPanel(
+    vm.items.mapState { it.isEmpty() },
+    message("pull.request.no.reviewers"),
+    message("pull.request.reviewers")
+  )
 
-private fun CoroutineScope.createAssigneesListPanelHandle(
+  val list = LabeledListComponentsFactory.createListPanel(
+    vm.items,
+    { comp, _ -> editList(comp, vm, GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider)) },
+    { UserLabel(it, avatarIconsProvider) },
+  )
+
+  return label to list
+}
+
+private fun createAssigneesListPanelHandle(
   vm: LabeledListPanelViewModel<GHUser>,
   avatarIconsProvider: GHAvatarIconsProvider,
-) =
-  LabeledListPanelHandle(this, vm,
-                         message("pull.request.unassigned"),
-                         message("pull.request.assignees"),
-                         { UserLabel(it, avatarIconsProvider) },
-                         GHUIUtil.SelectionPresenters.Users(avatarIconsProvider))
+): Pair<JComponent, JComponent> {
+  val label = LabeledListComponentsFactory.createLabelPanel(
+    vm.items.mapState { it.isEmpty() },
+    message("pull.request.unassigned"),
+    message("pull.request.assignees"),
+  )
 
-private fun CoroutineScope.createLabelsListPanelHandle(vm: LabeledListPanelViewModel<GHLabel>) =
-  LabeledListPanelHandle(this, vm,
-                         message("pull.request.no.labels"),
-                         message("pull.request.labels"),
-                         { LabelLabel(it) },
-                         GHUIUtil.SelectionPresenters.Labels())
+  val list = LabeledListComponentsFactory.createListPanel(
+    vm.items,
+    { comp, _ -> editList(comp, vm, GHUIUtil.SelectionPresenters.Users(avatarIconsProvider)) },
+    { UserLabel(it, avatarIconsProvider) },
+  )
+
+  return label to list
+}
+
+private fun createLabelsListPanelHandle(vm: LabeledListPanelViewModel<GHLabel>): Pair<JComponent, JComponent> {
+  val label = LabeledListComponentsFactory.createLabelPanel(
+    vm.items.mapState { it.isEmpty() },
+    message("pull.request.no.labels"),
+    message("pull.request.labels")
+  )
+
+  val list = LabeledListComponentsFactory.createListPanel(
+    vm.items,
+    { comp, _ -> editList(comp, vm, GHUIUtil.SelectionPresenters.Labels()) },
+    { LabelLabel(it) },
+  )
+
+  return label to list
+}
 
 @Suppress("FunctionName")
 private fun UserLabel(user: GHPullRequestRequestedReviewer, avatarIconsProvider: GHAvatarIconsProvider) =
@@ -485,6 +537,33 @@ private fun LabelLabel(label: GHLabel) =
 @Suppress("FunctionName")
 private fun ErrorLabel(text: @Nls String) = JLabel(text, AllIcons.Ide.FatalError, SwingConstants.LEFT).also {
   JLabelUtil.setTrimOverflow(it, true)
+}
+
+private suspend fun <T : Any> editList(
+  parentComponent: JComponent,
+  vm: LabeledListPanelViewModel<T>,
+  getItemPresentation: (T) -> PopupItemPresentation,
+) {
+  val newList = ChooserPopupUtil.showAsyncMultipleChooserPopup(
+    RelativePoint.getNorthEastOf(parentComponent),
+    vm.items.value,
+    vm.getSelectableItemsFlow(),
+    getItemPresentation,
+    PopupConfig(showDirection = ShowDirection.ABOVE)
+  )
+  vm.adjustList(newList)
+}
+
+private fun <T : Any> LabeledListPanelViewModel<T>.getSelectableItemsFlow(): Flow<Result<List<T>>> {
+  val current = items.value
+  return flow {
+    if (current.isNotEmpty()) {
+      emit(Result.success(current))
+    }
+    selectableItems
+      .mapNotNull { it.result?.map { items -> current + items.filter { item -> !current.contains(item) } } }
+      .first().let { emit(it) }
+  }
 }
 
 @Suppress("FunctionName")

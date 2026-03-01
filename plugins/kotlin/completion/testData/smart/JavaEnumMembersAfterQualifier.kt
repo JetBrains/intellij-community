@@ -6,3 +6,5 @@ fun foo(){
 
 // EXIST: { lookupString:"TYPE", itemText:"TYPE", tailText:" (java.lang.annotation.ElementType)" }
 // EXIST: { lookupString:"FIELD", itemText:"FIELD", tailText:" (java.lang.annotation.ElementType)" }
+
+// IGNORE_K2

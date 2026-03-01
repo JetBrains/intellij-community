@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class ToolSelectDialog extends DialogWrapper {
   private final BaseToolsPanel myToolsPanel;

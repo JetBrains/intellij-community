@@ -10,7 +10,7 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
-import java.util.*
+import java.util.PriorityQueue
 import java.util.zip.Deflater
 
 enum class AddDirEntriesMode {

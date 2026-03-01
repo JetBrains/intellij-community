@@ -2,6 +2,7 @@
 package com.intellij.completion.ml.features
 
 import com.intellij.codeInsight.completion.CompletionLocation
+import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
@@ -12,7 +13,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 
 internal class MLCompletionWeigher : CompletionWeigher() {
   override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<*> {
-    val storage = LookupStorage.get(location.completionParameters) ?: return DummyComparable.EMPTY
+    val parameters = location.baseCompletionParameters as? CompletionParameters ?: return DummyComparable.EMPTY
+    val storage = LookupStorage.get(parameters) ?: return DummyComparable.EMPTY
     if (!storage.shouldComputeFeatures()) {
       return DummyComparable.EMPTY
     }

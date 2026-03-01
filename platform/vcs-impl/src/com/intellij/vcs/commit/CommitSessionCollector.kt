@@ -34,7 +34,7 @@ import com.intellij.ui.TreeActions
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.HierarchyEvent
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.WeakHashMap
 import javax.swing.JTree
 
 internal object CommitSessionCounterUsagesCollector : CounterUsagesCollector() {

@@ -4,7 +4,17 @@ package com.intellij.ide.actions.searcheverywhere.statistics;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.internal.statistic.IdeActivityDefinition;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
+import com.intellij.internal.statistic.eventLog.events.EnumEventField;
+import com.intellij.internal.statistic.eventLog.events.EventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.eventLog.events.IntEventField;
+import com.intellij.internal.statistic.eventLog.events.LongEventField;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -17,8 +27,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
-
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 21);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 22);
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
@@ -115,6 +124,7 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
 
   public static final EventId1<Boolean> PREVIEW_SWITCHED = GROUP.registerEvent("previewSwitched", EventFields.Boolean("previewState"));
   public static final EventId1<Boolean> PREVIEW_CLOSED = GROUP.registerEvent("previewClosed", EventFields.Boolean("previewClosed"));
+  public static final EventId1<Boolean> SPLIT_SWITCHED = GROUP.registerEvent("splitSwitched", IS_SPLIT);
 
   public enum FuzzySearchResult {
     PROCESS_COMPLETE, PROCESS_STOPPED, EMPTY_PATTERN
@@ -129,8 +139,7 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   public static final EnumEventField<FuzzySearchResult> FUZZY_SEARCH_RESULT =
     EventFields.Enum("fuzzySearchResult", FuzzySearchResult.class);
   public static final IdeActivityDefinition FUZZY_SEARCH_ACTIVITY =
-    GROUP.registerIdeActivity("fuzzySearch", new EventField[]{FUZZY_SEARCH_TYPE},
-                              new EventField[]{FUZZY_SEARCH_TOTAL_RESULTS, FUZZY_SEARCH_RESULT});
+    GROUP.registerIdeActivity("fuzzySearch", new EventField[]{FUZZY_SEARCH_TYPE}, new EventField[]{FUZZY_SEARCH_TOTAL_RESULTS, FUZZY_SEARCH_RESULT});
 
   @Override
   public EventLogGroup getGroup() {
@@ -145,8 +154,7 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   }
 
   @ApiStatus.Internal
-  public static @NotNull boolean isReportable(@NotNull Object object) {
-    //noinspection rawtypes
+  public static boolean isReportable(@NotNull Object object) {
     Class<?> clazz = object.getClass();
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);
     return pluginInfo.isDevelopedByJetBrains();

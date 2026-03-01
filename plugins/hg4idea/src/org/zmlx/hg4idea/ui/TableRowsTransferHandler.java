@@ -6,9 +6,11 @@ import com.intellij.ui.TableUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.TransferHandler;
 import javax.swing.table.TableModel;
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DragSource;

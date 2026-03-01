@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
  *  - Automatically registers JDKs on the computer in the [ProjectJdkTable]
  *  - Uses the first JDK found as project SDK if none was configured
  */
-private class ExistingJdkConfigurationActivity : ProjectActivity {
+internal class ExistingJdkConfigurationActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!Registry.`is`("jdk.configure.existing", false)) {
       return

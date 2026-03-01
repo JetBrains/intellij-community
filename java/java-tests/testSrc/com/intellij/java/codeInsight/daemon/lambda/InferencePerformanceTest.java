@@ -9,11 +9,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import one.util.streamex.IntStreamEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
+@PerformanceUnitTest
 public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/performance";
 

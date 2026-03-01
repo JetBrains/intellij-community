@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
@@ -21,7 +21,11 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.HEADER_HEIGHT_DFM
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath.SimpleCustomDecorationPathComponent
-import com.intellij.openapi.wm.impl.headertoolbar.*
+import com.intellij.openapi.wm.impl.headertoolbar.MainMenuWithButton
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.headertoolbar.ToolbarWidthCalculationEvent
+import com.intellij.openapi.wm.impl.headertoolbar.ToolbarWidthCalculationListener
+import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ScreenUtil
@@ -33,13 +37,24 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import java.awt.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.awt.BorderLayout
+import java.awt.CardLayout
+import java.awt.Color
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.GridBagConstraints
 import java.awt.GridBagConstraints.WEST
+import java.awt.GridBagLayout
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
@@ -54,6 +69,7 @@ internal class ToolbarFrameHeader(
   private val ideMenuBar: IdeJMenuBar,
   private val isAlwaysCompact: Boolean,
   private val isFullScreen: () -> Boolean,
+  private val projectFrameTypeIdProvider: () -> String?,
 ) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val ideMenuHelper = IdeMenuHelper(menu = ideMenuBar, coroutineScope = coroutineScope)
   private val menuBarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame, isGrey = {true}).apply {
@@ -138,7 +154,9 @@ internal class ToolbarFrameHeader(
             updateLayout()
           }
 
-          val compactHeader = isAlwaysCompact || isCompactHeader { computeMainActionGroups() }
+          val compactHeader = isAlwaysCompact || isCompactHeader {
+            computeMainActionGroups(projectFrameTypeId = projectFrameTypeIdProvider())
+          }
 
           when (mode) {
             ShowMode.TOOLBAR, ShowMode.TOOLBAR_WITH_MENU -> {
@@ -393,7 +411,7 @@ internal class ToolbarFrameHeader(
   }
 
   override fun getComponentGraphics(graphics: Graphics): Graphics {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
+    return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, super.getComponentGraphics(graphics))
   }
 
   override fun updateActive() {

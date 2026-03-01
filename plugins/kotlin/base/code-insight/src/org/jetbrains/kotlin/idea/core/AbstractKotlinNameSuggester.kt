@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.core
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunctionType
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtTypeElement
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addIfNotNull

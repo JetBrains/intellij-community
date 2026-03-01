@@ -7,7 +7,10 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

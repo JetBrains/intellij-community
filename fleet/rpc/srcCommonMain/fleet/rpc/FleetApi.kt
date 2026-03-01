@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc
 
-import fleet.rpc.core.*
+import fleet.rpc.core.DeferredSerializer
+import fleet.rpc.core.FlowSerializer
+import fleet.rpc.core.ReceiveChannelSerializer
+import fleet.rpc.core.SendChannelSerializer
 import fleet.util.cast
 import fleet.util.letIf
 import kotlinx.serialization.KSerializer

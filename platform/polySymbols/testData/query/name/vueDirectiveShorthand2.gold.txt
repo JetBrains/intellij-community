@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/attributes/@click",
-  origin: "vue@3.0.0 (vue)",
+  origin: "events@1.0.0 (vue)",
   attrValue: {
    kind: EXPRESSION,
    type: COMPLEX,

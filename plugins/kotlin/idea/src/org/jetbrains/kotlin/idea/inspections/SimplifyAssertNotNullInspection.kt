@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -15,13 +16,23 @@ import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
+@K1Deprecation
 class SimplifyAssertNotNullInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(KtCallExpression::class.java) {
 
     override fun isApplicable(element: KtCallExpression): Boolean {

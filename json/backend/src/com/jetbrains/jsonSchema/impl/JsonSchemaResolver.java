@@ -27,7 +27,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaValidityCacheKt.getOrComputeAdapterValidityAgainstGivenSchema;
-import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.DEFS;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.JSON_DEFINITIONS;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.JSON_PROPERTIES;
 
 public final class JsonSchemaResolver {
   private final @NotNull Project myProject;

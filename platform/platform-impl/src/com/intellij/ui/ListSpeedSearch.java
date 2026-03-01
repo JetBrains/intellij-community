@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.Convertor;
@@ -10,7 +14,8 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.ListSelectionModel;
 import java.util.Arrays;
 import java.util.ListIterator;
 

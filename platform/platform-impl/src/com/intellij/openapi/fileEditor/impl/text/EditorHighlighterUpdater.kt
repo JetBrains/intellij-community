@@ -19,7 +19,14 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.KeyedFactoryEPBean
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.fileTypes.*
+import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
+import com.intellij.openapi.fileTypes.FileTypeEvent
+import com.intellij.openapi.fileTypes.FileTypeListener
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.fileTypes.LanguageSyntaxHighlighters
+import com.intellij.openapi.fileTypes.SyntaxHighlighter
+import com.intellij.openapi.fileTypes.SyntaxHighlighterLanguageFactory
 import com.intellij.openapi.fileTypes.impl.AbstractFileType
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project

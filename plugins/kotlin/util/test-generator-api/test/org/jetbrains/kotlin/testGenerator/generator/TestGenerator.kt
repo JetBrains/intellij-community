@@ -22,7 +22,8 @@ import org.jetbrains.kotlin.testGenerator.model.TWorkspace
 import org.junit.runner.RunWith
 import java.io.File
 import java.nio.file.Files
-import java.util.*
+import java.util.Calendar
+import java.util.GregorianCalendar
 
 object TestGenerator {
     fun write(workspace: TWorkspace, isUpToDateCheck: Boolean = false) {

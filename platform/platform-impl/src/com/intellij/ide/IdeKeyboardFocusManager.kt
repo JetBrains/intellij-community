@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
@@ -12,7 +12,14 @@ import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.EventQueue
+import java.awt.FocusTraversalPolicy
+import java.awt.KeyEventDispatcher
+import java.awt.KeyEventPostProcessor
+import java.awt.KeyboardFocusManager
+import java.awt.Window
 import java.awt.event.FocusEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED
@@ -52,11 +59,11 @@ internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManag
       val app = ApplicationManager.getApplication()
       // Don't try to get WIRA if we are in read action or there is no application at all
       if (app == null || app.isReadAccessAllowed || !wrapHighLevelFunctionsInWriteIntent) {
-        performActivity(e, false) { result = dispatch() }
+        performActivity(e) { result = dispatch() }
       }
       else {
         //todo IJPL-199557 fix all clients and remove WIRA here, but for now it is like keyboard or mouse event
-        performActivity(e, false) { getGlobalThreadingSupport().runPreventiveWriteIntentReadAction { result = dispatch() } }
+        performActivity(e) { getGlobalThreadingSupport().runWriteIntentReadAction { result = dispatch() } }
       }
       return result
     }

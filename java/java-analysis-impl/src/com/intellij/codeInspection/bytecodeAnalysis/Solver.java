@@ -7,7 +7,12 @@ import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * For lattice, equations and solver description, see http://pat.keldysh.ru/~ilya/faba.pdf (in Russian)

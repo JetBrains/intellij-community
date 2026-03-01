@@ -10,7 +10,11 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
-import com.intellij.psi.javadoc.*;
+import com.intellij.psi.javadoc.PsiSnippetAttribute;
+import com.intellij.psi.javadoc.PsiSnippetAttributeList;
+import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
+import com.intellij.psi.javadoc.PsiSnippetDocTag;
+import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

@@ -38,9 +38,9 @@
     <lang.refactoringSupport language="kotlin"
                              implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringSupportProvider"/>
     <refactoring.safeDeleteProcessor
-            id="kotlinFirProcessor"
+            id="kotlinProcessor"
             implementation="org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.KotlinFirSafeDeleteProcessor"
-            order="before kotlinProcessor"/>
+            order="before javaProcessor"/>
     <refactoring.changeSignatureUsageProcessor
             implementation="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProcessor"/>
 

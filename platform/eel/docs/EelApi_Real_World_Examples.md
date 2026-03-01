@@ -1,6 +1,6 @@
 # EelApi Real-World Examples
 
-This document provides an overview of how the Environment Execution Layer (EEL) API is used in IntelliJ IDEA plugins and features. It builds on the concepts introduced in the [EelApi Tutorial](EelApi_Tutorial.md).
+This document provides an overview of how the EEL API is used in IntelliJ IDEA plugins and features. It builds on the concepts introduced in the [EelApi Tutorial](EelApi_Tutorial.md).
 
 ## Table of Contents
 

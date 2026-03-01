@@ -39,4 +39,37 @@ jvm_library(
   ],
   exports = ["//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal"]
 )
+
+jvm_library(
+  name = "kotlin-highlighting-shared_test_lib",
+  module_name = "kotlin.highlighting.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+    "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
+  ],
+  runtime_deps = [
+    ":kotlin-highlighting-shared",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//libraries/markdown:markdown_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
+    "//plugins/kotlin/code-insight/utils:utils_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.highlighting.shared` end

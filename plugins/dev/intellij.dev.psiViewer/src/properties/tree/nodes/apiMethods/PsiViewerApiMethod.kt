@@ -13,7 +13,8 @@ fun Class<*>.psiViewerApiMethods(nodeContext: PsiViewerPropertyNode.Context, ins
 class PsiViewerApiMethod(
   val name: String,
   val returnType: ReturnType,
-  private val evaluator: suspend () -> Any?
+  val isPropertyAccess: Boolean = false,
+  val evaluator: suspend () -> Any?
 ) {
   data class ReturnType(
     val returnType: Class<*>,

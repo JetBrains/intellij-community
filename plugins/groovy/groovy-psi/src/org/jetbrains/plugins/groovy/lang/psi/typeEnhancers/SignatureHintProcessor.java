@@ -3,7 +3,12 @@ package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

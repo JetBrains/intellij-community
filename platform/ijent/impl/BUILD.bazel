@@ -27,4 +27,29 @@ jvm_library(
     "//platform/core-impl",
   ]
 )
+
+jvm_library(
+  name = "impl_test_lib",
+  module_name = "intellij.platform.ijent.community.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":impl",
+    "@lib//:junit5",
+    "@lib//:junit5Params",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-nio-fs:core-nio-fs_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/eel-impl:eel-impl_test_lib",
+    "//platform/ijent:ijent_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.ijent.community.impl` end

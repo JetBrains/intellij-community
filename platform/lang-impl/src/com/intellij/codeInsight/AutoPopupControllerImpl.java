@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
@@ -41,14 +41,16 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
-import static com.intellij.codeInsight.completion.CompletionPhase.*;
+import static com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments;
+import static com.intellij.codeInsight.completion.CompletionPhase.EmptyAutoPopup;
+import static com.intellij.codeInsight.completion.CompletionPhase.NoCompletion;
 
 @ApiStatus.Internal
-public class AutoPopupControllerImpl extends AutoPopupController {
+class AutoPopupControllerImpl extends AutoPopupController {
   private final Project myProject;
   private final Alarm myAlarm;
 
-  public AutoPopupControllerImpl(@NotNull Project project) {
+  AutoPopupControllerImpl(@NotNull Project project) {
     myProject = project;
 
     myAlarm = new Alarm(myProject);
@@ -150,48 +152,50 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void autoPopupParameterInfo(@NotNull Editor editor, @Nullable PsiElement highlightedMethod) {
+  public void autoPopupParameterInfo(@NotNull Editor editor, @Nullable PsiElement highlightedElement) {
     if (PowerSaveMode.isEnabled()) return;
 
     ThreadingAssertions.assertEventDispatchThread();
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_PARAMETER_INFO) {
-      AtomicInteger offset = new AtomicInteger(-1);
-      ReadAction.nonBlocking(() -> {
-          offset.set(editor.getCaretModel().getOffset());
-          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-          PsiFile file = documentManager.getPsiFile(editor.getDocument());
+    if (!settings.AUTO_POPUP_PARAMETER_INFO) {
+      return;
+    }
+
+    AtomicInteger offset = new AtomicInteger(-1);
+    ReadAction.nonBlocking(() -> {
+        offset.set(editor.getCaretModel().getOffset());
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+        PsiFile file = documentManager.getPsiFile(editor.getDocument());
+        if (file == null) return;
+
+        if (!documentManager.isUncommited(editor.getDocument())) {
+          file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
           if (file == null) return;
+        }
 
-          if (!documentManager.isUncommited(editor.getDocument())) {
-            file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
-            if (file == null) return;
-          }
-
-          Runnable request = () -> {
-            if (!myProject.isDisposed() && !editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
-              int lbraceOffset = offset.get() - 1;
-              try {
-                PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-                if (file1 != null) {
-                  ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
-                                                  true, null);
-                }
-              }
-              catch (IndexNotReadyException ignored) { //anything can happen on alarm
+        Runnable request = () -> {
+          if (!myProject.isDisposed() && !editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
+            int lbraceOffset = offset.get() - 1;
+            try {
+              PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+              if (file1 != null) {
+                ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedElement, false,
+                                                true, null);
               }
             }
-          };
+            catch (IndexNotReadyException ignored) { //anything can happen on alarm
+            }
+          }
+        };
 
-          myAlarm.addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
-        }).expireWith(myAlarm)
-        .coalesceBy(this, editor)
-        .expireWhen(() -> {
-          int initialOffset = offset.get();
-          return editor.isDisposed() || initialOffset != -1 && editor.getCaretModel().getOffset() != initialOffset;
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
+        myAlarm.addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
+      }).expireWith(myAlarm)
+      .coalesceBy(this, editor)
+      .expireWhen(() -> {
+        int initialOffset = offset.get();
+        return editor.isDisposed() || initialOffset != -1 && editor.getCaretModel().getOffset() != initialOffset;
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Override

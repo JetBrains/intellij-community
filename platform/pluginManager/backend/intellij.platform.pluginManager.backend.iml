@@ -4,19 +4,19 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.0-RC3-0.2/rpc-compiler-plugin-2.3.0-RC3-0.2.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.10-RC-0.1/rpc-compiler-plugin-2.3.10-RC-0.1.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -41,7 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
+    <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.pluginManager.shared" />
     <orderEntry type="module" module-name="intellij.platform.project" />

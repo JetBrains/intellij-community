@@ -5,8 +5,16 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.tools.projectWizard.GeneratedIdentificator
 import org.jetbrains.kotlin.tools.projectWizard.Identificator
 import org.jetbrains.kotlin.tools.projectWizard.IdentificatorOwner
-import org.jetbrains.kotlin.tools.projectWizard.core.*
-
+import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
+import org.jetbrains.kotlin.tools.projectWizard.core.Writer
+import org.jetbrains.kotlin.tools.projectWizard.core.enumParser
+import org.jetbrains.kotlin.tools.projectWizard.core.listParser
+import org.jetbrains.kotlin.tools.projectWizard.core.map
+import org.jetbrains.kotlin.tools.projectWizard.core.mapParser
+import org.jetbrains.kotlin.tools.projectWizard.core.mapSequence
+import org.jetbrains.kotlin.tools.projectWizard.core.parseAs
+import org.jetbrains.kotlin.tools.projectWizard.core.parseValue
+import org.jetbrains.kotlin.tools.projectWizard.core.valueParser
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildFileIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin

@@ -4,7 +4,7 @@ package com.intellij.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public final class ColorHexUtil {
   public static @NotNull Color fromHex(@NotNull String str) {

@@ -11,7 +11,7 @@ import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.xml.ElementPresentationManager;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class IconUtilEx {
   public static Icon getIcon(Object object, @Iconable.IconFlags int flags, Project project) {

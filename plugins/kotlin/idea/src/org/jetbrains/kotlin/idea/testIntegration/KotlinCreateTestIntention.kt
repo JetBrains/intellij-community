@@ -4,13 +4,17 @@ package org.jetbrains.kotlin.idea.testIntegration
 import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
-import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.actions.JavaToKotlinActionHandler
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.AbstractKotlinCreateTestIntention
@@ -68,16 +72,19 @@ class KotlinCreateTestIntention: AbstractKotlinCreateTestIntention() {
                     getDocument(generatedFile)?.let { doPostponedOperationsAndUnblockDocument(it) }
                 }
 
-                JavaToKotlinAction.Handler.convertFiles(
-                    listOf(generatedFile),
-                    project,
-                    srcModule,
-                    enableExternalCodeProcessing = false,
-                    forceUsingOldJ2k = false,
-                    settings = publicByDefault
-                ).singleOrNull()
+                project.service<ScopeHolder>().scope.launch {
+                    JavaToKotlinActionHandler.convertFiles(
+                        listOf(element = generatedFile),
+                        project = project,
+                        module = srcModule,
+                        enableExternalCodeProcessing = false,
+                        settings = publicByDefault
+                    )
+                }
             }
         }
     }
-
 }
+
+@Service(Service.Level.PROJECT)
+private class ScopeHolder(val scope: CoroutineScope)

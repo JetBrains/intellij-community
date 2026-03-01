@@ -15,8 +15,10 @@ suspend fun currentCoroutineDispatchingContext(): CoroutineContext {
   return if (currentContextModality != null) currentCoroutineDispatcher + currentCoroutineContext else currentCoroutineDispatcher
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 suspend fun currentCoroutineDispatcher(): CoroutineDispatcher {
   return currentCoroutineContext()[CoroutineDispatcher] ?: Dispatchers.Default
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 fun CoroutineScope.coroutineDispatcher(): CoroutineDispatcher = this.coroutineContext[CoroutineDispatcher] ?: Dispatchers.Default

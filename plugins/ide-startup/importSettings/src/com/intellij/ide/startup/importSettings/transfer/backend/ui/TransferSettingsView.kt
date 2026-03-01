@@ -4,7 +4,10 @@ package com.intellij.ide.startup.importSettings.ui
 import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
 import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
-import com.intellij.ide.startup.importSettings.models.*
+import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
+import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
+import com.intellij.ide.startup.importSettings.models.Settings
+import com.intellij.ide.startup.importSettings.models.TransferSettingsModel
 import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRepresentationPanel
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRightPanelChooser

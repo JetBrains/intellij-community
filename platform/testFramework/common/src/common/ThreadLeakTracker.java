@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
 import com.intellij.diagnostic.JVMResponsivenessMonitor;
@@ -14,7 +14,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -24,7 +23,13 @@ import org.jetbrains.io.NettyUtil;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -191,7 +196,6 @@ public final class ThreadLeakTracker {
       if (EDT.isCurrentThreadEdt()) {
         TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
           UIUtil.dispatchAllInvocationEvents();
-          return Unit.INSTANCE;
         });
       }
       else {

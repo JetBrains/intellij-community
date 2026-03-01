@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import java.io.File
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import kotlin.math.max
 
 data class EventLogFile(val file: File) {

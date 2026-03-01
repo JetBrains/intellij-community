@@ -26,7 +26,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ListCellRenderer;
 import java.util.List;
 
 class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {

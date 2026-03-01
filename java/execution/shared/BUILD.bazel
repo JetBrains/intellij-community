@@ -25,4 +25,23 @@ jvm_library(
     "//platform/project/shared:project",
   ]
 )
+
+jvm_library(
+  name = "shared_test_lib",
+  module_name = "intellij.java.execution.impl.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":shared",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/project/shared:project_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.execution.impl.shared` end

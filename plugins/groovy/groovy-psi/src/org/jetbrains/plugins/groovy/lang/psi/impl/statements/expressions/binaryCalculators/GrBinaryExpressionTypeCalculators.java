@@ -13,7 +13,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperat
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ID;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NID;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_IN;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
 public final class GrBinaryExpressionTypeCalculators {

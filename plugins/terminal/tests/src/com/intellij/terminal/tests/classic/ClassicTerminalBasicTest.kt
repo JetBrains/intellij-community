@@ -11,7 +11,11 @@ import com.intellij.util.io.delete
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.testFramework.classic.ClassicTerminalTestShellSession
-import org.junit.*
+import org.junit.Assert
+import org.junit.Assume
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.charset.StandardCharsets

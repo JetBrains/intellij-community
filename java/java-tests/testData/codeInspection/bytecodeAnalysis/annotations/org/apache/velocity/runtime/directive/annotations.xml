@@ -30,7 +30,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.directive.BlockMacro BlockMacro(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -246,9 +245,6 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Foreach.NullHolderContext NullHolderContext(java.lang.String, org.apache.velocity.context.InternalContextAdapter) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.velocity.runtime.directive.Foreach.NullHolderContext java.lang.Object get(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.directive.ForeachScope ForeachScope(java.lang.Object, java.lang.Object)'>
@@ -544,15 +540,6 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Scope.Info Info(org.apache.velocity.runtime.directive.Scope, java.lang.Object) 1'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.velocity.runtime.directive.Scope.Info java.lang.String getName()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.velocity.runtime.directive.Scope.Info java.lang.String getTemplate()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.velocity.runtime.directive.Scope.Info java.lang.String getType()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.directive.Scope.Info java.lang.String toString()'>

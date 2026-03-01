@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  JavaClass.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/removeAnnotation/a/JavaClass.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_removeAnnotation-a.kotlin_module
+  MainKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/removeAnnotation/a/Main.kt
+End of files
+------------------------------------------
+Exit code: ERROR

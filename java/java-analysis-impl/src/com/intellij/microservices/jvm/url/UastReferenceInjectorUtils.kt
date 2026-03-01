@@ -12,8 +12,16 @@ import com.intellij.psi.UastReferenceProvider
 import com.intellij.psi.getRequestedPsiElement
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UNamedExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastBinaryOperator
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade
+import org.jetbrains.uast.withContainingElements
 
 @JvmOverloads
 public fun uastUrlPathReferenceInjectorForScheme(schemes: List<String>,

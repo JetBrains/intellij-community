@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":classic-ui_resources"]
 )
+
+jvm_library(
+  name = "classic-ui_test_lib",
+  module_name = "intellij.classic.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":classic-ui"]
+)
 ### auto-generated section `build intellij.classic.ui` end

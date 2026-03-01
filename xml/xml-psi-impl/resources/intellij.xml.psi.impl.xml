@@ -1,9 +1,14 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <module name="intellij.xml.psi"/>
-    <module name="intellij.xml.parser"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
     <module name="intellij.regexp"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
     <module name="intellij.xml.syntax"/>
+    <!-- endregion -->
   </dependencies>
 
   <projectListeners>

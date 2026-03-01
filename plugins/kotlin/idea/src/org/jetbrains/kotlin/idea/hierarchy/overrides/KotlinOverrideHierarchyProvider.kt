@@ -9,11 +9,13 @@ import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.hierarchy.getCurrentElement
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 
+@K1Deprecation
 class KotlinOverrideHierarchyProvider : HierarchyProvider {
     override fun getTarget(dataContext: DataContext): PsiElement? {
         return CommonDataKeys.PROJECT.getData(dataContext)?.let { project ->
@@ -32,4 +34,5 @@ class KotlinOverrideHierarchyProvider : HierarchyProvider {
         element?.getParentOfTypesAndPredicate { it.isOverrideHierarchyElement() }
 }
 
+@K1Deprecation
 fun PsiElement.isOverrideHierarchyElement() = this is KtCallableDeclaration && containingClassOrObject != null

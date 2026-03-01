@@ -25,20 +25,36 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.core.compatibility.Point;
 import com.jediterm.core.util.TermSize;
-import com.jediterm.terminal.*;
+import com.jediterm.terminal.ProcessTtyConnector;
+import com.jediterm.terminal.RequestOrigin;
+import com.jediterm.terminal.SubstringFinder;
+import com.jediterm.terminal.TerminalColor;
+import com.jediterm.terminal.TerminalExecutorServiceManager;
+import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.SelectionUtil;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalSelection;
 import com.jediterm.terminal.model.TerminalTextBuffer;
-import com.jediterm.terminal.ui.*;
+import com.jediterm.terminal.ui.AwtTransformers;
+import com.jediterm.terminal.ui.JediTermSearchComponent;
+import com.jediterm.terminal.ui.JediTermWidget;
+import com.jediterm.terminal.ui.TerminalPanel;
+import com.jediterm.terminal.ui.TerminalWidgetListener;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollBar;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.DefaultFocusTraversalPolicy;
+import java.awt.Graphics;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -70,6 +86,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     myProject = project;
     myHyperlinkFilter = new JediTermHyperlinkFilterAdapter(project, console, this);
     addAsyncHyperlinkFilter(myHyperlinkFilter);
+    if (getTerminal() instanceof JediTerminal jediTerminal) {
+      jediTerminal.setUrlHyperlinkFilter(new Osc8UrlHyperlinkFilter(project, this));
+    }
     Disposer.register(parent, this);
     Disposer.register(this, myBridge);
     setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
@@ -145,46 +164,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
       }
     });
     return bar;
-  }
-
-  /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#getTerminalFontSize()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public int getFontSize() {
-    return Math.round(getSettingsProvider().getTerminalFontSize());
-  }
-
-  /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#getTerminalFontSize()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public float getFontSize2D() {
-    return getSettingsProvider().getTerminalFontSize();
-  }
-
-  /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#setTerminalFontSize(float)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void setFontSize(int fontSize) {
-    getSettingsProvider().setTerminalFontSize(fontSize);
-  }
-
-  /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#setTerminalFontSize(float)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void setFontSize(float fontSize) {
-    getSettingsProvider().setTerminalFontSize(fontSize);
-  }
-
-  /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#resetTerminalFontSize()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void resetFontSize() {
-    getSettingsProvider().resetTerminalFontSize();
   }
 
   public @Nullable ProcessTtyConnector getProcessTtyConnector() {

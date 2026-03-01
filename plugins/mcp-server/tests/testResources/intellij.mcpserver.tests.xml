@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.mcpServer"/>
+    <module name="intellij.libraries.junit5.params"/>
+    <module name="intellij.libraries.kotlinTest"/>
+    <module name="intellij.libraries.kotlinTestAssertionsCoreJvm"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+  </dependencies>
+</idea-plugin>

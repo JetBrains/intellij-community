@@ -35,7 +35,11 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.gradle.model.impl.*;
+import org.jetbrains.jps.gradle.model.impl.GradleModuleResourceConfiguration;
+import org.jetbrains.jps.gradle.model.impl.GradleProjectConfiguration;
+import org.jetbrains.jps.gradle.model.impl.ModuleVersion;
+import org.jetbrains.jps.gradle.model.impl.ResourceRootConfiguration;
+import org.jetbrains.jps.gradle.model.impl.ResourceRootFilter;
 import org.jetbrains.plugins.gradle.model.ExternalFilter;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
@@ -46,7 +50,12 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("SSBasedInspection")

@@ -30,7 +30,7 @@ import git4idea.util.lastInstance
 import git4idea.util.toShortenedLogString
 import git4idea.util.without
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.EventListener
 
 private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
 

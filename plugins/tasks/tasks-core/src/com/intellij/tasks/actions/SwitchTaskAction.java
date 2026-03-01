@@ -3,14 +3,33 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.MultiSelectionListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
@@ -34,8 +53,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -124,7 +146,9 @@ public class SwitchTaskAction extends ExpandableComboAction implements DumbAware
       @Override
       public PopupStep<?> onChosen(List<TaskListItem> selectedValues, boolean finalChoice) {
         if (finalChoice) {
-          selectedValues.get(0).select();
+          WriteIntentReadAction.run(() -> {
+            selectedValues.get(0).select();
+          });
           return FINAL_CHOICE;
         }
         ActionGroup group = createActionsStep(selectedValues, project, shiftPressed);

@@ -2,16 +2,38 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.DifferentiateContext;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.util.Pair;
 
 import java.lang.annotation.RetentionPolicy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.asIterable;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.contains;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.lazyIterable;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.recurseDepth;
+import static org.jetbrains.jps.util.Iterators.unique;
 
 public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
 
@@ -44,8 +66,8 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     for (JvmClass addedClass : addedClasses) {
       debug(context, "Class name: ", addedClass.getName());
 
-      // class duplication checks
-      if (!addedClass.isAnonymous() && !addedClass.isLocal() && !addedClass.isInnerClass()) {
+      // class duplication checks                                                           
+      if (!addedClass.isLibrary() && !addedClass.isAnonymous() && !addedClass.isLocal() && !addedClass.isInnerClass()) {
         if (affectNodeSourcesIfNotCompiled(context, asIterable(addedClass.getReferenceID()), present, "Possibly duplicated classes in the same compilation chunk; Scheduling for recompilation sources: ")) {
           affectSources(context, context.getDelta().getSources(addedClass.getReferenceID()), "Found conflicting class declarations ", true);
           continue; // if duplicates are found, do not perform further checks for classes with the same short name
@@ -429,7 +451,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     JvmClass changedClass = change.getPast();
     debug(context, "Processing removed methods: ");
     Supplier<Boolean> extendsLibraryClass = Utils.lazyValue(() -> {
-      return future.inheritsFromLibraryClass(changedClass);
+      return future.inheritsFromUnknownClass(changedClass);
     });
     for (JvmMethod removedMethod : removed) {
       debug(context, "Method ", removedMethod.getName());
@@ -477,7 +499,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
           for (JvmClass subClass : future.getNodes(id, JvmClass.class)) {
             Iterable<Pair<JvmClass, JvmMethod>> overriddenForSubclass = filter(future.getOverriddenMethods(subClass, removedMethod::isSameByJavaRules), p -> p.second.isAbstract() || removedMethod.isSame(p.second));
             boolean allOverriddenAbstract = !isEmpty(overriddenForSubclass) && isEmpty(filter(overriddenForSubclass, p -> !p.second.isAbstract()));
-            if (allOverriddenAbstract || future.inheritsFromLibraryClass(subClass)) {
+            if (allOverriddenAbstract || future.inheritsFromUnknownClass(subClass)) {
               debug(context, "Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass ", subClass.getName());
               affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ", future);
               break;
@@ -577,7 +599,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
           for (JvmClass outerClass : flat(map(future.getNodes(subClassId, JvmClass.class), cl -> {
             return future.getNodes(new JvmNodeReferenceID(cl.getOuterFqName()), JvmClass.class);
           }))) {
-            if (future.isMethodVisible(outerClass, addedMethod)  || future.inheritsFromLibraryClass(outerClass)) {
+            if (future.isMethodVisible(outerClass, addedMethod)  || future.inheritsFromUnknownClass(outerClass)) {
               for (NodeSource source : filter(sources, context.getParams().affectionFilter())) {
                 debug(context, "Affecting file due to local overriding: ", source);
                 context.affectNodeSource(source);

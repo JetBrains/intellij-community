@@ -2,6 +2,9 @@
 package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
+import com.intellij.internal.inspector.PropertyBean
+import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -14,7 +17,13 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.ui.dsl.listCellRenderer.*
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent
+import com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrRow
+import com.intellij.ui.dsl.listCellRenderer.LcrSeparator
+import com.intellij.ui.dsl.listCellRenderer.LcrSwitchInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
@@ -33,12 +42,19 @@ import java.awt.Component
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
 
 @ApiStatus.Internal
-open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
+open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>,
+                                                                       ExperimentalUI.NewUIComboBoxRenderer {
 
   companion object {
     const val DEFAULT_GAP: Int = 6
@@ -67,6 +83,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   override var toolTipText: @NlsContexts.Tooltip String? = null
   override var rowHeight: Int? = JBUI.CurrentTheme.List.rowHeight()
   override var rowWidth: Int? = null
+  override var uiInspectorContext: List<PropertyBean>? = null
 
   private var foreground: Color = JBUI.CurrentTheme.List.FOREGROUND
 
@@ -134,7 +151,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     if (renderingType == RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM) {
       background = null
       selectionColor = null
-      enabled = getComboBox(list)?.isEnabled ?: true
+      enabled = getComboBox(list)?.isEnabled ?: (list.getClientProperty(DarculaComboBoxUI.COLLAPSED_VALUE_DISABLED) != true)
     }
     else {
       background = list.background
@@ -155,7 +172,8 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     val model = list.model
     val listSeparator = if (model is ListPopupModel<T>) {
       if (model.isSeparatorAboveOf(value)) ListSeparator(model.getCaptionAboveOf(value)) else null
-    } else {
+    }
+    else {
       if (renderingType == RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM || separator == null) null
       else ListSeparator(separator!!.text)
     }
@@ -170,6 +188,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
 
     result.applySeparator(listSeparator, index == 0, list)
     result.setToolTipText(toolTipText)
+    result.providerUiInspectorContext = uiInspectorContext
 
     var minHeight = 0
 
@@ -192,11 +211,16 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
 
     applyRowStyle(result, renderingType, rowHeight ?: (minHeight + JBUIScale.scale(2)), rowWidth, roundSelectionTop, roundSelectionBottom)
 
+    // Free references
+    listCellRendererParams = null
+
     return result
   }
 
-  private fun applyRowStyle(rendererPanel: RendererPanel, renderingType: RenderingType, rowHeight: Int, rowWidth: Int?,
-                            roundSelectionTop: Boolean, roundSelectionBottom: Boolean) {
+  private fun applyRowStyle(
+    rendererPanel: RendererPanel, renderingType: RenderingType, rowHeight: Int, rowWidth: Int?,
+    roundSelectionTop: Boolean, roundSelectionBottom: Boolean,
+  ) {
     if (ExperimentalUI.isNewUI()) {
       if (renderingType == RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM) {
         rendererPanel.initCollapsedComboBoxItem()
@@ -278,7 +302,7 @@ private class RendererCache {
   }
 }
 
-private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRendererComponent {
+private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRendererComponent, UiInspectorContextProvider {
 
   private val cellsLayout = GridLayout()
 
@@ -290,6 +314,8 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
   private val selectablePanel = SelectablePanel()
   private val separator = GroupHeaderSeparator(if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Popup.separatorLabelInsets()
                                                else JBUI.insets(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding()))
+
+  var providerUiInspectorContext: List<PropertyBean>? = null
 
   init {
     add(separator, BorderLayout.NORTH)
@@ -304,6 +330,10 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     for (type in key.types) {
       builder.cell(type.createInstance())
     }
+  }
+
+  override fun getUiInspectorContext(): List<PropertyBean?> {
+    return providerUiInspectorContext ?: emptyList()
   }
 
   override var listSeparator: ListSeparator? = null
@@ -393,7 +423,8 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
 
       // Add 1 pixel above, which gives better vertical alignment in case odd row height
       is LcrSwitchImpl,
-      is LcrSimpleColoredTextImpl -> 1
+      is LcrSimpleColoredTextImpl,
+        -> 1
     }
 
     val gaps = UnscaledGaps(top = topOffset, left = leftGap)
@@ -435,10 +466,12 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     }
   }
 
-  fun initItem(background: Color?, selectionColor: Color?, rowHeight: Int, rowWidth: Int?,
-               roundSelectionTop: Boolean, roundSelectionBottom: Boolean) {
-    val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get()
-    val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets()
+  fun initItem(
+    background: Color?, selectionColor: Color?, rowHeight: Int, rowWidth: Int?,
+    roundSelectionTop: Boolean, roundSelectionBottom: Boolean,
+  ) {
+    val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.unscaled.toInt()
+    val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets().unscaled
 
     with(selectablePanel) {
       // Update height/insets every time, so IDE scaling is applied

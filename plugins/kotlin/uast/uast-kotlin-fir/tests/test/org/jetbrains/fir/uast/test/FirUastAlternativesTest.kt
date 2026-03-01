@@ -10,7 +10,14 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UastLanguagePlugin
 import java.nio.file.Path
 
 class FirUastAlternativesTest : AbstractFirUastTest() {

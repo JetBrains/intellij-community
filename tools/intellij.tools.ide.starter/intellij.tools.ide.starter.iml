@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.time.ExperimentalTime -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.time.ExperimentalTime -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -36,22 +36,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="library" name="kodein-di-jvm" level="project" />
-    <orderEntry type="module-library">
-      <library name="rauschig.jarchivelib" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.rauschig:jarchivelib:1.2.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/rauschig/jarchivelib/1.2.0/jarchivelib-1.2.0.jar">
-              <sha256sum>524142e431fc739120d961457c29ac1f9d384ab03265aaef2d6aa39677c9ad93</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/rauschig/jarchivelib/1.2.0/jarchivelib-1.2.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="qodana-sarif" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.tools.ide.performanceTesting.commands" exported="" />
@@ -80,5 +64,7 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="github.oshi.core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.io" />
   </component>
 </module>

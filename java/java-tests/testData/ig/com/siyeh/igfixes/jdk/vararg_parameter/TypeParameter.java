@@ -1,5 +1,7 @@
+import org.jetbrains.annotations.NotNull;
+
 class FieldSet<T> {
-  public FieldSet<T> set(<caret>T... fields) {
+  public FieldSet<T> set(<caret>T @NotNull ... fields) {
     return this;
   }
 

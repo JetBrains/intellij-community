@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
-import java.util.*
+import java.util.Date
 import javax.swing.JComponent
 
 internal object GHPRTimelineItemUIUtil {

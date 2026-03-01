@@ -14,7 +14,6 @@ import git4idea.test.TestGitImpl
 import git4idea.test.checkout
 import org.mockito.Mockito
 import org.mockito.Mockito.times
-import kotlin.text.lines
 
 class GitMergeCommitMessageProviderTest: GitSingleRepoTest() {
   private val mergeMessageProvider = GitMergeCommitMessagePolicy()

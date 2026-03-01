@@ -16,7 +16,8 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;

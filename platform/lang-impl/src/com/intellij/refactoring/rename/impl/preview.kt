@@ -26,8 +26,15 @@ import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewManager
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.containers.toArray
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import kotlin.coroutines.Continuation

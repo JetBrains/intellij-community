@@ -9,7 +9,11 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.platform.ml.*
+import com.intellij.platform.ml.DescriptionPolicy
+import com.intellij.platform.ml.MLModel
+import com.intellij.platform.ml.Session
+import com.intellij.platform.ml.Tier
+import com.intellij.platform.ml.TierDescriptor
 import com.intellij.platform.ml.analysis.SessionAnalyser
 import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.environment.EnvironmentExtender

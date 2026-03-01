@@ -19,7 +19,12 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.ListIterator;
+import java.util.Map;
 
 /**
  * @author gregsh

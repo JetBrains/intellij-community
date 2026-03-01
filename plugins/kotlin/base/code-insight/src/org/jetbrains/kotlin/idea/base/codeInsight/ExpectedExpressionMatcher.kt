@@ -2,20 +2,31 @@
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.types.Variance
 

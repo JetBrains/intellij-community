@@ -7,10 +7,10 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.documentation.TerminalDocumentationManager
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 import org.jetbrains.plugins.terminal.block.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal class TerminalShowDocAction : DumbAwareAction(), HintManagerImpl.ActionToIgnore {

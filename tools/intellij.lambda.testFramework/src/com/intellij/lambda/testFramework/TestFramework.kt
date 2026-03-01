@@ -1,11 +1,8 @@
 package com.intellij.lambda.testFramework
 
-import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.remoteDev.tests.impl.RdctTestFrameworkLoggerCategory
 import com.intellij.testFramework.TestLoggerFactory
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 val frameworkLogger: Logger by lazy {
   if (!Logger.isInitialized())

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcompletion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -35,7 +35,7 @@ public interface ModCompletionItem {
   }
 
   /**
-   * @return a context object. Often, it's a PsiElement associated with the item to be inserted, 
+   * @return a context object. Often, it's a PsiElement associated with the item to be inserted,
    * but it could be a type or any other object. It's used for item weighing, char filters, documentation providers, etc.
    */
   Object contextObject();
@@ -53,9 +53,9 @@ public interface ModCompletionItem {
   }
 
   /**
-   * @param actionContext action context where the completion is performed. 
-   *                      The selection range denotes the prefix text inserted during the current completion session.
-   *                      The command must ignore it, as at the time it will be applied, the selection range will be deleted. 
+   * @param actionContext    action context where the completion is performed.
+   *                         The selection range denotes the prefix text inserted during the current completion session.
+   *                         The command must ignore it, as at the time it will be applied, the selection range will be deleted.
    * @param insertionContext an insertion context, which describes how exactly the user invoked the completion
    * @return the command to perform the completion (e.g., insert the lookup string). The command must assume that the
    * selection range is already deleted.
@@ -71,19 +71,19 @@ public interface ModCompletionItem {
 
   /**
    * Context for the item insertion
-   * 
-   * @param mode whether to insert or overwrite the existing text
+   *
+   * @param mode               whether to insert or overwrite the existing text
    * @param insertionCharacter the character used to finish the completion
    */
   record InsertionContext(InsertionMode mode, char insertionCharacter) {
-    
+
   }
 
   /**
    * Default insertion context for 'insert' mode
    */
   InsertionContext DEFAULT_INSERTION_CONTEXT = new InsertionContext(InsertionMode.INSERT, '\n');
-  
+
   enum InsertionMode {
     /**
      * Insert mode: we should insert the text to the caret position

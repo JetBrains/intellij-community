@@ -7,23 +7,31 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class ChangeToMutableCollectionFix(property: KtProperty, context: ElementContext) :
     KotlinPsiUpdateModCommandAction.ElementBased<KtProperty, ChangeToMutableCollectionFix.ElementContext>(property, context) {
 

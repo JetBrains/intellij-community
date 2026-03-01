@@ -1,9 +1,17 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
+import com.intellij.openapi.application.impl.concurrencyTest
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -13,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -21,12 +30,19 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.application
 import com.intellij.util.io.delete
 import com.intellij.util.io.write
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -34,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReferenceArray
+import kotlin.io.path.createTempDirectory
 import kotlin.io.path.createTempFile
 import kotlin.test.assertEquals
 
@@ -42,14 +59,16 @@ class VfsRefreshTest {
 
   @Test
   @RegistryKey("vfs.refresh.use.background.write.action", "true")
-  fun `suspending refresh calls listeners on background threads`(): Unit = bulkFileListenerTestStub(false) { virtualFile ->
+  fun `suspending refresh calls listeners on background threads`(): Unit = bulkFileListenerTestStub { virtualFile ->
     RefreshQueue.getInstance().refresh(false, listOf(virtualFile))
   }
 
   @Test
-  fun `regular synchronous refresh calls listeners on EDT threads`(): Unit = bulkFileListenerTestStub(true) { virtualFile ->
+  @RegistryKey("vfs.refresh.use.background.write.action", "true")
+  fun `regular synchronous refresh calls listeners on background threads`(): Unit = bulkFileListenerTestStub { virtualFile ->
     RefreshQueue.getInstance().refresh(false, false, null, listOf(virtualFile))
   }
+
   @Test
   fun `parallelization guard stress test`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     val map = ConcurrentHashMap<Any, Pair<Semaphore, Int>>()
@@ -73,12 +92,13 @@ class VfsRefreshTest {
 
   @Test
   @RegistryKey("vfs.refresh.use.background.write.action", "true")
-  fun `suspending refresh calls async listeners on background threads`(): Unit = asyncFileListenerTestStub(false) { virtualFile ->
+  fun `suspending refresh calls async listeners on background threads`(): Unit = asyncFileListenerTestStub { virtualFile ->
     RefreshQueue.getInstance().refresh(false, listOf(virtualFile))
   }
 
   @Test
-  fun `regular synchronous refresh calls async listeners on EDT`(): Unit = asyncFileListenerTestStub(true) { virtualFile ->
+  @RegistryKey("vfs.refresh.use.background.write.action", "true")
+  fun `regular synchronous refresh calls async listeners on background`(): Unit = asyncFileListenerTestStub { virtualFile ->
     RefreshQueue.getInstance().refresh(false, false, null, listOf(virtualFile))
   }
 
@@ -151,7 +171,7 @@ class VfsRefreshTest {
     }
   }
 
-  fun bulkFileListenerTestStub(bgListenersShouldRunOnEdt: Boolean, refresh: suspend (VirtualFile) -> Unit) = refreshTestStub(
+  fun bulkFileListenerTestStub(refresh: suspend (VirtualFile) -> Unit) = refreshTestStub(
     { disposable, counter ->
       application.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
         override fun before(events: List<VFileEvent>) {
@@ -166,12 +186,12 @@ class VfsRefreshTest {
       })
       application.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
         override fun before(events: List<VFileEvent>) {
-          assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
+          assertThat(EDT.isCurrentThreadEdt()).isFalse
           counter.incrementAndGet()
         }
 
         override fun after(events: List<VFileEvent>) {
-          assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
+          assertThat(EDT.isCurrentThreadEdt()).isFalse
           counter.incrementAndGet()
         }
       })
@@ -180,7 +200,7 @@ class VfsRefreshTest {
     })
 
 
-  fun asyncFileListenerTestStub(bgListenersShouldRunOnEdt: Boolean, refresh: suspend (VirtualFile) -> Unit) = refreshTestStub(
+  fun asyncFileListenerTestStub(refresh: suspend (VirtualFile) -> Unit) = refreshTestStub(
     { disposable, counter ->
       VirtualFileManager.getInstance().addAsyncFileListener(
         {
@@ -200,12 +220,12 @@ class VfsRefreshTest {
         {
           object : AsyncFileListener.ChangeApplier {
             override fun beforeVfsChange() {
-              assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
+              assertThat(EDT.isCurrentThreadEdt()).isFalse
               counter.incrementAndGet()
             }
 
             override fun afterVfsChange() {
-              assertThat(EDT.isCurrentThreadEdt()).isEqualTo(bgListenersShouldRunOnEdt)
+              assertThat(EDT.isCurrentThreadEdt()).isFalse
               counter.incrementAndGet()
             }
           }
@@ -272,5 +292,50 @@ class VfsRefreshTest {
       FileContentUtilCore.reparseFiles(virtualFile)
     }
     assertThat(counter.get()).isEqualTo(2)
+  }
+
+  @Test
+  fun `event processing can start regardless of active scan`() = concurrencyTest {
+    val dir = createTempDirectory()
+    dir.resolve("file2").createFile()
+    val file2 = createTempFile()
+    val virtualFile1 = VirtualFileManager.getInstance().findFileByNioPath(dir)!!
+    val virtualFile2 = VirtualFileManager.getInstance().findFileByNioPath(file2)!!
+
+    writeAction {
+      virtualFile2.writeText("43")
+    }
+
+    RefreshQueueImpl.setTestListener {
+      checkpoint(1)
+      checkpoint(4)
+    }
+    try {
+      launch(Dispatchers.Default) {
+        RefreshQueue.getInstance().refresh(false, listOf(virtualFile1))
+      }
+      checkpoint(2)
+      RefreshQueue.getInstance().processEvents(listOf(VFileContentChangeEvent(Any(), virtualFile2, 0, 1)))
+      checkpoint(3)
+    } finally {
+      RefreshQueueImpl.setTestListener(null)
+    }
+  }
+
+  @Test
+  fun `prioritized vfs refresh does not skip async listeners`(): Unit = timeoutRunBlocking {
+    val file = createTempFile()
+    val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file)!!
+    val doc = readAction {
+      FileDocumentManager.getInstance().getDocument(virtualFile)
+    }!!
+    assertThat(runReadAction { doc.text }).isEqualTo("")
+    file.write("42")
+    backgroundWriteAction {
+      RefreshQueue.getInstance().createSession(false, false, null).apply {
+        addFile(virtualFile)
+      }.launch()
+    }
+    assertThat(runReadAction { doc.text }).isEqualTo("42")
   }
 }

@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;

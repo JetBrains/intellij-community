@@ -12,8 +12,17 @@ import com.intellij.openapi.application.smartReadActionBlocking
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.psi.*
-import java.util.*
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiImportList
+import com.intellij.psi.PsiImportStatement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiSuperExpression
+import java.util.UUID
 import com.intellij.lang.Language as PlatformLanguage
 
 fun interface GeneratedCodeIntegrator {
@@ -152,7 +161,7 @@ fun extractCalledInternalApiMethods(psiElement: PsiElement): List<PsiMethod> {
   return apiMethods.filter { isInternalApiMethod(it, psiElement) }
 }
 
-private fun isInternalApiMethod(method: PsiMethod, fromWhereCalled: PsiElement): Boolean {
+fun isInternalApiMethod(method: PsiMethod, fromWhereCalled: PsiElement): Boolean {
   if (isInTheSameFile(method, fromWhereCalled)) return true
   val project = method.project
   val containingFile = method.containingFile?.virtualFile ?: return false
@@ -166,7 +175,7 @@ private fun isInTheSameFile(method: PsiMethod, fromWhereCalled: PsiElement): Boo
 }
 
 
-private fun extractMethodCallExpressionsFromMethods(
+fun extractMethodCallExpressionsFromMethods(
   psiElement: PsiElement,
 ): List<PsiCallExpression> {
   val result: MutableList<PsiCallExpression> = mutableListOf()

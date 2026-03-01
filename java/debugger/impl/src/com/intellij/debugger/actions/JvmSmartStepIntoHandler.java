@@ -2,12 +2,24 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.AnonymousClassMethodFilter;
+import com.intellij.debugger.engine.BasicStepMethodFilter;
+import com.intellij.debugger.engine.ClassInstanceMethodFilter;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.LambdaAsyncMethodFilter;
+import com.intellij.debugger.engine.LambdaMethodFilter;
+import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

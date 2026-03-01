@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ex
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -14,6 +13,7 @@ import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import tools.jackson.databind.ObjectMapper
 import java.util.concurrent.atomic.AtomicReference
 
 val CWE_TOP25_2023: Set<Int> = setOf(20, 22, 77, 78, 79, 89, 94, 119, 125, 190, 269, 276, 287, 306, 352, 362, 416, 434, 476, 502,

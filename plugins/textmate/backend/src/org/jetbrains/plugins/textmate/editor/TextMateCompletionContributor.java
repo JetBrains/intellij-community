@@ -1,6 +1,12 @@
 package org.jetbrains.plugins.textmate.editor;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.WordCompletionContributor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;

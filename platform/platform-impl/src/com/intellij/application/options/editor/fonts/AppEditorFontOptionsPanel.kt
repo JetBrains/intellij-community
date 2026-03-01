@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts
 
 import com.intellij.application.options.colors.ColorAndFontOptions
@@ -6,7 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences
-import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
+import com.intellij.openapi.editor.colors.impl.AppFontOptions.initDefaults
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage
@@ -40,7 +40,8 @@ class AppEditorFontOptionsPanel(scheme: EditorColorsScheme) : AppFontOptionsPane
   }
 
   private fun restoreDefaults() {
-    AppEditorFontOptions.initDefaults(fontPreferences as ModifiableFontPreferences)
+    initDefaults(fontPreferences as ModifiableFontPreferences)
+    fireSchemeReset(fontPreferences)
     updateOnChangedFont()
   }
 

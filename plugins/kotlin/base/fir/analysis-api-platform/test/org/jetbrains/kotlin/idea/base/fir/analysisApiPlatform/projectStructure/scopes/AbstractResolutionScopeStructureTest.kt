@@ -9,7 +9,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.projectStructureTest.*
+import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibrary
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModule
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructure
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructureParser
 import java.io.File
 import kotlin.io.path.Path
 

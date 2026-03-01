@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.platform.ijent.spi
 
@@ -10,17 +10,29 @@ import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
-import java.util.*
+import java.util.Collections
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
@@ -161,7 +173,7 @@ object IjentSessionMediatorUtils {
         }
 
       val dateTimeDiff = try {
-        java.time.Duration.between(ZonedDateTime.parse(rawRemoteDateTime), hostDateTime).toKotlinDuration()
+        java.time.Duration.between(hostDateTime, ZonedDateTime.parse(rawRemoteDateTime)).toKotlinDuration()
       }
       catch (_: DateTimeParseException) {
         val logger = lastLoggingHandler ?: logger::info

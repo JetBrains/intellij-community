@@ -12,6 +12,8 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
 import org.jetbrains.java.generate.exception.TemplateResourceException
 import org.jetbrains.java.generate.template.TemplateResource
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinEqualsHashCodeGeneratorExtension
+import org.jetbrains.kotlin.psi.KtClass
 import java.io.IOException
 
 @State(name = "KotlinEqualsHashcodeTemplates", storages = [Storage("kotlinEqualsHashcodeTemplates.xml")], category = SettingsCategory.CODE)
@@ -44,6 +46,31 @@ class KotlinEqualsHashCodeTemplatesManager : EqualsHashCodeTemplatesManagerBase(
         val map = GenerateEqualsHelper.getHashCodeImplicitVars()
         addPlatformVariables(map)
         return map
+    }
+
+    fun <T> runWithExtensionTemplatesFor(ktClass: KtClass, block: () -> T): T {
+        val applicableExtension = KotlinEqualsHashCodeGeneratorExtension.getSingleApplicableFor(ktClass)
+        var previousDefaultTemplate: TemplateResource? = null
+        val extensionTemplates = mutableSetOf<TemplateResource>()
+
+        try {
+            val alternativeDefaultTemplate = applicableExtension?.alternativeDefaultTemplateFor(ktClass)
+            applicableExtension?.getTemplatesFor(ktClass)
+                ?.forEach { additionalTemplate ->
+                    addTemplate(additionalTemplate)
+                    extensionTemplates.add(additionalTemplate)
+                }
+            if (alternativeDefaultTemplate != null) {
+                previousDefaultTemplate = defaultTemplate
+                setDefaultTemplate(alternativeDefaultTemplate)
+            }
+            return block()
+        } finally {
+            if (previousDefaultTemplate != null) {
+                defaultTemplate = previousDefaultTemplate
+            }
+            setTemplates(this.allTemplates.filter { it !in extensionTemplates })
+        }
     }
 
     companion object {

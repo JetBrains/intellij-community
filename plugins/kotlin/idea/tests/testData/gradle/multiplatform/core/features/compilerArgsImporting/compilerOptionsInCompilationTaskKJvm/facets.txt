@@ -2,14 +2,14 @@ MODULES
 project
 
 project.main
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in OptInAnnotation
     targetPlatform = JVM (11)
 
 project.test
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
     compilerSettings = -opt-in OptInAnnotation
     targetPlatform = JVM (11)
 

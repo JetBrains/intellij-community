@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import kotlin.let
 
 class KotlinRawStringBackspaceHandler : BackspaceHandlerDelegate() {
     private var rangeMarker: RangeMarker? = null

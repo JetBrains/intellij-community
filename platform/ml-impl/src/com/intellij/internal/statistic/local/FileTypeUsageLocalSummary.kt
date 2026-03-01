@@ -19,9 +19,9 @@ import org.jetbrains.annotations.ApiStatus
  * This class is implemented as a project service. Use the [FileTypeUsageSummaryProvider] to get the service.
  */
 @State(name = "FileTypeUsageLocalSummary", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
-private class FileTypeUsageLocalSummary : PersistentStateComponent<FileTypeUsageLocalSummaryState>,
-                                          FileTypeUsageSummaryProvider,
-                                          SimpleModificationTracker() {
+internal class FileTypeUsageLocalSummary : PersistentStateComponent<FileTypeUsageLocalSummaryState>,
+                                           FileTypeUsageSummaryProvider,
+                                           SimpleModificationTracker() {
   @Volatile
   private var state = FileTypeUsageLocalSummaryState()
 

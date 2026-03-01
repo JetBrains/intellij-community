@@ -10,7 +10,12 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,7 +24,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class CustomRegionStructureUtil {

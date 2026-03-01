@@ -4,7 +4,11 @@ package com.intellij.platform.syntax.impl.builder
 import com.intellij.platform.syntax.impl.util.MutableBitSet
 import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
-import com.intellij.util.fastutil.ints.*
+import com.intellij.util.fastutil.ints.Int2ObjectOpenHashMap
+import com.intellij.util.fastutil.ints.IntOpenHashSet
+import com.intellij.util.fastutil.ints.MutableIntMap
+import com.intellij.util.fastutil.ints.MutableIntSet
+import com.intellij.util.fastutil.ints.toIntArray
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 

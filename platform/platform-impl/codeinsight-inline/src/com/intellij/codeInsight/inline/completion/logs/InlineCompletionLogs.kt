@@ -4,7 +4,12 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId2
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -15,11 +20,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object InlineCompletionLogs : CounterUsagesCollector() {
   // TODO use ML_RECORDER_ID
-  val GROUP: EventLogGroup = EventLogGroup("inline.completion.v2", 61, recorder = "ML", description = "Detailed Inline Completion logs. Local/Cloud, 1-party/3-party providers")
+  val GROUP: EventLogGroup = EventLogGroup("inline.completion.v2", 61, recorder = "ML")
 
   val INSERTED_STATE_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "inserted_state",
-    description = "Tracks the state of the accepted suggestion after some time",
     InsertedStateEvents.REQUEST_ID,
     EventFields.DurationMs,
     InsertedStateEvents.SUGGESTION_LENGTH,
@@ -31,10 +35,10 @@ object InlineCompletionLogs : CounterUsagesCollector() {
     EventFields.Language,
   )
 
-  val modelRequestSent: EventId2<Long, Class<*>?> = GROUP.registerEvent("model_request_sent",
-                                                                        EventFields.Long("request_id"),
-                                                                        EventFields.Class("client"),
-                                                                        "Indicates that the call to the model was initiated"
+  val modelRequestSent: EventId2<Long, Class<*>?> = GROUP.registerEvent(
+    "model_request_sent",
+    EventFields.Long("request_id"),
+    EventFields.Class("client"),
   )
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -97,7 +101,6 @@ object InlineCompletionLogs : CounterUsagesCollector() {
     // Each phase will have a separate ObjectEventField in the session event with the corresponding features.
     val SESSION_EVENT: VarargEventId = GROUP.registerVarargEvent(
       "session",
-      description = "The whole inline completion session",
       *phases.values.toTypedArray(),
     )
   }

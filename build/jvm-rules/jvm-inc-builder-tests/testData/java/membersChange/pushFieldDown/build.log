@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Sub.class
+  ppp/Super.class
+End of files
+Compiling files:
+  java/membersChange/pushFieldDown/a/ppp/Sub.java
+  java/membersChange/pushFieldDown/a/ppp/Super.java
+End of files
+Cleaning output files:
+  ppp/Main.class
+End of files
+Compiling files:
+  java/membersChange/pushFieldDown/a/ppp/Main.java
+End of files
+------------------------------------------
+Exit code: OK

@@ -6,7 +6,16 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

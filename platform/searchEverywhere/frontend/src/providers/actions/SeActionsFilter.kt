@@ -14,6 +14,16 @@ class SeActionsFilter(val includeDisabled: Boolean, val isAutoTogglePossible: Bo
       IS_AUTO_TOGGLE_POSSIBLE to listOf(isAutoTogglePossible.toString())
     ))
 
+  override fun isEqualTo(other: SeFilter): Boolean {
+    if (this === other) return true
+    if (other !is SeActionsFilter) return false
+
+    if (includeDisabled != other.includeDisabled) return false
+    if (isAutoTogglePossible != other.isAutoTogglePossible) return false
+
+    return true
+  }
+
   companion object {
     private const val KEY_INCLUDE_DISABLED = "INCLUDE_DISABLED"
     private const val IS_AUTO_TOGGLE_POSSIBLE: String = "IS_AUTO_TOGGLE_POSSIBLE"

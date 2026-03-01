@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=org.jetbrains.kotlin.gradle.ExperimentalGradleToolingApi -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -69,7 +69,7 @@
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
-    <orderEntry type="module" module-name="intellij.gradle.common" />
+    <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" />

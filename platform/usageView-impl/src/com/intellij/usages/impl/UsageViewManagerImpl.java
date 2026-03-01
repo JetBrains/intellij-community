@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
@@ -27,21 +27,41 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.EverythingGlobalScope;
+import com.intellij.psi.search.FileRankerMlService;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectAndLibrariesScope;
+import com.intellij.psi.search.ProjectScopeImpl;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
-import com.intellij.usages.*;
+import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageLimitUtil;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManagerWithUsageViewFactoryCallback;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -51,7 +71,7 @@ import java.util.function.Supplier;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
-public class UsageViewManagerImpl extends UsageViewManager {
+public class UsageViewManagerImpl extends UsageViewManagerWithUsageViewFactoryCallback {
   private static final Logger LOG = Logger.getInstance(UsageViewManagerImpl.class);
   private final Project project;
   private final @NotNull CoroutineScope coroutineScope;
@@ -63,13 +83,22 @@ public class UsageViewManagerImpl extends UsageViewManager {
     this.coroutineScope = coroutineScope;
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
                                               Usage @NotNull [] usages,
                                               @NotNull UsageViewPresentation presentation,
-                                              @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
+                                              @Nullable Factory<? extends UsageSearcher> usageSearcherFactory,
+                                              @Nullable Runnable onUsagesFoundRunnable) {
     for (UsageViewFactory factory : UsageViewFactory.EP_NAME.getExtensionList()) {
-      UsageViewEx result = factory.createUsageView(targets, usages, presentation, usageSearcherFactory);
+      UsageViewEx result;
+      if (factory instanceof UsageViewFactoryWithCallbackOnReady withCallback) {
+        result = withCallback.createUsageView(targets, usages, presentation, usageSearcherFactory, onUsagesFoundRunnable);
+      }
+      else {
+        result = factory.createUsageView(targets, usages, presentation, usageSearcherFactory);
+      }
+
       if (result != null) {
         return result;
       }
@@ -91,21 +120,19 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @Override
+  public @NotNull UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
+                                            Usage @NotNull [] usages,
+                                            @NotNull UsageViewPresentation presentation,
+                                            @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
+    return createUsageView(targets, usages, presentation, usageSearcherFactory, null);
+  }
+
+  @Override
   public @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
                                        Usage @NotNull [] foundUsages,
                                        @NotNull UsageViewPresentation presentation,
                                        @Nullable Factory<? extends UsageSearcher> factory) {
-    UsageViewEx usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
-    showUsageView(usageView, presentation);
-    if (usageView instanceof UsageViewImpl impl) {
-      showToolWindow(true);
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (!impl.isDisposed()) {
-          impl.expandRoot();
-        }
-      });
-    }
-    return usageView;
+    return showUsages(searchedFor, foundUsages, presentation, factory, null);
   }
 
   @Override
@@ -218,6 +245,26 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @ApiStatus.Internal
+  @Override
+  public @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                       Usage @NotNull [] foundUsages,
+                                       @NotNull UsageViewPresentation presentation,
+                                       @Nullable Factory<? extends UsageSearcher> usageSearcherFactory,
+                                       @Nullable Runnable onUsagesFoundRunnable) {
+    UsageViewEx usageView = createUsageView(searchedFor, foundUsages, presentation, usageSearcherFactory, onUsagesFoundRunnable);
+    showUsageView(usageView, presentation);
+    if (usageView instanceof UsageViewImpl impl) {
+      showToolWindow(true);
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (!impl.isDisposed()) {
+          impl.expandRoot();
+        }
+      });
+    }
+    return usageView;
+  }
+
+  @ApiStatus.Internal
   public static void informRankerMlService(@NotNull Project project,
                                            @NotNull Collection<Usage> usages,
                                            FileRankerMlService.@NotNull CallSource source) {
@@ -280,13 +327,13 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                    @NotNull TooManyUsagesStatus tooManyUsagesStatus,
                                                    @NotNull ProgressIndicator indicator,
                                                    @Nullable UsageViewEx usageView,
-                                                   @NotNull Supplier<@NlsContexts.DialogMessage String> messageSupplier,
+                                                   @Nullable Supplier<@NlsContexts.DialogMessage String> messageSupplier,
                                                    @Nullable Consumer<? super UsageLimitUtil.Result> onUserClicked) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) {
         return;
       }
-      UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, messageSupplier.get());
+      UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, messageSupplier == null ? null : messageSupplier.get());
       if (ret == UsageLimitUtil.Result.ABORT) {
         if (usageView != null) {
           usageView.cancelCurrentSearch();

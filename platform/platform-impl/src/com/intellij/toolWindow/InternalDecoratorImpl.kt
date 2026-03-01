@@ -1,13 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.Divider
@@ -18,13 +23,24 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.InternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowExternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.openapi.wm.impl.isInternal
-import com.intellij.ui.*
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ComponentWithMnemonics
+import com.intellij.ui.EditorTextField
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -40,20 +56,40 @@ import com.intellij.util.animation.AlphaAnimated
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.intellij.lang.annotations.MagicConstant
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Container
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.FocusTraversalPolicy
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.KeyboardFocusManager
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.EnumSet
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
-import javax.swing.*
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JScrollBar
+import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 import javax.swing.plaf.UIResource
 import javax.swing.text.JTextComponent
 
-@ApiStatus.Internal
+private val LOG = logger<ToolWindowManagerImpl>()
+
+@Internal
 class InternalDecoratorImpl internal constructor(
   @JvmField internal val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
@@ -562,8 +598,8 @@ class InternalDecoratorImpl internal constructor(
   fun applyWindowInfo(info: WindowInfo) {
     if (info.type == ToolWindowType.SLIDING) {
       val anchor = info.anchor
-      if (log().isDebugEnabled) {
-        log().debug("The sliding window ${info.id} anchor is now $anchor")
+      if (LOG.isDebugEnabled) {
+        LOG.debug("The sliding window ${info.id} anchor is now $anchor")
       }
       val divider = initDivider()
       divider.invalidate()
@@ -576,8 +612,8 @@ class InternalDecoratorImpl internal constructor(
       divider.preferredSize = Dimension(0, 0)
     }
     else if (divider != null) {
-      if (log().isDebugEnabled) {
-        log().debug("Removing divider of the non-sliding (${info.type}) window ${info.id}")
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Removing divider of the non-sliding (${info.type}) window ${info.id}")
       }
       // docked and floating windows don't have divider
       divider!!.parent?.remove(divider)
@@ -925,8 +961,8 @@ class InternalDecoratorImpl internal constructor(
     }
 
   override fun addNotify() {
-    if (log().isTraceEnabled) {
-      log().trace(Throwable("Tool window $toolWindowId shown"))
+    if (LOG.isTraceEnabled) {
+      LOG.trace(Throwable("Tool window $toolWindowId shown"))
     }
     super.addNotify()
 
@@ -953,8 +989,8 @@ class InternalDecoratorImpl internal constructor(
   }
 
   override fun removeNotify() {
-    if (log().isTraceEnabled) {
-      log().trace(Throwable("Tool window $toolWindowId hidden"))
+    if (LOG.isTraceEnabled) {
+      LOG.trace(Throwable("Tool window $toolWindowId hidden"))
     }
     super.removeNotify()
 
@@ -1134,6 +1170,4 @@ class InternalDecoratorImpl internal constructor(
     TOP_TOOL_WINDOW_EDGE,
     BOTTOM_TOOL_WINDOW_EDGE,
   }
-
-  private fun log(): Logger = toolWindow.toolWindowManager.log()
 }

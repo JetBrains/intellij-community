@@ -9,7 +9,11 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.tooling.util.StringUtils;
 
 import java.io.File;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

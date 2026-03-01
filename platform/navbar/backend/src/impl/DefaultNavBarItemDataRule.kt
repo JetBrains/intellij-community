@@ -2,7 +2,9 @@
 package com.intellij.platform.navbar.backend.impl
 
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
-import com.intellij.openapi.actionSystem.CommonDataKeys.*
+import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
+import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
+import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
 import com.intellij.openapi.actionSystem.DataMap
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot

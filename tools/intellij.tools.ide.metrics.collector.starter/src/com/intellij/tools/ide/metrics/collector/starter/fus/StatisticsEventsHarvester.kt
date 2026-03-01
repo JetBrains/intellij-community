@@ -1,9 +1,9 @@
 package com.intellij.tools.ide.metrics.collector.starter.fus
 
 import com.intellij.ide.starter.ide.IDETestContext
+import com.intellij.internal.statistic.eventLog.SerializationHelper
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
-import com.intellij.internal.statistic.eventLog.SerializationHelper
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import java.nio.file.Path
 import kotlin.io.path.bufferedReader

@@ -5,7 +5,9 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals

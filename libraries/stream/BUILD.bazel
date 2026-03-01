@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-stream-_stream_ex"],
   runtime_deps = ["@lib//:libraries-stream-_stream_ex"]
 )
+
+jvm_library(
+  name = "stream_test_lib",
+  module_name = "intellij.libraries.stream",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-stream-_stream_ex"],
+  runtime_deps = [":stream"]
+)
 ### auto-generated section `build intellij.libraries.stream` end

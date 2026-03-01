@@ -5,6 +5,8 @@ package com.intellij.execution.target
  * This request allows client to choose between copying files to the remote target and
  * accessing them directly. While copying may take some time, remote access may be slow
  */
+@Deprecated("Safe to remove usages; no longer has any effect")
 interface VolumeCopyingRequest {
+  @Deprecated("Safe to remove usages; no longer has any effect")
   var shouldCopyVolumes: Boolean
 }

@@ -1,0 +1,119 @@
+[build-system]
+requires = [
+  "setuptools>=68",
+  "wheel>=0.41",
+  "setuptools_scm>=8",
+  "setuptools_rust>=1.8",
+  "flit-core>=3.9",
+  "hatchling>=1.21",
+  "poetry-core>=1.9",
+  "scikit-build-core>=0.9",
+  "cython>=3.0",
+  "pybind11>=2.11",
+]
+build-backend = "setuptools.build_meta"
+
+[tool]
+
+[tool.bandit]
+
+[tool.black]
+
+[tool.codespell]
+
+[tool.coverage]
+
+[tool.darker]
+
+[tool.deptry]
+
+[tool.docformatter]
+
+[tool.flake8]
+
+[tool.hatch.xxx]
+
+[tool.hatch-vcs]
+
+[tool.hypothesis]
+
+[tool.isort]
+
+[tool.mkdocstrings]
+
+[tool.myst-parser]
+
+[tool.mypy]
+
+[tool.nbqa]
+
+[tool.nox]
+
+[tool.pdm]
+
+[tool.poetry]
+
+[tool.prefect]
+
+[tool.pycln]
+
+[tool.pydantic-mypy]
+
+[tool.pyright]
+
+[tool.pyupgrade]
+
+[tool.refurb]
+
+[tool.ruff]
+
+[tool.safety]
+
+[tool.sphinx]
+
+[tool.tox]
+
+[tool.uv]
+
+[tool.validate-pyproject]
+
+[tool.vulture]
+
+[tool.yapf]
+
+[dependency-groups]
+
+all = ["asyncio", "rich", "httpx", "pytest", "ruff", "mypy"]
+async = ["anyio", "async-timeout", "aiofiles", "httpx"]
+bench = ["pytest-benchmark", "perfplot", "timeit-decorator"]
+build = ["build", "twine", "wheel"]
+ci = ["pytest", "coverage[toml]", "ruff", "mypy", "tox"]
+cli = ["click", "rich", "typer"]
+coverage = ["coverage[toml]", "pytest-cov"]
+db = ["sqlalchemy", "alembic", "psycopg2-binary"]
+debug = ["ipdb", "debugpy", "rich"]
+deploy = ["gunicorn", "uvicorn"]
+dev = ["ipython", "pre-commit", "watchfiles"]
+docs = ["sphinx", "mkdocs", "mkdocstrings[python]", "myst-parser"]
+examples = ["jupyter", "notebook", "matplotlib"]
+extras = ["orjson", "ujson"]
+extras-all = ["orjson", "ujson", "msgpack"]
+format = ["black", "isort", "docformatter"]
+gpu = ["cupy", "torch"]
+lint = ["ruff", "flake8", "pylint"]
+optional = ["importlib-metadata"]
+profile = ["line-profiler", "memory-profiler"]
+security = ["bandit", "safety"]
+test = ["pytest", "hypothesis", "pytest-xdist"]
+tooling = ["nox", "pre-commit", "tox"]
+typing = ["mypy", "types-requests", "types-setuptools"]
+# viz = ["matplotlib", "seaborn", "plotly"]
+
+# ─────────────────────────
+# Additional groups, not listed in allowed (will be logged as "other")
+# ─────────────────────────
+
+logging = ["structlog", "loguru"]
+network = ["requests", "urllib3", "websockets"]
+performance = ["orjson", "ujson", "cython"]
+serialization = ["pydantic", "msgpack", "pyyaml"]

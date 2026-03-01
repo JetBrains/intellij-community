@@ -6,6 +6,7 @@ import com.intellij.ide.util.gotoByName.LanguageRef
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.ListCellRenderer
@@ -30,5 +31,7 @@ interface SearchEverywhereContributorModule : Disposable.Default {
 
   fun adjustFoundElementWeight(element: Any, weight: Int): Int
 
-  fun createCustomModel(project: Project?, contributor: AbstractGotoSEContributor): FilteringGotoByModel<LanguageRef>?
+  fun anyElementFitsScope(scope: SearchScope?, element: Any?): Boolean = true
+
+  fun createCustomModel(project: Project?, contributor: AbstractGotoSEContributor, operationDisposable: Disposable?): FilteringGotoByModel<LanguageRef>?
 }

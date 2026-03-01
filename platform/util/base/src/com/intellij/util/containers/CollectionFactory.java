@@ -3,10 +3,30 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.*;
-import org.jetbrains.annotations.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 // ContainerUtil requires trove in classpath
@@ -403,6 +423,7 @@ public final class CollectionFactory {
   public static @NotNull <K,V> Map<@NotNull K,V> createSoftMap(@Nullable EvictionListener<K,V,? super V> keyEvictionListener) {
     return createSoftMap(HashingStrategy.canonical(), keyEvictionListener);
   }
+
   /**
    * Create {@link Map} with soft-referenced keys and hard-referenced values, with a custom hashing strategy.
    * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked, passing (this map, the evicted key hash code and the associated value) as arguments there.
@@ -413,6 +434,9 @@ public final class CollectionFactory {
     return new SoftHashMap<>(10, hashingStrategy, keyEvictionListener);
   }
 
+  /**
+   * Create {@link ConcurrentMap} with soft-referenced keys and hard-referenced values.
+   */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap() {
     return new ConcurrentSoftHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, null, null);

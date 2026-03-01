@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.xml.events.*;
+import com.intellij.util.xml.events.DomEvent;
 
 public interface DomEventVisitor {
 

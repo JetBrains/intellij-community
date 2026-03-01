@@ -3,8 +3,20 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.gridLayout.Grid
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JCheckBox

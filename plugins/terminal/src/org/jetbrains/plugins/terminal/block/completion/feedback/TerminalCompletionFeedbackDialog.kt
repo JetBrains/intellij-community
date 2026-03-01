@@ -8,7 +8,12 @@ import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.dialog.uiBlocks.*
+import com.intellij.platform.feedback.dialog.uiBlocks.DescriptionBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.ImageBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.RatingBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
 import com.intellij.ui.RoundedIcon
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.scale.JBUIScale

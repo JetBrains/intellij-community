@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.LighterLazyParseableNode;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.IElementType;

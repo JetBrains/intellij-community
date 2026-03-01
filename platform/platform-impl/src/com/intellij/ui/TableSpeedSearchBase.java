@@ -7,7 +7,10 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.RowFilter;
+import javax.swing.RowSorter;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.event.KeyEvent;

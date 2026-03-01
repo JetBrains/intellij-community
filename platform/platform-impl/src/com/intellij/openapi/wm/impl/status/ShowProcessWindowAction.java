@@ -11,7 +11,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.KeyboardFocusManager;
 
 final class ShowProcessWindowAction extends ToggleAction implements DumbAware {
   ShowProcessWindowAction() {

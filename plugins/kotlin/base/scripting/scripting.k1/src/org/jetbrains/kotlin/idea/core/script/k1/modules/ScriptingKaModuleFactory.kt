@@ -9,7 +9,11 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
-import org.jetbrains.kotlin.analysis.api.projectStructure.*
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.KaModuleFactory

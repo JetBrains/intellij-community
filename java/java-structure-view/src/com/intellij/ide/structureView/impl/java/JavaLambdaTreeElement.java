@@ -9,7 +9,7 @@ import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
 

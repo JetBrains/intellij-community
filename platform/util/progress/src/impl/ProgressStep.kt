@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.progress.impl
 
-import com.intellij.platform.util.progress.*
+import com.intellij.platform.util.progress.ProgressReporter
+import com.intellij.platform.util.progress.ProgressReporterHandle
+import com.intellij.platform.util.progress.RawProgressReporterHandle
+import com.intellij.platform.util.progress.SequentialProgressReporter
+import com.intellij.platform.util.progress.SequentialProgressReporterHandle
+import com.intellij.platform.util.progress.StepState
+import com.intellij.platform.util.progress.currentProgressStep
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 

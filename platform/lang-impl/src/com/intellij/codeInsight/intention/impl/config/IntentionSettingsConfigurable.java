@@ -12,7 +12,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 @ApiStatus.Internal
 public final class IntentionSettingsConfigurable implements SearchableConfigurable, MasterDetails, IntentionsConfigurable {

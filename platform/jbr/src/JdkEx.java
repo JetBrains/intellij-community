@@ -10,8 +10,11 @@ import com.intellij.util.MethodInvocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JWindow;
+import javax.swing.RootPaneContainer;
+import java.awt.Color;
+import java.awt.Window;
 
 /**
  * Provides extensions for OpenJDK API, implemented in JetBrains JDK.

@@ -1,4 +1,4 @@
-// "Convert to local variable" "true"
+// "Convert parameter to local variable" "true"
 class Temp {
   /**
    * @param x

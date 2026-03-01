@@ -14,7 +14,7 @@ import com.intellij.platform.backend.observation.trackActivity
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 
-private class UnknownSdkHeadlessActivity : ProjectActivity {
+internal class UnknownSdkHeadlessActivity : ProjectActivity {
   private object Key : ActivityKey {
     override val presentableName: String = "fix-unknown-sdks"
   }

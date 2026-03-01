@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger.sequence.psi.java
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.CallCheckerWithNameHeuristics
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.StreamCallChecker
 
+@K1Deprecation
 class StreamExCallChecker(nestedChecker: StreamCallChecker) : CallCheckerWithNameHeuristics(nestedChecker) {
     private companion object {
         @NonNls

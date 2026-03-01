@@ -1,10 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.projectWizard.projectTypeStep.*;
+import com.intellij.ide.projectWizard.projectTypeStep.LanguageGeneratorItem;
+import com.intellij.ide.projectWizard.projectTypeStep.ProjectTypeList;
+import com.intellij.ide.projectWizard.projectTypeStep.ProjectTypeListKt;
+import com.intellij.ide.projectWizard.projectTypeStep.TemplateGroupItem;
+import com.intellij.ide.projectWizard.projectTypeStep.UserTemplateGroupItem;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
@@ -12,8 +16,16 @@ import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
 import com.intellij.ide.util.newProjectWizard.WizardDelegate;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
-import com.intellij.ide.util.projectWizard.*;
-import com.intellij.ide.wizard.*;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.PromoModuleBuilder;
+import com.intellij.ide.util.projectWizard.SettingsStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.ide.wizard.GeneratorNewProjectWizard;
+import com.intellij.ide.wizard.LanguageNewProjectWizard;
+import com.intellij.ide.wizard.NewProjectWizardStep;
+import com.intellij.ide.wizard.Step;
 import com.intellij.ide.wizard.language.BaseLanguageGeneratorNewProjectWizard;
 import com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard;
 import com.intellij.ide.wizard.language.LegacyLanguageGeneratorNewProjectWizard;
@@ -39,7 +51,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.ProjectTemplatesFactory;
-import com.intellij.platform.templates.*;
+import com.intellij.platform.templates.ArchivedProjectTemplate;
+import com.intellij.platform.templates.ArchivedTemplatesFactory;
+import com.intellij.platform.templates.BuilderBasedTemplate;
+import com.intellij.platform.templates.LocalArchivedTemplate;
+import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
@@ -61,11 +77,33 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Dimension;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -91,14 +129,14 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private final Map<ProjectTemplate, ModuleBuilder> myBuilders = FactoryMap.create(key -> (ModuleBuilder)key.createModuleBuilder());
   private final MultiMap<TemplatesGroup, ProjectTemplate> myTemplatesMap;
   private final Map<String, ModuleWizardStep> myCustomSteps = new HashMap<>();
-  private JPanel myPanel;
-  private JPanel myOptionsPanel;
-  private ProjectTemplateList myTemplatesList;
-  private JPanel myFrameworksPanelPlaceholder;
-  private JPanel myHeaderPanel;
-  private JBLabel myFrameworksLabel;
-  private JPanel mySettingsPanel;
-  private JPanel myProjectTypePanel;
+  private final JPanel myPanel;
+  private final JPanel myOptionsPanel;
+  private final ProjectTemplateList myTemplatesList;
+  private final JPanel myFrameworksPanelPlaceholder;
+  private final JPanel myHeaderPanel;
+  private final JBLabel myFrameworksLabel;
+  private final JPanel mySettingsPanel;
+  private final JPanel myProjectTypePanel;
   private @Nullable ModuleWizardStep mySettingsStep;
   private String myCurrentCard;
 
@@ -106,6 +144,47 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      mySettingsPanel = new JPanel();
+      mySettingsPanel.setLayout(new BorderLayout(0, 0));
+      myPanel.add(mySettingsPanel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null,
+                                                       null, null, 0, false));
+      myHeaderPanel = new JPanel();
+      myHeaderPanel.setLayout(new GridBagLayout());
+      mySettingsPanel.add(myHeaderPanel, BorderLayout.NORTH);
+      myHeaderPanel.setBorder(
+        BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5), null, TitledBorder.DEFAULT_JUSTIFICATION,
+                                         TitledBorder.DEFAULT_POSITION, null, null));
+      myOptionsPanel = new JPanel();
+      myOptionsPanel.setLayout(new CardLayout(0, 0));
+      myOptionsPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent");
+      mySettingsPanel.add(myOptionsPanel, BorderLayout.CENTER);
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new BorderLayout(0, 0));
+      myOptionsPanel.add(panel1, "templates card");
+      myTemplatesList = new ProjectTemplateList();
+      panel1.add(myTemplatesList.$$$getRootComponent$$$(), BorderLayout.CENTER);
+      myFrameworksPanelPlaceholder = new JPanel();
+      myFrameworksPanelPlaceholder.setLayout(new BorderLayout(0, 0));
+      myOptionsPanel.add(myFrameworksPanelPlaceholder, "frameworks card");
+      myFrameworksLabel = new JBLabel();
+      this.$$$loadLabelText$$$(myFrameworksLabel,
+                               this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "label.additional.libraries.and.frameworks"));
+      myFrameworksPanelPlaceholder.add(myFrameworksLabel, BorderLayout.NORTH);
+      myProjectTypePanel = new JPanel();
+      myProjectTypePanel.setLayout(new BorderLayout(0, 0));
+      myPanel.add(myProjectTypePanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                          null, null, 0, false));
+    }
     myContext.addContextListener(new WizardContext.Listener() {
       @Override
       public void switchToRequested(@NotNull String placeId, @NotNull Consumer<? super Step> configure) {
@@ -216,6 +295,53 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myProjectTypeList.restoreSelection();
     myTemplatesList.restoreSelection();
   }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
 
   private void initStepListener(Collection<ModuleWizardStep> steps) {
     myWizard.setStepListener(steps);
@@ -350,7 +476,10 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     for (ListIterator<TemplatesGroup> iterator = groups.listIterator(); iterator.hasNext(); ) {
       TemplatesGroup group = iterator.next();
       String parentGroup = group.getParentGroup();
-      if (parentGroup != null && groupNames.contains(parentGroup) && !group.getName().equals(parentGroup) && groupMap.containsKey(parentGroup)) {
+      if (parentGroup != null &&
+          groupNames.contains(parentGroup) &&
+          !group.getName().equals(parentGroup) &&
+          groupMap.containsKey(parentGroup)) {
         subGroups.putValue(parentGroup, group);
         iterator.remove();
       }
@@ -602,6 +731,14 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     if (group == null) return null;
 
     return group.getModuleBuilder();
+  }
+
+  @Override
+  public void onStepLeaving() {
+    ModuleWizardStep step = getCustomStep();
+    if (step != null) {
+      step.onStepLeaving();
+    }
   }
 
   @Override

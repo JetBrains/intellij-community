@@ -18,7 +18,11 @@ import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootCopyingH
 import org.jetbrains.jps.incremental.artifacts.instructions.FileCopyingHandler;
 import org.jetbrains.jps.incremental.artifacts.instructions.FilterCopyHandler;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
-import org.jetbrains.jps.maven.model.impl.*;
+import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
+import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
+import org.jetbrains.jps.maven.model.impl.MavenResourceFileFilter;
+import org.jetbrains.jps.maven.model.impl.MavenWebArtifactConfiguration;
+import org.jetbrains.jps.maven.model.impl.ResourceRootConfiguration;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement;

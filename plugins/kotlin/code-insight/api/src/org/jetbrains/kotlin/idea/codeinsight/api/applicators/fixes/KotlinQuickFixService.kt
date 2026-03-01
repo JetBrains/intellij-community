@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
-import com.intellij.codeInsight.intention.CommonIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName

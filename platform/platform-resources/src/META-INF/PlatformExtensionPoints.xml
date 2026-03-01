@@ -164,6 +164,7 @@
     <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider" dynamic="true"/>
     <extensionPoint name="editorFileSwapper" interface="com.intellij.openapi.fileEditor.impl.EditorFileSwapper" dynamic="true"/>
     <extensionPoint name="editorAutoClosingHandler" interface="com.intellij.openapi.fileEditor.impl.EditorAutoClosingHandler" dynamic="true"/>
+    <extensionPoint name="editorCompositeProvider" interface="com.intellij.openapi.fileEditor.impl.EditorCompositeProvider" dynamic="true"/>
 
     <extensionPoint name="http.localFileFinder" interface="com.intellij.openapi.fileEditor.impl.http.LocalFileFinder" dynamic="true"/>
     <extensionPoint name="http.fileEditorActionProvider" interface="com.intellij.openapi.fileEditor.impl.http.RemoteFileEditorActionProvider" dynamic="false"/>
@@ -177,7 +178,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="openInBrowserFloatingToolbarSuppressor"
-                    interface="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarSuppressor"
+                    interface="com.intellij.ide.browsers.actions.OpenInBrowserFloatingToolbarSuppressor"
                     dynamic="true"/>
 
     <extensionPoint name="actionPromoter" interface="com.intellij.openapi.actionSystem.ActionPromoter" dynamic="true"/>
@@ -215,6 +216,7 @@
     </extensionPoint>
 
     <extensionPoint name="defaultToolWindowLayout" interface="com.intellij.toolWindow.DefaultToolWindowLayoutExtension" dynamic="true"/>
+    <extensionPoint name="toolWindowLayoutProfileProvider" interface="com.intellij.toolWindow.ToolWindowLayoutProfileProvider" dynamic="true"/>
     <extensionPoint name="toolWindow.splitContentProvider" beanClass="com.intellij.toolWindow.ToolWindowSplitContentProviderBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.toolWindow.ToolWindowSplitContentProvider"/>
     </extensionPoint>
@@ -608,8 +610,6 @@
       <with attribute="implementationClass" implements="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfo"/>
     </extensionPoint>
 
-    <extensionPoint name="meetNewUiCustomization" interface="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiCustomization" dynamic="true"/>
-
     <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
     <extensionPoint name="usageFilteringRuleCustomizer" interface="com.intellij.usages.rules.UsageFilteringRuleCustomizer" dynamic="true"/>
 
@@ -619,6 +619,8 @@
                     dynamic="true"/>
 
     <extensionPoint name="cefDelegate" interface="com.intellij.ui.jcef.CefDelegate" dynamic="false"/>
+
+    <extensionPoint name="cefNativeBundleProvider" interface="com.intellij.ui.jcef.JBCefNativeBundleProvider" dynamic="false"/>
 
     <extensionPoint name="proxySettingsOverrideProvider" interface="com.intellij.util.net.ProxySettingsOverrideProvider" dynamic="true"/>
     <extensionPoint name="navbarLeftSide" dynamic="true" interface="com.intellij.ide.navigationToolbar.NavBarLeftSideExtension"/>
@@ -712,6 +714,15 @@
     <extensionPoint name="projectStorePathCustomizer"
                     interface="com.intellij.configurationStore.ProjectStorePathCustomizer"
                     dynamic="true"/>
+
+    <extensionPoint name="pluginCategoryPromotionProvider"
+                    interface="com.intellij.ide.plugins.PluginCategoryPromotionProvider"
+                    dynamic="false"/>
+
+    <extensionPoint name="fileChooserCustomizer"
+                    interface="com.intellij.openapi.fileChooser.FileChooserCustomizer"
+                    dynamic="true"/>
+
 
     <extensionPoint name="openAnotherToolHandler" interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler" dynamic="true"/>
   </extensionPoints>

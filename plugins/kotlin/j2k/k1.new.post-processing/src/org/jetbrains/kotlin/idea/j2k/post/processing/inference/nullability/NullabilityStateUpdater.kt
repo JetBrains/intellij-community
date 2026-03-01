@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.State
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.StateUpdater
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeElementBasedTypeVariable
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.psi.KtNullableType
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeElement
 
+@K1Deprecation
 class NullabilityStateUpdater : StateUpdater() {
     override fun TypeElementBasedTypeVariable.updateState() = when (state) {
         State.LOWER -> changeState(toNullable = false)

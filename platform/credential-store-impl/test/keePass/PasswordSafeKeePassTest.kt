@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore.keePass
 
-import com.intellij.credentialStore.*
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.PasswordSafeSettings
+import com.intellij.credentialStore.ProviderType
+import com.intellij.credentialStore.doErasePassword
+import com.intellij.credentialStore.doNullUsername
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.TestPasswordSafeImpl
 import com.intellij.testFramework.ApplicationRule

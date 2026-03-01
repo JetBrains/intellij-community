@@ -15,7 +15,7 @@ import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
 import com.intellij.util.cancelOnDispose
-import com.intellij.vcs.changes.ChangesViewChangeIdCache
+import com.intellij.vcs.changes.ChangesViewChangeIdProvider
 import com.intellij.vcs.changes.viewModel.RpcChangesViewProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +35,7 @@ internal class RemoteChangesViewDiffPreviewProcessor(
   private val changesView: RpcChangesViewProxy,
   private val isInEditor: Boolean,
 ) : ChangeViewDiffRequestProcessor(changesView.project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW) {
-  private val changesCache by lazy { ChangesViewChangeIdCache.getInstance(project) }
+  private val changesCache by lazy { ChangesViewChangeIdProvider.getInstance(project) }
 
   init {
     putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true)

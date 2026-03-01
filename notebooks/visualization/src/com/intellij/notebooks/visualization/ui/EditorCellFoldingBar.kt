@@ -4,7 +4,7 @@ import com.intellij.notebooks.ui.visualization.NotebookUtil.isOrdinaryNotebookEd
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
-import com.intellij.notebooks.visualization.use
+import com.intellij.notebooks.visualization.useG2D
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -12,7 +12,11 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Cursor
+import java.awt.Graphics
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -37,7 +41,7 @@ class EditorCellFoldingBar(
       if (!editor.isOrdinaryNotebookEditor()) return
 
       if (value) {
-        val panel = createFoldingBar()
+        val panel = EditorCellFoldingBarComponent()
         editor.gutterComponentEx.add(panel)
         this.panel = panel
         updateBounds()
@@ -51,7 +55,7 @@ class EditorCellFoldingBar(
     set(value) {
       if (field != value) {
         field = value
-        panel?.background = getBarColor()
+        panel?.repaint()
       }
     }
 
@@ -61,12 +65,6 @@ class EditorCellFoldingBar(
 
   private fun registerListeners() {
     JupyterBoundsChangeHandler.get(editor).subscribe(this, ::updateBounds)
-    editor.notebookAppearance.cellStripeSelectedColor.afterChange(this) {
-      updateBarColor()
-    }
-    editor.notebookAppearance.cellStripeHoveredColor.afterChange(this) {
-      updateBarColor()
-    }
   }
 
   override fun dispose() {
@@ -89,10 +87,6 @@ class EditorCellFoldingBar(
       val (y, height) = yAndHeightSupplier.invoke()
       panel.setBounds(editor.gutterComponentEx.annotationsAreaOffset - 2, y, 6, height)
     }
-  }
-
-  private fun createFoldingBar() = EditorCellFoldingBarComponent().apply {
-    background = getBarColor()
   }
 
   inner class EditorCellFoldingBarComponent : JComponent() {
@@ -139,7 +133,18 @@ class EditorCellFoldingBar(
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     }
 
-    override fun paint(g: Graphics) {
+    private fun getBackgroundColor(): Color {
+      return if (selected) {
+        editor.notebookAppearance.cellStripeSelectedColor()
+      }
+      else {
+        editor.notebookAppearance.cellStripeHoveredColor()
+      }
+    }
+
+    override fun paintComponent(g: Graphics) {
+      super.paintComponent(g)
+
       val rect = rect()
       val arc = if (ExperimentalUI.isNewUI()) {
         rect.width.toDouble()
@@ -147,9 +152,8 @@ class EditorCellFoldingBar(
       else {
         null
       }
-      g.create().use { g2 ->
-        g2 as Graphics2D
-        g2.color = background
+      g.useG2D { g2 ->
+        g2.color = getBackgroundColor()
         RectanglePainter2D.FILL.paint(g2, rect, arc, LinePainter2D.StrokeType.INSIDE, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
       }
     }
@@ -167,14 +171,5 @@ class EditorCellFoldingBar(
         Rectangle(1, 1, width - 2, height - 2)
       }
     }
-  }
-
-  private fun updateBarColor() = panel?.background = getBarColor()
-
-  private fun getBarColor(): Color = if (selected) {
-    editor.notebookAppearance.cellStripeSelectedColor.get()
-  }
-  else {
-    editor.notebookAppearance.cellStripeHoveredColor.get()
   }
 }

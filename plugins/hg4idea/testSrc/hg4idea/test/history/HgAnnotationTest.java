@@ -24,7 +24,9 @@ import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 
 import java.io.File;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgAnnotationTest extends HgPlatformTest {

@@ -14,4 +14,17 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "coroutine_test_lib",
+  module_name = "intellij.platform.bootstrap.coroutine",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":coroutine",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/coroutines/debug:debug_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.bootstrap.coroutine` end

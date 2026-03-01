@@ -5,7 +5,11 @@ import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.execution.process.*
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.LocalPtyOptions
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.sudo.SudoCommandProvider
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
@@ -13,6 +17,9 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.platform.eel.environmentVariables
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -27,6 +34,8 @@ import java.io.InputStreamReader
 import java.nio.file.Path
 
 object ExecUtil {
+  private val logger = logger<ExecUtil>()
+
   private val hasSupportedTerminals = lazy {
     @Suppress("SpellCheckingInspection")
     PathEnvironmentVariableUtil.isOnPath("konsole") ||
@@ -196,14 +205,29 @@ object ExecUtil {
     }
   }
 
+  @ThrowsChecked(EelExecApi.EnvironmentVariablesException::class)
   @ApiStatus.Internal
   @JvmStatic
   fun EelExecApi.startProcessBlockingUsingEel(builder: ProcessBuilder, pty: LocalPtyOptions?, isPassParentEnvironment: Boolean): Process {
     val args = builder.command()
     val exe = args.first().let { exe -> runCatching { Path.of(exe).asEelPath().toString() }.getOrNull() ?: exe }
     val rest = args.subList(1, args.size)
-    val env = (if (isPassParentEnvironment) runBlockingMaybeCancellable { fetchLoginShellEnvVariables() } else emptyMap()) + builder.environment()
+    val env = (if (isPassParentEnvironment) runBlockingMaybeCancellable {
+      environmentVariables().eelIt().await()
+    }
+    else emptyMap()) + builder.environment()
     val workingDir = builder.directory()?.toPath()?.asEelPath()
+
+    // Warn about paths not normalized to remote representation (see IJPL-232192)
+    if (descriptor !== LocalEelDescriptor) {
+      for (arg in rest) {
+        val path = runCatching { Path.of(arg) }.getOrNull() ?: continue
+        if (!path.isAbsolute) continue
+        val eelPath = runCatching { path.asEelPath().toString() }.getOrNull() ?: continue
+        if (arg == eelPath) continue  // already normalized
+        logger.warn("Argument '$arg' is not normalized for remote EEL execution, expected '$eelPath'")
+      }
+    }
 
     val options = spawnProcess(exe)
       .args(rest)

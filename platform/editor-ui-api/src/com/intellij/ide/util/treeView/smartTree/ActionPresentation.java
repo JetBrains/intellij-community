@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsActions.ActionDescription;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * The presentation information for a grouping, sorting or filtering action displayed in

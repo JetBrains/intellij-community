@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
@@ -29,8 +28,12 @@ import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.sdk.CustomSdkHomePattern;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.venvReader.VirtualEnvReader;
-import org.jetbrains.annotations.*;
+import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -199,7 +202,7 @@ public final class PythonSdkUtil {
   // It is only here for external plugins
   @RequiresBackgroundThread(generateAssertion = false)
   public static @Nullable String getPythonExecutable(@NotNull String rootPath) {
-    var python = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(rootPath));
+    var python = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(Path.of(rootPath));
     return (python != null) ? python.toString() : null;
   }
 

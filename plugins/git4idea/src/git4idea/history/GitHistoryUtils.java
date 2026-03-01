@@ -33,9 +33,21 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
-import static git4idea.history.GitLogParser.GitLogOption.*;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_NAME;
+import static git4idea.history.GitLogParser.GitLogOption.BODY;
+import static git4idea.history.GitLogParser.GitLogOption.COMMITTER_NAME;
+import static git4idea.history.GitLogParser.GitLogOption.COMMIT_TIME;
+import static git4idea.history.GitLogParser.GitLogOption.HASH;
+import static git4idea.history.GitLogParser.GitLogOption.PARENTS;
+import static git4idea.history.GitLogParser.GitLogOption.RAW_BODY;
+import static git4idea.history.GitLogParser.GitLogOption.SUBJECT;
 
 /**
  * A collection of methods for retrieving history information from native Git.

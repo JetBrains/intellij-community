@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonObject;
@@ -17,7 +17,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.ObjectUtils;

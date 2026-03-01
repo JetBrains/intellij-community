@@ -2,7 +2,11 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -49,7 +53,7 @@ fun Row.tabbedPaneHeader(items: Collection<String> = emptyList()): Cell<JBTabbed
   return cell(tabbedPaneHeader)
 }
 
-private class PopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {
+internal class PopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {
   init {
     isPopup = true
     templatePresentation.isPerformGroup = actions.isNotEmpty()

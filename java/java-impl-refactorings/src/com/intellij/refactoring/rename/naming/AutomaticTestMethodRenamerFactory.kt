@@ -40,8 +40,8 @@ abstract class AutomaticTestMethodRenamerFactory : AutomaticRenamerFactory {
       var count = 0
       for (eachName in ContainerUtil.newHashSet(*cache.getAllClassNames())) {
         if (classPattern.matcher(eachName).matches()) {
-          if (count ++ > 1000) break
           for (eachClass in cache.getClassesByName(eachName, moduleScope)) {
+            if (count ++ > 1000) break
             if (TestFrameworks.detectFramework(eachClass) != null) {
               eachClass.methods.forEach {
                 if (methodPattern.matcher(it.name).matches()) {

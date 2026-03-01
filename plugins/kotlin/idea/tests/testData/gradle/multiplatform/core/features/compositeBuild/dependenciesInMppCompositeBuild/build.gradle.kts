@@ -9,6 +9,6 @@ allprojects {
 }
 
 kotlin {
-    ios()
+    {{iosTargetPlaceholder}}
     jvm()
 }

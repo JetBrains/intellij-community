@@ -20,7 +20,11 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.*
+import javax.swing.JComboBox
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JToggleButton
+import javax.swing.JTree
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
 

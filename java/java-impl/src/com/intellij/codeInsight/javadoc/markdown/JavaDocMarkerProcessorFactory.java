@@ -8,7 +8,13 @@ import org.intellij.markdown.parser.MarkerProcessorFactory;
 import org.intellij.markdown.parser.ProductionHolder;
 import org.intellij.markdown.parser.constraints.CommonMarkdownConstraints;
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider;
-import org.intellij.markdown.parser.markerblocks.providers.*;
+import org.intellij.markdown.parser.markerblocks.providers.AtxHeaderProvider;
+import org.intellij.markdown.parser.markerblocks.providers.BlockQuoteProvider;
+import org.intellij.markdown.parser.markerblocks.providers.CodeFenceProvider;
+import org.intellij.markdown.parser.markerblocks.providers.HorizontalRuleProvider;
+import org.intellij.markdown.parser.markerblocks.providers.HtmlBlockProvider;
+import org.intellij.markdown.parser.markerblocks.providers.ListMarkerProvider;
+import org.intellij.markdown.parser.markerblocks.providers.SetextHeaderProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

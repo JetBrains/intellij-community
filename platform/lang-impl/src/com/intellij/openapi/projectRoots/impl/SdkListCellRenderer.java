@@ -10,7 +10,8 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JList;
 
 public final class SdkListCellRenderer extends ColoredListCellRenderer<Sdk> {
   private final @NlsContexts.Label String myNullText;

@@ -2,7 +2,7 @@
 package git4idea.branch
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
-import com.intellij.dvcs.repo.rpcId
+import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vcs.Executor.cd
@@ -21,7 +21,14 @@ import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import git4idea.GitUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.repo.GitRepositoryTagsHolderImpl
+import git4idea.test.GitPlatformTest
+import git4idea.test.TestDataUtil
+import git4idea.test.branch
+import git4idea.test.checkout
+import git4idea.test.checkoutNew
+import git4idea.test.git
+import git4idea.test.registerRepo
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
@@ -47,7 +54,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
 
     runBlocking {
       // Ensure that the state holder is initialized
-      GitRepositoriesHolder.getInstance(project).init()
+      GitRepositoriesHolder.getInstance(project).awaitInitialization()
     }
   }
 
@@ -89,7 +96,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     branchManager.setFavorite(GitTagType, repo, "c-tag", true)
 
     repo.update()
-    repo.tagHolder.ensureUpToDateForTests()
+    (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
 
     compareWithSnapshot(buildTestTree())
   }
@@ -214,7 +221,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
       repo.git("tag $it")
     }
     if (ensureTags) {
-      repo.tagHolder.ensureUpToDateForTests()
+      (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
     }
   }
 
@@ -254,7 +261,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
       val repositories = holder.getAll()
       //TODO replace with the actual tree from GitBranchesTreePopupBase
       val tree = Tree()
-      val preferredSelection = checkNotNull(holder.get(repo.rpcId()))
+      val preferredSelection = checkNotNull(holder.get(repo.repositoryId()))
       popupStep = GitDefaultBranchesPopupStep.create(project, preferredSelection, repositories)
       tree.cellRenderer = GitDefaultBranchesTreeRenderer(popupStep)
       tree.model = popupStep.treeModel

@@ -2,8 +2,15 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.ide.util.treeView.TreeState
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.CONFLICTS_NODE_TAG
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeListNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTree.TreeStateStrategy
+import com.intellij.openapi.vcs.changes.ui.RESOLVED_CONFLICTS_NODE_TAG
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.platform.vcs.changes.ChangesUtil.isMergeConflict
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus

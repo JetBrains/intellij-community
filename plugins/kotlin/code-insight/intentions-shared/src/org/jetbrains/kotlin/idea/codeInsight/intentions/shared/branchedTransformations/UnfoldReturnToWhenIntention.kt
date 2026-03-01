@@ -13,7 +13,11 @@ import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.inspections.createReturnOrEmptyText
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
 internal class UnfoldReturnToWhenIntention : KotlinApplicableModCommandAction<KtReturnExpression, List<String>>(KtReturnExpression::class) {

@@ -16,7 +16,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;

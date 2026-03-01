@@ -2,27 +2,64 @@
 package com.intellij.terminal
 
 import com.intellij.execution.process.KillableProcessHandler
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.process.PtyBasedProcess
+import com.intellij.execution.process.SelfKiller
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.util.io.BaseDataReader
 import com.intellij.util.io.BaseOutputReader
+import com.jediterm.core.util.TermSize
+import com.pty4j.windows.conpty.WinConPtyProcess
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
+import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.CompletableFuture
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
-internal suspend fun createTerminalProcessHandler(javaCommand: TestJavaMainClassCommand): ProcessHandler {
+internal suspend fun createTerminalProcessHandler(
+  coroutineScope: CoroutineScope,
+  javaCommand: TestJavaMainClassCommand,
+  initialTermSize: TermSize,
+): ProcessHandler {
   val eelProcess = try {
     javaCommand.createLocalProcessBuilder()
-      .interactionOptions(Pty(80, 25, true))
+      .interactionOptions(Pty(initialTermSize.columns, initialTermSize.rows, true))
+      .scope(coroutineScope)
       .eelIt()
   }
   catch (err: ExecuteProcessException) {
     throw IllegalStateException("Failed to start ${javaCommand.commandLine}", err)
   }
-  return createTerminalProcessHandler(eelProcess.convertToJavaProcess(), javaCommand.commandLine)
+  val javaProcess = eelProcess.convertToJavaProcess()
+  assumeTestableProcess(javaProcess)
+  return createTerminalProcessHandler(javaProcess, javaCommand.commandLine)
+}
+
+/**
+ * To have stable tests, we need a reliable VT/ANSI sequences supplier.
+ * For Windows, we enforce the use of the bundled ConPTY to maintain predictability.
+ */
+private fun assumeTestableProcess(localProcess: Process) {
+  if (LocalEelDescriptor.osFamily.isWindows) {
+    Assertions.assertThat(localProcess).isInstanceOf(WinConPtyProcess::class.java)
+    Assumptions.assumeTrue(
+      (localProcess as WinConPtyProcess).isBundledConPtyLibrary,
+      "Tests require bundled ConPTY to have stable PTY emulation on Windows"
+    )
+  }
 }
 
 private fun createTerminalProcessHandler(process: Process, commandLine: String): KillableProcessHandler {
@@ -36,6 +73,11 @@ private fun createTerminalProcessHandler(process: Process, commandLine: String):
   }
 }
 
+internal val TerminalExecutionConsole.termSize: TermSize
+  get() = with(this.terminalWidget.terminalTextBuffer) {
+    TermSize(this.width, this.height)
+  }
+
 internal fun ProcessHandler.writeToStdinAndHitEnter(input: String) {
   processInput!!.let {
     it.write((input + "\r").toByteArray(Charsets.UTF_8))
@@ -43,7 +85,40 @@ internal fun ProcessHandler.writeToStdinAndHitEnter(input: String) {
   }
 }
 
-internal class MockPtyBasedProcess : Process(), PtyBasedProcess {
+internal fun ProcessHandler.assertTerminated() {
+  Assertions.assertThat(this.isProcessTerminated).isTrue
+}
+
+internal suspend fun ProcessHandler.awaitTerminated(timeout: Duration = 20.seconds) {
+  try {
+    withTimeout(timeout) {
+      doAwaitProcessTerminated(this@awaitTerminated)
+    }
+    this@awaitTerminated.assertTerminated()
+  }
+  catch (e: TimeoutCancellationException) {
+    System.err.println(e.message)
+    this@awaitTerminated.assertTerminated()
+    Assertions.fail(e)
+  }
+}
+
+private suspend fun doAwaitProcessTerminated(processHandler: ProcessHandler) {
+  val terminatedDeferred = CompletableDeferred<Unit>()
+  val disposable = Disposer.newDisposable()
+  terminatedDeferred.invokeOnCompletion { Disposer.dispose(disposable) }
+  processHandler.addProcessListener(object : ProcessListener {
+    override fun processTerminated(event: ProcessEvent) {
+      terminatedDeferred.complete(Unit)
+    }
+  }, disposable)
+  if (processHandler.isProcessTerminated) {
+    terminatedDeferred.complete(Unit)
+  }
+  terminatedDeferred.await()
+}
+
+internal class MockPtyBasedProcess(private val withPty: Boolean) : Process(), PtyBasedProcess, SelfKiller {
 
   private val exitCodeFuture: CompletableFuture<Int> = CompletableFuture()
 
@@ -61,7 +136,7 @@ internal class MockPtyBasedProcess : Process(), PtyBasedProcess {
   override fun getErrorStream(): InputStream = InputStream.nullInputStream()
   override fun getInputStream(): InputStream = InputStream.nullInputStream()
 
-  override fun hasPty(): Boolean = true
+  override fun hasPty(): Boolean = withPty
 
   override fun setWindowSize(columns: Int, rows: Int) {}
 

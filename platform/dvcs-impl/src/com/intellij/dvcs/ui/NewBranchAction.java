@@ -24,7 +24,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 public abstract class NewBranchAction<T extends Repository> extends DumbAwareAction {

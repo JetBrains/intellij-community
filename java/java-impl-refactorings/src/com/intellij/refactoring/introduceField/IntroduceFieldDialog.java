@@ -7,11 +7,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.*;
+import com.intellij.refactoring.ui.NameSuggestionsField;
+import com.intellij.refactoring.ui.NameSuggestionsManager;
+import com.intellij.refactoring.ui.TypeSelector;
+import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -20,8 +29,11 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 class IntroduceFieldDialog extends DialogWrapper {
   public static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;

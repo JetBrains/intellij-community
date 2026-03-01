@@ -3,7 +3,18 @@
 
 package com.jetbrains.rhizomedb.impl
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.Datom
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityDoesNotExistException
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.IndexQuery
+import com.jetbrains.rhizomedb.Part
+import com.jetbrains.rhizomedb.TX
+import com.jetbrains.rhizomedb.Versioned
+import com.jetbrains.rhizomedb.VersionedEID
+import com.jetbrains.rhizomedb.partition
 import fleet.fastutil.ints.firstNotNullOfOrNull
 import fleet.fastutil.ints.forEach
 import fleet.util.letIf

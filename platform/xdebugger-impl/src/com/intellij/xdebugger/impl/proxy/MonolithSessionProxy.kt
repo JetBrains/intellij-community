@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.proxy
 
 import com.intellij.execution.RunContentDescriptorIdImpl
@@ -14,7 +14,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
+import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XSmartStepIntoHandlerEntry
@@ -24,19 +28,26 @@ import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.frame.XValueMarkers
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
+import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
+import com.intellij.xdebugger.impl.updateExecutionPosition
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +58,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.event.HyperlinkListener
 
-internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionProxy {
+private class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionProxy {
 
   val sessionImpl: XDebugSessionImpl get() = session as XDebugSessionImpl
   private val sessionImplIfAvailable get() = session as? XDebugSessionImpl
@@ -121,7 +132,7 @@ internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionP
   }
 
   override val currentSuspendContextCoroutineScope: CoroutineScope?
-    get() = sessionImplIfAvailable?.currentSuspendCoroutineScope
+    get() = sessionImplIfAvailable?.getSuspendContextModel()?.coroutineScope
 
   override val activeNonLineBreakpointFlow: Flow<XBreakpointProxy?>
     get() = sessionImpl
@@ -159,6 +170,9 @@ internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionP
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
     session.setCurrentStackFrame(executionStack, frame, isTopFrame)
+    if (session.currentStackFrame === frame) {
+      updateExecutionPosition(this)
+    }
   }
 
   override fun isTopFrameSelected(): Boolean {
@@ -177,11 +191,15 @@ internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionP
     session.suspendContext?.computeExecutionStacks(container)
   }
 
-  override fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
-    session.debugProcess.computeRunningExecutionStacks(container)
+  override fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackGroupContainer) {
+    session.debugProcess.computeRunningExecutionStacks(container, session.suspendContext)
   }
 
   override fun createTabLayouter(): XDebugTabLayouter = session.debugProcess.createTabLayouter()
+
+  override fun addSessionListener(listener: XDebugSessionListener) {
+    session.addSessionListener(listener)
+  }
 
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {
     session.addSessionListener(listener, disposable)
@@ -306,5 +324,52 @@ private class XDebugSessionProxyKeeper {
   }
 }
 
+/**
+ * For internal use only. Use [com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter.asProxy] in other modules.
+ * @see com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter.asProxy
+ */
 internal fun XDebugSession.asProxy(): XDebugSessionProxy =
   project.service<XDebugSessionProxyKeeper>().getOrCreateProxy(this)
+
+internal class XDebuggerMonolithAccessPointImpl : XDebuggerMonolithAccessPoint {
+  override fun getSession(proxy: XDebugSessionProxy): XDebugSession? {
+    return proxy.id.findValue()
+  }
+
+  override fun getSessionNonSplitOnly(proxy: XDebugSessionProxy): XDebugSession? {
+    return (proxy as? MonolithSessionProxy)?.session
+  }
+
+  override fun asProxy(session: XDebugSession): XDebugSessionProxy {
+    return session.asProxy()
+  }
+
+  override fun getValue(valueId: XValueId): XValue? {
+    return BackendXValueModel.findById(valueId)?.xValue
+  }
+
+  override fun getExecutionStack(stackId: XExecutionStackId): XExecutionStack? {
+    return stackId.findValue()?.executionStack
+  }
+
+  override fun getBreakpointType(typeId: String): XBreakpointType<*, *>? {
+    return XBreakpointUtil.findType(typeId)
+  }
+
+  override fun getBreakpoint(breakpointId: XBreakpointId): XBreakpoint<*>? {
+    return breakpointId.findValue()
+  }
+
+  override fun getBreakpointId(breakpoint: XBreakpoint<*>): XBreakpointId? {
+    return (breakpoint as? XBreakpointBase<*, *, *>)?.breakpointId
+  }
+
+  override fun asProxy(breakpoint: XBreakpoint<*>): XBreakpointProxy? {
+    return (breakpoint as? XBreakpointBase<*, *, *>)?.asProxy()
+  }
+
+  override suspend fun <T> withTemporaryXValueId(value: XValue, proxy: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
+    val sessionImpl = getSession(proxy) as XDebugSessionImpl
+    return withTemporaryXValueIdImpl(value, sessionImpl, block)
+  }
+}

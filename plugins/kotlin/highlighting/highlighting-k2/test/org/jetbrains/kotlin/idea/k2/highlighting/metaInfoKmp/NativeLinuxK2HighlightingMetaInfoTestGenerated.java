@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.highlighting.metaInfoKmp;
 
@@ -217,11 +217,6 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
             runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Invokes.kt");
         }
 
-        @TestMetadata("kt77707.kt")
-        public void testKt77707() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/kt77707.kt");
-        }
-
         @TestMetadata("Redundant.kt")
         public void testRedundant() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Redundant.kt");
@@ -230,6 +225,11 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
         @TestMetadata("RedundantWithExpectedType.kt")
         public void testRedundantWithExpectedType() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/RedundantWithExpectedType.kt");
+        }
+
+        @TestMetadata("RedundantWithReceiver.kt")
+        public void testRedundantWithReceiver() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/RedundantWithReceiver.kt");
         }
 
         @TestMetadata("Unstable_explicitReceiver.kt")

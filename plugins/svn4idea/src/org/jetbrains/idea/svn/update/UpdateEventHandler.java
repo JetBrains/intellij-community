@@ -17,7 +17,11 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.status.StatusType;
 

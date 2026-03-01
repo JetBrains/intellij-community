@@ -7,8 +7,28 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.slicer.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.slicer.DuplicateMap;
+import com.intellij.slicer.JavaSliceNullnessAnalyzer;
+import com.intellij.slicer.JavaSlicerAnalysisUtil;
+import com.intellij.slicer.LanguageSlicing;
+import com.intellij.slicer.SliceAnalysisParams;
+import com.intellij.slicer.SliceHandler;
+import com.intellij.slicer.SliceLeafAnalyzer;
+import com.intellij.slicer.SliceLeafValueRootNode;
+import com.intellij.slicer.SliceNode;
+import com.intellij.slicer.SliceNullnessAnalyzerBase;
+import com.intellij.slicer.SlicePanel;
+import com.intellij.slicer.SliceRootNode;
+import com.intellij.slicer.SliceTreeBuilder;
+import com.intellij.slicer.SliceTreeStructure;
+import com.intellij.slicer.SliceUsage;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,7 +38,13 @@ import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SliceTreeTest extends SliceTestCase {
   @Override

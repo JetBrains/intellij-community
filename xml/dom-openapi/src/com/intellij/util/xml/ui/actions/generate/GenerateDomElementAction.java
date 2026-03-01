@@ -13,7 +13,7 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class GenerateDomElementAction extends CodeInsightAction {
 

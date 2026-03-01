@@ -4,7 +4,11 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
-import com.intellij.ide.projectWizard.generators.*
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
+import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
+import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
+import com.intellij.ide.projectWizard.generators.withJavaSampleCodeAsset
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep

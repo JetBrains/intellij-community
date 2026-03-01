@@ -6,7 +6,11 @@ import com.intellij.codeInsight.DumbAwareAnnotationUtil;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 

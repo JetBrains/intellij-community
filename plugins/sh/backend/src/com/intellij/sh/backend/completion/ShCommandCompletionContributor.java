@@ -1,7 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.sh.backend.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.AddSpaceInsertHandler;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.completion.WordCompletionContributor;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.project.DumbAware;
@@ -30,7 +39,16 @@ import java.util.HashSet;
 import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.sh.backend.completion.ShCompletionUtil.*;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.endsWithDot;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideCaseDeclaration;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideComment;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideCondition;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideForClause;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideFunctionDefinition;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideIfDeclaration;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideSelectDeclaration;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideUntilDeclaration;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideWhileDeclaration;
 
 final class ShCommandCompletionContributor extends CompletionContributor implements DumbAware {
   private static final int BUILTIN_PRIORITY = -10;

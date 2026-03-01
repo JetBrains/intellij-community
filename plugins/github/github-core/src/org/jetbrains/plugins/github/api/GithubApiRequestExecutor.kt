@@ -9,7 +9,11 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -21,7 +25,11 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
-import org.jetbrains.plugins.github.exceptions.*
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
+import org.jetbrains.plugins.github.exceptions.GithubConfusingException
+import org.jetbrains.plugins.github.exceptions.GithubJsonException
+import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException
+import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.util.GithubSettings

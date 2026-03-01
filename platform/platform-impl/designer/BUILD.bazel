@@ -15,4 +15,20 @@ jvm_library(
     "//platform/statistics",
   ]
 )
+
+jvm_library(
+  name = "designer_test_lib",
+  module_name = "intellij.platform.ide.designer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":designer",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/statistics:statistics_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.ide.designer` end

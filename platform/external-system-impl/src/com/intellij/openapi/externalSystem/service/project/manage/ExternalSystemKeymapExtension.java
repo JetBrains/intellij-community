@@ -7,7 +7,11 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -31,7 +35,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.KeymapGroupFactory;
-import com.intellij.openapi.keymap.impl.ui.*;
+import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
+import com.intellij.openapi.keymap.impl.ui.Group;
+import com.intellij.openapi.keymap.impl.ui.Hyperlink;
+import com.intellij.openapi.keymap.impl.ui.KeymapListener;
+import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -43,9 +51,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka

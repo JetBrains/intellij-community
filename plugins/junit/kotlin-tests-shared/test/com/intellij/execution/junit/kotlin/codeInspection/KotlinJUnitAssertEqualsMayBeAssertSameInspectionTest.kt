@@ -1,12 +1,29 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnitAssertEqualsMayBeAssertSameInspectionTestBase
+import com.intellij.junit.testFramework.addJUnit4Library
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModifiableRootModel
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayBeAssertSameInspectionTestBase(), ExpectedPluginModeProvider {
+private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+  listOf(TestKotlinArtifacts.kotlinStdlib), listOf(TestKotlinArtifacts.kotlinStdlibSources)
+) {
+  override fun configureModule(module: Module, model: ModifiableRootModel) {
+    super.configureModule(module, model)
+    model.addJUnit4Library()
+  }
+}
+
+abstract class KotlinJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayBeAssertSameInspectionTestBase(),
+                                                                      ExpectedPluginModeProvider {
+  override fun getProjectDescriptor() = ktProjectDescriptor
+
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
   }

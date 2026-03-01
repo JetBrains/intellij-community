@@ -13,11 +13,14 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.libraries.AddKotlinLibraryQuickFixProvider.*
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.libraries.AddKotlinLibraryQuickFixProvider.LibraryAvailabilityTester
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.libraries.AddKotlinLibraryQuickFixProvider.LibraryDescriptorProvider
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.libraries.AddKotlinLibraryQuickFixProvider.LibraryReferenceTester
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
 import org.jetbrains.kotlin.idea.configuration.isProjectSyncPendingOrInProgress
 import org.jetbrains.kotlin.idea.configuration.withScope
+import org.jetbrains.kotlin.idea.inspections.libraries.AddKotlinLibraryQuickFix
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression

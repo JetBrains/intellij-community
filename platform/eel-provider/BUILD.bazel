@@ -26,4 +26,26 @@ jvm_library(
   ],
   exports = ["//platform/eel"]
 )
+
+jvm_library(
+  name = "eel-provider_test_lib",
+  module_name = "intellij.platform.eel.provider",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/eel",
+    "//platform/eel:eel_test_lib",
+  ],
+  runtime_deps = [
+    ":eel-provider",
+    "//platform/eel:eel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+    "//platform/core-nio-fs:core-nio-fs_test_lib",
+    "//platform/external-process-auth-helper/rt:rt_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.eel.provider` end

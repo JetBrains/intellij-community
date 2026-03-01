@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction -opt-in=org.jetbrains.kotlin.analysis.api.KaIdeApi -opt-in=org.jetbrains.kotlin.analysis.api.KaContextParameterApi -opt-in=org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction -Xcontext-parameters -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction -opt-in=org.jetbrains.kotlin.analysis.api.KaIdeApi -opt-in=org.jetbrains.kotlin.analysis.api.KaContextParameterApi -opt-in=org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction -Xcontext-parameters -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -63,10 +63,8 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" />
-    <orderEntry type="module" module-name="kotlin.completion.tests.shared" />
     <orderEntry type="module" module-name="kotlin.fir" />
     <orderEntry type="module" module-name="intellij.gradle.tests" />
-    <orderEntry type="module" module-name="kotlin.idea.tests" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
@@ -74,6 +72,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.minimal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.analysis.platform" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.platform" scope="TEST" />
@@ -91,5 +90,23 @@
     <orderEntry type="module" module-name="intellij.kotlin.searching" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.analysis.platform.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectStructure.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.rename.tests" scope="TEST" />
   </component>
 </module>

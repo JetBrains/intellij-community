@@ -2,12 +2,12 @@
 package com.jetbrains.python.debugger
 
 import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase
+import com.intellij.xdebugger.impl.ui.tree.actions.AbstractXFetchValueAction
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 
 class PyCopyValueEvaluationCallback(node: XValueNodeImpl,
-                                    private val valueCollector: XFetchValueActionBase.ValueCollector,
+                                    private val valueCollector: AbstractXFetchValueAction.ValueCollector,
                                     private val currentPolicy: QuotingPolicy) : HeadlessValueEvaluationCallback(node) {
   private val valueIndex = valueCollector.acquire()
 

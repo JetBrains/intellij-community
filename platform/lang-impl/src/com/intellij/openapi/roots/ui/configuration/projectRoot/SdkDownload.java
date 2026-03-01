@@ -7,11 +7,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -73,7 +75,7 @@ public interface SdkDownload {
                               @Nullable JComponent parentComponent,
                               @Nullable Project project,
                               @Nullable Sdk selectedSdk,
-                              @Nullable Predicate<Object> sdkFilter,
+                              @Nullable Predicate<JdkItem> sdkFilter,
                               @NotNull Consumer<? super SdkDownloadTask> sdkCreatedCallback) {
     assert parentComponent != null;
     showDownloadUI(sdkTypeId, sdkModel, parentComponent, selectedSdk, sdkCreatedCallback);
@@ -94,7 +96,8 @@ public interface SdkDownload {
   default @Nullable SdkDownloadTask pickSdk(@NotNull SdkTypeId sdkTypeId,
                                   @NotNull SdkModel sdkModel,
                                   @NotNull JComponent parentComponent,
-                                  @Nullable Sdk selectedSdk) {
+                                  @Nullable Sdk selectedSdk,
+                                  @Nullable Predicate<JdkItem> sdkFilter) {
     AtomicReference<SdkDownloadTask> task = new AtomicReference<>();
     showDownloadUI(sdkTypeId, sdkModel, parentComponent, selectedSdk, t -> { task.set(t); });
     return task.get();

@@ -8,11 +8,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport;
 import org.jetbrains.kotlin.lexer.KtTokens;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.KtClass;
+import org.jetbrains.kotlin.psi.KtFunction;
+import org.jetbrains.kotlin.psi.KtNamedDeclaration;
+import org.jetbrains.kotlin.psi.KtProperty;
 import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import java.awt.Component;
 
 final class Utils {
     private Utils() {

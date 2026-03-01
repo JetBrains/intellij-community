@@ -10,7 +10,11 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +22,20 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.MethodImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InterfaceType;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.InvocationException;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveType;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,7 +133,7 @@ public class MethodEvaluator implements Evaluator {
         List<Method> matchingMethods =
           StreamEx.of(referenceType.methodsByName(myMethodName)).filter(m -> m.argumentTypeNames().size() == args.size()).toList();
         if (matchingMethods.size() == 1) {
-          jdiMethod = matchingMethods.get(0);
+          jdiMethod = matchingMethods.getFirst();
         }
         else if (matchingMethods.size() > 1) {
           jdiMethod = ContainerUtil.find(matchingMethods, m -> matchArgs(m, args));

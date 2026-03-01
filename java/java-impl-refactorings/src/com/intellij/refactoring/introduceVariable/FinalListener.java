@@ -5,7 +5,11 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 
 public class FinalListener {
   private final Editor myEditor;

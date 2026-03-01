@@ -10,7 +10,7 @@ import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.project.asEntityOrNull
 import com.intellij.platform.project.projectId
 import fleet.kernel.change
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import fleet.kernel.transactor
 
 internal class BackendProjectEntitiesStorage : ProjectEntitiesStorage() {

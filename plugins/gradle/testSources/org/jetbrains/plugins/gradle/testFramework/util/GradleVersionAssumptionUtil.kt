@@ -1,9 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.*
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isConfigurationCacheSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGroovy5Supported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isIsolatedProjectsSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJavaConventionsBlockSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isKotlinDslScriptsModelImportSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isKotlinSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSpockSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isTopLevelJavaConventionsSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isVersionCatalogsSupported
 import org.junit.jupiter.api.Assumptions
 
 
@@ -78,5 +87,11 @@ fun assumeThatConfigurationCacheIsSupported(gradleVersion: GradleVersion) {
 fun assumeThatIsolatedProjectsIsSupported(gradleVersion: GradleVersion) {
   Assumptions.assumeTrue(isIsolatedProjectsSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support isolated projects."
+  }
+}
+
+fun assumeThatVersionCatalogsAreSupported(gradleVersion: GradleVersion) {
+  Assumptions.assumeTrue(isVersionCatalogsSupported(gradleVersion)) {
+    "Gradle ${gradleVersion.version} doesn't support version catalogs."
   }
 }

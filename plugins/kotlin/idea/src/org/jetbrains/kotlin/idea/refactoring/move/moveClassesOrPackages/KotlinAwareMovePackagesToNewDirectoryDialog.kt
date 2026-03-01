@@ -8,7 +8,9 @@ import com.intellij.psi.PsiPackage
 import com.intellij.refactoring.MoveDestination
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesToNewDirectoryDialog
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinAwareMovePackagesToNewDirectoryDialog(
     directory: PsiDirectory,
     elementsToMove: Array<out PsiElement>,

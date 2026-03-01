@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class GrFileItemPresentationProvider implements ItemPresentationProvider<GroovyFile> {
   @Override

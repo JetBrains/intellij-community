@@ -2,7 +2,11 @@
 package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.java.JavaBundle
 import com.intellij.java.library.JavaLibraryUtil
@@ -16,7 +20,19 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.annotations.Nls
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.sourcePsiElement
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
+import org.jetbrains.uast.tryResolve
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 

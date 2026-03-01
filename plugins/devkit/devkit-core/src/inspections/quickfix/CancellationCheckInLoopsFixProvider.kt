@@ -8,7 +8,16 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.psi.*
+import com.intellij.psi.PsiBlockStatement
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiLoopStatement
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiStatement
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.CommonJavaRefactoringUtil

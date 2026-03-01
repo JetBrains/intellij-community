@@ -11,9 +11,13 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import kotlinx.coroutines.Job;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.awt.*;
+import java.awt.Dialog;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -94,7 +98,9 @@ public final class ModalityStateEx extends ModalityState {
       }
     }
     */
-    if (requestedModality == any()) {
+
+    // do not use ModalityState.any(), in case Application was already disposed
+    if (requestedModality == AnyModalityState.ANY) {
       // Tasks with any modality can be run during this modality regardless of entities in this modality.
       return true;
     }

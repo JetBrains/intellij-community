@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.plugins
 
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
-import com.intellij.platform.plugins.parser.impl.elements.xmlValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.xmlValue
 import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.jarFile

@@ -2,7 +2,13 @@
 package com.intellij.vcs.log.ui.editor
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys

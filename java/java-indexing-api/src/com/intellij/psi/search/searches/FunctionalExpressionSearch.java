@@ -3,7 +3,11 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
@@ -13,6 +17,10 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/// Search that can find [PsiFunctionalExpression]s.
+///
+/// To display a functional expression as a string in the UI,
+/// consider using [com.intellij.psi.presentation.java.ClassPresentationUtil#getFunctionalExpressionPresentation].
 public final class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
   private static final FunctionalExpressionSearch INSTANCE = new FunctionalExpressionSearch();
 

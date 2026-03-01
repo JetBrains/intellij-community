@@ -2,7 +2,18 @@
 package com.siyeh.ig;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFragment;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;

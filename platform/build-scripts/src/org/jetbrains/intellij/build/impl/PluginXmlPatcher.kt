@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.embedContentModule
+import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 
 private val buildNumberRegex = Regex("""(\d+\.)+\d+""")

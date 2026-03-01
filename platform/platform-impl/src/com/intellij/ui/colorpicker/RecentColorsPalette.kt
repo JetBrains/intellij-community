@@ -9,11 +9,19 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.GridLayout
+import java.awt.RenderingHints
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.KeyStroke
 
 private const val COLOR_BUTTON_ROW = 2
 private const val COLOR_BUTTON_COLUMN = 10

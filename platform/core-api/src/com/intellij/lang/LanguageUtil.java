@@ -10,7 +10,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.LanguageSubstitutor;
+import com.intellij.psi.LanguageSubstitutors;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.JBIterable;
@@ -18,7 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;

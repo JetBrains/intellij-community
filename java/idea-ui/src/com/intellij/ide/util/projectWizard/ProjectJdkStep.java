@@ -14,8 +14,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.util.ui.JBInsets;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 /**
  * @author Eugene Zhuravlev

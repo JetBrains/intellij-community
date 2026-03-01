@@ -15,12 +15,12 @@ class TestFixtureRule : ExternalResource() {
     private set
 
   override fun apply(base: Statement, description: Description): Statement {
-    ApplicationManagerEx.setInStressTest(TestFrameworkUtil.isStressTest(description.methodName, description.className))
+    ApplicationManagerEx.setInStressTest(TestFrameworkUtil.isStressTest(description.methodName, description.testClass))
     return super.apply(base, description)
   }
 
   override fun before() {
-    val headless = TestFrameworkUtil.SKIP_HEADLESS && javaClass.getAnnotation(SkipInHeadlessEnvironment::class.java) != null
+    val headless = TestFrameworkUtil.shouldSkipHeadless() && javaClass.getAnnotation(SkipInHeadlessEnvironment::class.java) != null
     assumeFalse("Class '${javaClass.name}' is skipped because it requires working UI environment", headless)
 
     val slow = TestFrameworkUtil.SKIP_SLOW && javaClass.getAnnotation(SkipSlowTestLocally::class.java) != null

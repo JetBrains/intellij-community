@@ -3,18 +3,19 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Window;
 
 /**
  * Provides access to IDE's frames and status bar.
  */
 public abstract class WindowManager {
-  @RequiresBlockingContext
   public static WindowManager getInstance() {
     return ApplicationManager.getApplication().getService(WindowManager.class);
   }

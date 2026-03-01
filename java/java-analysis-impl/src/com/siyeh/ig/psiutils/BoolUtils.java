@@ -20,7 +20,25 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
@@ -34,10 +52,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInspection.util.OptionalUtil.*;
+import static com.intellij.codeInspection.util.OptionalUtil.OPTIONAL_DOUBLE;
+import static com.intellij.codeInspection.util.OptionalUtil.OPTIONAL_INT;
+import static com.intellij.codeInspection.util.OptionalUtil.OPTIONAL_LONG;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OBJECTS;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
-import static com.intellij.psi.JavaTokenType.*;
+import static com.intellij.psi.JavaTokenType.AND;
+import static com.intellij.psi.JavaTokenType.ANDAND;
+import static com.intellij.psi.JavaTokenType.ANDEQ;
+import static com.intellij.psi.JavaTokenType.EXCL;
+import static com.intellij.psi.JavaTokenType.OR;
+import static com.intellij.psi.JavaTokenType.OREQ;
+import static com.intellij.psi.JavaTokenType.OROR;
 
 public final class BoolUtils {
 

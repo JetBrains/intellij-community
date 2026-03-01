@@ -22,7 +22,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Konstantin Bulenkov

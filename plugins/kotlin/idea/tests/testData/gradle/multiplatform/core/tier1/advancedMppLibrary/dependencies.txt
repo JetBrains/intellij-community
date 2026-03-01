@@ -7,7 +7,6 @@ project.appleMain
     commonMain (refines, COMPILE)
     jvmAndNativeMain (refines, COMPILE)
     nativeMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.appleTest
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
@@ -19,7 +18,6 @@ project.appleTest
     jvmAndNativeTest (refines, TEST)
     nativeMain (friend, TEST)
     nativeTest (refines, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 project.commonMain
     org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
@@ -151,7 +149,6 @@ project.nativeMain
     Kotlin/Native: stdlib (COMPILE)
     commonMain (refines, COMPILE)
     jvmAndNativeMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.nativeTest
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
@@ -161,7 +158,6 @@ project.nativeTest
     jvmAndNativeMain (friend, TEST)
     jvmAndNativeTest (refines, TEST)
     nativeMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 
 Test configuration:

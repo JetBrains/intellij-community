@@ -2,13 +2,13 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.navigation.ChooseByNameContributor
+import com.intellij.navigation.ChooseByNameContributorWithDisposableCleanup
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FindSymbolParameters
-import it.unimi.dsi.fastutil.ints.IntSet
 
 abstract class DisposableGotoModelWithPersistentFilter<T>(
   project: Project, chooseByNameContributors: List<ChooseByNameContributor>,

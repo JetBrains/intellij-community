@@ -15,7 +15,15 @@ import com.intellij.ide.util.gotoByName.ActionAsyncProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.GotoActionListCellRenderer
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
@@ -42,7 +50,7 @@ import java.awt.Component
 import java.awt.KeyboardFocusManager
 import java.awt.event.InputEvent
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.Optional
 import javax.swing.ListCellRenderer
 
 private val LOG = logger<ActionSearchEverywhereContributor>()
@@ -139,14 +147,14 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
 
   override fun showInFindResults(): Boolean = false
 
-  override fun getSearchProviderId(): String = ActionSearchEverywhereContributor::class.java.simpleName
+  override fun getSearchProviderId(): String = ID
 
   override fun getDataForItem(element: MatchedValue, dataId: String): Any? {
-    return if (SetShortcutAction.SELECTED_ACTION.`is`(dataId)) getAction(element) else null
+    return if (SetShortcutAction.SELECTED_ACTION.`is`(dataId)) element.getUnwrappedAction() else null
   }
 
   override fun getItemDescription(element: MatchedValue): String? {
-    val action = getAction(element)
+    val action = element.getUnwrappedAction()
     if (action == null) {
       return null
     }
@@ -236,7 +244,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     val actionIDs: Set<String> = ActionHistoryManager.getInstance().state.ids
     provider.processActions(scope, presentationProvider, pattern, actionIDs) { element: MatchedValue ->
       if (!myDisabledActions && !(element.value as GotoActionModel.ActionWrapper).isAvailable) return@processActions true
-      val action = getAction(element)
+      val action = element.getUnwrappedAction()
       if (action == null) return@processActions true
 
       val id = serviceAsync<ActionManager>().getId(action)
@@ -246,8 +254,12 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
   }
 
   companion object {
+    @Internal
+    @JvmField
+    val ID: String = ActionSearchEverywhereContributor::class.java.simpleName
+
     fun showAssignShortcutDialog(myProject: Project?, value: MatchedValue) {
-      val action = getAction(value)
+      val action = value.getUnwrappedAction()
       if (action == null) return
 
       val id = ActionManager.getInstance().getId(action)
@@ -268,16 +280,17 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
   }
 }
 
-private fun getAction(element: MatchedValue): AnAction? {
-  var value = element.value
+@Internal
+fun MatchedValue.getUnwrappedAction(): AnAction? {
+  var value = this.value
   if (value is GotoActionModel.ActionWrapper) {
     value = value.action
   }
-  return if (value is AnAction) value else null
+  return value as? AnAction
 }
 
 private fun saveRecentAction(selected: MatchedValue) {
-  val action = getAction(selected)
+  val action = selected.getUnwrappedAction()
   if (action == null) return
 
   val id = ActionManager.getInstance().getId(action)

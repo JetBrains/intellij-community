@@ -19,9 +19,19 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Image
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JRootPane
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 
 /**

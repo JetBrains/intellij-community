@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.structureView;
 
-import com.intellij.ide.structureView.impl.java.*;
+import com.intellij.ide.structureView.impl.java.FieldsFilter;
+import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
+import com.intellij.ide.structureView.impl.java.KindSorter;
+import com.intellij.ide.structureView.impl.java.PropertiesGrouper;
+import com.intellij.ide.structureView.impl.java.PublicElementsFilter;
+import com.intellij.ide.structureView.impl.java.SuperTypesGrouper;
+import com.intellij.ide.structureView.impl.java.VisibilitySorter;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -15,7 +21,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.TreeModel;
 import java.util.ArrayList;
 import java.util.Collection;

@@ -10,8 +10,17 @@ import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 import java.awt.Dimension
 import java.awt.Graphics
-import javax.accessibility.*
-import javax.swing.*
+import javax.accessibility.Accessible
+import javax.accessibility.AccessibleAction
+import javax.accessibility.AccessibleEditableText
+import javax.accessibility.AccessibleRole
+import javax.accessibility.AccessibleText
+import javax.accessibility.AccessibleValue
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JProgressBar
+import javax.swing.JTextField
 
 @Suppress("DialogTitleCapitalization")
 internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {

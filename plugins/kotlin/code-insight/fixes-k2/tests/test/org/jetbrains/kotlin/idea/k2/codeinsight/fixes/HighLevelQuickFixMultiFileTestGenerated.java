@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes;
 
@@ -1679,41 +1679,195 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava")
-    public static class FieldFromJava extends AbstractHighLevelQuickFixMultiFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
+    @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createVariable")
+    public abstract static class CreateVariable extends AbstractHighLevelQuickFixMultiFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter")
+        public static class Parameter extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("platformType.before.Main.kt")
+            public void testPlatformType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/platformType.before.Main.kt");
+            }
+
+            @TestMetadata("redundantAnnotationsFromJava.before.Main.kt")
+            public void testRedundantAnnotationsFromJava() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/redundantAnnotationsFromJava.before.Main.kt");
+            }
+
+            @TestMetadata("redundantAnnotationsFromJava2.before.Main.kt")
+            public void testRedundantAnnotationsFromJava2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/redundantAnnotationsFromJava2.before.Main.kt");
+            }
         }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/primaryParameter")
+        public static class PrimaryParameter extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("staticValOnJavaClass.before.Main.kt")
+            public void testStaticValOnJavaClass() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/primaryParameter/staticValOnJavaClass.before.Main.kt");
+            }
+
+            @TestMetadata("valOnJavaType.before.Main.kt")
+            public void testValOnJavaType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/primaryParameter/valOnJavaType.before.Main.kt");
+            }
         }
 
-        @TestMetadata("brokenJavaType.before.Main.java")
-        public void testBrokenJavaType() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/brokenJavaType.before.Main.java");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property")
+        public abstract static class Property extends AbstractHighLevelQuickFixMultiFileTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/extension")
+            public static class Extension extends AbstractHighLevelQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
 
-        @TestMetadata("classMemberLateinitVar.before.Main.java")
-        public void testClassMemberLateinitVar() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/classMemberLateinitVar.before.Main.java");
-        }
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
 
-        @TestMetadata("classMemberVar.before.Main.java")
-        public void testClassMemberVar() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/classMemberVar.before.Main.java");
-        }
+                @TestMetadata("extensionPropertyOnTypeFromAnotherPackage.before.Main.kt")
+                public void testExtensionPropertyOnTypeFromAnotherPackage() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/extension/extensionPropertyOnTypeFromAnotherPackage.before.Main.kt");
+                }
 
-        @TestMetadata("companionMemberVar.before.Main.java")
-        public void testCompanionMemberVar() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/companionMemberVar.before.Main.java");
-        }
+                @TestMetadata("extensionValOnGroovyType.before.Main.kt")
+                public void testExtensionValOnGroovyType() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/extension/extensionValOnGroovyType.before.Main.kt");
+                }
 
-        @TestMetadata("topLevelVar.before.Main.java")
-        public void testTopLevelVar() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/topLevelVar.before.Main.java");
+                @TestMetadata("extensionValOnJavaType.before.Main.kt")
+                public void testExtensionValOnJavaType() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/extension/extensionValOnJavaType.before.Main.kt");
+                }
+
+                @TestMetadata("staticExtensionValOnJavaType.before.Main.kt")
+                public void testStaticExtensionValOnJavaType() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/extension/staticExtensionValOnJavaType.before.Main.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava")
+            public static class FieldFromJava extends AbstractHighLevelQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
+
+                @TestMetadata("brokenJavaType.before.Main.java")
+                public void testBrokenJavaType() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/brokenJavaType.before.Main.java");
+                }
+
+                @TestMetadata("classMemberLateinitVar.before.Main.java")
+                public void testClassMemberLateinitVar() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/classMemberLateinitVar.before.Main.java");
+                }
+
+                @TestMetadata("classMemberVar.before.Main.java")
+                public void testClassMemberVar() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/classMemberVar.before.Main.java");
+                }
+
+                @TestMetadata("companionMemberVar.before.Main.java")
+                public void testCompanionMemberVar() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/companionMemberVar.before.Main.java");
+                }
+
+                @TestMetadata("topLevelVar.before.Main.java")
+                public void testTopLevelVar() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/topLevelVar.before.Main.java");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property")
+            public static class Uncategorized extends AbstractHighLevelQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
+
+                @TestMetadata("propertyWithUnresolvedTypeOnJava.before.Main.kt")
+                public void testPropertyWithUnresolvedTypeOnJava() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/propertyWithUnresolvedTypeOnJava.before.Main.kt");
+                }
+
+                @TestMetadata("staticValOnJavaClass.before.Main.kt")
+                public void testStaticValOnJavaClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/staticValOnJavaClass.before.Main.kt");
+                }
+
+                @TestMetadata("staticValOnJavaInterface.before.Main.kt")
+                public void testStaticValOnJavaInterface() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/staticValOnJavaInterface.before.Main.kt");
+                }
+
+                @TestMetadata("staticVarOnJavaInterface.before.Main.kt")
+                public void testStaticVarOnJavaInterface() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/staticVarOnJavaInterface.before.Main.kt");
+                }
+
+                @TestMetadata("valOnClassNoClassObject3.before.Main.kt")
+                public void testValOnClassNoClassObject3() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/valOnClassNoClassObject3.before.Main.kt");
+                }
+
+                @TestMetadata("valOnGroovyType.before.Main.kt")
+                public void testValOnGroovyType() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/valOnGroovyType.before.Main.kt");
+                }
+
+                @TestMetadata("valOnJavaInterface.before.Main.kt")
+                public void testValOnJavaInterface() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/valOnJavaInterface.before.Main.kt");
+                }
+
+                @TestMetadata("valOnJavaType.before.Main.kt")
+                public void testValOnJavaType() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/valOnJavaType.before.Main.kt");
+                }
+
+                @TestMetadata("varOnJavaType.before.Main.kt")
+                public void testVarOnJavaType() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/varOnJavaType.before.Main.kt");
+                }
+            }
         }
     }
 

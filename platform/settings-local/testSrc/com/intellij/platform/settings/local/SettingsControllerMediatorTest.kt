@@ -4,7 +4,13 @@ package com.intellij.platform.settings.local
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.settings.*
+import com.intellij.platform.settings.DelegatedSettingsController
+import com.intellij.platform.settings.GetResult
+import com.intellij.platform.settings.ReadOnlySettingException
+import com.intellij.platform.settings.SetResult
+import com.intellij.platform.settings.SettingDescriptor
+import com.intellij.platform.settings.StringSettingSerializerDescriptor
+import com.intellij.platform.settings.settingDescriptor
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy

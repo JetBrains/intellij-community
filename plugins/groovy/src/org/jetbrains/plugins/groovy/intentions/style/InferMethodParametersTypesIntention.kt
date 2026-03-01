@@ -10,8 +10,11 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
-import org.jetbrains.plugins.groovy.intentions.style.inference.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.DefaultInferenceContext
+import org.jetbrains.plugins.groovy.intentions.style.inference.SignatureInferenceOptions
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
+import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
+import org.jetbrains.plugins.groovy.intentions.style.inference.runInferenceProcess
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier

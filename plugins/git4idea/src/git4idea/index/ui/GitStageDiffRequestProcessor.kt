@@ -14,12 +14,22 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerChangesTreeTracker
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
-import git4idea.index.*
+import git4idea.index.GitStageTracker
+import git4idea.index.GitStageTrackerListener
+import git4idea.index.HEAD_INFO
+import git4idea.index.KindTag
+import git4idea.index.createTwoSidesDiffRequestProducer
+import git4idea.index.isCurrent
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Objects
 
 class GitStageDiffRequestProcessor(val stageTree: GitStageTree,
                                    tracker: GitStageTracker,

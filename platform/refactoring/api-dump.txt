@@ -590,6 +590,7 @@ a:com.intellij.refactoring.rename.naming.AutomaticRenamer
 - a:getDialogTitle():java.lang.String
 - getElements():java.util.List
 - getNewName(com.intellij.psi.PsiNamedElement):java.lang.String
+- ps:getPresentationName(com.intellij.psi.PsiNamedElement):java.lang.String
 - getRenames():java.util.Map
 - hasAnythingToRename():Z
 - isSelectedByDefault():Z

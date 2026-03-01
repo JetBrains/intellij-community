@@ -21,4 +21,19 @@ jvm_library(
     "//platform/backend",
   ]
 )
+
+jvm_library(
+  name = "python_test_lib",
+  module_name = "intellij.sh.python",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":python",
+    "//python/python-psi-api:psi_test_lib",
+    "//plugins/sh/core:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.sh.python` end

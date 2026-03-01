@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
+import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.WriteAction;
@@ -12,7 +16,19 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;

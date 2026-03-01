@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnConfiguration;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class SvnUpdateConfigurable implements Configurable {
   private static final @NonNls String HELP_ID = "vcs.subversion.updateProject";

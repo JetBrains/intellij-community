@@ -29,12 +29,52 @@ jvm_library(
     "//libraries/fastutil",
     "//java/codeserver/core",
     "//java/java-syntax:syntax",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+    "//platform/backend/workspace",
   ],
   exports = [
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
     "//platform/indexing-api:indexing",
     "//platform/indexing-impl",
+  ]
+)
+
+jvm_library(
+  name = "indexing-impl_test_lib",
+  module_name = "intellij.java.indexing.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//java/java-psi-api:psi",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/indexing-api:indexing",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/indexing-impl",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+  ],
+  runtime_deps = [
+    ":indexing-impl",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//java/codeserver/core:core_test_lib",
+    "//java/java-syntax:syntax_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.indexing.impl` end

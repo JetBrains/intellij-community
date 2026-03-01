@@ -5,7 +5,42 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCaseLabelElement;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiConditionalLoopStatement;
+import com.intellij.psi.PsiDeconstructionList;
+import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForeachPatternStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiPrimaryPattern;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeTestPattern;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiUnnamedPattern;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.JavaVarTypeUtil;
@@ -18,7 +53,13 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public final class JavaPsiPatternUtil {
 
@@ -400,14 +441,22 @@ public final class JavaPsiPatternUtil {
 
   /**
    * 14.11.1 Switch Blocks
-   * @param overWhom - type of constant
+   *
+   * @param overWhomExpression - expression of constant
    */
   @Contract(value = "_,null -> false", pure = true)
-  public static boolean dominatesOverConstant(@NotNull PsiCaseLabelElement who, @Nullable PsiType overWhom) {
+  public static boolean dominatesOverConstant(@NotNull PsiCaseLabelElement who, @Nullable PsiExpression overWhomExpression) {
+    if (overWhomExpression == null) return false;
+    PsiType overWhom = overWhomExpression.getType();
     if (overWhom == null) return false;
     who = findUnconditionalPattern(who);
     PsiType whoType = TypeConversionUtil.erasure(getPatternType(who));
     if (whoType == null) return false;
+    boolean primitivePatternIsAllowed = PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, overWhomExpression);
+    if (primitivePatternIsAllowed) {
+      return isUnconditionallyExactForType(who, overWhom, whoType) ||
+             isValueBasedUnconditionallyExact(overWhomExpression, whoType);
+    }
     PsiType overWhomType = null;
     if (overWhom instanceof PsiPrimitiveType) {
       overWhomType = ((PsiPrimitiveType)overWhom).getBoxedType(who);
@@ -415,7 +464,69 @@ public final class JavaPsiPatternUtil {
     else if (overWhom instanceof PsiClassType) {
       overWhomType = overWhom;
     }
-    return overWhomType != null && TypeConversionUtil.areTypesConvertible(overWhomType, whoType);
+    return overWhomType != null &&
+           //no unboxing (not really necessary, because primitive is not allowed in this branch), just closer to JEP
+           !(whoType instanceof PsiPrimitiveType) &&
+           isUnconditionallyExactForType(who, overWhomType, whoType);
+  }
+
+  private static boolean isValueBasedUnconditionallyExact(@Nullable PsiExpression overWhomExpression, PsiType whoType) {
+    if (overWhomExpression == null) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_WITH_TIGHTENED_DOMINANCE, overWhomExpression)) return false;
+    PsiType overWhomExpressionType = overWhomExpression.getType();
+    if (overWhomExpressionType == null) return false;
+    Object constant = evaluateConstant(overWhomExpression);
+    if (constant == null) return false;
+    if (!(whoType instanceof PsiPrimitiveType)) return false;
+    if (!TypeConversionUtil.isNumericType(whoType)) return false;
+    if (constant instanceof Byte) {
+      byte b = ((Byte)constant).byteValue();
+      if (whoType.equals(PsiTypes.charType())) return ExactHelper.isExactIntToChar(b);
+    }
+    if (constant instanceof Character) {
+      char c = ((Character)constant).charValue();
+      if (whoType.equals(PsiTypes.byteType())) return ExactHelper.isExactIntToByte(c);
+      if (whoType.equals(PsiTypes.shortType())) return ExactHelper.isExactIntToShort(c);
+    }
+    if (constant instanceof Short) {
+      short s = ((Short)constant).shortValue();
+      if (whoType.equals(PsiTypes.byteType())) return ExactHelper.isExactIntToByte(s);
+      if (whoType.equals(PsiTypes.charType())) return ExactHelper.isExactIntToChar(s);
+    }
+    if (constant instanceof Integer) {
+      int i = ((Integer)constant).intValue();
+      if (whoType.equals(PsiTypes.byteType())) return ExactHelper.isExactIntToByte(i);
+      if (whoType.equals(PsiTypes.charType())) return ExactHelper.isExactIntToChar(i);
+      if (whoType.equals(PsiTypes.shortType())) return ExactHelper.isExactIntToShort(i);
+      if (whoType.equals(PsiTypes.floatType())) return ExactHelper.isExactIntToFloat(i);
+    }
+    if (constant instanceof Long) {
+      long l = ((Long)constant).longValue();
+      if (whoType.equals(PsiTypes.byteType())) return ExactHelper.isExactLongToByte(l);
+      if (whoType.equals(PsiTypes.charType())) return ExactHelper.isExactLongToChar(l);
+      if (whoType.equals(PsiTypes.shortType())) return ExactHelper.isExactLongToShort(l);
+      if (whoType.equals(PsiTypes.intType())) return ExactHelper.isExactLongToInt(l);
+      if (whoType.equals(PsiTypes.floatType())) return ExactHelper.isExactLongToFloat(l);
+      if (whoType.equals(PsiTypes.doubleType())) return ExactHelper.isExactLongToDouble(l);
+    }
+    if (constant instanceof Float) {
+      float f = ((Float)constant).floatValue();
+      if (whoType.equals(PsiTypes.byteType())) return ExactHelper.isExactFloatToByte(f);
+      if (whoType.equals(PsiTypes.charType())) return ExactHelper.isExactFloatToChar(f);
+      if (whoType.equals(PsiTypes.shortType())) return ExactHelper.isExactFloatToShort(f);
+      if (whoType.equals(PsiTypes.intType())) return ExactHelper.isExactFloatToInt(f);
+      if (whoType.equals(PsiTypes.longType())) return ExactHelper.isExactFloatToLong(f);
+    }
+    if (constant instanceof Double) {
+      double f = ((Double)constant).doubleValue();
+      if (whoType.equals(PsiTypes.byteType())) return ExactHelper.isExactDoubleToByte(f);
+      if (whoType.equals(PsiTypes.charType())) return ExactHelper.isExactDoubleToChar(f);
+      if (whoType.equals(PsiTypes.shortType())) return ExactHelper.isExactDoubleToShort(f);
+      if (whoType.equals(PsiTypes.intType())) return ExactHelper.isExactDoubleToInt(f);
+      if (whoType.equals(PsiTypes.longType())) return ExactHelper.isExactDoubleToLong(f);
+      if (whoType.equals(PsiTypes.floatType())) return ExactHelper.isExactDoubleToFloat(f);
+    }
+    return false;
   }
 
   @Contract(pure = true)
@@ -699,5 +810,104 @@ public final class JavaPsiPatternUtil {
     if (expression == null) return null;
     return JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper()
       .computeConstantExpression(expression, false);
+  }
+
+  private static class ExactHelper {
+    private static boolean isExactDoubleToByte(double d) {
+      return !Double.isNaN(d) && !Double.isInfinite(d) && Double.compare(d, -0.) != 0 &&
+             (d == (double)(byte)d);
+    }
+
+    private static boolean isExactDoubleToShort(double d) {
+      return !Double.isNaN(d) && !Double.isInfinite(d) && Double.compare(d, -0.) != 0 &&
+             (d == (double)(short)d);
+    }
+
+    private static boolean isExactDoubleToChar(double d) {
+      return !Double.isNaN(d) && !Double.isInfinite(d) && Double.compare(d, -0.) != 0 &&
+             (d == (double)(char)d);
+    }
+
+    private static boolean isExactDoubleToInt(double d) {
+      return !Double.isNaN(d) && !Double.isInfinite(d) && Double.compare(d, -0.) != 0 &&
+             (d == (double)(int)d);
+    }
+
+    private static boolean isExactDoubleToLong(double d) {
+      return !Double.isNaN(d) && !Double.isInfinite(d) && Double.compare(d, -0.) != 0 &&
+             new BigDecimal(d).compareTo(new BigDecimal((long)d)) == 0;
+    }
+
+    private static boolean isExactDoubleToFloat(double d) {
+      return Double.isNaN(d) ||
+             Double.isInfinite(d) ||
+             Double.compare(d, 0.) == 0 ||
+             d == (double)(float)d;
+    }
+
+    private static boolean isExactFloatToByte(float f) {
+      return !Float.isNaN(f) && !Float.isInfinite(f) && Float.compare(f, -0f) != 0 &&
+             (f == (float)(byte)f);
+    }
+
+    private static boolean isExactFloatToChar(float f) {
+      return !Float.isNaN(f) && !Float.isInfinite(f) && Float.compare(f, -0f) != 0 &&
+              f == (float)(char)f;
+    }
+
+    private static boolean isExactFloatToShort(float f) {
+      return !Float.isNaN(f) && !Float.isInfinite(f) && Float.compare(f, -0f) != 0 &&
+              f == (float)(short)f;
+    }
+
+    private static boolean isExactFloatToInt(float f) {
+      return !Float.isNaN(f) && !Float.isInfinite(f) && Float.compare(f, -0f) != 0 &&
+             (double)f == (double)(int)f;
+    }
+
+    private static boolean isExactFloatToLong(float f) {
+      return !Float.isNaN(f) && !Float.isInfinite(f) && Float.compare(f, -0f) != 0 &&
+             new BigDecimal(f).compareTo(new BigDecimal((long)f)) == 0;
+    }
+
+    private static boolean isExactLongToDouble(long l) {
+      return new BigDecimal(l).compareTo(new BigDecimal((double)l)) == 0;
+    }
+
+    private static boolean isExactLongToFloat(long l) {
+      return new BigDecimal(l).compareTo(new BigDecimal((float)l)) == 0;
+    }
+
+    private static boolean isExactLongToInt(long l) {
+      return l == (long)(int)l;
+    }
+
+    private static boolean isExactLongToShort(long l) {
+      return l == (long)(short)l;
+    }
+
+    private static boolean isExactLongToChar(long l) {
+      return l == (long)(char)l;
+    }
+
+    private static boolean isExactLongToByte(long l) {
+      return l == (long)(byte)l;
+    }
+
+    private static boolean isExactIntToFloat(int i) {
+      return (double)i == (double)(float)i;
+    }
+
+    private static boolean isExactIntToShort(int i) {
+      return i == (int)(short)i;
+    }
+
+    private static boolean isExactIntToByte(int i) {
+      return i == (int)(byte)i;
+    }
+
+    private static boolean isExactIntToChar(int i) {
+      return i == (int)(char)i;
+    }
   }
 }

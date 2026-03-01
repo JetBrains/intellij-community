@@ -5,7 +5,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +75,12 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   }
 
   @Override
+  public @Nullable PyCallableParameterVariadicType getParametersType(@NotNull TypeEvalContext context) {
+    List<PyCallableParameter> parameters = ContainerUtil.notNullize(getParameters(context));
+    return new PyCallableParameterListTypeImpl(parameters);
+  }
+
+  @Override
   public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                                     @Nullable PyExpression location,
                                                                     @NotNull AccessDirection direction,
@@ -85,11 +99,6 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   }
 
   @Override
-  public String getName() {
-    return "function";
-  }
-
-  @Override
   public boolean isBuiltin() {
     return false;
   }
@@ -105,12 +114,15 @@ public class PyFunctionTypeImpl implements PyFunctionType {
 
   @Override
   public @NotNull PyFunctionType dropSelf(@NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> parameters = getParameters(context);
+    final List<PyCallableParameter> parameters = ContainerUtil.notNullize(getParameters(context));
 
-    if (!ContainerUtil.isEmpty(parameters) && parameters.get(0).isSelf()) {
-      return new PyFunctionTypeImpl(myCallable, ContainerUtil.subList(parameters, 1));
-    }
-    return this;
+    List<PyCallableParameter> newParams = ParamHelper.dropSelf(parameters);
+    return newParams.size() < parameters.size() ? new PyFunctionTypeImpl(myCallable, newParams) : this;
+  }
+
+  @Override
+  public String toString() {
+    return "PyFunctionType: " + getName();
   }
 
   @Override

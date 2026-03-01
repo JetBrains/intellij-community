@@ -19,21 +19,29 @@ import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageViewManager
 import com.intellij.usages.UsageViewPresentation
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.types.KotlinType
 import javax.swing.SwingUtilities
 
+@K1Deprecation
 class FindImplicitNothingAction : AnAction() {
     companion object {
         private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.actions.internal.FindImplicitNothingAction")

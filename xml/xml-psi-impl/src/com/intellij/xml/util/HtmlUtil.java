@@ -33,17 +33,38 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharsetDetector;
 import com.intellij.util.ThreeState;
-import com.intellij.xml.*;
+import com.intellij.xml.Html5SchemaProvider;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlCustomElementDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.StringTokenizer;
 
 /**
  * @author Maxim.Mossienko

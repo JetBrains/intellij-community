@@ -6,7 +6,19 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.asStatement
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKBlockStatement
+import org.jetbrains.kotlin.nj2k.tree.JKCallExpression
+import org.jetbrains.kotlin.nj2k.tree.JKLabelEmpty
+import org.jetbrains.kotlin.nj2k.tree.JKLabelText
+import org.jetbrains.kotlin.nj2k.tree.JKLabeledExpression
+import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
+import org.jetbrains.kotlin.nj2k.tree.JKNameIdentifier
+import org.jetbrains.kotlin.nj2k.tree.JKReturnStatement
+import org.jetbrains.kotlin.nj2k.tree.JKStatement
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.copyTreeAndDetach
+import org.jetbrains.kotlin.nj2k.tree.detached
+import org.jetbrains.kotlin.nj2k.tree.parentOfType
 import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 

@@ -5,10 +5,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.ui.scale.TestScaleHelper
-import kotlinx.coroutines.*
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.util.concurrent.CountDownLatch
 
 /**

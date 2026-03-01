@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.asJava.classes
 
@@ -11,9 +11,6 @@ import java.io.File
 import java.util.regex.Pattern
 
 object LightClassTestCommon {
-    internal val SKIP_IDE_TEST_DIRECTIVE = "SKIP_IDE_TEST"
-    internal val SKIP_LIBRARY_EXCEPTIONS = "IGNORE_LIBRARY_EXCEPTIONS"
-
     private val SUBJECT_FQ_NAME_PATTERN = Pattern.compile("^//\\s*(.*)$", Pattern.MULTILINE)
     private const val NOT_GENERATED_DIRECTIVE = "// NOT_GENERATED"
 

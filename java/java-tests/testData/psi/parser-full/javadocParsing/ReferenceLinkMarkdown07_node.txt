@@ -26,8 +26,8 @@ java.FILE
           DOC_TAG_VALUE_SHARP_TOKEN
           DOC_TAG_VALUE_TOKEN
         DOC_SHARP
-      DOC_COMMENT_DATA
-      DOC_RBRACKET
+        DOC_COMMENT_DATA
+        DOC_RBRACKET
     WHITE_SPACE
     MODIFIER_LIST
       <empty list>

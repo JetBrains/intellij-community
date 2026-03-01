@@ -30,7 +30,13 @@ import com.intellij.psi.xml.XmlTag;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.plugins.xpathView.Config;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

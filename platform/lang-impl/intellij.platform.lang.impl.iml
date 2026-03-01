@@ -4,19 +4,19 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.0-RC3-0.2/rpc-compiler-plugin-2.3.0-RC3-0.2.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.10-RC-0.1/rpc-compiler-plugin-2.3.10-RC-0.1.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.libraries.oro.matcher" />
     <orderEntry type="module" module-name="intellij.libraries.velocity" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.welcomeScreen.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="module" module-name="intellij.platform.macro" />
@@ -75,9 +76,9 @@
     <orderEntry type="module" module-name="intellij.platform.util" exported="" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
     <orderEntry type="module" module-name="intellij.libraries.xz" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
@@ -100,6 +101,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="module" module-name="intellij.platform.projectFrame" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />

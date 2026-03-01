@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion;
 
@@ -203,6 +203,31 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("FileRefInStringLiteralNoPrefix")
     public void testFileRefInStringLiteralNoPrefix() throws Exception {
         runTest("../../completion/testData/basic/multifile/FileRefInStringLiteralNoPrefix/");
+    }
+
+    @TestMetadata("FlexibleType")
+    public void testFlexibleType() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleType/");
+    }
+
+    @TestMetadata("FlexibleTypeCompanionObjectValues")
+    public void testFlexibleTypeCompanionObjectValues() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleTypeCompanionObjectValues/");
+    }
+
+    @TestMetadata("FlexibleTypeEnum")
+    public void testFlexibleTypeEnum() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleTypeEnum/");
+    }
+
+    @TestMetadata("FlexibleTypeNotNull")
+    public void testFlexibleTypeNotNull() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleTypeNotNull/");
+    }
+
+    @TestMetadata("FlexibleTypeSealed")
+    public void testFlexibleTypeSealed() throws Exception {
+        runTest("../../completion/testData/basic/multifile/FlexibleTypeSealed/");
     }
 
     @TestMetadata("GroovyClassNameCompletionFromDefaultPackage")
@@ -573,6 +598,21 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("StaticMembersOfNotImportedClassNameConflict")
     public void testStaticMembersOfNotImportedClassNameConflict() throws Exception {
         runTest("../../completion/testData/basic/multifile/StaticMembersOfNotImportedClassNameConflict/");
+    }
+
+    @TestMetadata("StaticMembersOfPrivateClassHiddenInRerun")
+    public void testStaticMembersOfPrivateClassHiddenInRerun() throws Exception {
+        runTest("../../completion/testData/basic/multifile/StaticMembersOfPrivateClassHiddenInRerun/");
+    }
+
+    @TestMetadata("StaticPrivateMembersHiddenInRerun")
+    public void testStaticPrivateMembersHiddenInRerun() throws Exception {
+        runTest("../../completion/testData/basic/multifile/StaticPrivateMembersHiddenInRerun/");
+    }
+
+    @TestMetadata("StaticPrivateMembersHighInvocation")
+    public void testStaticPrivateMembersHighInvocation() throws Exception {
+        runTest("../../completion/testData/basic/multifile/StaticPrivateMembersHighInvocation/");
     }
 
     @TestMetadata("SuspensionPointInMonitor")

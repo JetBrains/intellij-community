@@ -62,7 +62,7 @@ class HotSwapDebugSessionManager(project: Project, cs: CoroutineScope) : XDebugg
 
 private data class HotSwapSessionEntry(val hotSwapSession: HotSwapSession<*>, val disposable: Disposable)
 
-private class HotSwapManagerInitActivity : ProjectActivity {
+internal class HotSwapManagerInitActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.serviceAsync<HotSwapDebugSessionManager>()
   }

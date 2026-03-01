@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;

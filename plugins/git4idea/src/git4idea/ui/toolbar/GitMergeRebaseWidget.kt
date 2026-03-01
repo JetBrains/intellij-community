@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DecorativeElement
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl

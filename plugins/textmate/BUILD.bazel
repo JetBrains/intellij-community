@@ -43,4 +43,43 @@ jvm_library(
     "//plugins/textmate/joni",
   ]
 )
+
+jvm_library(
+  name = "textmate_test_lib",
+  module_name = "intellij.textmate",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/textmate/core",
+    "//plugins/textmate/core:core_test_lib",
+    "//plugins/textmate/joni",
+    "//plugins/textmate/joni:joni_test_lib",
+  ],
+  runtime_deps = [
+    ":textmate",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/diff-api:diff_test_lib",
+    "//plugins/textmate/core:core_test_lib",
+    "//plugins/textmate/joni:joni_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//libraries/caffeine:caffeine_test_lib",
+    "//fleet/fastutil:fastutil_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.textmate` end

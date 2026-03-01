@@ -24,7 +24,13 @@ import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.DependencyDescriptor;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Plugin dependency declarations (old and new model).
@@ -133,6 +139,10 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
     Collection<VirtualFile> allFiles = new ArrayList<>(dependsFiles);
     allFiles.addAll(contentFiles);
     return allFiles;
+  }
+
+  public static Collection<VirtualFile> findDescriptorsWithReferenceInDependenciesTag(GlobalSearchScope scope, String moduleNameOrPluginId) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleNameOrPluginId, scope);
   }
 
   public static Collection<VirtualFile> findFilesIncludingContentModule(Project project, VirtualFile file) {

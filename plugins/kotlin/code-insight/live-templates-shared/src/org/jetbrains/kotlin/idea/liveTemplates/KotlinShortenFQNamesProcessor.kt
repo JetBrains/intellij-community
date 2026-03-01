@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.idea.liveTemplates
 
-import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
-import com.intellij.openapi.project.Project
-import com.intellij.codeInsight.template.Template
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.editor.Editor
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.impl.TemplateContext
+import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilBase
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility

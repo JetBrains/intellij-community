@@ -1,21 +1,47 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.concurrency.JobLauncher
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
+import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.EdtImmediate
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.application.installSuvorovProgress
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.useBackgroundWriteAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -24,8 +50,22 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.ref.DebugReflectionUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.jetbrains.concurrency.AsyncPromise
@@ -51,23 +91,6 @@ import kotlin.time.Duration.Companion.seconds
 class PlatformUtilitiesTest {
 
   @Test
-  fun `relaxing preventive actions leads to absence of lock`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    withContext(Dispatchers.UiWithModelAccess) {
-      assertThat(application.isWriteIntentLockAcquired).isFalse
-      getGlobalThreadingSupport().runPreventiveWriteIntentReadAction {
-        assertThat(application.isWriteIntentLockAcquired).isTrue
-      }
-      getGlobalThreadingSupport().relaxPreventiveLockingActions {
-        getGlobalThreadingSupport().runPreventiveWriteIntentReadAction {
-          assertThat(application.isWriteIntentLockAcquired).isFalse
-        }
-      }
-
-    }
-
-  }
-
-  @Test
   fun `invokeAndWaitRelaxed does not take lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     ApplicationManagerEx.getApplicationEx().invokeAndWaitRelaxed(
       {
@@ -79,11 +102,9 @@ class PlatformUtilitiesTest {
   }
 
   @Test
-  fun `raw background write action is not allowed`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
-    assertThrows<IllegalStateException> {
-      ApplicationManager.getApplication().runWriteAction {
-        fail<Nothing>()
-      }
+  fun `raw background write action is allowed`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    // no errors should be thrown
+    ApplicationManager.getApplication().runWriteAction {
     }
   }
 
@@ -362,7 +383,7 @@ class PlatformUtilitiesTest {
 
   @Test
   fun `parallelization of write-intent lock removes write-intent access`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val (lockContext, lockCleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
+    val (lockContext, lockCleanup) = getGlobalThreadingSupport().parallelizeLock()
     installThreadContext(lockContext).use {
       try {
         assertThat(application.isWriteIntentLockAcquired).isFalse
@@ -512,4 +533,72 @@ class PlatformUtilitiesTest {
     ref.get()?.let { throw it }
   }
 
+  @Test
+  fun `NBRA is cancellable in its busy wait`(): Unit = timeoutRunBlocking {
+    val currentJob = Job(coroutineContext.job)
+    launch(Dispatchers.Default) {
+      backgroundWriteAction {
+        currentJob.asCompletableFuture().join()
+      }
+    }
+    delay(10)
+    val raJob = launch(Dispatchers.Default) {
+      ReadAction.nonBlocking(Callable { true }).executeSynchronously()
+    }
+    delay(100)
+    raJob.cancelAndJoin()
+    currentJob.complete()
+  }
+
+  @Test
+  fun `JobLauncher can be canceled on termination of the context job`(): Unit = concurrencyTest {
+    val j1 = Job(coroutineContext.job)
+    val j2 = Job(coroutineContext.job)
+    val job = launch(Dispatchers.Default) {
+      JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(listOf(1, 2), { num ->
+        if (num == 1) {
+          j1.complete()
+          j2.asCompletableFuture().join()
+        }
+        if (num == 2) {
+          fail<Nothing>("should not be reached")
+        }
+        true
+      })
+    }
+    j1.join()
+    job.cancel()
+    j2.complete()
+    job.join()
+  }
+
+  @Test
+  fun `runProcess cannot resurrect canceled indicator`(): Unit = timeoutRunBlocking {
+    launch {
+      coroutineToIndicator {
+        val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
+        currentThreadContext().job.cancel()
+        indicator.stop()
+        ProgressManager.getInstance().runProcess({
+          Assertions.assertTrue(indicator.isCanceled, "indicator should be canceled")
+                                                 }, indicator)
+      }
+    }.join()
+  }
+
+  @Test
+  fun `runProcess cannot resurrect raw progress reporting indicator`(): Unit = timeoutRunBlocking {
+    launch {
+      reportProgress {
+        coroutineToIndicator {
+          val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
+          currentThreadContext().job.cancel()
+          indicator.stop()
+          ProgressManager.getInstance().runProcess({
+                                                     Assertions.assertTrue(indicator.isCanceled, "indicator should be canceled")
+                                                   }, indicator)
+        }
+      }
+    }.join()
+  }
 }

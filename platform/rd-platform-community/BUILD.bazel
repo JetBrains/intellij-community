@@ -20,4 +20,24 @@ jvm_library(
     "//platform/core-impl",
   ]
 )
+
+jvm_library(
+  name = "rd-community_test_lib",
+  module_name = "intellij.platform.rd.community",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":rd-community",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//libraries/rd/core:core_test_lib",
+    "//libraries/rd/text:text_test_lib",
+    "//libraries/rd/swing:swing_test_lib",
+    "//platform/util/progress:progress_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//libraries/rd/framework:framework_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.rd.community` end

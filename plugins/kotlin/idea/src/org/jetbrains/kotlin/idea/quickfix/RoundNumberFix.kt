@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.types.typeUtil.isFloat
 import org.jetbrains.kotlin.types.typeUtil.isInt
 import org.jetbrains.kotlin.types.typeUtil.isLong
 
+@K1Deprecation
 class RoundNumberFix(
     element: KtExpression,
     type: KotlinType,

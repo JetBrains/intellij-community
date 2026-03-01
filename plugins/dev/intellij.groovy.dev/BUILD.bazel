@@ -22,4 +22,20 @@ jvm_library(
     "//plugins/groovy/groovy-psi:psi",
   ]
 )
+
+jvm_library(
+  name = "groovy-dev_test_lib",
+  module_name = "intellij.groovy.dev",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":groovy-dev",
+    "//plugins/dev/intellij.dev.codeInsight:codeInsight_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//plugins/groovy/groovy-psi:psi_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.groovy.dev` end

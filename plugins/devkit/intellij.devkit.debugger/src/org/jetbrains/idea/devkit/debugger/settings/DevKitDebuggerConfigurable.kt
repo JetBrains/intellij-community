@@ -2,14 +2,15 @@
 package org.jetbrains.idea.devkit.debugger.settings
 
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.idea.devkit.debugger.DevKitDebuggerBundle
 
-private class DevKitDebuggerConfigurableProvider : ConfigurableProvider() {
-  override fun createConfigurable() = DevKitDebuggerConfigurable()
+internal class DevKitDebuggerConfigurableProvider : ConfigurableProvider() {
+  override fun createConfigurable(): Configurable = DevKitDebuggerConfigurable()
 }
 
 private class DevKitDebuggerConfigurable : BoundSearchableConfigurable(DevKitDebuggerBundle.message("configurable.name.ide.debugger"), "", "devkit.debugger") {

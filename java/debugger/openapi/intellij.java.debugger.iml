@@ -11,7 +11,6 @@
     <orderEntry type="module" module-name="intellij.java.execution" />
     <orderEntry type="module" module-name="intellij.jsp" />
     <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="module" module-name="intellij.java.resources.en" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
@@ -24,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>

@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ConvertToConcatenatedStringIntentionBase
 import org.jetbrains.kotlin.psi.KtExpression
 
+@K1Deprecation
 class ConvertToConcatenatedStringIntention : ConvertToConcatenatedStringIntentionBase() {
     override fun isExpressionOfStringType(expression: KtExpression): Boolean = KotlinBuiltIns.isString(expression.analyze().getType(expression))
 }

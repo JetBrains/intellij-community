@@ -5,7 +5,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
 class MethodCandidateImpl(

@@ -2,8 +2,18 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiCaseLabelElement;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.JavaSourceUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;

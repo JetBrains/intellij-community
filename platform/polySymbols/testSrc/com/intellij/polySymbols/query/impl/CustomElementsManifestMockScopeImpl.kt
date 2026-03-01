@@ -14,6 +14,7 @@ internal class CustomElementsManifestMockScopeImpl(private val disposable: Dispo
     val manifest = readCustomElementsManifest(file.toString())
     val context = CustomElementsManifestJsonOriginImpl(
       file.name.takeWhile { it != '.' },
+      version = null,
       project = MockProjectEx(disposable),
       typeSupport = PolySymbolsMockTypeSupport
     )

@@ -5,8 +5,14 @@ import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionWrapperUtil
+import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ex.*
+import com.intellij.codeInspection.ex.InspectionManagerEx
+import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.codeInspection.ex.InspectionToolWrapper
+import com.intellij.codeInspection.ex.InspectionToolsSupplier
+import com.intellij.codeInspection.ex.Tools
+import com.intellij.codeInspection.ex.createSimple
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -16,7 +22,7 @@ import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests
 import com.intellij.util.containers.mapSmart
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.UUID
 
 @TestOnly
 fun configureInspections(tools: Array<InspectionProfileEntry>,
@@ -64,12 +70,16 @@ fun ProjectInspectionProfileManager.createProfile(localInspectionTool: LocalInsp
 }
 
 fun enableInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable) {
+  enableAssociatedInspectionTool(project, tool, disposable)
   enableInspectionTool(project, InspectionWrapperUtil.wrapTool(tool), disposable)
 }
 
 fun enableInspectionTools(project: Project, disposable: Disposable, vararg tools: InspectionProfileEntry) {
   for (tool in tools) {
     enableInspectionTool(project, InspectionWrapperUtil.wrapTool(tool), disposable)
+  }
+  for (tool in tools) {
+    enableAssociatedInspectionTool(project, tool, disposable)
   }
 }
 
@@ -99,6 +109,24 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
   }
 
   IdeaTestExecutionPolicy.current()?.inspectionToolEnabled(project, toolWrapper, disposable)
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun enableAssociatedInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable) {
+  try {
+    val mainToolId = tool.mainToolId ?: return
+    val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
+    val isPresent = runInInitMode {
+      val mainTool = profile.getInspectionTool(mainToolId, project)
+      mainTool != null && mainTool.isInitialized
+    }
+    if (isPresent) return
+    val inspection = LocalInspectionEP.LOCAL_INSPECTION.extensionList.find { it.shortName == mainToolId } ?: return
+    val mainTool = inspection.instantiateTool()
+    enableInspectionTool(project, InspectionWrapperUtil.wrapTool(mainTool), disposable)
+  } catch (_: Throwable) {
+    return
+  }
 }
 
 @TestOnly

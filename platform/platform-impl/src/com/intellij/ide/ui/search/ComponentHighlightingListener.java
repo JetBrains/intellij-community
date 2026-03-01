@@ -4,7 +4,7 @@ package com.intellij.ide.ui.search;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Gets notified when a component is found and should be highlighted.

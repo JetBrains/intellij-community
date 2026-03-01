@@ -77,8 +77,14 @@ class GitVcsOptions : BaseState() {
   @get:OptionTag("FETCH_TAGS_MODE")
   var fetchTagsMode: GitFetchTagsMode by enum<GitFetchTagsMode>(GitFetchTagsMode.DEFAULT)
 
+  @Deprecated("Replaced with incomingCommitsCheckStrategy")
   @get:OptionTag("INCOMING_CHECK_STRATEGY")
-  var incomingCheckStrategy: GitIncomingCheckStrategy by enum(GitIncomingCheckStrategy.Auto)
+  @get:JvmName("getIncomingCheckStrategy")
+  @set:JvmName("setIncomingCheckStrategy")
+  internal var incomingCheckStrategy: GitIncomingCheckStrategy by enum(GitIncomingCheckStrategy.Auto)
+
+  @get:OptionTag("INCOMING_COMMITS_CHECK_STRATEGY")
+  var incomingCommitsCheckStrategy: GitIncomingRemoteCheckStrategy by enum<GitIncomingRemoteCheckStrategy>(GitIncomingRemoteCheckStrategy.LS_REMOTE)
 
   @get:OptionTag("SIGN_OFF_COMMIT")
   var isSignOffCommit: Boolean by property(false)
@@ -86,8 +92,6 @@ class GitVcsOptions : BaseState() {
   var isSetUserNameGlobally: Boolean by property(true)
   @get:OptionTag("SWAP_SIDES_IN_COMPARE_BRANCHES")
   var isSwapSidesInCompareBranches: Boolean by property(false)
-  @get:OptionTag("UPDATE_BRANCHES_INFO")
-  var isUpdateBranchesInfo: Boolean by property(true)
   @get:OptionTag("PREVIEW_PUSH_ON_COMMIT_AND_PUSH")
   var isPreviewPushOnCommitAndPush: Boolean by property(true)
   @get:OptionTag("PREVIEW_PUSH_PROTECTED_ONLY")

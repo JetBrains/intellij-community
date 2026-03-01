@@ -16,7 +16,13 @@
 package com.siyeh.ipp.bool;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;

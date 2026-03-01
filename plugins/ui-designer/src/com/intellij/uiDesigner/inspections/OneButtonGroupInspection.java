@@ -3,10 +3,10 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.FormEditingUtil;
 import org.jetbrains.annotations.NotNull;
 
 

@@ -2,7 +2,11 @@
 package com.intellij.psi.codeStyle.statusbar
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl.CODE_STYLE_SETTINGS
@@ -15,7 +19,11 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.*
+import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent
+import com.intellij.psi.codeStyle.CodeStyleSettingsListener
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.codeStyle.FileIndentOptionsProvider
+import com.intellij.psi.codeStyle.IndentStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings

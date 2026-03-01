@@ -2,7 +2,14 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.ide.diff.DirDiffSettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
@@ -11,7 +18,9 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import java.util.ArrayList;
 
 /**

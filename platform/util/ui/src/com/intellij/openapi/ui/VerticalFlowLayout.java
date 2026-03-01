@@ -5,7 +5,11 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Insets;
 import java.io.Serializable;
 
 public class VerticalFlowLayout extends FlowLayout implements Serializable {

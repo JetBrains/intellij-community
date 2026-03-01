@@ -9,7 +9,10 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.elementType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.annotator.inspections.WrapWithParensQuickFix
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TDQ
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TSQ
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap

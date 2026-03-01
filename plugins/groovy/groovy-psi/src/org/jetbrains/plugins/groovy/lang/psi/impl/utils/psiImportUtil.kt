@@ -4,7 +4,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils
 
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.resolve.imports.*
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticStarImport
 import org.jetbrains.plugins.groovy.util.getPackageAndShortName
 
 internal fun GrImportStatement.createImportFromStatement(): GroovyImport? {

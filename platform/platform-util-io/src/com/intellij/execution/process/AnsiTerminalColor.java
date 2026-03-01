@@ -4,7 +4,7 @@ package com.intellij.execution.process;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Interface to work with ANSI-defined terminal colors.

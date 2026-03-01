@@ -2,7 +2,12 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
@@ -18,7 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 
 /**

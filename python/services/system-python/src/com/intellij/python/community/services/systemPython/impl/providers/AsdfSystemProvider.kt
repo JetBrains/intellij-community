@@ -15,7 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-private class AsdfSystemPythonProvider : SystemPythonProvider {
+internal class AsdfSystemPythonProvider : SystemPythonProvider {
   private val LOGGER: Logger = Logger.getInstance(AsdfSystemPythonProvider::class.java)
 
   override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
@@ -44,7 +44,7 @@ private class AsdfSystemPythonProvider : SystemPythonProvider {
         val paths = entries
           .map { versionsDir.resolve(it).resolve("bin").asNioPath() }
 
-        return@withContext collectPythonsInPaths(eelApi, paths, listOf(python3NamePattern))
+        return@withContext collectPythonsInPaths( paths, listOf(python3NamePattern))
       }
       catch (e: RuntimeException) {
         if (Logger.shouldRethrow(e)) throw e

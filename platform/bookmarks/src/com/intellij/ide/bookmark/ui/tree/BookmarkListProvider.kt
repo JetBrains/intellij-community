@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui.tree
 
-import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.BookmarkBundle
+import com.intellij.ide.bookmark.BookmarkType
+import com.intellij.ide.bookmark.BookmarksListProvider
+import com.intellij.ide.bookmark.FileBookmark
+import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.ide.bookmark.providers.FileBookmarkImpl
 import com.intellij.ide.bookmark.providers.LineBookmarkImpl
 import com.intellij.ide.util.treeView.AbstractTreeNode

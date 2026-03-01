@@ -23,7 +23,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import kotlinx.coroutines.CoroutineScope
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JProgressBar
 
 /**
  * Internal demo action

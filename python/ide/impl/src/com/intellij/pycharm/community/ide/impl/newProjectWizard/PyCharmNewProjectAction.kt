@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 /**
  * New project wizard entry point
  */
-private class PyCharmNewProjectAction : DumbAwareAction() {
+internal class PyCharmNewProjectAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     e.coroutineScope.launch {
       runCatching {

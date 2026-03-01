@@ -2,7 +2,21 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;

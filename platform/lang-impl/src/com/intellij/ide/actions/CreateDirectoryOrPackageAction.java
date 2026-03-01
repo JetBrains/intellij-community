@@ -9,7 +9,13 @@ import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
@@ -36,11 +42,16 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FList;
+import com.intellij.util.text.matching.MatchedFragment;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -48,13 +59,25 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.awt.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
@@ -461,8 +484,11 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
             }
 
             String text = value == null ? "" : value.displayText;
-            FList<TextRange> ranges = currentMatcher == null ? FList.emptyList() : currentMatcher.matchingFragments(text);
-            SpeedSearchUtil.appendColoredFragments(this, text, ranges, SimpleTextAttributes.REGULAR_ATTRIBUTES, MATCHED);
+            List<MatchedFragment> ranges = currentMatcher == null ? List.of() : currentMatcher.match(text);
+            if (ranges != null) {
+              List<@NotNull TextRange> colored = ContainerUtil.map(ranges, f -> TextRange.create(f.getStartOffset(), f.getEndOffset()));
+              SpeedSearchUtil.appendColoredFragments(this, text, colored, SimpleTextAttributes.REGULAR_ATTRIBUTES, MATCHED);
+            }
             setIcon(value == null ? null : value.icon);
           }
         };

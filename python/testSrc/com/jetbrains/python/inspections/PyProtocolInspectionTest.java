@@ -183,6 +183,29 @@ public class PyProtocolInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-86249
+  public void testProtocolAndFrozenDataclassWithMethod() {
+    doTestByText("""
+                   import abc
+                   import dataclasses
+                   from typing import Protocol
+                   
+                   
+                   class Proto(Protocol):
+                       @abc.abstractmethod
+                       def to_kwargs(self) -> dict:
+                           pass
+                   
+                   
+                   @dataclasses.dataclass(frozen=True)
+                   class Impl(Proto):
+                       name: str
+                   
+                       def to_kwargs(self) -> dict:
+                           return {"name": self.name}
+                   """);
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doTest());

@@ -6,7 +6,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkAdditionalData
+import com.intellij.openapi.projectRoots.SdkModel
+import com.intellij.openapi.projectRoots.SdkModificator
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus

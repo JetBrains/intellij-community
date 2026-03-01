@@ -10,7 +10,15 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.PsiFilePattern
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProvider
+import com.intellij.polySymbols.query.PolySymbolAnyQueryScopeProviderRegistrar
+import com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProvider
+import com.intellij.polySymbols.query.PolySymbolLocationQueryScopeProviderRegistrar
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryScopeContributor
+import com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrar
+import com.intellij.polySymbols.query.PolySymbolQueryScopeProviderRegistrarInFileContext
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList

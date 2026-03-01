@@ -1,0 +1,28 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_defaultArgumentInConstructorRemoved-module1.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/defaultArgumentInConstructorRemoved/module1/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_defaultArgumentInConstructorRemoved-module2.kotlin_module
+  foo/CreateADefaultKt.class
+  foo/CreateANonDefaultKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/defaultArgumentInConstructorRemoved/module2/createADefault.kt
+  kotlin/multiModule/common/defaultArgumentInConstructorRemoved/module2/createANonDefault.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_defaultArgumentInConstructorRemoved-module2.kotlin_module
+End of files
+Compiling files:
+  kotlin/multiModule/common/defaultArgumentInConstructorRemoved/module2/createADefault.kt
+End of files
+------------------------------------------
+Exit code: OK

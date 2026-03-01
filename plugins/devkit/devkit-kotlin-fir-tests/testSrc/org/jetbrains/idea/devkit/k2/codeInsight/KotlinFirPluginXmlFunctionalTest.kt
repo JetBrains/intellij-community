@@ -19,8 +19,8 @@ import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
 import org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.nio.file.Paths

@@ -1,0 +1,36 @@
+- name: lib/agent-workbench-plugin.jar
+  modules:
+  - name: intellij.agent.workbench.plugin
+- name: lib/modules/intellij.agent.workbench.chat.jar
+  contentModules:
+  - name: intellij.agent.workbench.chat
+- name: lib/modules/intellij.agent.workbench.claude.common.jar
+  contentModules:
+  - name: intellij.agent.workbench.claude.common
+- name: lib/modules/intellij.agent.workbench.claude.sessions.jar
+  contentModules:
+  - name: intellij.agent.workbench.claude.sessions
+- name: lib/modules/intellij.agent.workbench.codex.common.jar
+  contentModules:
+  - name: intellij.agent.workbench.codex.common
+- name: lib/modules/intellij.agent.workbench.codex.sessions.jar
+  contentModules:
+  - name: intellij.agent.workbench.codex.sessions
+- name: lib/modules/intellij.agent.workbench.common.jar
+  contentModules:
+  - name: intellij.agent.workbench.common
+- name: lib/modules/intellij.agent.workbench.filewatch.jar
+  contentModules:
+  - name: intellij.agent.workbench.filewatch
+    libraries:
+      directory-watcher:
+      - name: $MAVEN_REPOSITORY$/io/methvin/directory-watcher/0/directory-watcher-0.jar
+- name: lib/modules/intellij.agent.workbench.json.jar
+  contentModules:
+  - name: intellij.agent.workbench.json
+- name: lib/modules/intellij.agent.workbench.sessions.core.jar
+  contentModules:
+  - name: intellij.agent.workbench.sessions.core
+- name: lib/modules/intellij.agent.workbench.sessions.jar
+  contentModules:
+  - name: intellij.agent.workbench.sessions

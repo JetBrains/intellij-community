@@ -7,16 +7,25 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.delete
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.gradle.diagnostic.KotlinGradleBuildErrorsChecker
 import org.jetbrains.kotlin.idea.gradle.statistics.v2.flow.KotlinBuildToolFusFlowProcessor
 import org.jetbrains.kotlin.statistics.BuildSessionLogger
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.notExists
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 

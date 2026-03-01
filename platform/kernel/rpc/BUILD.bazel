@@ -25,4 +25,23 @@ jvm_library(
     "//fleet/rpc",
   ]
 )
+
+jvm_library(
+  name = "rpc_test_lib",
+  module_name = "intellij.platform.rpc",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:kotlin-stdlib",
+    "//fleet/rpc",
+    "//fleet/rpc:rpc_test_lib",
+  ],
+  runtime_deps = [
+    ":rpc",
+    "//fleet/util/logging/api:api_test_lib",
+    "//fleet/rpc:rpc_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.rpc` end

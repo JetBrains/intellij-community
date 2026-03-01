@@ -5,7 +5,13 @@ package org.jetbrains.plugins.groovy.intentions.style.inference.search
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
-import com.intellij.psi.search.*
+import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.psi.search.PsiSearchRequest
+import com.intellij.psi.search.QuerySearchRequest
+import com.intellij.psi.search.RequestResultProcessor
+import com.intellij.psi.search.SearchRequestCollector
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.SearchSession
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes

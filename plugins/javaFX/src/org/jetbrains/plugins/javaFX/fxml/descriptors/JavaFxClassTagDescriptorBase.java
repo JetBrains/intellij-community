@@ -7,9 +7,22 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
@@ -25,7 +38,12 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescriptor, Validator<XmlTag> {
   private final String myName;

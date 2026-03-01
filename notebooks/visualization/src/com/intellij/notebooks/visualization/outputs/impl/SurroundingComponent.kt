@@ -1,12 +1,12 @@
 package com.intellij.notebooks.visualization.outputs.impl
 
+import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentWrapper
+import com.intellij.notebooks.visualization.ui.registerEditorSizeWatcher
+import com.intellij.notebooks.visualization.ui.textEditingAreaWidth
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentWrapper
-import com.intellij.notebooks.visualization.ui.registerEditorSizeWatcher
-import com.intellij.notebooks.visualization.ui.textEditingAreaWidth
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JPanel
@@ -16,7 +16,7 @@ internal class SurroundingComponent private constructor(private val innerCompone
   private var presetWidth = 0
 
   init {
-    isOpaque = true
+    isOpaque = false
     border = IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(JBUI.scale(4)))
     add(innerComponent, BorderLayout.CENTER)
   }
@@ -34,7 +34,6 @@ internal class SurroundingComponent private constructor(private val innerCompone
   }
 
   companion object {
-
     @JvmStatic
     fun create(editor: EditorImpl, innerComponent: InnerComponent) = SurroundingComponent(innerComponent).also {
       registerEditorSizeWatcher(it) {

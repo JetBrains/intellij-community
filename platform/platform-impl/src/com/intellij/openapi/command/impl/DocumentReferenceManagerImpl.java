@@ -35,7 +35,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   private final Map<FilePath, DocumentReference> deletedFilePathToRef = ContainerUtil.createWeakValueMap();
 
   DocumentReferenceManagerImpl() {
-    VirtualFileManager.getInstance().addAsyncFileListener(new CreateDeleteFileListener(), ApplicationManager.getApplication());
+    VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(new CreateDeleteFileListener(), ApplicationManager.getApplication());
   }
 
   @Override

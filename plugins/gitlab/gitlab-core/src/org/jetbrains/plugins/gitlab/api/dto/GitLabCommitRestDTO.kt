@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api.dto
 
-import java.util.*
+import java.util.Date
 
 data class GitLabCommitRestDTO(
   val id: String,

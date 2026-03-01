@@ -3,7 +3,7 @@ package com.intellij.openapi.ui.popup;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class ListItemDescriptorAdapter<T> implements ListItemDescriptor<T> {
   @Override

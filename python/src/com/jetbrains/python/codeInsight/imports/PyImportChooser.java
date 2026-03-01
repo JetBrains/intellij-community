@@ -19,8 +19,11 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
+import java.awt.Font;
 import java.util.List;
 
 public class PyImportChooser implements ImportChooser {

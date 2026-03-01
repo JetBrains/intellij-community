@@ -2,14 +2,17 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.util.MainDispatcherRule
 import com.intellij.util.messages.MessageBus
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.coVerifyAll
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.github.api.data.GHComment
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
 import org.junit.ClassRule
 import org.junit.Test
-import java.util.*
+import java.util.Date
 
 class GHPRCommentsDataProviderImplTest {
   companion object {

@@ -5,7 +5,13 @@ import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.inspections.*
+import com.jetbrains.python.inspections.PyArgumentListInspection
+import com.jetbrains.python.inspections.PyFinalInspection
+import com.jetbrains.python.inspections.PyProtocolInspection
+import com.jetbrains.python.inspections.PyRedeclarationInspection
+import com.jetbrains.python.inspections.PyTypeCheckerInspection
+import com.jetbrains.python.inspections.PyTypeHintsInspection
+import com.jetbrains.python.inspections.PyTypedDictInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 
 class TypeIgnoreInspectionSuppressorTest : PyTestCase() {

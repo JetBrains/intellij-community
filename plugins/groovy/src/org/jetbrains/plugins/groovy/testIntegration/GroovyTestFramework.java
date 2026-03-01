@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static org.jetbrains.plugins.groovy.bundled.BundledGroovy.getBundledGroovyFile;
 

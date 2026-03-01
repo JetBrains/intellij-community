@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.j2k.ast
 
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.Converter
 
+@K1Deprecation
 abstract class Constructor(
         annotations: Annotations,
         modifiers: Modifiers,
@@ -16,6 +18,7 @@ abstract class Constructor(
         get() = super.parameterList!!
 }
 
+@K1Deprecation
 class PrimaryConstructor(
         annotations: Annotations,
         modifiers: Modifiers,
@@ -43,6 +46,7 @@ class PrimaryConstructor(
     }
 }
 
+@K1Deprecation
 class PrimaryConstructorSignature(val annotations: Annotations, private val modifiers: Modifiers, val parameterList: ParameterList) : Element() {
     val accessModifier: Modifier? = run {
         val modifier = modifiers.accessModifier()
@@ -70,6 +74,7 @@ class PrimaryConstructorSignature(val annotations: Annotations, private val modi
     }
 }
 
+@K1Deprecation
 class SecondaryConstructor(
         annotations: Annotations,
         modifiers: Modifiers,

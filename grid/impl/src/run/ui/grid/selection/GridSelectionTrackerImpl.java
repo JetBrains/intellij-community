@@ -1,6 +1,15 @@
 package com.intellij.database.run.ui.grid.selection;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.DataGridListener;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ModelIndexSet;
+import com.intellij.database.datagrid.ResultView;
+import com.intellij.database.datagrid.ViewIndex;
+import com.intellij.database.datagrid.ViewIndexSet;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorHelper;
 import com.intellij.util.containers.Stack;

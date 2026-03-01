@@ -9,8 +9,17 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails;
+import com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder;
+import com.intellij.openapi.vcs.annotate.DefaultLineModificationDetailsProvider;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -28,7 +37,11 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.*;
+import git4idea.GitContentRevision;
+import git4idea.GitFileRevision;
+import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.log.GitCommitTooltipLinkHandler;
@@ -40,7 +53,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
@@ -53,6 +72,7 @@ public final class GitFileAnnotation extends FileAnnotation {
    * The path might not match {@link #myFile} for files that are renamed locally, see {@link VcsUtil#getLastCommitPath}.
    */
   private final @NotNull FilePath myFilePath;
+  private final @NotNull VirtualFile myRoot;
   private final @NotNull GitVcs myVcs;
   private final @Nullable VcsRevisionNumber myBaseRevision;
 
@@ -89,12 +109,14 @@ public final class GitFileAnnotation extends FileAnnotation {
   public GitFileAnnotation(@NotNull Project project,
                            @NotNull VirtualFile file,
                            @NotNull FilePath filePath,
+                           @NotNull VirtualFile root,
                            @Nullable VcsRevisionNumber revision,
                            @NotNull List<LineInfo> lines) {
     super(project);
     myProject = project;
     myFile = file;
     myFilePath = filePath;
+    myRoot = root;
     myVcs = GitVcs.getInstance(myProject);
     myBaseRevision = revision;
     myLines = lines;
@@ -394,6 +416,10 @@ public final class GitFileAnnotation extends FileAnnotation {
 
   public @NotNull FilePath getFilePath() {
     return myFilePath;
+  }
+
+  public @NotNull VirtualFile getRoot() {
+    return myRoot;
   }
 
   @Override

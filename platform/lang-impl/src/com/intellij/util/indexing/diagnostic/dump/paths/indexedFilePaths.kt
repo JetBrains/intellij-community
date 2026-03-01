@@ -10,7 +10,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.indexing.IndexedHashesSupport
 import com.intellij.util.indexing.SubstitutedFileType
-import java.util.*
+import java.util.Base64
 
 object IndexedFilePaths {
 

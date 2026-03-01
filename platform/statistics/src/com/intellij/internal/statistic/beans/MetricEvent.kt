@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.Objects
 
 /**
  * Used to write measurements to event log, override one of these methods to use it: <br/>

@@ -1,6 +1,10 @@
 package com.intellij.database.run.ui.grid;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridFilterAndSortingComponent;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridSortingModel;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -17,9 +21,12 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.CompoundBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
 
 /**
  * @author Liudmila Kornilova

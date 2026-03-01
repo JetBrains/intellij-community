@@ -5,16 +5,42 @@ package com.intellij.patterns.uast
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
-import com.intellij.patterns.*
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.ObjectPattern
+import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PsiJavaPatterns.psiClass
+import com.intellij.patterns.PsiNamePatternCondition
 import com.intellij.patterns.StandardPatterns.string
-import com.intellij.psi.*
+import com.intellij.patterns.ValuePatternCondition
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.REQUESTED_PSI_ELEMENT
 import com.intellij.util.ProcessingContext
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UArrayAccessExpression
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getContainingUAnnotationEntry
+import org.jetbrains.uast.getUCallExpression
+import org.jetbrains.uast.isInjectionHost
+import org.jetbrains.uast.sourcePsiElement
 
 fun literalExpression(): ULiteralExpressionPattern = ULiteralExpressionPattern()
 
@@ -24,9 +50,11 @@ fun injectionHostUExpression(strict: Boolean = true): UExpressionPattern<UExpres
     val requestedPsi = processingContext.get(REQUESTED_PSI_ELEMENT)
     if (requestedPsi == null) {
       if (strict && ApplicationManager.getApplication().isUnitTestMode) {
-        throw AssertionError("no ProcessingContext with `REQUESTED_PSI_ELEMENT` passed for `injectionHostUExpression`," +
-                             " please consider creating one using `UastPatterns.withRequestedPsi`, providing a source psi for which " +
-                             " this pattern was originally created, or make this `injectionHostUExpression` non-strict.")
+        throw AssertionError(
+          "no ProcessingContext with `REQUESTED_PSI_ELEMENT` passed for `injectionHostUExpression`," +
+          " please consider creating one using `UastPatterns.withRequestedPsi`, providing a source psi for which " +
+          " this pattern was originally created, or make this `injectionHostUExpression` non-strict."
+        )
       }
       else return@filterWithContext !strict
     }
@@ -83,6 +111,7 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     it.uastParent?.let { parentPattern.accepts(it, context) } ?: false
   }
 
+  @Suppress("unused")
   fun withUastParentOrSelf(parentPattern: ElementPattern<out UElement>): Self = filterWithContext { it, context ->
     parentPattern.accepts(it, context) || it.uastParent?.let { parentPattern.accepts(it, context) } ?: false
   }
@@ -100,14 +129,15 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
 private val constructorOrMethodCall = setOf(UastCallKind.CONSTRUCTOR_CALL, UastCallKind.METHOD_CALL)
 
-private fun isCallExpressionParameter(argumentExpression: UExpression,
-                                      parameterIndex: Int,
-                                      callPattern: ElementPattern<UCallExpression>, context: ProcessingContext): Boolean {
+private fun isCallExpressionParameter(
+  argumentExpression: UExpression,
+  parameterIndex: Int,
+  callPattern: ElementPattern<UCallExpression>, context: ProcessingContext,
+): Boolean {
   val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2) ?: return false
-
-  return callPattern.accepts(call, context)
-         && call.kind in constructorOrMethodCall
-         && call.getArgumentForParameter(parameterIndex) == argumentExpression
+  return callPattern.accepts(call, context) &&
+         call.kind in constructorOrMethodCall &&
+         call.getArgumentForParameter(parameterIndex) == argumentExpression
 }
 
 private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPattern<out PsiMethod>, context: ProcessingContext): Boolean {
@@ -132,8 +162,7 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
 
   fun withAnyResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = withResolvedMethod(method, true)
 
-  fun withResolvedMethod(method: ElementPattern<out PsiMethod>,
-                         multiResolve: Boolean): UCallExpressionPattern {
+  fun withResolvedMethod(method: ElementPattern<out PsiMethod>, multiResolve: Boolean): UCallExpressionPattern {
     val methodNames = method.condition.conditions
       .filterIsInstance<PsiNamePatternCondition<*>>()
       .flatMap { it.namePattern.condition.conditions }
@@ -186,14 +215,13 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
 
   fun constructor(className: String): UCallExpressionPattern = constructor(psiClass().withQualifiedName(className))
 
-  fun constructor(className: String, parameterCount: Int): UCallExpressionPattern = constructor(psiClass().withQualifiedName(className),
-                                                                                                parameterCount)
+  fun constructor(className: String, parameterCount: Int): UCallExpressionPattern =
+    constructor(psiClass().withQualifiedName(className), parameterCount)
 }
 
 private val IS_UAST_ANNOTATION_PARAMETER: Key<Boolean> = Key.create("UAST_ANNOTATION_PARAMETER")
 
 open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self>>(clazz: Class<T>) : UElementPattern<T, Self>(clazz) {
-
   fun annotationParam(@NonNls parameterName: String, annotationPattern: ElementPattern<UAnnotation>): Self =
     annotationParams(annotationPattern, string().equalTo(parameterName))
 
@@ -202,13 +230,13 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
       override fun accepts(uElement: T, context: ProcessingContext?): Boolean {
         val sharedContext = context?.sharedContext
         val isAnnotationParameter = sharedContext?.get(IS_UAST_ANNOTATION_PARAMETER, uElement)
-        if (isAnnotationParameter == java.lang.Boolean.FALSE) {
+        if (isAnnotationParameter == false) {
           return false
         }
 
         val containingUAnnotationEntry = getContainingUAnnotationEntry(uElement)
         if (containingUAnnotationEntry == null) {
-          sharedContext?.put(IS_UAST_ANNOTATION_PARAMETER, uElement, java.lang.Boolean.FALSE)
+          sharedContext?.put(IS_UAST_ANNOTATION_PARAMETER, uElement, false)
           return false
         }
 
@@ -242,7 +270,6 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
 
   fun setterParameter(methodPattern: ElementPattern<out PsiMethod>): Self {
     val callPattern = callExpression().withAnyResolvedMethod(methodPattern)
-
     return filterWithContext("setterParameter") { it, context ->
       isPropertyAssignCall(it, methodPattern, context) ||
       isCallExpressionParameter(it, 0, callPattern, context)
@@ -252,7 +279,6 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
   @JvmOverloads
   fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>, multiResolve: Boolean = true): Self {
     val callPattern = callExpression().withResolvedMethod(methodPattern, multiResolve)
-
     return callParameter(parameterIndex, callPattern)
   }
 
@@ -295,7 +321,6 @@ fun uAnnotationQualifiedNamePattern(annotationQualifiedName: ElementPattern<Stri
   }
 
 open class UDeclarationPattern<T : UDeclaration>(clazz: Class<T>) : UElementPattern<T, UDeclarationPattern<T>>(clazz) {
-
   fun annotatedWith(@NotNull annotationQualifiedNames: List<String>): UDeclarationPattern<T> {
     return this.with(object : PatternCondition<UDeclaration>("annotatedWith") {
       override fun accepts(uDeclaration: UDeclaration, context: ProcessingContext?): Boolean {

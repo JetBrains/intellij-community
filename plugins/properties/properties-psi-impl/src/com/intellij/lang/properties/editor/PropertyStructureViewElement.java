@@ -16,8 +16,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Font;
 import java.util.function.BooleanSupplier;
 
 public class PropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {

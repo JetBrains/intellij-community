@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiffLineRange
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
 
 sealed interface GitLabNotePosition {
   val parentSha: String
@@ -16,6 +16,10 @@ sealed interface GitLabNotePosition {
   interface WithLine : GitLabNotePosition {
     val lineIndexLeft: Int?
     val lineIndexRight: Int?
+    val startLineIndexLeft: Int?
+    val startLineIndexRight: Int?
+    val endLineIndexLeft: Int?
+    val endLineIndexRight: Int?
   }
 
   data class Text(
@@ -25,6 +29,10 @@ sealed interface GitLabNotePosition {
     override val filePathAfter: String?,
     override val lineIndexLeft: Int?,
     override val lineIndexRight: Int?,
+    override val startLineIndexLeft: Int?,
+    override val startLineIndexRight: Int?,
+    override val endLineIndexLeft: Int?,
+    override val endLineIndexRight: Int?,
   ) : WithLine
 
   data class Image(
@@ -38,17 +46,21 @@ sealed interface GitLabNotePosition {
     private val LOG = logger<GitLabNotePosition>()
 
     @Suppress("DuplicatedCode")
-    fun from(position: GitLabNoteDTO.Position): GitLabNotePosition? {
-      if (position.diffRefs.baseSha == null) {
+    fun from(position: GitLabNoteRestDTO.Position): GitLabNotePosition? {
+      if (position.baseSha == null) {
         LOG.debug("Missing merge base in note position: $position")
         return null
       }
 
-      val parentSha = position.diffRefs.baseSha
-      val sha = position.diffRefs.headSha
+      val parentSha = position.baseSha
+      val sha = position.headSha
 
       return when (position.positionType) {
-        "text" -> Text(parentSha, sha, position.oldPath, position.newPath, position.oldLine?.dec(), position.newLine?.dec())
+        "text" -> Text(parentSha, sha, position.oldPath, position.newPath,
+                       position.oldLine?.dec(), position.newLine?.dec(),
+                       position.lineRange?.start?.oldLine?.dec(), position.lineRange?.start?.newLine?.dec(),
+                       position.lineRange?.end?.oldLine?.dec(), position.lineRange?.end?.newLine?.dec()
+        )
         else -> Image(parentSha, sha, position.oldPath, position.newPath)
       }
     }
@@ -64,7 +76,11 @@ sealed interface GitLabNotePosition {
       val sha = position.headSha ?: return null
 
       return when (position.positionType) {
-        "text" -> Text(parentSha, sha, position.oldPath, position.newPath, position.oldLine?.dec(), position.newLine?.dec())
+        "text" -> Text(parentSha, sha, position.oldPath, position.newPath,
+                       position.oldLine?.dec(), position.newLine?.dec(),
+                       position.lineRange?.start?.oldLine?.dec(), position.lineRange?.start?.newLine?.dec(),
+                       position.lineRange?.end?.oldLine?.dec(), position.lineRange?.end?.newLine?.dec()
+        )
         else -> Image(parentSha, sha, position.oldPath, position.newPath)
       }
     }
@@ -74,7 +90,8 @@ sealed interface GitLabNotePosition {
 val GitLabNotePosition.filePath: String
   get() = (filePathAfter ?: filePathBefore)!!
 
-fun GitLabNotePosition.getLocation(contextSide: Side = Side.LEFT): DiffLineLocation? {
-  if (this !is GitLabNotePosition.WithLine) return null
-  return GitLabNotePositionUtil.getLocation(lineIndexLeft, lineIndexRight, contextSide)
+fun GitLabNotePosition.getLocation(contextSide: Side = Side.LEFT): DiffLineRange? {
+  val position = this
+  if (position !is GitLabNotePosition.WithLine) return null
+  return GitLabNotePositionUtil.getLocation(position, contextSide)
 }

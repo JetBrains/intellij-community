@@ -34,13 +34,13 @@ java.FILE
                 LBRACKET
                 RBRACKET
             DOC_COMMA
+            WHITE_SPACE
             DOC_TYPE_HOLDER
-              WHITE_SPACE
               TYPE
                 INT_KEYWORD
             DOC_COMMA
+            WHITE_SPACE
             DOC_TYPE_HOLDER
-              WHITE_SPACE
               TYPE
                 INT_KEYWORD
           DOC_RPAREN

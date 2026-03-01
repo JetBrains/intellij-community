@@ -3,7 +3,12 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;

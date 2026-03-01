@@ -25,4 +25,23 @@ jvm_library(
     "//platform/core-impl",
   ]
 )
+
+jvm_library(
+  name = "xml_test_lib",
+  module_name = "intellij.spellchecker.xml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":xml",
+    "//platform/core-api:core_test_lib",
+    "//spellchecker:spellchecker_test_lib",
+    "//xml/dom-openapi:dom_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//xml/impl:impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.spellchecker.xml` end

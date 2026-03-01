@@ -8,7 +8,11 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl {

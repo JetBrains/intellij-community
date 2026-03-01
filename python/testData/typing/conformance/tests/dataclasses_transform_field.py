@@ -47,7 +47,7 @@ def field2(*, init: bool = False, kw_only: bool = True) -> Any:
 
 @dataclass_transform(kw_only_default=True, field_specifiers=(field1, field2))
 def create_model(*, init: bool = True) -> Callable[[type[T]], type[T]]:
-    ...
+    raise NotImplementedError
 
 
 @create_model()

@@ -19,7 +19,11 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.validOrNull
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiPlainText
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES

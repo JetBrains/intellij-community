@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.scripting.gradleJava
 
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.scripting.KOTLIN_SCRIPTING_PLUGIN_ID
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import java.io.File

@@ -9,14 +9,25 @@ import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle.message
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassInitializer
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UObjectLiteralExpression
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getContainingUMethod
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.resolveToUElement
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
 private val runReadActionMethods: CallMatcher = CallMatcher.anyOf(
   CallMatcher.instanceCall("com.intellij.openapi.application.Application", "runReadAction", "runWriteIntentReadAction"),
-  CallMatcher.staticCall("com.intellij.openapi.application.ActionsKt", "runReadAction"),
-  CallMatcher.staticCall("com.intellij.openapi.application.ReadAction", "compute", "computeCancellable", "run"),
+  CallMatcher.staticCall("com.intellij.openapi.application.ActionsKt", "runReadAction", "runReadActionBlocking"),
+  CallMatcher.staticCall("com.intellij.openapi.application.ReadAction", "compute", "computeBlocking", "computeCancellable", "run", "runBlocking"),
   CallMatcher.instanceCall("com.intellij.openapi.application.ReadAction", "execute"),
   CallMatcher.instanceCall("com.intellij.openapi.application.NonBlockingReadAction", "executeSynchronously"), // no submit
 )

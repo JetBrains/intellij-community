@@ -2,8 +2,15 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;

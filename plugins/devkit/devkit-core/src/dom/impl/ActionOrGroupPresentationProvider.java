@@ -25,7 +25,7 @@ import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UastContextKt;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ActionOrGroupPresentationProvider extends PresentationProvider<ActionOrGroup> {
 

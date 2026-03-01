@@ -5,7 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker.reportUnavailability
-import org.apache.maven.wrapper.*
+import org.apache.maven.wrapper.DefaultDownloader
+import org.apache.maven.wrapper.Downloader
+import org.apache.maven.wrapper.Installer
+import org.apache.maven.wrapper.PathAssembler
+import org.apache.maven.wrapper.WrapperConfiguration
 import org.jetbrains.idea.maven.project.BundledMaven3
 import org.jetbrains.idea.maven.project.MavenInSpecificPath
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent

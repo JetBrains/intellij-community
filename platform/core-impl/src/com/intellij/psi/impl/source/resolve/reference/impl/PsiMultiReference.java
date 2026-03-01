@@ -4,13 +4,23 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class PsiMultiReference implements PsiPolyVariantReference {
   public static final Comparator<PsiReference> COMPARATOR = (ref1, ref2) -> {

@@ -24,6 +24,9 @@ interface PathsProvider {
   val configFolder: File
     get() = launcherFolder.resolve("config")
 
+  val configBackupFolder: File
+    get() = launcherFolder.resolve("config-backup")
+
   val systemFolder: File
     get() = launcherFolder.resolve("system")
 

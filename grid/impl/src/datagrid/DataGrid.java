@@ -23,7 +23,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.MouseListener;
 import java.util.Comparator;
 import java.util.List;

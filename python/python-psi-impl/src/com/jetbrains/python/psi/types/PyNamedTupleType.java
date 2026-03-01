@@ -11,13 +11,24 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 
 public class PyNamedTupleType extends PyTupleType implements PyCallableType {
@@ -164,6 +175,12 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     return isCallable()
            ? ContainerUtil.map(myFields.entrySet(), field -> fieldToCallableParameter(field.getKey(), field.getValue()))
            : null;
+  }
+
+  @Override
+  public @Nullable PyCallableParameterVariadicType getParametersType(@NotNull TypeEvalContext context) {
+    List<PyCallableParameter> parameters = getParameters(context);
+    return parameters != null ? new PyCallableParameterListTypeImpl(parameters) : null;
   }
 
   public boolean isTyped() {

@@ -4,19 +4,17 @@ package com.intellij.polySymbols.html.attributes
 import com.intellij.documentation.mdn.MdnSymbolDocumentation
 import com.intellij.documentation.mdn.getHtmlApiNamespace
 import com.intellij.documentation.mdn.getHtmlMdnAttributeDocumentation
-import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
-import com.intellij.polySymbols.PolySymbolOrigin
-import com.intellij.polySymbols.PolySymbolProperty
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
-import com.intellij.polySymbols.html.PROP_HTML_ATTRIBUTE_VALUE
+import com.intellij.polySymbols.html.HtmlAttributeValueProperty
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.psi.PsiElement
@@ -48,20 +46,17 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
   override val project: Project?
     get() = tag?.project ?: descriptor.declaration?.project
 
-  override val qualifiedKind: PolySymbolQualifiedKind
+  override val kind: PolySymbolKind
     get() = HTML_ATTRIBUTES
 
   override val name: String = descriptor.name
-
-  override val origin: PolySymbolOrigin
-    get() = PolySymbolOrigin.Companion.empty()
 
   override val priority: PolySymbol.Priority
     get() = PolySymbol.Priority.LOW
 
   override val modifiers: Set<PolySymbolModifier>
     get() = setOf(
-      if (descriptor.isRequired) PolySymbolModifier.Companion.REQUIRED else PolySymbolModifier.Companion.OPTIONAL,
+      if (descriptor.isRequired) PolySymbolModifier.REQUIRED else PolySymbolModifier.OPTIONAL,
     )
 
   override val defaultValue: String?
@@ -70,10 +65,11 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
   override val source: PsiElement?
     get() = descriptor.declaration
 
+  @PolySymbol.Property(HtmlAttributeValueProperty::class)
   val attributeValue: PolySymbolHtmlAttributeValue
     get() {
       val isBooleanAttribute = HtmlUtil.isBooleanAttribute(descriptor, null)
-      return PolySymbolHtmlAttributeValue.Companion.create(
+      return PolySymbolHtmlAttributeValue.create(
         null,
         when {
           isBooleanAttribute -> PolySymbolHtmlAttributeValue.Type.BOOLEAN
@@ -86,18 +82,12 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
       )
     }
 
-  override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
-    when (property) {
-      PROP_HTML_ATTRIBUTE_VALUE -> property.tryCast(attributeValue)
-      else -> super.get(property)
-    }
-
   override fun getSymbols(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
-    if (qualifiedKind == HTML_ATTRIBUTE_VALUES && descriptor.isEnumerated)
+    if (kind == HTML_ATTRIBUTE_VALUES && descriptor.isEnumerated)
       descriptor.enumeratedValues?.map { HtmlAttributeValueSymbol(it) } ?: emptyList()
     else
       emptyList()
@@ -129,10 +119,8 @@ internal class HtmlAttributeDescriptorBasedSymbol private constructor(
 
 
   private class HtmlAttributeValueSymbol(override val name: @NlsSafe String) : PolySymbol {
-    override val origin: PolySymbolOrigin
-      get() = PolySymbolOrigin.empty()
 
-    override val qualifiedKind: PolySymbolQualifiedKind
+    override val kind: PolySymbolKind
       get() = HTML_ATTRIBUTE_VALUES
 
     override fun createPointer(): Pointer<HtmlAttributeValueSymbol> =

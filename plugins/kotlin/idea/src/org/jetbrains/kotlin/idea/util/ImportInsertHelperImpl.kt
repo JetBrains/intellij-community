@@ -7,7 +7,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilityUtils
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.core.targetDescriptors
@@ -21,19 +34,36 @@ import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtImportList
+import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.scopes.*
-import org.jetbrains.kotlin.resolve.scopes.utils.*
+import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
+import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
+import org.jetbrains.kotlin.resolve.scopes.LexicalScope
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
+import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
+import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
+import org.jetbrains.kotlin.resolve.scopes.utils.findFunction
+import org.jetbrains.kotlin.resolve.scopes.utils.findPackage
+import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
+import org.jetbrains.kotlin.resolve.scopes.utils.processForMeAndParent
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport as _addImport
 
+@K1Deprecation
 class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper() {
     private fun getCodeStyleSettings(contextFile: KtFile): KotlinCodeStyleSettings = contextFile.kotlinCustomSettings
 

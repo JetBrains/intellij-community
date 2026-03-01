@@ -2,7 +2,20 @@
 package com.intellij.psi.scope.processor;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -88,8 +101,9 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
   protected @NotNull MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
                                                              boolean staticProblem, boolean accessible, boolean varargs) {
+    PsiType[] arguments = method.hasTypeParameters() ? getTypeArguments() : PsiType.EMPTY_ARRAY;
     return new VarargsAwareMethodCandidateInfo(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,
-                                               getTypeArguments(), getLanguageLevel(), varargs);
+                                               arguments, getLanguageLevel(), varargs);
   }
 
   private static PsiType @NotNull [] getExpressionTypes(@NotNull PsiExpressionList argumentList) {

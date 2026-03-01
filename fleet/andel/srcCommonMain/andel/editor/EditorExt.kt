@@ -7,7 +7,6 @@ import andel.text.charSequence
 import andel.text.line
 import andel.text.lineEndOffset
 import fleet.util.normalizeLineEndings
-import kotlin.collections.ArrayList
 
 val MutableEditor.carets: List<Caret> get() = multiCaret.carets
 val MutableEditor.primaryCaret: Caret get() = multiCaret.primaryCaret

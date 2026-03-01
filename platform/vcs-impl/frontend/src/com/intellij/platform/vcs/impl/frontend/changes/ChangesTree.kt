@@ -7,21 +7,21 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 import com.intellij.openapi.project.Project
-import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.Processor
-import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangesBrowserNode
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangesBrowserRootNode
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangesTreeFrontendCellRenderer
+import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.Processor
+import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_ENTER
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.Enumeration
 
 
 /*

@@ -3,7 +3,12 @@ package com.jetbrains.python.configuration
 
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.not
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.plus
 import com.jetbrains.python.createPromoPanel
 import javax.swing.JPanel
 

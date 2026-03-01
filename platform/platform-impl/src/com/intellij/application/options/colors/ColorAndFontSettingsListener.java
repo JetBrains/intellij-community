@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.editor.colors.FontPreferences;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -9,6 +10,7 @@ import java.util.EventListener;
 public interface ColorAndFontSettingsListener extends EventListener {
   void selectedOptionChanged(@NotNull Object selected);
   void schemeChanged(@NotNull Object source);
+  default void schemeReset(@NotNull FontPreferences fontPreferences) {}
   void settingsChanged();
   void selectionInPreviewChanged(@NotNull String typeToSelect);
 

@@ -6,6 +6,7 @@
 // ACTION: Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'
 // ACTION: Opt in for 'MyExperimentalAPI' on 'bar'
 // ACTION: Opt in for 'MyExperimentalAPI' on containing class 'Inner'
+// ACTION: Opt in for 'MyExperimentalAPI' on statement
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to 'bar'
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Inner'
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'

@@ -11,7 +11,7 @@ import training.util.getLearnToolWindowForProject
 import training.util.getNextLessonForCurrent
 import training.util.lessonOpenedInProject
 
-private class NextLessonAction : AnAction() {
+internal class NextLessonAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (getLearnToolWindowForProject(project) == null) return

@@ -18,9 +18,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Font;
 
 public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer {
   private static final Logger LOG = Logger.getInstance(ColoredTreeCellRenderer.class);

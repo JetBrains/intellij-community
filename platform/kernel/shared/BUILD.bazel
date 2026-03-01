@@ -29,4 +29,28 @@ jvm_library(
     "//fleet/kernel",
   ]
 )
+
+jvm_library(
+  name = "kernel_test_lib",
+  module_name = "intellij.platform.kernel",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/kernel/rpc",
+    "//platform/kernel/rpc:rpc_test_lib",
+    "//fleet/kernel",
+    "//fleet/kernel:kernel_test_lib",
+  ],
+  runtime_deps = [
+    ":kernel",
+    "//platform/kernel/rpc:rpc_test_lib",
+    "//fleet/kernel:kernel_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/kernel/pasta:pasta_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.kernel` end

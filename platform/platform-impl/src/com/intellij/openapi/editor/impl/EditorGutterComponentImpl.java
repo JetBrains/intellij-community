@@ -33,14 +33,38 @@ import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.EditorGutterAction;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.EditorThreading;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.GutterMarkPreprocessor;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.LineNumberConverter;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -48,7 +72,14 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.MarkupIterator;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent;
@@ -56,7 +87,13 @@ import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineComponent;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
+import com.intellij.openapi.editor.markup.GutterDraggableObject;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.LineMarkerRenderer;
+import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.EditorCompositeKt;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -69,7 +106,13 @@ import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -77,8 +120,15 @@ import com.intellij.platform.ide.core.permissions.Permission;
 import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.*;
 import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DirtyUI;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.hover.HoverStateListener;
 import com.intellij.ui.paint.LinePainter2D;
@@ -88,13 +138,27 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.*;
+import com.intellij.util.BitUtil;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.IconUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.JBValue.JBValueGroup;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import it.unimi.dsi.fastutil.ints.Int2IntRBTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -102,22 +166,52 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -173,17 +267,19 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   static final JBValue EMPTY_ANNOTATION_AREA_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.emptyAnnotationAreaWidth());
   static final JBValue GAP_AFTER_LINE_NUMBERS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterLineNumbersWidth());
   private static final JBValue GAP_AFTER_ICONS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterIconsWidth());
+  private static final JBValue INTER_LINE_SHIFT_AMOUNT = JBVG.value(3);
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
 
   private ClickInfo myLastActionableClick;
   private final @NotNull EditorImpl myEditor;
+  private final @NotNull DocumentEx myDocument;
   private final FoldingAnchorsOverlayStrategy myAnchorDisplayStrategy;
   private @Nullable Int2ObjectMap<List<GutterMark>> myLineToGutterRenderers;
   private boolean myLineToGutterRenderersCacheForLogicalLines;
   private boolean myHasInlaysWithGutterIcons;
   private int myStartIconAreaWidth = ExperimentalUI.isNewUI() ? 0 : START_ICON_AREA_WIDTH.get();
   private int myIconsAreaWidth;
-  int myLineNumberAreaWidth = getInitialLineNumberWidth();
+  int myLineNumberAreaWidth = getInitialLineNumberWidth(false);
   int myAdditionalLineNumberAreaWidth;
   private @NotNull List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
   int myTextAnnotationGuttersSize;
@@ -213,6 +309,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
     if (isShowing()) repaint();
   });
+  private @Nullable InterLineShiftAnimator myCurrentInterLineAnimator = null;
   private boolean myHovered = false;
   private final @NotNull EventDispatcher<EditorGutterListener> myEditorGutterListeners = EventDispatcher.create(EditorGutterListener.class);
   private int myHoveredFreeMarkersLine = -1;
@@ -221,6 +318,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
+    myDocument = editor.getUiDocument();
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       installDnD();
     }
@@ -298,7 +396,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
             int line = convertPointToLineNumber(e.getPoint());
             if (line != -1) {
               e.setDropPossible(true);
-              e.setCursor(draggableObject.getCursor(line, myEditor.getVirtualFile(), e.getAction().getActionId()));
+              WriteIntentReadAction.run(() -> {
+                e.setCursor(draggableObject.getCursor(line, myEditor.getVirtualFile(), e.getAction().getActionId()));
+              });
             }
           }
         }
@@ -308,7 +408,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
             int line = convertPointToLineNumber(e.getPoint());
             if (line != -1) {
               e.setDropPossible(true);
-              myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getLineStartOffset(line));
+              myEditor.getCaretModel().moveToOffset(myDocument.getLineStartOffset(line));
             }
           }
         }
@@ -396,6 +496,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         g.fillRect(clip.x, clip.y, clip.width, clip.height);
         return;
       }
+
+      updateInterLineShiftState();
 
       AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
       if (old != null) {
@@ -609,6 +711,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
               y = viewportStartY + lineHeight;
             }
 
+            int visualLine = visLinesIterator.getVisualLine();
+            y += getInterLineShiftForVisualLine(visualLine);
+
             if (paintText || logicalLine == -1) {
               logicalLine = visLinesIterator.getDisplayedLogicalLine();
               bg = gutterProvider.getBgColor(logicalLine, myEditor);
@@ -806,6 +911,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
                 y = viewportStartY;
               }
             }
+
+            int visualLine = visLinesIterator.getVisualLine();
+            int yShifted = y + getInterLineShiftForVisualLine(visualLine);
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
               g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
@@ -829,7 +937,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
                              ((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS)
                 .findFirst();
               if (breakpoint.isPresent()) {
-                iconOnTheLine = breakpoint.get().getIcon();
+                // Don't suppress line number if the icon is positioned between lines
+                GutterIconRenderer renderer = (GutterIconRenderer)breakpoint.get();
+                if (renderer.getVerticalAlignment() != GutterIconRenderer.VerticalAlignment.BETWEEN_LINES) {
+                  iconOnTheLine = breakpoint.get().getIcon();
+                }
               }
               if ((myAlphaContext.isVisible() || isGutterContextMenuShown()) &&
                   Objects.equals(getClientProperty("active.line.number"), logicalLine)) {
@@ -844,19 +956,28 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
               iconOnTheLine = null;
             }
 
-            if (iconOnTheLine == null && hoverIcon == null) {
+            Boolean isBetweenLines = (Boolean) getClientProperty("line.number.hover.between.lines");
+            boolean hoverIconBetweenLines = hoverIcon != null && isBetweenLines != null && isBetweenLines;
+
+            // Draw line number if no icon is on the line (inter-line hover icons don't suppress line numbers)
+            if (iconOnTheLine == null && (hoverIcon == null || hoverIconBetweenLines)) {
               int textOffset = isMirrored() ?
                                offset - getLineNumberAreaWidth() - 1 :
                                offset - FontLayoutService.getInstance().stringWidth(g.getFontMetrics(), lineToDisplay);
 
-              g.drawString(lineToDisplay, textOffset, y + myEditor.getAscent());
+              g.drawString(lineToDisplay, textOffset, yShifted + myEditor.getAscent());
             }
-            else if (hoverIcon != null && iconOnTheLine == null) {
+
+            // Draw hover icon if present
+            if (hoverIcon != null && iconOnTheLine == null) {
               Icon icon = scaleIcon(hoverIcon);
               int iconX = offset - icon.getIconWidth();
-              int iconY = y + (visLinesIterator.getLineHeight() - icon.getIconHeight()) / 2;
+
               float alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f);
-              alpha = Math.max(0, Math.min(alpha, 1));
+              alpha = Math.clamp(alpha, 0, 1);
+              int iconY = hoverIconBetweenLines
+                          ? y - icon.getIconHeight() / 2
+                          : yShifted + (visLinesIterator.getLineHeight() - icon.getIconHeight()) / 2;
               GraphicsUtil.paintWithAlpha(g, alpha, () -> icon.paintIcon(this, g, iconX, iconY));
             }
           }
@@ -870,7 +991,103 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private int endLineNumber() {
-    return Math.max(0, myEditor.getDocument().getLineCount() - 1);
+    return Math.max(0, myDocument.getLineCount() - 1);
+  }
+
+  /**
+   * Updates the inter-line shift state based on current client properties.
+   * Should be called when hover state changes.
+   */
+  void updateInterLineShiftState() {
+    Object activeLine = getClientProperty("active.line.number");
+
+    if (!(activeLine instanceof Integer)) {
+      stopCurrentAnimator();
+      return;
+    }
+
+    InterLineBreakpointConfiguration configuration =
+      InterLineBreakpointConfigurationProvider.findConfigurationForLine(myEditor, (Integer)activeLine);
+    if (configuration == null || configuration.getAnimator() == null) {
+      stopCurrentAnimator();
+      return;
+    }
+
+    Boolean isBetweenLines = (Boolean)getClientProperty("line.number.hover.between.lines");
+
+    if (isBetweenLines == null || !isBetweenLines) {
+      stopCurrentAnimator();
+      return;
+    }
+
+    InterLineShiftAnimator animator = configuration.getAnimator();
+    myCurrentInterLineAnimator = animator;
+
+    int visualLineBelow = myEditor.logicalToVisualPosition(new LogicalPosition((int)activeLine, 0)).line;
+    int visualLineAbove = visualLineBelow > 0 ? visualLineBelow - 1 : -1;
+
+    int targetShift = calculateInterLineShiftAmount(visualLineAbove, visualLineBelow);
+    if (targetShift > 0) {
+      animator.startShift(visualLineAbove, visualLineBelow, targetShift);
+    }
+    else {
+      animator.stopShift();
+    }
+  }
+
+  private void stopCurrentAnimator() {
+    InterLineShiftAnimator animator = myCurrentInterLineAnimator;
+    if (animator != null) {
+      animator.stopShift();
+      myCurrentInterLineAnimator = null;
+    }
+  }
+
+  /**
+   * Calculates the target shift amount for inter-line expansion.
+   * Returns 0 if no shift is needed (e.g., there's already enough space from block inlays).
+   *
+   * @param visualLineAbove the visual line above the gap (-1 if none)
+   * @param visualLineBelow the visual line below the gap (-1 if none)
+   * @return the shift amount in pixels, or 0 if no shift is needed
+   */
+  private int calculateInterLineShiftAmount(int visualLineAbove, int visualLineBelow) {
+    int lineHeight = myEditor.getLineHeight();
+
+    if (visualLineAbove < 0 && visualLineBelow < 0) {
+      return 0;
+    }
+
+    int extraSpace = 0;
+    if (visualLineBelow >= 0) {
+      VisualLinesIterator iterator = new VisualLinesIterator(myEditor, visualLineBelow);
+      if (!iterator.atEnd()) {
+        for (Inlay<?> inlay : iterator.getBlockInlaysAbove()) {
+          extraSpace += inlay.getHeightInPixels();
+        }
+      }
+    }
+
+    if (extraSpace >= lineHeight * 1.5) {
+      return 0;
+    }
+
+    // Calculate shift amount based on JBUI-scaled constant
+    // Ensure the shift doesn't cause overlap with adjacent lines
+    int baseShift = INTER_LINE_SHIFT_AMOUNT.get();
+
+    int maxShift = lineHeight / 4;
+    return Math.min(baseShift, maxShift);
+  }
+
+  /**
+   * Gets the vertical shift offset for a given visual line.
+   * Negative values mean shift up, positive values mean shift down.
+   * Returns 0 if no animator is active (inter-line feature disabled).
+   */
+  int getInterLineShiftForVisualLine(int visualLine) {
+    InterLineShiftAnimator animator = myCurrentInterLineAnimator;
+    return animator != null ? animator.getShiftForVisualLine(visualLine) : 0;
   }
 
   @Override
@@ -946,7 +1163,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   private int calcAnnotationsSize() {
     myGapAfterAnnotations = false;
-    int lineCount = Math.max(myEditor.getDocument().getLineCount(), 1);
+    int lineCount = Math.max(myDocument.getLineCount(), 1);
     myTextAnnotationGutterProviders.replaceAll(info -> {
       TextAnnotationGutterProvider gutterProvider = info.provider();
       int gutterSize = 0;
@@ -1025,7 +1242,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   private @NotNull Int2ObjectMap<List<GutterMark>> buildGutterRenderersCache() {
     myLineToGutterRenderersCacheForLogicalLines = logicalLinesMatchVisualOnes();
     Int2ObjectMap<List<GutterMark>> lineToGutterRenderers = new Int2ObjectOpenHashMap<>();
-    processGutterRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
+    processGutterRangeHighlighters(0, myDocument.getTextLength(), highlighter -> {
       GutterMark renderer = highlighter.getGutterIconRenderer();
       if (shouldBeShown(renderer) && isHighlighterVisible(highlighter)) {
         int line = myEditor.offsetToVisualLine(highlighter.getStartOffset());
@@ -1079,7 +1296,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     myRightFreePaintersAreaShown = myRightFreePaintersAreaState == EditorGutterFreePainterAreaState.SHOW;
 
     if (leftPainterOnDemand || rightPainterOnDemand) {
-      processGutterRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
+      processGutterRangeHighlighters(0, myDocument.getTextLength(), highlighter -> {
         LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
         if (lineMarkerRenderer != null) {
           LineMarkerRendererEx.Position position = getLineMarkerPosition(lineMarkerRenderer);
@@ -1113,7 +1330,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     }
 
     myHasInlaysWithGutterIcons = false;
-    myEditor.getInlayModel().getBlockElementsInRange(0, myEditor.getDocument().getTextLength()).forEach(inlay -> {
+    myEditor.getInlayModel().getBlockElementsInRange(0, myDocument.getTextLength()).forEach(inlay -> {
       GutterIconRenderer iconRenderer = inlay.getGutterIconRenderer();
       if (shouldBeShown(iconRenderer) && checkDumbAware(iconRenderer) && !EditorUtil.isInlayFolded(inlay)) {
         Icon icon = scaleIcon(iconRenderer.getIcon());
@@ -1370,10 +1587,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     int startOffset = highlighter.getStartOffset();
     int endOffset = highlighter.getEndOffset();
 
-    int startY = myEditor.visualLineToY(myEditor.offsetToVisualLine(startOffset));
-    int visualLine = myEditor.offsetToVisualLine(endOffset);
-    int blockInlaysBelowHeight = EditorUtil.getInlaysHeight(myEditor, visualLine, false);
-    int endY = myEditor.visualLineToYRange(visualLine)[1] + blockInlaysBelowHeight;
+    int startVisualLine = myEditor.offsetToVisualLine(startOffset);
+    int endVisualLine = myEditor.offsetToVisualLine(endOffset);
+
+    int startY = myEditor.visualLineToY(startVisualLine);
+    int blockInlaysBelowHeight = EditorUtil.getInlaysHeight(myEditor, endVisualLine, false);
+    int endY = myEditor.visualLineToYRange(endVisualLine)[1] + blockInlaysBelowHeight;
+
+    int startShift = getInterLineShiftForVisualLine(startVisualLine);
+    int endShift = getInterLineShiftForVisualLine(endVisualLine);
+    startY += startShift;
+    endY += endShift;
 
     LineMarkerRenderer renderer = Objects.requireNonNull(highlighter.getLineMarkerRenderer());
     LineMarkerRendererEx.Position position = getLineMarkerPosition(renderer);
@@ -1413,9 +1637,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     processIconsRowForY(myEditor.visualLineToY(line), row, processor);
   }
 
-  // y should be equal to visualLineToY(visualLine)
   private void processIconsRowForY(int y, @NotNull List<? extends GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
     if (row.isEmpty()) return;
+
+    int visualLine = myEditor.yToVisualLine(y);
+    int interLineShift = getInterLineShiftForVisualLine(visualLine);
+    int shiftedY = y + interLineShift;
+
     int middleCount = 0;
     int middleSize = 0;
     int x = getIconAreaOffset() + 2;
@@ -1429,15 +1657,24 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       }
       switch (alignment) {
         case LEFT -> {
-          processor.process(x, y + getTextAlignmentShift(icon), r);
+          processor.process(x, shiftedY + getTextAlignmentShift(icon), r);
           x += icon.getIconWidth() + getGapBetweenIcons();
         }
         case CENTER -> {
           middleCount++;
           middleSize += icon.getIconWidth() + getGapBetweenIcons();
         }
-        case LINE_NUMBERS -> processor.process(getLineNumberAreaOffset() + getLineNumberAreaWidth() - icon.getIconWidth(),
-                                               y + getTextAlignmentShift(icon), r);
+        case LINE_NUMBERS -> {
+          int iconX = getLineNumberAreaOffset() + getLineNumberAreaWidth() - icon.getIconWidth();
+          int iconY = shiftedY + getTextAlignmentShift(icon);
+          // Check if the icon should be positioned between lines
+          GutterIconRenderer renderer = (GutterIconRenderer)r;
+          if (renderer.getVerticalAlignment() == GutterIconRenderer.VerticalAlignment.BETWEEN_LINES) {
+            // BETWEEN_LINES icons should NOT be shifted - they stay at the boundary
+            iconY = computeBetweenLinesIconY(visualLine, y, icon);
+          }
+          processor.process(iconX, iconY, r);
+        }
       }
     }
 
@@ -1449,7 +1686,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       if (((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.RIGHT) {
         Icon icon = scaleIcon(r.getIcon());
         x -= icon.getIconWidth();
-        processor.process(x, y + getTextAlignmentShift(icon), r);
+        processor.process(x, shiftedY + getTextAlignmentShift(icon), r);
         x -= getGapBetweenIcons();
       }
     }
@@ -1463,7 +1700,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         if (!checkDumbAware(r)) continue;
         if (((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.CENTER) {
           Icon icon = scaleIcon(r.getIcon());
-          processor.process(x, y + getTextAlignmentShift(icon), r);
+          processor.process(x, shiftedY + getTextAlignmentShift(icon), r);
           x += icon.getIconWidth() + getGapBetweenIcons();
         }
       }
@@ -1478,6 +1715,27 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     int centerRelative = (myEditor.getLineHeight() - icon.getIconHeight()) / 2;
     int baselineRelative = myEditor.getAscent() - icon.getIconHeight();
     return Math.max(centerRelative, baselineRelative);
+  }
+
+  /**
+   * Computes the Y position for a BETWEEN_LINES icon.
+   * If there are above-line inlays, the icon is centered in the inlay area.
+   * Otherwise, it's positioned at the top boundary of the line.
+   */
+  private int computeBetweenLinesIconY(int visualLine, int lineY, @NotNull Icon icon) {
+    List<Inlay<?>> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(visualLine, true);
+    if (!inlays.isEmpty()) {
+      int totalInlayHeight = 0;
+      for (Inlay<?> inlay : inlays) {
+        totalInlayHeight += inlay.getHeightInPixels();
+      }
+      // Position the icon centered in the inlay area
+      int inlayAreaTop = lineY - totalInlayHeight;
+      int inlayAreaCenter = inlayAreaTop + totalInlayHeight / 2;
+      return inlayAreaCenter - icon.getIconHeight() / 2;
+    }
+    // No inlays - position at the top boundary of the line
+    return lineY - icon.getIconHeight() / 2;
   }
 
   private @NotNull Color getOutlineColor(boolean isActive) {
@@ -1594,11 +1852,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private int getLineCenterY(int line) {
-    return myEditor.visualLineToY(line) + myEditor.getLineHeight() / 2;
+    int baseY = myEditor.visualLineToY(line) + myEditor.getLineHeight() / 2;
+    return baseY + getInterLineShiftForVisualLine(line);
   }
 
   private double getFoldAnchorY(int line, double width) {
-    return myEditor.visualLineToY(line) + myEditor.getAscent() - width;
+    double baseY = myEditor.visualLineToY(line) + myEditor.getAscent() - width;
+    return baseY + getInterLineShiftForVisualLine(line);
   }
 
   private void drawFoldingAnchor(@NotNull Graphics2D g, double width, @NotNull Rectangle clip, int visualLine,
@@ -1714,7 +1974,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private int getFoldingIconY(int visualLine, @NotNull Icon icon) {
-    return (int)(myEditor.visualLineToY(visualLine) + (myEditor.getLineHeight() - icon.getIconHeight()) / 2f + 0.5f);
+    int baseY = (int)(myEditor.visualLineToY(visualLine) + (myEditor.getLineHeight() - icon.getIconHeight()) / 2f + 0.5f);
+    return baseY + getInterLineShiftForVisualLine(visualLine);
   }
 
   /**
@@ -1847,7 +2108,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     }
     if (ExperimentalUI.isNewUI() && isRealEditor()) {
       //todo[kb] recalculate gutters renderers and return 0 if there are none in EditorMouseEventArea.LINE_NUMBERS_AREA
-      return JBUI.scale(14);
+      return scaleWithEditor(14);
     }
     return 0;
   }
@@ -2020,9 +2281,19 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       TextAnnotationGutterProvider provider = getProviderAtPoint(point);
       String toolTip = null;
       if (provider == null) {
-        ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
-        if (lineRenderer != null) {
-          toolTip = lineRenderer.getTooltipText();
+        // Check for line number hover tooltip first
+        Object hoverIcon = getClientProperty("line.number.hover.icon");
+        if (hoverIcon instanceof Icon && getClientProperty("active.line.number") != null) {
+          Object hoverTooltip = getClientProperty("line.number.hover.tooltip");
+          if (hoverTooltip instanceof String) {
+            toolTip = (String) hoverTooltip;
+          }
+        }
+        else {
+          ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
+          if (lineRenderer != null) {
+            toolTip = lineRenderer.getTooltipText();
+          }
         }
       }
       else {
@@ -2173,6 +2444,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       if (renderer.isNavigateAction()) {
         return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
       }
+      if (renderer.getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS && renderer.getClickAction() != null) {
+        return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+      }
     }
 
     ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
@@ -2242,7 +2516,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       if (action != null) {
         int line = getLineNumAtPoint(clickPoint);
 
-        if (line >= 0 && line < myEditor.getDocument().getLineCount() && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED)) {
+        if (line >= 0 && line < myDocument.getLineCount() && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED)) {
           UIEventLogger.EditorAnnotationClicked.log(myEditor.getProject(), provider.getClass());
           action.doAction(line);
         }
@@ -2354,14 +2628,18 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   private boolean isDumbMode() {
     Project project = myEditor.getProject();
-    return project != null && !project.isDisposed() && DumbService.isDumb(project);
+    if (project == null || project.isDisposed()) {
+      return true;
+    }
+    return DumbService.isDumb(project);
   }
 
   private boolean checkDumbAware(@NotNull Object possiblyDumbAware) {
     Project project = myEditor.getProject();
-    return project == null
-           ? DumbService.isDumbAware(possiblyDumbAware)
-           : DumbService.getInstance(project).isUsableInCurrentContext(possiblyDumbAware);
+    if (project == null || project.isDisposed()) {
+      return DumbService.isDumbAware(possiblyDumbAware);
+    }
+    return DumbService.getInstance(project).isUsableInCurrentContext(possiblyDumbAware);
   }
 
   private void notifyNotDumbAware() {
@@ -2728,7 +3006,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private int convertPointToLineNumber(@NotNull Point p) {
-    DocumentEx document = myEditor.getDocument();
+    DocumentEx document = myDocument;
     int line = EditorUtil.yPositionToLogicalLine(myEditor, p);
     if (!DocumentUtil.isValidLine(line, document)) return -1;
 
@@ -2770,6 +3048,25 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         result[0].visualLine = line;
       }
       return result[0];
+    }
+    // Check for BETWEEN_LINES positioned LINE_NUMBERS icons
+    List<GutterMark> renderers = getGutterRenderers(line);
+    for (GutterMark r : renderers) {
+      if (r instanceof GutterIconRenderer renderer &&
+          renderer.getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS &&
+          renderer.getVerticalAlignment() == GutterIconRenderer.VerticalAlignment.BETWEEN_LINES) {
+        Icon icon = scaleIcon(renderer.getIcon());
+        int iconX = getLineNumberAreaOffset() + getLineNumberAreaWidth() - icon.getIconWidth();
+        int iconY = computeBetweenLinesIconY(line, yRange[0], icon);
+        int iconCenterY = iconY + icon.getIconHeight() / 2;
+
+        if (cX >= iconX && cX <= iconX + icon.getIconWidth() &&
+            p.y >= iconY && p.y <= iconY + icon.getIconHeight()) {
+          PointInfo info = new PointInfo(renderer, new Point(iconX + icon.getIconWidth() / 2, iconCenterY));
+          info.visualLine = line;
+          return info;
+        }
+      }
     }
     if (myHasInlaysWithGutterIcons) {
       if (p.y < yRange[0]) {
@@ -2873,10 +3170,20 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     }
   }
 
-  private static int getInitialLineNumberWidth() {
+  private int getInitialLineNumberWidth() {
+    return getInitialLineNumberWidth(true);
+  }
+
+  private int getInitialLineNumberWidth(boolean applyEditorScale) {
     if (ExperimentalUI.isNewUI()) {
       //have a placeholder for breakpoints
-      return JBUI.scale(12);
+      Icon breakpointIcon = AllIcons.Debugger.Db_set_breakpoint;
+      if (applyEditorScale) {
+        Icon scaledIcon = scaleIcon(breakpointIcon);
+        return scaledIcon.getIconWidth();
+      } else {
+        return breakpointIcon.getIconWidth();
+      }
     }
     return 0;
   }

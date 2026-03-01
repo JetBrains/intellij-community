@@ -11,19 +11,43 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_EXCEPTION;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_THROWABLE;
 
 final class CatchLookupElement extends LookupItem<PsiCatchSection> {
 

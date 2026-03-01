@@ -24,7 +24,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.withValue
 import com.intellij.openapi.util.removeUserData
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiManager

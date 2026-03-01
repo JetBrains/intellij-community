@@ -10,7 +10,7 @@ import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class CodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
 

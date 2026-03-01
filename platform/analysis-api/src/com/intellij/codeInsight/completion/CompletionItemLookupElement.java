@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -9,6 +9,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
@@ -35,7 +36,7 @@ public final class CompletionItemLookupElement extends LookupElement implements 
   private final ModCompletionItem item;
   private volatile @Nullable ModCommand myCachedCommand;
 
-  CompletionItemLookupElement(ModCompletionItem item) {
+  public CompletionItemLookupElement(ModCompletionItem item) {
     this.item = item;
   }
 
@@ -162,11 +163,15 @@ public final class CompletionItemLookupElement extends LookupElement implements 
         switch (onlyFragment.kind()) {
           case STRONG -> presentation.setItemTextBold(true);
           case EMPHASIZED -> presentation.setItemTextItalic(true);
+          case STRIKEOUT -> presentation.setStrikeout(true);
         }
       }
     }
     presentation.setIcon(itemPresentation.mainIcon());
-    presentation.setTailText(tailText + " (MC)", true);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      tailText += " (MC)";
+    }
+    presentation.setTailText(tailText, true);
     presentation.setTypeText(itemPresentation.detailText().toText(), itemPresentation.detailIcon());
   }
 
@@ -196,6 +201,6 @@ public final class CompletionItemLookupElement extends LookupElement implements 
 
   @Override
   public String toString() {
-    return "Adapter for " + item;
+    return "Adapter for: " + item;
   }
 }

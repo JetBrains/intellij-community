@@ -38,5 +38,6 @@
     <orderEntry type="module" module-name="intellij.platform.warmup" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
 </module>

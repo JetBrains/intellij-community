@@ -6,9 +6,21 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.actions.DisableHighlightingIntentionAction;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.IntentionActionWithOptions;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CustomSuppressableInspectionTool;
+import com.intellij.codeInspection.ExternalSourceProblemGroup;
+import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.SuppressIntentionActionFromFix;
+import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.codeInspection.SuppressableProblemGroup;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -26,7 +38,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -35,13 +51,18 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,14 +70,29 @@ import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Color;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -144,13 +180,13 @@ public class HighlightInfo implements Segment {
   private record OffsetStore(
     @Nullable RangeHighlighterEx highlighter,
     @Nullable("null means its fix range is the same as the range of #highlighter") RangeMarker fixMarker,
-    @NotNull @Unmodifiable List<IntentionActionDescriptor> intentionActionDescriptors,
-    @NotNull @Unmodifiable List<LazyFixDescription> lazyQuickFixes
+    @NotNull @Unmodifiable List<? extends IntentionActionDescriptor> intentionActionDescriptors,
+    @NotNull @Unmodifiable List<? extends LazyFixDescription> lazyQuickFixes
   ) {
-    @NotNull OffsetStore withLazyQuickFixes(@NotNull @Unmodifiable List<LazyFixDescription> newLazyQuickFixes) {
+    @NotNull OffsetStore withLazyQuickFixes(@NotNull @Unmodifiable List<? extends LazyFixDescription> newLazyQuickFixes) {
       return newLazyQuickFixes.equals(this.lazyQuickFixes()) ? this : new OffsetStore(highlighter(), fixMarker(), intentionActionDescriptors(), newLazyQuickFixes);
     }
-    @NotNull OffsetStore withIntentionDescriptorsAndFixMarker(@NotNull @Unmodifiable List<IntentionActionDescriptor> newIntentionDescriptors, @Nullable RangeMarker fixMarker) {
+    @NotNull OffsetStore withIntentionDescriptorsAndFixMarker(@NotNull @Unmodifiable List<? extends IntentionActionDescriptor> newIntentionDescriptors, @Nullable RangeMarker fixMarker) {
       return new OffsetStore(highlighter(), fixMarker, newIntentionDescriptors, lazyQuickFixes()); // fix ranges might be replaced with (albeit equal offsets) range markers
     }
     @NotNull OffsetStore withHighlighter(@NotNull RangeHighlighterEx highlighter) {
@@ -585,7 +621,7 @@ public class HighlightInfo implements Segment {
     OffsetStore store = offsetStore;
     RangeHighlighterEx highlighter = store.highlighter();
     if (highlighter != null) {
-      s += "; text='" + StringUtil.first(getText(), 40, true) + "'; highlighter: (" + highlighter.getStartOffset()+","+highlighter.getEndOffset()+")";
+      s += "; text='" + StringUtil.first(getText(), 40, true) + "'; highlighter: " + highlighter.debugOffsets();
       if (!highlighter.isValid()) {
         s+= " (invalid)";
       }
@@ -1061,7 +1097,7 @@ public class HighlightInfo implements Segment {
     public String toString() {
       String name = getAction().getFamilyName();
       return "IntentionActionDescriptor: '" + name + "' (" + ReportingClassSubstitutor.getClassToReport(getAction()) + ")"
-        + (myFixRange == null || myFixRange.getStartOffset() == myFixRange.getEndOffset() ? "" : "; fixRange: ("+myFixRange.getStartOffset()+", "+ myFixRange.getEndOffset()+": "+myFixRange.getClass()+")");
+        + (myFixRange == null || myFixRange.getStartOffset() == myFixRange.getEndOffset() ? "" : "; fixRange: "+TextRange.create(myFixRange)+": "+myFixRange.getClass()+")");
     }
 
     public @Nullable Icon getIcon() {
@@ -1135,7 +1171,7 @@ public class HighlightInfo implements Segment {
   }
 
   @ApiStatus.Internal
-  final void registerFixes(@NotNull List<@NotNull IntentionActionDescriptor> fixes, @Nullable Document document) {
+  final void registerFixes(@NotNull List<? extends @NotNull IntentionActionDescriptor> fixes, @Nullable Document document) {
     if (fixes.isEmpty()) {
       return;
     }
@@ -1174,7 +1210,7 @@ public class HighlightInfo implements Segment {
       RangeMarker fixMarker = oldStore.fixMarker();
       document = fixMarker != null ? fixMarker.getDocument() : highlighter != null ? highlighter.getDocument() : null;
     }
-    List<IntentionActionDescriptor> newDescriptors;
+    List<? extends IntentionActionDescriptor> newDescriptors;
     RangeMarker newFixMarker;
     if (document == null) {
       newDescriptors = oldStore.intentionActionDescriptors();
@@ -1227,9 +1263,7 @@ public class HighlightInfo implements Segment {
     OffsetStore store = offsetStore;
     RangeHighlighterEx highlighter = store.highlighter();
     if (highlighter == null || !highlighter.isValid()) return false;
-    int startOffset = highlighter.getStartOffset();
-    int endOffset = highlighter.getEndOffset();
-    if (startOffset <= offset && offset <= endOffset) {
+    if (highlighter.containsInclusive(offset)) {
       return true;
     }
     if (!includeFixRange) return false;
@@ -1255,16 +1289,16 @@ public class HighlightInfo implements Segment {
     updateOffsetStore(oldStore -> {
       long fixTextRange = TextRangeScalarUtil.coerceRange(getFixTextRangeScalar(oldStore), 0, document.getTextLength());
       RangeMarker newFixMarker = updateFixMarker(document, range2markerCache, fixTextRange, finalHighlighterRange);
-      List<IntentionActionDescriptor> newDescriptors = toRangeMarkerFixRanges(getIntentionActionDescriptors(oldStore), document, range2markerCache, fixTextRange);
+      List<? extends IntentionActionDescriptor> newDescriptors = toRangeMarkerFixRanges(getIntentionActionDescriptors(oldStore), document, range2markerCache, fixTextRange);
       return oldStore.withIntentionDescriptorsAndFixMarker(newDescriptors, newFixMarker);
     });
   }
 
   @Contract(pure = true)
-  private static @NotNull @Unmodifiable List<IntentionActionDescriptor> toRangeMarkerFixRanges(@NotNull List<IntentionActionDescriptor> descriptors,
-                                                                                               @NotNull Document document,
-                                                                                               @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
-                                                                                               long fixTextRange) {
+  private static @NotNull @Unmodifiable List<? extends IntentionActionDescriptor> toRangeMarkerFixRanges(@NotNull List<? extends IntentionActionDescriptor> descriptors,
+                                                                                                         @NotNull Document document,
+                                                                                                         @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                                                                                         long fixTextRange) {
     return ContainerUtil.map(descriptors, descriptor -> descriptor.withRangeMarkerFixRange(document, range2markerCache, fixTextRange));
   }
 
@@ -1335,7 +1369,7 @@ public class HighlightInfo implements Segment {
       }
       HighlightInfo newInfo = builder.createUnconditionally();
       OffsetStore oldStore = newInfo.offsetStore;
-      List<IntentionActionDescriptor> newDescriptors =
+      List<? extends IntentionActionDescriptor> newDescriptors =
         ContainerUtil.concat(ContainerUtil.map(infos, i -> ((HighlightInfo)i).offsetStore.intentionActionDescriptors()));
       OffsetStore newStore = oldStore.withIntentionDescriptorsAndFixMarker(newDescriptors, oldStore.fixMarker());
       if (anchorInfo.getHighlighter() != null) {
@@ -1403,14 +1437,14 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  final void computeQuickFixesSynchronously(@NotNull PsiFile psiFile, @NotNull Document document) throws ExecutionException, InterruptedException {
+  final void computeQuickFixesSynchronously(@NotNull Project project, @NotNull Document document) throws ExecutionException, InterruptedException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     // store results of computation here to avoid re-computing when the CAS fails, because it can be extremely expensive
     Map<Consumer<? super QuickFixActionRegistrar>, @NotNull List<IntentionActionDescriptor>> computerToResult = new IdentityHashMap<>();
     updateOffsetStore(oldStore -> {
-      List<LazyFixDescription> newLazies = ContainerUtil.map(oldStore.lazyQuickFixes(), desc -> {
+      List<? extends LazyFixDescription> newLazies = ContainerUtil.map(oldStore.lazyQuickFixes(), desc -> {
         Future<List<IntentionActionDescriptor>> future = desc.future();
         if (future != null && future.isDone()) {
           return desc;
@@ -1418,8 +1452,7 @@ public class HighlightInfo implements Segment {
         Consumer<? super QuickFixActionRegistrar> computer = desc.fixesComputer();
         // recompute only if necessary
         List<IntentionActionDescriptor> result =
-          computerToResult.computeIfAbsent(computer,
-            __ -> doComputeLazyQuickFixes(document, psiFile.getProject(), desc.psiModificationStamp(), computer));
+          computerToResult.computeIfAbsent(computer, __ -> doComputeLazyQuickFixes(document, project, desc.psiModificationStamp(), computer));
         assert result != null;
         future = CompletableFuture.completedFuture(result);
         return new LazyFixDescription(desc.fixesComputer(), desc.psiModificationStamp(), future);
@@ -1464,7 +1497,7 @@ public class HighlightInfo implements Segment {
     return lazyDescriptors;
   }
 
-  private static void assertIntentionActionDescriptorsAreRangeMarkerBased(@NotNull List<IntentionActionDescriptor> descriptors) {
+  private static void assertIntentionActionDescriptorsAreRangeMarkerBased(@NotNull List<? extends IntentionActionDescriptor> descriptors) {
     for (IntentionActionDescriptor descriptor : descriptors) {
       assert descriptor.myFixRange  == null || descriptor.myFixRange instanceof RangeMarker : descriptor +"; descriptors:"+descriptors;
     }
@@ -1500,8 +1533,8 @@ public class HighlightInfo implements Segment {
 
   final void copyComputedLazyFixesTo(@NotNull HighlightInfo newInfo, @NotNull Document document) {
     newInfo.updateOffsetStore(store -> {
-      List<LazyFixDescription> oldFixes = this.offsetStore.lazyQuickFixes();
-      List<LazyFixDescription> newFixes = store.lazyQuickFixes();
+      List<? extends LazyFixDescription> oldFixes = this.offsetStore.lazyQuickFixes();
+      List<? extends LazyFixDescription> newFixes = store.lazyQuickFixes();
       if (newFixes.size() == oldFixes.size() && psiModificationStampIsTheSame(newFixes, oldFixes)) {
         OffsetStore newO = store.withLazyQuickFixes(oldFixes);
         return updateFields(newO, document);
@@ -1510,8 +1543,8 @@ public class HighlightInfo implements Segment {
     });
   }
 
-  private static boolean psiModificationStampIsTheSame(@NotNull @Unmodifiable List<LazyFixDescription> list1,
-                                                       @NotNull @Unmodifiable List<LazyFixDescription> list2) {
+  private static boolean psiModificationStampIsTheSame(@NotNull @Unmodifiable List<? extends LazyFixDescription> list1,
+                                                       @NotNull @Unmodifiable List<? extends LazyFixDescription> list2) {
     for (int i = 0; i < list1.size(); i++) {
       LazyFixDescription fix1 = list1.get(i);
       LazyFixDescription fix2 = list2.get(i);

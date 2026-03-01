@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Map;
 
 /**

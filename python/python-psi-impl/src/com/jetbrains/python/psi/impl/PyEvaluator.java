@@ -26,7 +26,25 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFQDNNames;
 import com.jetbrains.python.nameResolver.NameResolverTools;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyBoolLiteralExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
@@ -35,7 +53,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * TODO: Merge PythonDataflowUtil and {@link PyEvaluator} and all its inheritors and improve Abstract Interpretation
@@ -267,16 +290,21 @@ public class PyEvaluator {
   }
 
   private @Nullable Object evaluatePrefix(@NotNull PyPrefixExpression expression) {
-    if (expression.getOperator() == PyTokenTypes.NOT_KEYWORD) {
+    PyElementType operator = expression.getOperator();
+    if (operator == PyTokenTypes.NOT_KEYWORD) {
       final Boolean value = PyUtil.as(evaluate(expression.getOperand()), Boolean.class);
       if (value != null) {
         return !value;
       }
     }
-    else if (expression.getOperator() == PyTokenTypes.MINUS) {
+    else if (operator == PyTokenTypes.MINUS || operator == PyTokenTypes.PLUS) {
       final Number number = PyUtil.as(evaluate(expression.getOperand()), Number.class);
       if (number != null) {
-        return fromBigInteger(toBigInteger(number).negate());
+        var bigInt = toBigInteger(number);
+        if (operator == PyTokenTypes.MINUS) {
+          bigInt = bigInt.negate();
+        }
+        return fromBigInteger(bigInt);
       }
     }
 

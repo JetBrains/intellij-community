@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.ide.actions.OpenInRightSplitAction.Companion.openInRightSplit
@@ -57,7 +57,7 @@ internal fun openEditorForFile(
             splitWindow = openInRightSplit(project = project, file = file, element = null, requestFocus = true)
           }
           else {
-            manager.openFile(file, splitWindow, FileEditorOpenOptions().withRequestFocus())
+            manager.openFile(file, splitWindow, FileEditorOpenOptions(waitForCompositeOpen = false).withRequestFocus())
           }
         }
         else if (mode == FileEditorManagerImpl.OpenMode.NEW_WINDOW) {
@@ -66,7 +66,7 @@ internal fun openEditorForFile(
         else if (value.editorWindow != null) {
           val editorWindow = findAppropriateWindow(value.editorWindow)
           if (editorWindow != null) {
-            manager.openFileImpl2(window = editorWindow, file = file, options = FileEditorOpenOptions(requestFocus = true))
+            manager.openFileImpl2(window = editorWindow, file = file, options = FileEditorOpenOptions(requestFocus = true, waitForCompositeOpen = false))
           }
         }
         else {
@@ -76,7 +76,7 @@ internal fun openEditorForFile(
           manager.openFile(
             file = file,
             window = null,
-            options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true),
+            options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true, waitForCompositeOpen = false),
           )
           if (LightEdit.owns(project)) {
             LightEditFeatureUsagesUtil.logFileOpen(project, OpenPlace.RecentFiles)

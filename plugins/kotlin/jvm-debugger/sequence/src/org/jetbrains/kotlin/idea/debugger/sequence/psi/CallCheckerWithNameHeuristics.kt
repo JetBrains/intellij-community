@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.psi
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtCallExpression
 
+@K1Deprecation
 abstract class CallCheckerWithNameHeuristics(private val nestedChecker: StreamCallChecker) : StreamCallChecker {
     override fun isIntermediateCall(expression: KtCallExpression): Boolean = nestedChecker.isIntermediateCall(expression)
 

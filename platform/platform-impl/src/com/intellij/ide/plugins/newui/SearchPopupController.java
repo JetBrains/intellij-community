@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public abstract class SearchPopupController {
   protected final PluginSearchTextField myTextField;
   @ApiStatus.Internal

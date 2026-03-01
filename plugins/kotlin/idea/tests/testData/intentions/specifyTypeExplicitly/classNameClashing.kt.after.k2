@@ -4,7 +4,7 @@ object Holder {
     class Array
 }
 
-fun getEntry() : Map.Entry<Array<String>, Holder.Array> {
+fun getEntry() : Map.Entry<kotlin.Array<String>, Holder.Array> {
     throw Error()
 }
 

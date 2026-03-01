@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @deprecated Should not be used, as the whole {@link InspectionGadgetsFix} hierarchy. Use {@link LocalQuickFix} directly.

@@ -12,7 +12,22 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.core.KotlinEditorTextProvider
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtOperationExpression
+import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 

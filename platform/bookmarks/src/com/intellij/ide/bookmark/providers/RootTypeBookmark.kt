@@ -7,7 +7,7 @@ import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.openapi.vfs.VirtualFile
-import java.util.*
+import java.util.Objects
 
 internal class RootTypeBookmark(override val provider: RootTypeBookmarkProvider, val type: RootType) : Bookmark {
 

@@ -8,8 +8,24 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.*
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.*
+import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesTestFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTestFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTweaksDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTweaksImpl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsLinkingDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LibraryKindsChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LinkedProjectPathsTestsFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.NoErrorEventsDuringImportFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.AllFilesAreUnderContentRootChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.AllFilesUnderContentRootConfigurationDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.DocumentationChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.DocumentationCheckerDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ReferenceTargetChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.TestTasksChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingCheckDsl
@@ -44,7 +60,7 @@ import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runner.RunWith
 import java.io.File
-import java.util.*
+import java.util.TreeSet
 
 /**
  * The base class for Kotlin MPP Import-based tests.
@@ -85,7 +101,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                                                       ExpectedPluginModeProvider,
                                                       WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl,
                                                       HighlightingCheckDsl,
-                                                      TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl,
+                                                      TestWithKotlinPluginAndGradleVersions, TestWithAndroidVersion, DevModeTweaksDsl,
                                                       AllFilesUnderContentRootConfigurationDsl, RunConfigurationChecksDsl,
                                                       CustomGradlePropertiesDsl, DocumentationCheckerDsl, KotlinMppTestHooksDsl,
                                                       LibrarySourcesCheckDsl {
@@ -124,18 +140,20 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
 
     // Two properties below are needed solely for compatibility with PluginTargetVersionsRule;
     // please, use context.testPropertiesService if you need those versions in your code
-    override var gradleVersion: String
-        get() = context.testProperties.gradleVersion.version
+    final override var testGradleVersion: TestVersion<GradleVersion>
+        get() = context.testProperties.gradleVersion
         set(_) {}
 
-    final override val kotlinPluginVersion: KotlinToolingVersion
+    final override val kotlinPluginVersion: TestVersion<KotlinToolingVersion>
         get() = context.testProperties.kotlinVersion
+
+    final override val agpVersion: TestVersion<String>?
+        get() = context.testProperties.agpVersion
 
     // Temporary hack allowing to reuse new test runner in selected smoke tests for runs on linux-hosts
     open val allowOnNonMac: Boolean = false
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
@@ -203,7 +221,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             // Hack: usually this is set-up by JUnit's Parametrized magic, but
             // our tests source versions from `kotlinTestPropertiesService`, not from
             // @Parametrized
-            (this as GradleImportingTestCase).gradleVersion = context.testProperties.gradleVersion.version
+            (this as GradleImportingTestCase).gradleVersion = testGradleVersion.version.version
             super.setUp()
         }
 

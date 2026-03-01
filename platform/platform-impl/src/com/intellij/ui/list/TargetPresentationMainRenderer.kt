@@ -5,7 +5,10 @@ import com.intellij.navigation.LocationPresentation
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.SimpleTextAttributes.*
+import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
+import com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN
+import com.intellij.ui.SimpleTextAttributes.fromTextAttributes
+import com.intellij.ui.SimpleTextAttributes.merge
 import com.intellij.util.ui.UIUtil
 import java.util.function.Function
 import javax.swing.JList

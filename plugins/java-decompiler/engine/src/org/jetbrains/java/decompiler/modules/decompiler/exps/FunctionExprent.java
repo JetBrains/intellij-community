@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -15,7 +16,15 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class FunctionExprent extends Exprent {
 
@@ -590,6 +599,14 @@ public class FunctionExprent extends Exprent {
       }
     }
 
+    if (!parentheses && expr.type == EXPRENT_FUNCTION) {
+      int childFunc = ((FunctionExprent)expr).getFuncType();
+      if (isBitwiseOrShift(funcType) != isBitwiseOrShift(childFunc)
+          && isBinaryOperator(funcType) && isBinaryOperator(childFunc)) {
+        parentheses = DecompilerContext.getOption(IFernflowerPreferences.PARENTHESES_FOR_BITWISE_OPERATIONS);
+      }
+    }
+
     TextBuffer res = expr.toJava(indent, tracer);
 
     if (parentheses) {
@@ -597,6 +614,15 @@ public class FunctionExprent extends Exprent {
     }
 
     return res;
+  }
+
+  private static boolean isBitwiseOrShift(int funcType) {
+    return funcType == FUNCTION_AND || funcType == FUNCTION_OR || funcType == FUNCTION_XOR
+        || funcType == FUNCTION_SHL || funcType == FUNCTION_SHR || funcType == FUNCTION_USHR;
+  }
+
+  private static boolean isBinaryOperator(int funcType) {
+    return funcType >= FUNCTION_ADD && funcType <= FUNCTION_USHR;
   }
 
   private static VarType getMaxVarType(VarType[] arr) {

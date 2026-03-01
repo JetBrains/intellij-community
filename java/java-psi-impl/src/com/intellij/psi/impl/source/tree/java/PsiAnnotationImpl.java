@@ -4,7 +4,31 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationOwner;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
@@ -116,6 +140,17 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
         }
       }
       else if (type instanceof PsiArrayType) {
+        boolean hasBracketAfter = false;
+        for (PsiElement next = getNextSibling(); next != null; next = next.getNextSibling()) {
+          if (PsiUtil.isJavaToken(next, JavaTokenType.LBRACKET) || PsiUtil.isJavaToken(next, JavaTokenType.ELLIPSIS)) {
+            hasBracketAfter = true;
+            break;
+          }
+        }
+        if (!hasBracketAfter) {
+          // Misplaced annotation after array brackets: no owner should be assigned
+          return null;
+        }
         for (PsiElement sibling = getPrevSibling(); sibling != null; sibling = sibling.getPrevSibling()) {
           if (PsiUtil.isJavaToken(sibling, JavaTokenType.LBRACKET)) {
             type = ((PsiArrayType)type).getComponentType();

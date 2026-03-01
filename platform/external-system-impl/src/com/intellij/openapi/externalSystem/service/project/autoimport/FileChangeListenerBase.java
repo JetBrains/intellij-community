@@ -7,7 +7,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

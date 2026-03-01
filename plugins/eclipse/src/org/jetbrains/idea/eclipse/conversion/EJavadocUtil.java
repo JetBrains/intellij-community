@@ -29,8 +29,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.idea.eclipse.EclipseXml.*;
-import static org.jetbrains.idea.eclipse.conversion.EPathUtil.*;
+import static org.jetbrains.idea.eclipse.EclipseXml.ATTRIBUTES_TAG;
+import static org.jetbrains.idea.eclipse.EclipseXml.ATTRIBUTE_TAG;
+import static org.jetbrains.idea.eclipse.EclipseXml.FILE_PROTOCOL;
+import static org.jetbrains.idea.eclipse.EclipseXml.JAR_PREFIX;
+import static org.jetbrains.idea.eclipse.EclipseXml.JAVADOC_LOCATION;
+import static org.jetbrains.idea.eclipse.EclipseXml.PLATFORM_PROTOCOL;
+import static org.jetbrains.idea.eclipse.conversion.EPathUtil.LOG;
+import static org.jetbrains.idea.eclipse.conversion.EPathUtil.collapse2eclipseRelative2OtherModule;
+import static org.jetbrains.idea.eclipse.conversion.EPathUtil.expandEclipseRelative2OtherModule;
+import static org.jetbrains.idea.eclipse.conversion.EPathUtil.getContentRoot;
 
 /**
  * Eclipse javadoc format:

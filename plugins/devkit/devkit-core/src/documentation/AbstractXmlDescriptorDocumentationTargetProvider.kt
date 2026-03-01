@@ -7,7 +7,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.documentation.*
+import com.intellij.platform.backend.documentation.DocumentationLinkHandler
+import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.LinkResolveResult
+import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.PomTargetPsiElement
 import com.intellij.psi.PsiElement

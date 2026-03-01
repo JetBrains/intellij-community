@@ -15,11 +15,10 @@ import com.intellij.psi.PsiTarget
 import com.intellij.ui.SimpleTextAttributes
 import junit.framework.AssertionFailedError
 import junit.framework.ComparisonFailure
-import junit.framework.TestCase.*
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertTrue
 import javax.swing.Icon
-import javax.swing.tree.TreePath
 
 private const val MAX_DEPTH = 20
 

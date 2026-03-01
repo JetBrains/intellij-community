@@ -8,14 +8,19 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.*;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
+import com.intellij.uiDesigner.designSurface.GridDropLocation;
+import com.intellij.uiDesigner.designSurface.GridInsertLocation;
+import com.intellij.uiDesigner.designSurface.GridInsertMode;
+import com.intellij.uiDesigner.designSurface.GridInsertProcessor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Processor;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.List;
 
 

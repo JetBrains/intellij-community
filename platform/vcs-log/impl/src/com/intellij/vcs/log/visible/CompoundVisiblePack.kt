@@ -14,8 +14,8 @@ internal class CompoundVisiblePack private constructor(private val newPack: Visi
   VisiblePack(oldPack.dataPack, CompoundVisibleGraph(newPack.visibleGraph, oldPack.visibleGraph), oldPack.canRequestMore, oldPack.filters, oldPack.additionalData) {
 
   override fun getRootAtHead(headCommitIndex: VcsLogCommitStorageIndex): VirtualFile? {
-    return newPack.dataPack.refsModel.rootAtHead(headCommitIndex)
-           ?: oldPack.dataPack.refsModel.rootAtHead(headCommitIndex)
+    return newPack.dataPack.refsModel.getRootForHeadCommit(headCommitIndex)
+           ?: oldPack.dataPack.refsModel.getRootForHeadCommit(headCommitIndex)
   }
 
   private fun getOldNotCompoundVisiblePack(): VisiblePack {

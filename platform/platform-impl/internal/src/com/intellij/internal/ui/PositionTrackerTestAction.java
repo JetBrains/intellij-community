@@ -13,7 +13,8 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 final class PositionTrackerTestAction extends AnAction {
 

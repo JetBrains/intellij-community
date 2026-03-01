@@ -1,0 +1,13 @@
+================ Step #1 =================
+Compiling files:
+  java/common/moveClassFromJavaFileToDependentModule/a/com/ppp/Inner.java
+End of files
+Cleaning output files:
+  com/ppp/B.class
+  com/ppp/Inner.class
+End of files
+Compiling files:
+  java/common/moveClassFromJavaFileToDependentModule/b/com/ppp/B.java
+End of files
+------------------------------------------
+Exit code: OK

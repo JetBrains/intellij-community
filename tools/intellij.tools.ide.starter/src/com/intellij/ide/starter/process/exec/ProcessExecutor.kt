@@ -2,12 +2,21 @@ package com.intellij.ide.starter.process.exec
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.logEnvVariables
-import com.intellij.ide.starter.coroutine.perClassSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.getThrowableText
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -193,7 +202,7 @@ class ProcessExecutor(
     @Suppress("BlockingMethodInNonBlockingContext") val process = processBuilder.start()
 
     val processId = process.pid()
-    val onProcessCreatedJob: Job = perClassSupervisorScope.launch(Dispatchers.IO + CoroutineName("On process $presentableName created job")) {
+    val onProcessCreatedJob: Job = scopeForProcesses.launch(Dispatchers.IO + CoroutineName("On process $presentableName created job")) {
       if (!silent) logOutput("  ... started external process `$presentableName` with process ID = $processId")
       onProcessCreated(process, processId)
     }
@@ -254,6 +263,7 @@ class ProcessExecutor(
         killProcess()
       }
       process.destroyForcibly()
+      process.descendants().forEach { it.destroyForcibly() }
 
       try {
         Runtime.getRuntime().removeShutdownHook(shutdownHookThread)

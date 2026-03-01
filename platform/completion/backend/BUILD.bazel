@@ -25,4 +25,19 @@ jvm_library(
     "//platform/main/intellij.platform.backend.main:backend-main",
   ]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.completion.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//platform/completion/common:common_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//platform/main/intellij.platform.backend.main:backend-main_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.completion.backend` end

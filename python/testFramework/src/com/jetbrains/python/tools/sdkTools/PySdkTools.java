@@ -19,12 +19,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PyTargetsIntrospectionFacade;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+
+import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
 
 
 /**
@@ -100,7 +105,7 @@ public final class PySdkTools {
       project = module.getProject();
 
       PySdkExtKt.setPythonSdk(project, sdk);
-      PySdkExtKt.setPythonSdk(module, sdk);
+      setPythonSdk(module, sdk);
     }
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
@@ -123,7 +128,7 @@ public final class PySdkTools {
     commitChangesObeyWriteAction(modificator);
 
     PySkeletonRefresher
-      .refreshSkeletonsOfSdk(project, null, skeletonsPath, sdk);
+      .refreshSkeletonsOfSdk(project, skeletonsPath, sdk);
   }
 
   /**

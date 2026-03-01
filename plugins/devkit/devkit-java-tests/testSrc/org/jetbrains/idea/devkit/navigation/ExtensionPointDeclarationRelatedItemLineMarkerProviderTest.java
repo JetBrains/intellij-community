@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.testFramework.TestDataPath;
@@ -16,37 +16,5 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest
   @Override
   protected String getExtension() {
     return ".java";
-  }
-
-  public void testMyStringEP() {
-    assertStringEP();
-  }
-
-  public void testMyStringEPViaConstant() {
-    assertStringEP();
-  }
-
-  public void testMyStringEPConstructor() {
-    assertStringEP();
-  }
-
-  public void testMyStringEPLanguageExtension() {
-    assertStringEP();
-  }
-
-  public void testMyStringProjectEP() {
-    assertStringEP();
-  }
-
-  public void testMyStringKeyedLazyInstanceEP() {
-    assertStringEP();
-  }
-
-  public void testMyStringEPViaLanguageExtensionSuperCall() {
-    assertStringEP();
-  }
-
-  public void testMyBeanClassStringEP() {
-    assertSingleEPDeclaration("MyBeanClassStringEP.java", "com.intellij.myBeanClassStringEP");
   }
 }

@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.removemiddleman.usageInfo;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;

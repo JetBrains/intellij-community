@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Computable;
@@ -25,10 +26,30 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -203,7 +224,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public PopupChooserBuilder<T> setItemChosenCallback(@NotNull Runnable runnable) {
     myItemChosenRunnable = () -> {
       try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-        runnable.run();
+        WriteIntentReadAction.run(runnable);
       }
     };
     return this;

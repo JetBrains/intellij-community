@@ -8,9 +8,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.jetbrains.python.PythonFoldingBuilder
 
-private class PyCollapseTypeAnnotationsAction : EditorAction(PyTypeAnnotationsFoldingHandler(false))
+internal class PyCollapseTypeAnnotationsAction : EditorAction(PyTypeAnnotationsFoldingHandler(false))
 
-private class PyExpandTypeAnnotationsAction : EditorAction(PyTypeAnnotationsFoldingHandler(true))
+internal class PyExpandTypeAnnotationsAction : EditorAction(PyTypeAnnotationsFoldingHandler(true))
 
 internal class PyTypeAnnotationsFoldingHandler(val expand: Boolean) : BaseFoldingHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {

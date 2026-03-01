@@ -16,7 +16,7 @@ import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UastCallKind;
 
-import java.awt.*;
+import java.awt.Insets;
 
 @ApiStatus.Internal
 public final class UseDPIAwareInsetsInspection extends AbstractUseDPIAwareBorderInspection {

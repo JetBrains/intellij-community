@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
@@ -20,6 +21,7 @@ final class ToggleVisibilityAction extends FileChooserAction implements Toggleab
 
   @Override
   protected void update(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) {
+    e.getPresentation().setIcon(AllIcons.Actions.ToggleVisibility);
     Toggleable.setSelected(e.getPresentation(), fileChooser.areHiddensShown());
   }
 

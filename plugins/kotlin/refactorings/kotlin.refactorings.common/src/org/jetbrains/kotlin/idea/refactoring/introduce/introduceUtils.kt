@@ -22,8 +22,44 @@ import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElem
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElements
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getContentRange
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getOutermostParentContainedIn
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import kotlin.math.min
 
@@ -263,7 +299,12 @@ fun KotlinPsiRange.getPhysicalTextRange(): TextRange {
     return (elements.singleOrNull() as? KtExpression)?.extractableSubstringInfo?.contentRange ?: textRange
 }
 
-fun isObjectOrNonInnerClass(e: PsiElement): Boolean = e is KtObjectDeclaration || (e is KtClass && !e.isInner())
+fun isObjectOrNonInnerClass(e: PsiElement): Boolean {
+    if (e is KtObjectDeclaration) {
+        return !e.isObjectLiteral()
+    }
+    return e is KtClass && !e.isInner()
+}
 
 fun <T : KtDeclaration> insertDeclaration(declaration: T, targetSibling: PsiElement): T {
     val targetParent = targetSibling.parent
@@ -285,8 +326,8 @@ fun <T : KtDeclaration> insertDeclaration(declaration: T, targetSibling: PsiElem
 
 
 fun showErrorHint(project: Project, editor: Editor, @NlsContexts.DialogMessage message: String, @NlsContexts.DialogTitle title: String) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) throw CommonRefactoringUtil.RefactoringErrorHintException(message);
-    CommonRefactoringUtil.showErrorHint(project, editor, message, title, null);
+    if (ApplicationManager.getApplication().isUnitTestMode()) throw CommonRefactoringUtil.RefactoringErrorHintException(message)
+    CommonRefactoringUtil.showErrorHint(project, editor, message, title, null)
 }
 
 fun showErrorHintByKey(project: Project, editor: Editor, messageKey: String, @NlsContexts.DialogTitle title: String) {

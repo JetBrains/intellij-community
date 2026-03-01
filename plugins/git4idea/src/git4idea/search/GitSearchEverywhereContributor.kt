@@ -2,7 +2,11 @@
 package git4idea.search
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
+import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
@@ -24,8 +28,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsRef
-import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.render.LabelIcon
 import com.intellij.vcs.log.util.containsAll
@@ -35,7 +39,11 @@ import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager
 import git4idea.repo.GitRepositoryManager
-import git4idea.search.GitSearchEverywhereItemType.*
+import git4idea.search.GitSearchEverywhereItemType.COMMIT_BY_HASH
+import git4idea.search.GitSearchEverywhereItemType.COMMIT_BY_MESSAGE
+import git4idea.search.GitSearchEverywhereItemType.LOCAL_BRANCH
+import git4idea.search.GitSearchEverywhereItemType.REMOTE_BRANCH
+import git4idea.search.GitSearchEverywhereItemType.TAG
 import java.util.function.Function
 import javax.swing.ListCellRenderer
 
@@ -78,7 +86,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
       .typoTolerant()
       .build()
 
-    dataPack.refsModel.stream().forEach {
+    dataPack.refsModel.allRefs().forEach {
       progressIndicator.checkCanceled()
       when (it.type) {
         GitRefManager.LOCAL_BRANCH, GitRefManager.HEAD -> processRefOfType(it, LOCAL_BRANCH, matcher, consumer)
@@ -108,12 +116,12 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
     if (matcher.matches(ref.name)) consumer.process(FoundItemDescriptor(ref, type.weight))
   }
 
-  private fun awaitFullLogDataPack(dataManager: VcsLogData, indicator: ProgressIndicator): DataPack? {
+  private fun awaitFullLogDataPack(dataManager: VcsLogData, indicator: ProgressIndicator): VcsLogGraphData? {
     if (!Registry.`is`("vcs.log.keep.up.to.date")) return null
-    var dataPack: DataPack
+    var dataPack: VcsLogGraphData
     do {
       indicator.checkCanceled()
-      dataPack = dataManager.dataPack
+      dataPack = dataManager.graphData
     }
     while (!dataPack.isFull && Thread.sleep(1000) == Unit)
     return dataPack

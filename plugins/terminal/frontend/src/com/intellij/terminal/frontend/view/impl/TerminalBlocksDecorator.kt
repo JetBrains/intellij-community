@@ -13,10 +13,23 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
-import org.jetbrains.plugins.terminal.block.ui.*
+import org.jetbrains.plugins.terminal.block.ui.BlockSeparatorRenderer
+import org.jetbrains.plugins.terminal.block.ui.TerminalBlockLeftErrorRenderer
+import org.jetbrains.plugins.terminal.block.ui.TerminalPromptLeftAreaRenderer
+import org.jetbrains.plugins.terminal.block.ui.TerminalPromptSeparatorRenderer
+import org.jetbrains.plugins.terminal.block.ui.TerminalUi
+import org.jetbrains.plugins.terminal.block.ui.VerticalSpaceInlayRenderer
+import org.jetbrains.plugins.terminal.block.ui.doTerminalOutputScrollChangingAction
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
-import org.jetbrains.plugins.terminal.view.shellIntegration.*
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockAddedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockId
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockRemovedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModelEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModelListener
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksReplacedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 
 @ApiStatus.Internal
 class TerminalBlocksDecorator(

@@ -34,6 +34,7 @@ class MavenNoRootDefinedInspection : BasicDomElementsInspection<MavenDomProjectM
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor?>? {
     if (file is XmlFile && file.isPhysical()) {
       val projectManager = MavenProjectsManager.getInstanceIfCreated(file.project) ?: return null
+      if (!projectManager.isInitialized) return null
       val rootMavenProject = projectManager.rootProjects.singleOrNull { file.virtualFile.equals(it.file) } ?: return null
       val model =
         DomManager.getDomManager(file.getProject()).getFileElement<MavenDomProjectModel?>(file, MavenDomProjectModel::class.java)

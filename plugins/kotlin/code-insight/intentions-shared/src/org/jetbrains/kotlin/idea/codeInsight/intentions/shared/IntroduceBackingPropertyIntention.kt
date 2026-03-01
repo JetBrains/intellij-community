@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.hasExplicitBackingField
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateTypeForDeclarationInDummyFile
@@ -24,7 +25,14 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.buildDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
@@ -76,6 +84,8 @@ class IntroduceBackingPropertyIntention :
         if (property.isAbstract()) return false
 
         if (property.isLocal) return false
+
+        if (property.hasExplicitBackingField()) return false
 
         if (isBackingFieldRequired(property)) return true
 

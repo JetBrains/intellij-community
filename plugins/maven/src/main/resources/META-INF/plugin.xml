@@ -26,6 +26,7 @@
                     dynamic="true"/>
     <extensionPoint name="importing.afterImportConfigurator" interface="org.jetbrains.idea.maven.importing.MavenAfterImportConfigurator"
                     dynamic="true"/>
+
     <extensionPoint name="projectResolutionContributor" interface="org.jetbrains.idea.maven.project.MavenProjectResolutionContributor"
                     dynamic="true"/>
     <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
@@ -38,6 +39,10 @@
 
     <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"
                     dynamic="true"/>
+
+
+    <extensionPoint name="runner.executionConfigurator"
+                    interface="org.jetbrains.idea.maven.execution.run.MavenExecutionConfiguratorProvider" dynamic="true"/>
     <extensionPoint name="executionEnvironmentProvider"
                     interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider" dynamic="true"/>
     <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
@@ -64,8 +69,8 @@
 
   <dependencies>
     <module name="intellij.properties.backend"/>
-    <plugin id="com.intellij.java"/>
-    <plugin id="org.jetbrains.idea.reposearch"/>
+    <module name="intellij.java.backend"/>
+    <module name="intellij.repository.search.common"/>
     <module name="intellij.java.aetherDependencyResolver"/>
   </dependencies>
 
@@ -379,7 +384,6 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenImportCollector"/>
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenPluginCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenLibraryScopesCollector"/>
@@ -492,6 +496,9 @@
 
     <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="true"
                  description="Refresh resolved artifacts after Maven sync"/>
+
+    <registryKey key="maven.download.sources.build.output.notifications" defaultValue="true"
+                 description="Notify about errors in progress of downloading sources of libraries into the Build Output"/>
 
     <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"
                  description="During incremental sync, resolve dependencies incrementally"/>
@@ -1039,6 +1046,10 @@
     <listener class="org.jetbrains.idea.maven.project.MavenImportListenerBridge"
               topic="org.jetbrains.idea.maven.project.MavenSyncListener"
               activeInTestMode="true" activeInHeadlessMode="true"/>
+
+    <listener class="org.jetbrains.idea.maven.project.source.MavenDownloadLibrarySourcesSyncListener"
+              topic="org.jetbrains.idea.maven.project.MavenSyncListener"
+              activeInTestMode="false" activeInHeadlessMode="false"/>
 
     <listener class="org.jetbrains.idea.maven.plugins.compatibility.PluginCompatibilityConfiguratorListener"
               topic="org.jetbrains.idea.maven.project.MavenSyncListener"

@@ -12,7 +12,7 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import javax.swing.plaf.FontUIResource;
 import javax.swing.text.StyleContext;
-import java.awt.*;
+import java.awt.Font;
 import java.util.Locale;
 
 public final class FontPropertyCodeGenerator extends PropertyCodeGenerator {

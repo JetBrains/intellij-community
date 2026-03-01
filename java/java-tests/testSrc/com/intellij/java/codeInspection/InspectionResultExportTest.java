@@ -4,7 +4,11 @@ package com.intellij.java.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolsSupplier;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.Disposer;
@@ -144,7 +148,7 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     InspectionTestUtil.compareWithExpected(expectedUnnCondResults, unnCondResults, false);
   }
 
-  private static @NotNull Element loadFile(@NotNull Path file) {
+  static @NotNull Element loadFile(@NotNull Path file) {
     try {
       return JDOMUtil.load(file);
     }

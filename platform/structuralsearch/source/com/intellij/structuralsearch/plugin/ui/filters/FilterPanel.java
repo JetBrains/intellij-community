@@ -1,10 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -12,7 +17,11 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.ui.SimpleColoredComponent;
@@ -34,9 +43,12 @@ import com.intellij.util.ui.table.JBTableRowRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.table.JTableHeader;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.MouseInfo;
 import java.util.Arrays;
 import java.util.List;
 
@@ -89,7 +101,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
       @Override
       protected JBTableRowEditor getRowEditor(int row) {
         if (!isValid()) return null;
-        return myTableModel.getRowValue(row).getEditor();
+        return WriteIntentReadAction.compute(() -> myTableModel.getRowValue(row).getEditor());
       }
     };
     final JBTable table = myFilterTable.getTable();

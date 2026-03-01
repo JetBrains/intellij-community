@@ -3,8 +3,11 @@
 package com.intellij.util.ui;
 
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 public final class WatermarkIcon implements Icon {
 

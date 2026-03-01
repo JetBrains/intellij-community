@@ -7,8 +7,16 @@ import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
 import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.*;
-import com.intellij.testFramework.bucketing.*;
+import com.intellij.testFramework.SelfSeedingTestCase;
+import com.intellij.testFramework.TeamCityLogger;
+import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.testFramework.TestSorter;
+import com.intellij.testFramework.bucketing.BucketingScheme;
+import com.intellij.testFramework.bucketing.CyclicCounterBucketingScheme;
+import com.intellij.testFramework.bucketing.HashingBucketingScheme;
+import com.intellij.testFramework.bucketing.NastradamusBucketingScheme;
+import com.intellij.testFramework.bucketing.NastradamusDataCollectingBucketingScheme;
+import com.intellij.testFramework.bucketing.TestsDurationBucketingScheme;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -17,7 +25,6 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import kotlin.Lazy;
 import kotlin.LazyKt;
-import kotlin.text.StringsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +39,13 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
@@ -93,8 +106,6 @@ public class TestCaseLoader {
    * This helps to find problems when test A modifies the global state, causing test B to fail if it runs after A.
    */
   private static final boolean REVERSE_ORDER = SystemProperties.getBooleanProperty("intellij.build.test.reverse.order", false);
-
-  private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
 
   public static final String COMMON_TEST_GROUPS_RESOURCE_NAME = "tests/testGroups.properties";
 
@@ -192,8 +203,7 @@ public class TestCaseLoader {
         GroupBasedTestClassFilter.readGroups(reader, groups);
       }
       catch (IOException e) {
-        System.err.println("Failed to load test groups from " + fileUrl);
-        e.printStackTrace();
+        throw new RuntimeException("Failed to load test groups from " + fileUrl, e);
       }
     }
     System.out.println("Using test groups: " + testGroupNames);
@@ -201,7 +211,7 @@ public class TestCaseLoader {
     testGroupNameSet.removeAll(groups.keySet());
     testGroupNameSet.remove(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED);
     if (!testGroupNameSet.isEmpty()) {
-      System.err.println("Unknown test groups: " + testGroupNameSet);
+      throw new RuntimeException("Unknown test groups: " + testGroupNameSet);
     }
     return new GroupBasedTestClassFilter(groups, testGroupNames);
   }
@@ -259,8 +269,6 @@ public class TestCaseLoader {
   }
 
   private boolean isPotentiallyTestCase(String className, String moduleName) {
-    String classNameWithoutPackage = StringsKt.substringAfterLast(className, '.', className);
-    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(classNameWithoutPackage)) return false;
     if (!myTestClassesFilter.matches(className, moduleName)) return false;
     if (myFirstTestClass != null && className.equals(myFirstTestClass.getName())) return false;
     if (myLastTestClass != null && className.equals(myLastTestClass.getName())) return false;
@@ -303,6 +311,12 @@ public class TestCaseLoader {
   public static List<Class<?>> loadClassesForWarmup() {
     var groupsTestCaseLoader = TestCaseLoader.Builder.fromDefaults().forWarmup().build();
     groupsTestCaseLoader.fillTestCases("", TestAll.getClassRoots(), true);
+    if (!groupsTestCaseLoader.getClassLoadingErrors().isEmpty()) {
+      RuntimeException e = new RuntimeException("Failed to load classes for warmup");
+      groupsTestCaseLoader.getClassLoadingErrors().forEach(e::addSuppressed);
+      throw e;
+    }
+
     var testCaseClasses = groupsTestCaseLoader.getClasses(false);
 
     System.out.printf("Finishing warmup initialization. Found %s classes%n", testCaseClasses.size());
@@ -377,7 +391,7 @@ public class TestCaseLoader {
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class<?> testCaseClass) {
-    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass.getSimpleName())) return true;
+    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
 
     return !myTestClassesFilter.matches(className, moduleName) ||
@@ -418,36 +432,7 @@ public class TestCaseLoader {
   }
 
   public static int getRank(Class<?> aClass) {
-    if (runFirst(aClass)) return 0;
-
-    // `PlatformLiteFixture` is a very special test case, because it doesn't load all the XMLs with component/extension declarations
-    // (that is, uses a mock application). Instead, it allows declaring them manually using its registerComponent/registerExtension
-    // methods. The goal is to make tests which extend PlatformLiteFixture extremely fast. The problem appears when such tests are invoked
-    // together with other tests which rely on declarations in XML files (that is, use a real application). The nature of the IDE
-    // application is such that static final fields are often used to cache extensions. While having a positive effect on performance,
-    // it creates problems during testing. Simply speaking, if the instance of PlatformLiteFixture is the first one in a suite, it pollutes
-    // static final fields (and all other kinds of caches) with invalid values. To avoid it, such tests should always be the last.
-    if (isPlatformLiteFixture(aClass)) {
-      return Integer.MAX_VALUE;
-    }
-
     return 1;
-  }
-
-  private static boolean runFirst(Class<?> testClass) {
-    return getAnnotationInHierarchy(testClass, RunFirst.class) != null;
-  }
-
-  private static boolean isPlatformLiteFixture(Class<?> aClass) {
-    while (aClass != null) {
-      if (PLATFORM_LITE_FIXTURE_NAME.equals(aClass.getName())) {
-        return true;
-      }
-      else {
-        aClass = aClass.getSuperclass();
-      }
-    }
-    return false;
   }
 
   public int getClassesCount() {
@@ -522,20 +507,22 @@ public class TestCaseLoader {
     myLastTestClass = null;
   }
 
-  static boolean isPerformanceTestsRun() {
+  // called reflectively from `JUnit5TeamCityRunner#createPerformancePostDiscoveryFilter`
+  public static boolean isPerformanceTestsRun() {
     return PERFORMANCE_TESTS_ONLY;
   }
 
-  static boolean isIncludingPerformanceTestsRun() {
+  // called reflectively from `JUnit5TeamCityRunner#createPerformancePostDiscoveryFilter`
+  public static boolean isIncludingPerformanceTestsRun() {
     return INCLUDE_PERFORMANCE_TESTS;
   }
 
-  public static boolean shouldIncludePerformanceTestCase(String className) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, className);
+  public static boolean shouldIncludePerformanceTestCase(Class<?> aClass) {
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, aClass);
   }
 
-  static boolean isPerformanceTest(String methodName, String className) {
-    return TestFrameworkUtil.isPerformanceTest(methodName, className);
+  static boolean isPerformanceTest(String methodName, Class<?> aClass) {
+    return TestFrameworkUtil.isPerformanceTest(methodName, aClass);
   }
 
   // We assume that getPatterns and getTestGroups won't change during execution
@@ -582,17 +569,16 @@ public class TestCaseLoader {
       return false;
     }
 
-    return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
-           ourCommonCompositeTestClassesFilter.getValue().matches(className);
+    return ourCommonCompositeTestClassesFilter.getValue().matches(className);
   }
 
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createPostDiscoveryFilter`
   @SuppressWarnings("unused")
-  public static boolean isClassIncluded(String className) {
+  public static boolean isClassIncluded(Class<?> aClass) {
     // JUnit 5 might rediscover `@Nested` tests if they were previously filtered out by `isClassNameIncluded`,
     // but their host class was not filtered out. Let's not remove them again based on `ourFilter.matches(className)`,
     // so not checking for `isClassNameIncluded` here.
-    return matchesCurrentBucket(className);
+    return SelfSeedingTestCase.class.isAssignableFrom(aClass) || matchesCurrentBucket(aClass.getName());
   }
 
   public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {

@@ -374,9 +374,9 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     }
 
     waitForImportWithinTimeout {
+      val model = ModuleManager.getInstance(project).getModifiableModel()
+      myBuilder.createModule(model)
       edtWriteAction {
-        val model = ModuleManager.getInstance(project).getModifiableModel()
-        myBuilder.createModule(model)
         model.commit()
       }
     }

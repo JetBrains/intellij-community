@@ -4,14 +4,19 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xexplicit-api=strict -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -Xexplicit-api=strict -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+            </arrayArg>
+          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>
@@ -46,7 +51,7 @@
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.oro.matcher" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.java.rt" />
@@ -100,7 +105,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.copyright" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
@@ -129,6 +133,7 @@
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
   </component>
   <component name="copyright">
     <Base>

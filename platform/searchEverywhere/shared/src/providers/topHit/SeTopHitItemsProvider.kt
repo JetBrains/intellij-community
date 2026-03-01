@@ -5,7 +5,14 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeCommandInfo
+import com.intellij.platform.searchEverywhere.SeCommandsProviderInterface
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeLegacyItem
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper

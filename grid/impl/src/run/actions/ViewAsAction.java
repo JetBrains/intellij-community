@@ -12,7 +12,9 @@ import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.database.datagrid.GridPresentationMode.*;
+import static com.intellij.database.datagrid.GridPresentationMode.TABLE;
+import static com.intellij.database.datagrid.GridPresentationMode.TEXT;
+import static com.intellij.database.datagrid.GridPresentationMode.TREE_TABLE;
 
 public abstract class ViewAsAction extends ToggleAction implements DumbAware, GridAction {
 

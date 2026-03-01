@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
@@ -13,7 +17,23 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDiamondType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,7 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

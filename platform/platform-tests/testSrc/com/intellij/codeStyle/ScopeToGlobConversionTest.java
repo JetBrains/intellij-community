@@ -4,7 +4,12 @@ package com.intellij.codeStyle;
 import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeToGlobConverter;
-import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
+import com.intellij.psi.search.scope.packageSet.ParsingException;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 

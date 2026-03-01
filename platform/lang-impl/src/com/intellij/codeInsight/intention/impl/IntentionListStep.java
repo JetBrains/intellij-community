@@ -12,13 +12,18 @@ import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.SpeedSearchFilter;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
@@ -31,8 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Dimension;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -248,7 +253,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public @NotNull List<IntentionActionWithTextCaching> getValues() {
-    return myCachedIntentions.getAllActions();
+    return ReadAction.compute(() -> myCachedIntentions.getAllActions());
   }
 
   @Override

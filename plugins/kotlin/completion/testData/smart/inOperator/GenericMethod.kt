@@ -3,3 +3,5 @@ fun foo(s: String) {
 }
 
 // EXIST: { lookupString:"listOf", itemText: "listOf", tailText: "(vararg elements: String) (kotlin.collections)", typeText:"List<String>" }
+
+// IGNORE_K2

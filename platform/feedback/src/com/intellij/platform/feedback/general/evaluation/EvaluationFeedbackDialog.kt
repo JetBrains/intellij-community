@@ -5,7 +5,12 @@ package com.intellij.platform.feedback.general.evaluation
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.dialog.CommonBlockBasedFeedbackDialogWithEmail
-import com.intellij.platform.feedback.dialog.uiBlocks.*
+import com.intellij.platform.feedback.dialog.uiBlocks.DescriptionBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.RatingGroupBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.RatingItem
+import com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
 import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackDialogCanceled
 import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackDialogShown
 import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackSent

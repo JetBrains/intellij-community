@@ -28,6 +28,6 @@ class Main {
     AtomicReferenceArray<String> arr = <warning descr="Constructor is not compatible with a non-null type argument">new AtomicReferenceArray<>(10)</warning>;
     AtomicReferenceArray<String> arr2 = new AtomicReferenceArray<>(new String[10]); // technically wrong and should be highlighted, as array contains nulls
     @Nullable String[] data = new String[10];
-    AtomicReferenceArray<String> arr3 = new AtomicReferenceArray<>(data); // technically wrong and should be highlighted, as array contains nulls
+    AtomicReferenceArray<String> <warning descr="Assigning a class with nullable type arguments when a class with not-null type arguments is expected">arr3</warning> = new AtomicReferenceArray<>(data);
   }
 }

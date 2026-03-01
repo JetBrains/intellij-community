@@ -1,11 +1,11 @@
 package com.intellij.execution.multilaunch.execution.executables
 
-import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.intellij.execution.multilaunch.execution.ExecutionMode
 import com.intellij.execution.multilaunch.state.ExecutableSnapshot
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.util.NlsSafe
+import com.jetbrains.rd.util.lifetime.Lifetime
 import javax.swing.Icon
 
 abstract class Executable(

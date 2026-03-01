@@ -49,7 +49,7 @@ public class PyInlineFunctionDialog(project: Project,
   override fun getInlineAllText(): String = PyPsiBundle.message("refactoring.inline.all.remove.declaration")
   override fun getKeepTheDeclarationText(): String = PyPsiBundle.message("refactoring.inline.all.keep.declaration")
   override fun getInlineThisText(): String = PyPsiBundle.message("refactoring.inline.this.only")
-  override fun getHelpId(): String = PyInlineFunctionHandler.REFACTORING_ID
+  override fun getHelpId(): String = PyInlineFunctionHandler.Helper.REFACTORING_ID
 
   override fun allowInlineAll(): Boolean = true
   override fun isInlineThis(): Boolean = true

@@ -1,56 +1,41 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
-import com.intellij.ide.wizard.NewProjectWizardActivityKey
-import com.intellij.idea.IJIgnore
-import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT_MS
-import com.intellij.platform.backend.observation.trackActivityBlocking
-import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
-import com.intellij.testFramework.TestObservation
-import org.jetbrains.kotlin.tools.projectWizard.cli.BuildSystem
-import org.jetbrains.kotlin.tools.projectWizard.cli.assertSuccess
-import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
-import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaServices
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
+import com.intellij.testFramework.closeProjectAsync
+import com.intellij.testFramework.withProjectAsync
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.GradleEnvironment
-import java.nio.file.Files
-import java.nio.file.Paths
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 
-class GradleProjectSettingsTest : AbstractProjectTemplateNewWizardProjectImportTestBase() {
-    @IJIgnore(issue = "KTIJ-34868")
-    fun testDistributionTypeIsDefaultWrapped() {
-        val directory = Paths.get("consoleApplication")
-        val tempDirectory = Files.createTempDirectory(null)
+class GradleProjectSettingsTest : GradleKotlinNewProjectWizardTestCase() {
 
-        val wizard = createWizard(directory, BuildSystem.GRADLE_KOTLIN_DSL, tempDirectory)
+    @ParameterizedTest
+    @EnumSource(GradleDsl::class)
+    fun testSimpleProject(gradleDsl: GradleDsl): Unit = runBlocking {
+        createProjectByWizard(KOTLIN) {
+            setGradleWizardData("project", gradleDsl = gradleDsl)
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", gradleDsl) {
+                withKotlinBuildFile()
+                withKotlinSettingsFile()
+            })
 
-        // here we force loading and initialization of `GradleEnvironment.Headless`, see KTIJ-24569
-        @Suppress("UNUSED_VARIABLE")
-        val distributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE
+            val settings = GradleSettings.getInstance(project)
+            val projectSettings = settings.linkedProjectsSettings
 
-        val projectDependentServices = IdeaServices.createScopeDependent(project)
-        waitForAllProjectActivities {
-            wizard.apply(projectDependentServices, GenerationPhase.ALL).assertSuccess()
-        }
+            val expectedDistributionType = DistributionType.DEFAULT_WRAPPED
+            val actualDistributionType = projectSettings.map { it.distributionType }.singleOrNull()
 
-        val settings = GradleSettings.getInstance(project)
-        val projectSettings = settings.linkedProjectsSettings
-
-        val expectedDistributionType = DistributionType.DEFAULT_WRAPPED
-        val actualDistributionType = projectSettings.map { it.distributionType }.singleOrNull()
-
-        assert(projectSettings.isNotEmpty()) { "Project settings are empty" }
-        assert(actualDistributionType == expectedDistributionType) {
-            "Distribution type $actualDistributionType, but $expectedDistributionType was expected"
-        }
-    }
-
-    fun <R> waitForAllProjectActivities(action: () -> R): R {
-        return project.trackActivityBlocking(NewProjectWizardActivityKey, action)
-            .also {
-                TestObservation.waitForConfiguration(project, DEFAULT_SYNC_TIMEOUT_MS)
-                waitUntilIndexesAreReady(project)
-            }
+            Assertions.assertTrue(projectSettings.isNotEmpty(), "Project settings are empty")
+            Assertions.assertTrue(
+                actualDistributionType == expectedDistributionType,
+                "Distribution type $actualDistributionType, but $expectedDistributionType was expected"
+            )
+        }.closeProjectAsync()
     }
 }

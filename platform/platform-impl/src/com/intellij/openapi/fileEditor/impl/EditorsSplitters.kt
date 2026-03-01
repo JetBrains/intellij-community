@@ -14,8 +14,13 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
@@ -45,14 +50,24 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusManager
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.FileIdAdapter
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
+import com.intellij.openapi.wm.ex.WelcomeScreenTabService
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.FloatingDecorator
+import com.intellij.openapi.wm.impl.FocusManagerImpl
+import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.fileEditor.parseFileEntry
@@ -61,7 +76,14 @@ import com.intellij.platform.ide.IdeFingerprint
 import com.intellij.platform.ide.ideFingerprint
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LightVirtualFileBase
-import com.intellij.ui.*
+import com.intellij.ui.BorderPainter
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.DefaultBorderPainter
+import com.intellij.ui.DirtyUI
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.decodeCachedImageIconFromByteArray
 import com.intellij.ui.scale.JBUIScale
@@ -77,12 +99,45 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.jsonDomToXml
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Container
+import java.awt.Font
+import java.awt.Graphics
+import java.awt.KeyEventPostProcessor
+import java.awt.KeyboardFocusManager
+import java.awt.Toolkit
+import java.awt.Window
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.event.AWTEventListener
@@ -94,7 +149,13 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JSplitPane
+import javax.swing.SwingUtilities
+import javax.swing.TransferHandler
+import javax.swing.UIManager
 import kotlin.time.Duration.Companion.milliseconds
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
@@ -127,6 +188,7 @@ open class EditorsSplitters internal constructor(
   }
 
   private val _currentWindowFlow = MutableStateFlow<EditorWindow?>(null)
+
   @JvmField
   internal val currentWindowFlow: StateFlow<EditorWindow?> = _currentWindowFlow.asStateFlow()
 
@@ -401,7 +463,7 @@ open class EditorsSplitters internal constructor(
 
   internal fun setCurrentWindow(window: EditorWindow?) {
     LOG.debug {
-     "set editor window to $window: ${ExceptionUtil.currentStackTrace()}"
+      "set editor window to $window: ${ExceptionUtil.currentStackTrace()}"
     }
     _currentWindowFlow.value = window
   }
@@ -787,20 +849,20 @@ open class EditorsSplitters internal constructor(
     }
 
     /**
-      Rolls back the last focus gained time if focus change was temporary
+    Rolls back the last focus gained time if focus change was temporary
 
-      Fixes the following situation:
+    Fixes the following situation:
 
-      1. The user clicks an inactive IDE window.
-      2. The window gets focus, the last focused editor becomes focused.
-      3. The component that the user clicked becomes focused immediately after that.
+    1. The user clicks an inactive IDE window.
+    2. The window gets focus, the last focused editor becomes focused.
+    3. The component that the user clicked becomes focused immediately after that.
 
-      In this case, the IDE should behave as if the editor never received this last focus to begin with.
-      However, it's impossible to detect when the editor gains focus.
-      At that point, the mouse click may not even be in the event queue yet,
-      and it's anyone's guess whether the window was activated by a mouse click or, say, with Alt+Tab.
-      Therefore, we update the editor's last focused time anyway, but then roll back if this situation is detected.
-    */
+    In this case, the IDE should behave as if the editor never received this last focus to begin with.
+    However, it's impossible to detect when the editor gains focus.
+    At that point, the mouse click may not even be in the event queue yet,
+    and it's anyone's guess whether the window was activated by a mouse click or, say, with Alt+Tab.
+    Therefore, we update the editor's last focused time anyway, but then roll back if this situation is detected.
+     */
     private fun rollbackFocusGainedIfNecessary(newFocusedComponent: Component) {
       if (previousFocusGainedTime == 0L) return // Nothing to roll back.
       if (ComponentUtil.getParentOfType(EditorsSplitters::class.java, newFocusedComponent) == this@EditorsSplitters) {
@@ -820,9 +882,15 @@ open class EditorsSplitters internal constructor(
 
   @JvmOverloads
   @RequiresEdt
-  fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, forceFocus: Boolean = false): EditorWindow? = openInRightSplit(file, requestFocus, forceFocus, null)
+  fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, forceFocus: Boolean = false): EditorWindow? =
+    openInRightSplit(file, requestFocus, forceFocus, null)
 
-  internal fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, forceFocus: Boolean = false, explicitlySetCompositeProvider: (() -> EditorComposite?)?): EditorWindow? {
+  internal fun openInRightSplit(
+    file: VirtualFile,
+    requestFocus: Boolean = true,
+    forceFocus: Boolean = false,
+    internalHint: FileEditorOpenOptionsHint? = null,
+  ): EditorWindow? {
     val window = currentWindow ?: return null
     val parent = window.component.parent
     if (parent is Splitter) {
@@ -833,13 +901,21 @@ open class EditorsSplitters internal constructor(
           manager.openFile(
             file = file,
             window = rightSplitWindow,
-            options = FileEditorOpenOptions(requestFocus = requestFocus, waitForCompositeOpen = false, forceFocus = forceFocus, explicitlyOpenCompositeProvider = explicitlySetCompositeProvider),
+            options = FileEditorOpenOptions(requestFocus = requestFocus,
+                                            waitForCompositeOpen = false,
+                                            forceFocus = forceFocus,
+                                            internalHint = internalHint),
           )
           return rightSplitWindow
         }
       }
     }
-    return window.split(orientation = JSplitPane.HORIZONTAL_SPLIT, forceSplit = true, virtualFile = file, focusNew = requestFocus, forceFocus = forceFocus, explicitlySetCompositeProvider = explicitlySetCompositeProvider)
+    return window.split(orientation = JSplitPane.HORIZONTAL_SPLIT,
+                        forceSplit = true,
+                        virtualFile = file,
+                        focusNew = requestFocus,
+                        forceFocus = forceFocus,
+                        internalHint = internalHint)
   }
 }
 
@@ -921,6 +997,7 @@ internal class EditorSplitterStateLeaf(element: Element, storedIdeFingerprint: I
 class EditorSplitterState(element: Element) {
   @JvmField
   internal val splitters: EditorSplitterStateSplitter?
+
   @JvmField
   internal val leaf: EditorSplitterStateLeaf?
 
@@ -1074,6 +1151,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
         window.updateTabsVisibility()
         addChild(window.component)
         splitters.addWindow(window)
+        WelcomeScreenTabService.getInstance(fileEditorManager.project).openTab()
         windowAddedDeferred.complete(Unit)
       }
       finally {
@@ -1108,26 +1186,27 @@ private fun computeFileEntry(
   val notFullyPreparedFile = resolveFileOrLogError(fileEntry, virtualFileManager) ?: return null
 
   // do not expose `file` variable to avoid using it instead of `fileProvider`
-  val fileProviderDeferred = compositeCoroutineScope.async(start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY) {
-    // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
-    // In the case of the JetBrains client, it's better to avoid a blocking protocol call inside [VirtualFile.contentsToByteArray]
-    if (!PlatformUtils.isJetBrainsClient() && notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
-      ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
-        try {
-          notFullyPreparedFile.contentsToByteArray(true)
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (ignore: FileTooBigException) {
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
+  val fileProviderDeferred =
+    compositeCoroutineScope.async(start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY) {
+      // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
+      // In the case of the JetBrains client, it's better to avoid a blocking protocol call inside [VirtualFile.contentsToByteArray]
+      if (!PlatformUtils.isJetBrainsClient() && notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
+        ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
+          try {
+            notFullyPreparedFile.contentsToByteArray(true)
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (ignore: FileTooBigException) {
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
         }
       }
+      notFullyPreparedFile
     }
-    notFullyPreparedFile
-  }
 
   val fileProvider = suspend { fileProviderDeferred.await() }
 
@@ -1294,7 +1373,8 @@ private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: Virt
   val file = if (PlatformUtils.isJetBrainsClient() && fileEntry.id != null) {
     if (fileEntry.managingFsCreationTimestamp != null) {
       fileIdAdapter.getFileWithTimestamp(fileEntry.id, fileEntry, fileEntry.managingFsCreationTimestamp)
-    } else {
+    }
+    else {
       fileIdAdapter.getFile(fileEntry.id, fileEntry)
     }
   }

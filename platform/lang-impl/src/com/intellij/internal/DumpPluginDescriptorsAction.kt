@@ -3,13 +3,15 @@
 
 package com.intellij.internal
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.intellij.ide.ApplicationActivity
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.ClassLoaderConfigurator
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.plugins.contentModules
 import com.intellij.internal.PluginDescriptionDumper.Companion.getDumpFileLocation
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
@@ -29,6 +31,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.ObjectWriteContext
+import tools.jackson.core.json.JsonFactory
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -37,13 +42,13 @@ import kotlin.io.path.relativeTo
 
 private const val DUMP_DESCRIPTORS_PROPERTY = "idea.dump.plugin.descriptors"
 
-private class DumpPluginDescriptorsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
+internal class DumpPluginDescriptorsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
   override fun actionPerformed(e: AnActionEvent) {
     service<PluginDescriptionDumper>().dump(getDumpFileLocation(), e.project)
   }
 }
 
-private class DumpPluginDescriptorsOnAppStartTrigger : ApplicationActivity {
+internal class DumpPluginDescriptorsOnAppStartTrigger : ApplicationActivity {
   override suspend fun execute() {
     if (System.getProperty(DUMP_DESCRIPTORS_PROPERTY, "false") == "true") {
       val dumpPath = getDumpFileLocation()
@@ -69,7 +74,7 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     coroutineScope.launch {
       withContext(Dispatchers.IO) {
         dumpPath.bufferedWriter().use { out ->
-          val writer = JsonFactory().createGenerator(out).setPrettyPrinter(DefaultPrettyPrinter().withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE))
+          val writer = JsonFactory().createGenerator(ObjectWriteContext.empty(), out)
           writer.writeStartArray()
           writer.writePlugins()
           writer.writeEndArray()
@@ -130,9 +135,9 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
                                             classLoaderIds: Map<ClassLoader, String>,
                                             printedClassLoaders: MutableSet<ClassLoader>) {
     writeStartObject()
-    writeStringField("id", plugin.pluginId.idString)
-    writeBooleanField("enabled", plugin.isEnabled)
-    writeBooleanField("bundled", plugin.isBundled)
+    writeStringProperty("id", plugin.pluginId.idString)
+    writeBooleanProperty("enabled", plugin.isEnabled)
+    writeBooleanProperty("bundled", plugin.isBundled)
     if (plugin.isEnabled) {
       writeClassLoaderData(plugin.classLoader, classLoaderIds, printedClassLoaders)
     }
@@ -147,12 +152,12 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     val modules = plugin.contentModules
     if (modules.isEmpty()) return
 
-    writeArrayFieldStart("modules")
+    writeArrayPropertyStart("modules")
     for (module in modules) {
       writeStartObject()
-      writeStringField("name", module.moduleId.name)
+      writeStringProperty("name", module.moduleId.name)
       val isEnabled = module in PluginManagerCore.getPluginSet().getEnabledModules()
-      writeBooleanField("enabled", isEnabled)
+      writeBooleanProperty("enabled", isEnabled)
       if (isEnabled) {
         writeClassLoaderData(module.classLoader, classLoaderIds, printedClassLoaders)
       }
@@ -164,10 +169,10 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
   private fun JsonGenerator.writeClassLoaderData(classLoader: ClassLoader,
                                                  classLoaderIds: Map<ClassLoader, String>,
                                                  printedClassLoaders: MutableSet<ClassLoader>) {
-    writeFieldName("classLoader")
+    writeName("classLoader")
     writeStartObject()
     classLoaderIds[classLoader]?.let {
-      writeStringField("id", it)
+      writeStringProperty("id", it)
     }
     if (printedClassLoaders.add(classLoader)) {
       @Suppress("TestOnlyProblems")
@@ -175,13 +180,13 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
         is PluginClassLoader -> classLoader.getAllParentsClassLoaders().toList()
         else -> listOf(classLoader.parent)
       }
-      writeArrayFieldStart("parents")
+      writeArrayPropertyStart("parents")
       for (parent in parents) {
         writeString(classLoaderIds[parent] ?: parent.toString())
       }
       writeEndArray()
 
-      writeArrayFieldStart("classpath")
+      writeArrayPropertyStart("classpath")
       val homePath = Path.of(PathManager.getHomePath())
       if (classLoader is UrlClassLoader) {
         for (path in classLoader.baseUrls) {

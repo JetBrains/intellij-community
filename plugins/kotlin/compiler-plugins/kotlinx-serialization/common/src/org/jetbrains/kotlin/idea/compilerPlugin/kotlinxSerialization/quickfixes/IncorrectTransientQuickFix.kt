@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl
@@ -25,7 +25,7 @@ internal class AddKotlinxSerializationTransientImportQuickFix(expression: PsiEle
 
     override fun getFamilyName(): String = text
 
-    override fun getText(): String = KotlinSerializationBundle.message("intention.name.import", SerializationAnnotations.serialTransientFqName)
+    override fun getText(): String = KotlinBundle.message("intention.name.import", SerializationAnnotations.serialTransientFqName)
 
     object Factory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {

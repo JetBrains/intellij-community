@@ -5,7 +5,11 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase.assertEquals
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.configuration.notifications.*
+import org.jetbrains.kotlin.idea.configuration.notifications.LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
+import org.jetbrains.kotlin.idea.configuration.notifications.campaignVersion
+import org.jetbrains.kotlin.idea.configuration.notifications.dropHotfixPart
+import org.jetbrains.kotlin.idea.configuration.notifications.newExternalKotlinCompilerShouldBePromoted
+import org.jetbrains.kotlin.idea.configuration.notifications.whatIsNewPageVersion
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

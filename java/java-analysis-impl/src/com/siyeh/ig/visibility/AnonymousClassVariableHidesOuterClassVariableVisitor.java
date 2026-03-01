@@ -1,7 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.visibility;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.ApiStatus;

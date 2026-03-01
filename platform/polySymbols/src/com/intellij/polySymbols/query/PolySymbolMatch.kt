@@ -2,7 +2,10 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.CompositePolySymbol
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
 import org.jetbrains.annotations.ApiStatus
 
@@ -21,11 +24,10 @@ interface PolySymbolMatch : CompositePolySymbol {
     fun create(
       matchedName: String,
       nameSegments: List<PolySymbolNameSegment>,
-      qualifiedKind: PolySymbolQualifiedKind,
-      origin: PolySymbolOrigin,
+      kind: PolySymbolKind,
       explicitPriority: PolySymbol.Priority? = null,
     ): PolySymbolMatch =
-      PolySymbolMatchBase.BuilderImpl(matchedName, qualifiedKind, origin)
+      PolySymbolMatchBase.BuilderImpl(matchedName, kind)
         .also { builder ->
           builder.addNameSegments(nameSegments)
           explicitPriority?.let { builder.explicitPriority(it) }
@@ -35,22 +37,20 @@ interface PolySymbolMatch : CompositePolySymbol {
     @JvmStatic
     fun create(
       matchedName: String,
-      qualifiedKind: PolySymbolQualifiedKind,
-      origin: PolySymbolOrigin,
+      kind: PolySymbolKind,
       builder: (PolySymbolMatchBuilder.() -> Unit),
     ): PolySymbolMatch =
-      PolySymbolMatchBase.BuilderImpl(matchedName, qualifiedKind, origin)
+      PolySymbolMatchBase.BuilderImpl(matchedName, kind)
         .also { builder.invoke(it) }
         .build()
 
     @JvmStatic
     fun create(
       matchedName: String,
-      qualifiedKind: PolySymbolQualifiedKind,
-      origin: PolySymbolOrigin,
+      kind: PolySymbolKind,
       vararg nameSegments: PolySymbolNameSegment,
     ): PolySymbolMatch =
-      PolySymbolMatchBase.BuilderImpl(matchedName, qualifiedKind, origin)
+      PolySymbolMatchBase.BuilderImpl(matchedName, kind)
         .also { it.addNameSegments(*nameSegments) }
         .build()
 

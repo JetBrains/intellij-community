@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 

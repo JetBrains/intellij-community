@@ -3,7 +3,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 
 public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
   protected final SmartPsiElementPointer<PsiReferenceExpression> myReferenceExpression;

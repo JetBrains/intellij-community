@@ -23,7 +23,16 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_COLLECTIONS_PACKAGE
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_SEQUENCES_PACKAGE
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.BuilderByPattern
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.buildExpression
+import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 

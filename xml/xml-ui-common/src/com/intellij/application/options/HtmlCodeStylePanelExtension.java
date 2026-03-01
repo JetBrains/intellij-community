@@ -7,7 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import java.util.List;
 
 public interface HtmlCodeStylePanelExtension {

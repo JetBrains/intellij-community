@@ -17,7 +17,14 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -32,9 +39,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_ITERABLE;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAYS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_STREAM;
 import static com.intellij.util.ObjectUtils.tryCast;
-import static com.siyeh.ig.callMatcher.CallMatcher.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 public class StreamChainInliner implements CallInliner {
   private static final String[] TERMINALS =

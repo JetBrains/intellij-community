@@ -33,6 +33,6 @@ public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
 
   @Override
   public @NotNull StructureView createStructureView(final FileEditor fileEditor, final @NotNull Project project) {
-    return new StructureViewComponent(fileEditor, createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null), project, true);
+    return new StructureViewComponent(fileEditor, createStructureViewModel(fileEditor instanceof TextEditor te ? te.getEditor() : null), project, true);
   }
 }

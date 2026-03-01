@@ -22,7 +22,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
 
 public final class InjectedLanguage {
   private static Map<String, Language> ourLanguageCache;

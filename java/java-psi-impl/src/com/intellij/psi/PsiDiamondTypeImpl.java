@@ -13,7 +13,12 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -22,7 +27,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author anna

@@ -13,7 +13,23 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JVMElementFactories;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -28,7 +44,11 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 final class UsedIconsListingAction extends AnAction {
 

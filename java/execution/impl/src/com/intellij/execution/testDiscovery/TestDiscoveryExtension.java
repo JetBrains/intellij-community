@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery;
 
-import com.intellij.execution.*;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport;
+import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.TestDiscoveryListener;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;

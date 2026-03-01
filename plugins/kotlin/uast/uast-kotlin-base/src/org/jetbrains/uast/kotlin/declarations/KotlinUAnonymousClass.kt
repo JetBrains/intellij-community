@@ -10,7 +10,15 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnonymousClass
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassInitializer
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinUAnonymousClass(

@@ -23,7 +23,7 @@ private val LOG = logger<SettingsSynchronizer>()
 
 private val MIGRATION_EP = ExtensionPointName<SettingsSyncMigration>("com.intellij.settingsSyncMigration")
 
-private class SettingsSynchronizerApplicationInitializedListener : ApplicationActivity {
+internal class SettingsSynchronizerApplicationInitializedListener : ApplicationActivity {
 
   override suspend fun execute() {
     val settingsSyncEventListener = object : SettingsSyncEventListener {

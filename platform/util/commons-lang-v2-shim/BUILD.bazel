@@ -11,4 +11,15 @@ jvm_library(
     "@lib//:platform-util-commons_lang_v2_shim-commons-collections",
   ]
 )
+
+jvm_library(
+  name = "commons-lang-v2-shim_test_lib",
+  module_name = "intellij.platform.util.commonsLangV2Shim",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":commons-lang-v2-shim",
+    "//libraries/commons/lang3:lang3_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.util.commonsLangV2Shim` end

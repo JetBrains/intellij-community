@@ -2,9 +2,14 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
@@ -13,8 +18,13 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.addRemoveModifier.addModifier
+import org.jetbrains.kotlin.psi.classOrObjectVisitor
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ManualVariance
@@ -22,6 +32,7 @@ import org.jetbrains.kotlin.resolve.VarianceCheckerCore
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+@K1Deprecation
 class AddVarianceModifierInspection : AbstractKotlinInspection() {
 
     private fun VarianceCheckerCore.checkClassOrObject(klass: KtClassOrObject): Boolean {

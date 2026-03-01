@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.model.versionCatalogs.versionCatalogs
 /**
  * Provides version catalog data collected at Gradle sync and stored in the Workspace Model.
  */
-private class GradleWsmVersionCatalogHandler : GradleVersionCatalogHandler {
+internal class GradleWsmVersionCatalogHandler : GradleVersionCatalogHandler {
   override fun getVersionCatalogFiles(module: Module): Map<String, VirtualFile> {
     val result = HashMap<String, VirtualFile>()
     for (entity in getVersionCatalogEntities(module)) {

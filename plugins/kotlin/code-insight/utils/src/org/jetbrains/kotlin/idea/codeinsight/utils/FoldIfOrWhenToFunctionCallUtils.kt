@@ -12,7 +12,13 @@ import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
 object FoldIfOrWhenToFunctionCallUtils {

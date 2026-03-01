@@ -3,3 +3,5 @@ fun foo(){
 }
 
 // ELEMENT_TEXT: Thread.currentThread
+
+// IGNORE_K2

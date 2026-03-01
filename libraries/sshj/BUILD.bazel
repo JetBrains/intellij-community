@@ -15,4 +15,13 @@ jvm_library(
   exports = ["@lib//:libraries-sshj-_s_s_h_j"],
   runtime_deps = ["@lib//:libraries-sshj-_s_s_h_j"]
 )
+
+jvm_library(
+  name = "sshj_test_lib",
+  module_name = "intellij.libraries.sshj",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:libraries-sshj-_s_s_h_j"],
+  runtime_deps = [":sshj"]
+)
 ### auto-generated section `build intellij.libraries.sshj` end

@@ -7,7 +7,8 @@ import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.HashMap;
 import java.util.Map;
 

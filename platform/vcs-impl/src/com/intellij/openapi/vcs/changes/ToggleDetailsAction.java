@@ -4,10 +4,10 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ToggleDetailsAction extends ShowDiffPreviewAction {
 
@@ -16,9 +16,10 @@ public class ToggleDetailsAction extends ShowDiffPreviewAction {
     super.update(e);
     Project project = e.getProject();
     if (project == null) return;
-    ChangesViewManager changesViewManager = getChangesViewManager(project);
-    if (changesViewManager == null) return;
-    e.getPresentation().setEnabledAndVisible(changesViewManager.isDiffPreviewAvailable());
+    ChangesViewController controller = e.getData(ChangesViewController.DATA_KEY);
+    if (controller == null) return;
+    e.getPresentation().setEnabledAndVisible(controller.isDiffPreviewAvailable()
+                                             || Registry.get("show.diff.preview.as.editor.tab.with.single.click").asBoolean());
   }
 
   @Override
@@ -32,9 +33,9 @@ public class ToggleDetailsAction extends ShowDiffPreviewAction {
     if (project == null) return;
     VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
 
-    ChangesViewManager changesViewManager = getChangesViewManager(project);
-    if (changesViewManager == null) return;
-    changesViewManager.diffPreviewChanged(state);
+    ChangesViewController controller = e.getData(ChangesViewController.DATA_KEY);
+    if (controller == null) return;
+    controller.toggleDiffPreview(state);
   }
 
   @Override
@@ -43,11 +44,5 @@ public class ToggleDetailsAction extends ShowDiffPreviewAction {
     if (project == null) return false;
 
     return VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
-  }
-
-  private static @Nullable ChangesViewManager getChangesViewManager(@NotNull Project project) {
-    ChangesViewI changesView = ChangesViewManager.getInstance(project);
-    if (changesView instanceof ChangesViewManager) return (ChangesViewManager)changesView;
-    return null;
   }
 }

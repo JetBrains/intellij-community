@@ -4,10 +4,10 @@ package andel.rope.impl
 import andel.rope.Metric
 import andel.rope.Metrics
 import fleet.fastutil.ints.IntArrayList
-import kotlin.jvm.JvmInline
 import fleet.fastutil.ints.MutableIntList
 import fleet.fastutil.ints.addElements
 import fleet.fastutil.ints.toArray
+import kotlin.jvm.JvmInline
 
 internal fun concatArrays(
   rank: Int,

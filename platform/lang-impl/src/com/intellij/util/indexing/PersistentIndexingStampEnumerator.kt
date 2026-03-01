@@ -3,12 +3,16 @@
 
 package com.intellij.util.indexing
 
-import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
 import com.intellij.platform.util.io.storages.DataExternalizerEx
-import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory
 import com.intellij.platform.util.io.storages.KeyDescriptorEx
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
+import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.*
+import com.intellij.util.io.DurableDataEnumerator
+import com.intellij.util.io.IOUtil
+import com.intellij.util.io.KeyDescriptor
+import com.intellij.util.io.PersistentEnumerator
+import com.intellij.util.io.Unmappable
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.io.DataInput

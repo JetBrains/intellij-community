@@ -3,7 +3,13 @@ package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.JavaExpressionTypeNullabilityPatcher;
 import com.intellij.codeInsight.TypeNullability;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;

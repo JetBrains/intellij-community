@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -9,7 +10,6 @@ import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
-import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Deferred
@@ -26,7 +26,7 @@ import java.nio.file.Path
  */
 class PythonAddLocalInterpreterPresenter(
   val moduleOrProject: ModuleOrProject,
-  val envReader: VirtualEnvReader = VirtualEnvReader.Instance,
+  val envReader: VirtualEnvReader = VirtualEnvReader(),
   val errorSink: ErrorSink,
   val bestGuessCreateSdkInfo: Deferred<CreateSdkInfoWithTool?>,
 ) {
@@ -36,7 +36,7 @@ class PythonAddLocalInterpreterPresenter(
    */
   val pathForVEnv: Path
     get() = when (moduleOrProject) {
-              is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.rootManager.contentRoots.firstOrNull()?.toNioPath()
+              is ModuleOrProject.ModuleAndProject -> ModuleRootManager.getInstance(moduleOrProject.module).contentRoots.firstOrNull()?.toNioPath()
                                                      ?: moduleOrProject.project.basePath?.toNioPathOrNull()
               is ModuleOrProject.ProjectOnly -> moduleOrProject.project.basePath?.toNioPathOrNull()
             } ?: envReader.getVEnvRootDir()

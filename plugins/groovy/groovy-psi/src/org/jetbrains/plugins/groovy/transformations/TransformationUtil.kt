@@ -10,6 +10,7 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -35,6 +36,7 @@ private val emptyTransformationResult = TransformationResult(
 private val LOG: Logger = Logger.getInstance("#org.jetbrains.plugins.groovy.transformations.TransformationUtilKt")
 private var ourAssertOnRecursion: Boolean = true
 
+@TestOnly
 fun disableAssertOnRecursion(disposable: Disposable) {
   if (!ourAssertOnRecursion) {
     return

@@ -18,7 +18,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.util" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
-    <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.jvm.shared" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

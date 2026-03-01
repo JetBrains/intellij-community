@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;

@@ -12,7 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 
 public final class BlockTreeNode extends SimpleNode {
   private final Block myBlock;

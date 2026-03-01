@@ -9,7 +9,8 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.table.TableModel;
 import java.util.Collections;
 import java.util.Comparator;

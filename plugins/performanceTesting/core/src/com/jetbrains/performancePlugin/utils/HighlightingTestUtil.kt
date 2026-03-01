@@ -3,14 +3,14 @@ package com.jetbrains.performancePlugin.utils
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.diagnostic.telemetry.Scope
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import java.util.concurrent.TimeUnit
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.jetbrains.performancePlugin.commands.CodeAnalysisStateListener
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.delay
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -37,8 +37,8 @@ class HighlightingTestUtil {
     }
 
     @JvmStatic
-    suspend fun waitForAnalysisWithNewApproach(project: Project, span: Span?, timeout: Long?, suppressErrors: Boolean?) {
-      val timeoutDuration = if (timeout == 0L || timeout == null) 5.minutes else timeout.seconds
+    suspend fun waitForAnalysisWithNewApproach(project: Project, span: Span?, timeoutSeconds: Long?, suppressErrors: Boolean?) {
+      val timeoutDuration = if (timeoutSeconds == 0L || timeoutSeconds == null) 5.minutes else timeoutSeconds.seconds
       try {
         project.service<CodeAnalysisStateListener>().waitAnalysisToFinish(timeoutDuration, !(suppressErrors ?: true))
       }

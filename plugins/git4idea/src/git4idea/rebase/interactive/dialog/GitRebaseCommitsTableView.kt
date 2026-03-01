@@ -31,7 +31,12 @@ import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GR
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GRAPH_LINE_WIDTH
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GRAPH_NODE_WIDTH
 import git4idea.rebase.interactive.dialog.view.CommitMessageCellEditor
-import java.awt.*
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
 import javax.swing.DefaultListSelectionModel
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
@@ -154,7 +159,7 @@ internal open class GitRebaseCommitsTableView(
     else -> NodeType.SIMPLE_NODE
   }
 
-  private abstract class DisabledDuringRewordAction(protected val table: GitRebaseCommitsTableView) : DumbAwareAction() {
+  internal abstract class DisabledDuringRewordAction(protected val table: GitRebaseCommitsTableView) : DumbAwareAction() {
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.EDT
     }
@@ -169,13 +174,13 @@ internal open class GitRebaseCommitsTableView(
     }
   }
 
-  private class UndoAction(table: GitRebaseCommitsTableView) : DisabledDuringRewordAction(table) {
+  internal class UndoAction(table: GitRebaseCommitsTableView) : DisabledDuringRewordAction(table) {
     override fun actionPerformed(e: AnActionEvent) {
       table.model.undo()
     }
   }
 
-  private class RedoAction(table: GitRebaseCommitsTableView) : DisabledDuringRewordAction(table) {
+  internal class RedoAction(table: GitRebaseCommitsTableView) : DisabledDuringRewordAction(table) {
     override fun actionPerformed(e: AnActionEvent) {
       table.model.redo()
     }

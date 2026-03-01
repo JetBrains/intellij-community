@@ -6,7 +6,9 @@ import com.intellij.codeInsight.hints.codeVision.UsagesCountManagerBase
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch
 import com.intellij.serviceContainer.NonInjectable

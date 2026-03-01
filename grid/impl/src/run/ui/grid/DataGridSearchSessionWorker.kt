@@ -1,19 +1,31 @@
 package com.intellij.database.run.ui.grid
 
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridRow
+import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.ModelIndex
+import com.intellij.database.datagrid.ModelIndexSet
 import com.intellij.database.extractors.DatabaseObjectFormatterConfig.DatabaseDisplayObjectFormatterConfig
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
-import java.util.*
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.SortedSet
+import java.util.TreeSet
 import kotlin.time.Duration.Companion.milliseconds
 
 internal typealias SearchInfo = List<TreeSet<Int>?>

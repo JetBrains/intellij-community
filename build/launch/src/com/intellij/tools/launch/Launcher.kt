@@ -1,7 +1,12 @@
 package com.intellij.tools.launch
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.tools.launch.ide.*
+import com.intellij.tools.launch.ide.ClassPathBuilder
+import com.intellij.tools.launch.ide.ClasspathCollector
+import com.intellij.tools.launch.ide.IdeDebugOptions
+import com.intellij.tools.launch.ide.IdeLaunchContext
+import com.intellij.tools.launch.ide.IdeLauncher
+import com.intellij.tools.launch.ide.collectedClasspath
 import com.intellij.tools.launch.ide.environments.docker.legacyDockerRunCliCommandLauncherFactory
 import com.intellij.tools.launch.ide.environments.local.LocalIdeCommandLauncherFactory
 import com.intellij.tools.launch.ide.environments.local.localLaunchOptions

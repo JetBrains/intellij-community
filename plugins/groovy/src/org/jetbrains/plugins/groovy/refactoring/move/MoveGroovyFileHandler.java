@@ -17,7 +17,13 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;

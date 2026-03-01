@@ -2,7 +2,17 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.MutationSignature;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;

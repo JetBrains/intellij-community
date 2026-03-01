@@ -16,7 +16,12 @@
 
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.InlineUtil;

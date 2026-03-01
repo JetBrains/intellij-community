@@ -1,9 +1,19 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.JUnitBundle;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.JavaTestFrameworkRunnableState;
+import com.intellij.execution.Location;
+import com.intellij.execution.TestClassCollector;
+import com.intellij.execution.configurations.CompositeParameterTargetedValue;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit.testDiscovery.TestBySource;
 import com.intellij.execution.junit.testDiscovery.TestsByChanges;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -41,9 +51,25 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -64,11 +90,16 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.io.File;
@@ -76,7 +107,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -96,6 +140,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private static final @NlsSafe String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
 
   private static final @NonNls String DEFAULT_RUNNER = "default";
+  private static final int DEFAULT_SHUTDOWN_TIMEOUT = 600;
 
   private final JUnitConfiguration myConfiguration;
   protected File myListenersFile;
@@ -257,8 +302,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
     javaParameters.getClassPath().addFirst(getJUnitRtFile(JUnitStarter.JUNIT5_PARAMETER));
-    //include junit6 listeners for the case custom junit 6 engines would be detected on runtime
-    javaParameters.getClassPath().addFirst(getJUnitRtFile(JUnitStarter.JUNIT6_PARAMETER));
+
+    // Add junit6_rt.jar to the classpath if the runner is -junit6
+    String runner = getRunner();
+    if (runner.equals(JUnitStarter.JUNIT6_PARAMETER)) {
+      javaParameters.getClassPath().addFirst(getJUnitRtFile(JUnitStarter.JUNIT6_PARAMETER));
+    }
 
     appendDownloadedDependenciesForForkedConfigurations(javaParameters, module);
   }
@@ -347,6 +396,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     JavaParameters javaParameters = super.createJavaParameters();
+
+    int timeout = Registry.intValue("idea.test.graceful.shutdown.timeout.seconds", DEFAULT_SHUTDOWN_TIMEOUT);
+    if (timeout != DEFAULT_SHUTDOWN_TIMEOUT) {
+      javaParameters.getVMParametersList().addProperty("idea.test.graceful.shutdown.timeout.seconds", String.valueOf(timeout));
+    }
 
     if (javaParameters.getMainClass() == null) { // for custom main class, e.g. overridden by JUnitDevKitUnitTestingSettings.Companion#apply
       javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
@@ -539,6 +593,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return null;
   }
 
+  private static final Map<String, Object> DOWNLOAD_LOCKS = new ConcurrentHashMap<>();
   private void downloadDependenciesWhenRequired(@NotNull Project project,
                                                 @NotNull List<String> classPath,
                                                 @NotNull RepositoryLibraryProperties properties) throws CantRunException {
@@ -553,9 +608,14 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         String title = JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1);
         targetProgressIndicator.addSystemLine(title);
       }
-      roots = JarRepositoryManager.loadDependenciesSync(project, properties, false, false, null, null,
-                                                        targetProgressIndicator != null ? new ProgressIndicatorWrapper(targetProgressIndicator)
-                                                                                        : ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new DumbProgressIndicator()));
+      Object lock = DOWNLOAD_LOCKS.computeIfAbsent(properties.getMavenId(), key -> ObjectUtils.sentinel("JUnitDownload: " + key));
+      synchronized (lock) {
+        roots = JarRepositoryManager.loadDependenciesSync(
+          project, properties, false, false, null, null,
+          targetProgressIndicator != null
+          ? new ProgressIndicatorWrapper(targetProgressIndicator)
+          : ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new DumbProgressIndicator()));
+      }
     }
     catch (ProcessCanceledException e) {
       roots = Collections.emptyList();
@@ -767,19 +827,28 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  private String myRunner;
-  private static final Object LOCK = ObjectUtils.sentinel("JUnitRunner");
+  private final AtomicReference<String> myRunner = new AtomicReference<>(null);
 
   protected @NotNull String getRunner() {
-    synchronized (LOCK) {
-      if (myRunner == null) {
-        myRunner = ProgressManager.getInstance()
+    String cached = myRunner.get();
+    if (cached != null) return cached;
+
+    Supplier<String> runner = () -> {
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        return ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(() -> ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously(),
                                                JUnitBundle.message("dialog.title.preparing.test"),
                                                true, myConfiguration.getProject());
       }
-      return myRunner;
-    }
+      else if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+        return ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously();
+      }
+      else {
+        return getRunnerInner();
+      }
+    };
+    myRunner.compareAndSet(null, runner.get());
+    return myRunner.get();
   }
 
   private String getRunner(@NotNull GlobalSearchScope scope, @NotNull Project project) {
@@ -796,6 +865,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
+  @RequiresBackgroundThread
   private @NotNull String getRunnerInner() {
     Project project = myConfiguration.getProject();
     LOG.assertTrue(!DumbService.getInstance(project).isAlternativeResolveEnabled());

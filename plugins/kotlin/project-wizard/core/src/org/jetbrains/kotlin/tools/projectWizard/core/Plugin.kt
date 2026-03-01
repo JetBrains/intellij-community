@@ -3,11 +3,22 @@ package org.jetbrains.kotlin.tools.projectWizard.core
 
 import org.jetbrains.kotlin.tools.projectWizard.PropertiesOwner
 import org.jetbrains.kotlin.tools.projectWizard.SettingsOwner
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.*
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.EntityBase
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.Task1
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PluginProperty
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PropertyBuilder
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.*
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.BooleanSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.DropDownSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ListSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PathSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingBuilder
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.StringSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ValueSettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.VersionSettingType
 import org.jetbrains.kotlin.tools.projectWizard.enumSettingImpl
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem

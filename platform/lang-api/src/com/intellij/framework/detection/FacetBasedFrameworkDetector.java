@@ -1,16 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.framework.FrameworkType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

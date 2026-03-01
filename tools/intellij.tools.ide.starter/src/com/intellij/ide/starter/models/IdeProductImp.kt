@@ -118,7 +118,8 @@ object IdeProductImp : IdeProduct {
     productCode = "RR",
     platformPrefix = "RustRover",
     executableFileName = "rustrover",
-    fullName = "RustRover"
+    fullName = "RustRover",
+    qodanaProductCode = "QDRST"
   )
 
   /** Rider */
@@ -126,15 +127,8 @@ object IdeProductImp : IdeProduct {
     productCode = "RD",
     platformPrefix = "Rider",
     executableFileName = "rider",
-    fullName = "Rider"
-  )
-
-  /** Writerside */
-  override val WRS = IdeInfo(
-    productCode = "WRS",
-    platformPrefix = "Writerside",
-    executableFileName = "writerside",
-    fullName = "Writerside"
+    fullName = "Rider",
+    qodanaProductCode = "QDNET"
   )
 
   /** Gateway */
@@ -143,13 +137,5 @@ object IdeProductImp : IdeProduct {
     platformPrefix = "Gateway",
     executableFileName = "gateway",
     fullName = "Gateway"
-  )
-
-  /** Git Client */
-  override val GIG: IdeInfo = IdeInfo(
-    productCode = "GIG",
-    platformPrefix = "GitClient",
-    executableFileName = "gitClient",
-    fullName = "GitClient"
   )
 }

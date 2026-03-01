@@ -7,7 +7,12 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class DuplicateParentFixer {

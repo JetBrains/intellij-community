@@ -21,7 +21,6 @@ f:com.intellij.ui.jcef.JBCefApp
 - s:getForceDeviceScaleFactor():D
 - s:getInstance():com.intellij.ui.jcef.JBCefApp
 - s:getNotificationGroup():com.intellij.notification.NotificationGroup
-- getRemoteDebuggingPort():java.lang.Integer
 - getRemoteDebuggingPort(java.util.function.Consumer):V
 - s:isOffScreenRenderingModeEnabled():Z
 - s:isStarted():Z

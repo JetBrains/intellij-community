@@ -53,13 +53,67 @@ jvm_library(
     "@lib//:sqlite",
   ]
 )
+
+jvm_library(
+  name = "vcs-svn_test_lib",
+  module_name = "intellij.vcs.svn",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-svn",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/credential-store:credential-store_test_lib",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/diff:diff_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//libraries/http-client:http-client_test_lib",
+    "//platform/diff-impl:diff-impl_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//libraries/ini4j:ini4j_test_lib",
+    "//libraries/oro-matcher:oro-matcher_test_lib",
+    "//libraries/javax/activation:activation_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/lvcs-api:lvcs_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/external-process-auth-helper:external-process-auth-helper_test_lib",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.vcs.svn` end
 
 ### auto-generated section `build intellij.vcs.svn.tests` start
 jvm_library(
   name = "vcs-svn-tests",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//plugins/svn4idea:vcs-svn",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/forms_rt:java-guiForms-rt",
+  ]
 )
 
 jvm_library(
@@ -70,11 +124,17 @@ jvm_library(
   deps = [
     "@lib//:junit4",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//plugins/svn4idea:vcs-svn",
+    "//plugins/svn4idea:vcs-svn_test_lib",
     "//platform/vcs-api:vcs",
+    "//platform/vcs-api:vcs_test_lib",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/platform-impl:ide-impl",
@@ -82,15 +142,30 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/ide-core-impl",
     "//platform/lang-api:lang",
+    "//platform/lang-api:lang_test_lib",
     "//platform/core-impl",
+    "//platform/core-impl:core-impl_test_lib",
     "//xml/dom-impl",
+    "//xml/dom-impl:dom-impl_test_lib",
     "//platform/vcs-tests:vcs-testFramework",
+    "//platform/vcs-tests:vcs-testFramework_test_lib",
     "@lib//:hamcrest",
     "@lib//:kotlin-test",
     "//libraries/stream",
+    "//libraries/stream:stream_test_lib",
     "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/vcs-impl:vcs-impl-tests",
+    "//platform/vcs-impl:vcs-impl-tests_test_lib",
+  ],
+  runtime_deps = [
+    ":vcs-svn-tests",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.svn.tests` end

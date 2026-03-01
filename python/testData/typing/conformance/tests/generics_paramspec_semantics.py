@@ -11,11 +11,11 @@ P = ParamSpec("P")
 
 
 def changes_return_type_to_str(x: Callable[P, int]) -> Callable[P, str]:
-    ...
+    raise NotImplementedError
 
 
 def returns_int(a: str, b: bool, /) -> int:
-    ...
+    raise NotImplementedError
 
 
 f1 = changes_return_type_to_str(returns_int)
@@ -28,15 +28,15 @@ f1("A", "A")  # E: wrong type
 
 
 def func1(x: Callable[P, int], y: Callable[P, int]) -> Callable[P, bool]:
-    ...
+    raise NotImplementedError
 
 
 def x_y(x: int, y: str) -> int:
-    ...
+    raise NotImplementedError
 
 
 def y_x(y: int, x: str) -> int:
-    ...
+    raise NotImplementedError
 
 
 f2 = func1(x_y, x_y)
@@ -51,11 +51,11 @@ f3 = func1(x_y, y_x)  # E?: Could return (a: int, b: str, /) -> bool
 
 
 def keyword_only_x(*, x: int) -> int:
-    ...
+    raise NotImplementedError
 
 
 def keyword_only_y(*, y: int) -> int:
-    ...
+    raise NotImplementedError
 
 
 func1(keyword_only_x, keyword_only_y)  # E
@@ -74,7 +74,7 @@ class Y(Generic[U, P]):
 
 
 def callback_a(q: int, /) -> str:
-    ...
+    raise NotImplementedError
 
 
 def func(x: int) -> None:
@@ -85,11 +85,11 @@ def func(x: int) -> None:
 
 
 def bar(x: int, *args: bool) -> int:
-    ...
+    raise NotImplementedError
 
 
 def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]:
-    ...
+    raise NotImplementedError
 
 
 a1 = add(bar)  # Should return (a: str, /, x: int, *args: bool) -> bool
@@ -99,7 +99,7 @@ a1(1, x=1)  # E
 
 
 def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]:
-    ...
+    raise NotImplementedError
 
 
 r1 = remove(bar)  # Should return (*args: bool) -> bool
@@ -111,7 +111,7 @@ r1(1)  # E
 def transform(
     x: Callable[Concatenate[int, P], int]
 ) -> Callable[Concatenate[str, P], bool]:
-    ...
+    raise NotImplementedError
 
 
 t1 = transform(bar)  # Should return (a: str, /, *args: bool) -> bool
@@ -126,19 +126,19 @@ def expects_int_first(x: Callable[Concatenate[int, P], int]) -> None:
 
 @expects_int_first  # E
 def one(x: str) -> int:
-    ...
+    raise NotImplementedError
 
 
 @expects_int_first  # E
 def two(*, x: int) -> int:
-    ...
+    raise NotImplementedError
 
 
 @expects_int_first  # E
 def three(**kwargs: int) -> int:
-    ...
+    raise NotImplementedError
 
 
 @expects_int_first  # OK
 def four(*args: int) -> int:
-    ...
+    raise NotImplementedError

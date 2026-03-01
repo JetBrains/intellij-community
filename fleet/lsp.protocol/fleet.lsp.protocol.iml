@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -Xlambdas=class -Xconsistent-data-class-copy-visibility -opt-in=kotlinx.serialization.ExperimentalSerializationApi -Xcontext-parameters -Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi" />
+          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -Xlambdas=class -Xconsistent-data-class-copy-visibility -opt-in=kotlinx.serialization.ExperimentalSerializationApi -Xcontext-parameters -Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -24,6 +24,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/srcCommonMain" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/srcJvmMain" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/gradlebuild/build" />

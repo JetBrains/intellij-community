@@ -5,14 +5,35 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.PopupCornerType
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.ToolWindowAnchor.*
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowAnchor.BOTTOM
+import com.intellij.openapi.wm.ToolWindowAnchor.LEFT
+import com.intellij.openapi.wm.ToolWindowAnchor.RIGHT
+import com.intellij.openapi.wm.ToolWindowAnchor.TOP
+import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.openapi.wm.impl.*
-import com.intellij.ui.*
+import com.intellij.openapi.wm.impl.AbstractDroppableStripe
+import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
+import com.intellij.openapi.wm.impl.SquareStripeButton
+import com.intellij.openapi.wm.impl.SquareStripeButtonLook
+import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.isInternal
+import com.intellij.openapi.wm.impl.isOnTheLeftStripe
+import com.intellij.openapi.wm.safeToolWindowPaneId
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.ScreenUtil
+import com.intellij.ui.UIBundle
+import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -28,12 +49,22 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.lang.ref.WeakReference
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JLabel
+import javax.swing.JLayeredPane
+import javax.swing.SwingUtilities
 
 private fun Dimension.isNotEmpty(): Boolean = width > 0 && height > 0
 private const val THUMB_SIZE = 220
@@ -65,10 +96,12 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
      * Create a potentially scaled image of the component to use as a drag image
      */
     internal fun createThumbnailDragImage(component: JComponent, thumbSize: Int = JBUI.scale(THUMB_SIZE)): BufferedImage {
-      val image = ImageUtil.createImage(component.graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_RGB)
+      val image = ImageUtil.createImage(component.graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_ARGB)
       val graphics = image.graphics
-      graphics.color = UIUtil.getBgFillColor(component)
-      RectanglePainter.FILL.paint(graphics as Graphics2D, 0, 0, component.width, component.height, null)
+      if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag != true) {
+        graphics.color = UIUtil.getBgFillColor(component)
+        RectanglePainter.FILL.paint(graphics as Graphics2D, 0, 0, component.width, component.height, null)
+      }
       component.paint(graphics)
       graphics.dispose()
       val width: Double = image.getWidth(null).toDouble()
@@ -236,7 +269,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   }
 
   private fun createDragImageView(event: MouseEvent): DragImageView = if (StartupUiUtil.isWaylandToolkit()) {
-    GlassPaneDragImageView(IdeGlassPaneUtil.find(event.component))
+    GlassPaneDragImageView(IdeGlassPaneUtil.find(event.component)).also {
+      it.drawRoundRect = false
+    }
   }
   else {
     DialogDragImageView(DragImageDialog(dragSourcePane, this))
@@ -721,16 +756,18 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         return null
       }
 
-      val image = ImageUtil.createImage(component.graphicsConfiguration, areaSize.width, areaSize.height, BufferedImage.TYPE_INT_RGB)
+      val image = ImageUtil.createImage(component.graphicsConfiguration, areaSize.width, areaSize.height, BufferedImage.TYPE_INT_ARGB)
       image.graphics.let {
-        it.color = if (isNewUi) {
-          JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
-        }
-        else {
-          UIUtil.getBgFillColor(component.parent)
-        }
+        if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag != true) {
+          it.color = if (isNewUi) {
+            JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
+          }
+          else {
+            UIUtil.getBgFillColor(component.parent)
+          }
 
-        it.fillRect(0, 0, areaSize.width, areaSize.height)
+          it.fillRect(0, 0, areaSize.width, areaSize.height)
+        }
 
         when (component) {
           is StripeButton -> component.paint(it)
@@ -799,6 +836,10 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
           helper.relocate(e)
         }
       })
+
+      if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true) {
+        WindowRoundedCornersManager.setRoundedCorners(this, PopupCornerType.RoundedWindow)
+      }
     }
 
     override var image: Image? = null

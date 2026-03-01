@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtTypeElement
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 @Suppress("unused")
 class ConstraintBuilder(
     private val inferenceContext: InferenceContext,

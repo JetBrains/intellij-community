@@ -10,6 +10,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:AddList:javax.swing.Icon
 - sf:AddMulticaret:javax.swing.Icon
 - sf:AddToDictionary:javax.swing.Icon
+- sf:AiIntentionBulb:javax.swing.Icon
 - sf:Annotate:javax.swing.Icon
 - sf:ArrowCollapse:javax.swing.Icon
 - sf:ArrowExpand:javax.swing.Icon
@@ -45,7 +46,6 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:EditScheme:javax.swing.Icon
 - sf:EditSource:javax.swing.Icon
 - sf:EnableNewUi:javax.swing.Icon
-- sf:EnableNewUiSelected:javax.swing.Icon
 - sf:Execute:javax.swing.Icon
 - sf:Exit:javax.swing.Icon
 - sf:Expandall:javax.swing.Icon
@@ -224,6 +224,8 @@ f:com.intellij.icons.AllIcons$Breakpoints
 - sf:BreakpointFieldUnsuspendentDisabled:javax.swing.Icon
 - sf:BreakpointMethodUnsuspendentDisabled:javax.swing.Icon
 - sf:BreakpointUnsuspendentDisabled:javax.swing.Icon
+- sf:ConditionalInstrumentation:javax.swing.Icon
+- sf:LoggingInstrumentation:javax.swing.Icon
 - sf:MultipleBreakpointsDisabled:javax.swing.Icon
 - sf:MultipleBreakpointsMuted:javax.swing.Icon
 - <init>():V
@@ -366,6 +368,10 @@ f:com.intellij.icons.AllIcons$Debugger
 - sf:ViewBreakpoints:javax.swing.Icon
 - sf:Watch:javax.swing.Icon
 - sf:WatchLastReturnValue:javax.swing.Icon
+- <init>():V
+f:com.intellij.icons.AllIcons$Debugger$PinToTop
+- sf:PinnedItem:javax.swing.Icon
+- sf:UnpinnedItem:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Debugger$ThreadStates
 - sf:Idle:javax.swing.Icon
@@ -555,6 +561,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:LinkDropTriangle:javax.swing.Icon
 - sf:LocalizationSettings:javax.swing.Icon
 - sf:Locate:javax.swing.Icon
+- sf:LockedUltimate:javax.swing.Icon
 - sf:Menu:javax.swing.Icon
 - sf:Modified:javax.swing.Icon
 - sf:ModifiedSelected:javax.swing.Icon
@@ -685,6 +692,7 @@ f:com.intellij.icons.AllIcons$Ide
 - sf:FeedbackRatingOn:javax.swing.Icon
 - sf:FeedbackRatingOnFocused:javax.swing.Icon
 - sf:Gift:javax.swing.Icon
+- sf:GrayDot:javax.swing.Icon
 - sf:HectorOff:javax.swing.Icon
 - sf:HectorOn:javax.swing.Icon
 - sf:HectorSyntax:javax.swing.Icon
@@ -826,13 +834,7 @@ f:com.intellij.icons.AllIcons$Mac$Touchbar
 - <init>():V
 f:com.intellij.icons.AllIcons$MeetNewUi
 - sf:DarkTheme:javax.swing.Icon
-- sf:DarkThemeSelected:javax.swing.Icon
-- sf:DensityCompact:javax.swing.Icon
-- sf:DensityDefault:javax.swing.Icon
 - sf:LightTheme:javax.swing.Icon
-- sf:LightThemeSelected:javax.swing.Icon
-- sf:SystemTheme:javax.swing.Icon
-- sf:SystemThemeSelected:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Modules
 - sf:AddExcludedRoot:javax.swing.Icon
@@ -1025,6 +1027,7 @@ f:com.intellij.icons.AllIcons$Plugins
 - sf:PluginLogo:javax.swing.Icon
 - sf:PluginLogoDisabled:javax.swing.Icon
 - sf:Rating:javax.swing.Icon
+- sf:Refresh:javax.swing.Icon
 - sf:Updated:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Process
@@ -2718,6 +2721,8 @@ f:com.intellij.ui.SizedIcon
 - getIconHeight():I
 - getIconWidth():I
 - getMenuBarIcon(Z):javax.swing.Icon
+- getSizedHeight():I
+- getSizedWidth():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.SizedIcon
 - retrieveIcon():javax.swing.Icon
@@ -3673,7 +3678,6 @@ com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - kotlin.jvm.functions.Function2
 f:com.intellij.util.ui.ExtendableHTMLViewFactory$Extensions
 - sf:ADAPTIVE_IMAGE_EXTENSION:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
-- sf:BASE64_IMAGES:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:BLOCK_HR_SUPPORT:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:BLOCK_VIEW_EX:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:DETAILS_SUMMARY_SUPPORT:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
@@ -3984,7 +3988,6 @@ f:com.intellij.util.ui.JBHiDpiScalableIcon
 Fc:com.intellij.util.ui.JBHtmlEditorKit
 - javax.swing.text.html.HTMLEditorKit
 - <init>():V
-- <init>(Z):V
 - createDefaultDocument():javax.swing.text.Document
 - deinstall(javax.swing.JEditorPane):V
 - getDefaultCursor():java.awt.Cursor
@@ -3994,10 +3997,6 @@ Fc:com.intellij.util.ui.JBHtmlEditorKit
 - setFontResolver(com.intellij.util.ui.CSSFontResolver):V
 - setStyleSheet(javax.swing.text.html.StyleSheet):V
 - setUnderlineHoveredHyperlink(Z):V
-c:com.intellij.util.ui.JBHtmlEditorKit$JBHtmlFactory
-- javax.swing.text.html.HTMLEditorKit$HTMLFactory
-- <init>():V
-- create(javax.swing.text.Element):javax.swing.text.View
 c:com.intellij.util.ui.JBImageIcon
 - javax.swing.ImageIcon
 - <init>(java.awt.Image):V
@@ -4159,6 +4158,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Banner
 - sf:WARNING_BACKGROUND:java.awt.Color
 - sf:WARNING_BORDER_COLOR:java.awt.Color
 - <init>():V
+- s:arc():com.intellij.util.ui.JBValue
 f:com.intellij.util.ui.JBUI$CurrentTheme$BigPopup
 - sf:LIST_SETTINGS_BACKGROUND:java.awt.Color
 - <init>():V
@@ -4440,6 +4440,11 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$List$Selection
 com.intellij.util.ui.JBUI$CurrentTheme$List$Tag
 - sf:BACKGROUND:java.awt.Color
 - sf:FOREGROUND:java.awt.Color
+f:com.intellij.util.ui.JBUI$CurrentTheme$MainMenu
+f:com.intellij.util.ui.JBUI$CurrentTheme$MainMenu$Selection
+- s:fullScreenArc():com.intellij.util.ui.JBValue
+- s:fullScreenOuterInsets():com.intellij.util.ui.JBInsets
+- s:outerInsets():com.intellij.util.ui.JBInsets
 f:com.intellij.util.ui.JBUI$CurrentTheme$MainToolbar
 - <init>():V
 - s:borderColor():java.awt.Color
@@ -4540,7 +4545,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Popup$Selection
 - sf:ARC:com.intellij.util.ui.JBValue
 - sf:LEFT_RIGHT_INSET:com.intellij.util.ui.JBValue
 - <init>():V
-- s:innerInsets():java.awt.Insets
+- s:innerInsets():com.intellij.util.ui.JBInsets
 f:com.intellij.util.ui.JBUI$CurrentTheme$PopupMenu
 - <init>():V
 f:com.intellij.util.ui.JBUI$CurrentTheme$PopupMenu$Selection
@@ -4704,7 +4709,6 @@ com.intellij.util.ui.JBUI$CurrentTheme$ToolWindow$DragAndDrop
 - sf:BUTTON_DROP_BACKGROUND:java.awt.Color
 - sf:BUTTON_DROP_BORDER:java.awt.Color
 - sf:BUTTON_FLOATING_BACKGROUND:java.awt.Color
-- sf:STRIPE_BACKGROUND:java.awt.Color
 f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - sf:SEPARATOR_COLOR:java.awt.Color
 - <init>():V
@@ -4956,7 +4960,6 @@ f:com.intellij.util.ui.NamedColorUtil
 - s:getErrorForeground():java.awt.Color
 - s:getInactiveTextColor():java.awt.Color
 - s:getListSelectionForeground(Z):java.awt.Color
-- s:getTextCursor(java.awt.Color):java.awt.Cursor
 f:com.intellij.util.ui.PaletteAvatarPresentation
 - com.intellij.util.ui.AvatarPresentation
 - <init>(java.lang.String,java.lang.String,com.intellij.util.ui.ColorPalette):V
@@ -5543,9 +5546,22 @@ f:com.intellij.util.ui.UIUtil$TextPainter
 - withShortcutColor(java.awt.Color):com.intellij.util.ui.UIUtil$TextPainter
 e:com.intellij.util.ui.UnixDesktopEnv
 - java.lang.Enum
-- s:CURRENT:com.intellij.util.ui.UnixDesktopEnv
+- sf:BUDGIE:com.intellij.util.ui.UnixDesktopEnv
+- sf:CINNAMON:com.intellij.util.ui.UnixDesktopEnv
+- sf:CURRENT:com.intellij.util.ui.UnixDesktopEnv
+- sf:DEEPIN:com.intellij.util.ui.UnixDesktopEnv
 - sf:GNOME:com.intellij.util.ui.UnixDesktopEnv
+- sf:HYPRLAND:com.intellij.util.ui.UnixDesktopEnv
+- sf:I3:com.intellij.util.ui.UnixDesktopEnv
 - sf:KDE:com.intellij.util.ui.UnixDesktopEnv
+- sf:LXDE:com.intellij.util.ui.UnixDesktopEnv
+- sf:LXQT:com.intellij.util.ui.UnixDesktopEnv
+- sf:MATE:com.intellij.util.ui.UnixDesktopEnv
+- sf:PANTHEON:com.intellij.util.ui.UnixDesktopEnv
+- sf:SWAY:com.intellij.util.ui.UnixDesktopEnv
+- sf:UNITY:com.intellij.util.ui.UnixDesktopEnv
+- sf:XFCE:com.intellij.util.ui.UnixDesktopEnv
+- getPresentableName():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.util.ui.UnixDesktopEnv
 - s:values():com.intellij.util.ui.UnixDesktopEnv[]
 f:com.intellij.util.ui.WatermarkIcon
@@ -5701,6 +5717,8 @@ f:com.intellij.util.ui.html.HRViewEx
 - getBreakWeight(I,F,F):I
 - getPreferredSpan(I):F
 - getResizeWeight(I):I
+- modelToView(I,java.awt.Shape,javax.swing.text.Position$Bias):java.awt.Shape
+- viewToModel(F,F,java.awt.Shape,javax.swing.text.Position$Bias[]):I
 c:com.intellij.util.ui.html.ParagraphViewEx
 - javax.swing.text.html.ParagraphView
 - p:fixedLineHeight:java.lang.Float

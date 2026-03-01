@@ -66,6 +66,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         doImplementFileTest()
     }
 
+    fun testImplementFromMultipleSupers() {
+        doMultiImplementFileTest()
+    }
+
     // Shared with K1
 
     override fun testNoCallToAbstractSuper() {

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui.cell.background
 
-import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCellHighlighterRenderer
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookLineMarkerRenderer
@@ -10,25 +9,33 @@ import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.markup.TextAttributes
+import java.awt.Color
 
+/** For code cells, fills a code cell background and vertical line in the gutter between line numbers and the text. */
 class NotebookCellBackgroundController(editorCell: EditorCell) : NotebookCellSelfHighlighterController(editorCell) {
   private var cachedBounds: Pair<Int, Int>? = null
+  private var textAttributesColor: Color? = null
 
   init {
-    editor.notebookAppearance.codeCellBackgroundColor.afterDistinctChange(this) {
-      forceUpdate()
-    }
     val jupyterBoundsChangeHandler = JupyterBoundsChangeHandler.get(editor)
     jupyterBoundsChangeHandler.subscribe(this) {
       cachedBounds = null
     }
   }
 
+  override fun checkAndRebuildInlays() {
+    if (textAttributesColor != editor.notebookAppearance.codeCellBackgroundColor()) {
+      forceUpdate()
+    }
+    super.checkAndRebuildInlays()
+  }
+
   override fun getHighlighterLayer(): Int = editor.notebookAppearance.cellBackgroundHighlightLayer
 
   override fun getTextAttribute(): TextAttributes {
     val textAttributes = TextAttributes()
-    textAttributes.backgroundColor = editor.notebookAppearance.codeCellBackgroundColor.get()
+    textAttributes.backgroundColor = editor.notebookAppearance.codeCellBackgroundColor()
+    textAttributesColor = textAttributes.backgroundColor
     return textAttributes
   }
 
@@ -53,8 +60,8 @@ class NotebookCellBackgroundController(editorCell: EditorCell) : NotebookCellSel
     return newBounds
   }
 
-  override fun createLineMarkerRender(rangeHighlighter: RangeHighlighterEx): NotebookLineMarkerRenderer? {
-    // draws gray vertical rectangles between line numbers and the leftmost border of the text
+  override fun createLineMarkerRender(rangeHighlighter: RangeHighlighterEx): NotebookLineMarkerRenderer {
+    // draws colored vertical rectangles between line numbers and the leftmost border of the text
     return NotebookCodeCellBackgroundGutterRenderer(this)
   }
 }

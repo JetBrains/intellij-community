@@ -8,7 +8,9 @@ import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.getRoamableCategory
 import com.intellij.vcs.log.VcsFullCommitDetails
 import java.text.DateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 internal sealed class HistoryRecord(val commitId: Int,
                                     private val commitDetails: VcsFullCommitDetails,

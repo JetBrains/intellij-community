@@ -3,43 +3,12 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.checkers.AbstractKotlinHighlightVisitorTest
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
-
-abstract class AbstractCodeFragmentHighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
-    open fun doTest(filePath: String) {
-        myFixture.configureByCodeFragment(filePath, useFirCodeFragment = isFirPlugin)
-        checkHighlighting(filePath)
-    }
-
-    protected open fun doTestWithImport(filePath: String) {
-        myFixture.configureByCodeFragment(filePath, useFirCodeFragment = isFirPlugin)
-
-        project.executeWriteCommand("Imports insertion") {
-            val fileText = FileUtil.loadFile(File(filePath), true)
-            val file = myFixture.file as KtFile
-            InTextDirectivesUtils.findListWithPrefixes(fileText, "// IMPORT: ").forEach {
-                doImport(file, it)
-            }
-        }
-
-        checkHighlighting(filePath)
-    }
-
-    protected open fun doImport(file: KtFile, importName: String) {}
-
-    protected open fun checkHighlighting(filePath: String) {
-        myFixture.checkHighlighting(true, false, false)
-    }
-}
 
 abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHighlightingTest() {
     override fun doImport(file: KtFile, importName: String) {
@@ -68,6 +37,10 @@ abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHigh
         }
 
         super.checkHighlighting(filePath)
+    }
+
+    override fun configureByCodeFragment(filePath: String) {
+        myFixture.configureByK1ModeCodeFragment(filePath)
     }
 
     private val inspectionDirectives: List<String> =

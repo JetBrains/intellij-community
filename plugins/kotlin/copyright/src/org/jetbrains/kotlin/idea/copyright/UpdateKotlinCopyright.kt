@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.copyright
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.containers.TreeTraversal
 import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.psi.UpdatePsiFileCopyright

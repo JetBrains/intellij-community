@@ -2,7 +2,12 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.registry.RegistryManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;

@@ -5,7 +5,12 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -19,7 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractMethodResolveConverter<ParentType extends DomElement> extends ResolvingConverter<PsiMethod> {
   public static final String ALL_METHODS = "*";

@@ -2,7 +2,12 @@
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.Bookmark
+import com.intellij.ide.bookmark.BookmarkProvider
+import com.intellij.ide.bookmark.BookmarksManager
+import com.intellij.ide.bookmark.BookmarksManagerImpl
+import com.intellij.ide.bookmark.FileBookmark
+import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.ide.bookmark.ui.tree.FileNode
 import com.intellij.ide.bookmark.ui.tree.LineNode
 import com.intellij.ide.projectView.ProjectViewNode
@@ -15,6 +20,7 @@ import com.intellij.openapi.editor.event.BulkAwareDocumentListener.Simple
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -30,9 +36,9 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.tree.project.ProjectFileNode
 import com.intellij.util.SingleAlarm
+import com.intellij.util.application
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
 @Suppress("ExtensionClassShouldBeFinalAndNonPublic")
@@ -208,11 +214,7 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
           this@LineBookmarkProvider.afterDocumentChange(document)
         }
       }, project)
-      getInstance().addAsyncFileListener(object : AsyncFileListener {
-        override fun prepareChange(events: List<out VFileEvent>): AsyncFileListener.ChangeApplier? {
-          return this@LineBookmarkProvider.prepareChange(events)
-        }
-      }, project)
+      getInstance().addAsyncFileListenerBackgroundable({ events -> this@LineBookmarkProvider.prepareChange(events) }, project)
 
       project.messageBus.connect().subscribe<FileDocumentManagerListener>(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
         override fun beforeFileContentReload(file: VirtualFile, document: Document) {
@@ -225,15 +227,6 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     }
   }
 
-  companion object {
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use the 'Util.find' method", ReplaceWith("Util.find(project)", "com.intellij.ide.bookmark.providers.LineBookmarkProvider.Util"))
-    fun find(project: Project): LineBookmarkProvider? {
-      return Util.find(project)
-    }
-  }
-
   object Util {
     @JvmStatic
     fun find(project: Project): LineBookmarkProvider? = when {
@@ -241,7 +234,11 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
       else -> BookmarkProvider.EP.findExtension(LineBookmarkProvider::class.java, project)
     }
 
-    fun readLineText(bookmark: LineBookmark?): String? = bookmark?.let { readLineText(it.file, it.line) }
+    fun readLineText(bookmark: LineBookmark?): String? = bookmark?.let {
+      application.runReadAction(Computable {
+        readLineText(it.file, it.line)
+      })
+    }
 
     private fun readLineText(file: VirtualFile, line: Int): String? {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null

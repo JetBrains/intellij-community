@@ -1,6 +1,5 @@
-// "Convert to a full name-based destructuring form" "true"
+// "Convert to a full name-based destructuring form" "false"
 // COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
-// IGNORE_K1
 // WITH_STDLIB
 
 fun <A, B, C> test(triple: Triple<A, B, C>) {

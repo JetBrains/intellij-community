@@ -11,8 +11,13 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 

@@ -331,7 +331,7 @@ public final class Utils {
         continue;
       }
       try {
-        componentClass.getConstructor();
+        var unused = componentClass.getConstructor();
       }
       catch (NoSuchMethodException ex) {
         continue;

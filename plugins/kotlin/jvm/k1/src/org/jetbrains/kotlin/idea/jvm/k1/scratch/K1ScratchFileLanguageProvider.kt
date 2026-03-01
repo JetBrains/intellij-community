@@ -3,10 +3,12 @@ package org.jetbrains.kotlin.idea.jvm.k1.scratch
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.compile.KtCompilingExecutor
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.repl.KtScratchReplExecutor
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 
+@K1Deprecation
 class K1ScratchFileLanguageProvider : ScratchFileLanguageProvider() {
     override fun createFile(project: Project, file: VirtualFile): ScratchFile = K1KotlinScratchFile(project, file)
     override fun createReplExecutor(file: ScratchFile): KtScratchReplExecutor = KtScratchReplExecutor(file as K1KotlinScratchFile)

@@ -11,7 +11,7 @@ import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.launch
 
-private class StepOutOfBlockAction : AnAction(), DumbAware, SplitDebuggerAction {
+internal class StepOutOfBlockAction : AnAction(), DumbAware, SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
     sessionProxy.coroutineScope.launch {

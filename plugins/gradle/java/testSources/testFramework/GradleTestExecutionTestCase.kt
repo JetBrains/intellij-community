@@ -30,7 +30,7 @@ abstract class GradleTestExecutionTestCase : GradleTestExecutionBaseTestCase() {
 
   fun isOpentest4jSupportedByGradleJunit4Integration(): Boolean = isGradleAtLeast("8.4")
 
-  fun testJunit5Project(gradleVersion: GradleVersion, action: () -> Unit) {
+  fun testJunitPlatformProject(gradleVersion: GradleVersion, action: () -> Unit) {
     assumeThatJunit5IsSupported(gradleVersion)
     testJavaProject(gradleVersion, action)
   }

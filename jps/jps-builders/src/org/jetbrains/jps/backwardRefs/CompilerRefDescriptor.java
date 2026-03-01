@@ -10,7 +10,16 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static org.jetbrains.jps.backwardRefs.CompilerRef.*;
+import static org.jetbrains.jps.backwardRefs.CompilerRef.ANONYMOUS_CLASS_MARKER;
+import static org.jetbrains.jps.backwardRefs.CompilerRef.CLASS_MARKER;
+import static org.jetbrains.jps.backwardRefs.CompilerRef.FIELD_MARKER;
+import static org.jetbrains.jps.backwardRefs.CompilerRef.FUN_EXPR_MARKER;
+import static org.jetbrains.jps.backwardRefs.CompilerRef.JavaCompilerAnonymousClassRef;
+import static org.jetbrains.jps.backwardRefs.CompilerRef.JavaCompilerClassRef;
+import static org.jetbrains.jps.backwardRefs.CompilerRef.JavaCompilerFieldRef;
+import static org.jetbrains.jps.backwardRefs.CompilerRef.JavaCompilerFunExprDef;
+import static org.jetbrains.jps.backwardRefs.CompilerRef.JavaCompilerMethodRef;
+import static org.jetbrains.jps.backwardRefs.CompilerRef.METHOD_MARKER;
 
 public final class CompilerRefDescriptor implements KeyDescriptor<CompilerRef>, DifferentSerializableBytesImplyNonEqualityPolicy {
   public static final CompilerRefDescriptor INSTANCE = new CompilerRefDescriptor();

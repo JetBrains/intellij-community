@@ -8,6 +8,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.BASE_VERSION_CATALOG_FIXTURE
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE
+import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -99,6 +100,24 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
     ) { usages ->
       runInEdtAndWait {
         assertContainsUsagesInFiles(usages, "subproject1/build.gradle")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNestedProjectOfIncludedBuild(gradleVersion: GradleVersion) {
+    test(gradleVersion, VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE) {
+      writeTextAndCommit("includedBuild1/gradle/libs.versions.toml", /* language=TOML */ """
+        [libraries]
+        apache-gro<caret>ovy = { module = "org.apache.groovy:groovy", version = "4.0.0" }
+        """.trimIndent()
+      )
+      writeTextAndCommit("includedBuild1/subproject1/build.gradle", "libs.apache.groovy")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("includedBuild1/gradle/libs.versions.toml"))
+        val usages = ReferencesSearch.search(codeInsightFixture.elementAtCaret).findAll()
+        assertContainsUsagesInFiles(usages, "includedBuild1/subproject1/build.gradle")
       }
     }
   }

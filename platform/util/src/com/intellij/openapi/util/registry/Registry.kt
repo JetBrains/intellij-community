@@ -1,6 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "KDocUnresolvedReference")
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry
 
 import com.intellij.diagnostic.LoadingState
@@ -9,13 +7,13 @@ import kotlinx.coroutines.future.asDeferred
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.Color
 import java.io.IOException
 import java.lang.ref.Reference
 import java.lang.ref.SoftReference
-import java.util.*
+import java.util.MissingResourceException
+import java.util.Properties
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
@@ -29,8 +27,18 @@ data class ValueWithSource(
 /**
  * Provides a UI to configure internal settings of the IDE.
  *
- * Plugins can provide their own registry keys using the
- * `com.intellij.registryKey` extension point (see [com.intellij.openapi.util.registry.RegistryKeyBean] for more details).
+ * Plugins can provide their own registry keys using the `com.intellij.registryKey` extension point
+ * (see `com.intellij.openapi.util.registry.RegistryKeyBean` for more details).
+ * 
+ * ## Registry Access Notes
+ * Any [Registry] access in the early IDE startup phase, before the IDE components are initialized ([LoadingState.COMPONENTS_LOADED]),
+ * might lead to reading an uninitialized value (**without** respect to the actual value stored by the user or the corresponding defaults).
+ * Such access is only allowed from the IDE features that only work after the component initialization, such as action system,
+ * tool windows, editor features. If you access the registry too early, the access will be permitted, but an error will be logged.
+ * 
+ * In any other cases, when you need to access the registry but aren't sure if the component initialization is complete, you should use the
+ * `com.intellij.openapi.util.registry.RegistryManager`: `RegistryManager.getInstance()` or `getInstanceAsync()` guarantees the correct
+ * initialization.
  */
 class Registry {
   private val userProperties = LinkedHashMap<String, ValueWithSource>()
@@ -41,10 +49,6 @@ class Registry {
   var isLoaded: Boolean = false
     private set
 
-  // we cannot use kotlin CompletableDeferred - kotlin coroutines lib maybe not available in classpath (only kotlin stdlib)
-  @Volatile
-  private var loadFuture = CompletableFuture<Void?>()
-
   @Volatile
   var valueChangeListener: RegistryValueListener = EMPTY_VALUE_LISTENER
     private set
@@ -52,10 +56,9 @@ class Registry {
   companion object {
     private var bundledRegistry: Reference<Map<String, String>>? = null
 
-    const val REGISTRY_BUNDLE: @NonNls String = "misc.registry"
+    const val REGISTRY_BUNDLE: String = "misc.registry"
 
-    private val EMPTY_VALUE_LISTENER: RegistryValueListener = object : RegistryValueListener {
-    }
+    private val EMPTY_VALUE_LISTENER: RegistryValueListener = object : RegistryValueListener { }
 
     private val staticRegistry by lazy { Registry() }
 
@@ -67,11 +70,11 @@ class Registry {
       get() = registrySupplier?.invoke() ?: staticRegistry
 
     @JvmStatic
-    fun get(key: @NonNls String): RegistryValue = getInstance().resolveValue(key)
+    fun get(key: String): RegistryValue = getInstance().resolveValue(key)
 
     @Experimental
     @Internal
-    fun booleanValueHotSupplier(key: @NonNls String, defaultValue: Boolean = false): () -> Boolean {
+    fun booleanValueHotSupplier(key: String, defaultValue: Boolean = false): () -> Boolean {
       val valueHandle by lazy(mode = LazyThreadSafetyMode.NONE) {
         // no check for LoadingState - do not use `getInstance()` here
         registry.resolveValue(key)
@@ -89,14 +92,14 @@ class Registry {
     @Suppress("FunctionName")
     @Internal
     @JvmStatic
-    fun _getWithoutStateCheck(key: @NonNls String): RegistryValue = registry.resolveValue(key)
+    fun _getWithoutStateCheck(key: String): RegistryValue = registry.resolveValue(key)
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun `is`(key: @NonNls String): Boolean = getInstance().resolveValue(key).asBoolean()
+    fun `is`(key: String): Boolean = getInstance().resolveValue(key).asBoolean()
 
     @JvmStatic
-    fun `is`(key: @NonNls String, defaultValue: Boolean): Boolean {
+    fun `is`(key: String, defaultValue: Boolean): Boolean {
       if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
         return defaultValue
       }
@@ -111,10 +114,10 @@ class Registry {
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun intValue(key: @NonNls String): Int = getInstance().resolveValue(key).asInteger()
+    fun intValue(key: String): Int = getInstance().resolveValue(key).asInteger()
 
     @JvmStatic
-    fun intValue(key: @NonNls String, defaultValue: Int): Int {
+    fun intValue(key: String, defaultValue: Int): Int {
       if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
         LoadingState.COMPONENTS_REGISTERED.checkOccurred()
         return defaultValue
@@ -129,7 +132,7 @@ class Registry {
     }
 
     @JvmStatic
-    fun doubleValue(key: @NonNls String, defaultValue: Double): Double {
+    fun doubleValue(key: String, defaultValue: Double): Double {
       if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
         LoadingState.COMPONENTS_REGISTERED.checkOccurred()
         return defaultValue
@@ -145,15 +148,15 @@ class Registry {
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun doubleValue(key: @NonNls String): Double = getInstance().resolveValue(key).asDouble()
+    fun doubleValue(key: String): Double = getInstance().resolveValue(key).asDouble()
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun stringValue(key: @NonNls String): String = getInstance().resolveValue(key).asString()
+    fun stringValue(key: String): String = getInstance().resolveValue(key).asString()
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun getColor(key: @NonNls String, defaultValue: Color?): Color? = getInstance().resolveValue(key).asColor(defaultValue)
+    fun getColor(key: String, defaultValue: Color?): Color? = getInstance().resolveValue(key).asColor(defaultValue)
 
     @Throws(IOException::class)
     private fun loadFromBundledConfig(): Map<String, String>? {
@@ -176,9 +179,7 @@ class Registry {
       val stream = Registry::class.java.classLoader.getResourceAsStream(sourceResourceName) ?: return false
       stream.use {
         object : Properties() {
-          override fun put(key: Any, value: Any): Any? {
-            return targetMap.put(key as String, value as String)
-          }
+          override fun put(key: Any, value: Any): Any? = targetMap.put(key as String, value as String)
         }.load(stream)
       }
       return true
@@ -191,8 +192,8 @@ class Registry {
     }
 
     @JvmStatic
-    fun intValue(key: @NonNls String, defaultValue: Int, minValue: Int, maxValue: Int): Int {
-      require(!(defaultValue < minValue || defaultValue > maxValue)) {
+    fun intValue(key: String, defaultValue: Int, minValue: Int, maxValue: Int): Int {
+      require(defaultValue in minValue..maxValue) {
         "Wrong values for default:min:max ($defaultValue:$minValue:$maxValue)"
       }
       return intValue(key, defaultValue).coerceIn(minValue, maxValue)
@@ -208,7 +209,7 @@ class Registry {
           RegistryValueSource.MANAGER.name -> RegistryValueSource.MANAGER
           else -> RegistryValueSource.SYSTEM
         }
-        map.put(key, ValueWithSource(value, source))
+        map[key] = ValueWithSource(value, source)
       }
       return map
     }
@@ -247,7 +248,7 @@ class Registry {
         return updateStateInternal(registry, state)
       }
       else {
-        return loadStateInternal(registry = registry, state = state, earlyAccess = earlyAccess)
+        return loadStateInternal(registry, state, earlyAccess)
       }
     }
 
@@ -255,23 +256,15 @@ class Registry {
     @JvmStatic
     fun markAsLoaded() {
       registry.isLoaded = true
-      registry.loadFuture.complete(null)
-    }
-
-    @Internal
-    suspend fun awaitLoad() {
-      registry.loadFuture.asDeferred().join()
     }
 
     @Internal
     @JvmStatic
     fun getAll(): List<RegistryValue> {
-      var bundle: Map<String, String>? = null
-      try {
-        bundle = loadFromBundledConfig()
+      val bundle = try {
+        loadFromBundledConfig()
       }
-      catch (_: IOException) {
-      }
+      catch (_: IOException) { null }
       val keys = bundle?.keys ?: emptySet()
       val result = ArrayList<RegistryValue>()
       // don't use getInstance here - https://youtrack.jetbrains.com/issue/IDEA-271748
@@ -299,7 +292,6 @@ class Registry {
           return true
         }
       }
-
       return false
     }
 
@@ -334,7 +326,7 @@ class Registry {
         for ((key, value) in map) {
           val registryValue = registry.resolveValue(key)
           if (value.value != registry.getBundleValueOrNull(registryValue.key)) {
-            userProperties.put(key, value)
+            userProperties[key] = value
             registryValue.resetCache()
           }
         }
@@ -346,38 +338,33 @@ class Registry {
       }
 
       registry.isLoaded = true
-      registry.loadFuture.complete(null)
       return userProperties
     }
   }
 
   // https://youtrack.jetbrains.com/issue/IJPL-158097/Investigate-allocation-performance-of-Registry.is
   private val valueProducer: Function<String, RegistryValue> = Function {
-    RegistryValue(registry = this, key = it, keyDescriptor = contributedKeys.get(it))
+    RegistryValue(registry = this, key = it, keyDescriptor = contributedKeys[it])
   }
 
-  private fun resolveValue(key: @NonNls String): RegistryValue = values.computeIfAbsent(key, valueProducer)
+  private fun resolveValue(key: String): RegistryValue = values.computeIfAbsent(key, valueProducer)
 
   @TestOnly
   fun reset() {
     userProperties.clear()
     values.clear()
     isLoaded = false
-    loadFuture.cancel(false)
-    loadFuture = CompletableFuture()
   }
 
-  fun getBundleValueOrNull(key: @NonNls String): @NlsSafe String? {
-    return contributedKeys.get(key)?.defaultValue ?: loadFromBundledConfig()?.get(key)
-  }
+  fun getBundleValueOrNull(key: String): @NlsSafe String? =
+    contributedKeys[key]?.defaultValue ?: loadFromBundledConfig()?.get(key)
 
   @Throws(MissingResourceException::class)
-  internal fun getBundleValue(key: @NonNls String, keyDescriptor: RegistryKeyDescriptor?): @NlsSafe String {
-    return keyDescriptor?.defaultValue
-           ?: contributedKeys.get(key)?.defaultValue
-           ?: loadFromBundledConfig()?.get(key)
-           ?: throw MissingResourceException("Registry key $key is not defined", REGISTRY_BUNDLE, key)
-  }
+  internal fun getBundleValue(key: String, keyDescriptor: RegistryKeyDescriptor?): @NlsSafe String =
+    keyDescriptor?.defaultValue
+    ?: contributedKeys[key]?.defaultValue
+    ?: loadFromBundledConfig()?.get(key)
+    ?: throw MissingResourceException("Registry key $key is not defined", REGISTRY_BUNDLE, key)
 
   @Internal
   fun getState(): Element {
@@ -401,7 +388,7 @@ class Registry {
   @Internal
   fun getStoredProperties(): MutableMap<String, ValueWithSource> = userProperties
 
-  @Deprecated("Use `getStoredProperties`, changes to this map no longer have any effect", ReplaceWith("getStoredProperties()"))
+  @Deprecated("Use `getStoredProperties`; changes to this map no longer have any effect", ReplaceWith("getStoredProperties()"), level = DeprecationLevel.ERROR)
   @Internal
   fun getUserProperties(): MutableMap<String, String> {
     val copy = mutableMapOf<String, String>()
@@ -420,7 +407,7 @@ class Registry {
         values.remove(key)
       }
       else {
-        registry.values.get(key)?.setValue(v)
+        registry.values[key]?.setValue(v)
       }
     }
   }

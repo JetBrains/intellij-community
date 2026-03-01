@@ -19,6 +19,9 @@ import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+/// Either a [PsiLambdaExpression] or [PsiMethodReferenceExpression].
+/// 
+/// @see com.intellij.psi.search.searches.FunctionalExpressionSearch
 public interface PsiFunctionalExpression extends PsiExpression, Iconable, NavigatablePsiElement {
   PsiFunctionalExpression[] EMPTY_ARRAY = new PsiFunctionalExpression[0];
   /**

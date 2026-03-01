@@ -16,4 +16,20 @@ jvm_library(
     "@lib//:kotlin-stdlib",
   ]
 )
+
+jvm_library(
+  name = "starter_test_lib",
+  module_name = "intellij.platform.starter",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":starter",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/platform-impl/bootstrap:bootstrap_test_lib",
+    "//platform/bootstrap:bootstrap_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.starter` end

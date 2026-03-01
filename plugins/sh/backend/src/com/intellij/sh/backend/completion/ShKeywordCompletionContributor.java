@@ -9,7 +9,23 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.sh.backend.completion.ShCompletionUtil.*;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideArithmeticExpansions;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideCaseDeclaration;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideCommandSubstitution;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideComment;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideCondition;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideForClause;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideFunctionDefinition;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideIfDeclaration;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideOldArithmeticExpansions;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideParameterExpansion;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideRawString;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideSelectDeclaration;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideString;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideSubshellCommand;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideThenOrElse;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideUntilDeclaration;
+import static com.intellij.sh.backend.completion.ShCompletionUtil.insideWhileDeclaration;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.BASE_KEYWORD_COMPLETION_USED_EVENT_ID;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.CONDITION_KEYWORD_COMPLETION_USED_EVENT_ID;
 

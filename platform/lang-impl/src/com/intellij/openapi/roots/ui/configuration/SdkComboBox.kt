@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.PopupMenuListenerAdapter
@@ -76,7 +77,9 @@ class SdkComboBox(model: SdkComboBoxModel) : SdkComboBoxBase<SdkListItem>(model.
       val disposable = Disposer.newDisposable()
       setReloadDisposable(disposable)
       myModel.reloadActions()
-      myModel.detectItems(this@SdkComboBox, disposable)
+      WriteIntentReadAction.run {
+        myModel.detectItems(this@SdkComboBox, disposable)
+      }
     }
 
     override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent) {

@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-commons-imaging-commons-imaging"],
   runtime_deps = ["@lib//:libraries-commons-imaging-commons-imaging"]
 )
+
+jvm_library(
+  name = "imaging_test_lib",
+  module_name = "intellij.libraries.commons.imaging",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-commons-imaging-commons-imaging"],
+  runtime_deps = [":imaging"]
+)
 ### auto-generated section `build intellij.libraries.commons.imaging` end

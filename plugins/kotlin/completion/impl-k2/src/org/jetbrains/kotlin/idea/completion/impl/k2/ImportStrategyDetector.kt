@@ -6,11 +6,18 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImports
 import org.jetbrains.kotlin.idea.base.util.isImported
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.isExtensionCall
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.isExtensionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -26,17 +33,29 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
         excludedImports = imports.excludedFromDefaultImports.map { it.fqName }
     }
 
+    /**
+     * Returns if the callable symbol is a JVM static field or method.
+     */
+    private fun KaCallableSymbol.isStaticFieldOrMethod(): Boolean = when(this) {
+        is KaNamedFunctionSymbol -> isStatic
+        is KaJavaFieldSymbol -> isStatic
+        else -> false
+    }
 
     context(_: KaSession)
-    fun detectImportStrategyForCallableSymbol(symbol: KaCallableSymbol, isFunctionalVariableCall: Boolean = false): ImportStrategy {
-        val hasStablePath = when ((symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol)?.classKind) {
+    private fun KaCallableSymbol.hasStablePath(): Boolean {
+        val containingClass = fakeOverrideOriginal.containingSymbol as? KaClassSymbol ?: return false
+        return when (containingClass.classKind) {
             KaClassKind.ENUM_CLASS,
             KaClassKind.OBJECT,
             KaClassKind.COMPANION_OBJECT -> true
-
-            else -> false
+            else -> isStaticFieldOrMethod()
         }
-        if (symbol.location == KaSymbolLocation.CLASS && !hasStablePath) return ImportStrategy.DoNothing
+    }
+
+    context(_: KaSession)
+    fun detectImportStrategyForCallableSymbol(symbol: KaCallableSymbol, isFunctionalVariableCall: Boolean = false): ImportStrategy {
+        if (symbol.location == KaSymbolLocation.CLASS && !symbol.hasStablePath()) return ImportStrategy.DoNothing
 
         val callableId = symbol.callableId?.asSingleFqName() ?: return ImportStrategy.DoNothing
 

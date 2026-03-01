@@ -79,7 +79,8 @@ TFoo2 = TypeVar("TFoo2", bound="Foo2")
 
 class Foo2:
     # Rejected (Self is treated as unknown).
-    def has_existing_self_annotation(self: TFoo2) -> Self: ... # E
+    def has_existing_self_annotation(self: TFoo2) -> Self: # E
+        raise NotImplementedError
 
 class Foo3:
     def return_concrete_type(self) -> Self:
@@ -95,7 +96,8 @@ class Foo3Child(Foo3):
 T = TypeVar("T")
 
 class Bar(Generic[T]):
-    def bar(self) -> T: ...
+    def bar(self) -> T:
+        raise NotImplementedError
 
 # This should generate an error.
 class Baz(Bar[Self]): ...  # E
@@ -109,18 +111,18 @@ class Base:
     @staticmethod
     # This should generate an error.
     def make() -> Self:  # E
-        ...
+        raise NotImplementedError
 
     @staticmethod
     # This should generate an error.
     def return_parameter(foo: Self) -> Self:  # E
-        ...
+        raise NotImplementedError
 
 class MyMetaclass(type):
     # This should generate an error.
     def __new__(cls, *args: Any) -> Self:  # E
-        ...
+        raise NotImplementedError
 
     # This should generate an error.
     def __mul__(cls, count: int) -> list[Self]:  # E
-        ...
+        raise NotImplementedError

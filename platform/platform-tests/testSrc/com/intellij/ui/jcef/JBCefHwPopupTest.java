@@ -10,8 +10,10 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Point;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicBoolean;
 

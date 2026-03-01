@@ -9,9 +9,10 @@ internal interface Renderable {
   fun render(): String
 }
 
-internal class BuildFile {
+internal open class BuildFile {
   private val loads = HashSet<LoadStatement>()
   private val targets = mutableListOf<Target>()
+  private val exportsFiles = mutableSetOf<String>()
   private val lines = mutableListOf<String>()
 
   val loadStatements: List<LoadStatement>
@@ -37,7 +38,11 @@ internal class BuildFile {
     addTarget(target)
   }
 
-  fun render(existingLoads: Map<String, Set<String>> = emptyMap()): String {
+  fun exportFile(path: String) {
+    exportsFiles.add(path)
+  }
+
+  open fun render(existingLoads: Map<String, Set<String>> = emptyMap()): String {
     val filteredLoads = loads.mapNotNull { load ->
       val filteredSymbols = load.symbols.filter { existingLoads[load.bzlFile]?.contains(it) != true }
       if (filteredSymbols.isEmpty()) {
@@ -52,10 +57,16 @@ internal class BuildFile {
       .map { it.render() }
       .sorted()
       .joinToString("\n")
-    val targetStatements = targets.joinToString("\n") { it.render() }
-    return sequenceOf(loadStatements, targetStatements, lines.joinToString("\n"))
+    val targetStatements = (targets.joinToString("\n") { it.render() }).trim()
+
+    val exportsFiles = if (exportsFiles.isEmpty()) "" else
+      "exports_files([\n" + exportsFiles.sorted().joinToString("") { "  \"$it\",\n" } + "], visibility = [\"//visibility:public\"])"
+
+    val render = sequenceOf(loadStatements, targetStatements, exportsFiles, lines.joinToString("\n"))
       .filter { it.isNotEmpty() }
       .joinToString("\n\n")
+
+    return render
   }
 }
 
@@ -95,6 +106,12 @@ internal class Target(private val type: String) : Renderable {
       LinkedHashSet::class.java.isAssignableFrom(klass) -> {
         for (item in value as LinkedHashSet<*>) {
           verifyTypeIsSupported(item!!)
+        }
+      }
+      HashMap::class.java.isAssignableFrom(klass) -> {
+        for (item in value as Map<*, *>) {
+          verifyTypeIsSupported(item.key!!)
+          verifyTypeIsSupported(item.value!!)
         }
       }
       else -> error("Unsupported type '$klass' for value: $value")
@@ -157,6 +174,9 @@ private fun formatValue(value: Any?): String {
     is Array<*> -> value.joinToString(separator = ", ", prefix = "[", postfix = "]") { formatValue(it) }
     is String -> "\"$value\""
     is Number -> value.toString()
+    is Map<*, *> -> value.entries.joinToString(",\n    ", prefix = "{\n    ", postfix = ",\n  }") {
+      (key, value) -> "\"$key\": ${formatValue(value)}"
+    }
     true -> "True"
     false -> "False"
     is Renderable -> value.render()

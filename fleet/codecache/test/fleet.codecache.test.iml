@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -Xlambdas=class -Xconsistent-data-class-copy-visibility -Xcontext-parameters -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -opt-in=kotlin.ExperimentalStdlibApi -Xlambdas=class -Xconsistent-data-class-copy-visibility -Xcontext-parameters -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -33,7 +33,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="fleet.junit" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.test.runtime" scope="TEST" />
     <orderEntry type="module" module-name="fleet.codecache" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="fleet.bundles" scope="TEST" />

@@ -11,71 +11,11 @@ object JavaPluginLayout {
       spec.directoryName = "java"
       spec.mainJarName = "java-impl.jar"
 
-      spec.withProjectLibrary("netty-jps", "rt/netty-jps.jar")
-
       spec.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
-      for (moduleName in listOf(
-        "intellij.platform.jps.build",
-        "intellij.platform.jps.build.dependencyGraph",
-      )) {
-        spec.withModule(moduleName, "jps-builders.jar")
-      }
-      spec.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
-
-      for (moduleName in listOf(
-        "intellij.java.compiler.antTasks",
-        "intellij.java.guiForms.compiler",
-        "intellij.java.compiler.instrumentationUtil",
-        "intellij.java.compiler.instrumentationUtil.java8"
-      )) {
-        spec.withModule(moduleName, "javac2.jar")
-      }
-
-      // api modules
-      spec.withModules(listOf(
-        "intellij.java.compiler",
-        "intellij.java.debugger",
-        "intellij.java.execution",
-        "intellij.java.execution.impl.shared",
-        "intellij.java.remoteServers",
-        "intellij.java.analysis",
-        "intellij.jvm.analysis",
-        "intellij.java.indexing",
-        "intellij.java",
-        "intellij.jsp",
-        "intellij.platform.uast",
-        "intellij.platform.uast.ide",
-        "intellij.java.uast.ide",
-      ))
-
-      spec.withModules(listOf(
-        "intellij.java.codeserver.core",
-        "intellij.java.codeserver.highlighting",
-        "intellij.java.compiler.impl",
-        "intellij.java.debugger.impl",
-        "intellij.java.terminal",
-        "intellij.java.debugger.memory.agent",
-        "intellij.java.execution.impl",
-        "intellij.java.execution.impl.backend",
-        "intellij.java.execution.impl.frontend",
-        "intellij.java.structureView",
-        "intellij.java.manifest",
-        "intellij.java.remoteServers.impl",
-        "intellij.uiDesigner",
-        "intellij.java.analysis.impl",
-        "intellij.jvm.analysis.impl",
-        "intellij.jvm.analysis.quickFix",
-        "intellij.jvm.analysis.refactoring",
-        "intellij.java.indexing.impl",
-        "intellij.java.impl",
-        "intellij.java.impl.inspections",
-        "intellij.java.impl.refactorings",
-        "intellij.jsp.spi",
-        "intellij.java.uast",
-        "intellij.java.typeMigration",
-      ))
 
       spec.withModuleLibrary("debugger-agent", "intellij.java.debugger.agent.holder", "rt")
+
+      spec.withProjectLibrary("netty-codec-protobuf", "netty-codec-protobuf.jar")
 
       spec.withProjectLibrary("Eclipse", "ecj")
       spec.withProjectLibrary("jps-javac-extension")

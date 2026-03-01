@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -8,13 +8,32 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
-import com.intellij.find.findUsages.*;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.find.findUsages.JavaClassFindUsagesOptions;
+import com.intellij.find.findUsages.JavaFindUsagesHelper;
+import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
+import com.intellij.find.findUsages.JavaPackageFindUsagesOptions;
+import com.intellij.find.findUsages.JavaVariableFindUsagesOptions;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -210,20 +229,6 @@ public final class UnusedSymbolUtil {
     return useScope;
   }
 
-  /**
-   * @deprecated use {@link #processUsages(Project, PsiFile, SearchScope, PsiMember, PsiFile, Processor)}
-   */
-  @SuppressWarnings("unused")
-  @Deprecated(forRemoval = true)
-  public static boolean processUsages(@NotNull Project project,
-                                      @NotNull PsiFile containingFile,
-                                      @NotNull PsiMember member,
-                                      @NotNull ProgressIndicator progress,
-                                      @Nullable PsiFile ignoreFile,
-                                      @NotNull Processor<? super UsageInfo> usageInfoProcessor) {
-    return processUsages(project, containingFile, member, ignoreFile, usageInfoProcessor);
-  }
-
   // return false if can't process usages (weird member of too may usages) or processor returned false
   public static boolean processUsages(@NotNull Project project,
                                       @NotNull PsiFile containingFile,
@@ -283,6 +288,7 @@ public final class UnusedSymbolUtil {
     }
     else if (member instanceof PsiClass) {
       options = new JavaClassFindUsagesOptions(useScope);
+      ((JavaClassFindUsagesOptions)options).isConstructorUsages = false;
       options.isSearchForTextOccurrences = true;
     }
     else if (member instanceof PsiMethod method) {
@@ -319,7 +325,11 @@ public final class UnusedSymbolUtil {
     if (!(containingFile instanceof PsiJavaFile)) return true;  // Groovy field can be referenced from Java by getter
     if (member instanceof PsiField) return false;  //Java field cannot be referenced by anything but its name
     if (member instanceof PsiMethod) {
-      return PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)member);  //Java accessors can be referenced by field name from Groovy
+      if (PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)member)) return true;  //Java accessors can be referenced by field name from Groovy
+      for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
+        ProgressManager.checkCanceled();
+        if (provider.isReferencedByAlternativeNames(member)) return true;
+      }
     }
     return false;
   }

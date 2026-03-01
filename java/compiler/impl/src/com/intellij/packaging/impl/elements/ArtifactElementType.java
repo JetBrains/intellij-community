@@ -14,7 +14,7 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

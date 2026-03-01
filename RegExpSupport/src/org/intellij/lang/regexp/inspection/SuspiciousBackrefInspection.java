@@ -7,7 +7,12 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import org.intellij.lang.regexp.RegExpBundle;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpBackref;
+import org.intellij.lang.regexp.psi.RegExpBranch;
+import org.intellij.lang.regexp.psi.RegExpConditional;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.intellij.lang.regexp.psi.impl.RegExpGroupImpl;
 import org.jetbrains.annotations.NotNull;
 

@@ -10,7 +10,7 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class XsltIconPatcher implements FileIconPatcher {
 

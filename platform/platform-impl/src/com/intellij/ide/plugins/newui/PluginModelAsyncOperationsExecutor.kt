@@ -43,37 +43,25 @@ internal object PluginModelAsyncOperationsExecutor {
     }
   }
 
-  fun performMarketplaceSearch(
-    cs: CoroutineScope,
+  suspend fun performMarketplaceSearch(
     query: String,
-    loadUpdates: Boolean,
-    callback: (PluginSearchResult, List<PluginUiModel>) -> Unit,
-  ) {
-    cs.launch(Dispatchers.IO) {
+  ): PluginSearchResult {
+    return withContext(Dispatchers.IO) {
       val pluginManager = UiPluginManager.getInstance()
-      val result = pluginManager.executeMarketplaceQuery(query, 10000, true)
-      val updates = mutableListOf<PluginUiModel>()
-      if (loadUpdates) {
-        updates.addAll(pluginManager.getUpdateModels())
-      }
-      callback(result, updates)
+      pluginManager.executeMarketplaceQuery(query, 10000, true)
     }
   }
 
-  fun getCustomRepositoriesPluginMap(cs: CoroutineScope, callback: (Map<String, List<PluginUiModel>>) -> Unit) {
-    cs.launch(Dispatchers.IO) {
+  suspend fun getCustomRepositoriesPluginMap(): Map<String, List<PluginUiModel>> {
+    return withContext(Dispatchers.IO) {
       val pluginManager = UiPluginManager.getInstance()
-      val result = pluginManager.getCustomRepositoryPluginMap()
-      callback(result)
+      pluginManager.getCustomRepositoryPluginMap()
     }
   }
 
-  fun loadUpdates(cs: CoroutineScope, callback: (List<PluginUiModel>) -> Unit) {
-    cs.launch(Dispatchers.IO) {
-      val updates = UiPluginManager.getInstance().getUpdateModels()
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(updates)
-      }
+  suspend fun loadUpdates(): List<PluginUiModel> {
+    return withContext(Dispatchers.IO) {
+      UiPluginManager.getInstance().getUpdateModels()
     }
   }
 
@@ -160,7 +148,7 @@ internal object PluginModelAsyncOperationsExecutor {
   fun switchPlugins(coroutineScope: CoroutineScope, pluginModelFacade: PluginModelFacade, enable: Boolean, callback: (List<PluginUiModel>) -> Unit) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val models = mutableListOf<PluginUiModel>()
-      val group = pluginModelFacade.getModel().downloadedGroup
+      val group = pluginModelFacade.getModel().userInstalled
       if (group == null || group.ui == null) {
         val appInfo = ApplicationInfoEx.getInstanceEx()
 

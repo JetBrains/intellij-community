@@ -14,11 +14,6 @@ internal class JewelCustomPopupRendererAction : DumbAwareToggleAction(
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    e.presentation.text = DevkitComposeBundle.message("action.JewelCustomPopupRenderer.text")
-  }
-
   override fun isSelected(e: AnActionEvent): Boolean = JewelFlags.useCustomPopupRenderer
 
 

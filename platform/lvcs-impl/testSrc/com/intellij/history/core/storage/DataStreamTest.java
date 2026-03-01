@@ -16,10 +16,20 @@
 
 package com.intellij.history.core.storage;
 
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.StoredContent;
-import com.intellij.history.core.DataStreamUtil;
-import com.intellij.history.core.changes.*;
+import com.intellij.history.core.changes.Change;
+import com.intellij.history.core.changes.ChangeSet;
+import com.intellij.history.core.changes.ContentChange;
+import com.intellij.history.core.changes.CreateDirectoryChange;
+import com.intellij.history.core.changes.CreateFileChange;
+import com.intellij.history.core.changes.DeleteChange;
+import com.intellij.history.core.changes.MoveChange;
+import com.intellij.history.core.changes.PutLabelChange;
+import com.intellij.history.core.changes.PutSystemLabelChange;
+import com.intellij.history.core.changes.ROStatusChange;
+import com.intellij.history.core.changes.RenameChange;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
@@ -27,7 +37,11 @@ import com.intellij.history.core.tree.RootEntry;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.List;
 
 public class DataStreamTest extends LocalHistoryTestCase {

@@ -4,7 +4,7 @@ package com.intellij.ui.icons;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Icon which supports providing a tooltip.

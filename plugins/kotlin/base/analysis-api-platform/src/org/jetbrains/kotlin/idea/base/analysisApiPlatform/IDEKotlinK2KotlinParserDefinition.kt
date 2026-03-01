@@ -6,7 +6,11 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.analysis.isInjectedFileShouldBeAnalyzed
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockCodeFragment
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 internal class IDEKotlinK2KotlinParserDefinition : KotlinParserDefinition() {
     override fun createFile(fileViewProvider: FileViewProvider): PsiFile {

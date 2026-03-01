@@ -19,8 +19,28 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApp
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.psiUtil.contentRange
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class ConvertToForEachFunctionCallIntention :
     KotlinApplicableModCommandAction<KtForExpression, Unit>(KtForExpression::class) {

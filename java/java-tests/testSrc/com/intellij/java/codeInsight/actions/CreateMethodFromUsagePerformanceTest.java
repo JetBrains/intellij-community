@@ -3,10 +3,12 @@ package com.intellij.java.codeInsight.actions;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class CreateMethodFromUsagePerformanceTest extends LightQuickFixTestCase {
 
   public void testWithHugeNumberOfParameters() {

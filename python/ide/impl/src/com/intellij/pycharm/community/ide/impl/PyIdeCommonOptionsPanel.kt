@@ -11,7 +11,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.RawCommandLineEditor
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm

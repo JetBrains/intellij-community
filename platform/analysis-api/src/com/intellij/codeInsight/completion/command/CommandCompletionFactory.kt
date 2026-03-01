@@ -57,6 +57,20 @@ interface CommandCompletionFactory : PossiblyDumbAware {
   }
 
   /**
+   * Determines whether the functionality is applicable in the given context for host.
+   * For injected languages, the context is the host file.
+   * It is checked only for injected fragments
+   * Should be fast because it can be called on EDT.
+   *
+   * @param psiFile the PSI file representing the host file in which the applicability is being evaluated
+   * @param offset the position within the file where the applicability should be checked
+   * @return true if the functionality is applicable at the specified context, false otherwise
+   */
+  fun isApplicableForHost(psiFile: PsiFile, offset: Int): Boolean {
+    return true
+  }
+
+  /**
    * Creates a new file based on the provided original file and text content.
    *
    * @param originalFile The base file from which the new file will be created. It must be of type `PsiFile`.

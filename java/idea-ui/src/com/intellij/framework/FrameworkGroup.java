@@ -4,7 +4,7 @@ package com.intellij.framework;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 

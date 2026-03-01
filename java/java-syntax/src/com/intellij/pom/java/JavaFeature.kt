@@ -84,6 +84,7 @@ enum class JavaFeature {
                     LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
   ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
   SEQUENCED_COLLECTIONS(LanguageLevel.JDK_21, "feature.sequenced.collections"),
+  MATH_CLAMP_METHODS(LanguageLevel.JDK_21, "feature.math.clamp.methods"),
   STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates") {
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
       return super.isSufficient(useSiteLevel) && !useSiteLevel.isAtLeast(LanguageLevel.JDK_23)
@@ -224,7 +225,10 @@ enum class JavaFeature {
     override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
   },
 
-  //JEP 507
+  /**
+   * JEP 507
+   * @see PATTERNS_WITH_TIGHTENED_DOMINANCE
+   */
   PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
 
   /**
@@ -286,6 +290,22 @@ enum class JavaFeature {
    * @see JAVA_LANG_IO
    */
   JAVA_LANG_IO(LanguageLevel.JDK_25, "feature.java.lang.io"),
+
+  /**
+   * JEP 502,
+   * JEP 526
+   * @see STABLE_VALUES
+   */
+  LAZY_CONSTANTS(LanguageLevel.JDK_26_PREVIEW, "feature.lazy.constants"),
+
+  /**
+   * JEP 530
+   * @see PRIMITIVE_TYPES_IN_PATTERNS
+   */
+  PATTERNS_WITH_TIGHTENED_DOMINANCE(LanguageLevel.JDK_26_PREVIEW, "feature.patterns.with.tightened.dominance"),
+
+
+  COMPARATOR_MIN_MAX(LanguageLevel.JDK_26, "feature.comparator.min.max"),
 
   VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
   ;
@@ -380,6 +400,7 @@ enum class JavaFeature {
         "FOREIGN" -> FOREIGN_FUNCTIONS
         "VIRTUAL_THREADS" -> VIRTUAL_THREADS
         "MODULE_IMPORTS" -> MODULE_IMPORT_DECLARATIONS
+        "LAZY_CONSTANTS" -> LAZY_CONSTANTS
         else -> null
       }
     }

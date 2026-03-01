@@ -3,7 +3,8 @@ package com.intellij.ui;
 
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 import static org.junit.Assert.assertTrue;
 

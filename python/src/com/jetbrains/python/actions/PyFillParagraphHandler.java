@@ -10,7 +10,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-ion-ion"],
   runtime_deps = ["@lib//:libraries-ion-ion"]
 )
+
+jvm_library(
+  name = "ion_test_lib",
+  module_name = "intellij.libraries.ion",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-ion-ion"],
+  runtime_deps = [":ion"]
+)
 ### auto-generated section `build intellij.libraries.ion` end

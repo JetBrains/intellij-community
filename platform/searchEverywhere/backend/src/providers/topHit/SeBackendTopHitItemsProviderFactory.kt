@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProviderFactory
 import org.jetbrains.annotations.Nls
 
-private class SeBackendTopHitItemsProviderFactory : SeTopHitItemsProviderFactory() {
+internal class SeBackendTopHitItemsProviderFactory : SeTopHitItemsProviderFactory() {
   override val isHost: Boolean
     get() = true
   override val displayName: @Nls String

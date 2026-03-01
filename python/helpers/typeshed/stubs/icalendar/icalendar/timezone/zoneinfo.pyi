@@ -2,7 +2,7 @@ import datetime
 from typing import Final, Literal
 from zoneinfo import ZoneInfo
 
-from dateutil.rrule import rrule, rruleset
+from dateutil.rrule import rrule
 
 from ..cal import Timezone
 from ..prop import vRecur
@@ -22,7 +22,3 @@ class ZONEINFO(TZProvider):
     def create_timezone(self, tz: Timezone) -> datetime.tzinfo: ...  # type: ignore[override]
     def uses_pytz(self) -> Literal[False]: ...
     def uses_zoneinfo(self) -> Literal[True]: ...
-
-def pickle_tzicalvtz(tzicalvtz): ...
-def pickle_rruleset_with_cache(rs: rruleset): ...
-def unpickle_rruleset_with_cache(rrule, rdate, exrule, exdate, cache): ...

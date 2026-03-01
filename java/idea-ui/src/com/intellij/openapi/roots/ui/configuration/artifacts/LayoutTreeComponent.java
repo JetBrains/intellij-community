@@ -44,14 +44,21 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class LayoutTreeComponent implements DnDTarget, Disposable {

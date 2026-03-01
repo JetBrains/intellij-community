@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.core.implicitModality
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
+@K1Deprecation
 class AddOpenModifierIntention : SelfTargetingIntention<KtCallableDeclaration>(
     KtCallableDeclaration::class.java, KotlinBundle.messagePointer("make.open")
 ), LowPriorityAction {

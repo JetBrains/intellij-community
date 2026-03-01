@@ -21,9 +21,19 @@ import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Instant;
 
-import static com.intellij.openapi.util.io.IoTestUtil.*;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
+import static com.intellij.openapi.util.io.IoTestUtil.createJunction;
+import static com.intellij.openapi.util.io.IoTestUtil.deleteJunction;
+import static com.intellij.openapi.util.io.IoTestUtil.getUnicodeName;
+import static com.intellij.openapi.util.io.IoTestUtil.performTestOnWindowsSubst;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class FileAttributesReadingTest {

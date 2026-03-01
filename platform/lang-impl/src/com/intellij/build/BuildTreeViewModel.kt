@@ -6,9 +6,12 @@ import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.util.containers.nullize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -18,18 +21,7 @@ private val LOG = fileLogger()
 
 @ApiStatus.Internal
 class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private val scope: CoroutineScope) {
-  // sequential execution ensures consistent snapshot construction
-  private val sequentialDispatcher = Dispatchers.Default.limitedParallelism(1)
-  // buffering is important to ensure proper ordering between events emission and 'onSubscription' execution
-  private val nodesFlow = MutableSharedFlow<BuildTreeEvent>(extraBufferCapacity = Int.MAX_VALUE)
-
-  private val idGenerator = AtomicInteger(BuildTreeNode.BUILD_PROGRESS_ROOT_ID)
-  private val node2Id = mutableMapOf<ExecutionNode, Int>() // accessed only via sequentialDispatcher
-  private val nodeStates = mutableMapOf<Int, BuildTreeNode>() // accessed only via sequentialDispatcher
-  private val exposeRequests = mutableListOf<BuildTreeExposeRequest>() // accessed only via sequentialDispatcher
-  private var filteringState = BuildTreeFilteringState(false, false) // accessed only via sequentialDispatcher
-  private val id2Node = ConcurrentHashMap<Int, ExecutionNode>()
-
+  private val eventFlow = BuildTreeEventFlow(scope, consoleView.rootElement, consoleView.buildProgressRootNode)
   private val navigationFlow = MutableSharedFlow<BuildTreeNavigationRequest>(extraBufferCapacity = Int.MAX_VALUE)
 
   val id: BuildViewId = this.storeGlobally(scope)
@@ -45,73 +37,17 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   @Volatile
   private var clearingSelection = false
 
-  fun getTreeEventsFlow(): Flow<BuildTreeEvent> {
-    return flow {
-      nodesFlow.onSubscription {
-        val initialFilteringState = filteringState
-        LOG.debug { "Sending initial filtering state: $initialFilteringState" }
-        emit(initialFilteringState)
-
-        val toSend = nodeStates.values.toList()
-        if (toSend.isEmpty()) {
-          LOG.debug("No nodes initially available")
-        }
-        else {
-          LOG.debug { "Sending snapshot: ${toSend.map { it.id }}" }
-          emit(BuildNodesUpdate(System.currentTimeMillis(), toSend))
-        }
-
-        exposeRequests.forEach {
-          LOG.debug { "Replaying expose request: node id=${it.nodeId}, alsoSelect=${it.alsoSelect}" }
-          emit(it)
-        }
-      }.collect(this)
-    }.flowOn(sequentialDispatcher)
-  }
+  fun getTreeEventsFlow(): Flow<BuildTreeEvent> = eventFlow.getFlowWithHistory()
 
   fun createOrUpdateNodes(nodes: Collection<ExecutionNode>) {
     assert(consoleView.isCorrectThread) // it should be ok to extract information from the passed nodes here
     if (nodes.isEmpty()) return
     val nodesWithData = nodes.associateWith { it.toDto() }
-    scope.launch(sequentialDispatcher) {
-      val toSend = nodesWithData.mapNotNull { entry ->
-        val node = entry.key
-        val parent = node.parent ?: run {
-          LOG.warn("No parent for node '$node', skipping update")
-          return@mapNotNull null
-        }
-        val parentId = getNodeId(parent)
-        if (parentId == null) {
-          LOG.warn("Unknown parent node ('$parent'), skipping update")
-          return@mapNotNull null
-        }
-        val id = getOrCreateNodeId(node)
-        val dto = entry.value.copy(id = id, parentId = parentId)
-        if (nodeStates[id] == dto) {
-          LOG.debug { "State not changed for id=$id, skipping update" }
-          null
-        }
-        else {
-          nodeStates[id] = dto
-          dto
-        }
-      }
-      if (toSend.isNotEmpty()) {
-        LOG.debug { "Sending updates: ${toSend.map { it.id }}" }
-        nodesFlow.emit(BuildNodesUpdate(System.currentTimeMillis(), toSend))
-      }
-    }
+    eventFlow.emitNodeUpdates(nodesWithData)
   }
 
   fun clearNodes() {
-    scope.launch(sequentialDispatcher) {
-      node2Id.clear()
-      id2Node.clear()
-      nodeStates.clear()
-      exposeRequests.clear()
-      LOG.debug("Clearing nodes")
-      nodesFlow.emit(BuildNodesUpdate(System.currentTimeMillis(), emptyList()))
-    }
+    eventFlow.clearNodes()
   }
 
   fun clearSelection() {
@@ -128,54 +64,18 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   }
 
   private fun expose(node: ExecutionNode?, alsoSelect: Boolean) {
-    scope.launch(sequentialDispatcher) {
-      val nodeId = node?.let { getNodeId(it) }
-      if (node != null && nodeId == null) {
-        LOG.warn("Unknown node ('$node'), skipping expose")
-      }
-      else {
-        LOG.debug { "Expose node id=$nodeId, alsoSelect=$alsoSelect" }
-        val request = BuildTreeExposeRequest(nodeId, alsoSelect)
-        if (nodeId != null) { // we want to replay only the requests generated by build events
-          exposeRequests.add(request)
-        }
-        nodesFlow.emit(request)
-      }
-    }
+    eventFlow.expose(node, alsoSelect)
   }
 
   private fun updateFilteringState() {
-    val newState = BuildTreeFilteringState(showingSuccessful, showingWarnings)
-    scope.launch(sequentialDispatcher) {
-      filteringState = newState
-      nodesFlow.emit(newState)
-    }
-  }
-
-  // to be called only via sequentialDispatcher
-  private fun getOrCreateNodeId(node: ExecutionNode): Int {
-    val existingId = getNodeId(node)
-    if (existingId != null) return existingId
-    return idGenerator.incrementAndGet().also {
-      node2Id[node] = it
-      id2Node[it] = node
-    }
-  }
-
-  // to be called only via sequentialDispatcher
-  private fun getNodeId(node: ExecutionNode): Int? {
-    return when(node) {
-      consoleView.rootElement -> BuildTreeNode.ROOT_ID
-      consoleView.buildProgressRootNode -> BuildTreeNode.BUILD_PROGRESS_ROOT_ID
-      else -> node2Id[node]
-    }
+    eventFlow.updateFilteringState(BuildTreeFilteringState(showingSuccessful, showingWarnings))
   }
 
   fun getNodeById(id: Int): ExecutionNode? {
     return when(id) {
       BuildTreeNode.ROOT_ID -> consoleView.rootElement
       BuildTreeNode.BUILD_PROGRESS_ROOT_ID -> consoleView.buildProgressRootNode
-      else -> id2Node[id]
+      else -> eventFlow.id2Node[id]
     }
   }
 
@@ -267,4 +167,110 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
         updateFilteringState()
       }
     }
+}
+
+private class BuildTreeEventFlow(scope: CoroutineScope, private val rootNode: ExecutionNode, private val progressRootNode: ExecutionNode) :
+  FlowWithHistory<BuildTreeEvent>(scope) {
+
+  private val idGenerator = AtomicInteger(BuildTreeNode.BUILD_PROGRESS_ROOT_ID)
+  private val node2Id = mutableMapOf<ExecutionNode, Int>()
+  private val nodeStates = mutableMapOf<Int, BuildTreeNode>()
+  private val exposeRequests = mutableListOf<BuildTreeExposeRequest>()
+  private var filteringState = BuildTreeFilteringState(false, false)
+  val id2Node = ConcurrentHashMap<Int, ExecutionNode>()
+
+  override fun getHistory(): List<BuildTreeEvent> = buildList {
+    val initialFilteringState = filteringState
+    LOG.debug { "Sending initial filtering state: $initialFilteringState" }
+    add(initialFilteringState)
+
+    val toSend = nodeStates.values.toList()
+    if (toSend.isEmpty()) {
+      LOG.debug("No nodes initially available")
+    }
+    else {
+      LOG.debug { "Sending snapshot: ${toSend.map { it.id }}" }
+      add(BuildNodesUpdate(System.currentTimeMillis(), toSend))
+    }
+
+    exposeRequests.forEach {
+      LOG.debug { "Replaying expose request: node id=${it.nodeId}, alsoSelect=${it.alsoSelect}" }
+      add(it)
+    }
+  }
+
+  fun emitNodeUpdates(nodesWithData: Map<ExecutionNode, BuildTreeNode>) = updateHistoryAndEmit {
+    nodesWithData.mapNotNull { entry ->
+      val node = entry.key
+      val parent = node.parent ?: run {
+        LOG.warn("No parent for node '$node', skipping update")
+        return@mapNotNull null
+      }
+      val parentId = getNodeId(parent)
+      if (parentId == null) {
+        LOG.warn("Unknown parent node ('$parent'), skipping update")
+        return@mapNotNull null
+      }
+      val id = getOrCreateNodeId(node)
+      val dto = entry.value.copy(id = id, parentId = parentId)
+      if (nodeStates[id] == dto) {
+        LOG.debug { "State not changed for id=$id, skipping update" }
+        null
+      }
+      else {
+        nodeStates[id] = dto
+        dto
+      }
+    }.nullize()?.let { toSend ->
+      LOG.debug { "Sending updates: ${toSend.map { it.id }}" }
+      BuildNodesUpdate(System.currentTimeMillis(), toSend)
+    }
+  }
+
+  fun clearNodes() = updateHistoryAndEmit {
+    node2Id.clear()
+    id2Node.clear()
+    nodeStates.clear()
+    exposeRequests.clear()
+    LOG.debug("Clearing nodes")
+    BuildNodesUpdate(System.currentTimeMillis(), emptyList())
+  }
+
+  fun expose(node: ExecutionNode?, alsoSelect: Boolean) = updateHistoryAndEmit {
+    val nodeId = node?.let { getNodeId(it) }
+    if (node != null && nodeId == null) {
+      LOG.warn("Unknown node ('$node'), skipping expose")
+      null
+    }
+    else {
+      LOG.debug { "Expose node id=$nodeId, alsoSelect=$alsoSelect" }
+      val request = BuildTreeExposeRequest(nodeId, alsoSelect)
+      if (nodeId != null) { // we want to replay only the requests generated by build events
+        exposeRequests.add(request)
+      }
+      request
+    }
+  }
+
+  fun updateFilteringState(value: BuildTreeFilteringState) = updateHistoryAndEmit {
+    filteringState = value
+    value
+  }
+
+  private fun getOrCreateNodeId(node: ExecutionNode): Int {
+    val existingId = getNodeId(node)
+    if (existingId != null) return existingId
+    return idGenerator.incrementAndGet().also {
+      node2Id[node] = it
+      id2Node[it] = node
+    }
+  }
+
+  private fun getNodeId(node: ExecutionNode): Int? {
+    return when (node) {
+      rootNode -> BuildTreeNode.ROOT_ID
+      progressRootNode -> BuildTreeNode.BUILD_PROGRESS_ROOT_ID
+      else -> node2Id[node]
+    }
+  }
 }

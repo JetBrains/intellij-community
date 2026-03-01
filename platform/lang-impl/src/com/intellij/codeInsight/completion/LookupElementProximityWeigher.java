@@ -15,7 +15,8 @@ public final class LookupElementProximityWeigher extends CompletionWeigher {
   public Comparable weigh(final @NotNull LookupElement item, final @NotNull CompletionLocation location) {
     // don't extract variable from getPsiElement to avoid excessive memory usage
     if (item.getPsiElement() != null) {
-      return PsiProximityComparator.getProximity((NullableComputable<PsiElement>)() -> item.getPsiElement(), location.getCompletionParameters().getPosition(), location.getProcessingContext());
+      return PsiProximityComparator.getProximity((NullableComputable<PsiElement>)() -> item.getPsiElement(), 
+                                                 location.getBaseCompletionParameters().getPosition(), location.getProcessingContext());
     }
     return null;
   }

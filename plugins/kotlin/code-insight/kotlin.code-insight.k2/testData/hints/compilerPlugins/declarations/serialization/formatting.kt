@@ -8,9 +8,9 @@ class MyClass
 class BracesCSharpStyle
 {
 
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] #>*/
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>] #>*/
 }
 
 
@@ -18,8 +18,8 @@ class NestedClassesNoFormatting {
 @Serializer(MyClass::class)
 class Nested {
 
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] #>*/
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>] #>*/
 }
 }

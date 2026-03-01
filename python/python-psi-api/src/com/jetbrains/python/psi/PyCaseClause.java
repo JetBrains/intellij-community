@@ -2,6 +2,10 @@
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstCaseClause;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PyCaseClause extends PyAstCaseClause, PyStatementPart {
@@ -14,4 +18,7 @@ public interface PyCaseClause extends PyAstCaseClause, PyStatementPart {
   default @Nullable PyExpression getGuardCondition() {
     return (PyExpression)PyAstCaseClause.super.getGuardCondition();
   }
+
+  @ApiStatus.Internal
+  @Nullable PyType getSubjectTypeAfter(@NotNull TypeEvalContext context);
 }

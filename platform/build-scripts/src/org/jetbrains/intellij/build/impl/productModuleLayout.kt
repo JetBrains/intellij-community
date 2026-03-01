@@ -1,11 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.parser.impl.elements.xmlValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.xmlValue
 import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.resolveAndEmbedContentModuleDescriptor
+import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.isOptionalLoadingRule
@@ -31,7 +32,7 @@ internal fun getProductModuleJarName(moduleName: String, context: BuildContext, 
 }
 
 // result _must be_ consistent, do not use Set.of or HashSet here
-internal fun processAndGetProductPluginContentModules(
+internal suspend fun processAndGetProductPluginContentModules(
   layout: PlatformLayout,
   descriptorCache: ScopedCachedDescriptorContainer,
   includedPlatformModulesPartialList: Collection<String>,
@@ -58,15 +59,16 @@ internal fun processAndGetProductPluginContentModules(
       outputProvider = context.outputProvider,
       inlineXmlIncludes = true,
       inlineModuleSets = true,
-      productPropertiesClass = context.productProperties::class.java.name,
-      generatorCommand = "(runtime)",
+      metadataBuilder = { sb ->
+        sb.append("  <id>com.intellij</id>\n")
+      },
       isUltimateBuild = context.paths.projectHome != context.paths.communityHomeDir
     )
     Span.current().addEvent("Generated ${buildResult.contentBlocks.size} content blocks with ${buildResult.contentBlocks.sumOf { it.modules.size }} total modules")
 
     element = JDOMUtil.load(buildResult.xml)
-    moduleToSetChainMapping = buildResult.moduleToSetChainMapping
-    moduleToIncludeDependenciesMapping = buildResult.moduleToIncludeDependenciesMapping
+    moduleToSetChainMapping = buildResult.moduleToSetChainMapping.mapKeys { it.key.value }
+    moduleToIncludeDependenciesMapping = buildResult.moduleToIncludeDependenciesMapping.mapKeys { it.key.value }
   }
 
   // Scrambling isn’t an issue: the scrambler can modify XML.
@@ -107,12 +109,18 @@ internal fun processAndGetProductPluginContentModules(
   return moduleItems
 }
 
-internal inline fun filterAndProcessContentModules(
+private data class ContentModuleData(
+  val element: Element,
+  val name: String,
+  val loadingRule: String?,
+)
+
+private fun collectContentModules(
   rootElement: Element,
   pluginMainModuleName: String?,
   context: BuildContext,
-  crossinline contentHandler: (moduleElement: Element, moduleName: String, loadingRule: String?) -> Unit,
-) {
+): List<ContentModuleData> {
+  val result = ArrayList<ContentModuleData>()
   var contentModuleFilter: ContentModuleFilter? = null
   for (content in rootElement.getChildren("content")) {
     val iterator = content.getChildren("module").iterator()
@@ -134,12 +142,24 @@ internal inline fun filterAndProcessContentModules(
         }
       }
 
-      contentHandler(moduleElement, moduleName, loadingRule)
+      result.add(ContentModuleData(element = moduleElement, name = moduleName, loadingRule = loadingRule))
     }
+  }
+  return result
+}
+
+internal suspend fun filterAndProcessContentModules(
+  rootElement: Element,
+  pluginMainModuleName: String?,
+  context: BuildContext,
+  contentHandler: suspend (moduleElement: Element, moduleName: String, loadingRule: String?) -> Unit,
+) {
+  for (module in collectContentModules(rootElement = rootElement, pluginMainModuleName = pluginMainModuleName, context = context)) {
+    contentHandler(module.element, module.name, module.loadingRule)
   }
 }
 
-private fun processProductModule(
+private suspend fun processProductModule(
   moduleElement: Element,
   frontendModuleFilter: FrontendModuleFilter,
   result: LinkedHashSet<ModuleItem>,

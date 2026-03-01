@@ -27,10 +27,14 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 public final class RootDetectionUtil {
   private static final Logger LOG = Logger.getInstance(RootDetectionUtil.class);

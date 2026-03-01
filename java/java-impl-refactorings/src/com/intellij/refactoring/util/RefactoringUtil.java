@@ -18,7 +18,62 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhileStatement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -31,7 +86,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -41,7 +95,12 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class RefactoringUtil {
   private static final Logger LOG = Logger.getInstance(RefactoringUtil.class);
@@ -610,8 +669,7 @@ public final class RefactoringUtil {
     if (PsiImplUtil.getSwitchLabel(expr) != null) {
       PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiReferenceExpression.class);
       if (ref != null && ref.resolve() instanceof PsiEnumConstant) {
-        return RefactoringBundle.getCannotRefactorMessage(
-          JavaRefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"));
+        return JavaRefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message");
       }
     }
     return null;

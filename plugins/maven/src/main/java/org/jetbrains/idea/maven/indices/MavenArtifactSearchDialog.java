@@ -14,10 +14,15 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class MavenArtifactSearchDialog extends DialogWrapper {
   private List<MavenId> myResult = Collections.emptyList();

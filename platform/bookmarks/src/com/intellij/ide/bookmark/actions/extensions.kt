@@ -13,7 +13,12 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.ide.util.treeView.SmartElementDescriptor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.wm.ToolWindowId

@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 public class GrAccessorWeigher extends CompletionWeigher {
   @Override
   public Integer weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    if (!(location.getCompletionParameters().getPosition().getContainingFile() instanceof GroovyFileBase)) {
+    if (!(location.getBaseCompletionParameters().getPosition().getContainingFile() instanceof GroovyFileBase)) {
       return null;
     }
 

@@ -110,6 +110,9 @@ protected constructor() : UiDslUnnamedConfigurable.Simple(), UiDslUnnamedConfigu
       if (configurable is BeanConfigurable<*>) {
         return configurable.title
       }
+      if (configurable is BoundConfigurable) {
+        return configurable.displayName
+      }
       return null
     }
   }

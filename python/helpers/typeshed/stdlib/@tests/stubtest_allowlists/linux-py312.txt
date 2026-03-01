@@ -2,8 +2,13 @@
 # Temporary
 # =========
 
-# Added in Python 3.12.13 (parameter `scripting`)
-html.parser.HTMLParser.__init__
+# Incompatible changes introduced in Python 3.12.13
+# (Remove once 3.12.13 becomes available for GitHub Actions)
+html.parser.HTMLParser.__init__ # parameter `scripting`
+pyexpat.XMLParserType.SetAllocTrackerActivationThreshold
+pyexpat.XMLParserType.SetAllocTrackerMaximumAmplification
+xml.parsers.expat.XMLParserType.SetAllocTrackerActivationThreshold
+xml.parsers.expat.XMLParserType.SetAllocTrackerMaximumAmplification
 
 
 # =============================================================

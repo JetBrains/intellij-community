@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.isCoreKotlinLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
-import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.caches.project.isLibraryClasses
 
 internal interface ModuleFilters {
     fun sdkFacadeFilter(module: IdeaModuleInfo): Boolean

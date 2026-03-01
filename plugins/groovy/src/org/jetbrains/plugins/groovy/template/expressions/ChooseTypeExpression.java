@@ -6,11 +6,20 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SmartTypePointer;
+import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
@@ -92,9 +101,9 @@ public class ChooseTypeExpression extends Expression {
 
   @Override
   public Result calculateResult(ExpressionContext context) {
-    Editor editor = context.getEditor();
-    if (editor != null) {
-      PsiDocumentManager.getInstance(context.getProject()).commitDocument(editor.getDocument());
+    PsiFile file = context.getPsiFile();
+    if (file != null) {
+      PsiDocumentManager.getInstance(context.getProject()).commitDocument(file.getFileDocument());
     }
     PsiType type = myTypePointer.getType();
     if (type != null) {
@@ -143,7 +152,7 @@ public class ChooseTypeExpression extends Expression {
     if (myAddDefType) {
       LookupElementBuilder def = LookupElementBuilder.create(GrModifier.DEF).bold();
       if (mySelectDef) {
-        result.add(0, def);
+        result.addFirst(def);
       }
       else {
         result.add(def);

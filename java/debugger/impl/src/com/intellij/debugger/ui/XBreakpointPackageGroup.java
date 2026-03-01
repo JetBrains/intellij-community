@@ -10,7 +10,7 @@ import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class XBreakpointPackageGroup extends XBreakpointGroup {
   private final String myPackageName;

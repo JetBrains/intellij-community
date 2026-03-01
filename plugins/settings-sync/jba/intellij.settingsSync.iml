@@ -23,7 +23,6 @@
     <orderEntry type="library" name="cloud-config-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />

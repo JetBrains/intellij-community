@@ -7,7 +7,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PackagePrefixFileSystemItem;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtilRt;
@@ -16,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 
 /**

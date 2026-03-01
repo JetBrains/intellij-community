@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
@@ -40,7 +39,8 @@ internal class BytecodeLineMappingTest : BasePlatformTestCase() {
     bytecodeSelectionEndLine++ // because string operations are 0-indexed but the editor is 1-indexed
 
     val bytecode = if (showDebugInfo) fixture.bytecodeWithDebugInfo else fixture.bytecode
-    assertEquals(expectedBytecodeSelection, bytecode.lines().subList(fromIndex = bytecodeSelectionStartLine, toIndex = bytecodeSelectionEndLine).joinToString("\n"))
+    assertEquals(expectedBytecodeSelection,
+                 bytecode.lines().subList(fromIndex = bytecodeSelectionStartLine, toIndex = bytecodeSelectionEndLine).joinToString("\n"))
   }
 
   fun `test removeDebugInfo`() {
@@ -714,12 +714,12 @@ internal class BytecodeLineMappingTest : BasePlatformTestCase() {
     }
 
     private val testDataPath: String
-      get() = PathManager.getHomePath() + "/community/plugins/byteCodeViewer/testData/lineMapping"
+      get() = PlatformTestUtil.getCommunityPath() + "/plugins/ByteCodeViewer/testData/lineMapping"
 
-    private val simple1: Fixture = createFixture("simple1")
+    private val simple1: Fixture get() = createFixture("simple1")
 
-    private val simple2: Fixture = createFixture("simple2")
+    private val simple2: Fixture get() = createFixture("simple2")
 
-    private val simple3: Fixture = createFixture("simple3")
+    private val simple3: Fixture get() = createFixture("simple3")
   }
 }

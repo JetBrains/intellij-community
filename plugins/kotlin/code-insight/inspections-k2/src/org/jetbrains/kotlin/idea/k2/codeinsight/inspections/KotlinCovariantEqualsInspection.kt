@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEqualsMethodSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.namedFunctionVisitor
@@ -31,7 +30,7 @@ class KotlinCovariantEqualsInspection : AbstractKotlinInspection() {
             if (parameterType.isNullableAnyType()) return
 
             val hasOverrideEquals = classOrObject.declarations.any { declaration ->
-                declaration is KtNamedFunction && 
+                declaration is KtNamedFunction &&
                 (declaration.symbol as? KaNamedFunctionSymbol)?.isEqualsMethodSymbol() == true
             }
             if (hasOverrideEquals) return

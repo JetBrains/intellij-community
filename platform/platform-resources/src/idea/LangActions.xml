@@ -7,6 +7,7 @@
 
     <group id="LangCodeInsightActions">
       <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
+      <action id="EditorSelectWordAtCurrentCaret" class="com.intellij.openapi.editor.actions.SelectWordAtCurrentCaretAction"/>
       <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
 
       <add-to-group group-id="EditorActions" anchor="last"/>
@@ -247,7 +248,9 @@
         <override-text place="MainMenu"/>
         <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
+      <!--suppress PluginXmlCapitalization -->
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction">
+        <!--suppress PluginXmlCapitalization -->
         <override-text place="MainMenu"/>
         <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
@@ -345,6 +348,7 @@
         <reference ref="InsertInlineCompletionAction"/>
         <reference ref="InsertInlineCompletionWordAction"/>
         <reference ref="InsertInlineCompletionLineAction"/>
+        <!--suppress PluginXmlCapitalization -->
         <action class="com.intellij.codeInsight.completion.command.configuration.EnableCommandCompletionAction"
                 id="EnableCommandCompletion"/>
       </group>
@@ -547,7 +551,7 @@
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction">
         <override-text place="GoToAction"/>
       </action>
-      <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
+      <group id="FileTemplateSeparatorGroup" searchable="false"/> <!-- kept for backward compatibility -->
       <group id="NewWebDevelopment" class="com.intellij.ide.actions.NewWebDevelopmentGroup"/>
       <group id="NewMicroservices" class="com.intellij.ide.actions.NewMicroservicesGroup"/>
       <group id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>

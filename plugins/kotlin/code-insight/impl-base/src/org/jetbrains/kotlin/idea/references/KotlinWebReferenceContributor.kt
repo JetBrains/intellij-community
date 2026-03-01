@@ -5,7 +5,11 @@ import com.intellij.openapi.paths.GlobalPathReferenceProvider
 import com.intellij.openapi.paths.WebReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression

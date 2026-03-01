@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-jettison-jettison"],
   runtime_deps = ["@lib//:libraries-jettison-jettison"]
 )
+
+jvm_library(
+  name = "jettison_test_lib",
+  module_name = "intellij.libraries.jettison",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-jettison-jettison"],
+  runtime_deps = [":jettison"]
+)
 ### auto-generated section `build intellij.libraries.jettison` end

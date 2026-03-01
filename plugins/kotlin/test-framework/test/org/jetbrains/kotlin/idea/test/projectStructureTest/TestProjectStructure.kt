@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.test.projectStructureTest
 
-import com.google.gson.*
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
 import org.jetbrains.kotlin.idea.base.util.getAsStringList
 import org.jetbrains.kotlin.idea.base.util.getNullableString
 import org.jetbrains.kotlin.idea.base.util.getString

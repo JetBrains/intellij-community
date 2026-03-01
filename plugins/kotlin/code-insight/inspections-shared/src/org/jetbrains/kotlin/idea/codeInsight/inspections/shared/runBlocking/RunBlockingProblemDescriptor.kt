@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking
 
+import com.intellij.codeInspection.ExportedInspectionsResultModifier
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ExportedInspectionsResultModifier
 import com.intellij.psi.PsiElement
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle

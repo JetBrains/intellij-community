@@ -9,7 +9,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * DO NOT USE

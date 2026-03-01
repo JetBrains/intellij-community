@@ -39,9 +39,40 @@ class Container(Model):
     def health(self) -> str: ...
     @property
     def ports(self) -> dict[Incomplete, Incomplete]: ...
+    @overload
     def attach(
-        self, **kwargs
-    ) -> str | tuple[str | None, str | None] | CancellableStream[str] | CancellableStream[tuple[str | None, str | None]]: ...
+        self,
+        *,
+        stdout: bool = True,
+        stderr: bool = True,
+        stream: Literal[False] = False,
+        logs: bool = False,
+        demux: Literal[False] = False,
+    ) -> bytes: ...
+    @overload
+    def attach(
+        self,
+        *,
+        stdout: bool = True,
+        stderr: bool = True,
+        stream: Literal[False] = False,
+        logs: bool = False,
+        demux: Literal[True],
+    ) -> tuple[bytes | None, bytes | None]: ...
+    @overload
+    def attach(
+        self,
+        *,
+        stdout: bool = True,
+        stderr: bool = True,
+        stream: Literal[True],
+        logs: bool = False,
+        demux: Literal[False] = False,
+    ) -> CancellableStream[bytes]: ...
+    @overload
+    def attach(
+        self, *, stdout: bool = True, stderr: bool = True, stream: Literal[True], logs: bool = False, demux: Literal[True]
+    ) -> CancellableStream[tuple[bytes | None, bytes | None]]: ...
     def attach_socket(self, **kwargs) -> SocketIO | _BufferedReaderStream | SSHSocket: ...
     def commit(self, repository: str | None = None, tag: str | None = None, **kwargs) -> Image: ...
     def diff(self) -> list[dict[str, Incomplete]]: ...

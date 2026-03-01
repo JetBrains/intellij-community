@@ -24,4 +24,21 @@ jvm_library(
   ],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "frontmatter_test_lib",
+  module_name = "intellij.markdown.frontmatter",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontmatter",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/IntelliLang:langInjection_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//plugins/markdown/core:markdown_test_lib",
+    "//json/backend:backend_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.markdown.frontmatter` end

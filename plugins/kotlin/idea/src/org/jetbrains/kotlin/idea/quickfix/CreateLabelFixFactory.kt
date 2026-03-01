@@ -6,7 +6,11 @@ import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.quickfix.CreateLabelFix.Companion.getContainingLambdas
 import org.jetbrains.kotlin.idea.quickfix.CreateLabelFix.Companion.getContainingLoops
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 
 internal object CreateLabelFixFactory : KotlinSingleIntentionActionFactory() {
 

@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.workspace
 
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.filter.EvaluationFilterReader
@@ -10,8 +14,8 @@ import com.intellij.cce.util.getAs
 import com.intellij.cce.util.getIfExists
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.LookupFilter
-import com.intellij.cce.workspace.filter.SpanFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
+import com.intellij.cce.workspace.filter.SpanFilter
 import com.intellij.openapi.diagnostic.logger
 import org.apache.commons.text.StringSubstitutor
 import org.apache.commons.text.lookup.StringLookup

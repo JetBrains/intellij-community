@@ -15,7 +15,25 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -24,7 +42,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.IntroduceFunctionalVariableAction;
-import com.intellij.refactoring.extractMethod.*;
+import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
+import com.intellij.refactoring.extractMethod.ExtractMethodDialog;
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
+import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
+import com.intellij.refactoring.extractMethod.InputVariables;
+import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -35,9 +58,14 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.FlowLayout;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler {
@@ -53,8 +81,12 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
         }
         PsiElement anchorStatement =
           elements[0] instanceof PsiComment ? elements[0] : CommonJavaRefactoringUtil.getParentStatement(elements[0], false);
-        PsiElement tempContainer = checkAnchorStatement(project, editor, anchorStatement);
-        if (tempContainer == null) return;
+        ErrorOrContainer errorOrContainer = getTempContainer(anchorStatement);
+
+
+        if (errorOrContainer instanceof ErrorOrContainer.Error(@NlsContexts.DialogMessage String message)) {
+          showErrorMessage(project, editor, message);
+        }
 
         PsiElement[] elementsInCopy = IntroduceParameterHandler.getElementsInCopy(project, file, elements);
         MyExtractMethodProcessor processor =
@@ -195,7 +227,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
 
 
   @Override
-  protected void showErrorMessage(Project project, Editor editor, @NlsContexts.DialogMessage String message) {
+  protected void showErrorMessage(@NotNull Project project, Editor editor, @NlsContexts.DialogMessage @NotNull String message) {
     CommonRefactoringUtil
       .showErrorHint(project, editor, message, IntroduceFunctionalVariableAction.getRefactoringName(), HelpID.INTRODUCE_VARIABLE);
   }

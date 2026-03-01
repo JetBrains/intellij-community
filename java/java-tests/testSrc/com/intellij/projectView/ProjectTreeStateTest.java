@@ -8,7 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider;
 import org.jdom.Element;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class ProjectTreeStateTest extends BaseProjectViewTestCase {
   private String myExpectedTree;

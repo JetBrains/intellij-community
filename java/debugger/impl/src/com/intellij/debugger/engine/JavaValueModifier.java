@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -9,19 +9,37 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.expression.*;
+import com.intellij.debugger.engine.evaluation.expression.BoxingEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
+import com.intellij.debugger.engine.evaluation.expression.IdentityEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.DoubleValue;
+import com.sun.jdi.FloatType;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.InvocationException;
+import com.sun.jdi.LongType;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.PrimitiveType;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -196,60 +214,61 @@ public abstract class JavaValueModifier extends XValueModifier {
                      final XModificationCallback callback,
                      final DebuggerContextImpl debuggerContext,
                      final SetValueRunnable setValueRunnable) {
-    final ProgressWindow progressWindow = new ProgressWindow(true, debuggerContext.getProject());
     final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();
 
-    SuspendContextCommandImpl askSetAction = new DebuggerContextCommandImpl(debuggerContext) {
-      @Override
-      public Priority getPriority() {
-        return Priority.HIGH;
-      }
-
-      @Override
-      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        ExpressionEvaluator evaluator;
-        try {
-          evaluator = tryDirectAssignment(expression, setValueRunnable.getLType(), evaluationContext);
-
-          if (evaluator == null) {
-            Project project = evaluationContext.getProject();
-            SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
-            PsiElement context = ContextUtil.getContextElement(evaluationContext, position);
-            evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<>() {
-              @Override
-              public ExpressionEvaluator compute() throws EvaluateException {
-                return EvaluatorBuilderImpl
-                  .build(TextWithImportsImpl.fromXExpression(expression), context, position, project);
-              }
-            });
+    evaluationContext.getManagerThread().startCommandWithModalProgress(
+      evaluationContext.getProject(), JavaDebuggerBundle.message("title.evaluating"),
+      (indicator) -> {
+        return new DebuggerContextCommandImpl(debuggerContext) {
+          @Override
+          public Priority getPriority() {
+            return Priority.HIGH;
           }
 
-          setValue(evaluator, evaluationContext, new SetValueRunnable() {
-            @Override
-            public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
-                                                                                                 InvalidTypeException,
-                                                                                                 EvaluateException,
-                                                                                                 IncompatibleThreadStateException {
-              if (!progressWindow.isCanceled()) {
-                setValueRunnable.setValue(evaluationContext, newValue);
-                //node.calcValue();
+          @Override
+          public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+            ExpressionEvaluator evaluator;
+            try {
+              evaluator = tryDirectAssignment(expression, setValueRunnable.getLType(), evaluationContext);
+
+              if (evaluator == null) {
+                Project project = evaluationContext.getProject();
+                SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
+                PsiElement context = ContextUtil.getContextElement(evaluationContext, position);
+                evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<>() {
+                  @Override
+                  public ExpressionEvaluator compute() throws EvaluateException {
+                    return EvaluatorBuilderImpl
+                      .build(TextWithImportsImpl.fromXExpression(expression), context, position, project);
+                  }
+                });
               }
-            }
 
-            @Override
-            public @Nullable Type getLType() throws EvaluateException, ClassNotLoadedException {
-              return setValueRunnable.getLType();
+              setValue(evaluator, evaluationContext, new SetValueRunnable() {
+                @Override
+                public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
+                                                                                                     InvalidTypeException,
+                                                                                                     EvaluateException,
+                                                                                                     IncompatibleThreadStateException {
+                  if (!indicator.isCanceled()) {
+                    setValueRunnable.setValue(evaluationContext, newValue);
+                    //node.calcValue();
+                  }
+                }
+
+                @Override
+                public @Nullable Type getLType() throws EvaluateException, ClassNotLoadedException {
+                  return setValueRunnable.getLType();
+                }
+              });
+              callback.valueModified();
             }
-          });
-          callback.valueModified();
-        }
-        catch (EvaluateException | ClassNotLoadedException e) {
-          callback.errorOccurred(e.getMessage());
-        }
+            catch (EvaluateException | ClassNotLoadedException e) {
+              callback.errorOccurred(e.getMessage());
+            }
+          }
+        };
       }
-    };
-
-    progressWindow.setTitle(JavaDebuggerBundle.message("title.evaluating"));
-    evaluationContext.getManagerThread().startProgress(askSetAction, progressWindow);
+    );
   }
 }

@@ -8,9 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.getModule
-import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 @VisibleForTesting

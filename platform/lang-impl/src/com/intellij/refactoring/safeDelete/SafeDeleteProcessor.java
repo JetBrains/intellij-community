@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.ide.util.DeleteHandler;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -13,7 +14,17 @@ import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -34,7 +45,11 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.*;
+import com.intellij.usages.UsageInfoToUsageConverter;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -42,7 +57,13 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.util.NlsContexts.Command;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -378,17 +399,17 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   @Override
   protected void performRefactoring(UsageInfo @NotNull [] usages) {
     try {
-      SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
-      List<SmartPsiElementPointer<PsiElement>> pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
+      var pointerManager = SmartPointerManager.getInstance(myProject);
+      var pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
 
-      for (UsageInfo usage : usages) {
+      for (var usage : usages) {
         if (usage instanceof SafeDeleteCustomUsageInfo info) {
           info.performRefactoring();
         }
       }
 
-      for (PsiElement element : myElements) {
-        for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
+      for (var element : myElements) {
+        for (var delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
           if (delegate.handlesElement(element)) {
             delegate.prepareForDeletion(element);
             break;
@@ -396,14 +417,16 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      for (SmartPsiElementPointer<PsiElement> pointer : pointers) {
-        PsiElement element = pointer.getElement();
+      for (var pointer : pointers) {
+        var element = pointer.getElement();
         if (element != null) {
-          element.delete();
+          DeleteHandler.deleteElementImpl(element);
         }
       }
+
       if (myAfterRefactoringCallback != null) myAfterRefactoringCallback.run();
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
   }

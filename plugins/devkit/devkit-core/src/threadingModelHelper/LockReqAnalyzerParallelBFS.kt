@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.concurrency.virtualThreads.inVirtualThread
@@ -84,7 +84,7 @@ class LockReqAnalyzerParallelBFS {
     smartReadAction(project) {
       val method = root.element ?: return@smartReadAction
       val sig = LockReqPsiOps.forLanguage(method.language).extractSignature(method)
-      queue.put(QueueEntry(root, sig, listOf(MethodCall(sig.methodName, sig.containingClassName))))
+      queue.put(QueueEntry(root, sig, listOf(MethodCall(sig.methodName, sig.containingClassName, method.location()))))
       sig
     }
 
@@ -219,7 +219,11 @@ class LockReqAnalyzerParallelBFS {
   }
 
   fun reportCurrentlyProcessedMethod(holder: MutableList<MethodSignature>, rawReporter: RawProgressReporter) {
-    val presentableName = holder.getOrNull(0) ?: return
+    val presentableName = try {
+      holder[0]
+    } catch (_: IndexOutOfBoundsException) {
+      return
+    }
     val qualifiedName = presentableName.containingClassName + "." + presentableName.methodName
     rawReporter.details(DevKitBundle.message("progress.details.analyzing.method.during.lock.requirement.search", qualifiedName))
   }

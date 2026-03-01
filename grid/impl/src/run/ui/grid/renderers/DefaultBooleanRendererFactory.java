@@ -1,6 +1,11 @@
 package com.intellij.database.run.ui.grid.renderers;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.extractors.ObjectFormatterUtil;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorHelper;
@@ -12,7 +17,8 @@ import com.intellij.util.ui.JBEmptyBorder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
 import java.util.Objects;
 
 public class DefaultBooleanRendererFactory implements GridCellRendererFactory {

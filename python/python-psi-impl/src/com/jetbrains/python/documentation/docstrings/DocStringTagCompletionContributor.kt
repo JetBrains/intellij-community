@@ -15,12 +15,17 @@
  */
 package com.jetbrains.python.documentation.docstrings
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.project.DumbAware
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.util.ProcessingContext
+import com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor.Helper.DOCSTRING_PATTERN
 import com.jetbrains.python.psi.PyDocStringOwner
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyStringLiteralExpression
@@ -72,7 +77,7 @@ class DocStringTagCompletionContributor : CompletionContributor(), DumbAware {
            })
   }
 
-  companion object {
+  object Helper {
     @JvmField
     val DOCSTRING_PATTERN: PsiElementPattern.Capture<PyStringLiteralExpression?> =
       PlatformPatterns.psiElement<PyStringLiteralExpression?>(PyStringLiteralExpression::class.java)

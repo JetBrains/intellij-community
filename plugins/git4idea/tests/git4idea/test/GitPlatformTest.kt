@@ -11,8 +11,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
@@ -31,14 +35,18 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitHandler
-import git4idea.config.*
+import git4idea.config.GitExecutableManager
+import git4idea.config.GitSaveChangesPolicy
+import git4idea.config.GitVcsApplicationSettings
+import git4idea.config.GitVcsSettings
+import git4idea.config.GitVersion
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.test.GitPlatformTest.ConfigScope.GLOBAL
 import git4idea.test.GitPlatformTest.ConfigScope.SYSTEM
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 
 abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var repositoryManager: GitRepositoryManager

@@ -3,7 +3,13 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiResolveHelper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.JavaChangeInfo;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;

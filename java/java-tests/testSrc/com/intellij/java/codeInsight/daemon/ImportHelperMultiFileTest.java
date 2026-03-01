@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.ProductionDaemonAnalyzerTestCase;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -12,13 +13,13 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
-public class ImportHelperMultiFileTest extends DaemonAnalyzerTestCase {
+public class ImportHelperMultiFileTest extends ProductionDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/importHelper/";
 
   public void testReimportConflictingClasses() throws Exception {
     String path = BASE_PATH + getTestName(true);
     configureByFile(path + "/x/Usage.java", path);
-    assertEmpty(highlightErrors());
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
 
     JavaCodeStyleSettings.getInstance(getProject()).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
     WriteCommandAction.runWriteCommandAction(getProject(),
@@ -33,7 +34,7 @@ public class ImportHelperMultiFileTest extends DaemonAnalyzerTestCase {
   public void testConflictBetweenRegularAndStaticClassesInImportList() throws Exception {
     String path = BASE_PATH + getTestName(true);
     configureByFile(path + "/foo/A.java", path);
-    assertEmpty(highlightErrors());
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
 
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
@@ -42,6 +43,6 @@ public class ImportHelperMultiFileTest extends DaemonAnalyzerTestCase {
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 
-    assertEmpty(highlightErrors());
+    assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
   }
 }

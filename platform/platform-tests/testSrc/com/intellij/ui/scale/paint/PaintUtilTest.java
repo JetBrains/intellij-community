@@ -10,7 +10,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;

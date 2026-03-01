@@ -1,9 +1,13 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="switcher.presentation.update.debounce.interval.ms" defaultValue="300"

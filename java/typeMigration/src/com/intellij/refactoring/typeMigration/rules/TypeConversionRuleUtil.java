@@ -1,8 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules;
 
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowOptions;
+import com.intellij.psi.controlFlow.ControlFlowPolicy;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;

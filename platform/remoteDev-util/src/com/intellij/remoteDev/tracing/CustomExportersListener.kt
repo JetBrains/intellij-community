@@ -7,7 +7,7 @@ import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider
 
-private class CustomExportersListener : ApplicationInitializedListener {
+internal class CustomExportersListener : ApplicationInitializedListener {
   override suspend fun execute() {
     val ep = ExtensionPointName<OpenTelemetryExporterProvider>("com.intellij.openTelemetryExporterProvider")
     if (!ep.hasAnyExtensions()) {

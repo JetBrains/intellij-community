@@ -29,8 +29,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.sameHistories;

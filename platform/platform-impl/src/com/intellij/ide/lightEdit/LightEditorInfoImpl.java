@@ -60,7 +60,7 @@ public final class LightEditorInfoImpl implements LightEditorInfo {
   }
 
   public static @Nullable Editor getEditor(@Nullable FileEditor fileEditor) {
-    TextEditor textEditor = fileEditor instanceof TextEditor ? (TextEditor)fileEditor : null;
+    TextEditor textEditor = fileEditor instanceof TextEditor te ? te : null;
     return textEditor == null ? null : textEditor.getEditor();
   }
 
@@ -71,7 +71,7 @@ public final class LightEditorInfoImpl implements LightEditorInfo {
   @Override
   public boolean isSaveRequired() {
     return isUnsaved() &&
-           (!isNew() || myFileEditor instanceof TextEditor && ((TextEditor)myFileEditor).getEditor().getDocument().getTextLength() > 0);
+           (!isNew() || myFileEditor instanceof TextEditor te && te.getEditor().getDocument().getTextLength() > 0);
   }
 
   @Override

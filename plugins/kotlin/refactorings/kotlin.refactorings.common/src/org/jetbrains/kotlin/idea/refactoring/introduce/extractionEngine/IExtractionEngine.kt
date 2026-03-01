@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
@@ -155,7 +156,9 @@ abstract class IExtractionEngine<KotlinType,
                         MessageType.WARNING
                     ) { event ->
                         if (event?.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-                            validateAndRefactor()
+                            WriteIntentReadAction.run  {
+                                validateAndRefactor()
+                            }
                         }
                     }
                     .setHideOnClickOutside(true)

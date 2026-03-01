@@ -22,3 +22,5 @@ fun foo(): C {
 // ABSENT: { itemText: "JavaClass1.h" }
 // ABSENT: { itemText: "JavaClass2.f" }
 // ABSENT: { itemText: "JavaClass2.g" }
+
+// IGNORE_K2

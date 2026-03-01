@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.List;
 
 /**

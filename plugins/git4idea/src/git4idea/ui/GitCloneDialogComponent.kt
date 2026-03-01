@@ -23,7 +23,11 @@ import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_CREATE_
 import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_FIND_DESTINATION_DIR
 import git4idea.GitUtil
 import git4idea.checkout.GitCloneUtils
-import git4idea.config.*
+import git4idea.config.GitExecutableInlineComponent
+import git4idea.config.GitExecutableManager
+import git4idea.config.InlineErrorNotifier
+import git4idea.config.findGitExecutableProblemHandler
+import git4idea.config.showUnsupportedVersionError
 import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
 import java.nio.file.Path

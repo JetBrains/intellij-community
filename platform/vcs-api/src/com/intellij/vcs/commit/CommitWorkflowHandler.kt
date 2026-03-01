@@ -16,7 +16,7 @@ interface CommitWorkflowHandler {
   fun execute(executor: CommitExecutor)
 
   fun getState(): CommitWorkflowHandlerState =
-    CommitWorkflowHandlerState(amendCommitHandler.isAmendCommitMode, false)
+    CommitWorkflowHandlerState(amendCommitHandler.commitToAmend !is CommitToAmend.None, false)
 }
 
 sealed class CommitChecksResult {

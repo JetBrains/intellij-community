@@ -4,7 +4,11 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.light.LightParameter;
 import org.jetbrains.annotations.NotNull;
 

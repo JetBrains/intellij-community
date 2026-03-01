@@ -9,7 +9,12 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.syntax.lexer.TokenList;
 import com.intellij.psi.impl.source.JavaFileElementType;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.io.BooleanDataDescriptor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -26,7 +31,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.platform.syntax.lexer.TokenListUtil.*;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.backWhile;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.forwardWhile;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.hasType;
 
 public final class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boolean, JavaBinaryPlusExpressionIndex.PlusOffsets> {
   public static final ID<Boolean, PlusOffsets> INDEX_ID = ID.create("java.binary.plus.expression");

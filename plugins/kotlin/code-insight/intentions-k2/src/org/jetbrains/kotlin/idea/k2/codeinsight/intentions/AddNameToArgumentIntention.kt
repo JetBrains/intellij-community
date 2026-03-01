@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -21,7 +22,8 @@ import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
-internal class AddNameToArgumentIntention :
+@ApiStatus.Internal
+class AddNameToArgumentIntention :
     KotlinApplicableModCommandAction<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class) {
 
     data class Context(

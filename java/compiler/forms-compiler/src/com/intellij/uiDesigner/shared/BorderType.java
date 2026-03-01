@@ -4,9 +4,11 @@ package com.intellij.uiDesigner.shared;
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Insets;
 
 public final class BorderType {
   public static final BorderType NONE = new BorderType("none", "None",null,null);

@@ -32,10 +32,10 @@ f:com.intellij.internal.statistic.eventLog.LogEventDeserializer
 - f:fromString(java.lang.String):com.jetbrains.fus.reporting.model.lion3.LogEvent
 - f:getLogger():com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger
 f:com.intellij.internal.statistic.eventLog.LogEventJsonDeserializer
-- com.fasterxml.jackson.databind.JsonDeserializer
+- tools.jackson.databind.ValueDeserializer
 - <init>():V
-- f:createAction(com.fasterxml.jackson.databind.JsonNode):com.jetbrains.fus.reporting.model.lion3.LogEventAction
-- deserialize(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.DeserializationContext):com.jetbrains.fus.reporting.model.lion3.LogEvent
+- f:createAction(tools.jackson.databind.JsonNode):com.jetbrains.fus.reporting.model.lion3.LogEventAction
+- deserialize(tools.jackson.core.JsonParser,tools.jackson.databind.DeserializationContext):com.jetbrains.fus.reporting.model.lion3.LogEvent
 f:com.intellij.internal.statistic.eventLog.LogEventRecord
 - <init>(java.util.List):V
 - equals(java.lang.Object):Z
@@ -58,9 +58,9 @@ f:com.intellij.internal.statistic.eventLog.LogEventRecordRequest$Companion
 - bs:create$default(com.intellij.internal.statistic.eventLog.LogEventRecordRequest$Companion,java.io.File,java.lang.String,java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.filters.LogEventFilter,Z,com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger,com.intellij.internal.statistic.eventLog.MachineId,Z,I,java.lang.Object):com.intellij.internal.statistic.eventLog.LogEventRecordRequest
 - f:fillMachineId(com.jetbrains.fus.reporting.model.lion3.LogEvent,com.intellij.internal.statistic.eventLog.MachineId):V
 f:com.intellij.internal.statistic.eventLog.LogEventRecordRequestJsonDeserializer
-- com.fasterxml.jackson.databind.JsonDeserializer
+- tools.jackson.databind.ValueDeserializer
 - <init>():V
-- deserialize(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.DeserializationContext):com.intellij.internal.statistic.eventLog.LogEventRecordRequest
+- deserialize(tools.jackson.core.JsonParser,tools.jackson.databind.DeserializationContext):com.intellij.internal.statistic.eventLog.LogEventRecordRequest
 f:com.intellij.internal.statistic.eventLog.LogEventRecordSizeEstimator
 - <init>(java.lang.String,java.lang.String):V
 - f:estimate(java.lang.String):I

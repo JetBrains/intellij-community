@@ -5,7 +5,15 @@ import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.EventResult
 import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.impl.*
+import com.intellij.build.events.impl.DerivedResultImpl
+import com.intellij.build.events.impl.FailureResultImpl
+import com.intellij.build.events.impl.FinishBuildEventImpl
+import com.intellij.build.events.impl.FinishEventImpl
+import com.intellij.build.events.impl.MessageEventImpl
+import com.intellij.build.events.impl.OutputBuildEventImpl
+import com.intellij.build.events.impl.StartBuildEventImpl
+import com.intellij.build.events.impl.StartEventImpl
+import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -14,11 +22,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ExceptionUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.MavenConsoleBundle
 import org.jetbrains.idea.maven.execution.SyncBundle
-import org.jetbrains.idea.maven.model.MavenArtifact
-import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenArtifactEvent
 import org.jetbrains.idea.maven.server.MavenServerConsoleEvent
@@ -68,13 +73,6 @@ abstract class MavenSyncConsoleBase(protected val myProject: Project) : MavenEve
 
   protected fun completeTask(@NlsSafe taskName: String, result: EventResult) {
     completeTask(myTaskId, taskName, result)
-  }
-
-  @ApiStatus.Internal
-  fun addException(e: Throwable) {
-    MavenLog.LOG.warn(e)
-    hasErrors = true
-    progressListener.onEvent(myTaskId, createMessageEvent(myProject, myTaskId, e))
   }
 
   fun addError(@NlsSafe message: String) {
@@ -159,41 +157,6 @@ abstract class MavenSyncConsoleBase(protected val myProject: Project) : MavenEve
       MavenServerConsoleIndicator.LEVEL_ERROR to "ERROR",
       MavenServerConsoleIndicator.LEVEL_FATAL to "FATAL_ERROR"
     )
-  }
-}
-
-/**
- * An instance of this class is not supposed to be reused in multiple downloads
- */
-class MavenDownloadConsole(myProject: Project,
-                           downloadSources: Boolean,
-                           downloadDocs: Boolean) : MavenSyncConsoleBase(myProject) {
-  override val title: String = MavenConsoleBundle.message("maven.download.title")
-  override val message: String = if (downloadSources) {
-    if (downloadDocs) {
-      MavenConsoleBundle.message("maven.download.sources.and.docs")
-    }
-    else {
-      MavenConsoleBundle.message("maven.download.sources")
-    }
-  }
-  else {
-    MavenConsoleBundle.message("maven.download.docs")
-  }
-
-  fun startDownloadTask(projects: Collection<MavenProject>, artifacts: Collection<MavenArtifact>?) {
-    startTask(getStringRepresentation(projects, artifacts))
-  }
-
-  fun finishDownloadTask(projects: Collection<MavenProject>, artifacts: Collection<MavenArtifact>?) {
-    completeTask(getStringRepresentation(projects, artifacts), SuccessResultImpl())
-  }
-
-  private fun getStringRepresentation(projects: Collection<MavenProject>, artifacts: Collection<MavenArtifact>?): String {
-    val projectNames = if (projects.isEmpty()) "-" else projects.map { it.mavenId }.joinToString()
-    val artifactNames = if (artifacts.isNullOrEmpty()) "" else artifacts.map { it.mavenId }.joinToString()
-    return if (artifactNames.isEmpty()) MavenConsoleBundle.message("maven.download.projects", projectNames)
-    else MavenConsoleBundle.message("maven.download.projects.and.artifacts", projectNames, artifactNames)
   }
 }
 

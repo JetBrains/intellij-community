@@ -2,7 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.*
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptorWithConflicts
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionData
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGeneratorConfiguration
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionEngine
 

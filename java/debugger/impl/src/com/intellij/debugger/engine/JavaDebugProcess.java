@@ -9,12 +9,23 @@ import com.intellij.debugger.engine.dfaassist.DfaAssist;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.impl.DebuggerContextUtil;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerStateManager;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.intellij.debugger.impl.PrioritizedTask;
+import com.intellij.debugger.impl.SourceCodeChecker;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -30,7 +41,15 @@ import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.UIExperiment;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Anchor;
+import com.intellij.openapi.actionSystem.Constraints;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.Comparing;
@@ -44,11 +63,23 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.DapMode;
+import com.intellij.xdebugger.SplitDebuggerMode;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionEventsProvider;
+import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XDescriptor;
+import com.intellij.xdebugger.frame.XDropFrameHandler;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.ThreadsActionsProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -65,6 +96,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
+
+import java.util.concurrent.CompletableFuture;
 
 public class JavaDebugProcess extends XDebugProcess {
   private final DebuggerSession myJavaSession;
@@ -83,6 +116,8 @@ public class JavaDebugProcess extends XDebugProcess {
     process -> new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process),
     process -> new JavaBreakpointHandler.JavaCollectionBreakpointHandler(process)
   };
+
+  private final @Nullable CompletableFuture<@NotNull XDescriptor> myProcessDescriptor;
 
   public static JavaDebugProcess create(final @NotNull XDebugSession session, final @NotNull DebuggerSession javaSession) {
     JavaDebugProcess res = new JavaDebugProcessWithThreadsActions(session, javaSession);
@@ -206,6 +241,7 @@ public class JavaDebugProcess extends XDebugProcess {
       }
 
       private void showAlternativeNotification(@Nullable XStackFrame frame) {
+        if (DapMode.isDap()) return;
         if (frame != null) {
           XSourcePosition position = frame.getSourcePosition();
           if (position != null) {
@@ -224,6 +260,7 @@ public class JavaDebugProcess extends XDebugProcess {
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);
     myDropFrameActionActionHandler = new JvmDropFrameActionHandler(javaSession);
     myJavaDebugSessionEventsProvider = new JavaDebugSessionEventsProvider(this);
+    myProcessDescriptor = JavaProcessDescriptorFactory.createProcessDescriptor(this);
   }
 
   private boolean shouldApplyContext(DebuggerContextImpl context) {
@@ -261,7 +298,13 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Override
-  public void computeRunningExecutionStacks(XSuspendContext.XExecutionStackContainer container) {
+  public void computeRunningExecutionStacks(XSuspendContext.XExecutionStackGroupContainer container, @Nullable XSuspendContext suspendContext) {
+    // TODO: Provide a platform-level way to define threads view settings, IDEA-384653
+    var showThreadGroups = ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS;
+    if (!showThreadGroups && suspendContext != null) {
+      suspendContext.computeExecutionStacks(container);
+      return;
+    }
     var debugProcess = getDebuggerSession().getProcess();
     var context = debugProcess.getDebuggerContext();
     var managerThread = context.getManagerThread();
@@ -273,12 +316,11 @@ public class JavaDebugProcess extends XDebugProcess {
       @Override
       protected void action() {
         try {
-          var currentThread = context.getThreadProxy();
-          var allThreads = debugProcess.getVirtualMachineProxy().allThreads();
-          var executionStacks = ContainerUtil.map(
-            allThreads, (thread) -> (XExecutionStack) new JavaExecutionStack(thread, debugProcess, thread.equals(currentThread))
-          );
-          container.addExecutionStack(executionStacks, true);
+          if (showThreadGroups) {
+            addExecutionStackGroups(container, debugProcess);
+          } else {
+            addRunningExecutionStacks(container, debugProcess);
+          }
         }
         catch (Throwable e) {
           container.errorOccurred(XDebuggerBundle.message("debugger.threads.not.available") + ": " + e.getMessage());
@@ -290,6 +332,30 @@ public class JavaDebugProcess extends XDebugProcess {
         container.errorOccurred(XDebuggerBundle.message("debugger.threads.not.available"));
       }
     });
+  }
+
+  private static void addExecutionStackGroups(XSuspendContext.XExecutionStackGroupContainer container, DebugProcessImpl debugProcess) {
+    var vm = VirtualMachineProxyImpl.getCurrent();
+    var currentThread = debugProcess.getDebuggerContext().getThreadProxy();
+    var executionStackGroups = ContainerUtil.map(
+      vm.topLevelThreadGroups(),
+      t -> JavaThreadGroup.buildJavaThreadGroup(t, debugProcess, currentThread)
+    );
+    CompletableFuture.allOf(executionStackGroups.toArray(CompletableFuture[]::new))
+      .thenAccept(unused -> {
+        if (container.isObsolete()) return;
+        var groups = ContainerUtil.map(executionStackGroups, CompletableFuture::join);
+        container.addExecutionStackGroups(groups, true);
+      })
+      .exceptionally(DebuggerUtilsAsync::logError);
+  }
+
+  private static void addRunningExecutionStacks(XSuspendContext.XExecutionStackGroupContainer container, DebugProcessImpl debugProcess) {
+    var allThreads = VirtualMachineProxyImpl.getCurrent().allThreads();
+    var executionStacks = ContainerUtil.map(
+      allThreads, (thread) -> (XExecutionStack) new JavaExecutionStack(thread, debugProcess, false)
+    );
+    container.addExecutionStack(executionStacks, true);
   }
 
   @Override
@@ -592,6 +658,11 @@ public class JavaDebugProcess extends XDebugProcess {
   @Override
   public @Nullable XDropFrameHandler getDropFrameHandler() {
     return myDropFrameActionActionHandler;
+  }
+
+  @Override
+  public @Nullable CompletableFuture<XDescriptor> getProcessDescriptor() {
+    return myProcessDescriptor;
   }
 
   private static final class JavaDebugProcessWithThreadsActions extends JavaDebugProcess implements ThreadsActionsProvider {

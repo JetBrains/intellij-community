@@ -1,10 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -19,8 +25,9 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.List;
 import java.util.Set;
 
@@ -51,9 +58,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
                  && (PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, element) || !element.hasModifierProperty(PsiModifier.STATIC));
         }
         else if (element instanceof PsiField && !(element instanceof PsiEnumConstant)) {
-          return element.hasModifierProperty(PsiModifier.FINAL)
-                 && element.hasModifierProperty(PsiModifier.STATIC)
-                 && element.hasModifierProperty(PsiModifier.PUBLIC);
+          return element.hasModifierProperty(PsiModifier.FINAL) && element.hasModifierProperty(PsiModifier.STATIC);
         }
         else if (element instanceof PsiClass) {
           return ((PsiClass)element).isInterface() || element.hasModifierProperty(PsiModifier.STATIC);

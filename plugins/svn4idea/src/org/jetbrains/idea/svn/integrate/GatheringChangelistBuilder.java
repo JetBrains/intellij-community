@@ -21,7 +21,11 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
 

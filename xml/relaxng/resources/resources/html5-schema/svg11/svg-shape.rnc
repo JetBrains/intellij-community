@@ -58,7 +58,7 @@ grammar {
         SVG.Cursor.attrib,
         SVG.External.attrib,
         common.attrs.aria?,
-        attribute d { PathData.datatype },
+        attribute d { PathData.datatype }?,
         attribute pathLength { Number.datatype }?,
         attribute transform { TransformList.datatype }?
     a:documentation [
@@ -85,8 +85,8 @@ grammar {
         common.attrs.aria?,
         attribute x { Coordinate.datatype }?,
         attribute y { Coordinate.datatype }?,
-        attribute width { Length.datatype },
-        attribute height { Length.datatype },
+        attribute width { Length.datatype }?,
+        attribute height { Length.datatype }?,
         attribute rx { Length.datatype }?,
         attribute ry { Length.datatype }?,
         attribute transform { TransformList.datatype }?
@@ -114,7 +114,7 @@ grammar {
         common.attrs.aria?,
         attribute cx { Coordinate.datatype }?,
         attribute cy { Coordinate.datatype }?,
-        attribute r { Length.datatype },
+        attribute r { Length.datatype }?,
         attribute transform { TransformList.datatype }?
     a:documentation [ "\x{a}" ~ "    line: Line Element\x{a}" ~ "  " ]
     SVG.line.content = SVG.Description.class*, SVG.Animation.class*
@@ -164,8 +164,8 @@ grammar {
         common.attrs.aria?,
         attribute cx { Coordinate.datatype }?,
         attribute cy { Coordinate.datatype }?,
-        attribute rx { Length.datatype },
-        attribute ry { Length.datatype },
+        attribute rx { Length.datatype }?,
+        attribute ry { Length.datatype }?,
         attribute transform { TransformList.datatype }?
     a:documentation [
         "\x{a}" ~
@@ -191,7 +191,7 @@ grammar {
         SVG.Cursor.attrib,
         SVG.External.attrib,
         (common.attrs.aria.implicit.group | common.attrs.aria)?,
-        attribute points { Points.datatype },
+        attribute points { Points.datatype }?,
         attribute transform { TransformList.datatype }?
     a:documentation [
         "\x{a}" ~
@@ -216,6 +216,6 @@ grammar {
         SVG.Cursor.attrib,
         SVG.External.attrib,
         common.attrs.aria?,
-        attribute points { Points.datatype },
+        attribute points { Points.datatype }?,
         attribute transform { TransformList.datatype }?
 }

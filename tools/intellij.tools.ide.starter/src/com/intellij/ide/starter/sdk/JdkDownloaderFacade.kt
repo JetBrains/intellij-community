@@ -4,14 +4,26 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.runner.SetupException
 import com.intellij.ide.starter.runner.targets.TargetIdentifier
 import com.intellij.ide.starter.runner.targets.isLocal
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.*
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequest
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerWSL
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetryBlocking
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.walk
 
 class DownloadJDKException : SetupException("JDK list is empty")
 

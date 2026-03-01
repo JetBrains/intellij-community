@@ -22,7 +22,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 
-import static com.intellij.testFramework.EditorTestUtil.*;
+import static com.intellij.testFramework.EditorTestUtil.CARET_TAG;
+import static com.intellij.testFramework.EditorTestUtil.SELECTION_END_TAG;
+import static com.intellij.testFramework.EditorTestUtil.SELECTION_START_TAG;
 
 public class CopyActionTest extends LightPlatformCodeInsightTestCase {
 

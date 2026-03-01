@@ -16,7 +16,14 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.name.JvmStandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.expressionVisitor
 
 internal class SuspiciousJavaClassCallableReferenceInspection :
     KotlinApplicableInspectionBase.Simple<KtCallableReferenceExpression, SuspiciousJavaClassCallableReferenceInspection.Context>() {

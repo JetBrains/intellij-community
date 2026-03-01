@@ -15,12 +15,12 @@
  */
 package com.intellij.refactoring.move.moveInstanceMethod;
 
-import com.intellij.usageView.UsageInfo;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiNewExpression;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.usageView.UsageInfo;
 
 public class InternalUsageInfo extends UsageInfo {
   private static final Logger LOG = Logger.getInstance(InternalUsageInfo.class);

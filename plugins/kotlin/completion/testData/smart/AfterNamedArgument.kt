@@ -8,3 +8,5 @@ fun bar(pInt: Int, pString: String) {
 // EXIST: { lookupString: "param3 =", itemText: "param3 =" }
 // ABSENT: param2
 // NOTHING_ELSE
+
+// IGNORE_K2

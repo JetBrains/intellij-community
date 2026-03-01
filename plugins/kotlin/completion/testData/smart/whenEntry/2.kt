@@ -14,3 +14,5 @@ fun foo(e: E) {
 // EXIST: { lookupString:"B", itemText:"E.B" }
 // EXIST: { lookupString:"C", itemText:"E.C" }
 // ABSENT: else
+
+// IGNORE_K2

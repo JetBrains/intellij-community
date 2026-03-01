@@ -2,7 +2,14 @@
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -16,7 +23,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 public final class GroovyOverrideImplementExploreUtil {
 

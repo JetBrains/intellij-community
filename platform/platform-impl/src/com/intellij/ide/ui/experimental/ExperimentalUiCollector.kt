@@ -2,7 +2,7 @@
 package com.intellij.ide.ui.experimental
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -18,48 +18,14 @@ object ExperimentalUiCollector : CounterUsagesCollector() {
     PREFERENCES
   }
 
-  enum class MeetNewUiAction {
-    NEW_UI_LINK,
-    DENSITY_CLEAN,
-    DENSITY_COMPACT
-  }
-
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("experimental.ui.interactions", 7)
-
-  private val switchSourceField = EventFields.Enum<SwitchSource>("switch_source")
-  private val expUiField = EventFields.Boolean("exp_ui")
-  private val switchUi = GROUP.registerVarargEvent("switch.ui", switchSourceField, expUiField)
+  private val GROUP = EventLogGroup("experimental.ui.interactions", 8)
 
   @JvmStatic
-  fun logSwitchUi(switchSource: SwitchSource, value: Boolean): Unit = switchUi.log(
-    switchSourceField with switchSource,
-    expUiField with value)
+  val islandsThemeOn: EventId = GROUP.registerEvent("islands.theme.on")
 
   @JvmStatic
-  val inviteBannerShown = GROUP.registerEvent("invite.banner.shown")
+  val islandsThemeOff: EventId = GROUP.registerEvent("islands.theme.off")
 
-  @JvmStatic
-  val inviteBannerClosed = GROUP.registerEvent("invite.banner.closed")
-
-  @JvmStatic
-  val islandsThemeOn = GROUP.registerEvent("islands.theme.on")
-
-  @JvmStatic
-  val islandsThemeOff = GROUP.registerEvent("islands.theme.off")
-
-  private val meetNewUiActionField = EventFields.Enum<MeetNewUiAction>("action")
-  private val meetNewUiAction = GROUP.registerVarargEvent("meet.new.ui.action", meetNewUiActionField)
-
-  @JvmStatic
-  fun logMeetNewUiAction(action: MeetNewUiAction): Unit = meetNewUiAction.log(
-    meetNewUiActionField with action)
-
-  private val meetNewUiThemeField = EventFields.StringValidatedByEnum("theme_name", "look_and_feel")
-  private val meetNewUiSwitchTheme = GROUP.registerVarargEvent("meet.new.ui.switch_theme", meetNewUiThemeField)
-
-  @JvmStatic
-  fun logMeetNewUiTheme(theme: String): Unit = meetNewUiSwitchTheme.log(
-    meetNewUiThemeField with theme)
 }

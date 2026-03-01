@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
 import com.intellij.injected.editor.VirtualFileWindow
@@ -8,9 +8,11 @@ import com.intellij.pom.PomManager
 import com.intellij.pom.core.impl.PomModelImpl
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.FileElement
-import java.util.function.Supplier
 
-class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
+class OffsetsInFile(
+  val file: PsiFile,
+  val offsets: OffsetMap
+) {
   constructor(file: PsiFile) : this(file, OffsetMap(file.viewProvider.document!!))
 
   fun toTopLevelFile(): OffsetsInFile {
@@ -35,10 +37,16 @@ class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
   }
 
   fun copyWithReplacement(startOffset: Int, endOffset: Int, replacement: String): OffsetsInFile {
-    return replaceInCopy(file.copy() as PsiFile, startOffset, endOffset, replacement).get()
+    val task = replaceInCopy(file.copy() as PsiFile, startOffset, endOffset, replacement)
+    return task.ensureUpdatedAndGetNewOffsets()
   }
 
-  fun replaceInCopy(fileCopy: PsiFile, startOffset: Int, endOffset: Int, replacement: String): Supplier<OffsetsInFile> {
+  fun replaceInCopy(
+    fileCopy: PsiFile,
+    startOffset: Int,
+    endOffset: Int,
+    replacement: String,
+  ): CopyFileUpdateTask {
     val originalText = offsets.document.immutableCharSequence
     val tempDocument = DocumentImpl(originalText, originalText.contains('\r') || replacement.contains('\r'), true)
     val tempMap = offsets.copyOffsets(tempDocument)
@@ -47,13 +55,11 @@ class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
     val copyDocument = fileCopy.viewProvider.document!!
     val node = fileCopy.node as? FileElement
                ?: throw IllegalStateException("Node is not a FileElement ${fileCopy.javaClass.name} / ${fileCopy.fileType} / ${fileCopy.node}")
-    val applyPsiChange = (PomManager.getModel(file.project) as PomModelImpl).reparseFile(fileCopy,
-                                                                                         node,
-                                                                                         tempDocument.immutableCharSequence)
-    return Supplier {
+    val pomModel = PomManager.getModel(file.project) as PomModelImpl
+    val applyPsiChange = pomModel.reparseFile(fileCopy, node, tempDocument.immutableCharSequence)
+    return CopyFileUpdateTask {
       applyPsiChange?.run()
       OffsetsInFile(fileCopy, tempMap.copyOffsets(copyDocument))
     }
   }
-
 }

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptionController
 import com.intellij.codeInspection.options.RegexValidator
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.isNullable
 import java.util.regex.PatternSyntaxException
 
+@K1Deprecation
 class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
 
     private var nameRegex: Regex? = DEFAULT_NAME_PATTERN.toRegex()

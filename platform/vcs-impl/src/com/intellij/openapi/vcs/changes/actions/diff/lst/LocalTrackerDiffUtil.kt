@@ -7,8 +7,12 @@ import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider
-import com.intellij.diff.util.*
+import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.DiffGutterOperation
+import com.intellij.diff.util.DiffGutterRenderer
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
+import com.intellij.diff.util.Side
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
@@ -27,7 +31,11 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.ActiveGutterRenderer
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.LineMarkerRenderer
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
@@ -36,7 +44,13 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.ex.*
+import com.intellij.openapi.vcs.ex.ExclusionState
+import com.intellij.openapi.vcs.ex.LineStatusTracker
+import com.intellij.openapi.vcs.ex.LocalRange
+import com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.RangeExclusionState
+import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.ui.DirtyUI
 import com.intellij.ui.InplaceButton
@@ -47,11 +61,15 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.BitSet
 import javax.swing.Icon
 import javax.swing.JPanel
 import kotlin.math.max
@@ -106,7 +124,7 @@ object LocalTrackerDiffUtil {
       is TrackerData.Invalid -> {
         if (data.affectedChangelist.singleOrNull() == activeChangelistId) {
           if (data.isLoading) {
-            // tracker is waiting for initialisation
+            // tracker is waiting for initialization
             // there are only one changelist, so it's safe to fallback to default logic
             handler.fallbackWithProgress()
           }
@@ -461,7 +479,7 @@ object LocalTrackerDiffUtil {
     return listOf(ExcludeSelectedChangesFromCommitAction(provider))
   }
 
-  private class MoveSelectedChangesToAnotherChangelistAction(provider: LocalTrackerActionProvider)
+  internal class MoveSelectedChangesToAnotherChangelistAction(provider: LocalTrackerActionProvider)
     : MySelectedChangesActionBase(false, provider) {
 
     init {
@@ -495,7 +513,7 @@ object LocalTrackerDiffUtil {
     }
   }
 
-  private class ExcludeSelectedChangesFromCommitAction(provider: LocalTrackerActionProvider)
+  internal class ExcludeSelectedChangesFromCommitAction(provider: LocalTrackerActionProvider)
     : MySelectedChangesActionBase(true, provider) {
 
     init {
@@ -520,8 +538,8 @@ object LocalTrackerDiffUtil {
     }
   }
 
-  private abstract class MySelectedChangesActionBase(private val forActiveChangelistOnly: Boolean,
-                                                     protected val provider: LocalTrackerActionProvider) : DumbAwareAction() {
+  internal abstract class MySelectedChangesActionBase(private val forActiveChangelistOnly: Boolean,
+                                                      protected val provider: LocalTrackerActionProvider) : DumbAwareAction() {
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.EDT
     }
@@ -582,7 +600,7 @@ object LocalTrackerDiffUtil {
                                      changes: List<LocalTrackerChange>)
   }
 
-  private class PartiallyExcludeSelectedLinesFromCommitAction(
+  internal class PartiallyExcludeSelectedLinesFromCommitAction(
     val provider: LocalTrackerActionProvider,
     val isExclude: Boolean
   ) : DumbAwareAction() {

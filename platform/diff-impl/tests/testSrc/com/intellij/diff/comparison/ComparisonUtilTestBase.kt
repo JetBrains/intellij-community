@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.util.IntPair
-import java.util.*
+import java.util.BitSet
 
 abstract class ComparisonUtilTestBase : DiffTestCase() {
   private fun doLineTest(text: Couple<Document>, matchings: Couple<BitSet>?, expected: List<Couple<IntPair>>?, policy: ComparisonPolicy) {

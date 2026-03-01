@@ -2,7 +2,11 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.context
 
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPsiUtil
 
 /**
  * Returns the same declaration from the [originalKtFile], or [declaration] if the original declaration is not found.

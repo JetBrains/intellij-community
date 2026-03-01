@@ -11,7 +11,7 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.plugins.gradle.model.RepositoryModels
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.util.*
+import java.util.Collections
 
 
 class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {

@@ -1,9 +1,12 @@
-class ImplicitType {
-  void test() {
-    var x/*<# : ImplicitType #>*/ = someMethod();
+import java.util.*;
+
+class HintsDemo {
+
+  public static void main(String[] args) {
+    var list/*<# : List<String> #>*/ = getList();
   }
 
-  ImplicitType someMethod() {
-    return null;
+  private static List<String> getList() {
+    return Arrays.asList("hello", "world");
   }
 }

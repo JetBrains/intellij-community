@@ -14,7 +14,7 @@ import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 
-internal enum class EmptyCherryPickResolutionStrategy {
+enum class EmptyCherryPickResolutionStrategy {
   SKIP, CREATE_EMPTY
 }
 

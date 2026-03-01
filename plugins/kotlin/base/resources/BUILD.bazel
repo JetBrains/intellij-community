@@ -45,4 +45,22 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi",
   ]
 )
+
+jvm_library(
+  name = "kotlin-base-resources_test_lib",
+  module_name = "intellij.kotlin.base.resources",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-base-resources",
+  runtime_deps = [
+    ":kotlin-base-resources",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//java/java-frontback-psi-api:frontback-psi_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.base.resources` end

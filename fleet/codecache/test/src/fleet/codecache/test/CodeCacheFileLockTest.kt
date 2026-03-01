@@ -5,12 +5,16 @@ import fleet.bundles.ResolutionException
 import fleet.codecache.CodeCache
 import fleet.codecache.CodeCachePath
 import io.ktor.client.HttpClient
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
-import kotlin.test.Test
+import kotlinx.coroutines.withTimeout
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.test.Test
 import kotlin.test.fail
 
 class CodeCacheFileLockTest {

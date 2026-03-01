@@ -6,12 +6,22 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.completion.handlers.*
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.idea.completion.handlers.BaseDeclarationInsertHandler
+import org.jetbrains.kotlin.idea.completion.handlers.GenerateLambdaInfo
+import org.jetbrains.kotlin.idea.completion.handlers.KotlinClassifierInsertHandler
+import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
+import org.jetbrains.kotlin.idea.completion.handlers.KotlinPropertyInsertHandler
+import org.jetbrains.kotlin.idea.completion.handlers.createNormalFunctionInsertHandler
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.fuzzyType
 import org.jetbrains.kotlin.idea.util.CallType
@@ -20,6 +30,7 @@ import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.util.getValueParametersCountFromFunctionType
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class InsertHandlerProvider(
     private val callType: CallType<*>,
     private val editor: Editor,

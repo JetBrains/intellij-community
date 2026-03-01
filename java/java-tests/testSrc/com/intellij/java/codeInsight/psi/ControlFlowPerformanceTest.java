@@ -1,17 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.psi;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 
+@PerformanceUnitTest
 public class ControlFlowPerformanceTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String PATH = "/psi/controlFlowPerf/";
 

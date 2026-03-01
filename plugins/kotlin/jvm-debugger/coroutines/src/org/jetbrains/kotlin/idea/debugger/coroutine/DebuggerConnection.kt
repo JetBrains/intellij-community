@@ -60,21 +60,21 @@ class DebuggerConnection(
 
     override fun processStarted(debugProcess: XDebugProcess) {
         val session = debugProcess.session as? XDebugSessionImpl ?: return
-        session.runWhenUiReady {
+        session.runWhenUiReady { ui ->
             if (debugProcess is JavaDebugProcess &&
                 !isDisposed &&
                 coroutinesPanelShouldBeShown() &&
-                !coroutinePanelIsRegistered(session)
+                !coroutinePanelIsRegistered(ui)
             ) {
-                registerXCoroutinesPanel(session)?.let {
+                registerXCoroutinesPanel(session, ui)?.let {
                     Disposer.register(this@DebuggerConnection, it)
                 }
             }
         }
     }
 
-    private fun coroutinePanelIsRegistered(session: XDebugSession): Boolean {
-        val ui = session.ui as? RunnerLayoutUiImpl ?: return false
+    private fun coroutinePanelIsRegistered(ui: RunnerLayoutUi): Boolean {
+        if (ui !is RunnerLayoutUiImpl) return false
         val contentUi = ui.contentUI
         val content = invokeAndWaitIfNeeded {
             contentUi.findContent(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
@@ -88,8 +88,7 @@ class DebuggerConnection(
         }
     }
 
-    private fun registerXCoroutinesPanel(session: XDebugSession): Disposable? {
-        val ui = session.ui ?: return null
+    private fun registerXCoroutinesPanel(session: XDebugSession, ui: RunnerLayoutUi): Disposable? {
         val javaDebugProcess = session.debugProcess as? JavaDebugProcess ?: return null
         val coroutineThreadView = CoroutineView(project, javaDebugProcess)
         val framesContent: Content = createContent(ui, coroutineThreadView)

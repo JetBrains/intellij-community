@@ -10,7 +10,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.system.CpuArch
 import com.jetbrains.python.sdk.Product
 import com.jetbrains.python.sdk.Release
-import com.jetbrains.python.sdk.installer.*
+import com.jetbrains.python.sdk.installer.BinaryInstallerException
+import com.jetbrains.python.sdk.installer.CancelledPrepareException
+import com.jetbrains.python.sdk.installer.CancelledProcessException
+import com.jetbrains.python.sdk.installer.NonZeroExitCodeProcessException
+import com.jetbrains.python.sdk.installer.PrepareException
+import com.jetbrains.python.sdk.installer.ProcessException
+import com.jetbrains.python.sdk.installer.TimeoutProcessException
+import com.jetbrains.python.sdk.installer.WrongChecksumPrepareException
+import com.jetbrains.python.sdk.installer.WrongSizePrepareException
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

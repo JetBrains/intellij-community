@@ -239,15 +239,16 @@ class PluginModuleDependencyCannotBeLoadedOrMissing(
 @ApiStatus.Internal
 class PluginDependencyCannotBeLoaded(
   override val plugin: IdeaPluginDescriptor,
-  val dependencyNameOrId: @NlsSafe String,
+  val dependency: IdeaPluginDescriptor,
   override val shouldNotifyUser: Boolean
 ): PluginNonLoadReason {
+  private val dependencyName: @NlsSafe String get() = dependency.name ?: dependency.pluginId.idString
   override val detailedMessage: @NlsContexts.DetailedDescription String
-    get() = CoreBundle.message("plugin.loading.error.long.depends.on.failed.to.load.plugin", plugin.name, dependencyNameOrId)
+    get() = CoreBundle.message("plugin.loading.error.long.depends.on.failed.to.load.plugin", plugin.name, dependencyName)
   override val shortMessage: @NlsContexts.Label String
-    get() = CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", dependencyNameOrId)
+    get() = CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", dependencyName)
   override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has dependency on '${dependencyNameOrId}' which cannot be loaded"
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has dependency on '${dependencyName}' which cannot be loaded"
 }
 
 @ApiStatus.Internal
@@ -265,16 +266,56 @@ class PluginDependencyIsNotInstalled(
 }
 
 @ApiStatus.Internal
-class PluginHasDuplicateContentModuleDeclaration(
-  override val plugin: IdeaPluginDescriptor,
-  val moduleId: PluginModuleId,
+class PluginVersionIsSuperseded(
+  override val plugin: PluginMainDescriptor,
+  val supersededBy: PluginMainDescriptor,
 ): PluginNonLoadReason {
   override val detailedMessage: @NlsContexts.DetailedDescription String
-    get() = CoreBundle.message("plugin.loading.error.long.content.modules.are.invalid.duplicate.module", plugin.name, moduleId.name)
+    get() = CoreBundle.message("plugin.loading.error.long.plugin.version.is.superseded", plugin.name, plugin.version, supersededBy.version)
   override val shortMessage: @NlsContexts.Label String
-    get() = CoreBundle.message("plugin.loading.error.short.content.modules.are.invalid.duplicate.module", plugin.name)
+    get() = CoreBundle.message("plugin.loading.error.short.plugin.version.is.superseded", supersededBy.version)
   override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has duplicate declaration of content module '${moduleId.name}'"
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) of version ${plugin.version} is superseded by version ${supersededBy.version}"
   override val shouldNotifyUser: Boolean
-    get() = true
+    get() = false
+}
+
+@ApiStatus.Internal
+class PluginDeclaresConflictingId(
+  val module: PluginModuleDescriptor,
+  val conflictingModule: PluginModuleDescriptor,
+  /** either [PluginId] or [PluginModuleId] */
+  val conflictingId: Any,
+  override val shouldNotifyUser: Boolean = true,
+) : PluginNonLoadReason {
+  init {
+    require(conflictingId is PluginId || conflictingId is PluginModuleId)
+  }
+
+  override val plugin: PluginMainDescriptor get() = module.getMainDescriptor()
+
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.declares.conflicting.id", plugin.name, conflictingId, conflictingModule.getMainDescriptor().name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.declares.conflicting.id", conflictingId)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}" +
+            (module as? ContentModuleDescriptor)?.let { ", content module ${it.moduleId.name}" }.orEmpty() +
+            ") declares id '${conflictingId}' " +
+            "which conflicts with the same id " +
+            "from plugin '${conflictingModule.getMainDescriptor().name}' (${conflictingModule.getMainDescriptor().pluginId}" +
+            (conflictingModule as? ContentModuleDescriptor)?.let { ", content module ${it.moduleId.name}" }.orEmpty() + ")"
+}
+
+@ApiStatus.Internal
+class PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.not.required.for.explicitly.configured.subset", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.not.required.for.explicitly.configured.subset")
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is not required for loading the explicitly configured subset of plugins"
+  override val shouldNotifyUser: Boolean = false
 }

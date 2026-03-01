@@ -18,21 +18,67 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.io.ContentTooBigException;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.AsyncFileListener;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.*;
-import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.openapi.vfs.newvfs.impl.*;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
+import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
+import com.intellij.openapi.vfs.newvfs.CompoundVFileEvent;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
+import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.FileDeletedException;
+import com.intellij.openapi.vfs.newvfs.impl.FsRoot;
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsData;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordForRead;
 import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordReader;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
@@ -40,7 +86,14 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.Suppressions;
+import com.intellij.util.UriUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -50,17 +103,40 @@ import com.intellij.util.io.ReplicatorInputStream;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,11 +144,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static com.intellij.configurationStore.StorageUtilKt.RELOADING_STORAGE_WRITE_REQUESTOR;
+import static com.intellij.openapi.vfs.newvfs.AsyncEventSupport.afterVfsChange;
 import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
 import static com.intellij.openapi.vfs.newvfs.impl.VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
-import static com.intellij.util.containers.CollectionFactory.*;
+import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
+import static com.intellij.util.containers.CollectionFactory.createFilePathSet;
+import static com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -1142,7 +1221,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
           long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
           executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
-          fireAfterEvents(getPublisherEdt(), getPublisherBackgroundable(), events);
+          fireAfterEvents(getPublisherEdt(), getPublisherBackgroundable(), Collections.emptyList(), events);
         }
       }
     };
@@ -1170,8 +1249,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException {
+    long modCount = newParent.getModificationCount();
     fileSystemOf(file).moveFile(requestor, file, newParent);
-    processEvent(new VFileMoveEvent(requestor, file, newParent));
+    try {
+      processEvent(new VFileMoveEvent(requestor, file, newParent));
+    }
+    catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("newParent.modCount(Before): " + modCount, e);
+    }
   }
 
   private void processEvent(@NotNull VFileEvent event) {
@@ -1190,7 +1275,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       runSuppressing(
         () -> fireBeforeEvents(publisher, publisherBackgroundable, outValidatedEvents),
         () -> applyEvent(event),
-        () -> fireAfterEvents(publisher, publisherBackgroundable, outValidatedEvents),
+        () -> fireAfterEvents(publisher, publisherBackgroundable, Collections.emptyList(), outValidatedEvents),
+        EmptyRunnable.INSTANCE,
         EmptyRunnable.INSTANCE
       );
     }
@@ -1201,11 +1287,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         outApplyActions.add(() -> applyEvent(jarDeleteEvent));
         outValidatedEvents.add(jarDeleteEvent);
       }
-      applyMultipleEvents(publisher, publisherBackgroundable, outApplyActions, outValidatedEvents, false);
+      applyMultipleEvents(publisher, publisherBackgroundable, Collections.emptyList(), outApplyActions, outValidatedEvents, false);
     }
   }
 
-  private static void runSuppressing(@NotNull Runnable r1, @NotNull Runnable r2, @NotNull Runnable r3, @NotNull Runnable r4) {
+  private static void runSuppressing(@NotNull Runnable r1, @NotNull Runnable r2, @NotNull Runnable r3, @NotNull Runnable r4, @NotNull Runnable r5) {
     Throwable t = null;
     try {
       r1.run();
@@ -1230,12 +1316,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         r4.run();
       }
       catch (Throwable e) {
-        if (t == null) {
-          t = e;
-        }
-        else {
-          t.addSuppressed(e);
-        }
+        t = Suppressions.addSuppressed(t, e);
+      }
+    }
+    if (r5 != EmptyRunnable.INSTANCE) {
+      try {
+        r5.run();
+      }
+      catch (Throwable e) {
+        t = Suppressions.addSuppressed(t, e);
       }
     }
     if (t != null) {
@@ -1505,7 +1594,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final int INNER_ARRAYS_THRESHOLD = 4096;
 
   @ApiStatus.Internal
-  public void processEventsImpl(@NotNull List<CompoundVFileEvent> events, boolean excludeAsyncListeners) {
+  public void processEventsImpl(@NotNull List<CompoundVFileEvent> events, @NotNull List<AsyncFileListener.ChangeApplier> earlyAfterEventChangeAppliers, boolean excludeAsyncListeners) {
     ThreadingAssertions.assertWriteAccess();
 
     int startIndex = 0;
@@ -1536,13 +1625,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                     excludeAsyncListeners);
 
       if (!validated.isEmpty()) {
-        applyMultipleEvents(publisherEdt, publisherBackgroundable, applyActions, validated, excludeAsyncListeners);
+        applyMultipleEvents(publisherEdt, publisherBackgroundable, earlyAfterEventChangeAppliers, applyActions, validated, excludeAsyncListeners);
       }
     }
   }
 
   private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
                                           @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
+                                          @NotNull List<AsyncFileListener.ChangeApplier> earlyAfterEventChangeAppliers,
                                           @NotNull List<? extends @NotNull Runnable> applyActions,
                                           @NotNull List<? extends @NotNull VFileEvent> applyEvents,
                                           boolean excludeAsyncListeners) {
@@ -1574,7 +1664,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       PingProgress.interactWithEdtProgress();
       try {
-        fireAfterEvents(publisher, publisherBackgroundable, toSend);
+        fireAfterEvents(publisher, publisherBackgroundable, earlyAfterEventChangeAppliers, toSend);
       }
       catch (Throwable t) {
         if (x != null) t.addSuppressed(x);
@@ -1594,15 +1684,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       () -> publisherBackgroundable.before(toSend),
       () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.before(toSend)),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend),
+      EmptyRunnable.INSTANCE,
       EmptyRunnable.INSTANCE
     );
   }
 
   private static void fireAfterEvents(@NotNull BulkFileListener publisherEdt,
                                       @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
+                                      @NotNull List<AsyncFileListener.ChangeApplier> earlyAfterEventChangeAppliers,
                                       @NotNull List<? extends VFileEvent> toSend) {
     runSuppressing(
       () -> CachedFileType.clearCache(),
+      () -> afterVfsChange(earlyAfterEventChangeAppliers),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
       () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.after(toSend)),
       () -> publisherBackgroundable.after(toSend)
@@ -1813,9 +1906,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                        String rootUrl) {
     // avoid creating gazillions of roots which are not actual roots
     if (fs instanceof LocalFileSystem) {
-      String parentPath = PathUtil.getParentPath(rootPath);
-      if (!parentPath.isEmpty()) {
-        FileAttributes parentAttributes = loadAttributes(fs, parentPath);
+      Path parentPath = Path.of(rootPath).getParent();
+      if (parentPath != null) {
+        FileAttributes parentAttributes = loadAttributes(fs, parentPath.toString());
         if (parentAttributes != null) {
           throw new IllegalArgumentException(
             "Must pass FS root path, but got: '" + path + "' (url: '" + rootUrl + "'), " +

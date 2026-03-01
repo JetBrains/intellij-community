@@ -3,9 +3,14 @@
 package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -14,7 +19,12 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.asExpression
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.*
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeToInlineBuilder
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ResolvedImportPath
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.forEachDescendantOfType
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.toNonMutable
 import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.references.canBeResolvedViaImport
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -24,8 +34,30 @@ import org.jetbrains.kotlin.idea.util.isAnonymousFunction
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.psiUtil.getOrCreateValueArgumentList
+import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isNull
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.unpackFunctionLiteral
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -45,6 +77,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
+@K1Deprecation
 class CodeToInlineBuilder(private val targetCallable: CallableDescriptor,
                           private val resolutionFacade: ResolutionFacade,
                           originalDeclaration: KtDeclaration?,

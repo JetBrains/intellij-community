@@ -8,7 +8,24 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.siyeh.ig.psiutils.TypeUtils
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.ULocalVariable
+import org.jetbrains.uast.UParenthesizedExpression
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UUnknownExpression
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.getContainingUFile
+import org.jetbrains.uast.getContainingUMethod
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.skipParenthesizedExprDown
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 internal class LoggingStringPartEvaluator {

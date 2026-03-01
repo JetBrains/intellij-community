@@ -10,7 +10,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.EventListener
 
 @Internal
 interface EditorTracker {
@@ -19,11 +19,12 @@ interface EditorTracker {
     fun getInstance(project: Project): EditorTracker = project.service<EditorTracker>()
   }
 
-  // set only for tests, it may corrupt daemon internal data structures
   @get:RequiresEdt
-  @set:RequiresEdt
-  @set:TestOnly
-  var activeEditors: List<Editor>
+  val activeEditors: List<Editor>
+
+  @RequiresEdt
+  @TestOnly
+  fun setActiveEditorsInTests(editors: List<Editor>)
 }
 
 interface EditorTrackerListener : EventListener {

@@ -4,8 +4,10 @@ package com.intellij.platform.eel.impl.fs
 import com.intellij.platform.eel.fs.WalkDirectoryEntry
 import com.intellij.platform.eel.fs.WalkDirectoryEntryWindows
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 import java.time.ZonedDateTime
 
+@ApiStatus.Internal
 data class WalkDirectoryEntryWindowsImpl(
   override val path: EelPath,
   override val type: WalkDirectoryEntry.Type,

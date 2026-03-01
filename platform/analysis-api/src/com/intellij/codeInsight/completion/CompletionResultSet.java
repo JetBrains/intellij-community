@@ -62,12 +62,16 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     consumer.accept(result);
   }
 
+  /** @deprecated this method does not do anything meaningful anymore. */
+  @Deprecated
   public void startBatch() {
     if (consumer instanceof BatchConsumer<?> batch) {
       batch.startBatch();
     }
   }
 
+  /** @deprecated this method does not do anything meaningful anymore. */
+  @Deprecated
   public void endBatch() {
     if (consumer instanceof BatchConsumer<?> batch) {
       batch.endBatch();

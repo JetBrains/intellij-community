@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;

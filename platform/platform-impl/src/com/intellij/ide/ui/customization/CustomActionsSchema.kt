@@ -1,15 +1,25 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "RemoveRedundantQualifierName")
 
 package com.intellij.ide.ui.customization
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider.CustomizableActionGroupRegistrar
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionStub
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
@@ -26,6 +36,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.with
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +50,7 @@ import java.io.FileNotFoundException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
@@ -134,6 +145,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     }
 
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(): CustomActionsSchema = service<CustomActionsSchema>()
 
     suspend fun getInstanceAsync(): CustomActionsSchema = serviceAsync<CustomActionsSchema>()

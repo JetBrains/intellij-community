@@ -3,7 +3,10 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UElement
 
 @ApiStatus.Internal
 class JavaUDeclarationsExpression(

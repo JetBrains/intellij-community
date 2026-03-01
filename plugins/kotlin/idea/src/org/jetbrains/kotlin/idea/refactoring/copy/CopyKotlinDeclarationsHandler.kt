@@ -7,8 +7,16 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.*
-import com.intellij.psi.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileCopyEvent
+import com.intellij.openapi.vfs.VirtualFileEvent
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
@@ -18,6 +26,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.createKotlinFile
@@ -25,7 +34,19 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
-import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.AutoCreatingPsiDirectoryWrapper
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerInfo
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.MoveContainerChangeInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveContainerInfo
+import org.jetbrains.kotlin.idea.refactoring.move.checkModuleConflictsInDeclarations
+import org.jetbrains.kotlin.idea.refactoring.move.checkVisibilityInDeclarations
+import org.jetbrains.kotlin.idea.refactoring.move.cleanUpInternalUsages
+import org.jetbrains.kotlin.idea.refactoring.move.getInternalReferencesToUpdateOnPackageNameChange
+import org.jetbrains.kotlin.idea.refactoring.move.markInternalUsages
+import org.jetbrains.kotlin.idea.refactoring.move.postProcessMoveUsages
+import org.jetbrains.kotlin.idea.refactoring.move.restoreInternalUsages
+import org.jetbrains.kotlin.idea.refactoring.move.toDirectoryWrapper
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.sourceRoot
@@ -35,6 +56,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
+@K1Deprecation
 class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
     override fun createFile(
         targetFileName: String,

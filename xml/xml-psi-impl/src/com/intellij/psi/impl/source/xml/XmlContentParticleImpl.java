@@ -23,7 +23,9 @@ import com.intellij.psi.xml.XmlContentParticle;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.xml.XmlElementDescriptor;
 
-import static com.intellij.psi.xml.XmlTokenType.*;
+import static com.intellij.psi.xml.XmlTokenType.XML_PLUS;
+import static com.intellij.psi.xml.XmlTokenType.XML_QUESTION;
+import static com.intellij.psi.xml.XmlTokenType.XML_STAR;
 
 /**
  * @author Dmitry Avdeev

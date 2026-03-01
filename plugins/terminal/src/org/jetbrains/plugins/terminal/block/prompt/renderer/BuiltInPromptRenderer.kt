@@ -6,7 +6,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
-import org.jetbrains.plugins.terminal.block.output.*
+import org.jetbrains.plugins.terminal.block.output.EmptyTextAttributesProvider
+import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
+import org.jetbrains.plugins.terminal.block.output.TextWithAttributes
+import org.jetbrains.plugins.terminal.block.output.TextWithHighlightings
+import org.jetbrains.plugins.terminal.block.output.toTextWithHighlightings
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils

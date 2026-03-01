@@ -28,7 +28,9 @@ kotlin {
   compilerOptions.freeCompilerArgs = listOf(
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
+    "-Xcontext-parameters",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   wasmJs {

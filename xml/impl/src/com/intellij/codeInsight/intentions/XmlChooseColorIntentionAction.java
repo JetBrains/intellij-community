@@ -21,8 +21,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
 
 /**
  * @author Konstantin Bulenkov

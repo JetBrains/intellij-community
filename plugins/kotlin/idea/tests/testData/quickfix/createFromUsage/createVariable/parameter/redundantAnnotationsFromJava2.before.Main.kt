@@ -1,4 +1,4 @@
-// "Create parameter 'foo'" "true"
-// ERROR: Unresolved reference: foo
+// "Create parameter 'foo1'" "true"
+// ERROR: Unresolved reference: foo1
 
-class B() : A(foo<caret>)
+class B() : A(foo1<caret>)

@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiTests.robot.routing
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.QueryStringDecoder
-
 
 internal class PathHandler(private val method: HttpMethod, path: String, private val handler: RequestContext.() -> Any) : Handler {
   private val pathSegments: List<PathSegment> = mutableListOf<PathSegment>().apply {
@@ -40,7 +39,6 @@ internal class PathHandler(private val method: HttpMethod, path: String, private
 }
 
 internal class PathSegment(val type: PathSegmentType, val value: String) {
-
 }
 
 internal enum class PathSegmentType { CONSTANT, PARAMETER }

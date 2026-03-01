@@ -15,7 +15,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.LineSeparator
 import git4idea.stash.GitShelveChangesSaver
-import git4idea.test.*
+import git4idea.test.ChangesBuilder
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.assertNoChanges
+import git4idea.test.assertStatus
+import git4idea.test.createRepository
+import git4idea.test.file
 import org.assertj.core.api.Assertions.assertThat
 
 class GitStandardShelveTest : GitShelveTest() {

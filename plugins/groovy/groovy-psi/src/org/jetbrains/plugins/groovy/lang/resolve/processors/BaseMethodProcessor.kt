@@ -13,7 +13,11 @@ import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
 import org.jetbrains.plugins.groovy.lang.resolve.getName
-import org.jetbrains.plugins.groovy.lang.resolve.impl.*
+import org.jetbrains.plugins.groovy.lang.resolve.impl.ApplicabilitiesResult
+import org.jetbrains.plugins.groovy.lang.resolve.impl.chooseOverloads
+import org.jetbrains.plugins.groovy.lang.resolve.impl.correctStaticScope
+import org.jetbrains.plugins.groovy.lang.resolve.impl.filterApplicable
+import org.jetbrains.plugins.groovy.lang.resolve.impl.filterBySignature
 import org.jetbrains.plugins.groovy.lang.resolve.log
 import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 

@@ -52,9 +52,9 @@ public interface CommonProblemDescriptor {
    * <li>{@code #treeend} is used as cut-symbol for template when it's shown inside inspection result tree.
    * So any content after this marker is not visible in the tree node.</li>
    * </ul>
+   *
    * @return the template for the problem description.
    * @see ProblemDescriptorUtil#REF_REFERENCE
-   * @see ProblemDescriptorUtil#LOC_REFERENCE
    */
   @InspectionMessage
   @NotNull

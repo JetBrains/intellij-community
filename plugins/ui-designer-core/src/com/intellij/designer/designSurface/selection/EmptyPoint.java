@@ -19,7 +19,7 @@ import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * @author Alexander Lobas

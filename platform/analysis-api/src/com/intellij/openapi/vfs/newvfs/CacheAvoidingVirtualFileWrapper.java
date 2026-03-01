@@ -10,7 +10,11 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.io.InputStream;

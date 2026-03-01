@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
@@ -19,8 +20,9 @@ import org.jetbrains.kotlin.types.TypeProjectionImpl
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.toDefaultAttributes
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import java.util.*
+import java.util.Collections
 
+@K1Deprecation
 object CreateIteratorFunctionActionFactory : CreateCallableMemberFromUsageFactory<KtForExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtForExpression? {
         return diagnostic.psiElement.findParentOfType(strict = false)

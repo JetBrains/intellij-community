@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import java.util.*
+import java.util.EventListener
 
 interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi {
   val commitOptionsUi: CommitOptionsUi

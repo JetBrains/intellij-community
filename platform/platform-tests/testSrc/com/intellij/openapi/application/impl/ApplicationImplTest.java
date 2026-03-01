@@ -8,7 +8,12 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.idea.IJIgnore;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -23,17 +28,21 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.RunFirst;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.TestTimeOut;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,7 +55,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-@RunFirst
 public class ApplicationImplTest extends LightPlatformTestCase {
   private TestTimeOut t;
 
@@ -66,10 +74,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   private volatile Throwable exception;
 
+  @PerformanceUnitTest
   public void testRead50Write50LockPerformance() throws NoSuchMethodException {
     runReadWrites(500_000, 500_000);
   }
 
+  @PerformanceUnitTest
   public void testRead100Write0LockPerformance() throws NoSuchMethodException {
     runReadWrites(5_000_000, 0);
   }

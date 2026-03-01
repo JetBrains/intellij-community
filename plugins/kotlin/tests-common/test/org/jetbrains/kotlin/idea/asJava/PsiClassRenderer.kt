@@ -2,7 +2,27 @@
 
 package org.jetbrains.kotlin.idea.asJava
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationMemberValue
+import com.intellij.psi.PsiAnnotationMethod
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiEllipsisType
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiNameHelper
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiReferenceList
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.util.MethodSignature
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint

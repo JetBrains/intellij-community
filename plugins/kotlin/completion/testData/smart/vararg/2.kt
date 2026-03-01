@@ -7,3 +7,4 @@ fun bar(s: String, arr: Array<String>){
 // EXIST: s
 // ABSENT: { itemText: "arr" }
 // EXIST: { lookupString: "arr", itemText: "*arr" }
+// IGNORE_K2

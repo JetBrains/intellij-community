@@ -2,13 +2,21 @@
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ArtifactPointer;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.JavaDeploymentSourceUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public final class JavaDeploymentSourceUtilImpl extends JavaDeploymentSourceUtil {
   @Override

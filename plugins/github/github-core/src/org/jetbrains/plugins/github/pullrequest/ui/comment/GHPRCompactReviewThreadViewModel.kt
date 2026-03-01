@@ -14,7 +14,14 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -62,6 +69,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   initialData: GHPullRequestReviewThread,
+  private val viewModelWithTextCompletion: GHViewModelWithTextCompletion
 ) : GHPRCompactReviewThreadViewModel {
   private val cs = parentCs.childScope(javaClass.name)
   private val reviewData: GHPRReviewDataProvider = dataProvider.reviewData
@@ -147,10 +155,12 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
 
   private fun CoroutineScope.createComment(comment: IndexedValue<GHPullRequestReviewComment>): UpdateableGHPRReviewThreadCommentViewModel =
     UpdateableGHPRReviewThreadCommentViewModel(project, this, dataContext, dataProvider,
-                                               this@UpdateableGHPRCompactReviewThreadViewModel, comment)
+                                               this@UpdateableGHPRCompactReviewThreadViewModel, viewModelWithTextCompletion, comment)
 
   private inner class ReplyViewModel
-    : CodeReviewSubmittableTextViewModelBase(project, cs, ""), GHPRNewThreadCommentViewModel {
+    : CodeReviewSubmittableTextViewModelBase(project, cs, ""),
+      GHPRNewThreadCommentViewModel,
+      GHViewModelWithTextCompletion by viewModelWithTextCompletion {
 
     override val currentUser: GHActor = dataContext.securityService.currentUser
 

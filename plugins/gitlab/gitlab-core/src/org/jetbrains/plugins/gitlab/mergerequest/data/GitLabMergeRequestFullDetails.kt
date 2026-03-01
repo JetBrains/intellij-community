@@ -8,9 +8,16 @@ import git4idea.push.GitSpecialRefRemoteBranch
 import git4idea.remote.hosting.HostedGitRepositoryRemote
 import git4idea.repo.GitRemote
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.api.dto.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffRefs
+import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelGQLDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestPermissionsDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
-import java.util.*
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
+import java.util.Date
 
 data class GitLabMergeRequestFullDetails(
   val iid: String,
@@ -24,28 +31,40 @@ data class GitLabMergeRequestFullDetails(
   val assignees: List<GitLabUserDTO>,
   val reviewers: List<GitLabReviewerDTO>,
   val webUrl: @NlsSafe String,
-  val detailedLabels: List<GitLabLabelDTO>,
-  val targetProject: GitLabProjectDTO,
-  val sourceProject: GitLabProjectDTO?,
+  val detailedLabels: List<GitLabLabelGQLDTO>,
+  val targetProject: ProjectDetails,
+  val sourceProject: ProjectDetails?,
   val description: String,
   val approvedBy: List<GitLabUserDTO>,
   val targetBranch: String,
   val sourceBranch: String,
   val approvalsRequired: Int,
   val conflicts: Boolean,
+  val ffOnlyMerge: Boolean,
   val onlyAllowMergeIfAllDiscussionsAreResolved: Boolean,
   val onlyAllowMergeIfPipelineSucceeds: Boolean,
   val allowMergeOnSkippedPipeline: Boolean,
+  val shouldSquash: Boolean,
+  val shouldSquashWithProject: Boolean, // [shouldSquash] + project override
+  val shouldSquashReadOnly: Boolean,
+  val defaultSquashCommitMessage: String?,
+  val defaultMergeCommitMessage: String?,
+  val removeSourceBranch: Boolean,
+  val shouldBeRebased: Boolean,
+  val rebaseInProgress: Boolean,
   val diffRefs: GitLabDiffRefs?,
   val headPipeline: GitLabPipelineDTO?,
   val userPermissions: GitLabMergeRequestPermissionsDTO,
-  val shouldRemoveSourceBranch: Boolean?,
-  val shouldBeRebased: Boolean,
-  val rebaseInProgress: Boolean
 ) {
 
+  data class ProjectDetails(
+    val path: GitLabProjectPath,
+    val httpUrlToRepo: String?,
+    val sshUrlToRepo: String?,
+  )
+
   companion object {
-    fun fromGraphQL(dto: GitLabMergeRequestDTO) = GitLabMergeRequestFullDetails(
+    fun fromGraphQL(dto: GitLabMergeRequestDTO): GitLabMergeRequestFullDetails = GitLabMergeRequestFullDetails(
       iid = dto.iid,
       title = dto.title,
       createdAt = dto.createdAt,
@@ -57,24 +76,36 @@ data class GitLabMergeRequestFullDetails(
       assignees = dto.assignees,
       reviewers = dto.reviewers,
       webUrl = dto.webUrl,
-      targetProject = dto.targetProject,
-      sourceProject = dto.sourceProject,
+      targetProject = dto.targetProject.toDetails(),
+      sourceProject = dto.sourceProject?.toDetails(),
       description = dto.description.orEmpty(),
       approvedBy = dto.approvedBy,
       targetBranch = dto.targetBranch,
       sourceBranch = dto.sourceBranch,
       approvalsRequired = dto.approvalsRequired ?: 0,
       conflicts = dto.conflicts,
-      onlyAllowMergeIfAllDiscussionsAreResolved = dto.targetProject.onlyAllowMergeIfAllDiscussionsAreResolved,
-      onlyAllowMergeIfPipelineSucceeds = dto.targetProject.onlyAllowMergeIfPipelineSucceeds,
-      allowMergeOnSkippedPipeline = dto.targetProject.allowMergeOnSkippedPipeline,
       diffRefs = dto.diffRefs,
       headPipeline = dto.headPipeline,
       userPermissions = dto.userPermissions,
       detailedLabels = dto.labels,
-      shouldRemoveSourceBranch = dto.shouldRemoveSourceBranch,
+      ffOnlyMerge = dto.targetProject.mergeRequestsFfOnlyEnabled ?: false,
+      shouldSquash = dto.squash,
+      shouldSquashWithProject = dto.squashOnMerge,
+      shouldSquashReadOnly = dto.squashReadOnly,
+      defaultSquashCommitMessage = dto.defaultSquashCommitMessage,
+      defaultMergeCommitMessage = dto.defaultMergeCommitMessage,
+      removeSourceBranch = dto.forceRemoveSourceBranch ?: false,
+      onlyAllowMergeIfAllDiscussionsAreResolved = dto.targetProject.onlyAllowMergeIfAllDiscussionsAreResolved ?: false,
+      onlyAllowMergeIfPipelineSucceeds = dto.targetProject.onlyAllowMergeIfPipelineSucceeds ?: false,
+      allowMergeOnSkippedPipeline = dto.targetProject.allowMergeOnSkippedPipeline ?: false,
       shouldBeRebased = dto.shouldBeRebased,
       rebaseInProgress = dto.rebaseInProgress
+    )
+
+    private fun GitLabProjectDTO.toDetails() = ProjectDetails(
+      path = GitLabProjectPath(ownerPath, path),
+      httpUrlToRepo = httpUrlToRepo,
+      sshUrlToRepo = sshUrlToRepo
     )
   }
 }
@@ -91,11 +122,11 @@ val GitLabMergeRequestFullDetails.reviewState: ReviewRequestState
       else -> ReviewRequestState.OPENED // to avoid null state
     }
 
-fun GitLabProjectDTO.getRemoteDescriptor(server: GitLabServerPath): HostedGitRepositoryRemote =
+fun GitLabMergeRequestFullDetails.ProjectDetails.getRemoteDescriptor(server: GitLabServerPath): HostedGitRepositoryRemote =
   HostedGitRepositoryRemote(
-    ownerPath,
+    path.owner,
     server.toURI(),
-    fullPath,
+    path.fullPath(),
     httpUrlToRepo,
     sshUrlToRepo
   )
@@ -117,4 +148,4 @@ fun GitLabMergeRequestFullDetails.getSpecialRemoteBranchForHead(remote: GitRemot
   GitSpecialRefRemoteBranch("refs/merge-requests/${iid}/head", remote)
 
 fun GitLabMergeRequestFullDetails.isFork(): Boolean =
-  sourceProject?.fullPath != targetProject.fullPath
+  sourceProject != targetProject

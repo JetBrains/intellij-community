@@ -11,3 +11,5 @@ class C {
 // EXIST: p1
 // EXIST: p2
 // ABSENT: p3
+
+// IGNORE_K2

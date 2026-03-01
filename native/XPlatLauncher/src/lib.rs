@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #![warn(
 absolute_paths_not_starting_with_crate,
@@ -39,17 +39,22 @@ use serde::Deserialize;
 #[cfg(target_os = "windows")]
 use {
     std::io::Write,
-    std::ptr::null_mut,
     windows::Win32::Foundation,
     windows::Win32::Foundation::HANDLE,
     windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole, SetStdHandle, STD_ERROR_HANDLE, STD_OUTPUT_HANDLE},
     windows::Win32::System::LibraryLoader,
     windows::Win32::UI::Shell,
-    windows::core::{HSTRING, GUID, PCWSTR, PWSTR},
+    windows::core::{HSTRING, GUID, PWSTR},
 };
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+use {
+    std::os::unix::process::CommandExt,
+    libc::{dl_iterate_phdr, dl_phdr_info, size_t},
+};
 
 use crate::cef_sandbox::CefScopedSandboxInfo;
 use crate::default::DefaultLaunchConfiguration;
@@ -115,19 +120,20 @@ fn attach_console() {
             // but even if it's some other error, let's not write there
             // passing null here is not explicitly documented,
             // but it works and is consistent with the GetStdHandle returning null
-            if SetStdHandle(STD_ERROR_HANDLE, HANDLE(null_mut())).is_err() {
+            if SetStdHandle(STD_ERROR_HANDLE, HANDLE(std::ptr::null_mut())).is_err() {
                 std::process::exit(1011)
             }
         }
 
+        #[allow(clippy::collapsible_if)]
         if writeln!(std::io::stdout(), ".").is_err() {
-            if SetStdHandle(STD_OUTPUT_HANDLE, HANDLE(null_mut())).is_err() {
+            if SetStdHandle(STD_OUTPUT_HANDLE, HANDLE(std::ptr::null_mut())).is_err() {
                 std::process::exit(1012)
             }
         }
 
         if let Some(err) = err {
-            eprintln!("AttachConsole(ATTACH_PARENT_PROCESS): {:?}", err)
+            eprintln!("AttachConsole(ATTACH_PARENT_PROCESS): {err:?}")
         }
     }
 }
@@ -156,20 +162,21 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
         ensure_env_vars_set()?;
     }
 
-    #[cfg(all(target_os = "linux", target_env = "gnu"))]
-    {
-        // on Linux, glibc allocates arenas too aggressively 
-        if unsafe { libc::mallopt(libc::M_ARENA_MAX, 1) } == 0 {
-            bail!(std::io::Error::last_os_error());
-        }
-    }
-
     debug!("** Preparing launch configuration");
     let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?, started_via_remote_dev_launcher).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
     let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
     debug!("Resolved runtime: {jre_home:?}");
+
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    {
+        if is_running_with_gcompat() {
+            adjust_to_musl(&exe_path, &jre_home)?;
+        } else {
+            call_mallopt();
+        }
+    }
 
     #[cfg(target_os = "windows")]
     {
@@ -203,13 +210,13 @@ fn ensure_env_vars_set() -> Result<()> {
 #[cfg(target_os = "windows")]
 fn strip_working_directory_ns_prefix() -> Result<()> {
     let cwd_res = env::current_dir();
-    debug!("Adjusting current directory {:?}", cwd_res);
+    debug!("Adjusting current directory {cwd_res:?}");
 
     if let Ok(cwd) = cwd_res {
         let orig_len = cwd.as_os_str().len();
         if let Ok(stripped) = cwd.strip_ns_prefix() {
             if stripped.as_os_str().len() < orig_len {
-                debug!("  ... to {:?}", stripped);
+                debug!("  ... to {stripped:?}");
                 env::set_current_dir(&stripped)
                     .with_context(|| format!("Cannot set current directory to '{}'", stripped.display()))?;
             }
@@ -227,7 +234,7 @@ fn set_dll_search_path(jre_home: &Path) -> Result<()> {
         .context("Failed to set JRE DLL dependencies search path")?;
 
     let jre_bin_dir = jre_home.join("bin");
-    debug!("[JVM] Adding {:?} to the DLL search path", jre_bin_dir);
+    debug!("[JVM] Adding {jre_bin_dir:?} to the DLL search path");
     let jre_bin_dir_cookie = unsafe { LibraryLoader::AddDllDirectory(&HSTRING::from(jre_bin_dir.as_path())) };
     if jre_bin_dir_cookie.is_null() {
         return Err(anyhow::Error::from(std::io::Error::last_os_error()))
@@ -252,6 +259,83 @@ fn restore_working_directory() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+fn is_running_with_gcompat() -> bool {
+    unsafe {
+        dl_iterate_phdr(Some(check_gcompat_callback), std::ptr::null_mut()) == 1
+    }
+}
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+extern "C" fn check_gcompat_callback(info: *mut dl_phdr_info, _size: size_t, _data: *mut std::ffi::c_void,) -> std::ffi::c_int {
+    unsafe {
+        let name_ptr = (*info).dlpi_name;
+        if !name_ptr.is_null() {
+            if let Ok(name) = std::ffi::CStr::from_ptr(name_ptr).to_str() {
+                if name.contains("libgcompat.so") {
+                    return 1;
+                }
+            }
+        }
+    }
+    0
+}
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+fn adjust_to_musl(exe_path: &Path, jre_home: &Path) -> Result<()> {
+    let ext_lib_path = exe_path.parent_or_err()?.join("libgcompat-ext.so");
+    if !ext_lib_path.exists() {
+        debug!("gcompat extensions missing: {ext_lib_path:?}");
+        return Ok(());
+    }
+
+    let jvm_dir = jre_home.join("lib/server");
+    let ld_lib_path = env::var_os("LD_LIBRARY_PATH").unwrap_or_default();
+    if env::split_paths(&ld_lib_path).any(|p| p == jvm_dir) {
+        debug!("gcompat patch already applied: LD_LIBRARY_PATH={ld_lib_path:?}");
+        return Ok(());
+    }
+
+    let mut new_ld_lib_path = std::ffi::OsString::from(jvm_dir);
+    if !ld_lib_path.is_empty() {
+        new_ld_lib_path.push(":");
+        new_ld_lib_path.push(ld_lib_path);
+    };
+
+    let ld_preload = env::var_os("LD_PRELOAD").unwrap_or_default();
+    let mut new_ld_preload = std::ffi::OsString::from(ext_lib_path);
+    if !ld_preload.is_empty() {
+        new_ld_preload.push(":");
+        new_ld_preload.push(ld_preload);
+    }
+
+    debug!("*** restarting with LD_LIBRARY_PATH={new_ld_lib_path:?} LD_PRELOAD={new_ld_preload:?}");
+    Err(std::process::Command::new(exe_path)
+        .args(env::args())
+        .env("LD_LIBRARY_PATH", new_ld_lib_path)
+        .env("LD_PRELOAD", new_ld_preload)
+        .exec().into())
+}
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+fn call_mallopt() {
+    // on Linux, glibc allocates arenas too aggressively
+    // (dynamic loading to avoid unresolvable dependency on musl systems)
+    type MalloptFn = extern "C" fn(std::ffi::c_int, std::ffi::c_int) -> std::ffi::c_int;
+    unsafe {
+        let mallopt_ptr = libc::dlsym(std::ptr::null_mut(), c"mallopt".as_ptr());
+        if mallopt_ptr.is_null() {
+            warn!("mallopt: symbol not found");
+        } else {
+            let mallopt: MalloptFn = std::mem::transmute(mallopt_ptr);
+            debug!("calling 'mallopt' at {mallopt:?}'");
+            if mallopt(libc::M_ARENA_MAX, 1) == 1 {
+                warn!("mallopt: {}", std::io::Error::last_os_error());
+            }
+        }
+    }
 }
 
 #[macro_export]
@@ -315,6 +399,8 @@ fn get_configuration(is_remote_dev: bool, exe_path: &Path, started_via_remote_de
 
 #[cfg(all(target_os = "windows", feature = "cef"))]
 fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
+    use windows::core::PCWSTR;
+
     debug!("** Initializing CEF sandbox");
     let cef_sandbox = CefScopedSandboxInfo::new();
 
@@ -349,10 +435,10 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _cef_sandbox: &O
     debug!("Looking for custom properties environment variable");
     match configuration.get_custom_properties_file() {
         Ok(path) => {
-            debug!("Custom properties file: {:?}", path);
+            debug!("Custom properties file: {path:?}");
             vm_options.push(jvm_property!("idea.properties.file", path.to_string_checked()?));
         }
-        Err(e) => { debug!("Failed: {}", e.to_string()); }
+        Err(e) => { debug!("Failed: {e}"); }
     }
 
     debug!("Assembling classpath");
@@ -382,10 +468,10 @@ pub fn get_caches_home() -> Result<PathBuf> {
 
 #[cfg(target_os = "windows")]
 fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> {
-    debug!("Calling SHGetKnownFolderPath({})", rfid_debug_name);
+    debug!("Calling SHGetKnownFolderPath({rfid_debug_name})");
     let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, None) }?;
     let result_str = unsafe { result.to_string() }?;
-    debug!("  result: {}", result_str);
+    debug!("  result: {result_str}");
     Ok(PathBuf::from(result_str))
 }
 
@@ -435,11 +521,11 @@ fn win_user_profile_dir() -> Result<String> {
     let token = HANDLE(-4isize as *mut std::ffi::c_void);  // as defined in `GetCurrentProcessToken()`
     let mut buf = [0u16; Foundation::MAX_PATH as usize];
     let mut size = buf.len() as u32;
-    debug!("Calling GetUserProfileDirectoryW({:?})", token);
+    debug!("Calling GetUserProfileDirectoryW({token:?})");
     let result = unsafe {
         Shell::GetUserProfileDirectoryW(token, Some(PWSTR::from_raw(buf.as_mut_ptr())), std::ptr::addr_of_mut!(size))
     };
-    debug!("  result: {:?}, size: {}", result, size);
+    debug!("  result: {result:?}, size: {size}");
     if result.is_ok() {
         Ok(String::from_utf16(&buf[0..(size - 1) as usize])?)
     } else {
@@ -467,9 +553,9 @@ pub fn get_path_from_user_config(config_raw: &str, expecting_dir: bool) -> Resul
 
     let path = PathBuf::from(config_value);
     if expecting_dir && !path.is_dir() {
-        bail!("Not a directory: {:?}", path);
+        bail!("Not a directory: {path:?}");
     } else if !expecting_dir && !path.is_file() {
-        bail!("Not a file: {:?}", path);
+        bail!("Not a file: {path:?}");
     }
 
     Ok(path)
@@ -492,7 +578,7 @@ impl PathExt for Path {
     fn to_string_checked(&self) -> Result<String> {
         self.to_str()
             .map(|s| s.to_string())
-            .ok_or_else(|| anyhow!("Inconvertible path: {:?}", self))
+            .ok_or_else(|| anyhow!("Inconvertible path: {self:?}"))
     }
 
     #[cfg(target_os = "windows")]

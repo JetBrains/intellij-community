@@ -8,10 +8,19 @@ import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.execService.execute
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
@@ -30,11 +39,20 @@ import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.BASE_DIR
+import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
+import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.asBinToExecute
+import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.detectTool
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.jetbrains.python.sdk.isSystemWide
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +62,7 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 
 
 private val LOG: Logger = fileLogger()
@@ -61,7 +80,8 @@ sealed interface FileSystem<P : PathHolder> {
   val isLocal: Boolean
 
   fun parsePath(raw: String): PyResult<P>
-  fun validateExecutable(path: P): PyResult<Unit>
+  suspend fun validateExecutable(path: P): PyResult<Unit>
+  suspend fun fileExists(path: P): Boolean
 
   /**
    * [pathToPython] has to be system (not venv) if set [requireSystemPython]
@@ -70,13 +90,15 @@ sealed interface FileSystem<P : PathHolder> {
 
   suspend fun validateVenv(homePath: P): PyResult<Unit>
   suspend fun suggestVenv(projectPath: Path): PyResult<P>
-  fun wrapSdk(sdk: Sdk): SdkWrapper<P>
-  suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<P>>
+  suspend fun wrapSdk(sdk: Sdk): SdkWrapper<P>
+  suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<P>>
   fun preferredInterpreterBasePath(): P? = null
-  suspend fun resolvePythonBinary(pythonHome: P): P?
+  fun resolvePythonBinary(pythonHome: P): P?
+  fun getVenvName(pythonHome: P): String?
 
   fun getBinaryToExec(path: P): BinaryToExec
   suspend fun which(cmd: String): P?
+  suspend fun getHomePath(): P?
 
   data class Eel(
     val eelApi: EelApi,
@@ -97,13 +119,15 @@ sealed interface FileSystem<P : PathHolder> {
       PyResult.localizedError(e.localizedMessage)
     }
 
-    override fun validateExecutable(path: PathHolder.Eel): PyResult<Unit> {
+    override suspend fun validateExecutable(path: PathHolder.Eel): PyResult<Unit> {
       return when {
         !path.path.exists() -> PyResult.localizedError(message("sdk.create.not.executable.does.not.exist.error"))
         path.path.isDirectory() -> PyResult.localizedError(message("sdk.create.executable.directory.error"))
         else -> PyResult.success(Unit)
       }
     }
+
+    override suspend fun fileExists(path: PathHolder.Eel): Boolean = path.path.exists()
 
     override suspend fun validateVenv(homePath: PathHolder.Eel): PyResult<Unit> = withContext(Dispatchers.IO) {
       val validationResult = when {
@@ -130,7 +154,10 @@ sealed interface FileSystem<P : PathHolder> {
       parsePath(suggestedVirtualEnvPath)
     }
 
-    override suspend fun getSystemPythonFromSelection(pathToPython: PathHolder.Eel, requireSystemPython: Boolean): PyResult<DetectedSelectableInterpreter<PathHolder.Eel>> {
+    override suspend fun getSystemPythonFromSelection(
+      pathToPython: PathHolder.Eel,
+      requireSystemPython: Boolean,
+    ): PyResult<DetectedSelectableInterpreter<PathHolder.Eel>> {
       val sysPythonValidationInfo = SystemPythonService().registerSystemPython(pathToPython.path)
       val (vanillaPython, isSystem) = when (sysPythonValidationInfo) {
         is Result.Failure -> {
@@ -161,13 +188,16 @@ sealed interface FileSystem<P : PathHolder> {
       return PyResult.success(interpreter)
     }
 
-    override fun wrapSdk(sdk: Sdk): SdkWrapper<PathHolder.Eel> {
-      return SdkWrapper(sdk, PathHolder.Eel(Path.of(sdk.homePath!!)))
+    override suspend fun wrapSdk(sdk: Sdk): SdkWrapper<PathHolder.Eel> = withContext(Dispatchers.IO) {
+      val adjustedHomePath = PythonSdkType.getInstance().adjustSelectedSdkHome(sdk.homePath!!)
+      SdkWrapper(sdk, PathHolder.Eel(Path.of(adjustedHomePath)))
     }
 
-    override suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<PathHolder.Eel>> {
+    override suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<PathHolder.Eel>> {
       // Venvs are not detected manually, but must migrate to VenvService or so
-      val pythonBinaries = VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, null)
+      val context: UserDataHolder = UserDataHolderBase()
+      context.putUserData(BASE_DIR, projectPathPrefix)
+      val pythonBinaries = VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, context)
       val suggestedPythonBinaries = VanillaPythonWithPythonInfoImpl.createByPythonBinaries(pythonBinaries)
 
       val venvs: List<VanillaPythonWithPythonInfo> = suggestedPythonBinaries.mapNotNull { (venv, r) ->
@@ -208,11 +238,17 @@ sealed interface FileSystem<P : PathHolder> {
       else -> null
     }
 
-    override suspend fun resolvePythonBinary(pythonHome: PathHolder.Eel): PathHolder.Eel? {
+    override fun resolvePythonBinary(pythonHome: PathHolder.Eel): PathHolder.Eel? {
       return pythonHome.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
     }
 
+    override fun getVenvName(pythonHome: PathHolder.Eel): String? {
+      return resolvePythonBinary(pythonHome)?.let { VirtualEnvReader().getVenvName(it.path) }
+    }
+
     override suspend fun which(cmd: String): PathHolder.Eel? = detectTool(cmd, eelApi)?.let { PathHolder.Eel(it) }
+
+    override suspend fun getHomePath(): PathHolder.Eel = PathHolder.Eel(eelApi.userInfo.home.asNioPath())
   }
 
   data class Target(
@@ -226,15 +262,25 @@ sealed interface FileSystem<P : PathHolder> {
     override val isLocal: Boolean = false
 
     private val systemPythonCache = ArrayList<DetectedSelectableInterpreter<PathHolder.Target>>()
+    private lateinit var shellImpl: PyResult<String>
 
     override fun parsePath(raw: String): PyResult<PathHolder.Target> {
       return PyResult.success(PathHolder.Target(raw))
     }
 
     /**
-     * Currently, we don't validate executable on target because there is no API to check path existence and its type on target.
+     * Currently, we don't validate the executable on target because there is no API to check its type on target.
      */
-    override fun validateExecutable(path: PathHolder.Target): PyResult<Unit> = PyResult.success(Unit)
+    override suspend fun validateExecutable(path: PathHolder.Target): PyResult<Unit> =
+      if (fileExists(path)) {
+        PyResult.success(Unit)
+      }
+      else PyResult.localizedError(message("sdk.create.not.executable.does.not.exist.error"))
+
+    override suspend fun fileExists(path: PathHolder.Target): Boolean {
+      val bin = getBinaryToExec(PathHolder.Target("/usr/bin/test"))
+      return ExecService().execute(bin, Args("-f", path.pathString), processOutputTransformer = { output -> PyResult.success(output.exitCode == 0) }).successOrNull ?: false
+    }
 
     override suspend fun validateVenv(homePath: PathHolder.Target): PyResult<Unit> = withContext(Dispatchers.IO) {
       val pythonBinaryPath = resolvePythonBinary(homePath)
@@ -291,7 +337,7 @@ sealed interface FileSystem<P : PathHolder> {
       return PyResult.success(interpreter)
     }
 
-    override fun wrapSdk(sdk: Sdk): SdkWrapper<PathHolder.Target> {
+    override suspend fun wrapSdk(sdk: Sdk): SdkWrapper<PathHolder.Target> {
       return SdkWrapper(sdk, PathHolder.Target(sdk.homePath!!))
     }
 
@@ -299,49 +345,81 @@ sealed interface FileSystem<P : PathHolder> {
       return BinOnTarget(path.pathString, targetEnvironmentConfiguration)
     }
 
-    override suspend fun getSystemPythonFromSelection(pathToPython: PathHolder.Target, requireSystemPython: Boolean): PyResult<DetectedSelectableInterpreter<PathHolder.Target>> {
+    override suspend fun getSystemPythonFromSelection(
+      pathToPython: PathHolder.Target,
+      requireSystemPython: Boolean,
+    ): PyResult<DetectedSelectableInterpreter<PathHolder.Target>> {
       return registerSystemPython(pathToPython)
     }
 
-    override suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<PathHolder.Target>> {
+    override suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<PathHolder.Target>> {
       val fullPathOnTarget = pythonLanguageRuntimeConfiguration.pythonInterpreterPath
       val pathHolder = PathHolder.Target(fullPathOnTarget)
       val systemPython = getSystemPythonFromSelection(pathHolder, requireSystemPython = false).getOr { return emptyList() }
       return listOf(systemPython)
     }
 
-    override suspend fun resolvePythonBinary(pythonHome: PathHolder.Target): PathHolder.Target {
+    override fun resolvePythonBinary(pythonHome: PathHolder.Target): PathHolder.Target {
       val pythonHomeString = pythonHome.pathString
-      val pythonBinaryPath = when {
-        pythonHomeString.contains("\\") -> "${pythonHomeString.removeSuffix("\\")}\\Scripts\\python.exe"
-        else -> "${pythonHomeString.removeSuffix("/")}/bin/python"
-      }.let { PathHolder.Target(it) }
+      val platform = targetEnvironmentConfiguration.getPlatformAndRoot().platform
+      return PathHolder.Target(VirtualEnvReader().findPythonInPythonRootForTarget(pythonHomeString, platform))
+    }
 
-      return pythonBinaryPath
+    override fun getVenvName(pythonHome: PathHolder.Target): String? {
+      val pythonBinary = resolvePythonBinary(pythonHome)
+      val pythonBinaryString = pythonBinary.pathString
+      val platform = targetEnvironmentConfiguration.getPlatformAndRoot().platform
+      return VirtualEnvReader().getVenvNameForTarget(pythonBinaryString, platform)
     }
 
     override suspend fun which(cmd: String): PathHolder.Target? {
-      val which = getBinaryToExec(PathHolder.Target("which"))
-      val condaPathString = ExecService().execGetStdout(which, Args(cmd)).getOr { return null }
-      val condaPathOnFS = parsePath(condaPathString).getOr { return null }
-      return condaPathOnFS
+      val binaryPathString = executeCommand("which $cmd") ?: return null
+      val binaryPathOnFS = parsePath(binaryPathString).getOr { return null }
+      return binaryPathOnFS
+    }
+
+    override suspend fun getHomePath(): PathHolder.Target? = executeCommand($$"echo ${HOME}")?.let { PathHolder.Target(it) }
+
+    private suspend fun executeCommand(cmd: String): String? {
+      val shell = getShell().getOr { return null }
+      val bin = getBinaryToExec(PathHolder.Target(shell))
+      return ExecService().execGetStdout(bin, Args("-l", "-c", cmd)).successOrNull
+    }
+
+    private suspend fun getShell(): PyResult<String> {
+      if (!this::shellImpl.isInitialized) {
+        shellImpl = getShellImpl()
+      }
+      return shellImpl
+    }
+
+    private suspend fun getShellImpl(): PyResult<String> {
+      val bin1 = getBinaryToExec(PathHolder.Target("getent"))
+      val execService = ExecService()
+      val res = execService.execGetStdout(bin1, Args("passwd")).getOr { return it }
+      val bin2 = getBinaryToExec(PathHolder.Target("whoami"))
+      val user = execService.execGetStdout(bin2).getOr { return it }
+      val shell = res.lines().firstOrNull { it.substringBefore(':').contains(user) }?.substringAfterLast(':')
+      @Suppress("HardCodedStringLiteral")
+      return shell?.let { PyResult.success(it) } ?: PyResult.localizedError("Could not get shell")
     }
   }
 }
 
-internal fun <P : PathHolder> FileSystem<P>.getInstallableInterpreters(): List<InstallableSelectableInterpreter<P>> = when ((this as? FileSystem.Eel)?.eelApi) {
-  localEel -> {
-    getSdksToInstall()
-      .mapNotNull { sdk ->
-        LanguageLevel.fromPythonVersionSafe(sdk.installation.release.version)?.let { it to sdk }
-      }
-      .sortedByDescending { it.first }
-      .map { (languageLevel, sdk) ->
-        InstallableSelectableInterpreter(PythonInfo(languageLevel), sdk)
-      }
+internal fun <P : PathHolder> FileSystem<P>.getInstallableInterpreters(): List<InstallableSelectableInterpreter<P>> =
+  when ((this as? FileSystem.Eel)?.eelApi) {
+    localEel -> {
+      getSdksToInstall()
+        .mapNotNull { sdk ->
+          LanguageLevel.fromPythonVersionSafe(sdk.installation.release.version)?.let { it to sdk }
+        }
+        .sortedByDescending { it.first }
+        .map { (languageLevel, sdk) ->
+          InstallableSelectableInterpreter(PythonInfo(languageLevel), sdk)
+        }
+    }
+    else -> emptyList()
   }
-  else -> emptyList()
-}
 
 internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpreters(
   projectPathPrefix: Path,
@@ -381,9 +459,10 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
 }
 
 internal suspend fun <P : PathHolder> FileSystem<P>.getDetectedSelectableInterpreters(
+  projectPathPrefix: Path,
   existingSelectableInterpreters: List<ExistingSelectableInterpreter<P>>,
 ): List<DetectedSelectableInterpreter<P>> = withContext(Dispatchers.IO) {
   val existingSdkPaths = existingSelectableInterpreters.map { it.homePath }.toSet()
-  val detected = detectSelectableVenv().filterNot { it.homePath in existingSdkPaths }
+  val detected = detectSelectableVenv(projectPathPrefix).filterNot { it.homePath in existingSdkPaths }
   detected
 }

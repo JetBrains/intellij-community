@@ -114,6 +114,10 @@ final class SettingsHelper {
           }
         }
       }
+      if (Registry.is("ide.browser.jcef.run-under-superuser.allowed")) {
+        LOG.warn("ide.browser.jcef.run-under-superuser.allowed applied, JCEF-sandbox is disabled");
+        settings.no_sandbox = true;
+      }
     }
     return settings;
   }

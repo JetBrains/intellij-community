@@ -5,7 +5,11 @@ import com.intellij.openapi.Disposable
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalUtil
-import org.jetbrains.plugins.terminal.block.session.scraper.*
+import org.jetbrains.plugins.terminal.block.session.scraper.DropTrailingNewLinesStringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.StringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.TerminalLinesCollector
 import org.jetbrains.plugins.terminal.block.session.util.Debouncer
 import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.session.impl.StyleRange

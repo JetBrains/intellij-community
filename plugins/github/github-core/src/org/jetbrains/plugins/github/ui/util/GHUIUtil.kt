@@ -47,7 +47,7 @@ internal object GHUIUtil {
       PopupItemPresentation.Simple(
         it.shortName,
         avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
-        null
+        it.name
       )
     }
 
@@ -55,7 +55,7 @@ internal object GHUIUtil {
       PopupItemPresentation.Simple(
         it.login,
         avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
-        null
+        it.name
       )
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.BuildView
@@ -15,7 +15,6 @@ import com.intellij.pom.Navigatable
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -52,7 +51,8 @@ abstract class UnresolvedDependencyIssue(
   fun configureQuickFix(
     failureMessage: String?,
     isOfflineMode: Boolean,
-    @Nls offlineModeQuickFixText: String,
+    offlineModeQuickFix: BuildIssueQuickFix,
+    offlineModeQuickFixMessageKey: String,
     projectPath: String? = null,
     requiredGradleJVM: Int? = null,
   ) {
@@ -60,7 +60,10 @@ abstract class UnresolvedDependencyIssue(
 
     when {
       projectPath != null && requiredGradleJVM != null -> addGradleJvmOrNewerQuickFix(projectPath, requiredGradleJVM)
-      isOfflineMode && !noRepositoriesDefined -> addQuickFixPrompt(offlineModeQuickFixText)
+      isOfflineMode && !noRepositoriesDefined -> {
+        val offlineFixHyperlink = addQuickFix(offlineModeQuickFix)
+        addQuickFixPrompt(GradleBundle.message(offlineModeQuickFixMessageKey, offlineFixHyperlink))
+      }
       else -> addQuickFixPrompt(
         GradleBundle.message("gradle.build.quick.fix.artifact.declare.repository", declaringRepositoriesLink)
       )
@@ -104,11 +107,11 @@ data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
     configureQuickFix(
       cleanedMessage,
       isOfflineMode,
-      GradleBundle.message("gradle.build.quick.fix.disable.offline.mode.reload", offlineQuickFixId),
+      DisableOfflineAndReimport(projectPath),
+      "gradle.build.quick.fix.disable.offline.mode.reload",
       projectPath,
       jvmIssueInfo?.requiredJvmVersion
     )
-    if (isOfflineMode) addQuickFix(DisableOfflineAndReimport(projectPath))
   }
 
   class DisableOfflineAndReimport(private val projectPath: String) : BuildIssueQuickFix {
@@ -129,9 +132,9 @@ class UnresolvedDependencyBuildIssue(dependencyName: String,
     configureQuickFix(
       failureMessage,
       isOfflineMode,
-      GradleBundle.message("gradle.build.quick.fix.disable.offline.mode.rebuild", offlineQuickFixId)
+      DisableOfflineAndRerun(),
+      "gradle.build.quick.fix.disable.offline.mode.rebuild"
     )
-    if (isOfflineMode) addQuickFix(DisableOfflineAndRerun())
   }
 
   class DisableOfflineAndRerun : BuildIssueQuickFix {

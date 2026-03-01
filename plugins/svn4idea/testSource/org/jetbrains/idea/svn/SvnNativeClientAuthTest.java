@@ -19,7 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.auth.*;
+import org.jetbrains.idea.svn.auth.AcceptResult;
+import org.jetbrains.idea.svn.auth.AuthenticationData;
+import org.jetbrains.idea.svn.auth.CertificateAuthenticationData;
+import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -34,7 +39,9 @@ import java.util.concurrent.TimeoutException;
 
 import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @Ignore
 public class SvnNativeClientAuthTest extends SvnTestCase {

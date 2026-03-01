@@ -1,27 +1,28 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
-import com.intellij.dvcs.repo.rpcId
+import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.components.service
 import com.intellij.platform.project.projectId
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
+import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.rpc.GitRepositoryApi
 import com.intellij.vcs.git.rpc.GitUiSettingsApi
+import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitStandardLocalBranch
 import git4idea.GitTag
-import git4idea.GitWorkingTree
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchesCollection
+import git4idea.test.GitSingleRepoTest
 import git4idea.test.checkoutNew
 import git4idea.test.createSubRepository
 import git4idea.test.git
 import git4idea.ui.branch.GitBranchManager
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 
-@OptIn(ExperimentalCoroutinesApi::class)
-class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase() {
+class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
+  override fun getDebugLogCategories() = super.getDebugLogCategories().plus(GitRepositoriesHolder::class.java.name)
 
   fun `test single repository data is available`() {
     val holder = GitRepositoriesHolder.getInstance(project)
@@ -31,26 +32,23 @@ class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase(
     }
 
     runBlocking {
-      holder.init()
+      holder.awaitInitialization()
     }
 
     val allReposInHolder = holder.getAll()
     assertSize(1, allReposInHolder)
     val singleRepoInHolder = allReposInHolder.single()
-    assertEquals(repo.rpcId(), singleRepoInHolder.repositoryId)
+    assertEquals(repo.repositoryId(), singleRepoInHolder.repositoryId)
 
-    assertEquals(holder.get(repo.rpcId()), singleRepoInHolder)
+    assertEquals(holder.get(repo.repositoryId()), singleRepoInHolder)
 
     assertTrue(holder.initialized)
   }
 
   fun `test data is updated after repository is removed`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
     assertSize(1, holder.getAll())
-    executeAndExpectEvent(
+    holder.expectEvent(
       { vcsManager.unregisterVcs(vcs) },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.REPOSITORY_DELETED })
 
@@ -58,13 +56,10 @@ class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase(
   }
 
   fun `test new repository is added`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
     assertSize(1, holder.getAll())
 
-    executeAndExpectEvent(
+    holder.expectEvent(
       { repo.createSubRepository("nested") },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.REPOSITORY_CREATED })
 
@@ -72,15 +67,12 @@ class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase(
   }
 
   fun `test favorite branches are updated`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
     assertTrue("master should be favorite",
                holder.getTestRepo().favoriteRefs.contains(GitStandardLocalBranch("master")))
 
-    executeAndExpectEvent(
+    holder.expectEvent(
       {
         project.service<GitBranchManager>().setFavorite(
           GitBranchType.LOCAL,
@@ -96,10 +88,7 @@ class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase(
   }
 
   fun `test repo state is updated`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
     val masterBranch = GitStandardLocalBranch("master")
     assertTrue("master is current branch", holder.getTestRepo().state.isCurrentRef(masterBranch))
@@ -108,7 +97,7 @@ class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase(
     branchesToCheckout.forEach { branch -> repo.checkoutNew(branch.name) }
 
     val newCurrentBranch = GitStandardLocalBranch("new-branch")
-    executeAndExpectEvent(
+    holder.expectEvent(
       { repo.checkoutNew(newCurrentBranch.name) },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.REPOSITORY_STATE_UPDATED })
 
@@ -116,23 +105,21 @@ class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase(
     assertTrue("master is current branch", stateAfterUpdate.isCurrentRef(newCurrentBranch))
 
     // max 5 branches in order of checkout
-    val expectedRecentBranches = listOf(newCurrentBranch) + branchesToCheckout.reversed().take(GitBranchesCollection.MAX_RECENT_CHECKOUT_BRANCHES - 1)
+    val expectedRecentBranches =
+      listOf(newCurrentBranch) + branchesToCheckout.reversed().take(GitBranchesCollection.MAX_RECENT_CHECKOUT_BRANCHES - 1)
     assertEquals("recent branches are updated", expectedRecentBranches, stateAfterUpdate.recentBranches)
   }
 
   fun `test tags can be hidden`() {
     val tagName = "hello"
     repo.git("tag $tagName")
-    repo.tagHolder.ensureUpToDateForTests()
+    (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
 
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
     assertEquals(setOf(GitTag(tagName)), holder.getTestRepo().state.tags)
 
-    executeAndExpectEvent(
+    holder.expectEvent(
       { GitUiSettingsApi.getInstance().setShowTags(project.projectId(), false) },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.TAGS_HIDDEN }
     )
@@ -143,14 +130,11 @@ class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase(
   fun `test tags can be hidden and shown`() {
     val tagName = "hello"
     repo.git("tag $tagName")
-    repo.tagHolder.ensureUpToDateForTests()
+    (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
 
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
-    executeAndExpectEvent(
+    holder.expectEvent(
       {
         GitUiSettingsApi.getInstance().setShowTags(project.projectId(), false)
         GitUiSettingsApi.getInstance().setShowTags(project.projectId(), true)
@@ -164,24 +148,18 @@ class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase(
   }
 
   fun `test force state sync`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
-    executeAndExpectEvent(
+    holder.expectEvent(
       { GitRepositoryApi.getInstance().forceSync(project.projectId()) },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.RELOAD_STATE }
     )
   }
 
   fun `test update of unknown repo forces sync`() {
-    val holder = GitRepositoriesHolder.getInstance(project)
-    runBlocking {
-      holder.init()
-    }
+    val holder = GitRepositoriesHolder.getAndInit(project)
 
-    executeAndExpectEvent(
+    holder.expectEvent(
       {
         holder.clearRepositories()
         assertTrue(holder.getAll().isEmpty())
@@ -193,10 +171,9 @@ class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase(
     holder.getTestRepo()
   }
 
-  fun `test creating a worktree on a main repo`() {
-    doTestWorkingTreeCreation(
-      projectNioRoot,
-      GitWorkingTree(repo.root.path, repo.currentBranch!!.fullName, true, true)
-    )
+  private fun GitRepositoriesHolder.getTestRepo(): GitRepositoryModel {
+    val holderRepo = checkNotNull(get(repo.repositoryId()))
+    assertEquals(holderRepo.root, getFilePath(repo.root))
+    return holderRepo
   }
 }

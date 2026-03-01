@@ -3,7 +3,11 @@ package com.intellij.terminal.tests.block
 
 import com.intellij.openapi.editor.markup.TextAttributes
 import junit.framework.TestCase.assertEquals
-import org.jetbrains.plugins.terminal.block.output.*
+import org.jetbrains.plugins.terminal.block.output.EmptyTextAttributesProvider
+import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
+import org.jetbrains.plugins.terminal.block.output.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
+import org.jetbrains.plugins.terminal.block.output.TextWithHighlightings
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.junit.Test
 import org.junit.runner.RunWith

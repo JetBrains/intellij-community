@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight;
 
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -35,7 +36,10 @@ public abstract class AutoPopupController {
   /**
    * Setting this user data key to the editor with a completion provider
    * allows showing the auto popup for slashes
+   * @deprecated Implement your own {@link com.intellij.codeInsight.editorActions.TypedHandlerDelegate#checkAutoPopup(char, Project, Editor, PsiFile)}
    */
+  @ApiStatus.Internal
+  @Deprecated
   public static final Key<Boolean> ALLOW_AUTO_POPUP_FOR_SLASHES_IN_PATHS = Key.create("Allow Auto-Popup For Slashes In Paths");
 
   /**
@@ -106,12 +110,25 @@ public abstract class AutoPopupController {
                                          @NotNull CompletionType completionType,
                                          @Nullable Condition<? super PsiFile> condition);
 
+  /**
+   * Show the parameter info popup at the given element.
+   *
+   * @param editor             editor to show the popup in
+   * @param highlightedElement element to show the popup at
+   */
+  public abstract void autoPopupParameterInfo(@NotNull Editor editor, @Nullable PsiElement highlightedElement);
+
+  @ApiStatus.Internal
   public abstract void cancelAllRequests();
 
-  public abstract void autoPopupParameterInfo(@NotNull Editor editor, @Nullable PsiElement highlightedMethod);
-
+  /** Use {@link com.intellij.testFramework.AutoPopupParameterInfoTestUtil#waitForAutoPopup} instead */
+  @ApiStatus.Internal
   @TestOnly
   public abstract void waitForDelayedActions(long timeout, @NotNull TimeUnit unit) throws TimeoutException;
+
+  @ApiStatus.Internal
+  protected AutoPopupController() {
+  }
 
   //region Deprecated methods
 

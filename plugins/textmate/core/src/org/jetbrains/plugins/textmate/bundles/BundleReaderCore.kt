@@ -3,7 +3,13 @@ package org.jetbrains.plugins.textmate.bundles
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.getLogger
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil
-import org.jetbrains.plugins.textmate.language.preferences.*
+import org.jetbrains.plugins.textmate.language.preferences.IndentationRules
+import org.jetbrains.plugins.textmate.language.preferences.OnEnterRule
+import org.jetbrains.plugins.textmate.language.preferences.TextMateAutoClosingPair
+import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair
+import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable
+import org.jetbrains.plugins.textmate.language.preferences.TextMateSnippet
+import org.jetbrains.plugins.textmate.language.preferences.TextMateTextAttributes
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistReaderCore
 

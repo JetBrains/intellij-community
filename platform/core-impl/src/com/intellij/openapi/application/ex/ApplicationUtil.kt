@@ -23,7 +23,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.*
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds

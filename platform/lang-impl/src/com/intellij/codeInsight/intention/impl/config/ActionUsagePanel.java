@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -17,8 +21,9 @@ import com.intellij.util.ui.RangeBlinker;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 

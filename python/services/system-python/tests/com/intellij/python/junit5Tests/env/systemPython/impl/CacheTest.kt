@@ -3,7 +3,12 @@ package com.intellij.python.junit5Tests.env.systemPython.impl
 
 import com.intellij.python.community.services.systemPython.impl.Cache
 import com.intellij.testFramework.common.timeoutRunBlocking
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

@@ -8,7 +8,6 @@ import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.evaluable.AIA_TEST_LINE_COVERAGE
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import kotlin.Double
 
 class LineCoverageMetricTest {
 

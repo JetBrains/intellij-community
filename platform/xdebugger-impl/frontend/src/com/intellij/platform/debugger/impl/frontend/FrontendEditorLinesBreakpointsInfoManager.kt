@@ -1,11 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.frontend.FrontendApplicationInfo
+import com.intellij.frontend.FrontendType
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -22,15 +25,25 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 private val DOCUMENTS_UPDATE_DEBOUNCE = 600.milliseconds
+
+// Do not preload map in monolith for performance reasons, see IJPL-220984
+private val shouldPreloadMap = FrontendApplicationInfo.getFrontendType() is FrontendType.Remote
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -85,19 +98,18 @@ internal class FrontendEditorLinesBreakpointsInfoManager(private val project: Pr
   }
 
   suspend fun getBreakpointsInfoForLine(editor: Editor, line: Int): EditorLineBreakpointsInfo {
-    val editorMap = editorsMap[editor]
-    if (editorMap == null) {
-      return putNewLinesInfoMap(editor).getBreakpointsInfoForLine(line)
-    }
+    val editorMap = editorsMap[editor] ?: putNewLinesInfoMap(editor)
     return editorMap.getBreakpointsInfoForLine(line)
   }
 
   /**
    * Returns cached breakpoint types for the line, or null if the data is not available yet.
-   * Schedules data fetching if needed, so the next calls will hopefully return cached data.
    */
   @RequiresReadLock
-  fun getBreakpointsInfoForLineFast(editor: Editor, line: Int): EditorLineBreakpointsInfo? {
+  internal fun getBreakpointsInfoForLineFast(editor: Editor, line: Int): EditorLineBreakpointsInfo? {
+    if (!shouldPreloadMap) {
+      thisLogger().error("getBreakpointsInfoForLineInternal is unsafe to use in monolith mode, use getBreakpointsInfoForLine instead")
+    }
     val editorMap = editorsMap[editor] ?: return null
     val currentEditorStamp = editor.document.modificationStamp
     return editorMap.getBreakpointsInfoForLineInternal(line, currentEditorStamp)
@@ -114,8 +126,6 @@ private class EditorBreakpointLinesInfoMap(
   private val editor: Editor,
   private val project: Project,
 ) {
-  private val mapUpdateRequest = MutableSharedFlow<Unit>(replay = 1)
-  private val debouncedUpdateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
   private val cs: CoroutineScope = parentCs.childScope("EditorBreakpointLinesInfoMap")
 
   private val breakpointsMap: FrontendViewportDataCache<EditorLineBreakpointsInfo> = FrontendViewportDataCache(
@@ -125,20 +135,26 @@ private class EditorBreakpointLinesInfoMap(
   )
 
   init {
-    mapUpdateRequest.tryEmit(Unit)
-    cs.launch {
-      debouncedUpdateRequests.debounce(DOCUMENTS_UPDATE_DEBOUNCE).collectLatest {
-        mapUpdateRequest.tryEmit(Unit)
-      }
-    }
-    cs.launch {
-      mapUpdateRequest.collectLatest {
-        val (viewportInfo, currentStamp, editorLinesCount) = withContext(Dispatchers.EDT) {
-          val (firstViewportIndex, lastViewportIndex) = editor.viewportIndicesInclusive()
-          Triple(ViewportInfo(firstViewportIndex, lastViewportIndex), editor.document.modificationStamp, editor.document.lineCount)
+    val mapUpdateRequest = MutableSharedFlow<Unit>(replay = 1)
+    val debouncedUpdateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    if (shouldPreloadMap) {
+      mapUpdateRequest.tryEmit(Unit)
+      cs.launch {
+        debouncedUpdateRequests.debounce(DOCUMENTS_UPDATE_DEBOUNCE).collectLatest {
+          mapUpdateRequest.tryEmit(Unit)
         }
-        breakpointsMap.update(viewportInfo, editorLinesCount - 1, currentStamp)
       }
+      cs.launch {
+        mapUpdateRequest.collectLatest {
+          val (viewportInfo, currentStamp, editorLinesCount) = withContext(Dispatchers.EDT) {
+            val (firstViewportIndex, lastViewportIndex) = editor.viewportIndicesInclusive()
+            Triple(ViewportInfo(firstViewportIndex, lastViewportIndex), editor.document.modificationStamp, editor.document.lineCount)
+          }
+          breakpointsMap.update(viewportInfo, editorLinesCount - 1, currentStamp)
+        }
+      }
+      editor.scrollingModel.addVisibleAreaListener({ debouncedUpdateRequests.tryEmit(Unit) }, cs.asDisposable())
     }
 
     editor.document.addDocumentListener(object : DocumentListener {
@@ -152,8 +168,6 @@ private class EditorBreakpointLinesInfoMap(
       breakpointsMap.clear()
       mapUpdateRequest.tryEmit(Unit)
     }
-
-    editor.scrollingModel.addVisibleAreaListener({ debouncedUpdateRequests.tryEmit(Unit) }, cs.asDisposable())
   }
 
   suspend fun getBreakpointsInfoForLine(line: Int): EditorLineBreakpointsInfo {

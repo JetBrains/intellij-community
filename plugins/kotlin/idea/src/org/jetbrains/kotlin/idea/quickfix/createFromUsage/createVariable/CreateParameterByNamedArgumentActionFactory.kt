@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
@@ -13,12 +14,18 @@ import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 
+@K1Deprecation
 object CreateParameterByNamedArgumentActionFactory : CreateParameterFromUsageFactory<KtValueArgument>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtValueArgument? {
         return diagnostic.psiElement.findParentOfType<KtValueArgument>(strict = false)?.takeIf { it.isNamed() }

@@ -16,7 +16,11 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.PyAstAssignmentStatement;
+import com.jetbrains.python.ast.PyAstDelStatement;
+import com.jetbrains.python.ast.PyAstElement;
+import com.jetbrains.python.ast.PyAstExpression;
+import com.jetbrains.python.ast.PyAstTargetExpression;
 
 /** How we refer to a name */
 public enum AccessDirection {

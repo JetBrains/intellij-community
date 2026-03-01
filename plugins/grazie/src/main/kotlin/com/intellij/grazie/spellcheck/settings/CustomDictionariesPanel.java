@@ -17,7 +17,14 @@ import com.intellij.spellchecker.settings.CustomDictionarySettingsListener;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.AppDictionaryState;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -27,11 +34,18 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.spellchecker.SpellCheckerManagerKt.isDic;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
@@ -115,6 +129,8 @@ public final class CustomDictionariesPanel extends JPanel {
     myCustomDictionariesTableView.getEmptyText().setText((SpellCheckerBundle.message("no.custom.dictionaries")));
     this.setLayout(new BorderLayout());
     this.add(decorator.createPanel(), BorderLayout.CENTER);
+
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
   }
 
   private void doChooseFiles(@NotNull Project project, @NotNull Consumer<? super List<VirtualFile>> consumer) {

@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package andel.editor
 
-import andel.operation.*
+import andel.operation.IntervalPoint
+import andel.operation.NewOffsetProvider
+import andel.operation.Operation
+import andel.operation.Sticky
+import andel.operation.caretToPoints
+import andel.operation.positionByPoints
+import andel.operation.shiftPoints2
 import fleet.util.logging.logger
 import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.Serializable

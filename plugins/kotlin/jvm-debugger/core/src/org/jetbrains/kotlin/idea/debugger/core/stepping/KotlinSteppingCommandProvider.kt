@@ -22,7 +22,12 @@ import com.sun.jdi.Method
 import com.sun.jdi.StackFrame
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
-import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
+import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
+import org.jetbrains.kotlin.idea.debugger.base.util.safeThreadProxy
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap

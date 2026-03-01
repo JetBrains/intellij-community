@@ -24,7 +24,7 @@ import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.GZIPOutputStream

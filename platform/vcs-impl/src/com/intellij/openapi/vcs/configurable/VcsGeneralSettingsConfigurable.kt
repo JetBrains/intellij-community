@@ -25,7 +25,14 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsSetting
 import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindIntValue
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.containers.MultiMap

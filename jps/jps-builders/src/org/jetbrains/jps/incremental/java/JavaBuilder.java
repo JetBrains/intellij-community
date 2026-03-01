@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,29 +27,67 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetIndex;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.JpsBuildBundle;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
+import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.impl.TargetOutputIndexImpl;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
-import org.jetbrains.jps.builders.java.*;
+import org.jetbrains.jps.builders.java.JavaBuilderExtension;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaCompilingTool;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.CompilerEncodingConfiguration;
+import org.jetbrains.jps.incremental.FSOperations;
+import org.jetbrains.jps.incremental.GlobalContextKey;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.StopBuildException;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.FallbackJdkSetupNotification;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.javac.*;
+import org.jetbrains.jps.javac.CompilationPaths;
+import org.jetbrains.jps.javac.DiagnosticOutputConsumer;
+import org.jetbrains.jps.javac.ExternalJavacManager;
+import org.jetbrains.jps.javac.ExternalJavacManagerKey;
+import org.jetbrains.jps.javac.ExternalJavacProcess;
+import org.jetbrains.jps.javac.InputFileDataProvider;
+import org.jetbrains.jps.javac.JavacFileReferencesRegistrar;
+import org.jetbrains.jps.javac.JavacMain;
+import org.jetbrains.jps.javac.JpsInfoDiagnostic;
+import org.jetbrains.jps.javac.ModulePath;
+import org.jetbrains.jps.javac.OutputFileConsumer;
+import org.jetbrains.jps.javac.OutputFileObject;
+import org.jetbrains.jps.javac.PlainMessageDiagnostic;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.LanguageLevel;
-import org.jetbrains.jps.model.java.compiler.*;
+import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
+import org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions;
+import org.jetbrains.jps.model.java.compiler.JavaCompilers;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
@@ -66,7 +104,17 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
@@ -1165,16 +1213,21 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     return JpsJavaSdkType.complianceOption(JavaVersion.compose(major));
   }
 
+  /**
+   * @return the specified module's language level, or the project's language level, when no module language level is set. 
+   * When no language level is set or the language level is experimental <code>0</code> is returned.
+   */
   private static int getLanguageLevel(@NotNull JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    return level != null ? level.feature() : 0;
+    return level != null && level != LanguageLevel.JDK_X ? level.feature() : 0;
   }
 
   /**
    * The assumed module's source code language version.
    * Returns the version number, corresponding to the language level, associated with the given module.
-   * If no language level set (neither on module- nor on project-level), the version of JDK associated with the module is returned.
-   * If no JDK is associated, returns 0.
+   * When no language level is set (neither on module- nor on project-level) or the level is X - experimental,
+   * the version of JDK associated with the module is returned.
+   * When no JDK is associated, returns 0.
    */
   private static int getTargetPlatformLanguageVersion(@NotNull JpsModule module) {
     final int level = getLanguageLevel(module);

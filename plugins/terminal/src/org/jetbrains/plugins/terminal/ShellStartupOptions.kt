@@ -2,12 +2,21 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.containers.CollectionFactory
 import com.jediterm.core.util.TermSize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.runner.InitialShellCommand
+import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
+import org.jetbrains.plugins.terminal.startup.ShellExecOptions
+import org.jetbrains.plugins.terminal.startup.ShellExecOptionsImpl
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.ShellIntegration
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 class ShellStartupOptions private constructor(builder: Builder) {
@@ -15,6 +24,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
   val shellCommand: List<String>? = builder.shellCommand
   @ApiStatus.Internal
   val initialShellCommand: InitialShellCommand? = builder.initialShellCommand
+  val processType: TerminalProcessType = builder.processType
   val commandHistoryFileProvider: (() -> Path?)? = builder.commandHistoryFileProvider
   val initialTermSize: TermSize? = builder.initialTermSize
   val widget: TerminalWidget? = builder.widget
@@ -23,7 +33,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
   internal val startupMoment: TerminalStartupMoment? = builder.startupMoment
 
   fun builder(): Builder {
-    return Builder(workingDirectory, shellCommand, initialShellCommand, commandHistoryFileProvider, initialTermSize,
+    return Builder(workingDirectory, shellCommand, initialShellCommand, processType, commandHistoryFileProvider, initialTermSize,
                    widget, shellIntegration, envVariables, startupMoment)
   }
 
@@ -34,24 +44,55 @@ class ShellStartupOptions private constructor(builder: Builder) {
            ", initialTermSize=[$initialTermSize]" +
            ", shellIntegration=$shellIntegration" +
            ", envVariables=$envVariables" +
+           ", processType=$processType" +
            ", widget=${widget != null}"
   }
 
-  class Builder internal constructor(var workingDirectory: String?,
-                                     var shellCommand: List<String>?,
-                                     var initialShellCommand: InitialShellCommand?,
-                                     var commandHistoryFileProvider: (() -> Path?)?,
-                                     var initialTermSize: TermSize?,
-                                     var widget: TerminalWidget?,
-                                     var shellIntegration: ShellIntegration? = null,
-                                     var envVariables: Map<String, String> = createEnvVariablesMap(),
-                                     internal var startupMoment: TerminalStartupMoment? = null) {
+  @ApiStatus.Internal
+  @Throws(IllegalArgumentException::class)
+  fun toExecOptions(eelDescriptor: EelDescriptor): ShellExecOptions {
+    requireNotNull(shellCommand) { "Shell command is null" }
+    return ShellExecOptionsImpl(
+      ShellExecCommandImpl(shellCommand),
+      findWorkingDirectoryEelPath(eelDescriptor),
+      envVariables
+    )
+  }
 
-    constructor() : this(null, null, null, null, null, null)
+  @Throws(IllegalArgumentException::class)
+  private fun findWorkingDirectoryEelPath(eelDescriptor: EelDescriptor): EelPath {
+    requireNotNull(workingDirectory) { "Working directory is null" }
+    try {
+      val nioPath = Path.of(workingDirectory)
+      return nioPath.asEelPath(eelDescriptor)
+    }
+    catch (e: Exception) {
+      if (e is InvalidPathException || e is EelPathException) {
+        throw IllegalArgumentException("Cannot find working directory ($workingDirectory)", e)
+      }
+      throw e
+    }
+  }
+
+  class Builder internal constructor(
+    var workingDirectory: String?,
+    var shellCommand: List<String>?,
+    var initialShellCommand: InitialShellCommand?,
+    var processType: TerminalProcessType = TerminalProcessType.SHELL,
+    var commandHistoryFileProvider: (() -> Path?)?,
+    var initialTermSize: TermSize?,
+    var widget: TerminalWidget?,
+    var shellIntegration: ShellIntegration? = null,
+    var envVariables: Map<String, String> = createEnvVariablesMap(),
+    internal var startupMoment: TerminalStartupMoment? = null,
+  ) {
+
+    constructor() : this(null, null, null, TerminalProcessType.SHELL, null, null, null)
 
     fun workingDirectory(workingDirectory: String?) = also { this.workingDirectory = workingDirectory }
     fun shellCommand(shellCommand: List<String>?) = also { this.shellCommand = shellCommand }
     fun envVariables(envs: Map<String, String>) = also { this.envVariables = envs }
+    fun processType(processType: TerminalProcessType) = also { this.processType = processType }
     fun commandHistoryFileProvider(commandHistoryFileProvider: (() -> Path?)?) = also { this.commandHistoryFileProvider = commandHistoryFileProvider }
     fun initialTermSize(initialTermSize: TermSize?) = also { this.initialTermSize = initialTermSize }
     fun widget(widget: TerminalWidget?) = also { this.widget = widget }

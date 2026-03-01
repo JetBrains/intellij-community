@@ -8,12 +8,13 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Comparator;
 
 public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
@@ -106,4 +107,14 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   }
 
   Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = Comparator.comparingInt(RangeHighlighterEx::getAffectedAreaStartOffset);
+
+  @ApiStatus.Internal
+  default @NotNull String debugOffsets() {
+    TextRange range = getTextRange();
+    return (isGreedyToLeft() ? "[" : "(")
+           + range.getStartOffset()
+           + ","
+           + range.getEndOffset()
+           + (isGreedyToLeft() ? "]" : ")");
+  }
 }

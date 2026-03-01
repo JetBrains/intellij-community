@@ -2,10 +2,19 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CachedValueBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;

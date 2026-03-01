@@ -25,7 +25,7 @@ private val LEVELS = (1..3).map { i ->
   " ".repeat(i * 2)
 }.toList()
 
-private class KeymapGenerator : ModernApplicationStarter() {
+internal class KeymapGenerator : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
     val xml = StringBuilder()
     xml.append("""<?xml version="1.0" encoding="UTF-8"?>""").append("\n<Keymaps>\n")

@@ -7,10 +7,14 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ExtendableHTMLViewFactory;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;

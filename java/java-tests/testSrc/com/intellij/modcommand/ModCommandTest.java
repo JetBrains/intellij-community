@@ -12,6 +12,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public final class ModCommandTest extends LightPlatformCodeInsightTestCase {
@@ -41,6 +42,14 @@ public final class ModCommandTest extends LightPlatformCodeInsightTestCase {
     assertEquals(new IntentionPreviewInfo.Html(HtmlChunk.text("Browse \"https://example.com\"")), preview);
     ModCommandExecutor.BatchExecutionResult result = executor.executeInBatch(context, command);
     assertEquals(ModCommandExecutor.Result.INTERACTIVE, result);
+  }
+  
+  public void testShrink() {
+    configureFromFileText("dummy.txt", "");
+    ModUpdateFileText command =
+      new ModUpdateFileText(getFile().getVirtualFile(), "example", "bye", List.of(new ModUpdateFileText.Fragment(0, 7, 3)));
+    ModUpdateFileText shrunk = command.shrinkFragments();
+    assertEquals(List.of(new ModUpdateFileText.Fragment(0, 6, 2)), shrunk.updatedRanges());
   }
   
   public void testCreateDirectories() {

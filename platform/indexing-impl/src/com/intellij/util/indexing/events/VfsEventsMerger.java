@@ -20,7 +20,10 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
-import static com.intellij.util.indexing.events.VfsEventsMerger.ChangeInfo.*;
+import static com.intellij.util.indexing.events.VfsEventsMerger.ChangeInfo.EventMask;
+import static com.intellij.util.indexing.events.VfsEventsMerger.ChangeInfo.FILE_ADDED;
+import static com.intellij.util.indexing.events.VfsEventsMerger.ChangeInfo.FILE_CONTENT_CHANGED;
+import static com.intellij.util.indexing.events.VfsEventsMerger.ChangeInfo.FILE_REMOVED;
 
 /**
  * Accumulates VFS file-change events [file, change: (ADDED | REMOVED | CONTENT_CHANGED | TRANSIENT_STATE_CHANGED)]
@@ -70,10 +73,10 @@ public final class VfsEventsMerger {
   }
 
   // NB: this code is executed not only during vfs events dispatch (in write action) but also during requestReindex (in read action)
-  private void updateChange(int fileId, @NotNull VirtualFile file, @ChangeInfo.EventMask int mask) {
+  private void updateChange(int fileId, @NotNull VirtualFile file, @EventMask int mask) {
     while (true) {// CAS-like loop:
       ChangeInfo existingChangeInfo = changePerFileId.get(fileId);
-      if (existingChangeInfo != null && existingChangeInfo.changeMask == mask) {
+      if (existingChangeInfo != null && existingChangeInfo.changeMask() == mask) {
         return;//nothing to update
       }
 
@@ -214,7 +217,7 @@ public final class VfsEventsMerger {
       return (changeMask & FILE_TRANSIENT_STATE_CHANGED) != 0;
     }
 
-    public int changeMask(){
+    public @EventMask int changeMask(){
       return changeMask;
     }
 

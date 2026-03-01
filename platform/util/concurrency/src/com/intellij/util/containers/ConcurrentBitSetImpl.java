@@ -4,7 +4,11 @@ package com.intellij.util.containers;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.function.IntUnaryOperator;

@@ -1,6 +1,6 @@
 package com.intellij.notebooks.visualization.ui
 
-import java.util.*
+import java.util.EventListener
 
 fun interface EditorCellEventListener : EventListener {
   fun onEditorCellEvents(events: List<EditorCellEvent>)

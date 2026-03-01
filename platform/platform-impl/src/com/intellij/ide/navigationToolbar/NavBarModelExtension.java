@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataMap;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DataSnapshot;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -51,22 +55,8 @@ public interface NavBarModelExtension {
   default void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
   }
 
-  /**
-   * @noinspection unused
-   * @deprecated Unused. Use {@link #uiDataSnapshot} instead
-   */
-  @Deprecated(forRemoval = true)
-  default @Nullable Object getData(@NotNull String dataId, @NotNull DataProvider provider) { return null; }
-
   /** @noinspection LambdaUnfriendlyMethodOverload*/
   default @Nullable String getPopupMenuGroup(@NotNull DataContext dataContext) { return null; }
-
-  /**
-   * @noinspection LambdaUnfriendlyMethodOverload, unused
-   * @deprecated Unused. Use {@link #uiDataSnapshot} instead
-   */
-  @Deprecated(forRemoval = true)
-  default @Nullable String getPopupMenuGroup(@NotNull DataProvider provider) { return null; }
 
   /** @noinspection LambdaUnfriendlyMethodOverload*/
   default PsiElement getLeafElement(@NotNull DataMap dataProvider) {

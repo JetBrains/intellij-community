@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.project.Project
@@ -34,7 +34,7 @@ class StubIndexPerFileElementTypeModificationTrackerTestHelper() {
 
   fun checkModCountIncreasedAtLeast(type: IFileElementType, minInc: Int) {
     val modCount = getModCount(type)
-    assert(modCount >= lastSeenModCounts[type]!! + minInc)
+    assert(modCount >= lastSeenModCounts[type]!! + minInc){"modCount(=$modCount) must be >= ${lastSeenModCounts[type]} + $minInc"}
     lastSeenModCounts[type] = modCount
   }
 

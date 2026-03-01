@@ -15,9 +15,13 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration.Companion.minutes
 

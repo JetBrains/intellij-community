@@ -22,7 +22,11 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinArrayHashCodeI
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 private val HASH_CODE_CALLABLE_ID = CallableId(StandardClassIds.Any, Name.identifier("hashCode"))
 

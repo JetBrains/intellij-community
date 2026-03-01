@@ -5,6 +5,7 @@ import com.intellij.ide.starter.config.classFileVerification
 import com.intellij.ide.starter.config.includeRuntimeModuleRepositoryInIde
 import com.intellij.ide.starter.config.monitoringDumpsIntervalSeconds
 import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDEStartConfig
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.asRemDevContext
@@ -22,7 +23,12 @@ import com.intellij.ide.starter.profiler.ProfilerType
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
-import com.intellij.ide.starter.utils.*
+import com.intellij.ide.starter.utils.JvmUtils
+import com.intellij.ide.starter.utils.catchAll
+import com.intellij.ide.starter.utils.formatArtifactName
+import com.intellij.ide.starter.utils.startProfileNativeThreads
+import com.intellij.ide.starter.utils.stopProfileNativeThreads
+import com.intellij.ide.starter.utils.takeScreenshot
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.starter.bus.EventsBus
@@ -43,7 +49,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.exists
+import kotlin.io.path.name
 import kotlin.io.path.readText
+import kotlin.io.path.walk
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -244,7 +252,7 @@ data class IDERunContext(
     snapshotsDir: Path,
     runContext: IDERunContext,
   ) {
-    if (!runContext.calculateVmOptions().hasHeadlessMode()) {
+    if (!runContext.calculateVmOptions().hasHeadlessMode() && runContext.testContext !is IDERemDevTestContext) {
       catchAll {
         takeScreenshot(logsDir)
       }
@@ -281,7 +289,7 @@ data class IDERunContext(
   }
 
   private fun isLowMemorySignalPresent(logsDir: Path): Boolean {
-    return logsDir.resolve("idea.log").bufferedReader().useLines { lines ->
+    return logsDir.walk().single { it.name == "idea.log"}.bufferedReader().useLines { lines ->
       lines.any { line ->
         line.contains("Low memory signal received: afterGc=true")
       }
@@ -371,7 +379,7 @@ data class IDERunContext(
       logOutput("Will not record screen for a backend of remote dev")
       return
     }
-    val screenRecorder = IDEScreenRecorder(this)
+    val screenRecorder = IDEScreenRecorder.create(this)
     EventsBus.subscribeOnce(IDEScreenRecorder::class.java) { _: IdeLaunchEvent ->
       screenRecorder.start()
     }

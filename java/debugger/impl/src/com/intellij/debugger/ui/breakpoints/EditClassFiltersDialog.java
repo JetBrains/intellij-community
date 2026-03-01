@@ -15,8 +15,9 @@ import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class EditClassFiltersDialog extends DialogWrapper {
   private ClassFilterEditor myClassFilterEditor;

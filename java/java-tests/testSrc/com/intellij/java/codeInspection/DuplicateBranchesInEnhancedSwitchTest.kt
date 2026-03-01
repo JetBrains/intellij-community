@@ -40,6 +40,7 @@ class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCas
   fun testMixedCases() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21_PREVIEW) { doTest() }
   fun testDominatedUnnamedVariables() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21_PREVIEW) { doTest() }
   fun testDefaultWithDominated() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_25) { doTest() }
+  fun testNextDominated() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_25) { doTest() }
 
   fun testSkipUnnamedForPreviousVersions() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
   private fun doTest() {

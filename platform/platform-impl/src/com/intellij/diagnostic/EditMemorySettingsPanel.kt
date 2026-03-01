@@ -5,7 +5,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.text
 
 internal class EditMemorySettingsPanel(private val option: VMOptions.MemoryKind, private val memoryLow: Boolean, private val suggested: Int) {
   lateinit var newValueField: JBTextField

@@ -14,7 +14,7 @@ Ts = TypeVarTuple("Ts")
 
 
 def args_to_tuple(*args: *Ts) -> tuple[*Ts]:
-    ...
+    raise NotImplementedError
 
 
 assert_type(args_to_tuple(1, "a"), tuple[int, str])
@@ -25,7 +25,7 @@ class Env:
 
 
 def exec_le(path: str, *args: * tuple[*Ts, Env], env: Env | None = None) -> tuple[*Ts]:
-    ...
+    raise NotImplementedError
 
 
 assert_type(exec_le("", Env()), tuple[()])  # OK

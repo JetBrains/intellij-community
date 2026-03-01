@@ -13,8 +13,8 @@ val ExtProperty<*, *>.wsCode: String
     if (additionalAnnotations.isNotEmpty()) {
       line(additionalAnnotations)
     }
-    sectionNoBrackets("$parentAnnotation$generatedCodeVisibilityModifier var ${receiver.defaultJavaBuilderName}$generic.$name: ${valueType.javaBuilderTypeWithGeneric}") {
-      line("by WorkspaceEntity.extensionBuilder(${valueType.entityType}::class.java)")
+    sectionNoBrackets("$parentAnnotation${generatedCodeVisibilityModifier}var ${receiver.defaultJavaBuilderName}$generic.$name: ${valueType.javaBuilderTypeWithGeneric}") {
+      line("by $WorkspaceEntity.extensionBuilder(${valueType.entityType}::class.java)")
     }
   }
 

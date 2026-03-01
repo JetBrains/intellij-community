@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.util.SmartList
 
-private class RunToolbarActionPromoter : ActionPromoter {
+internal class RunToolbarActionPromoter : ActionPromoter {
   override fun promote(actions: List<AnAction>, context: DataContext): MutableList<AnAction> {
     for (action in actions) {
       if (action is RunToolbarProcessAction) {

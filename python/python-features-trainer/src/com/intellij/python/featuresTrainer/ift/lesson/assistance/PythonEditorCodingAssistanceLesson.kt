@@ -3,8 +3,8 @@ package com.intellij.python.featuresTrainer.ift.lesson.assistance
 
 import com.intellij.codeInsight.daemon.impl.runActionCustomShortcutSet
 import com.intellij.openapi.actionSystem.KeyboardShortcut
-import com.jetbrains.python.PyPsiBundle
 import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
+import com.jetbrains.python.PyPsiBundle
 import training.dsl.LearningDslBase
 import training.dsl.LessonSample
 import training.dsl.LessonUtil

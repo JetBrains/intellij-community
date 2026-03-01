@@ -1,9 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.java
 
-import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.common.PossibleSourceTypesTestBase
 import com.intellij.platform.uast.testFramework.common.allUElementSubtypes
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.junit.Test
 
 

@@ -25,4 +25,22 @@ jvm_library(
     "//platform/built-in-server:builtInServer-impl",
   ]
 )
+
+jvm_library(
+  name = "auth_test_lib",
+  module_name = "intellij.platform.collaborationTools.auth",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":auth",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "//platform/platform-util-netty:ide-util-netty_test_lib",
+    "//platform/collaboration-tools/auth-base:collaborationTools-auth-base_test_lib",
+    "//platform/built-in-server:builtInServer-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.collaborationTools.auth` end

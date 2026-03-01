@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.core.script.k1.configuration
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
  *
  * @sample GradleBuildRootsManager
  */
+@K1Deprecation
 interface ScriptingSupport {
     fun isApplicable(file: VirtualFile): Boolean
     fun isConfigurationLoadingInProgress(file: KtFile): Boolean

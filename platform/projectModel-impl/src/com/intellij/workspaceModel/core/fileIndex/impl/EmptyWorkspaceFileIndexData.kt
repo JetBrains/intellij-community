@@ -26,6 +26,7 @@ class EmptyWorkspaceFileIndexData private constructor(private val debugName: Str
     includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeExternalNonIndexableSets: Boolean,
     includeCustomKindSets: Boolean
   ): WorkspaceFileInternalInfo {
     return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS

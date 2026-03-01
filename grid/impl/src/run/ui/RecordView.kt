@@ -1,7 +1,13 @@
 package com.intellij.database.run.ui
 
 import com.intellij.database.DataGridBundle
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridHelper
+import com.intellij.database.datagrid.GridRequestSource
+import com.intellij.database.datagrid.GridRow
+import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.color.ColorLayer
 import com.intellij.database.datagrid.color.MutationsColorLayer
 import com.intellij.database.run.ui.grid.editors.GridCellEditorFactoryProvider
@@ -17,12 +23,14 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
 import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.getTextWidth
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.KeyAdapter

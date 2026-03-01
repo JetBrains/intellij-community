@@ -9,7 +9,7 @@ import org.jetbrains.yaml.YAMLLanguage
 import org.jetbrains.yaml.psi.YAMLScalar
 import org.jetbrains.yaml.psi.YamlRecursivePsiElementVisitor
 
-private class YamlStripTrailingSpacesFilterFactory : PsiBasedStripTrailingSpacesFilter.Factory() {
+internal class YamlStripTrailingSpacesFilterFactory : PsiBasedStripTrailingSpacesFilter.Factory() {
   override fun createFilter(document: Document): PsiBasedStripTrailingSpacesFilter = object : PsiBasedStripTrailingSpacesFilter(document) {
     override fun process(psiFile: PsiFile) {
       psiFile.accept(object : YamlRecursivePsiElementVisitor(){

@@ -1,7 +1,12 @@
 package org.jetbrains.plugins.textmate
 
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.plugins.textmate.bundles.*
+import org.jetbrains.plugins.textmate.bundles.BundleType
+import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader
+import org.jetbrains.plugins.textmate.bundles.TextMateFileNameMatcher
+import org.jetbrains.plugins.textmate.bundles.readSublimeBundle
+import org.jetbrains.plugins.textmate.bundles.readTextMateBundle
+import org.jetbrains.plugins.textmate.bundles.readVSCBundle
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.plist.JsonOrXmlPlistReader

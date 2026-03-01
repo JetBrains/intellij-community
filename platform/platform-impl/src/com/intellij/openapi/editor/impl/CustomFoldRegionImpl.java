@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomFoldRegionRenderer;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -9,8 +13,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Point;
 import java.util.Objects;
 
 @ApiStatus.Internal

@@ -2,7 +2,18 @@
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.GrVisibilityUtils.getVisibility;
+
 public final class ConstructorAnnotationsProcessor implements AstTransformationSupport {
 
   @Override

@@ -3,12 +3,12 @@ package com.intellij.python.community.impl.installer
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.Product
 import com.jetbrains.python.sdk.Resource
 import com.jetbrains.python.sdk.ResourceType
 import com.jetbrains.python.sdk.SdksKeeper
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.installer.BinaryInstallation
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString

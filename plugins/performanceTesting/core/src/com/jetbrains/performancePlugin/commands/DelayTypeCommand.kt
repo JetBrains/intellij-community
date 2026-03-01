@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.jetbrains.performancePlugin.PerformanceTestSpan
@@ -22,11 +23,17 @@ import com.jetbrains.performancePlugin.utils.HighlightingTestUtil
 import com.jetbrains.performancePlugin.utils.findTypingTarget
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.awt.KeyboardFocusManager
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.seconds
-import com.intellij.openapi.util.Pair
 
 /**
  * Command types text with some delay between typing.
@@ -80,28 +87,40 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
 
     PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext()).useWithScope { span ->
       coroutineScope {
+        val barriers = Array(text.length) { CompletableDeferred<Unit>() }
         List(text.length) { i ->
           launch {
             delay(i * delay)
-            withContext(Dispatchers.EDT) {
-              span.addEvent("Calling find target second time in DelayTypeCommand")
-              val typingTarget = findTypingTarget(project)
-              if (typingTarget == null) {
-                throw Exception("Focus was lost during typing. Current focus is in: " +
-                                (KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.javaClass ?: "null"))
-              }
-              if (disableWriteProtection) {
-                val editor = DataManager.getInstance().getDataContext(typingTarget as? JComponent).getData(CommonDataKeys.EDITOR)
-                if (editor == null) {
-                  throw Exception("Cannot find Editor")
+            if (i > 0) barriers[i - 1].await()
+            var typed = false
+            for (attempt in 1..3) {
+              typed = withContext(Dispatchers.EDT) {
+                val typingTarget = findTypingTarget(project)
+                if (typingTarget == null) return@withContext false
+                if (disableWriteProtection) {
+                  val editor = DataManager.getInstance().getDataContext(typingTarget as? JComponent).getData(CommonDataKeys.EDITOR)
+                  if (editor == null) throw Exception("Cannot find Editor")
+                  NonProjectFileWritingAccessProvider.allowWriting(listOf(editor.virtualFile))
                 }
-                NonProjectFileWritingAccessProvider.allowWriting(listOf(editor.virtualFile))
+                span.addEvent("Typing ${text[i]}")
+                writeIntentReadAction {
+                  typingTarget.type(text[i].toString())
+                }
+                true
               }
-              span.addEvent("Typing ${text[i]}")
-              writeIntentReadAction {
-                typingTarget.type(text[i].toString())
-              }
+              if (typed) break
+              span.addEvent("Focus lost while typing char $i, attempt $attempt of 3 failed")
+              if (attempt < 3) delay(500)
             }
+            if (!typed) {
+              val ex = Exception("Focus was lost during typing. Current focus is in: " +
+                                 withContext(Dispatchers.EDT) {
+                                   KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.javaClass ?: "null"
+                                 })
+              barriers[i].completeExceptionally(ex)
+              throw ex
+            }
+            barriers[i].complete(Unit)
           }
         }
 

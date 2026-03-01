@@ -22,7 +22,11 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.COLLECTION_SIZE;
 import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.CONSUMED_STREAM;
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SET;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;

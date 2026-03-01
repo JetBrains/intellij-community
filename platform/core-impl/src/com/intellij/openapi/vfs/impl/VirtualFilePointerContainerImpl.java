@@ -7,7 +7,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TraceableDisposable;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -23,9 +27,18 @@ import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal

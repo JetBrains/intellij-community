@@ -2,7 +2,7 @@
 package com.intellij.vcs.git.rpc
 
 import com.intellij.ide.ui.icons.IconId
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls

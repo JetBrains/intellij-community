@@ -16,7 +16,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
 import java.util.List;
 
 import static com.intellij.tasks.gitlab.GitlabRepository.UNSPECIFIED_PROJECT;

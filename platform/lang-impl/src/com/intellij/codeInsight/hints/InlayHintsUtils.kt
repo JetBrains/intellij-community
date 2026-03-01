@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.codeVision.CodeVisionState
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
+import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
+import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
@@ -17,7 +21,11 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
@@ -172,7 +180,7 @@ object InlayHintsUtils {
     )
 
   /**
-   * Function updates list of old presentations with a new list, taking into account priorities.
+   * Function updates the list of old presentations with a new list, taking into account priorities.
    * Both lists must be sorted.
    *
    * @return list of updated constrained presentations
@@ -307,8 +315,8 @@ object InlayHintsUtils {
       else {
         // In tests [computeCodeVision] is executed in sync mode on EDT
         assert(ApplicationManager.getApplication().isUnitTestMode)
-        return ReadAction.compute<CodeVisionState, Throwable> {
-          return@compute computable.invoke()
+        return ReadAction.computeBlocking<CodeVisionState, Throwable> {
+          computable.invoke()
         }
       }
     }

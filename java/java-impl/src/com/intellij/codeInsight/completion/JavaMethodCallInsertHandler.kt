@@ -6,8 +6,14 @@ import com.intellij.codeInsight.TailTypes
 import com.intellij.codeInsight.completion.JavaMethodCallElement.areParameterTemplatesEnabledOnCompletion
 import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.needParameterHints
 import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.showParameterHints
-import com.intellij.codeInsight.completion.method.*
+import com.intellij.codeInsight.completion.method.DiamondInsertHandler
+import com.intellij.codeInsight.completion.method.FrontendFriendlyParenthesesInsertHandler
+import com.intellij.codeInsight.completion.method.JavaMethodCallInsertHandlerHelper
 import com.intellij.codeInsight.completion.method.JavaMethodCallInsertHandlerHelper.findInsertedCall
+import com.intellij.codeInsight.completion.method.MethodCallInstallerHandler
+import com.intellij.codeInsight.completion.method.NegationInsertHandler
+import com.intellij.codeInsight.completion.method.RefStartInsertHandler
+import com.intellij.codeInsight.completion.serialization.InsertHandlerSerializer
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase
 import com.intellij.codeInsight.hint.ShowParameterInfoContext
@@ -21,7 +27,15 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiCodeFragment
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
@@ -63,7 +77,7 @@ public class JavaMethodCallInsertHandler(
    * It is expected that the element is fully set up and ready for insertion.
    */
   item: JavaMethodCallElement,
-) : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
+) : InsertHandler<JavaMethodCallElement> {
 
   /**
    * tracks the start offset of the reference, needs movableToRight=true to correctly handle insertion of a qualifier
@@ -86,15 +100,18 @@ public class JavaMethodCallInsertHandler(
     myHandlers.forEach { it.handleInsert(context, item) }
   }
 
-  public override fun asFrontendFriendly(): FrontendFriendlyInsertHandler? {
-    val convertedChildren = myHandlers
-      .mapNotNull { child -> child.asFrontendFriendly() }
+  internal class Converter : InsertHandlerToFrontendFriendlyConverter<JavaMethodCallInsertHandler> {
+    override fun toDescriptor(target: JavaMethodCallInsertHandler): FrontendFriendlyInsertHandler? {
+      val convertedChildren = target.myHandlers.mapNotNull { child ->
+        InsertHandlerSerializer.toDescriptor(child)
+      }
 
-    if (convertedChildren.size != myHandlers.size) return null
+      if (convertedChildren.size != target.myHandlers.size) return null
 
-    val operational = convertedChildren.filterNot { it is NoOpFrontendFriendlyInsertHandler }
+      val operational = convertedChildren.filterNot { it is NoOpFrontendFriendlyInsertHandler }
 
-    return CompositeFrontendFriendlyInsertHandler("JavaMethodCallInsertHandler#frontendFriendly", operational)
+      return CompositeFrontendFriendlyInsertHandler("JavaMethodCallInsertHandler#frontendFriendly", operational)
+    }
   }
 
   public companion object {
@@ -196,24 +213,28 @@ private fun createDiamondInsertHandler(item: JavaMethodCallElement): InsertHandl
 private class MethodCallParenthesesInsertHandler private constructor(
   private val hasParameters: Boolean,
   private val hasTailType: Boolean,
-) : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
+  private val isVoidMethod: Boolean,
+) : InsertHandler<JavaMethodCallElement> {
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
     val method = item.getObject()
     val allItems = context.elements
     val hasParams = if (hasParameters) MethodParenthesesHandler.overloadsHaveParameters(allItems, method) else ThreeState.NO
-    FrontendFriendlyParenthesesInsertHandler.insertParenthesesForJavaMethod(item, context, hasParams)
+    FrontendFriendlyParenthesesInsertHandler.insertParenthesesForJavaMethod(item, context, hasParams, isVoidMethod)
   }
 
-  override fun asFrontendFriendly(): FrontendFriendlyInsertHandler? {
-    if (hasTailType) return null
-    return FrontendFriendlyParenthesesInsertHandler(hasParameters)
+  class Converter : InsertHandlerToFrontendFriendlyConverter<MethodCallParenthesesInsertHandler> {
+    override fun toDescriptor(target: MethodCallParenthesesInsertHandler): FrontendFriendlyInsertHandler? {
+      if (target.hasTailType) return null
+      return FrontendFriendlyParenthesesInsertHandler(target.hasParameters, target.isVoidMethod)
+    }
   }
 
   companion object {
     fun create(item: JavaMethodCallElement): InsertHandler<JavaMethodCallElement> {
       val method = item.getObject()
       val hasTailType = item.tailType != TailTypes.unknownType()
-      return MethodCallParenthesesInsertHandler(!method.parameterList.isEmpty, hasTailType)
+      val isVoidMethod = method.returnType == PsiTypes.voidType()
+      return MethodCallParenthesesInsertHandler(!method.parameterList.isEmpty, hasTailType, isVoidMethod)
     }
   }
 }
@@ -350,16 +371,18 @@ private class ShowParameterInfoInsertHandler : InsertHandler<JavaMethodCallEleme
   }
 }
 
-private class MethodCallRegistrationHandler : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
+private class MethodCallRegistrationHandler : InsertHandler<JavaMethodCallElement> {
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
     val method = item.getObject()
     val methodCall = findInsertedCall(item, context) ?: return
     CompletionMemory.registerChosenMethod(method, methodCall)
   }
 
-  override fun asFrontendFriendly(): FrontendFriendlyInsertHandler {
-    //TODO IJPL-207762 registering functionality is off on frontend, can be implemented separately if needed
-    return NoOpFrontendFriendlyInsertHandler
+  class Converter : InsertHandlerToFrontendFriendlyConverter<MethodCallRegistrationHandler> {
+    override fun toDescriptor(target: MethodCallRegistrationHandler): FrontendFriendlyInsertHandler? {
+      //TODO IJPL-207762 registering functionality is off on frontend, can be implemented separately if needed
+      return NoOpFrontendFriendlyInsertHandler
+    }
   }
 }
 

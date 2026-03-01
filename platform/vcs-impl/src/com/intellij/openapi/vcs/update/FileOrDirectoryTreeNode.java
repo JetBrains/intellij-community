@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,17 +60,19 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
 
   @Override
   public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
-    if (!getFilePointer().isValid()) {
-      AbstractTreeNode parent = (AbstractTreeNode)getParent();
-      if (parent != null && parent.getSupportsDeletion()) {
-        getTreeModel().removeNodeFromParent(this);
-      }
-      else {
-        if (getTree() != null) {
-          getTree().repaint();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!getFilePointer().isValid()) {
+        AbstractTreeNode parent = (AbstractTreeNode)getParent();
+        if (parent != null && parent.getSupportsDeletion()) {
+          getTreeModel().removeNodeFromParent(this);
+        }
+        else {
+          if (getTree() != null) {
+            getTree().repaint();
+          }
         }
       }
-    }
+    });
   }
 
   @Override

@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetAsVirtualFile;
+import com.intellij.facet.FacetFinder;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetRootsProvider;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;

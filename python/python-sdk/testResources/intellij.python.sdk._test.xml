@@ -2,5 +2,8 @@
   <dependencies>
     <module name="intellij.python.sdk"/>
     <module name="intellij.libraries.junit5"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.junit4"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

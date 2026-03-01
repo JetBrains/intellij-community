@@ -21,7 +21,8 @@ class PGSchema(dbschema.DBSchema):
 class PGTranslator(SQLTranslator):
     dialect: ClassVar[str]
 
-class PGValue(Value): ...
+class PGValue(Value):
+    __slots__: list[str] = []
 
 class PGSQLBuilder(SQLBuilder):
     dialect: ClassVar[str]

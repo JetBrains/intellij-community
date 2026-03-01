@@ -1,13 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,27 +26,27 @@ public final class MavenServerConfigUtil {
     }
     File baseDir = MavenServerUtil.findMavenBasedir(nestedProjectDir);
 
-    return getMavenAndJvmConfigPropertiesForBaseDir(baseDir);
+    return getMavenAndJvmConfigPropertiesForBaseDir(baseDir.toPath());
   }
 
-  public static Map<String, String> getMavenAndJvmConfigPropertiesForBaseDir(File baseDir) {
+  public static Map<String, String> getMavenAndJvmConfigPropertiesForBaseDir(Path baseDir) {
     Map<String, String> result = new HashMap<>();
     readConfigFiles(baseDir, result);
     return result.isEmpty() ? Collections.emptyMap() : result;
   }
 
   @VisibleForTesting
-  public static void readConfigFiles(File baseDir, Map<String, String> result) {
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result, "");
-    readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result, "true");
+  public static void readConfigFiles(Path baseDir, Map<String, String> result) {
+    readConfigFile(baseDir, ".mvn/jvm.config", result, "");
+    readConfigFile(baseDir, ".mvn/maven.config", result, "true");
   }
 
-  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result, String valueIfMissing) {
-    File configFile = new File(baseDir, relativePath);
+  private static void readConfigFile(Path baseDir, String relativePath, Map<String, String> result, String valueIfMissing) {
+    Path configFile = baseDir.resolve(relativePath);
 
-    if (configFile.exists() && configFile.isFile()) {
+    if (Files.isRegularFile(configFile)) {
       try {
-        String text = FileUtilRt.loadFile(configFile, "UTF-8");
+        String text = String.join("\n", Files.readAllLines(configFile, StandardCharsets.UTF_8));
         Matcher matcher = PROPERTY_PATTERN.matcher(text);
         while (matcher.find()) {
           if (matcher.group(1) != null) {

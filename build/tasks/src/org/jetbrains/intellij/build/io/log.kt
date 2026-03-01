@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.io
 
 import java.lang.System.Logger
-import java.util.*
+import java.util.ResourceBundle
 
 fun Logger.error(message: String) {
   log(Logger.Level.ERROR, null as ResourceBundle?, message)

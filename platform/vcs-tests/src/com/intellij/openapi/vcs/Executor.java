@@ -46,7 +46,7 @@ public final class Executor {
   }
 
   public static void cd(@NotNull String relativeOrAbsolutePath) {
-    if (relativeOrAbsolutePath.startsWith("/") || relativeOrAbsolutePath.charAt(1) == ':') {
+    if (relativeOrAbsolutePath.startsWith("/") || relativeOrAbsolutePath.charAt(1) == ':' || relativeOrAbsolutePath.startsWith("\\\\")) {
       cdAbs(relativeOrAbsolutePath);
     }
     else {

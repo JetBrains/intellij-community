@@ -17,7 +17,10 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.psi.PsiFile
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,6 +29,7 @@ import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -65,7 +69,13 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
             return@launch
           }
 
-          val downloadResult = manager.downloadArtifacts(mavenProjects, artifacts, true, false)
+          val downloadResult = manager.downloadArtifacts(
+            MavenDownloadSourcesRequest.builder()
+              .forProjects(mavenProjects)
+              .forArtifacts(artifacts)
+              .withSources()
+              .build()
+          )
 
           withContext(Dispatchers.EDT) {
             if (!downloadResult.unresolvedSources.isEmpty()) {
@@ -143,9 +153,18 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
   private fun getMavenProjects(psiFile: PsiFile): Collection<MavenProject> {
     val project = psiFile.getProject()
     val result: MutableCollection<MavenProject> = ArrayList()
-    for (each in ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(psiFile.getVirtualFile())) {
-      val mavenProject = MavenProjectsManager.getInstance(project).findProject(each.getOwnerModule())
-      if (mavenProject != null) result.add(mavenProject)
+    val currentSnapshot = WorkspaceModel.getInstance(project).currentSnapshot
+    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
+    if (!mavenProjectsManager.isInitialized) return emptyList()
+
+    val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
+    val libsAndSdks = fileIndex.findContainingLibraries(psiFile.getVirtualFile()) + fileIndex.findContainingSdks(psiFile.getVirtualFile())
+
+    for (entity in libsAndSdks) {
+      currentSnapshot.referrers(entity.symbolicId, ModuleEntity::class.java)
+        .mapNotNull { it.findModule(currentSnapshot) }
+        .mapNotNull { mavenProjectsManager.findProject(it) }
+        .toCollection(result)
     }
     return result
   }

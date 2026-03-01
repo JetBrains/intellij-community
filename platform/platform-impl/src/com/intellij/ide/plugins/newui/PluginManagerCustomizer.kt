@@ -7,7 +7,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -39,6 +38,11 @@ interface PluginManagerCustomizer {
     updateModel: PluginUiModel?,
     modalityState: ModalityState,
   ): UpdateButtonCustomizationModel?
+
+  suspend fun getUninstallButtonCustomizationModel(
+    pluginModelFacade: PluginModelFacade,
+    pluginModel: PluginUiModel,
+  ): UninstallButtonCustomizationModel?
 
   fun updateAfterModification(updateUi: () -> Unit)
 
@@ -86,5 +90,10 @@ data class OptionsButonCustomizationModel(
 
 @ApiStatus.Internal
 data class UpdateButtonCustomizationModel(
+  val action: () -> Unit,
+)
+
+@ApiStatus.Internal
+data class UninstallButtonCustomizationModel(
   val action: () -> Unit,
 )

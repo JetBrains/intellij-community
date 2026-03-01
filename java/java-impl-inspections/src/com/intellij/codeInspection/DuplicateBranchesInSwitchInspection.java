@@ -11,7 +11,49 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiCaseLabelElement;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiQualifiedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeTestPattern;
+import com.intellij.psi.PsiUnaryExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.PsiYieldStatement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -32,9 +74,19 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -122,9 +174,86 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
                 registerProblem(otherBranch, otherBranch.getCaseBranchMessage(), state, fix);
               }
             }
+            state = canDominateAndJoin(branch, otherBranch);
+            if (state != LevelType.NO) {
+              isDuplicate[otherIndex] = true;
+              PsiSwitchLabelStatementBase otherLabel = otherBranch.myFirstLabel;
+              LocalQuickFix fix = new DeleteRedundantRuleFix(SmartPointerManager.createPointer(otherLabel));
+              registerProblem(branch, branch.getCaseBranchMessage(), state, fix);
+            }
           }
         }
       }
+    }
+
+    @NotNull
+    private static LevelType canDominateAndJoin(@NotNull BranchBase<?> branch, @NotNull BranchBase<?> otherBranch) {
+      if (branch.isDefault() || otherBranch.isDefault()) return LevelType.NO;
+      if (branch.canFallThrough() || otherBranch.canFallThrough()) return LevelType.NO;
+      if (branch.isSimpleExit() != otherBranch.isSimpleExit() ||
+          branch.effectiveLength() != otherBranch.effectiveLength()) {
+        return LevelType.NO;
+      }
+      if (branch.effectiveLength() == 0) return LevelType.NO;
+      if (!branch.isNearby(otherBranch)) return LevelType.NO;
+      if (!(branch instanceof Rule branchRule)) return LevelType.NO;
+      if (!(otherBranch instanceof Rule otherBranchRule)) return LevelType.NO;
+      if (branchRule.myFirstLabel.getGuardExpression() != null) return LevelType.NO;
+      if (otherBranchRule.myFirstLabel.getGuardExpression() != null) return LevelType.NO;
+
+      PsiCaseLabelElementList branchList = branchRule.myFirstLabel.getCaseLabelElementList();
+      if (branchList == null) return LevelType.NO;
+      if (branchList.getElementCount() != 1) return LevelType.NO;
+      if (!(branchList.getElements()[0] instanceof PsiTypeTestPattern branchPattern) ||
+          branchPattern.getPatternVariable() == null) {
+        return LevelType.NO;
+      }
+
+      PsiCaseLabelElementList otherBranchList = otherBranchRule.myFirstLabel.getCaseLabelElementList();
+      if (otherBranchList == null) return LevelType.NO;
+      if (otherBranchList.getElementCount() != 1) return LevelType.NO;
+      if (!(otherBranchList.getElements()[0] instanceof PsiTypeTestPattern otherBranchPattern) ||
+          otherBranchPattern.getPatternVariable() == null) {
+        return LevelType.NO;
+      }
+
+      if (!JavaPsiPatternUtil.dominates(otherBranchPattern, branchPattern)) return LevelType.NO;
+
+      Match match = isRuleDuplicate(branchRule, otherBranchRule, branchPattern, otherBranchPattern);
+      if (match == null) return LevelType.NO;
+
+      Match otherMatch = isRuleDuplicate(otherBranchRule, branchRule, otherBranchPattern, branchPattern);
+      if (otherMatch == null) return LevelType.NO;
+
+      if (!ReturnValue.areEquivalent(match.getReturnValue(), otherMatch.getReturnValue())) return LevelType.NO;
+
+      if (!Arrays.equals(branch.myCommentTexts, otherBranch.myCommentTexts)) {
+        return LevelType.INFO;
+      }
+      return LevelType.WARN;
+    }
+
+    private static @Nullable Match isRuleDuplicate(@NotNull Rule branchRule,
+                                                   @NotNull Rule otherBranchRule,
+                                                   @NotNull PsiTypeTestPattern branchPattern,
+                                                   @NotNull PsiTypeTestPattern otherBranchPattern) {
+      PsiPatternVariable patternVariable = branchPattern.getPatternVariable();
+      if (patternVariable == null) return null;
+      PsiPatternVariable otherPatternVariable = otherBranchPattern.getPatternVariable();
+      if (otherPatternVariable == null) return null;
+      DuplicatesFinder finder = createFinder(branchRule.myStatements, List.of(patternVariable));
+      Match match = finder.isDuplicate(otherBranchRule.myStatements[0], true);
+      if (match == null) return null;
+      List<PsiElement> values = match.getParameterValues(patternVariable);
+      if (values != null) {
+        for (PsiElement value : values) {
+          if (!(value instanceof PsiReferenceExpression referenceExpression &&
+                referenceExpression.resolve() == otherPatternVariable)) {
+            return null;
+          }
+        }
+      }
+      return match;
     }
 
     private void highlightDefaultDuplicate(@NotNull BranchBase<?> branch, BranchBase<?> defaultBranch, LevelType state) {
@@ -666,7 +795,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
         if (thisGuard != null) {
           //IDEA always moves to upper position, so it cannot be dominated
-          return createFinder(new PsiElement[]{thisGuard}).isDuplicate(otherGuard, true) != null;
+          return createFinder(new PsiElement[]{thisGuard}, Collections.emptyList()).isDuplicate(otherGuard, true) != null;
         }
       }
 
@@ -729,8 +858,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     int effectiveLength() {
-      return myStatements.length == 1 && myStatements[0] instanceof PsiBlockStatement blockStatement 
-             ? blockStatement.getCodeBlock().getStatementCount() 
+      return myStatements.length == 1 && myStatements[0] instanceof PsiBlockStatement blockStatement
+             ? blockStatement.getCodeBlock().getStatementCount()
              : myStatements.length;
     }
 
@@ -745,22 +874,24 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     abstract @Nullable LocalQuickFix mergeWithDefaultFix(BranchBase<?> defaultBranch);
 
     @Nullable
-    Match match(BranchBase<?> other) {
+    Match match(@NotNull BranchBase<?> other) {
       return getFinder().isDuplicate(other.myStatements[0], true);
     }
 
     private @NotNull DuplicatesFinder getFinder() {
       if (myFinder == null) {
-        myFinder = createFinder(myStatements);
+        myFinder = createFinder(myStatements, Collections.emptyList());
       }
       return myFinder;
     }
 
-    @InspectionMessage String getCaseBranchMessage() {
+    @InspectionMessage
+    String getCaseBranchMessage() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.message");
     }
 
-    @InspectionMessage String getDefaultBranchMessage() {
+    @InspectionMessage
+    String getDefaultBranchMessage() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.default.message");
     }
 
@@ -860,11 +991,12 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       .flatMap(t -> t != null ? Arrays.stream(t.getElements()) : Stream.empty()).anyMatch(e -> e instanceof PsiPattern);
   }
 
-  private static @NotNull DuplicatesFinder createFinder(PsiElement @NotNull [] elements) {
+  private static @NotNull DuplicatesFinder createFinder(PsiElement @NotNull [] elements,
+                                                        @NotNull List<@NotNull PsiVariable> variables) {
     Project project = elements[0].getProject();
-    InputVariables noVariables =
-      new InputVariables(Collections.emptyList(), project, new LocalSearchScope(elements), false, Collections.emptySet());
-    return new DuplicatesFinder(elements, noVariables, null, Collections.emptyList());
+    InputVariables inputVariables =
+      new InputVariables(variables, project, new LocalSearchScope(elements), false, Collections.emptySet());
+    return new DuplicatesFinder(elements, inputVariables, null, Collections.emptyList());
   }
 
   private static class Branch extends BranchBase<PsiSwitchLabelStatement> {
@@ -935,7 +1067,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         return false;
       }
       if (myGuardExpression != null) {
-        return createFinder(new PsiElement[]{myGuardExpression}).isDuplicate(otherGuardExpression, true) != null;
+        return createFinder(new PsiElement[]{myGuardExpression}, Collections.emptyList()).isDuplicate(otherGuardExpression, true) != null;
       }
       return true;
     }
@@ -1176,6 +1308,18 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
   private static class DeleteRedundantRuleFix extends PsiUpdateModCommandQuickFix {
 
+    @Nullable
+    private final SmartPsiElementPointer<PsiSwitchLabelStatementBase> mergeWith;
+
+    private DeleteRedundantRuleFix(@Nullable SmartPsiElementPointer<PsiSwitchLabelStatementBase> with) {
+      mergeWith = with;
+    }
+
+    private DeleteRedundantRuleFix() {
+      this(null);
+    }
+
+
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message("inspection.duplicate.branches.in.switch.delete.fix.name");
@@ -1189,7 +1333,14 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       RuleFixContext context = new RuleFixContext();
-      if (context.prepare(element, Rule::isDefault)) {
+      PsiSwitchLabelStatementBase ruleMergeWith = null;
+      if (mergeWith != null) {
+        PsiSwitchLabelStatementBase originalMergeWith = mergeWith.getElement();
+        ruleMergeWith = PsiTreeUtil.findSameElementInCopy(originalMergeWith, element.getContainingFile());
+      }
+      PsiSwitchLabelStatementBase finalRuleMergeWith = ruleMergeWith;
+      if (context.prepare(element, rule -> rule.isDefault() ||
+                                           finalRuleMergeWith != null && finalRuleMergeWith == rule.myFirstLabel)) {
         context.deleteRedundantComments();
         context.deleteRule();
       }
@@ -1230,7 +1381,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
           }
         }
       }
-      if(myRuleToMergeWith == null) return false;
+      if (myRuleToMergeWith == null) return false;
       myCommentsToMergeWith = Set.of(myRuleToMergeWith.myCommentTexts);
       return true;
     }

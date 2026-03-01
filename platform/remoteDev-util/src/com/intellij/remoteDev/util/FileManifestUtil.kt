@@ -14,11 +14,29 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.function.BiConsumer
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.fileSize
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.isSymbolicLink
+import kotlin.io.path.name
+import kotlin.io.path.notExists
+import kotlin.io.path.readText
+import kotlin.io.path.relativeTo
+import kotlin.io.path.relativeToOrNull
+import kotlin.io.path.setAttribute
+import kotlin.io.path.writeText
 import com.intellij.util.io.Decompressor.Entry.Type as EntryType
 
 @ApiStatus.Experimental

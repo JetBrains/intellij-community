@@ -26,7 +26,7 @@ import javax.swing.JComponent
 
 private const val PROMO_DISMISSED_KEY = "git.editor.promo.dismissed"
 
-private class GitEditorPromo : EditorNotificationProvider, DumbAware {
+internal class GitEditorPromo : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (!isEnabled() || !CommandLineWaitingManager.getInstance().hasHookFor(file) || file.name != GitRepositoryFiles.COMMIT_EDITMSG) {
       return null

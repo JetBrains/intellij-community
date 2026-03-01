@@ -11,8 +11,11 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import javax.swing.SwingConstants;
+import java.awt.Component;
 
 public final class PlatformModuleRendererFactory extends ModuleRendererFactory {
 

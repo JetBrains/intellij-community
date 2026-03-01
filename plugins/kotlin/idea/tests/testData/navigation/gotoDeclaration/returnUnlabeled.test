@@ -1,0 +1,30 @@
+// FILE: before.kt
+// IGNORE_K1
+inline fun test(f: () -> Unit) {
+    f()
+}
+
+fun main(args: Array<String>) {
+    test {
+        if (true) {
+            <caret>return
+        }
+    }
+
+    println("Some code")
+}
+// FILE: after.kt
+// IGNORE_K1
+inline fun test(f: () -> Unit) {
+    f()
+}
+
+fun <caret>main(args: Array<String>) {
+    test {
+        if (true) {
+            return
+        }
+    }
+
+    println("Some code")
+}

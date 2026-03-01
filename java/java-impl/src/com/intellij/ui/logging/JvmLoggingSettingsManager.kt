@@ -3,7 +3,12 @@ package com.intellij.ui.logging
 
 import com.intellij.lang.logging.JvmLoggerFieldDelegate
 import com.intellij.lang.logging.UnspecifiedLogger
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 
 @Service(Service.Level.PROJECT)
 @State(name = "JvmLoggingSettingsStorage",

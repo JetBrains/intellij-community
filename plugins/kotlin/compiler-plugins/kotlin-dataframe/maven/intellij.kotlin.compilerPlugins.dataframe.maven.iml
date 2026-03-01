@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
     <orderEntry type="module" module-name="intellij.kotlin.base.jps" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
 </module>

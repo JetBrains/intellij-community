@@ -12,7 +12,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.osFamily
 import com.intellij.util.io.BaseOutputReader
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
@@ -182,6 +182,6 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     return text
   }
 
-  private fun String.getPathPlatform(): EelOsFamily = Path.of(this).getEelDescriptor().osFamily
+  private fun String.getPathPlatform(): EelOsFamily = Path.of(this).osFamily
 
 }

@@ -3,15 +3,29 @@ package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.DifferentiateContext;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.util.Pair;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.asIterable;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.recurse;
 
 /**
  * This class provides implementation common to all jvm strategies
@@ -205,7 +219,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
 
   protected void affectStaticMemberOnDemandUsages(DifferentiateContext context, JvmNodeReferenceID clsId, Iterable<JvmNodeReferenceID> propagated) {
     affectUsages(
-      context, "static member on-demand import usage",
+      context, "static member on-demand import",
       flat(asIterable(clsId), propagated),
       id -> new ImportStaticOnDemandUsage(id),
       null
@@ -223,13 +237,15 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
 
   protected void affectUsages(DifferentiateContext context, String usageKind, Iterable<JvmNodeReferenceID> usageOwners, Function<? super JvmNodeReferenceID, ? extends Usage> usageFactory, @Nullable Predicate<Node<?, ?>> constraint) {
     for (JvmNodeReferenceID id : usageOwners) {
+      Usage usage = usageFactory.apply(id);
       if (constraint != null) {
-        context.affectUsage(usageFactory.apply(id), constraint);
+        context.affectUsage(usage, constraint);
       }
       else {
-        context.affectUsage(usageFactory.apply(id));
+        context.affectUsage(usage);
       }
-      debug(context, "Affect ", usageKind, " usage owned by node '", id.getNodeName(), "'");
+      String usageOwnerName = usage.getElementOwner() instanceof JvmNodeReferenceID? ((JvmNodeReferenceID) usage.getElementOwner()).getNodeName() : usage.getElementOwner().toString();
+      debug(context, "Affect ", usageKind, " usage owned by '", usageOwnerName, "' ", "(node '", id.getNodeName(), "')");
     }
   }
 

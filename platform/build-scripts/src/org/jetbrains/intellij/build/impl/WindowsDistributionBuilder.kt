@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
-import com.intellij.platform.util.coroutines.mapConcurrent
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
@@ -29,6 +28,7 @@ import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
+import org.jetbrains.intellij.build.impl.languageServer.generateLspServerLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
@@ -48,6 +48,7 @@ import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.transformFile
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.intellij.build.productLayout.util.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.InputStream
@@ -57,6 +58,7 @@ import java.nio.file.StandardCopyOption
 import java.time.LocalDate
 import java.util.Arrays
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.fileSize
@@ -79,41 +81,49 @@ internal class WindowsDistributionBuilder(
     get() = WindowsLibcImpl.DEFAULT
 
   override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
-    val distBinDir = targetPath.resolve("bin")
     withContext(Dispatchers.IO) {
-      val sourceBinDir = context.paths.communityHomeDir.resolve("bin/win")
+      val distBinDir = targetPath.resolve("bin").createDirectories()
+      writeVmOptions(distBinDir)
 
-      copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
+      context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
+        val sourceBinDir = context.paths.communityHomeDir.resolve("bin/win")
 
-      copyDir(sourceBinDir, distBinDir, dirFilter = { it == sourceBinDir })
+        copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
+        copyDir(sourceBinDir, distBinDir, dirFilter = { it == sourceBinDir })
 
-      copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
+        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
 
-      generateBuildTxt(targetPath, context)
-      copyDistFiles(targetPath, OsFamily.WINDOWS, arch, WindowsLibcImpl.DEFAULT, context)
+        createFrontendContextForLaunchers(context)?.let { clientContext ->
+          writeWindowsVmOptions(distBinDir, clientContext)
+          buildWinLauncher(winDistPath = targetPath, arch = arch, copyLicense = false, customizer = customizer, context = clientContext)
+        }
+
+        if (customizer.includeBatchLaunchers) {
+          generateScripts(distBinDir, arch, context)
+        }
+      }
+
+      generateBuildTxt(targetDirectory = targetPath, context = context)
+      copyDistFiles(newDir = targetPath, os = OsFamily.WINDOWS, arch = arch, libcImpl = WindowsLibcImpl.DEFAULT, context = context)
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))
 
-      Files.copy(computeIcoPath(context), distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
-
-      if (customizer.includeBatchLaunchers) {
-        generateScripts(distBinDir, arch, context)
+      if (context.options.isLanguageServer) {
+        // no icon
+      }
+      else {
+        val icoFile = locateIcoFileForWindowsLauncher(customizer, context)
+        Files.copy(icoFile, distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
       }
 
-      writeVmOptions(distBinDir)
-
-      buildWinLauncher(winDistPath = targetPath, arch = arch, copyLicense = true, context = context)
-
-      createFrontendContextForLaunchers(context)?.let { clientContext ->
-        writeWindowsVmOptions(distBinDir, clientContext)
-        buildWinLauncher(winDistPath = targetPath, arch = arch, copyLicense = false, context = clientContext)
-      }
+      buildWinLauncher(winDistPath = targetPath, arch = arch, copyLicense = true, customizer = customizer, context = context)
 
       customizer.copyAdditionalFiles(targetPath, arch, context)
     }
 
     context.executeStep(spanBuilder("sign windows"), BuildOptions.WIN_SIGN_STEP) {
       val binFiles = withContext(Dispatchers.IO) {
+        val distBinDir = targetPath.resolve("bin")
         Files.walk(distBinDir, Int.MAX_VALUE).use { stream ->
           stream.filter { it.extension in setOf("exe", "dll", "ps1") && Files.isRegularFile(it) }.toList()
         }
@@ -134,14 +144,6 @@ internal class WindowsDistributionBuilder(
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     val runtimeDir = context.bundledRuntime.extract(OsFamily.WINDOWS, arch, WindowsLibcImpl.DEFAULT)
 
-    val vcRtDll = runtimeDir.resolve("jbr/bin/msvcp140.dll")
-    check(Files.exists(vcRtDll)) {
-      "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
-      "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
-      "If DLL was relocated to another place, please correct the path in this code."
-    }
-    copyFileToDir(vcRtDll, osAndArchSpecificDistPath.resolve("bin"))
-
     val (zipWithJbrPath, exePath) = context.executeStep(spanBuilder("build Windows artifacts"), stepId = BuildOptions.WINDOWS_ARTIFACTS_STEP) {
       var zipWithJbrPath: Path? = null
       var exePath: Path? = null
@@ -151,7 +153,14 @@ internal class WindowsDistributionBuilder(
       if (customizer.buildZipArchiveWithBundledJre && !context.isStepSkipped(BuildOptions.WINDOWS_ZIP_STEP)) {
         val zipNameSuffix = suffix(arch) + customizer.zipArchiveWithBundledJreSuffix
         launch(Dispatchers.IO + CoroutineName("build Windows ${zipNameSuffix}.zip distribution")) {
-          zipWithJbrPath = createBuildWinZipTask(runtimeDir, zipNameSuffix, osAndArchSpecificDistPath, arch, customizer, context)
+          zipWithJbrPath = createBuildWinZipTask(
+            runtimeDir = runtimeDir,
+            zipNameSuffix = zipNameSuffix,
+            winDistPath = osAndArchSpecificDistPath,
+            arch = arch,
+            customizer = customizer,
+            context = context,
+          )
         }
       }
 
@@ -164,7 +173,7 @@ internal class WindowsDistributionBuilder(
 
       context.executeStep(spanBuilder("build Windows installer").setAttribute("arch", arch.dirName), BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
         val productJsonDir = Files.createTempDirectory(context.paths.tempDir, "win-product-info")
-        val productJsonFile = writeProductJsonFile(productJsonDir, arch, context, withRuntime = true)
+        val productJsonFile = writeProductJsonFile(productJsonDir, arch, withRuntime = true, context)
         val installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
         validateProductJson(jsonText = productJsonFile.readText(), installationDirectories, installationArchives = emptyList(), context)
         launch(Dispatchers.IO + CoroutineName("build Windows ${arch.dirName} installer")) {
@@ -198,7 +207,7 @@ internal class WindowsDistributionBuilder(
   }
 
   override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path {
-    return writeProductJsonFile(targetDir = targetDir, arch = arch, context = context, withRuntime = true)
+    return writeProductJsonFile(targetDir = targetDir, arch = arch, withRuntime = true, context = context)
   }
 
   override fun writeVmOptions(distBinDir: Path): Path = writeWindowsVmOptions(distBinDir, context)
@@ -228,7 +237,7 @@ private fun generateScripts(distBinDir: Path, arch: JvmArchitecture, context: Bu
   val classPathJars = context.bootClassPathJarNames
   var classPath = ""
   for (jar in classPathJars) {
-    classPath += "\nECHO|SET /P=\"\"%IDE_HOME:\\=/%/lib/${jar};\"\" >> \"%ARG_FILE%\""
+    classPath += "\nECHO|SET /P=\"\"%IDE_HOME:\\=/%/lib/${jar}\";\" >> \"%ARG_FILE%\""
   }
 
   val additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isScript = true)
@@ -311,7 +320,7 @@ private suspend fun createBuildWinZipTask(
       }
 
       val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip${zipNameSuffix}")
-      val productJsonFile = writeProductJsonFile(productJsonDir, arch, context, withRuntime = runtimeDir != null)
+      val productJsonFile = writeProductJsonFile(productJsonDir, arch, withRuntime = runtimeDir != null, context)
       dirs.add(productJsonDir)
       copyFile(productJsonFile, targetFileProductInfoJson)
 
@@ -333,15 +342,23 @@ private suspend fun createBuildWinZipTask(
   return targetFile
 }
 
-private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture, copyLicense: Boolean, context: BuildContext) {
+private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture, copyLicense: Boolean, customizer: WindowsDistributionCustomizer, context: BuildContext) {
   spanBuilder("build Windows executable").use {
     val communityHome = context.paths.communityHomeDir
     val appInfo = context.applicationInfo
     val executableBaseName = "${context.productProperties.baseFileName}64"
     val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
-    val icoFile = computeIcoPath(context)
+    val icoFile =
+      if (context.options.isLanguageServer) null
+      else locateIcoFileForWindowsLauncher(customizer, context)
 
-    val productVersion = context.buildNumber.replace(".SNAPSHOT", ".0") + ".0".repeat(3 - context.buildNumber.count { it == '.' })
+    val productVersion = context.buildNumber
+      .replace(".SNAPSHOT", ".0")
+      .replace("-SNAPSHOT", ".0")
+      .let { version ->
+        version + ".0".repeat(3 - version.count { it == '.' })
+      }
+
     val launcherProperties = listOf(
       "CompanyName" to appInfo.companyName,
       "LegalCopyright" to "Copyright 2000-${LocalDate.now().year} ${appInfo.companyName}",
@@ -365,7 +382,7 @@ private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture, c
         execPath.absolutePathString(),
         "${communityHome}/native/XPlatLauncher/resources/windows/resource.h",
         launcherPropertiesPath.absolutePathString(),
-        icoFile.absolutePathString(),
+        icoFile?.absolutePathString() ?: "no-icon",
         outputPath.absolutePathString(),
       ),
       jvmArgs = listOf("-Djava.awt.headless=true"),
@@ -412,32 +429,42 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(
           Files.deleteIfExists(tempExe.resolve("bin/Uninstall.exe.nsis"))
           Files.deleteIfExists(tempExe.resolve("bin/Uninstall.exe"))
 
-          val extraInZip = ArrayList<String>()
-          val differ = ArrayList<String>()
-          ZipFile.Builder().setSeekableByteChannel(Files.newByteChannel(zipPath)).get().use { zipFile ->
+          val differences = ZipFile.Builder().setSeekableByteChannel(Files.newByteChannel(zipPath)).get().use { zipFile ->
             zipFile.entries.asSequence()
-              .filter { !it.isDirectory }.toList()
-              .mapConcurrent(Runtime.getRuntime().availableProcessors().coerceAtLeast(4)) { entry ->
+              .filter { !it.isDirectory }
+              .toList()
+              .mapConcurrent { entry ->
                 val entryPath = Path.of(entry.name)
                 val fileInExe = tempExe.resolve(entryPath)
-                if (!fileInExe.exists()) {
-                  extraInZip.add(entryPath.toString())
+                if (Files.notExists(fileInExe)) {
+                  entryPath.toString() to true
                 }
                 else {
-                  if (fileInExe.fileSize() != entry.size) {
-                    differ.add(entryPath.toString())
+                  val isDifferent = if (fileInExe.fileSize() != entry.size) {
+                    true
                   }
                   else if (entry.size < 2 * FileUtilRt.MEGABYTE) {
-                    if (!fileInExe.readBytes().contentEquals(zipFile.getInputStream(entry).readAllBytes())) {
-                      differ.add(entryPath.toString())
-                    }
+                    !fileInExe.readBytes().contentEquals(zipFile.getInputStream(entry).readAllBytes())
                   }
-                  else if (!compareStreams(fileInExe.inputStream().buffered(FileUtilRt.MEGABYTE), zipFile.getInputStream(entry).buffered(FileUtilRt.MEGABYTE))) {
-                    differ.add(entryPath.toString())
+                  else {
+                    !compareStreams(fileInExe.inputStream().buffered(FileUtilRt.MEGABYTE), zipFile.getInputStream(entry).buffered(FileUtilRt.MEGABYTE))
                   }
                   NioFiles.deleteRecursively(fileInExe)
+                  if (isDifferent) entryPath.toString() to false else null
                 }
               }
+              .filterNotNull()
+          }
+
+          val extraInZip = ArrayList<String>()
+          val differ = ArrayList<String>()
+          for ((entryPath, isOnlyInZip) in differences) {
+            if (isOnlyInZip) {
+              extraInZip.add(entryPath)
+            }
+            else {
+              differ.add(entryPath)
+            }
           }
 
           val extraInExe = Files.walk(tempExe)
@@ -474,26 +501,14 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(
   }
 }
 
-private fun computeIcoPath(context: BuildContext): Path {
-  val customizer = context.windowsDistributionCustomizer!!
-  val icoPath = (if (context.applicationInfo.isEAP) customizer.icoPathForEAP else null) ?: customizer.icoPath
-  requireNotNull(icoPath) { "`WindowsDistributionCustomizer#icoPath` must be set" }
-  return icoPath
-}
-
 private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
   val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
-  val vmOptions = VmOptionsGenerator.generate(context).asSequence()
-  VmOptionsGenerator.writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
+  val vmOptions = generateVmOptions(context).asSequence()
+  writeVmOptions(file = vmOptionsFile, vmOptions = vmOptions, separator = "\r\n")
   return vmOptionsFile
 }
 
-private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, context: BuildContext, withRuntime: Boolean): Path {
-  val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context) {
-    "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
-  }
-  val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.WINDOWS)
-  val stdioMcpRunnerLaunchData = generateStdioMcpRunnerLaunchData(context)
+private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean, context: BuildContext): Path {
   val json = generateProductInfoJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
@@ -507,7 +522,18 @@ private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture,
         bootClassPathJarNames = context.bootClassPathJarNames,
         additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
         mainClass = context.ideMainClassName,
-        customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData, stdioMcpRunnerLaunchData),
+        customCommands = when {
+          context.options.isLanguageServer -> listOf(
+            generateLspServerLaunchData(context)
+          )
+          else -> listOfNotNull(
+            generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context) {
+              "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
+            },
+            generateQodanaLaunchData(context, arch, OsFamily.WINDOWS),
+            generateStdioMcpRunnerLaunchData(context)
+          )
+        },
       )
     ),
     context

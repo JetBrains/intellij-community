@@ -2,7 +2,12 @@
 package com.intellij.html.embedding
 
 import com.intellij.embedding.EmbeddingElementType
-import com.intellij.lang.*
+import com.intellij.lang.ASTNode
+import com.intellij.lang.Language
+import com.intellij.lang.LighterASTNode
+import com.intellij.lang.LighterLazyParseableNode
+import com.intellij.lang.PsiBuilder
+import com.intellij.lang.PsiBuilderFactory
 import com.intellij.lexer.Lexer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LazyParseableElement

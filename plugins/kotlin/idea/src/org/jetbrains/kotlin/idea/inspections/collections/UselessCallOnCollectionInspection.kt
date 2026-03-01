@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.collections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.ReplaceSelectorOfQualifiedExpressionFix
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 // TODO: This inspection has been ported to K2 with an implementation that will also work for K1,
 //  but there is a bug in the analysis API preventing it from being used for both.
 //  Once KT-65376 is fixed, remove this class and use the shared implementation instead.
+@K1Deprecation
 class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     override val uselessFqNames = mapOf(
         "kotlin.collections.filterNotNull" to deleteConversion,

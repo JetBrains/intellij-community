@@ -12,7 +12,11 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsKey
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.VcsSharedChecker
 import com.intellij.openapi.vcs.changes.IgnoreSettingsType
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.IgnoredFileProvider
@@ -45,7 +49,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<GitIgnoreInStoreDirGenerator>()
 
-private class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
+internal class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!project.isDirectoryBased) {
       return
@@ -56,7 +60,7 @@ private class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
   }
 }
 
-private class GitIgnoreInStoreDirSharedChecker : VcsSharedChecker {
+internal class GitIgnoreInStoreDirSharedChecker : VcsSharedChecker {
 
   override fun getSupportedVcs(): VcsKey = GitVcs.getKey()
 

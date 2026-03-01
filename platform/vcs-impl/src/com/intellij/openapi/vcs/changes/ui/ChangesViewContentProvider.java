@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @see ChangesViewContentEP#className

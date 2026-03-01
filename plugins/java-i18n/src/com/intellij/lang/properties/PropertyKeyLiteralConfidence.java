@@ -3,6 +3,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -13,7 +14,7 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 
 public final class PropertyKeyLiteralConfidence extends CompletionConfidence {
   @Override
-  public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  public @NotNull ThreeState shouldSkipAutopopup(@NotNull Editor editor, @NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     if (DumbService.isDumb(psiFile.getProject())) return ThreeState.UNSURE;
 
     UInjectionHost injectionHost = UastContextKt.getUastParentOfType(contextElement.getParent(), UInjectionHost.class, false);

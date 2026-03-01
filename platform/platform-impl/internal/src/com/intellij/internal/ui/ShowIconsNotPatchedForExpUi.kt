@@ -12,7 +12,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.SystemProperties
 import javax.swing.JList
 
-private class ShowIconsNotPatchedForExpUi : DumbAwareAction("Show Icons Non Patched For ExpUI") {
+internal class ShowIconsNotPatchedForExpUi : DumbAwareAction("Show Icons Non Patched For ExpUI") {
   val isEnabled = SystemProperties.getBooleanProperty("ide.experimental.ui.dump.not.patched.icons", false)
 
   override fun actionPerformed(e: AnActionEvent) {

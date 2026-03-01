@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCaseLabelElement;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
@@ -16,7 +23,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.function.Function;
 
 public final class CreateMissingDeconstructionRecordClassBranchesFix extends CreateMissingSwitchBranchesFix {

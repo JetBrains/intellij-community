@@ -25,8 +25,12 @@
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
     <orderEntry type="module" module-name="intellij.java.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.backend" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />

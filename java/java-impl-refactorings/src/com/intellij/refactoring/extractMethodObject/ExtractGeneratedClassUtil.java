@@ -4,7 +4,24 @@ package com.intellij.refactoring.extractMethodObject;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,15 +31,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 final class ExtractGeneratedClassUtil {
-  private static final String GENERATED_CLASS_PACKAGE = "idea.debugger.rt";
   private static final Logger LOG = Logger.getInstance(ExtractGeneratedClassUtil.class);
 
   static PsiClass extractGeneratedClass(@NotNull PsiClass generatedInnerClass,
                                         @NotNull PsiElementFactory elementFactory,
-                                        @NotNull PsiElement anchor) {
+                                        @NotNull PsiElement anchor,
+                                        @Nullable String explicitGeneratedEvaluationClassFullName) {
     Project project = generatedInnerClass.getProject();
 
-    PsiClass extractedClass = elementFactory.createClass("GeneratedEvaluationClass");
+    if (explicitGeneratedEvaluationClassFullName == null) {
+      explicitGeneratedEvaluationClassFullName = "idea.debugger.rt.GeneratedEvaluationClass";
+    }
+
+    int dotIndex = explicitGeneratedEvaluationClassFullName.lastIndexOf('.');
+
+
+    String generatedEvaluationClass = dotIndex == -1 ? explicitGeneratedEvaluationClassFullName : explicitGeneratedEvaluationClassFullName.substring(dotIndex + 1);
+    String packageName = dotIndex == -1 ? "" : explicitGeneratedEvaluationClassFullName.substring(0, dotIndex);
+
+    PsiClass extractedClass = elementFactory.createClass(generatedEvaluationClass);
 
     for (PsiField field : generatedInnerClass.getAllFields()) {
       extractedClass.add(elementFactory.createFieldFromText(field.getText(), anchor)); // TODO: check if null is OK
@@ -34,9 +61,8 @@ final class ExtractGeneratedClassUtil {
 
     PsiJavaFile generatedFile = (PsiJavaFile)PsiFileFactory.getInstance(project)
       .createFileFromText(extractedClass.getName() + ".java", JavaFileType.INSTANCE, extractedClass.getContainingFile().getText());
-    // copy.getModificationStamp(),
-    //false, false);
-    generatedFile.setPackageName(GENERATED_CLASS_PACKAGE);
+
+    generatedFile.setPackageName(packageName);
     extractedClass = PsiTreeUtil.findChildOfType(generatedFile, PsiClass.class);
     copyStaticImports(generatedInnerClass, generatedFile, elementFactory);
     assert extractedClass != null;

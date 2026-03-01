@@ -1,9 +1,15 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.rpc"/>
   </dependencies>
+  <!-- endregion -->
   <actions>
     <action class="com.intellij.platform.execution.serviceView.frontend.SwitchServiceViewImplementationAction"
             id="ServiceView.SwitchImplementation"

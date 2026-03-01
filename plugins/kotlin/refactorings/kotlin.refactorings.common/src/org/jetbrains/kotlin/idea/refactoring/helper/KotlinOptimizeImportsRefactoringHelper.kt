@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.refactoring.helper
 
 import com.intellij.formatting.service.PostQuickFixTaskService
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator

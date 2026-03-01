@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -13,11 +14,12 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContextUtils
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getExplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class ReplaceAddWithPlusAssignIntention : SelfTargetingOffsetIndependentIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java,
     KotlinBundle.messagePointer("replace.with1")

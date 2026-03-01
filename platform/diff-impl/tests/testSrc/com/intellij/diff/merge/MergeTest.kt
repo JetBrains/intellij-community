@@ -1,10 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
-import com.intellij.diff.merge.MergeTestBase.SidesState.*
+import com.intellij.diff.merge.MergeTestBase.SidesState.BOTH
+import com.intellij.diff.merge.MergeTestBase.SidesState.LEFT
+import com.intellij.diff.merge.MergeTestBase.SidesState.NONE
+import com.intellij.diff.merge.MergeTestBase.SidesState.RIGHT
 import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.util.Side
-import com.intellij.diff.util.TextDiffType.*
+import com.intellij.diff.util.TextDiffType.CONFLICT
+import com.intellij.diff.util.TextDiffType.DELETED
+import com.intellij.diff.util.TextDiffType.INSERTED
+import com.intellij.diff.util.TextDiffType.MODIFIED
 import com.intellij.diff.util.ThreeSide
 import com.intellij.util.ui.UIUtil
 
@@ -960,6 +966,7 @@ class MergeTest : MergeTestBase() {
 
       viewer.textSettings.ignorePolicy = IgnorePolicy.IGNORE_WHITESPACES
       UIUtil.dispatchAllInvocationEvents()
+      viewer.waitWhileRediff()
       assertCantUndo()
 
       0.assertRange(0, 1, 0, 1, 0, 1)
@@ -978,6 +985,49 @@ class MergeTest : MergeTestBase() {
       2.assertResolved(BOTH)
       3.assertResolved(BOTH)
       4.assertResolved(BOTH)
+    }
+  }
+
+  fun testResetAll() {
+    fun doResetTest1(left: String = "a", base: String = "b", right: String = "c", beforeReset: TestBuilder.() -> Unit) =
+      doTest1(left, base, right) {
+        beforeReset()
+
+        resetAll()
+
+        assertChangesCount(1)
+        assertContent(base)
+        0.assertResolved(NONE)
+        0.assertRange(0, 1, 0, 1, 0, 1)
+      }
+
+    doResetTest1 { 0.apply(Side.LEFT) }
+    doResetTest1 { 0.apply(Side.RIGHT) }
+    doResetTest1 { 0.ignore(Side.LEFT) }
+    doResetTest1 { 0.ignore(Side.RIGHT) }
+
+    doResetTest1 {
+      0.apply(Side.LEFT)
+      0.apply(Side.RIGHT)
+    }
+
+    doResetTest1 {
+      0.ignore(Side.LEFT)
+      0.ignore(Side.RIGHT)
+    }
+
+    doResetTest1 {
+      0.ignore(Side.LEFT)
+      0.apply(Side.RIGHT)
+    }
+
+    doResetTest1 {
+      0.apply(Side.LEFT)
+      0.ignore(Side.RIGHT)
+    }
+
+    doResetTest1("y z", "x y z", "x y") {
+      0.resolve()
     }
   }
 }

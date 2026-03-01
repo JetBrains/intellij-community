@@ -9,10 +9,9 @@ import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.isResolvableInScope
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ControlFlow
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IMutableParameter

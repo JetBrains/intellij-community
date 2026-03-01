@@ -3,7 +3,13 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;

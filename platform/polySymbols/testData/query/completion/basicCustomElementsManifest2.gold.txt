@@ -4,7 +4,7 @@
   priority: NORMAL,
   source: {
    matchedName: "html/attributes/deprecated",
-   origin: "basic@null (<none>)",
+   origin: "basic (<none>)",
    complete: true,
    apiStatus: deprecated,
    priority: NORMAL,
@@ -21,7 +21,7 @@
   priority: NORMAL,
   source: {
    matchedName: "html/attributes/deprecatedWithMessage",
-   origin: "basic@null (<none>)",
+   origin: "basic (<none>)",
    complete: true,
    apiStatus: deprecated (<p>This is <b>old</b>!),
    priority: NORMAL,
@@ -38,7 +38,7 @@
   priority: NORMAL,
   source: {
    matchedName: "html/attributes/disabled",
-   origin: "basic@null (<none>)",
+   origin: "basic (<none>)",
    complete: true,
    priority: NORMAL,
    segments: [

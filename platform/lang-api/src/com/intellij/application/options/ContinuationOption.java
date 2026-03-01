@@ -9,7 +9,7 @@ import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
@@ -410,6 +410,17 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
     ThreadingAssertions.assertEventDispatchThread()
     reincludeSkippedItems(skippedUiQueue, uiQueue)
     reincludeSkippedItems(skippedWriteIntentQueue, writeIntentQueue)
+  }
+
+  fun purgeExpiredItems() {
+    ThreadingAssertions.assertEventDispatchThread()
+    synchronized(lockObject) {
+      skippedUiQueue.get().removeAll { it.isExpired.value(null) }
+      skippedWriteIntentQueue.get().removeAll { it.isExpired.value(null) }
+      writeIntentQueue.removeAll { it.isExpired.value(null) }
+      uiQueue.removeAll { it is RunnableInfo && it.isExpired.value(null) }
+      requestFlush()
+    }
   }
 
   /**

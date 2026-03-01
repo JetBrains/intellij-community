@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
+@K1Deprecation
 class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
     KotlinBundle.messagePointer("convert.to.raw.string.literal")

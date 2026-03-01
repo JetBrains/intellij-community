@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.api
 
 import com.intellij.collaboration.util.resolveRelative
-import git4idea.remote.hosting.HostedRepositoryCoordinates
 import com.intellij.openapi.util.NlsSafe
+import git4idea.remote.hosting.HostedRepositoryCoordinates
 import java.net.URI
 
 data class GHRepositoryCoordinates(override val serverPath: GithubServerPath,

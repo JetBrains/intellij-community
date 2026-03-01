@@ -10,7 +10,12 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.test.TargetBackend
 import java.io.File

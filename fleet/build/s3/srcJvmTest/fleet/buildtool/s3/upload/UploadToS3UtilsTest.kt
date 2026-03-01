@@ -1,22 +1,28 @@
 package fleet.buildtool.s3.upload
 
 import fleet.buildtool.s3.upload.FakeFleetS3Client.Call
+import kotlinx.coroutines.test.runTest
 import org.slf4j.helpers.NOPLogger
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.createTempDirectory
-import kotlin.io.path.deleteRecursively
-import kotlin.test.*
-import kotlinx.coroutines.test.runTest
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.createParentDirectories
+import kotlin.io.path.createTempDirectory
 import kotlin.io.path.createTempFile
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 class UploadToS3UtilsTest {
 

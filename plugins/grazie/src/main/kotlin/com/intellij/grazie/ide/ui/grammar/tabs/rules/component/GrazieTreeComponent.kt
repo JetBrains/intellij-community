@@ -18,7 +18,11 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.ui.*
+import com.intellij.ui.CheckboxTree
+import com.intellij.ui.CheckboxTreeListener
+import com.intellij.ui.CheckedTreeNode
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.TreeSpeedSearch
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus

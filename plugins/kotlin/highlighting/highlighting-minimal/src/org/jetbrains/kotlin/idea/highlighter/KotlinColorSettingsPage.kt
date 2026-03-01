@@ -15,10 +15,11 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import java.lang.reflect.Modifier
+import javax.swing.Icon
 
 class KotlinColorSettingsPage : ColorSettingsPage, RainbowColorSettingsPage {
-    override fun getLanguage() = KotlinLanguage.INSTANCE
-    override fun getIcon() = KotlinIcons.SMALL_LOGO
+    override fun getLanguage(): KotlinLanguage = KotlinLanguage.INSTANCE
+    override fun getIcon(): Icon = KotlinIcons.SMALL_LOGO
     override fun getHighlighter(): SyntaxHighlighter = KotlinHighlighter()
 
     override fun getDemoText(): String {
@@ -108,7 +109,7 @@ var <PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION><MUTABLE_VARIABLE>globalCounte
             if (Modifier.isStatic(field.modifiers)) {
                 try {
                     map[field.name] = field.get(null) as TextAttributesKey
-                } catch (e: IllegalAccessException) {
+                } catch (_: IllegalAccessException) {
                     assert(false)
                 }
 
@@ -197,7 +198,6 @@ var <PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION><MUTABLE_VARIABLE>globalCounte
 
     override fun getColorDescriptors(): Array<ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY
     override fun getDisplayName(): String {
-        @Suppress("UnnecessaryVariable")
         @NlsSafe
         val name = KotlinLanguage.NAME
         return name

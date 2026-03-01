@@ -24,7 +24,7 @@
     <orderEntry type="module" module-name="intellij.python.community.execService.python" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.impl.installer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.pydev" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.venv" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.venv" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.hatch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" scope="RUNTIME" />

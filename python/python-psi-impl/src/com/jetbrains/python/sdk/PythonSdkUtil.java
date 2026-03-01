@@ -8,7 +8,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
 import java.util.List;

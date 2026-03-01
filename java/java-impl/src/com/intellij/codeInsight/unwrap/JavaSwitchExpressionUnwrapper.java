@@ -2,7 +2,12 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

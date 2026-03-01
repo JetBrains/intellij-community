@@ -1,23 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
+import com.intellij.openapi.module.Module
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import io.github.z4kn4fein.semver.Version
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-interface UvCli {
-  suspend fun runUv(workingDir: Path, vararg args: String): PyResult<String>
+interface UvCli<P : PathHolder> {
+  suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String>
 }
 
 @ApiStatus.Internal
-interface UvLowLevel {
-  suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<Path>
+interface UvLowLevel<P : PathHolder> {
+  suspend fun initializeEnvironment(init: Boolean, version: Version?): PyResult<P>
 
   suspend fun listUvPythons(): PyResult<Set<Path>>
   suspend fun listSupportedPythonVersions(versionRequest: String? = null): PyResult<List<Version>>
@@ -25,8 +28,8 @@ interface UvLowLevel {
   /**
   * Manage project dependencies by adding/removing them to the project along side installation
   */
-  suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>): PyResult<Unit>
-  suspend fun removeDependencies(pyPackages: Array<out String>): PyResult<Unit>
+  suspend fun addDependency(pyPackages: PythonPackageInstallRequest, options: List<String>, workspaceMember: PyWorkspaceMember? = null): PyResult<Unit>
+  suspend fun removeDependencies(pyPackages: Array<out String>, workspaceMember: PyWorkspaceMember? = null): PyResult<Unit>
 
   /**
    * Managing environment packages directly w/o depending or changing the project
@@ -36,9 +39,11 @@ interface UvLowLevel {
 
   suspend fun listPackages(): PyResult<List<PythonPackage>>
   suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>>
-  suspend fun listTopLevelPackages(): PyResult<List<PythonPackage>>
+  suspend fun listTopLevelPackages(module: Module): PyResult<List<PythonPackage>>
   suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<PyPackageName>>
   suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String>
+  suspend fun listProjectStructureTree(): PyResult<String>
+  suspend fun listAllPackagesTree(): PyResult<String>
 
   suspend fun isProjectSynced(inexact: Boolean): PyResult<Boolean>
   suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyResult<ScriptSyncCheckResult>

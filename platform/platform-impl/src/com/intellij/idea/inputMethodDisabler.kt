@@ -28,7 +28,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
-import java.util.*
+import java.util.Locale
 import javax.swing.SwingUtilities
 
 private const val PERSISTENT_SETTING_MUTED_KEY = "input.method.disabler.muted"

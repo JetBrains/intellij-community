@@ -10,15 +10,18 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-open class DeclarativeInlayActionService {
-  open fun invokeInlayMenu(hintData: InlayData, e: EditorMouseEvent, relativePoint: RelativePoint) {
+@Service(Service.Level.APP)
+class DeclarativeInlayActionService {
+  fun invokeInlayMenu(hintData: InlayData, e: EditorMouseEvent, relativePoint: RelativePoint) {
     val project = e.editor.project ?: return
     val document = e.editor.document
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
@@ -50,7 +53,8 @@ open class DeclarativeInlayActionService {
     }
   }
 
-  open fun logActionHandlerInvoked(handlerId: String, handlerClass: Class<out InlayActionHandler>) {
+  fun logActionHandlerInvoked(handlerId: String, handlerClass: Class<out InlayActionHandler>) {
+    if (IdeProductMode.isFrontend) return // will be logged on the backend
     InlayActionHandlerUsagesCollector.clickHandled(handlerId, handlerClass)
   }
 

@@ -7,7 +7,14 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "childrenArray()")

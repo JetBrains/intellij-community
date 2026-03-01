@@ -28,7 +28,11 @@ import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -102,6 +106,7 @@ public final class PySdkUtil {
     return getProcessOutput(cmd, homePath, extraEnv, timeout, null, true);
   }
 
+  @ApiStatus.Internal
   public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
                                                @Nullable @NonNls Map<String, String> extraEnv,
                                                int timeout,
@@ -197,6 +202,7 @@ public final class PySdkUtil {
     return result;
   }
 
+  @ApiStatus.Internal
   public static @NotNull Map<String, String> activateVirtualEnv(@NotNull Sdk sdk) {
     final Map<String, String> cached = sdk.getUserData(ENVIRONMENT_KEY);
     if (cached != null) return cached;

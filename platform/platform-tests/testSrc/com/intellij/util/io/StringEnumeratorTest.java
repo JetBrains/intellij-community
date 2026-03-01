@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.IntObjectCache;
 import junit.framework.TestCase;
@@ -152,6 +153,7 @@ public class StringEnumeratorTest extends TestCase {
     assertEquals(allStringsSet, new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
+  @PerformanceUnitTest
   public void testPerformance() throws IOException {
     final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
     final IntObjectCache.DeletedPairsListener<String> listener = (key, value) -> {

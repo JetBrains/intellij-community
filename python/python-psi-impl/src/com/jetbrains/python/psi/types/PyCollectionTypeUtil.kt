@@ -4,7 +4,12 @@
 package com.jetbrains.python.psi.types
 
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PySetLiteralExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 
 object PyCollectionTypeUtil {
@@ -57,16 +62,17 @@ object PyCollectionTypeUtil {
       if (!(keyType is PyClassType && PyNames.TYPE_STR == keyType.classQName)) {
         return null
       }
-      val keyExpression = if (keyType is PyLiteralType) {
-        keyType.expression
+      val keyString: String? = if (keyType is PyLiteralType) {
+        keyType.stringValue
       }
       else {
-        element.key
+        val keyExpression = element.key
+        if (keyExpression is PyStringLiteralExpression) keyExpression.stringValue else null
       }
-      if (keyExpression !is PyStringLiteralExpression) {
+      if (keyString == null) {
         return null
       }
-      strKeysToValueTypes[keyExpression.stringValue] = Pair(element.value, PyLiteralType.upcastLiteralToClass(valueType))
+      strKeysToValueTypes[keyString] = Pair(element.value, PyLiteralType.upcastLiteralToClass(valueType))
     }
 
     return strKeysToValueTypes

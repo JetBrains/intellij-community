@@ -9,7 +9,6 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.PsiTreeUtil
@@ -20,17 +19,21 @@ import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReference
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import java.util.*
+import java.util.Collections
 import kotlin.math.abs
 
 
-private fun extractProperKtFileWithOffset(document: Document, context: ExpressionContext, psiDocumentManager: PsiDocumentManager? = null): Pair<KtFile?, Int> {
-    val containingFile = (psiDocumentManager ?: PsiDocumentManager.getInstance(context.project)).getPsiFile(document)
+private fun extractProperKtFileWithOffset(context: ExpressionContext): Pair<KtFile?, Int> {
+    val containingFile = context.psiFile
     val startOffsetInContext = context.startOffset
     if (containingFile is KtFile) return containingFile to startOffsetInContext
     val elementAt = context.psiElementAtStartOffset
@@ -66,12 +69,11 @@ internal class ParameterNameExpression(
 
         // find the parameter list
         val project = context.project ?: return null
-        val editor = context.editor ?: return null
-        val document = editor.document
-        PsiDocumentManager.getInstance(project).commitDocument(document)
 
-        val (file, offset) = extractProperKtFileWithOffset(document, context)
-        val elementAt = file?.findElementAt(offset) ?: return arrayOf()
+        val (file, offset) = extractProperKtFileWithOffset(context)
+        file?: return null
+        PsiDocumentManager.getInstance(project).commitDocument(file.fileDocument)
+        val elementAt = file.findElementAt(offset) ?: return arrayOf()
         val declaration = PsiTreeUtil.getParentOfType(elementAt, KtFunction::class.java, KtClass::class.java) ?: return arrayOf()
         val parameterList = when (declaration) {
             is KtFunction -> declaration.valueParameterList!!
@@ -157,13 +159,10 @@ internal class TypeParameterListExpression(
         context!!
         val project = context.project!!
 
-        val editor = context.editor!!
-        val document = editor.document
-        val documentManager = PsiDocumentManager.getInstance(project)
-        documentManager.commitDocument(document)
-
-        val (file, offset) = extractProperKtFileWithOffset(document, context, documentManager)
-        val elementAt = file?.findElementAt(offset) ?: return TextResult("")
+        val (file, offset) = extractProperKtFileWithOffset(context)
+        if (file == null) return TextResult("")
+        PsiDocumentManager.getInstance(project).commitDocument(file.fileDocument)
+        val elementAt = file.findElementAt(offset) ?: return TextResult("")
         val declaration = elementAt.getStrictParentOfType<KtNamedDeclaration>() ?: return TextResult("")
 
         val renderedTypeParameters = LinkedHashSet<RenderedTypeParameter>()

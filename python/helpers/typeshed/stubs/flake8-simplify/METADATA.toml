@@ -1,2 +1,2 @@
-version = "0.22.*"
+version = "0.30.*"
 upstream_repository = "https://github.com/MartinThoma/flake8-simplify"

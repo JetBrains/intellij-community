@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.application.options.colors.*;
+import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.application.options.colors.ColorAndFontPanelFactory;
+import com.intellij.application.options.colors.ColorAndFontSettingsListener;
+import com.intellij.application.options.colors.NewColorAndFontPanel;
+import com.intellij.application.options.colors.OptionsPanelImpl;
+import com.intellij.application.options.colors.SchemesPanel;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;

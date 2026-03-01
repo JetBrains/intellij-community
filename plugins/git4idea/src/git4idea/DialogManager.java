@@ -9,9 +9,11 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-import static com.intellij.openapi.util.NlsContexts.*;
+import static com.intellij.openapi.util.NlsContexts.Button;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
 /**
  * Use {@link DialogManager#show(DialogWrapper) DialogManager.show(DialogWrapper)} instead of {@link DialogWrapper#show()}

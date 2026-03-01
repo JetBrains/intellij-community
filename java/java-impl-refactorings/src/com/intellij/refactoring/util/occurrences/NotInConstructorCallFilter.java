@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.occurrences;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;

@@ -92,7 +92,7 @@ class QuickListsManager {
   }
 }
 
-private class InvokeQuickListAction(private val quickList: QuickList) : QuickSwitchSchemeAction() {
+internal class InvokeQuickListAction(private val quickList: QuickList) : QuickSwitchSchemeAction() {
   init {
     myActionPlace = ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION
     templatePresentation.description = quickList.description

@@ -11,7 +11,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.FrameInfoHelper
+import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.X11UiUtil
 import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.WindowMoveListener

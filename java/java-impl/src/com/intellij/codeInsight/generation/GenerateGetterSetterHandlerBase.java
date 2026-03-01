@@ -28,8 +28,11 @@ import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.view.TemplatesPanel;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;

@@ -25,13 +25,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 enum class ResolveConflictsMethod {
   REBASE,
   MERGE;
 }
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface ResolveConflictsLocallyViewModel<Error : Any> {
   /**
    * Whether there are conflicts that need to be resolved before merging.
@@ -79,7 +79,7 @@ private class ResolveConflictsLocallyViewModelImpl<Error : Any>(
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 
   override val hasConflicts: StateFlow<Boolean?> =
-    hasConflicts.stateIn(cs, SharingStarted.Lazily, false)
+    hasConflicts.stateIn(cs, SharingStarted.Lazily, null)
   override val requestOrError: StateFlow<Either<Error, ResolveConflictsLocallyCoordinates>> =
     requestOrError.stateIn(cs, SharingStarted.Lazily, initialRequestOrErrorState)
 

@@ -6,7 +6,11 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.system.OS;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -15,8 +19,18 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -246,8 +260,7 @@ public final class PathManager {
     return null;
   }
 
-  @Nullable
-  private static Path getIdeaHomeUpwards(Path start) {
+  private static @Nullable Path getIdeaHomeUpwards(Path start) {
     Path root = start.toAbsolutePath();
     do root = root.getParent();
     while (root != null && !isIdeaHome(root));
@@ -260,8 +273,7 @@ public final class PathManager {
    * (monorepo.devkit.use.bazel.compile=true)
    * this is a temporary solution while we're still using JPS model for ultimate monorepo
    */
-  @Nullable
-  private static Path getIdeaHomeFromBazelExecRoot(Path start) throws IOException {
+  private static @Nullable Path getIdeaHomeFromBazelExecRoot(Path start) throws IOException {
     String workspacePrefix = "WORKSPACE: ";
 
     Path root = start.toAbsolutePath();

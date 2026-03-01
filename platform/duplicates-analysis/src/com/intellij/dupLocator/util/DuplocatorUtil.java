@@ -1,6 +1,12 @@
 package com.intellij.dupLocator.util;
 
-import com.intellij.dupLocator.*;
+import com.intellij.dupLocator.AbstractMatchingVisitor;
+import com.intellij.dupLocator.DefaultDuplocatorState;
+import com.intellij.dupLocator.DuplicatesProfile;
+import com.intellij.dupLocator.DuplocatorState;
+import com.intellij.dupLocator.ExternalizableDuplocatorState;
+import com.intellij.dupLocator.MultilanguageDuplocatorSettings;
+import com.intellij.dupLocator.PsiElementRole;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.dupLocator.equivalence.MultiChildDescriptor;

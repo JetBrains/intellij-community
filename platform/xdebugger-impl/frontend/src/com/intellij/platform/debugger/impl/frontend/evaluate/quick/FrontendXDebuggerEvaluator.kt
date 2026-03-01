@@ -7,7 +7,12 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorApi
+import com.intellij.platform.debugger.impl.rpc.XDebuggerEvaluatorDto
+import com.intellij.platform.debugger.impl.rpc.XEvaluationResult
+import com.intellij.platform.debugger.impl.rpc.XStackFrameId
+import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition

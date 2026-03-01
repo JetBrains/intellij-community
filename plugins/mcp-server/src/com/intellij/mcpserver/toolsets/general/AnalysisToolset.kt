@@ -5,7 +5,11 @@ package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewManager
-import com.intellij.build.events.*
+import com.intellij.build.events.BuildIssueEvent
+import com.intellij.build.events.FileMessageEvent
+import com.intellij.build.events.FinishBuildEvent
+import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.StartBuildEvent
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
@@ -13,9 +17,14 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl
 import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.mcpserver.*
+import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.mcpCallInfo
+import com.intellij.mcpserver.mcpFail
+import com.intellij.mcpserver.project
+import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.mcpserver.util.projectDirectory
@@ -40,7 +49,11 @@ import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskManager
 import com.intellij.task.impl.ProjectTaskManagerImpl
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -155,10 +168,10 @@ class AnalysisToolset : McpToolset {
     val buildFinished = CompletableDeferred<Unit>()
 
     logger.trace { "Starting build task with timeout ${timeout}ms" }
+    var buildStarted = false
     val buildResult = withTimeoutOrNull(timeout.milliseconds) {
       coroutineScope {
         val buildViewManager = project.serviceAsync<BuildViewManager>()
-        
         // Listen to build events to collect problems directly
         buildViewManager.addListener(BuildProgressListener { buildId, event ->
           logger.trace { "Received build event: ${event.javaClass.simpleName}, buildId=$buildId" }
@@ -166,6 +179,7 @@ class AnalysisToolset : McpToolset {
           when (event) {
             is StartBuildEvent -> {
               logger.trace { "Build started: ${event.buildDescriptor.title}" }
+              buildStarted = true
             }
             
             is FileMessageEvent -> {
@@ -215,7 +229,7 @@ class AnalysisToolset : McpToolset {
           }
         }, this.asDisposable())
 
-        val task = if (filesToRebuild != null) {
+        val task = if (!filesToRebuild.isNullOrEmpty()) {
           val filePaths = filesToRebuild.map { file -> project.resolveInProject(file) }
           logger.trace { "Refreshing files: $filePaths..." }
           LocalFileSystem.getInstance().refreshNioFiles(filePaths)
@@ -239,15 +253,25 @@ class AnalysisToolset : McpToolset {
         val result = ProjectTaskManager.getInstance(project).run(context, task).await()
 
         logger.trace { "Build task completed, waiting for FinishBuildEvent..." }
-        buildFinished.await()
+        if (buildStarted) {
+          logger.trace { "Build was started, waiting for FinishBuildEvent" }
+          buildFinished.await()
+        }
+        else {
+          logger.trace { "Build was not started, skipping waiting for FinishBuildEvent" }
+        }
 
-        logger.trace { "FinishBuildEvent received or timed out" }
+        logger.trace { "FinishBuildEvent received" }
         result
       }
     }
     logger.trace { "Build completed: result=$buildResult, hasErrors=${buildResult?.hasErrors()}, problemsCount=${problems.size}" }
 
     logger.trace { "build_project completed: buildTimedOut=${buildResult == null}, problemsCount=${problems.size}" }
+    // for the cases when the build doesn't report messages via BuildViewManager
+    if (!buildStarted) {
+      problems.add(ProjectProblem(message = "The project has limited build diagnostics functionality. Build messages cannot be collected."))
+    }
     return BuildProjectResult(
       timedOut = buildResult == null,
       isSuccess = buildResult != null && !buildResult.hasErrors() && problems.none { it.kind == Kind.ERROR.name },

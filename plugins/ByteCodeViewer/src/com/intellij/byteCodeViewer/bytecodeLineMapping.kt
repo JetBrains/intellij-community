@@ -3,7 +3,7 @@ package com.intellij.byteCodeViewer
 
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.util.Textifier
-import java.util.*
+import java.util.Scanner
 
 /**
  * This method removes the following debug information from `bytecode`:

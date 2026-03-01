@@ -13,7 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class CustomLibraryDescriptionBase extends CustomLibraryDescription {
   private final String myDefaultLibraryName;

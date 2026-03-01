@@ -54,30 +54,26 @@ class MavenProjectsTree(val project: Project) {
   private val myStructureReadLock: Lock = myStructureLock.readLock()
   private val myStructureWriteLock: Lock = myStructureLock.writeLock()
 
-  // TODO replace with sets
-  @Volatile
-  private var myManagedFilesPaths: MutableSet<String> = LinkedHashSet()
+  private val myManagedFilesPaths: MutableSet<String> = LinkedHashSet()
 
-  @Volatile
-  private var myIgnoredFilesPaths: MutableList<String> = ArrayList()
+  private val myIgnoredFilesPaths: MutableList<String> = ArrayList()
 
-  @Volatile
-  private var myIgnoredFilesPatterns: List<String> = ArrayList()
+  private val myIgnoredFilesPatterns: MutableList<String> = ArrayList()
 
-  @Volatile
   private var myIgnoredFilesPatternsCache: Pattern? = null
 
+  @Transient
   private var myExplicitProfiles: MavenExplicitProfiles = MavenExplicitProfiles.NONE
   private val myTemporarilyRemovedExplicitProfiles = MavenExplicitProfiles(HashSet(), HashSet())
 
-  private val myRootProjects: MutableList<MavenProject> = ArrayList() //2
+  private val myRootProjects = mutableListOf<MavenProject>() //2
 
   private val myTimestamps: MutableMap<VirtualFile, MavenProjectTimestamp> = HashMap()
   private val myWorkspaceMap = MavenWorkspaceMap()
   private val myMavenIdToProjectMapping: MutableMap<MavenId, MavenProject> = HashMap()
   private val myVirtualFileToProjectMapping: MutableMap<VirtualFile, MavenProject> = HashMap() //2
-  private val myAggregatorToModuleMapping: MutableMap<MavenProject, MutableList<MavenProject>> = HashMap() //2
-  private val myModuleToAggregatorMapping: MutableMap<MavenProject, MavenProject> = HashMap() //2
+  private val myAggregatorToModuleMapping: MutableMap<String, MutableList<MavenProject>> = HashMap() //2
+  private val myModuleToAggregatorMapping: MutableMap<String, MavenProject> = HashMap() //2
 
   private val myListeners = DisposableWrapperList<Listener>()
 
@@ -108,21 +104,25 @@ class MavenProjectsTree(val project: Project) {
 
   @Throws(IOException::class)
   fun save(file: Path) {
+    val copy = MavenProjectsTree(project)
+
     withReadLock {
-      DataOutputStream(BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file)))).use { out ->
-        out.writeUTF(STORAGE_VERSION)
-        writeCollection(out, myManagedFilesPaths)
-        writeCollection(out, myIgnoredFilesPaths)
-        writeCollection(out, myIgnoredFilesPatterns)
-        writeCollection(out, myExplicitProfiles.enabledProfiles)
-        writeCollection(out, myExplicitProfiles.disabledProfiles)
-        writeProjectsRecursively(out, myRootProjects)
-      }
+      copy.updater().copyFrom(this)
+    }
+
+    DataOutputStream(BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file)))).use { out ->
+      out.writeUTF(STORAGE_VERSION)
+      writeCollection(out, copy.myManagedFilesPaths)
+      writeCollection(out, copy.myIgnoredFilesPaths)
+      writeCollection(out, copy.myIgnoredFilesPatterns)
+      writeCollection(out, copy.myExplicitProfiles.enabledProfiles)
+      writeCollection(out, copy.myExplicitProfiles.disabledProfiles)
+      copy.writeProjectsRecursively(out, copy.myRootProjects)
     }
   }
 
   @Throws(IOException::class)
-  private fun writeProjectsRecursively(out: DataOutputStream, mavenProjects: List<MavenProject>) {
+  private fun writeProjectsRecursively(out: DataOutputStream, mavenProjects: Collection<MavenProject>) {
     out.writeInt(mavenProjects.size)
     for (mavenProject in mavenProjects) {
       mavenProject.write(out)
@@ -139,7 +139,7 @@ class MavenProjectsTree(val project: Project) {
 
   fun resetManagedFilesPathsAndProfiles(paths: List<String>, profiles: MavenExplicitProfiles) {
     withWriteLock {
-      myManagedFilesPaths = LinkedHashSet(paths)
+      myManagedFilesPaths.replaceWith(LinkedHashSet(paths))
       explicitProfiles = profiles
     }
   }
@@ -183,7 +183,9 @@ class MavenProjectsTree(val project: Project) {
       ArrayList(myIgnoredFilesPaths)
     }
     set(paths) {
-      doChangeIgnoreStatus({ myIgnoredFilesPaths = ArrayList(paths) })
+      doChangeIgnoreStatus({
+                             myIgnoredFilesPaths.replaceWith(paths)
+                           })
     }
 
   fun removeIgnoredFilesPaths(paths: Collection<String>?) {
@@ -233,7 +235,7 @@ class MavenProjectsTree(val project: Project) {
     set(patterns) {
       doChangeIgnoreStatus({
                              myIgnoredFilesPatternsCache = null
-                             myIgnoredFilesPatterns = ArrayList(patterns)
+                             myIgnoredFilesPatterns.replaceWith(patterns)
                            })
     }
 
@@ -555,13 +557,13 @@ class MavenProjectsTree(val project: Project) {
         removeModule(aggregator, project)
       }
       else {
-        myRootProjects.remove(project)
+        myRootProjects.removeProject(project)
       }
       myTimestamps.remove(project.file)
       myVirtualFileToProjectMapping.remove(project.file)
       clearIDMaps(project.mavenId)
-      myAggregatorToModuleMapping.remove(project)
-      myModuleToAggregatorMapping.remove(project)
+      myAggregatorToModuleMapping.remove(project.path)
+      myModuleToAggregatorMapping.remove(project.path)
     }
     updateContext.deleted(project)
   }
@@ -581,7 +583,7 @@ class MavenProjectsTree(val project: Project) {
 
   private fun addRootModule(project: MavenProject) {
     withWriteLock {
-      myRootProjects.add(project)
+      myRootProjects.addProject(project)
       myRootProjects.sortWith(Comparator.comparing { mavenProject: MavenProject -> mavenProjectToNioPath(mavenProject) })
     }
   }
@@ -597,7 +599,7 @@ class MavenProjectsTree(val project: Project) {
         removeModule(prevAggregator, project)
       }
       else {
-        myRootProjects.remove(project)
+        myRootProjects.removeProject(project)
       }
       addModule(newAggregator, project)
     }
@@ -637,7 +639,9 @@ class MavenProjectsTree(val project: Project) {
   }
 
   val rootProjects: List<MavenProject>
-    get() = withReadLock { ArrayList(myRootProjects) }
+    get() = withReadLock {
+      myRootProjects.toList()
+    }
 
   fun getFilterConfigCrc(fileIndex: ProjectFileIndex): Int {
     ApplicationManager.getApplication().assertReadAccessAllowed()
@@ -765,7 +769,7 @@ class MavenProjectsTree(val project: Project) {
     get() = withReadLock { myWorkspaceMap.copy() }
 
   fun findAggregator(project: MavenProject): MavenProject? {
-    return withReadLock { myModuleToAggregatorMapping[project] }
+    return withReadLock { myModuleToAggregatorMapping[project.path] }
   }
 
   fun collectAggregators(mavenProjects: Collection<MavenProject>): Collection<MavenProject> {
@@ -790,7 +794,7 @@ class MavenProjectsTree(val project: Project) {
     var rootProject = project
     val traversed = LinkedHashSet<MavenProject>().also { it.add(project) }
     while (true) {
-      val aggregator = myModuleToAggregatorMapping[rootProject]
+      val aggregator = myModuleToAggregatorMapping[rootProject.path]
       if (aggregator == null) {
         return rootProject
       }
@@ -804,33 +808,33 @@ class MavenProjectsTree(val project: Project) {
 
   fun getModules(aggregator: MavenProject): List<MavenProject> {
     return withReadLock {
-      val modules: List<MavenProject>? = myAggregatorToModuleMapping[aggregator]
+      val modules: List<MavenProject>? = myAggregatorToModuleMapping[aggregator.path]
       if (modules == null) emptyList() else ArrayList(modules)
     }
   }
 
   private fun addModule(aggregator: MavenProject, module: MavenProject) {
     withWriteLock {
-      var modules = myAggregatorToModuleMapping[aggregator]
+      var modules = myAggregatorToModuleMapping[aggregator.path]
       if (modules == null) {
         modules = ArrayList()
-        myAggregatorToModuleMapping[aggregator] = modules
+        myAggregatorToModuleMapping[aggregator.path] = modules
       }
       modules.add(module)
-      myModuleToAggregatorMapping[module] = aggregator
+      myModuleToAggregatorMapping[module.path] = aggregator
     }
   }
 
   @ApiStatus.Internal
   fun removeModule(aggregator: MavenProject, module: MavenProject) {
     withWriteLock {
-      val modules = myAggregatorToModuleMapping[aggregator]
+      val modules = myAggregatorToModuleMapping[aggregator.path]
       if (modules == null) return@withWriteLock
       modules.remove(module)
       if (modules.isEmpty()) {
-        myAggregatorToModuleMapping.remove(aggregator)
+        myAggregatorToModuleMapping.remove(aggregator.path)
       }
-      myModuleToAggregatorMapping.remove(module)
+      myModuleToAggregatorMapping.remove(module.path)
     }
   }
 
@@ -1032,18 +1036,16 @@ class MavenProjectsTree(val project: Project) {
 
   inner class Updater {
     fun setManagedFiles(paths: List<String>): Updater {
-      myManagedFilesPaths.clear()
-      myManagedFilesPaths.addAll(paths)
+      myManagedFilesPaths.replaceWith(paths)
       return this
     }
 
     fun setRootProjects(roots: List<MavenProject>): Updater {
       myRootProjects.clear()
-      myRootProjects.addAll(roots)
-      roots.forEach(
-        Consumer { root: MavenProject ->
-          myVirtualFileToProjectMapping[root.file] = root
-        })
+      roots.forEach { root ->
+        myRootProjects.addProject(root)
+        myVirtualFileToProjectMapping[root.file] = root
+      }
 
       return this
     }
@@ -1054,9 +1056,9 @@ class MavenProjectsTree(val project: Project) {
 
       for ((key, value) in map) {
         val result: MutableList<MavenProject> = ArrayList(value)
-        myAggregatorToModuleMapping[key] = result
+        myAggregatorToModuleMapping[key.path] = result
         for (c in result) {
-          myModuleToAggregatorMapping[c] = key
+          myModuleToAggregatorMapping[c.path] = key
           myVirtualFileToProjectMapping[c.file] = c
         }
       }
@@ -1075,7 +1077,10 @@ class MavenProjectsTree(val project: Project) {
     fun copyFrom(projectTree: MavenProjectsTree): Updater {
 
       addFrom(projectTree) { it.myManagedFilesPaths }
-      addFrom(projectTree) { it.myRootProjects }
+      projectTree.myRootProjects.forEach {
+        myRootProjects.addProject(it)
+      }
+
 
       addFromMap(projectTree) { it.myMavenIdToProjectMapping }
       addFromMap(projectTree) { it.myVirtualFileToProjectMapping }
@@ -1095,8 +1100,7 @@ class MavenProjectsTree(val project: Project) {
         val set = LinkedHashSet<T>()
         set.addAll(my)
         set.addAll(theirs)
-        my.clear()
-        my.addAll(set.toList())
+        my.replaceWith(set)
       }
     }
 
@@ -1132,18 +1136,24 @@ class MavenProjectsTree(val project: Project) {
       var storageVersion = ""
       try {
         storageVersion = inputStream.readUTF()
-        val storageVersionNumber = storageVersion.getStorageVersionNumber()
 
-        myManagedFilesPaths = readCollection(inputStream, LinkedHashSet())
-        myIgnoredFilesPaths = readCollection(inputStream, ArrayList())
-        myIgnoredFilesPatterns = readCollection(inputStream, ArrayList())
+        myManagedFilesPaths.replaceWith(readCollection(inputStream, LinkedHashSet()))
+        myIgnoredFilesPaths.replaceWith(readCollection(inputStream, ArrayList()))
+        myIgnoredFilesPatterns.replaceWith(readCollection(inputStream, ArrayList()))
         myExplicitProfiles = MavenExplicitProfiles(readCollection(inputStream, HashSet()), readCollection(inputStream, HashSet()))
 
-        if (STORAGE_VERSION_NUMBER == storageVersionNumber) {
-          myRootProjects.addAll(readProjectsRecursively(inputStream, this))
+        if (STORAGE_VERSION == storageVersion) {
+          readProjectsRecursively(inputStream, this).forEach {
+            myRootProjects.addProject(it)
+          }
         }
       }
       catch (e: IOException) {
+        myRootProjects.clear()
+        myTimestamps.clear()
+        myVirtualFileToProjectMapping.clear()
+        myAggregatorToModuleMapping.clear()
+        myModuleToAggregatorMapping.clear()
         MavenLog.LOG.warn("Cannot read project tree from storage, storageVersion $storageVersion", e)
       }
     }
@@ -1152,7 +1162,7 @@ class MavenProjectsTree(val project: Project) {
   companion object {
     private val LOG = Logger.getInstance(MavenProjectsTree::class.java)
 
-    private const val STORAGE_VERSION_NUMBER = 16
+    private const val STORAGE_VERSION_NUMBER = 18
     val STORAGE_VERSION: String = MavenProjectsTree::class.java.simpleName + "." + STORAGE_VERSION_NUMBER
 
     private fun String.getStorageVersionNumber(): Int {
@@ -1199,9 +1209,9 @@ class MavenProjectsTree(val project: Project) {
           tree.myVirtualFileToProjectMapping[project.file] = project
           tree.fillIDMaps(project)
           if (!modules.isEmpty()) {
-            tree.myAggregatorToModuleMapping[project] = modules
+            tree.myAggregatorToModuleMapping[project.path] = modules
             for (eachModule in modules) {
-              tree.myModuleToAggregatorMapping[eachModule] = project
+              tree.myModuleToAggregatorMapping[eachModule.path] = project
             }
           }
         }
@@ -1224,10 +1234,6 @@ class MavenProjectsTree(val project: Project) {
 
       explicitProfiles.removeAll(removedProfiles)
       explicitProfiles.addAll(restoredProfiles)
-    }
-
-    private fun mavenProjectToNioPath(mavenProject: MavenProject): Path {
-      return Path.of(mavenProject.file.parent.path)
     }
 
     private fun updateCrc(crc: CRC32, xInt: Int) {
@@ -1270,4 +1276,25 @@ class MavenProjectsTree(val project: Project) {
       return Collections.unmodifiableList(customNonFilteredExtensions)
     }
   }
+}
+
+private fun MutableList<MavenProject>.addProject(project: MavenProject) {
+  this.removeIf {
+    it === project || (
+      it.path == project.path && it.file.isValid)
+  }
+  this.add(project)
+}
+
+private fun MutableList<MavenProject>.removeProject(project: MavenProject) {
+  this.removeIf { it === project || it.path == project.path }
+}
+
+private fun mavenProjectToNioPath(mavenProject: MavenProject): Path {
+  return Path.of(mavenProject.file.parent.path)
+}
+
+private fun <T> MutableCollection<T>.replaceWith(new: Collection<T>) {
+  this.clear()
+  this.addAll(new)
 }

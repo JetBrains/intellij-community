@@ -3,7 +3,15 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.TransactionRunnable;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
@@ -21,7 +29,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;

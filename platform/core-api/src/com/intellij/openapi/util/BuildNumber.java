@@ -162,7 +162,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       if (baselineVersionString.trim().isEmpty()) {
         return null;
       }
-
+      code = code.replace("-" + SNAPSHOT, "." + SNAPSHOT);
       String[] stringComponents = code.split("\\.");
       int[] intComponentList = new int[stringComponents.length];
       for (int i = 0, n = stringComponents.length; i < n; i++) {

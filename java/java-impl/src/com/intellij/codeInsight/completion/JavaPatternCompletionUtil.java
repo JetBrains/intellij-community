@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailTypes;
@@ -8,7 +8,26 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDeconstructionList;
+import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeTestPattern;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.JavaVarTypeUtil;
@@ -96,7 +115,7 @@ public final class JavaPatternCompletionUtil {
     }
     if (type instanceof PsiPrimitiveType) {
       LookupElement lookupItem = BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, type.getCanonicalText());
-      result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
+      result.accept(OverridableSpace.create(lookupItem, TailTypes.spaceType()));
     }
   }
 
@@ -126,7 +145,7 @@ public final class JavaPatternCompletionUtil {
       indexOfPattern = components.length;
     }
     PsiRecordComponent[] recordComponents = psiRecord.getRecordComponents();
-    if (recordComponents.length < indexOfPattern) return null;
+    if (recordComponents.length <= indexOfPattern) return null;
     return recordComponents[indexOfPattern];
   }
 
@@ -139,7 +158,7 @@ public final class JavaPatternCompletionUtil {
       if (TypeConversionUtil.areTypesConvertible(fromType, primitiveType)) {
         LookupElement lookupItem =
           BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, primitiveType.getCanonicalText());
-        result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
+        result.accept(OverridableSpace.create(lookupItem, TailTypes.spaceType()));
       }
     }
   }
@@ -168,7 +187,6 @@ public final class JavaPatternCompletionUtil {
                               @NotNull List<PsiType> types,
                               boolean onlyDeconstructionList) {
     static PatternModel create(@NotNull PsiClass record, @NotNull PsiElement context, boolean onlyDeconstructionList) {
-      JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(record.getProject());
       PsiDeconstructionPattern deconstructionPattern = PsiTreeUtil.getParentOfType(context, PsiDeconstructionPattern.class);
       List<String> names = new ArrayList<>();
       for (PsiRecordComponent component : record.getRecordComponents()) {

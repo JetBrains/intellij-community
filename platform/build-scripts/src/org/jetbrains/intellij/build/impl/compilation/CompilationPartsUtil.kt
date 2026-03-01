@@ -56,7 +56,6 @@ internal val uploadParallelism = nettyMax.coerceIn(4, 32)
 // max not 32 as for upload because we write to disk (not read as upload)
 internal val downloadParallelism = nettyMax.coerceIn(4, 24)
 
-private const val BRANCH_PROPERTY_NAME = "intellij.build.compiled.classes.branch"
 private const val SERVER_URL_PROPERTY = "intellij.build.compiled.classes.server.url"
 private const val UPLOAD_PREFIX = "intellij.build.compiled.classes.upload.prefix"
 
@@ -65,7 +64,6 @@ class CompilationCacheUploadConfiguration(
   val checkFiles: Boolean = true,
   val uploadOnly: Boolean = false,
   val saveMetadata: Boolean = true,
-  branch: String? = null,
   uploadPredix: String? = null,
 ) {
   val serverUrl: String by lazy(LazyThreadSafetyMode.NONE) { serverUrl ?: getAndNormalizeServerUrlBySystemProperty() }
@@ -83,14 +81,6 @@ class CompilationCacheUploadConfiguration(
     uploadPredix ?: System.getProperty(UPLOAD_PREFIX, "intellij-compile/v2").also {
       check(!it.isNullOrBlank()) {
         "$UPLOAD_PREFIX system property should not be blank."
-      }
-    }
-  }
-
-  val branch: String by lazy {
-    branch ?: System.getProperty(BRANCH_PROPERTY_NAME).also {
-      check(!it.isNullOrBlank()) {
-        "Git branch is not defined. Please set $BRANCH_PROPERTY_NAME system property."
       }
     }
   }
@@ -262,7 +252,6 @@ private suspend fun upload(
   val metadataJson = Json.encodeToString(
     CompilationPartsMetadata(
       serverUrl = config.serverUrl,
-      branch = config.branch,
       prefix = config.uploadUrlPathPrefix,
       files = items.associateTo(TreeMap()) { item ->
         item.name to item.hash!!
@@ -576,7 +565,6 @@ internal data class FetchAndUnpackItem(
 @Serializable
 internal data class CompilationPartsMetadata(
   @JvmField @SerialName("server-url") val serverUrl: String,
-  @JvmField val branch: String,
   @JvmField val prefix: String,
   /**
    * Map compilation part path to a hash, for now SHA-256 is used.

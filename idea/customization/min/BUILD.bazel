@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":min_resources"]
 )
+
+jvm_library(
+  name = "min_test_lib",
+  module_name = "intellij.platform.customization.min",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":min"]
+)
 ### auto-generated section `build intellij.platform.customization.min` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 package com.intellij.platform.ide.bootstrap
 
@@ -15,7 +15,12 @@ import com.intellij.idea.AppMode
 import com.intellij.idea.ApplicationStartArguments
 import com.intellij.idea.LoggerFactory
 import com.intellij.jna.JnaLoader
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.InitialConfigImportState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.PluginAutoUpdater
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -43,7 +48,19 @@ import com.intellij.util.singleProduct.migrateCommunityToSingleProductIfNeeded
 import com.intellij.util.system.OS
 import com.jetbrains.JBR
 import kotlinx.collections.immutable.toImmutableMap
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
@@ -54,7 +71,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Locale
+import java.util.Random
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiConsumer
@@ -351,6 +369,7 @@ fun startApplication(
         }.getOrLogException(log)
       }
 
+      ClassicUiToIslandsMigration.migrateSchemeAndUiSettingsIfNeeded()
       applyIslandsTheme(afterImportSettings = false)
       executeApplicationStarter(starter, args)
     }
@@ -592,9 +611,14 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
   log.info("args: ${args.joinToString(separator = " ")}")
   log.info("library path: ${System.getProperty("java.library.path")}")
   log.info("boot library path: ${System.getProperty("sun.boot.library.path")}")
-  logEnvVar(log, "_JAVA_OPTIONS")
-  logEnvVar(log, "JDK_JAVA_OPTIONS")
-  logEnvVar(log, "JAVA_TOOL_OPTIONS")
+  if (System.getProperty("ide.native.launcher").toBoolean()) {
+    logEnvVar(log, "IJ_JAVA_OPTIONS")
+  }
+  else {
+    logEnvVar(log, "_JAVA_OPTIONS")
+    logEnvVar(log, "JDK_JAVA_OPTIONS")
+    logEnvVar(log, "JAVA_TOOL_OPTIONS")
+  }
   @Suppress("SystemGetProperty")
   log.info(
     """locale=${Locale.getDefault()} JNU=${System.getProperty("sun.jnu.encoding")} file.encoding=${System.getProperty("file.encoding")}

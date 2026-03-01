@@ -56,4 +56,4 @@ internal open class GetFromVersionControlAction : DumbAwareAction() {
 }
 
 @InternalIgnoreDependencyViolation
-private class ProjectFromVersionControlAction : GetFromVersionControlAction()
+internal class ProjectFromVersionControlAction : GetFromVersionControlAction()

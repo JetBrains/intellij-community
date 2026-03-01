@@ -13,10 +13,19 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.*
+import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.isWithCaret
 import org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.LanguageSmartEnterProcessorFixer
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class KotlinSmartEnterHandler : SmartEnterProcessorWithFixers() {

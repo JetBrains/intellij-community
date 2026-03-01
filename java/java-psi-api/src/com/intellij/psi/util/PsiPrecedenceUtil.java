@@ -1,7 +1,34 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPostfixExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

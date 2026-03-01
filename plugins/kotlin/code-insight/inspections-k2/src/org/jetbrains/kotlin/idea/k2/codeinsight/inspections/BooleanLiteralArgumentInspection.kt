@@ -31,7 +31,12 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.getStableN
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class BooleanLiteralArgumentInspection(

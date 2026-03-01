@@ -26,4 +26,23 @@ jvm_library(
     "//platform/util",
   ]
 )
+
+jvm_library(
+  name = "xpath_test_lib",
+  module_name = "intellij.xml.langInjection.xpath",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":xpath",
+    "//xml/langInjection:langInjection_test_lib",
+    "//plugins/xpath:xpath_test_lib",
+    "//xml/xml-psi-impl:psi-impl_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//libraries/jaxen:jaxen_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util:util_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.xml.langInjection.xpath` end

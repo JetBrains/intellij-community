@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 interface PeekCallFactory {
     fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall
 }

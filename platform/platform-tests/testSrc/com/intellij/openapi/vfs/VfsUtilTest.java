@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -59,7 +61,13 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
@@ -336,7 +344,8 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     AtomicReference<Project> project = new AtomicReference<>();
     checkNewDirAndRefresh(
       temp -> {
-        Project p = PlatformTestUtil.loadAndOpenProject(temp, getTestRootDisposable());
+        Project p = ProjectUtil.openOrImport(temp);
+        Disposer.register(getTestRootDisposable(), () -> PlatformTestUtil.forceCloseProjectWithoutSaving(p));
         project.set(p);
         assertTrue(p.isOpen());
       },
@@ -550,7 +559,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     File dir = new File(tempDir.getRoot(), "dir");
     File file = new File(dir, "child.txt");
     assertFalse(file.exists());
-    assertEquals(tempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRoot()));
+    assertEquals(tempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRootPath()));
 
     assertTrue(dir.mkdirs());
     assertTrue(file.createNewFile());

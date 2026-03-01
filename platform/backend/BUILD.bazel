@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":backend_resources"]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":backend"]
+)
 ### auto-generated section `build intellij.platform.backend` end

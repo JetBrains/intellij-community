@@ -5,7 +5,15 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase

@@ -28,7 +28,7 @@ internal class IgnoreRequirementFix(private val packagesToIgnore: Set<String>) :
 
     SideEffectGuard.Companion.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
 
-    val inspection = PyPackageRequirementsInspection.Companion.getInstance(element) ?: return
+    val inspection = PyPackageRequirementsInspection.Helper.getInstance(element) ?: return
     inspection.ignoredPackages = (inspection.ignoredPackages + packagesToIgnore).distinct().toMutableList()
 
     val profileManager = ProjectInspectionProfileManager.Companion.getInstance(project)

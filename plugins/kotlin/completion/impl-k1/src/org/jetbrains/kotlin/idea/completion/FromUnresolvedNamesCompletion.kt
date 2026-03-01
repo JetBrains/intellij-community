@@ -5,7 +5,12 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinHighlightVisitor
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
@@ -14,8 +19,8 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import java.util.*
 
+@K1Deprecation
 class FromUnresolvedNamesCompletion(
     private val collector: LookupElementsCollector,
     private val prefixMatcher: PrefixMatcher

@@ -3,13 +3,12 @@ package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.parentOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 private object LockReqPsiOpsProvider : LanguageExtension<LockReqPsiOps>("DevKit.lang.LockReqPsiOps")

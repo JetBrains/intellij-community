@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
@@ -78,7 +78,7 @@ public final class ShellEnvironmentReader {
       command.add("-i");
     }
 
-    // macOS now supports the `-0` option, too (supposedly, from 12.3); we can drop `printenv` in ~3 years
+    // FTR, macOS now supports the `-0` option, too (supposedly, from 12.3)
     var reader = OS.CURRENT == OS.macOS ? "'" + PathManager.findBinFileWithException("printenv") + "'" : "/usr/bin/env -0";
     if (shFile != null) {
       if ("nu".equals(name) || "pwsh".equals(name) || "xonsh".equals(name))
@@ -98,11 +98,10 @@ public final class ShellEnvironmentReader {
     else {
       command.add(reader + " > '" + OUTPUT_PLACEHOLDER + "'");
     }
-    if (shFile != null) {
-      command.add(shFile.toString());
-      if (args != null) {
-        command.addAll(args);
-      }
+    // positional parameters for the '-c' script ($0, etc.)
+    if (shFile != null && args != null) {
+      command.add(shell);
+      command.addAll(args);
     }
 
     var processBuilder = new ProcessBuilder(command);
@@ -148,8 +147,8 @@ public final class ShellEnvironmentReader {
 
   private static String prepareCallArgs(List<String> callArgs) {
     var preparedCallArgs = CommandLineUtil.toCommandLine(callArgs);
-    var firstArg = preparedCallArgs.remove(0);
-    preparedCallArgs.add(0, CommandLineUtil.escapeParameterOnWindows(firstArg, false));
+    var firstArg = preparedCallArgs.removeFirst();
+    preparedCallArgs.addFirst(CommandLineUtil.escapeParameterOnWindows(firstArg, false));
     // for `cmd.exe`, we need to add extra double quotes for the actual command in call
     // to mitigate possible JVM issue when argument contains spaces and the first word
     // starts with double quote and the last ends with double quote and JVM does not
@@ -201,13 +200,6 @@ public final class ShellEnvironmentReader {
     return cp;
   }
 
-  private static String readString(Path path) throws IOException {
-    // this is a workaround for CPP-47852 because `readString` throws exception on
-    // on malformed input, while new String() does not for incomplete UTF-8 sequence
-
-    // noinspection ReadWriteStringCanBeUsed
-    return new String(Files.readAllBytes(path), Charset.defaultCharset());
-  }
   /**
    * Runs the given command.
    * Returns loaded environment and the command output (stdout/stderr combined).
@@ -218,8 +210,10 @@ public final class ShellEnvironmentReader {
   ) throws IOException {
     if (timeoutMillis <= 0) timeoutMillis = DEFAULT_TIMEOUT_MILLIS;
 
-    var dataFile = Files.createTempFile("ij-shell-env-data.", ".tmp");
-    var logFile = Files.createTempFile("ij-shell-env-log.", ".tmp");
+    var tmpDir = Files.createDirectories(Path.of(System.getProperty("java.io.tmpdir")));
+    var mark = ProcessHandle.current().pid() + "." + System.nanoTime();
+    var dataFile = tmpDir.resolve("ij-shell-env-data." + mark + ".tmp");
+    var logFile = tmpDir.resolve("ij-shell-env-log." + mark + ".tmp");
 
     try {
       var args = command.command();
@@ -243,8 +237,8 @@ public final class ShellEnvironmentReader {
         .start();
       int exitCode = waitAndTerminateAfter(process, timeoutMillis);
 
-      var envData = readString(dataFile);
-      var log = Files.exists(logFile) ? readString(logFile) : "(no log file)";
+      var envData = Files.exists(dataFile) ? Files.readString(dataFile) : "";
+      var log = Files.exists(logFile) ? readLogFile(logFile) : "(no log file)";
       if (exitCode != 0 || envData.isEmpty()) {
         if (!log.isEmpty()) {
           LOG.info("stdout/stderr: " + log);
@@ -254,15 +248,26 @@ public final class ShellEnvironmentReader {
 
       var env = EnvironmentUtil.parseEnv(envData.split("\0"));
       env.remove(INTELLIJ_ENVIRONMENT_READER);
-      if ("zsh".equals(Path.of(command.command().get(0)).getFileName().toString())) {
+      if ("zsh".equals(Path.of(command.command().getFirst()).getFileName().toString())) {
         env.remove(DISABLE_OMZ_AUTO_UPDATE);
       }
-      LOG.info("shell environment loaded (" + command.command().get(0) + ", " + env.size() + " vars)");
+      LOG.info("shell environment loaded (" + command.command().getFirst() + ", " + env.size() + " vars)");
       return new Pair<>(env, log);
     }
     finally {
       deleteTempFile(logFile);
       deleteTempFile(dataFile);
+    }
+  }
+
+  @SuppressWarnings("ReadWriteStringCanBeUsed")
+  private static String readLogFile(Path path) {
+    try {
+      // `new String(...)` better survives malformed UTF-8 input that `Files.readString(...)`
+      return new String(Files.readAllBytes(path), Charset.defaultCharset());
+    }
+    catch (IOException e) {
+      return "(error: " + e.getClass().getName()+ ": " + e.getMessage() + ")";
     }
   }
 

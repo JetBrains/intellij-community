@@ -3,7 +3,11 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
-import okhttp3.*
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Dispatcher
+import okhttp3.OkHttpClient
+import okhttp3.Response
 import okhttp3.internal.closeQuietly
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -56,12 +60,12 @@ internal val httpClient: OkHttpClient by lazy {
 }
 
 @ExperimentalCoroutinesApi
-internal suspend fun Call.executeAsync(): Response {
+internal suspend fun execute(call: Call): Response {
   return suspendCancellableCoroutine { continuation ->
     continuation.invokeOnCancellation {
-      this.cancel()
+      call.cancel()
     }
-    enqueue(object : Callback {
+    call.enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {
         continuation.resumeWithException(e)
       }

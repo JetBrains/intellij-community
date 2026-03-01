@@ -10,7 +10,7 @@ import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProviderFactory
 
-private class SeTextItemsProviderFactory : SeWrappedLegacyContributorItemsProviderFactory {
+internal class SeTextItemsProviderFactory : SeWrappedLegacyContributorItemsProviderFactory {
   override val id: String get() = SeProviderIdUtils.TEXT_ID
 
   override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {

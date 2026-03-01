@@ -73,6 +73,15 @@ public abstract class ModNavigatorTailType extends TailType {
   }
 
   /**
+   * @return tail type that inserts a dot
+   */
+  @Contract(pure = true)
+  public static @NotNull ModNavigatorTailType dotType() {
+    return (ModNavigatorTailType)TailTypes.dotType();
+  }
+  
+
+  /**
    * @return tail type that insert a space unless there's one at the caret position already, followed by a word or '@'
    */
   @Contract(pure = true)

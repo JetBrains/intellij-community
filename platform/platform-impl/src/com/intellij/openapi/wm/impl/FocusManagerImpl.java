@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.concurrency.ContextAwareRunnable;
@@ -18,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.AbstractPopup;
@@ -29,8 +28,15 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Frame;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowEvent;
 import java.util.LinkedList;
@@ -175,11 +181,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
       if (immediate.get()) {
         boolean expired = runnable instanceof ExpirableRunnable && ((ExpirableRunnable)runnable).isExpired();
         if (!expired) {
-          // Even immediate code need explicit write-safe context, not implicit one
-          IntelliJLockingUtil.getGlobalThreadingSupport().runPreventiveWriteIntentReadAction(() -> {
-            runnable.run();
-            return null;
-          });
+          runnable.run();
         }
       }
       else {

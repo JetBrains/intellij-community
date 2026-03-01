@@ -31,6 +31,7 @@ abstract class SchemeManager<T> {
 
   abstract fun reload()
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use reload()", replaceWith = ReplaceWith("reload()"))
   open fun reload(retainFilter: ((scheme: T) -> Boolean)?) {
     reload()

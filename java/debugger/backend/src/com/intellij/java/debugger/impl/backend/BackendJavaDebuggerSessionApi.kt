@@ -1,27 +1,45 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.backend
 
-import com.intellij.debugger.actions.*
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.actions.FreezeThreadAction
+import com.intellij.debugger.actions.InterruptThreadAction
+import com.intellij.debugger.actions.MuteRendererUtils
+import com.intellij.debugger.actions.ResumeThreadAction
+import com.intellij.debugger.actions.StepOutOfBlockActionUtils
+import com.intellij.debugger.actions.ThreadDumpAction
+import com.intellij.debugger.engine.AsyncStacksUtils
+import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.JavaExecutionStack
+import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.executeOnDMT
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.execution.filters.ExceptionFilters
+import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
-import com.intellij.java.debugger.impl.shared.rpc.*
+import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
+import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpDto
+import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpItemDto
+import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpResponseDto
+import com.intellij.java.debugger.impl.shared.rpc.ThreadDumpWithAwaitingDependencies
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
-import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.DumpItem
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.util.channels.use
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -80,7 +98,7 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
 
     for (javaValue in javaValues) {
       withDebugContext(javaValue.evaluationContext.suspendContext) {
-        javaValue.setRenderer(renderer, null)
+        javaValue.setRenderer(renderer)
       }
     }
     for (xValueModel in xValueModels) {
@@ -199,12 +217,17 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
                           isDeadLocked = it.isDeadLocked,
                           stackTraceIndex = stackTraceIndex,
                           iconToolTipIndex = iconToolTipToIndex[it.iconToolTip]!!.toByte(),
-                          firstLine = firstLine)
+                          firstLine = firstLine,
+                          isContainer = it.isContainer,
+                          treeId = it.treeId,
+                          parentTreeId = it.parentTreeId,
+                          canBeHidden = it.canBeHidden
+    )
   }
 
   return ThreadDumpWithAwaitingDependencies(items = items,
                                             icons = icons.map { it.rpcId() },
-                                            attributes = attributes.map { it.toRpc() },
+                                            attributes = attributes.map { it.rpcId() },
                                             stackTraces = stackTraces,
                                             awaitingDependencies = awaiting,
                                             stateDescriptions = stateDescriptions,

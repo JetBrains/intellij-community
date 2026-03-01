@@ -4,7 +4,7 @@ package com.intellij.platform.debugger.impl.rpc
 import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.DocumentPatchVersionAccessor
 import com.intellij.ide.rpc.FrontendDocumentId
-import com.intellij.ide.rpc.util.TextRangeId
+import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.Document
@@ -79,6 +79,8 @@ interface XBreakpointApi : RemoteApi<Unit> {
 data class XBreakpointDto(
   val id: XBreakpointId,
   val initialState: XBreakpointDtoState,
+  val initialCustomPresentation: XBreakpointCustomPresentationDto?,
+  val initialCurrentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
   val state: RpcFlow<XBreakpointDtoState>,
   val editorsProviderDto: XDebuggerEditorsProviderDto?,
   val typeId: XBreakpointTypeId,
@@ -104,8 +106,6 @@ data class XBreakpointDtoState(
   val generalDescription: String,
   val tooltipDescription: String,
   val timestamp: Long,
-  val currentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
-  val customPresentation: XBreakpointCustomPresentationDto?,
   val lineBreakpointInfo: XLineBreakpointInfo?,
   val requestId: Long,
 )
@@ -113,11 +113,11 @@ data class XBreakpointDtoState(
 @ApiStatus.Internal
 @Serializable
 data class XLineBreakpointInfo(
-  val isTemporary: Boolean,
-  val line: Int,
-  val fileUrl: String,
-  val highlightingRange: TextRangeId?,
-  val file: VirtualFileId?,
+    val isTemporary: Boolean,
+    val line: Int,
+    val fileUrl: String,
+    val highlightingRange: TextRangeDto?,
+    val file: VirtualFileId?,
 )
 
 @ApiStatus.Internal
@@ -139,6 +139,7 @@ enum class XBreakpointTypeSerializableStandardPanels {
 @Serializable
 data class XLineBreakpointTypeInfo(
   val priority: Int,
+  val supportsInterLinePlacement: Boolean,
 )
 
 

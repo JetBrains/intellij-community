@@ -124,3 +124,34 @@ fun rethrowLoggedErrorsIn(executable: ThrowableRunnable<*>) {
     executable.run()
   }
 }
+
+/**
+ * Run [code] and fail if any error it logged, but if [failOnWarn] is set, warn also leads to error.
+ * Unlike some other functions in this file, it is *not* thread-local.
+ */
+@Internal
+fun assertNothingLogged(failOnWarn: Boolean = false, code: () -> Unit) {
+  LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
+    override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+      if (failOnWarn) {
+        throw AssertionError("Unexpected warn $category: $message", t)
+      }
+      else {
+        return super.processWarn(category, message, t)
+      }
+    }
+
+    override fun processError(
+      category: String,
+      message: String,
+      details: Array<out String?>,
+      t: Throwable?,
+    ): Set<Action?> {
+      throw AssertionError("Unexpected error $category: $message ${details.joinToString(", ")}", t)
+    }
+  }, ThrowableRunnable {
+    code()
+  })
+}
+
+

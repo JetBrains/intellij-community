@@ -7,17 +7,29 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.indexing.StorageException
-import com.intellij.util.io.*
+import com.intellij.util.io.DataExternalizer
+import com.intellij.util.io.DataInputOutputUtil
+import com.intellij.util.io.IOUtil
+import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.keyStorage.AppendableObjectStorage
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile
-import it.unimi.dsi.fastutil.ints.*
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectFunction
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.*
+import java.io.Closeable
+import java.io.DataInput
+import java.io.DataOutput
+import java.io.Flushable
+import java.io.IOException
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.BitSet
 import kotlin.math.abs
 
 @ApiStatus.Internal

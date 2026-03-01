@@ -1,11 +1,15 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.grid.core.impl"/>
     <module name="intellij.platform.navbar.frontend"/>
+    <module name="intellij.grid.core.impl"/>
     <module name="intellij.grid.csv.core.impl"/>
     <module name="intellij.grid.types"/>
     <module name="intellij.libraries.microba"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.database.datagrid.valueEditorTab" interface="com.intellij.database.run.ui.ValueEditorTab" dynamic="true"/>
@@ -15,6 +19,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.database.csv.CsvFileUsageCollector"/>
     <fileEditorProvider id="csv-data-editor" implementation="com.intellij.database.editor.CsvTableFileEditorProvider" isDocumentRequired="true"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.database.actions.EscapeEditMaximizedHandler"/>
     <statusBarWidgetFactory id="GridAggregator" implementation="com.intellij.database.datagrid.AggregatorWidget$Factory" order="before Position"/>
@@ -32,7 +37,7 @@
     <registryKey key="database.grid.show.chart.tab" defaultValue="true" restartRequired="false"
                  description="Adds 'Show Chart' action to DG tables in editor, inlay and services."/>
     <uiDataRule implementation="com.intellij.database.run.ui.TableResultPanelUIDataRule"
-                id="TableResultPanelDataRule" order="before BasicUiDataRule"/>
+                id="TableResultPanelDataRule" order="before BasicUiDataRule, before ServiceViewProvidersDataRule"/>
     <uiDataRule implementation="com.intellij.database.run.ui.InnerEditorsTableResultPanelUIDataRule"
                 id="InnerEditorsTableResultPanelUIDataRule" order="before TableResultPanelDataRule"/>
     <applicationService serviceInterface="com.intellij.database.extensions.ExtensionsService" serviceImplementation="com.intellij.database.extensions.ExtensionsServiceImpl"/>
@@ -57,6 +62,11 @@
     <search.optionContributor implementation="com.intellij.database.settings.DataGridAppearanceOptionContributor"/>
     <customizableActionGroupProvider implementation="com.intellij.database.run.ui.table.TableFloatingToolbar$CustomizableGroupProvider"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.database.csv.CsvFileOpenedListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </applicationListeners>
 
   <actions resource-bundle="messages.DataGridBundle">
     <action id="DecreaseColumnWidth" class="com.intellij.database.actions.ColumnsWidthAction$DecreaseColumnsWidthAction"

@@ -29,7 +29,10 @@ import java.util.function.DoubleConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.split;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 

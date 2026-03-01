@@ -6,7 +6,9 @@
 package org.toml.lang.lexer
 
 import com.intellij.lexer.Lexer
-import com.intellij.psi.StringEscapesTokenTypes.*
+import com.intellij.psi.StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN
+import com.intellij.psi.StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN
+import com.intellij.psi.StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN
 import com.intellij.psi.tree.IElementType
 
 fun esc(test: Boolean): IElementType = if (test) VALID_STRING_ESCAPE_TOKEN else INVALID_CHARACTER_ESCAPE_TOKEN

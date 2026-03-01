@@ -2,8 +2,13 @@
 package com.intellij.rt.debugger;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
+import java.awt.Image;
+import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

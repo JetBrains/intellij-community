@@ -28,4 +28,25 @@ jvm_library(
     "//platform/xdebugger-impl/rpc",
   ]
 )
+
+jvm_library(
+  name = "debugger-streams-backend_test_lib",
+  module_name = "intellij.debugger.streams.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":debugger-streams-backend",
+    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//plugins/stream-debugger-core/intellij.debugger.streams.shared:debugger-streams-shared_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/xdebugger-api:debugger_test_lib",
+    "//plugins/stream-debugger-core:debugger-streams-core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/xdebugger-impl/rpc:rpc_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.debugger.streams.backend` end

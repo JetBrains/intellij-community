@@ -2,10 +2,22 @@
 package org.jetbrains.plugins.gitlab
 
 import com.intellij.openapi.components.serviceAsync
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.plugins.gitlab.api.*
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabApiManager
+import org.jetbrains.plugins.gitlab.api.GitLabEdition
+import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.GitLabVersion
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import org.jetbrains.plugins.gitlab.api.request.checkIsGitLabServer
 import org.jetbrains.plugins.gitlab.api.request.getServerMetadata

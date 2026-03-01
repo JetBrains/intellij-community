@@ -35,62 +35,14 @@ private const val packageName = "fleet.util.multiplatform"
 private val actualFqName = FqName("$packageName.Actual")
 private val linkToActualFqName = FqName("$packageName.linkToActual")
 
-@OptIn(UnsafeDuringIrConstructionAPI::class)
 class ExpectsPluginIrGenerationExtension(val logger: MessageCollector) : IrGenerationExtension {
-  private fun IrExpression?.isLinkToActualFunction(): Boolean {
-    return when (this) {
-      is IrCall -> symbol.owner.kotlinFqName == linkToActualFqName
-      else -> false
-    }
-  }
-
-  // Compares signatures
-  private fun IrFunction.matchesWith(to: IrFunction): Boolean {
-    // Description kept for debugging purposes
-    val problem = when {
-      to.parameters.size != parameters.size -> "non matching number of parameters"
-      to.typeParameters.size != typeParameters.size -> "non matching number of type parameters"
-      to.returnType != returnType.remapTypeParameters(this, to) -> "non matching return type"
-
-      !to.parameters.zipWithNulls(parameters).all { (expect, actual) ->
-        expect.matchesWith(actual, this, to)
-      } -> "non matching parameters"
-
-      !to.typeParameters.zipWithNulls(typeParameters).all { (expect, actual) ->
-        expect?.variance == actual?.variance && expect?.superTypes == actual?.superTypes?.map { it.remapTypeParameters(this, to) }
-      } -> "non matching type parameters"
-
-      else -> null
-    }
-
-    return problem == null
-  }
-
-  private fun IrValueParameter?.matchesWith(
-    actual: IrValueParameter?,
-    thisParams: IrTypeParametersContainer,
-    actualParams: IrTypeParametersContainer,
-  ): Boolean {
-    return when {
-      this != null && actual == null -> false
-      this == null && actual != null -> false
-      this?.kind != actual?.kind -> false
-      this?.type != actual?.type?.remapTypeParameters(thisParams, actualParams) -> false
-      else -> true
-    }
-  }
-
-  private fun Iterable<IrFunction>.findMatching(to: IrFunction): IrFunction? {
-    return firstOrNull { actual ->
-      actual.matchesWith(to)
-    }
-  }
-
+  @OptIn(UnsafeDuringIrConstructionAPI::class)
   override fun generate(
-    moduleFragment: IrModuleFragment, pluginContext: IrPluginContext,
+    moduleFragment: IrModuleFragment,
+    pluginContext: IrPluginContext,
   ) {
-    val expectFunctions = mutableMapOf<FqName, MutableList<IrFunction>>()
-    val actualFunctions = mutableListOf<IrFunction>()
+    val expectDeclarations = mutableMapOf<FqName, MutableList<IrFunction>>()
+    val actualDeclarations = mutableListOf<IrFunction>()
     var hasFailed = false
 
     // Collect expect + actual from sources to compile
@@ -107,32 +59,38 @@ class ExpectsPluginIrGenerationExtension(val logger: MessageCollector) : IrGener
         }
 
         if (isExpect) {
-          expectFunctions.getOrPut(declaration.kotlinFqName) { mutableListOf() }.add(declaration)
+          expectDeclarations.getOrPut(declaration.kotlinFqName) { mutableListOf() }.add(declaration)
         }
         else if (declaration.hasAnnotation(actualFqName)) {
-          actualFunctions.add(declaration)
+          actualDeclarations.add(declaration)
         }
 
         super.visitFunction(declaration)
       }
     }, null)
 
-    val usedActuals = expectFunctions.flatMap { (fqName, expects) ->
+    val usedActuals = expectDeclarations.flatMap { (fqName, expectOverloads) ->
       // Search for actual with matching FqName once
-      val actualName = fqName.toActualName(pluginContext.platform)
-      val refs = pluginContext.referenceFunctions(
+      val actualFqName = fqName.toActualName(pluginContext.platform)
+      val actualOverloads = pluginContext.referenceFunctions(
         CallableId(
-          packageName = actualName.parent(),
-          callableName = actualName.shortName()
+          packageName = actualFqName.parent(),
+          callableName = actualFqName.shortName()
         )
-      )
-        .filter { it.owner.hasAnnotation(actualFqName) }
+      ).also { afns ->
+        expectOverloads.forEach { e ->
+          afns.forEach { a ->
+            pluginContext.recordLookup(a.owner, e.file)
+          }
+        }
+      }
+        .filter { it.owner.hasAnnotation(fleet.multiplatform.expects.actualFqName) }
         .map { it.owner }
 
-      if (refs.isEmpty()) {
-        expects.forEach { expect ->
+      if (actualOverloads.isEmpty()) {
+        expectOverloads.forEach { expect ->
           reportError(
-            "no `@Actual fun ${actualName}()` found, cannot link `linkToActual()`",
+            "no `@Actual fun ${actualFqName}()` found, cannot link `linkToActual()`",
             expect
           )
           hasFailed = true
@@ -141,12 +99,12 @@ class ExpectsPluginIrGenerationExtension(val logger: MessageCollector) : IrGener
         emptyList()
       }
       else {
-        expects.mapNotNull { expect ->
-          val actual = refs.findMatching(expect)
+        expectOverloads.mapNotNull { expect ->
+          val actual = actualOverloads.findMatching(expect)
 
           if (actual == null) {
             reportError(
-              "none of existing `@Actual fun $actualName()` have compatible signature, cannot link `linkToActual()`",
+              "none of existing `@Actual fun $actualFqName()` have compatible signature, cannot link `linkToActual()`",
               expect
             )
             hasFailed = true
@@ -170,7 +128,7 @@ class ExpectsPluginIrGenerationExtension(val logger: MessageCollector) : IrGener
     }
 
     // Check that actual functions are mapped somewhere as well (already compiled code or from the mapping above)
-    actualFunctions
+    actualDeclarations
       // No need to run search for those already mapped
       .minus(usedActuals)
       .forEach { actual ->
@@ -183,19 +141,23 @@ class ExpectsPluginIrGenerationExtension(val logger: MessageCollector) : IrGener
         }
         else {
           // Search in compiled files for matching method
-          val expectName = actual.kotlinFqName.toExpectName(pluginContext.platform)
+          val expectFqn = actual.kotlinFqName.toExpectName(pluginContext.platform)
 
           // We cannot really check for calls of `linkToActual` here since it's compiled / substituted
           val sameFqName = pluginContext.referenceFunctions(
             CallableId(
-              packageName = expectName.parent(),
-              callableName = expectName.shortName()
+              packageName = expectFqn.parent(),
+              callableName = expectFqn.shortName()
             )
-          )
+          ).also { efns ->
+            efns.forEach { e ->
+              pluginContext.recordLookup(e.owner, actual.file)
+            }
+          }
 
           if (sameFqName.isEmpty()) {
             reportError(
-              "no `fun ${expectName.shortName()}()` calling ${linkToActualFqName.shortName()}() found, invalid `@Actual` usage",
+              "no `fun ${expectFqn.shortName()}()` calling ${linkToActualFqName.shortName()}() found, invalid `@Actual` usage",
               actual
             )
             hasFailed = true
@@ -207,7 +169,7 @@ class ExpectsPluginIrGenerationExtension(val logger: MessageCollector) : IrGener
 
             if (matching == null) {
               reportError(
-                "none of existing `fun ${expectName.shortName()}()` has compatible signature, invalid `@Actual` usage",
+                "none of existing `fun ${expectFqn.shortName()}()` has compatible signature, invalid `@Actual` usage",
                 actual
               )
               hasFailed = true
@@ -229,21 +191,71 @@ class ExpectsPluginIrGenerationExtension(val logger: MessageCollector) : IrGener
       declaration.getCompilerMessageLocation(declaration.file)
     )
   }
+}
 
-  private val TargetPlatform?.specifier: String
-    get() {
-      // TODO check this doesn't hurt in KMP or use "Impl"
-      return when (val single = this?.singleOrNull()) {
-        null -> "Impl"
-        else -> single.platformName.split("-").joinToString("") {
-          it.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-        }
+@OptIn(UnsafeDuringIrConstructionAPI::class)
+private fun IrExpression?.isLinkToActualFunction(): Boolean {
+  return when (this) {
+    is IrCall -> symbol.owner.kotlinFqName == linkToActualFqName
+    else -> false
+  }
+}
+
+// Compares signatures
+private fun IrFunction.matchesWith(to: IrFunction): Boolean {
+  // Description kept for debugging purposes
+  val problem = when {
+    to.parameters.size != parameters.size -> "non matching number of parameters"
+    to.typeParameters.size != typeParameters.size -> "non matching number of type parameters"
+    to.returnType != returnType.remapTypeParameters(this, to) -> "non matching return type"
+
+    !to.parameters.zipWithNulls(parameters).all { (expect, actual) ->
+      expect.matchesWith(actual, this, to)
+    } -> "non matching parameters"
+
+    !to.typeParameters.zipWithNulls(typeParameters).all { (expect, actual) ->
+      expect?.variance == actual?.variance && expect?.superTypes == actual?.superTypes?.map { it.remapTypeParameters(this, to) }
+    } -> "non matching type parameters"
+
+    else -> null
+  }
+
+  return problem == null
+}
+
+private fun IrValueParameter?.matchesWith(
+  actual: IrValueParameter?,
+  thisParams: IrTypeParametersContainer,
+  actualParams: IrTypeParametersContainer,
+): Boolean {
+  return when {
+    this != null && actual == null -> false
+    this == null && actual != null -> false
+    this?.kind != actual?.kind -> false
+    this?.type != actual?.type?.remapTypeParameters(thisParams, actualParams) -> false
+    else -> true
+  }
+}
+
+private fun Iterable<IrFunction>.findMatching(to: IrFunction): IrFunction? {
+  return firstOrNull { actual ->
+    actual.matchesWith(to)
+  }
+}
+
+private val TargetPlatform?.specifier: String
+  get() {
+    // TODO check this doesn't hurt in KMP or use "Impl"
+    return when (val single = this?.singleOrNull()) {
+      null -> "Impl"
+      else -> single.platformName.split("-").joinToString("") {
+        it.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
       }
     }
+  }
 
-  private fun FqName.toActualName(platform: TargetPlatform?): FqName = parent()
-    .child(Name.identifier(shortName().identifier + platform.specifier))
+private fun FqName.toActualName(platform: TargetPlatform?): FqName = parent()
+  .child(Name.identifier(shortName().identifier + platform.specifier))
 
-  private fun FqName.toExpectName(platform: TargetPlatform?): FqName = parent()
-    .child(Name.identifier(shortName().identifier.removeSuffix(platform.specifier)))
-}
+private fun FqName.toExpectName(platform: TargetPlatform?): FqName = parent()
+  .child(Name.identifier(shortName().identifier.removeSuffix(platform.specifier)))

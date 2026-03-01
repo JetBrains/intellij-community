@@ -2,14 +2,31 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.core.trace.dsl.*
+import com.intellij.debugger.streams.core.trace.dsl.ArrayVariable
+import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.CompositeCodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.Convertable
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.ForLoopBody
+import com.intellij.debugger.streams.core.trace.dsl.IfBranch
+import com.intellij.debugger.streams.core.trace.dsl.Lambda
+import com.intellij.debugger.streams.core.trace.dsl.LambdaBody
+import com.intellij.debugger.streams.core.trace.dsl.ListVariable
+import com.intellij.debugger.streams.core.trace.dsl.MapVariable
+import com.intellij.debugger.streams.core.trace.dsl.StatementFactory
+import com.intellij.debugger.streams.core.trace.dsl.TryBlock
+import com.intellij.debugger.streams.core.trace.dsl.Types
+import com.intellij.debugger.streams.core.trace.dsl.Variable
+import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.core.trace.dsl.impl.AssignmentStatement
 import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.core.trace.dsl.impl.VariableImpl
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinStatementFactory(private val peekCallFactory: PeekCallFactory) : StatementFactory {
     override fun createNewListExpression(elementType: GenericType, vararg args: Expression): Expression =
         TextExpression("kotlin.collections.mutableListOf<${elementType.genericTypeName}>(${StatementFactory.commaSeparate(*args)})")

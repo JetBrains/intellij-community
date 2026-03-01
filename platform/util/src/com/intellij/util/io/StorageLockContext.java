@@ -17,7 +17,11 @@ import java.nio.file.Path;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.intellij.util.io.PageCacheUtils.*;
+import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
+import static com.intellij.util.io.PageCacheUtils.FILE_PAGE_CACHE_NEW_CAPACITY_BYTES;
+import static com.intellij.util.io.PageCacheUtils.FILE_PAGE_CACHE_OLD_CAPACITY_BYTES;
+import static com.intellij.util.io.PageCacheUtils.HEAP_CAPACITY_FRACTION;
+import static com.intellij.util.io.PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED;
 
 /**
  * Context of storage operations: which file page cache to use, which kind of locking to use, how to cache file

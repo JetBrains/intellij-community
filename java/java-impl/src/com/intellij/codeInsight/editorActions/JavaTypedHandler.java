@@ -1,19 +1,33 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
-import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
-import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -190,64 +204,12 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
 
   @Override
   protected void autoPopupMemberLookup(@NotNull Project project, final @NotNull Editor editor) {
-    AutoPopupController.getInstance(project).scheduleAutoPopup(editor, file -> {
-      int offset = editor.getCaretModel().getOffset();
-
-      PsiElement lastElement = file.findElementAt(offset - 1);
-      if (lastElement == null) {
-        return false;
-      }
-
-      //do not show lookup when typing varargs ellipsis
-      final PsiElement prevSibling = PsiTreeUtil.prevVisibleLeaf(lastElement);
-      if (prevSibling == null || ".".equals(prevSibling.getText())) return false;
-      PsiElement parent = prevSibling;
-      do {
-        parent = parent.getParent();
-      }
-      while (parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
-      if (parent instanceof PsiParameterList list && PsiTreeUtil.isAncestor(list, lastElement, false) ||
-          (parent instanceof PsiParameter && !(parent instanceof PsiPatternVariable))) {
-        if (CommandCompletionSettingsService.getInstance().commandCompletionEnabled() &&
-            parent instanceof PsiParameter parameter &&
-            lastElement instanceof PsiJavaToken javaToken &&
-            javaToken.textMatches(".") &&
-            prevSibling instanceof PsiIdentifier identifier &&
-            parameter.getIdentifyingElement() == identifier) {
-          return true;
-        }
-        return false;
-      }
-
-      if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText()) && !"##".equals(lastElement.getText())) {
-        return JavaClassReferenceCompletionContributor.findJavaClassReference(file, offset - 1) != null;
-      }
-      else {
-        final PsiElement element = file.findElementAt(offset);
-        return element == null ||
-               !"#".equals(lastElement.getText()) ||
-               PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null;
-      }
-    });
+    AutoPopupController.getInstance(project).scheduleAutoPopup(editor, new BackendAutoPopupMemberLookupCondition(editor));
   }
 
   @Override
   public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return Result.CONTINUE;
-
-    int offset = editor.getCaretModel().getOffset();
-    if (charTyped == ' ' &&
-        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, JavaKeywords.NEW)) {
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, f -> {
-        PsiElement leaf = f.findElementAt(offset - JavaKeywords.NEW.length());
-        return leaf instanceof PsiKeyword &&
-               leaf.textMatches(JavaKeywords.NEW) &&
-               !PsiJavaPatterns.psiElement().insideStarting(PsiJavaPatterns.psiExpressionStatement()).accepts(leaf);
-      });
-      return Result.STOP;
-    }
-
-    return super.checkAutoPopup(charTyped, project, editor, file);
+    return doCheckAutoPopup(charTyped, project, editor, file);
   }
 
   @Override
@@ -258,5 +220,14 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
       PsiElement lastElement = file.findElementAt(offset - 1);
       return lastElement != null && StringUtil.endsWithChar(lastElement.getText(), '@');
     });
+  }
+
+  private static class BackendAutoPopupMemberLookupCondition extends FrontendAutoPopupMemberLookupCondition {
+    BackendAutoPopupMemberLookupCondition(@NotNull Editor editor) { super(editor); }
+
+    @Override
+    protected boolean additionalChecks(@NotNull PsiFile file, int offset) {
+      return JavaClassReferenceCompletionContributor.findJavaClassReference(file, offset - 1) != null;
+    }
   }
 }

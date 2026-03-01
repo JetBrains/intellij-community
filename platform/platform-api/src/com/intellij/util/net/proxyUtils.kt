@@ -1,15 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProxyUtils")
-@file:Suppress("removal", "DEPRECATION")
-
 package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.isFulfilled
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.util.net.ProxyConfiguration.ProxyProtocol
 import com.intellij.util.proxy.JavaProxyProperty
-import java.net.*
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.URI
+import java.net.URL
 import javax.swing.JComponent
 
 fun Proxy.isRealProxy(): Boolean {
@@ -65,9 +67,9 @@ fun ProxyConfiguration.StaticProxyConfiguration.asJvmProperties(credentialProvid
   }
 }
 
-fun ProxySettings.editConfigurable(parent: JComponent?): Boolean {
-  return ShowSettingsUtil.getInstance().editConfigurable(parent, HttpProxyConfigurable(this))
-}
+@Deprecated("Use HttpProxyConfigurable.editConfigurable", replaceWith = ReplaceWith("HttpProxyConfigurable.editConfigurable(parent)"), level = DeprecationLevel.ERROR)
+@Suppress("UnusedReceiverParameter")
+fun ProxySettings.editConfigurable(parent: JComponent?): Boolean = HttpProxyConfigurable.editConfigurable(parent)
 
 fun ProxySettings.getStaticProxyCredentials(credentialStore: ProxyCredentialProvider): Credentials? {
   val conf = getProxyConfiguration()

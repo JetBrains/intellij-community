@@ -106,6 +106,10 @@ class JTreeFixtureAdapter(robot: Robot, component: BeControlComponentBase) :
     return fixture.getComponentAtRow(row)
   }
 
+  override fun scrollToRowAndGetVisibleCenter(row: Int): Point {
+    return fixture.scrollToRowAndGetVisibleCenter(row)
+  }
+
   override fun collectIconsAtRow(row: Int): List<Icon> {
     return fixture.collectIconsAtRow(row)
   }

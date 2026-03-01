@@ -15,3 +15,5 @@ fun foo(e: E) {
 // EXIST: B
 // EXIST: C
 // ABSENT: else
+
+// IGNORE_K2

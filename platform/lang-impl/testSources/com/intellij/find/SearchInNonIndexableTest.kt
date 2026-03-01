@@ -19,7 +19,12 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.CommonProcessors.CollectProcessor
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FilesDeque
-import com.intellij.util.indexing.testEntities.*
+import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.IndexingTestEntity
+import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.util.indexing.testEntities.NonRecursiveFileSetContributor
+import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking

@@ -5,3 +5,5 @@ fun bar(arr: IntArray) {
 }
 
 // ELEMENT: arr
+
+// IGNORE_K2

@@ -4,7 +4,13 @@ package com.siyeh.ipp.annotation;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 

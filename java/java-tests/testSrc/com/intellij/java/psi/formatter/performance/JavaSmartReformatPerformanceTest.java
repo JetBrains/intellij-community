@@ -10,9 +10,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
 
+@PerformanceUnitTest
 public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest {
   public void testSmartReformatPerformanceInLargeFile_AsUsedInPostponedFormatting() {
     Project project = getProject();

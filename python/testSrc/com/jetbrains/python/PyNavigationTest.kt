@@ -549,6 +549,19 @@ class PyNavigationTest : PyTestCase() {
     assertEquals("a = 2", result.parent.text)
   }
 
+  @TestFor(issues=["PY-82222"])
+  fun `test gtd prefer pyi over skeleton`() {
+    myFixture.configureByText("a.py", "in<caret>t")
+    val target = gotoDeclaration()
+    assertNotNull(target)
+
+    val containingFile = target!!.containingFile
+
+    // Should navigate to .pyi file (typeshed), not .py skeleton file
+    assertTrue(containingFile is PyiFile)
+    assertEquals("builtins.pyi", containingFile.name)
+  }
+
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")

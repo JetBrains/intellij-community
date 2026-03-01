@@ -2,7 +2,13 @@
 package com.jetbrains.python.packaging.toolwindow.packages.tree
 
 import com.intellij.ide.CopyProvider
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
@@ -16,7 +22,12 @@ import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
-import com.jetbrains.python.packaging.toolwindow.model.*
+import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
+import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
+import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
+import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageNameCellRenderer
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PackageVersionCellRenderer
 import com.jetbrains.python.sdk.isReadOnly
@@ -143,7 +154,7 @@ class PyPackagesTreeTable(
       is InstalledPackage -> controller.packageSelected(pkg)
       is InstallablePackage -> controller.packageSelected(pkg)
       is RequirementPackage -> controller.packageSelected(pkg)
-      is ErrorNode -> controller.setEmpty()
+      is WorkspaceMember -> controller.packageSelected(pkg)
       is ExpandResultNode -> controller.setEmpty()
     }
   }
@@ -234,7 +245,7 @@ class PyPackagesTreeTable(
 
     private fun shouldShowPopupForNode(node: DisplayablePackage): Boolean = when (node) {
       is InstallablePackage, is InstalledPackage -> true
-      is RequirementPackage, is ExpandResultNode, is ErrorNode -> false
+      is RequirementPackage, is ExpandResultNode, is WorkspaceMember -> false
     }
 
     private fun createAndShowPopupMenu(comp: Component?, x: Int, y: Int, actionGroup: ActionGroup) {
@@ -292,8 +303,8 @@ class PyPackagesTreeTable(
   override fun isCopyVisible(dataContext: DataContext): Boolean = true
 
   private fun getTextForCopy(): String? = when (val pkg = selectedItem()) {
-    is InstalledPackage, is InstallablePackage, is RequirementPackage -> pkg.name
-    is ErrorNode, is ExpandResultNode, null -> null
+    is InstalledPackage, is InstallablePackage, is RequirementPackage, is WorkspaceMember -> pkg.name
+    is ExpandResultNode, null -> null
   }
 }
 

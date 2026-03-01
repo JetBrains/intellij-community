@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 
-private class PauseScanningAndIndexingAction : AnAction() {
+internal class PauseScanningAndIndexingAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.service<InternalIndexingActionsService>()?.pauseScanningAndIndexingAndRunEmptyTask()
   }

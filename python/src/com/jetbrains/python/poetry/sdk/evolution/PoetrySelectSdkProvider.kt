@@ -20,7 +20,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.poetry.runPoetry
@@ -31,7 +30,7 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.name
 
-private class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
+internal class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeElement = EvoTreeLazyNodeElement("Poetry", PythonIcons.Python.Origami) {
     getPoetryExecutable() ?:PyResult.localizedError(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"))
 
@@ -46,8 +45,8 @@ private class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
 
 
     val (projectName, requiresPython) = withContext(Dispatchers.IO) {
-      val toml = PyProjectToml.parse(pyProjectTomlFile.readText()).getOrNull()
-      (toml?.project?.name) to (toml?.project?.requiresPython)
+      val toml = PyProjectToml.parse(pyProjectTomlFile.readText())
+      (toml.project?.name) to (toml.project?.requiresPython)
     }
     val poetryVirtualenvsPath = runPoetry(pyProjectTomlFile.parent.toNioPath(), "config", "virtualenvs.path")
       .getOr { return@EvoTreeLazyNodeElement it }.let { Path(it.trim()) }
@@ -84,7 +83,7 @@ private class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
   }
 }
 
-private class SelectPoetryEnvAction(
+internal class SelectPoetryEnvAction(
   title: String,
   installedVersion: Version?,
 

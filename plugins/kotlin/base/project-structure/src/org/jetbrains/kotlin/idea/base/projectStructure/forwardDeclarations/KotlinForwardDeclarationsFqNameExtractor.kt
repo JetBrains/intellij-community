@@ -29,7 +29,7 @@ internal object KotlinForwardDeclarationsFqNameExtractor {
         declarations.filterNot { it.isRoot }.groupBy(FqName::parent)
 
     private fun getForwardDeclarationFqNames(klib: KLibRoot): List<FqName> {
-        return getForwardDeclarationFqNames(klib.resolvedKotlinLibrary.manifestProperties)
+        return klib.resolvedKotlinLibrary?.manifestProperties?.let(::getForwardDeclarationFqNames).orEmpty()
     }
 
     private fun getForwardDeclarationFqNames(properties: Properties): List<FqName> {

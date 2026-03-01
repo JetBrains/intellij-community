@@ -19,7 +19,8 @@ package com.intellij.util.xml.ui;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.util.List;
 
 public class DomUINavigationProvider extends DomElementNavigationProvider {

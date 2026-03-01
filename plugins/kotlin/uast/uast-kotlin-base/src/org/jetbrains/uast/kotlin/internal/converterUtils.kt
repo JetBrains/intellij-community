@@ -12,7 +12,14 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.uast.*
+import org.jetbrains.uast.DEFAULT_EXPRESSION_TYPES_LIST
+import org.jetbrains.uast.DEFAULT_TYPES_LIST
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 

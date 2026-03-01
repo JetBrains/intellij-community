@@ -8,7 +8,9 @@ import com.intellij.ide.hierarchy.call.JavaCallHierarchyData
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinCallReferenceProcessor : CallReferenceProcessor {
     override fun process(reference: PsiReference, data: JavaCallHierarchyData): Boolean {
         val nodeDescriptor = data.nodeDescriptor as? HierarchyNodeDescriptor ?: return false

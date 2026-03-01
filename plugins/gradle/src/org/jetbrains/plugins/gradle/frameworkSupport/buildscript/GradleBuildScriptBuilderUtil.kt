@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleBuildScriptBuilderUtil")
 
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
@@ -37,12 +37,19 @@ import org.gradle.util.GradleVersion.version
  * 1.9.24                      8.10                        1.8
  * 2.0.20                      8.11                        1.8
  * 2.0.21                      8.12                        1.8
+ * 2.2.0                       9.0.0                       2.2
+ * 2.2.20                      9.2.0                       2.2
+ * 2.2.21                      9.3.0                       2.2
  *
  * Source: https://docs.gradle.org/current/userguide/compatibility.html
  */
 fun getKotlinVersion(gradleVersion: GradleVersion): String {
   val base = gradleVersion.baseVersion
   return when {
+    base >= version("9.4.0") -> "2.3.0"
+    base >= version("9.3.0") -> "2.2.21"
+    base >= version("9.2.0") -> "2.2.20"
+    base >= version("9.0.0") -> "2.2.0"
     base >= version("8.12") -> "2.0.21"
     base >= version("8.11") -> "2.0.20"
     base >= version("8.10") -> "1.9.24"
@@ -71,6 +78,10 @@ fun getJunit5Version(): String {
   return "5.10.0"
 }
 
+fun getJunit6Version(): String {
+  return "6.0.0"
+}
+
 fun isTaskConfigurationAvoidanceSupported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.9")
 }
@@ -89,6 +100,10 @@ fun isJunit5Supported(gradleVersion: GradleVersion): Boolean {
 
 fun isGroovy5Supported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.0")
+}
+
+fun isJunit6Supported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.0")
 }
 
 fun isSpockSupported(gradleVersion: GradleVersion): Boolean {
@@ -126,4 +141,8 @@ fun isExplicitTestFrameworkRuntimeDeclarationRequired(gradleVersion: GradleVersi
 fun isGroovyApacheSupported(groovyVersion: String): Boolean {
   val majorVersion = groovyVersion.split(".").firstOrNull()?.let(Integer::valueOf) ?: 0
   return majorVersion >= 4
+}
+
+fun isVersionCatalogsSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.4")
 }

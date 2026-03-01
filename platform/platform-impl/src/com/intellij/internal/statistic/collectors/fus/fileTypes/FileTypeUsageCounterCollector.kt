@@ -1,28 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes
 
-import  com.intellij.ide.fileTemplates.FileTemplate
+import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.PluginBundledTemplate
+import com.intellij.internal.statistic.collectors.fus.actions.ProjectStateObserver
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.Class
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByCustomRule
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.StringEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.readActionBlocking
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorComposite
-import com.intellij.openapi.fileTypes.FileTypeManager   
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState
@@ -30,9 +32,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
@@ -83,7 +82,7 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
   @RequiresEdt
   @JvmStatic
   fun triggerEdit(project: Project, file: VirtualFile) {
-    val projectState = ReadAction.compute<List<EventPair<*>>, Throwable> {
+    val projectState = ReadAction.computeBlocking<List<EventPair<*>>, Throwable> {
       listOf(
         EventFields.Dumb.with(isDumb(project)),
         INCOMPLETE_DEPENDENCIES_MODE.with(project.service<IncompleteDependenciesService>().getState())
@@ -242,53 +241,3 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
     return null
   }
 }
-
-/**
- * Usage statistics has the relaxed guarantees for data consistency, so we just have some observation of dumb/dependencies state.
- * At the same time, it lets us avoid getting the read lock on every change in files.
- */
-@Service(Service.Level.PROJECT)
-private class ProjectStateObserver(private val project: Project, coroutineScope: CoroutineScope) {
-  private val flow: MutableStateFlow<ProjectState> = MutableStateFlow(ProjectState(true, DependenciesState.COMPLETE))
-
-  init {
-    val connection = project.messageBus.connect(coroutineScope)
-    connection.subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
-      override fun enteredDumbMode() {
-        updateState { state -> ProjectState(true, state.dependenciesState) }
-      }
-
-      override fun exitDumbMode() {
-        updateState { state -> ProjectState(false, state.dependenciesState) }
-      }
-    })
-
-    coroutineScope.launch {
-      flow.value = ProjectState(
-        isDumb(project),
-        readActionBlocking { project.service<IncompleteDependenciesService>().getState() }
-      )
-
-      project.service<IncompleteDependenciesService>().stateFlow.collect {
-        updateState { state -> ProjectState(state.isDumb, it) }
-      }
-    }
-  }
-
-  fun getState(): ProjectState = flow.value
-
-  private fun updateState(updater: (ProjectState) -> ProjectState) {
-    while (true) {
-      val state = flow.value
-      val newState = updater(state)
-      if (flow.compareAndSet(state, newState)) {
-        return
-      }
-    }
-  }
-}
-
-private class ProjectState(
-  val isDumb: Boolean,
-  val dependenciesState: DependenciesState,
-)

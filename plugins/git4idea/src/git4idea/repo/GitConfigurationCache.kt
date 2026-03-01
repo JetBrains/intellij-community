@@ -14,7 +14,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.MessageBusConnection
 import git4idea.config.GitConfigUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.jvm.optionals.getOrNull
 

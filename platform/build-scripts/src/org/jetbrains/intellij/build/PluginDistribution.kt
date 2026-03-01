@@ -21,4 +21,11 @@ enum class PluginDistribution {
    * A plugin should be included in distribution for nightly builds only (non EAP, non Release)
    */
   NOT_FOR_PUBLIC_BUILDS,
+
+  /**
+   * A plugin should be included only in cross-platform distribution zip.
+   * Use this for plugins that have OS/arch-specific variants - the cross-platform variant
+   * replaces them in the cross-platform zip to avoid content conflicts.
+   */
+  CROSS_PLATFORM_DIST_ONLY,
 }

@@ -12,7 +12,10 @@ import com.intellij.grazie.spellcheck.GrazieCheckers
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.utils.TextStyleDomain
-import com.intellij.grazie.utils.TextStyleDomain.*
+import com.intellij.grazie.utils.TextStyleDomain.AIPrompt
+import com.intellij.grazie.utils.TextStyleDomain.CodeComment
+import com.intellij.grazie.utils.TextStyleDomain.CodeDocumentation
+import com.intellij.grazie.utils.TextStyleDomain.Commit
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
@@ -20,6 +23,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -53,6 +57,12 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
       }
     }
 
+    @JvmStatic
+    fun installTestChecker(disposable: Disposable) {
+      val newExtensions = TextChecker.allCheckers().map { if (it is LanguageToolChecker) LanguageToolChecker.TestChecker() else it }
+      ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, disposable)
+    }
+
     fun loadLangs(langs: Collection<Lang>, project: Project) {
       langs.filter { it in hunspellLangs }.forEach { loadLang(it, project) }
     }
@@ -73,7 +83,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
       if (!Files.exists(zip)) {
         fail("Hunspell-${lang.iso} not found in classpath")
       }
-      val outputDir = GrazieDynamic.getLangDynamicFolder(lang).resolve(lang.hunspellRemote!!.storageName)
+      val outputDir = GrazieDynamic.dynamicFolder.resolve(lang.hunspellRemote!!.storageName)
       Files.createDirectories(outputDir)
       ZipUtil.extract(zip, outputDir, HunspellDescriptor.filenameFilter())
       getInstance(project).spellChecker!!.addDictionary(lang.dictionary!!)
@@ -85,7 +95,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     }
 
     private fun getDictionaryPath(lang: Lang): String {
-      return GrazieDynamic.getLangDynamicFolder(lang).resolve(lang.hunspellRemote!!.file).toString()
+      return GrazieDynamic.dynamicFolder.resolve(lang.hunspellRemote!!.file).toString()
     }
   }
 
@@ -97,13 +107,11 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    maskSaxParserFactory(testRootDisposable)
     myFixture.enableInspections(*inspectionTools)
 
+    maskSaxParserFactory(testRootDisposable)
+    installTestChecker(testRootDisposable)
     enableProofreadingFor(enabledLanguages)
-
-    val newExtensions = TextChecker.allCheckers().map { if (it is LanguageToolChecker) LanguageToolChecker.TestChecker() else it }
-    ExtensionTestUtil.maskExtensions(ExtensionPointName("com.intellij.grazie.textChecker"), newExtensions, testRootDisposable)
   }
 
   override fun tearDown() {

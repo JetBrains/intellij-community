@@ -6,6 +6,7 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import java.nio.charset.StandardCharsets
 
@@ -26,6 +27,15 @@ class PropertiesSupportTest : GrazieTestBase() {
       encodingManager.setDefaultCharsetForPropertiesFiles(null, defaultCharset)
       encodingManager.setNative2AsciiForPropertiesFiles(null, native2Ascii)
     }
+  }
+
+  fun `test asian-english mixed text in properties file`() {
+    myFixture.configureByText("a.properties", "title=本地daemon插件jar")
+    myFixture.checkHighlighting()
+
+    enableProofreadingFor(setOf(Lang.CHINESE))
+    myFixture.configureByText("a.properties", "title=本地daemon插件jar")
+    myFixture.checkHighlighting()
   }
 
   fun `test grammar check in file`() {
@@ -72,6 +82,7 @@ class PropertiesSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
+  @PerformanceUnitTest
   fun `test properties typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.properties file") {
       runHighlightTestForFile("ide/language/properties/i18n.properties")

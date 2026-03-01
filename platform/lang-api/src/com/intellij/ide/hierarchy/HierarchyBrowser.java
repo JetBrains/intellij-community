@@ -6,7 +6,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Base class for components which can be displayed in the Hierarchy toolwindow.

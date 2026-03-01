@@ -28,4 +28,25 @@ jvm_library(
     "//platform/platform-impl/update-checker",
   ]
 )
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.platform.pluginManager.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//platform/core-api:core_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/pluginManager/shared:shared_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/platform-frontend:frontend_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/platform-impl/update-checker:update-checker_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.pluginManager.frontend` end

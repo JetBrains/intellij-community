@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:icu4j"],
   runtime_deps = ["@lib//:icu4j"]
 )
+
+jvm_library(
+  name = "icu4j_test_lib",
+  module_name = "intellij.libraries.icu4j",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:icu4j"],
+  runtime_deps = [":icu4j"]
+)
 ### auto-generated section `build intellij.libraries.icu4j` end

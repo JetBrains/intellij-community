@@ -13,7 +13,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -22,7 +26,6 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   private volatile RawRuntimeModuleRepositoryData myMainData;
   private volatile List<RawRuntimeModuleRepositoryData> myAdditionalData;
   private final Path myDescriptorsFilePath;
-  private final Map<String, RuntimeModuleId> myInternedModuleIds;
 
   public RuntimeModuleRepositoryImpl(@NotNull Path descriptorsFilePath) {
     this(descriptorsFilePath, null);
@@ -31,7 +34,6 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   public RuntimeModuleRepositoryImpl(@NotNull Path descriptorsFilePath, @Nullable RawRuntimeModuleRepositoryData preloadedMainData) {
     myDescriptorsFilePath = descriptorsFilePath;
     myResolveResults = new ConcurrentHashMap<>();
-    myInternedModuleIds = new ConcurrentHashMap<>();
     myMainData = preloadedMainData;
   }
 
@@ -49,11 +51,11 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     if (cached != null) return cached;
 
     RawRuntimeModuleRepositoryData rawData = getMainData();
-    RawRuntimeModuleDescriptor rawDescriptor = rawData.findDescriptor(moduleId.getStringId());
+    RawRuntimeModuleDescriptor rawDescriptor = rawData.findDescriptor(moduleId);
     if (rawDescriptor == null) {
       if (myAdditionalData != null) {
         for (RawRuntimeModuleRepositoryData data : myAdditionalData) {
-          rawDescriptor = data.findDescriptor(moduleId.getStringId());
+          rawDescriptor = data.findDescriptor(moduleId);
           if (rawDescriptor != null) {
             rawData = data;
             break;
@@ -68,12 +70,11 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
       }
     }
     
-    List<String> rawDependencies = rawDescriptor.getDependencies();
+    List<RuntimeModuleId> rawDependencies = rawDescriptor.getDependencyIds();
     List<RuntimeModuleDescriptor> resolvedDependencies = new ArrayList<>(rawDependencies.size());
     RuntimeModuleDescriptorImpl descriptor = new RuntimeModuleDescriptorImpl(moduleId, rawData.getBasePath(), rawDescriptor.getResourcePaths(), resolvedDependencies);
     dependencyPath.put(moduleId, descriptor);
-    for (String dependency : rawDependencies) {
-      RuntimeModuleId dependencyId = myInternedModuleIds.computeIfAbsent(dependency, RuntimeModuleId::raw);
+    for (RuntimeModuleId dependencyId : rawDependencies) {
       RuntimeModuleDescriptor circularDependency = dependencyPath.get(dependencyId);
       if (circularDependency != null) {
         //the circularDependency instance isn't fully constructed, but it's ok given that RuntimeModuleDescriptorImpl's constructor just stores the passed values 
@@ -106,13 +107,13 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     List<RuntimeModuleId> failedDependencyPath = result.getFailedDependencyPath();
     String message;
     if (failedDependencyPath.size() == 1) {
-      message = "Cannot find module '" + failedDependencyPath.get(0).getStringId() + "'";
+      message = "Cannot find module '" + failedDependencyPath.get(0).getPresentableName() + "'";
     }
     else {
       List<RuntimeModuleId> reversed = new ArrayList<>(failedDependencyPath.subList(0, failedDependencyPath.size() - 1));
       Collections.reverse(reversed);
-      message = "Cannot resolve module '" + moduleId.getStringId() + "': module '" + failedDependencyPath.get(failedDependencyPath.size() - 1).getStringId() + "' (" +
-                reversed.stream().map(id -> " <- '" + id.getStringId() + "'").collect(Collectors.joining()).trim() + ") is not found";
+      message = "Cannot resolve module '" + moduleId.getPresentableName() + "': module '" + failedDependencyPath.get(failedDependencyPath.size() - 1).getStringId() + "' (" +
+                reversed.stream().map(id -> " <- '" + id.getPresentableName() + "'").collect(Collectors.joining()).trim() + ") is not found";
     }
     throw new MalformedRepositoryException(message);
   }
@@ -120,11 +121,11 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   @Override
   public @NotNull List<Path> getModuleResourcePaths(@NotNull RuntimeModuleId moduleId) {
     RawRuntimeModuleRepositoryData rawData = getMainData();
-    RawRuntimeModuleDescriptor rawDescriptor = rawData.findDescriptor(moduleId.getStringId());
+    RawRuntimeModuleDescriptor rawDescriptor = rawData.findDescriptor(moduleId);
     if (rawDescriptor == null) {
       if (myAdditionalData != null) {
         for (RawRuntimeModuleRepositoryData repository : myAdditionalData) {
-          rawDescriptor = repository.findDescriptor(moduleId.getStringId());
+          rawDescriptor = repository.findDescriptor(moduleId);
           if (rawDescriptor != null) {
             rawData = repository;
             break;
@@ -132,7 +133,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
         }
       }
       if (rawDescriptor == null) {
-        throw new MalformedRepositoryException("Cannot find module '" + moduleId.getStringId() + "'");
+        throw new MalformedRepositoryException("Cannot find module '" + moduleId.getPresentableName() + "'");
       }
     }
     //todo improve this to reuse the computed paths if the module is resolved later

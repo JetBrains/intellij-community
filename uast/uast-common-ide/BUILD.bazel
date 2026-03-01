@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.platform.uast.ide` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ide_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "ide",
   module_name = "intellij.platform.uast.ide",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/core-impl",
@@ -16,6 +23,26 @@ jvm_library(
     "//uast/uast-common:uast",
     "@lib//:kotlin-stdlib",
     "//libraries/stream",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "ide_test_lib",
+  module_name = "intellij.platform.uast.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ide",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/backend:backend_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.uast.ide` end

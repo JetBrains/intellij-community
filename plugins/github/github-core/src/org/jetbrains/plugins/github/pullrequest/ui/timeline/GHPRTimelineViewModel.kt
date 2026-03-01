@@ -16,7 +16,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.GHNode
@@ -33,6 +38,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInter
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.UpdateableGHPRTimelineCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.UpdateableGHPRTimelineReviewViewModel
@@ -75,7 +81,8 @@ internal class GHPRTimelineViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
-  private val dataProvider: GHPRDataProvider
+  private val dataProvider: GHPRDataProvider,
+  private val viewModelWithTextCompletion: GHViewModelWithTextCompletion,
 ) : GHPRTimelineViewModel {
   private val cs = parentCs.childScope("GitHub Pull Request Timeline View Model", Dispatchers.Main)
 
@@ -99,7 +106,10 @@ internal class GHPRTimelineViewModelImpl(
 
   override val commentVm: GHPRNewCommentViewModel? =
     if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
-      GHPRNewCommentViewModel(project, cs, commentsData)
+      GHPRNewCommentViewModel(project,
+                              cs,
+                              commentsData,
+                              viewModelWithTextCompletion)
     }
     else null
 
@@ -194,10 +204,15 @@ internal class GHPRTimelineViewModelImpl(
   private fun CoroutineScope.createItemFromDTO(data: GHPRTimelineItemDTO): GHPRTimelineItem =
     when (data) {
       is GHIssueComment -> {
-        UpdateableGHPRTimelineCommentViewModel(project, this, dataContext, dataProvider.commentsData, data)
+        UpdateableGHPRTimelineCommentViewModel(project,
+                                               this,
+                                               dataContext,
+                                               dataProvider.commentsData,
+                                               viewModelWithTextCompletion,
+                                               data)
       }
       is GHPullRequestReview -> {
-        UpdateableGHPRTimelineReviewViewModel(project, this, dataContext, dataProvider, data).also {
+        UpdateableGHPRTimelineReviewViewModel(project, this, dataContext, dataProvider, viewModelWithTextCompletion, data).also {
           launchNow {
             it.showDiffRequests.collect(showDiffRequests)
           }

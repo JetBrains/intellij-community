@@ -18,4 +18,17 @@ jvm_library(
     "//libraries/jackson/jackson",
   ]
 )
+
+jvm_library(
+  name = "libraries-jackson-dataformat-yaml_test_lib",
+  module_name = "intellij.libraries.jackson.dataformat.yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:jackson-dataformat-yaml"],
+  runtime_deps = [
+    ":libraries-jackson-dataformat-yaml",
+    "//libraries/jackson/jackson:jackson_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.jackson.dataformat.yaml` end

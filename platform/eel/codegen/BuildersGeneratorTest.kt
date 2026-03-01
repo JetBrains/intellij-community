@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.codegen
 
 import com.intellij.analysis.AnalysisBundle
@@ -41,7 +41,13 @@ import com.intellij.platform.eel.codegen.BuilderRequest.Ownership
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.project.stateStore
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubUpdatingIndex
@@ -71,76 +77,48 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightField
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.ALL
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIELD
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FILE
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_DELEGATE_FIELD
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.RECEIVER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.SETTER_PARAMETER
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassLiteralExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.types.Variance
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Optional
 import java.util.TreeSet
-import kotlin.Boolean
-import kotlin.Char
-import kotlin.OptIn
-import kotlin.Pair
-import kotlin.String
-import kotlin.assert
-import kotlin.check
-import kotlin.collections.ArrayDeque
-import kotlin.collections.addAll
-import kotlin.collections.map
-import kotlin.collections.mapNotNull
-import kotlin.error
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.io.path.walk
-import kotlin.isInitialized
 import kotlin.jvm.optionals.getOrNull
-import kotlin.let
-import kotlin.run
-import kotlin.sequences.associateWithTo
-import kotlin.sequences.filter
-import kotlin.sequences.filterIsInstance
-import kotlin.sequences.flatMap
-import kotlin.sequences.generateSequence
-import kotlin.sequences.joinToString
-import kotlin.sequences.lastOrNull
-import kotlin.sequences.map
-import kotlin.sequences.takeWhile
-import kotlin.sequences.toList
-import kotlin.takeIf
-import kotlin.text.Regex
-import kotlin.text.RegexOption
-import kotlin.text.buildString
-import kotlin.text.contains
-import kotlin.text.endsWith
-import kotlin.text.indexOf
-import kotlin.text.isBlank
-import kotlin.text.isNotEmpty
-import kotlin.text.lines
-import kotlin.text.lowercase
-import kotlin.text.matches
-import kotlin.text.orEmpty
-import kotlin.text.prependIndent
-import kotlin.text.removePrefix
-import kotlin.text.removeSuffix
-import kotlin.text.replace
-import kotlin.text.replaceFirstChar
-import kotlin.text.startsWith
-import kotlin.text.substring
-import kotlin.text.trim
-import kotlin.text.trimEnd
-import kotlin.text.trimIndent
-import kotlin.text.trimMargin
-import kotlin.text.trimStart
-import kotlin.text.uppercase
-import kotlin.text.uppercaseChar
-import kotlin.to
 
 /**
  * This test generates builders for `com.intellij.platform.eel.EelApi`.
@@ -212,14 +190,17 @@ class BuildersGeneratorTest {
       // The value is the pair of the old and the new content.
       val filesContent: Map<Path, Pair<Optional<String>, Optional<String>>> = fillRequests(tempProject, newEelModule, genSrcDirName)
 
-      for ((path, contentPair) in filesContent) {
-        if (contentPair.first.isPresent) {
-          val virtualFile = VfsUtil.findFile(path, true)!!
-          prettifyFile(tempProject, virtualFile)
+      // For some unclear reason, one call of prettification is not enouigh. On the second call, something can change in files.
+      repeat(2) {
+        for ((path, contentPair) in filesContent) {
+          if (contentPair.first.isPresent) {
+            val virtualFile = VfsUtil.findFile(path, true)!!
+            prettifyFile(tempProject, virtualFile)
+          }
         }
-      }
 
-      synchronizeVariousCaches(tempProject)
+        synchronizeVariousCaches(tempProject)
+      }
 
       val oldPrettifiedFiles = mutableMapOf<Path, String>()
 
@@ -255,17 +236,19 @@ class BuildersGeneratorTest {
           }
         }
       }
-
-      for ((path, contentPair) in filesContent) {
-        if (contentPair.second.isEmpty) continue
-        val virtualFile = VfsUtil.findFile(path, true) ?: error("Failed to find the VFS file for $path")
-        val (_, newContent) = contentPair
-        if (newContent.isPresent) {
-          prettifyFile(tempProject, virtualFile)
+      // For some unclear reason, one call of prettification is not enouigh. On the second call, something can change in files.
+      repeat(2) {
+        for ((path, contentPair) in filesContent) {
+          if (contentPair.second.isEmpty) continue
+          val virtualFile = VfsUtil.findFile(path, true) ?: error("Failed to find the VFS file for $path")
+          val (_, newContent) = contentPair
+          if (newContent.isPresent) {
+            prettifyFile(tempProject, virtualFile)
+          }
         }
-      }
 
-      synchronizeVariousCaches(tempProject)
+        synchronizeVariousCaches(tempProject)
+      }
 
       if (unimportantChanges.isNotEmpty()) {
         logger<BuildersGeneratorTest>().warn(

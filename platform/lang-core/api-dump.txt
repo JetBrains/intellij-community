@@ -468,7 +468,6 @@ f:com.intellij.openapi.projectRoots.JdkCommandLineSetup
 - <init>(com.intellij.execution.target.TargetEnvironmentRequest):V
 - f:getCommandLine():com.intellij.execution.target.TargetedCommandLineBuilder
 - f:getPlatform():com.intellij.execution.Platform
-- f:requestLocalPortBinding(java.lang.String,I):com.intellij.execution.target.value.TargetValue
 - f:setupCommandLine(com.intellij.execution.configurations.SimpleJavaParameters):V
 - f:setupJavaExePath(com.intellij.execution.configurations.SimpleJavaParameters):V
 f:com.intellij.openapi.projectRoots.JdkCommandLineSetup$Companion

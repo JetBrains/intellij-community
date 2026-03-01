@@ -2,7 +2,11 @@
 package org.jetbrains.kotlin.idea.base.searching.usages
 
 import com.intellij.openapi.project.Project
-import com.intellij.usages.*
+import com.intellij.usages.PsiNamedElementUsageGroupBase
+import com.intellij.usages.Usage
+import com.intellij.usages.UsageGroup
+import com.intellij.usages.UsageInfo2UsageAdapter
+import com.intellij.usages.UsageTarget
 import com.intellij.usages.impl.FileStructureGroupRuleProvider
 import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.usages.rules.SingleParentUsageGroupingRule

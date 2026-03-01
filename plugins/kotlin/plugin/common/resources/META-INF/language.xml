@@ -7,7 +7,7 @@
     <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitorVoid"/>
     <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitor"/>
 
-    <importBlockRangeProvider implementation="org.jetbrains.kotlin.idea.imports.KotlinImportBlockRangeProvider"/>
+    <importBlockRangeProvider implementation="org.jetbrains.kotlin.idea.KotlinImportBlockRangeProvider"/>
 
     <itemPresentationProvider
             implementationClass="org.jetbrains.kotlin.idea.presentation.KtFunctionPresenter"

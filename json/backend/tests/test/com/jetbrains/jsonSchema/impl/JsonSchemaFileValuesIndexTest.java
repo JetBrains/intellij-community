@@ -22,7 +22,9 @@ import com.intellij.util.indexing.FileContentImpl;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.jetbrains.jsonSchema.impl.JsonCachedValues.*;
+import static com.jetbrains.jsonSchema.impl.JsonCachedValues.ID_CACHE_KEY;
+import static com.jetbrains.jsonSchema.impl.JsonCachedValues.OBSOLETE_ID_CACHE_KEY;
+import static com.jetbrains.jsonSchema.impl.JsonCachedValues.URL_CACHE_KEY;
 
 public class JsonSchemaFileValuesIndexTest extends JsonTestCase {
 

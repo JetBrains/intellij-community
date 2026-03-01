@@ -168,7 +168,8 @@ f:com.intellij.openapi.actionSystem.ActionGroupUtil
 - *s:forceRecursiveUpdateInBackground(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionGroup
 *f:com.intellij.openapi.application.impl.TestOnlyThreading
 - sf:INSTANCE:com.intellij.openapi.application.impl.TestOnlyThreading
-- sf:releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(kotlin.jvm.functions.Function0):java.lang.Object
+- sf:dispatchAwtEventsWithoutWriteIntentLock():V
+- sf:releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(java.lang.Runnable):V
 *e:com.intellij.openapi.editor.ComponentInlayAlignment
 - java.lang.Enum
 - sf:FIT_CONTENT_WIDTH:com.intellij.openapi.editor.ComponentInlayAlignment
@@ -311,8 +312,40 @@ f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultIm
 - setTextToFile(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile):V
 a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - com.intellij.openapi.fileEditor.FileEditorManager
-- *a:openFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:openFile$default(com.intellij.openapi.fileEditor.ex.FileEditorManagerEx,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- *f:openFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest):com.intellij.openapi.fileEditor.FileEditorComposite
+- *bs:openFile$default(com.intellij.openapi.fileEditor.ex.FileEditorManagerEx,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest,I,java.lang.Object):com.intellij.openapi.fileEditor.FileEditorComposite
+*e:com.intellij.openapi.fileEditor.ex.FileEditorOpenMode
+- java.lang.Enum
+- sf:DEFAULT:com.intellij.openapi.fileEditor.ex.FileEditorOpenMode
+- sf:NEW_WINDOW:com.intellij.openapi.fileEditor.ex.FileEditorOpenMode
+- sf:RIGHT_SPLIT:com.intellij.openapi.fileEditor.ex.FileEditorOpenMode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.fileEditor.ex.FileEditorOpenMode
+- s:values():com.intellij.openapi.fileEditor.ex.FileEditorOpenMode[]
+*f:com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
+- <init>():V
+- <init>(com.intellij.openapi.fileEditor.impl.EditorWindow):V
+- <init>(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.fileEditor.ex.FileEditorOpenMode):V
+- <init>(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.fileEditor.ex.FileEditorOpenMode,Z):V
+- <init>(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.fileEditor.ex.FileEditorOpenMode,Z,Z):V
+- <init>(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.fileEditor.ex.FileEditorOpenMode,Z,Z,Z):V
+- <init>(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.fileEditor.ex.FileEditorOpenMode,Z,Z,Z,Z):V
+- <init>(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.fileEditor.ex.FileEditorOpenMode,Z,Z,Z,Z,Z):V
+- b:<init>(com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.fileEditor.ex.FileEditorOpenMode,Z,Z,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getOpenMode():com.intellij.openapi.fileEditor.ex.FileEditorOpenMode
+- f:getPin():Z
+- f:getRequestFocus():Z
+- f:getReuseOpen():Z
+- f:getSelectAsCurrent():Z
+- f:getTargetWindow():com.intellij.openapi.fileEditor.impl.EditorWindow
+- f:getUsePreviewTab():Z
+- f:withOpenMode(com.intellij.openapi.fileEditor.ex.FileEditorOpenMode):com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
+- f:withPin(Z):com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
+- f:withRequestFocus(Z):com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
+- f:withReuseOpen(Z):com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
+- f:withSelectAsCurrent(Z):com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
+- f:withTargetWindow(com.intellij.openapi.fileEditor.impl.EditorWindow):com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
+- f:withUsePreviewTab(Z):com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
 a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - *a:reallyExcludeCurrentCommandAsNavigation():V
 *:com.intellij.openapi.options.ex.MutableConfigurableGroup
@@ -328,6 +361,23 @@ a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - a:openInChildProcess(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.project.impl.P3SupportKt
 - *sf:processPerProjectSupport():com.intellij.openapi.project.impl.P3Support
+*f:com.intellij.openapi.updateSettings.PluginUpdateCheckService
+- *sf:Companion:com.intellij.openapi.updateSettings.PluginUpdateCheckService$Companion
+- <init>():V
+- sf:getInstance():com.intellij.openapi.updateSettings.PluginUpdateCheckService
+- f:getPluginUpdate(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.PluginUpdateInfo
+- bs:getPluginUpdate$default(com.intellij.openapi.updateSettings.PluginUpdateCheckService,com.intellij.openapi.extensions.PluginId,com.intellij.openapi.progress.ProgressIndicator,I,java.lang.Object):com.intellij.openapi.updateSettings.PluginUpdateInfo
+*f:com.intellij.openapi.updateSettings.PluginUpdateCheckService$Companion
+- f:getInstance():com.intellij.openapi.updateSettings.PluginUpdateCheckService
+*:com.intellij.openapi.updateSettings.PluginUpdateInfo
+*f:com.intellij.openapi.updateSettings.PluginUpdateInfo$CheckFailed
+- com.intellij.openapi.updateSettings.PluginUpdateInfo
+- f:getErrors():java.util.Map
+*f:com.intellij.openapi.updateSettings.PluginUpdateInfo$NoUpdate
+- com.intellij.openapi.updateSettings.PluginUpdateInfo
+*f:com.intellij.openapi.updateSettings.PluginUpdateInfo$UpdateAvailable
+- com.intellij.openapi.updateSettings.PluginUpdateInfo
+- f:getUpdate():com.intellij.openapi.updateSettings.impl.PluginDownloader
 a:com.intellij.openapi.wm.impl.FrameTitleBuilder
 - *:getFileTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.wm.impl.IdeBackgroundUtil

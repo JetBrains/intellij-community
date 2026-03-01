@@ -13,7 +13,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.LibraryTypeId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl

@@ -15,7 +15,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.Function
-import com.intellij.util.ReflectionUtil.*
+import com.intellij.util.ReflectionUtil.getField
+import com.intellij.util.ReflectionUtil.getFieldValue
+import com.intellij.util.ReflectionUtil.getStaticFieldValue
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.lang.UrlClassLoader
 import it.unimi.dsi.fastutil.Hash
@@ -31,7 +33,12 @@ import org.gradle.tooling.internal.consumer.loader.SynchronizedToolingImplementa
 import org.gradle.tooling.internal.consumer.loader.ToolingImplementationLoader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.io.Serializable
 import java.lang.reflect.Method
 import java.nio.file.Path
 import java.util.function.BiConsumer

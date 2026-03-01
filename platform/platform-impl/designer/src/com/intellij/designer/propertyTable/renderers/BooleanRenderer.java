@@ -8,7 +8,8 @@ import com.intellij.designer.propertyTable.PropertyTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 
 public final class BooleanRenderer extends JCheckBox implements PropertyRenderer {
   @Override

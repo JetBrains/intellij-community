@@ -1,7 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +31,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.jetbrains.plugins.groovy.util.ResolveTest;

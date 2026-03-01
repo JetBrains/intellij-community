@@ -3,7 +3,6 @@
 
 package com.jetbrains.builtInHelp.search
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.io.safeOutputStream
 import com.jetbrains.builtInHelp.Utils
@@ -18,13 +17,14 @@ import org.apache.lucene.search.highlight.Scorer
 import org.apache.lucene.store.NIOFSDirectory
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Collections
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 

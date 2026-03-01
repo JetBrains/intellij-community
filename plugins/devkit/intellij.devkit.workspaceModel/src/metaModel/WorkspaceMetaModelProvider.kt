@@ -11,5 +11,5 @@ interface WorkspaceMetaModelProvider {
     module: Module,
     processAbstractTypes: Boolean,
     isTestSourceFolder: Boolean,
-  ): List<CompiledObjModule>
+  ): Pair<List<CompiledObjModule>, List<MetaProblem>>
 }

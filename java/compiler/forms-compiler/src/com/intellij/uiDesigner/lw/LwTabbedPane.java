@@ -4,7 +4,7 @@ package com.intellij.uiDesigner.lw;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.LayoutManager;
 
 public final class LwTabbedPane extends LwContainer implements ITabbedPane {
   LwTabbedPane(String className) {

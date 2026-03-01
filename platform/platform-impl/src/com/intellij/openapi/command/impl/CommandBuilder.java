@@ -1,22 +1,31 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.impl.cmd.CmdEvent;
+import com.intellij.openapi.command.impl.cmd.CmdMeta;
+import com.intellij.openapi.command.impl.cmd.MutableCmdMeta;
+import com.intellij.openapi.command.impl.cmd.UndoMeta;
+import com.intellij.openapi.command.impl.cmd.UndoableActionMeta;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Objects;
 
 
 final class CommandBuilder {
@@ -24,8 +33,7 @@ final class CommandBuilder {
   private static final Logger LOG = Logger.getInstance(CommandBuilder.class);
 
   private final @Nullable Project undoProject; // null - global, isDefault - error
-  private final boolean isTransparentSupported;
-  private final boolean isGroupIdChangeSupported;
+  private final UndoCapabilities undoCapabilities;
 
   private @NotNull CmdEvent cmdEvent;
   private @Nullable Throwable tracedStartCommand;
@@ -40,10 +48,9 @@ final class CommandBuilder {
   private boolean isValid;
   private boolean isInsideCommand;
 
-  CommandBuilder(@Nullable Project undoProject, boolean isTransparentSupported, boolean isGroupIdChangeSupported) {
+  CommandBuilder(@Nullable Project undoProject, @NotNull UndoCapabilities undoCapabilities) {
     this.undoProject = undoProject;
-    this.isTransparentSupported = isTransparentSupported;
-    this.isGroupIdChangeSupported = isGroupIdChangeSupported;
+    this.undoCapabilities = undoCapabilities;
     reset();
   }
 
@@ -60,22 +67,27 @@ final class CommandBuilder {
     return !undoableActions.isEmpty();
   }
 
-  void commandStarted(@NotNull CmdEvent cmdEvent, @NotNull CurrentEditorProvider editorProvider) {
-    assertOutsideCommand(cmdEvent);
+  void commandStarted(@NotNull CmdEvent cmdStartEvent, @NotNull CurrentEditorProvider editorProvider) {
+    assertOutsideCommand(cmdStartEvent);
     if (LOG.isTraceEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
       this.tracedStartCommand = new Throwable();
     }
-    this.cmdEvent = cmdEvent;
+    this.cmdEvent = cmdStartEvent;
     this.editorProvider = editorProvider;
     this.editorStateBefore = currentEditorState();
     this.originalDocument = this.cmdEvent.recordOriginalDocument() ? originalDocument() : null;
     this.isInsideCommand = true;
+    UndoSpy undoSpy = UndoSpy.getInstance();
+    if (undoSpy != null && cmdStartEvent.meta() instanceof MutableCmdMeta mutableMeta) {
+      UndoMeta undoMeta = UndoMeta.create(undoProject, editorProvider.getCurrentEditor(undoProject));
+      mutableMeta.addUndoMeta(undoMeta);
+    }
   }
 
   void addUndoableAction(@NotNull UndoableAction action) {
     assertInsideCommand();
     if (isRefresh()) {
-      originalDocument = null;
+      resetOriginalDocument();
     }
     undoableActions.add(action);
     affectedDocuments.addAffected(action.getAffectedDocuments());
@@ -112,24 +124,28 @@ final class CommandBuilder {
     }
   }
 
-  @NotNull PerformedCommand commandFinished(@NotNull CmdEvent cmdEvent) {
-    assertInsideCommand(cmdEvent);
-    if (isGroupIdChangeSupported) {
-      this.cmdEvent = cmdEvent;
-    }
+  void resetOriginalDocument() {
+    assertInsideCommand();
+    originalDocument = null;
+  }
+
+  @NotNull PerformedCommand commandFinished(@NotNull CmdEvent cmdFinishEvent) {
+    assertInsideCommand(cmdFinishEvent);
+    this.cmdEvent = cmdFinishEvent;
     this.editorStateAfter = currentEditorState();
     if (originalDocument != null && hasActions() && !isTransparent() && affectedDocuments.affectsOnlyPhysical()) {
       addDocumentAsAffected(Objects.requireNonNull(originalDocument));
+    }
+    UndoSpy undoSpy = UndoSpy.getInstance();
+    if (undoSpy != null &&  cmdFinishEvent.meta() instanceof MutableCmdMeta mutableMeta) {
+      UndoMeta undoMeta = createUndoMeta();
+      mutableMeta.addUndoMeta(undoMeta);
     }
     return buildAndReset();
   }
 
   void assertOutsideCommand() {
     assertOutsideCommand(null);
-  }
-
-  @Nullable DocumentReference getOriginalDocument() {
-    return originalDocument;
   }
 
   private void assertInsideCommand() {
@@ -166,7 +182,8 @@ final class CommandBuilder {
       isTransparent(),
       isForcedGlobal,
       isGlobal(),
-      isValid
+      isValid,
+      cmdEvent.isForeign()
     );
     reset();
     return performedCommand;
@@ -183,16 +200,36 @@ final class CommandBuilder {
 
   private @Nullable DocumentReference originalDocument() {
     if (undoProject != null && undoProject == cmdEvent.project()) {
-      if (editorProvider instanceof ForeignEditorProvider foreignEditorProvider) {
-        return foreignEditorProvider.originator();
+      if (editorProvider instanceof ForeignEditorProvider) {
+        return null;
       }
-      return UndoDocumentUtil.getDocReference(undoProject, editorProvider);
+      return Cancellation.computeInNonCancelableSection( // fixes flaky `CompletionRestartTest`
+        () -> UndoDocumentUtil.getDocReference(undoProject, editorProvider)
+      );
     }
     return null;
   }
 
+  private @NotNull UndoMeta createUndoMeta() {
+    var actions = ContainerUtil.map(
+      undoableActions,
+      a -> UndoableActionMeta.create(
+        UndoableActionType.forAction(a),
+        a.getAffectedDocuments(),
+        a.isGlobal()
+      )
+    );
+    UndoMeta undoMeta = UndoMeta.create(
+      undoProject,
+      editorProvider.getCurrentEditor(undoProject),
+      actions,
+      isForcedGlobal
+    );
+    return undoMeta;
+  }
+
   private boolean isTransparent() {
-    if (isTransparentSupported) {
+    if (undoCapabilities.isTransparentSupported()) {
       return cmdEvent.isTransparent();
     }
     return cmdEvent.isTransparent() && !hasActions();
@@ -256,6 +293,15 @@ final class CommandBuilder {
 
     @Override
     public boolean isTransparent() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public boolean isForeign() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public @NotNull CmdMeta meta() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public @NotNull CmdEvent withNameAndGroupId(@Nullable String name, @Nullable Object groupId) { throw new UnsupportedOperationException(); }
 
     // endregion
   }

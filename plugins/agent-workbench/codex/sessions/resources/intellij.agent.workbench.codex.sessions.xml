@@ -1,0 +1,18 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.codex.common"/>
+    <module name="intellij.agent.workbench.filewatch"/>
+    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.sessionProviderBridge
+      id="agentWorkbenchCodex"
+      order="before agentWorkbenchClaude"
+      implementation="com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderBridge"/>
+  </extensions>
+</idea-plugin>

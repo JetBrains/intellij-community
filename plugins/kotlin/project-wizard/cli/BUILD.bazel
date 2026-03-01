@@ -19,4 +19,25 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
   ]
 )
+
+jvm_library(
+  name = "cli_test_lib",
+  module_name = "intellij.kotlin.projectWizard.cli",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":cli",
+    "//platform/core-api:core_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//libraries/snakeyaml:snakeyaml_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/project-wizard/core:core_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.projectWizard.cli` end

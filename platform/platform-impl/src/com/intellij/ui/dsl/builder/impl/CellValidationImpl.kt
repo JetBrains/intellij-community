@@ -9,7 +9,14 @@ import com.intellij.openapi.observable.util.whenChanged
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getUserData
 import com.intellij.openapi.ui.putUserData
-import com.intellij.openapi.ui.validation.*
+import com.intellij.openapi.ui.validation.DialogValidation
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.ui.validation.WHEN_DOCUMENT_CHANGED
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.openapi.ui.validation.WHEN_STATE_CHANGED
+import com.intellij.openapi.ui.validation.WHEN_TEXT_CHANGED
+import com.intellij.openapi.ui.validation.and
+import com.intellij.openapi.ui.validation.transformResult
 import com.intellij.openapi.util.Key
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.UserActivityProviderComponent

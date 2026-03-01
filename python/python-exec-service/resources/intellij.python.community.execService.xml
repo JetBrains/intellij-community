@@ -1,7 +1,8 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.helpersLocator"/>
+    <module name="intellij.python.processOutput.common"/>
   </dependencies>
 
   <extensionPoints>

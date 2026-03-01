@@ -32,7 +32,10 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
@@ -83,6 +86,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
         scheduleResultsUpdate();
       }
     });
+    myModuleComboBox.getAccessibleContext().setAccessibleName(FindBundle.message("find.usages.module.combobox.accessible.name"));
 
     myDirectoryChooser = new FindPopupDirectoryChooser(myFindPopupPanel);
 

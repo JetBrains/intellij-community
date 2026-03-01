@@ -27,4 +27,23 @@ jvm_library(
     "//platform/kernel/pasta",
   ]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.editor.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor/shared:editor_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//fleet/kernel:kernel_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/kernel/pasta:pasta_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.editor.backend` end

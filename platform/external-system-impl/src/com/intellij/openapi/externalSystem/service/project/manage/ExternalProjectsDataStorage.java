@@ -8,10 +8,19 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.SerializationKt;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
@@ -25,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.serialization.ObjectSerializer;
 import com.intellij.serialization.SerializationException;
@@ -46,7 +56,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,7 +83,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
   // exposed for tests
-  public static final int STORAGE_VERSION = 12;
+  public static final int STORAGE_VERSION = 13;
 
   private final @NotNull Project myProject;
   private final @NotNull ConcurrentMap<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
@@ -477,6 +494,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
 
     var markerFile = getBrokenMarkerFile();
     try {
+      NioFiles.createParentDirectories(markerFile);
       Files.writeString(markerFile, String.valueOf(System.currentTimeMillis()));
     }
     catch (IOException e) {

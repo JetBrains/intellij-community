@@ -19,8 +19,16 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplic
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplicitLambdaParameterWithItUtils.createAnalyzableExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplicitLambdaParameterWithItUtils.getLambda
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetingIntention<KtElement>(
     KtElement::class.java,

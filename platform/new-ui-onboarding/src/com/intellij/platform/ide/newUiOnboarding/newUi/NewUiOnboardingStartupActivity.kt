@@ -18,7 +18,7 @@ import com.intellij.ui.ExperimentalUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private class NewUiOnboardingStartupActivity : ProjectActivity {
+internal class NewUiOnboardingStartupActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()
@@ -29,8 +29,9 @@ private class NewUiOnboardingStartupActivity : ProjectActivity {
     val propertyManager = serviceAsync<PropertiesComponent>()
     rememberNewUiOnFirstStartup(propertyManager)
 
-    if (NewUiOnboardingUtil.shouldProposeOnboarding()) {
+    if (NewUiOnboardingUtil.shouldProposeOnboarding(NewUiOnboardingUtil.OnboardingType.NEW_UI_ONBOARDING)) {
       propertyManager.unsetValue(ExperimentalUI.NEW_UI_SWITCH)
+      ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START = false
       val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
       propertyManager.setValue(ONBOARDING_PROPOSED_VERSION, version)
 

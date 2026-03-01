@@ -8,3 +8,5 @@ fun bar() {
 
 // ELEMENT_TEXT: "!! takeString"
 // CHAR: \t
+
+// IGNORE_K2

@@ -26,13 +26,17 @@ import com.jetbrains.jsonSchema.settings.mappings.JsonSchemaMappingsConfigurable
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.openapi.util.NlsContexts.Tooltip;
-import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.*;
+import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.ADD_MAPPING;
+import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.EDIT_MAPPINGS;
+import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.IGNORE_FILE;
+import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.LOAD_REMOTE;
+import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.STOP_IGNORE_FILE;
 
 public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> implements ListPopupStepEx<JsonSchemaInfo> {
   private final Project myProject;

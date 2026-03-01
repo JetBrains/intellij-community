@@ -6,10 +6,22 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.asBase
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentMultipleEntity
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import org.junit.jupiter.api.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class ParentChildReferenceTest {
 

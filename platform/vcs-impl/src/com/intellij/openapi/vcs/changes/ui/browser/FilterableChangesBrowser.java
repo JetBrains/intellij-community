@@ -7,7 +7,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.ui.components.ProgressBarLoadingDecorator;
 import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -16,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Collection;
 import java.util.List;
 

@@ -6,7 +6,12 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.DataIndexer
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import org.jetbrains.annotations.ApiStatus

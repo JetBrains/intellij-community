@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -130,6 +130,11 @@ public final class StructureViewCompositeModel extends StructureViewModelBase
       result = true;
     }
     return result;
+  }
+
+  @Override
+  public int getMinimumAutoExpandDepth() {
+    return 3;
   }
 
   private static @NotNull TreeElement createTreeElementFromView(final PsiFile file, final StructureViewComposite.StructureViewDescriptor view) {

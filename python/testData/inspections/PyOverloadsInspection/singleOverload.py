@@ -31,10 +31,10 @@ def bar(x: int | str) -> None:
 
 class B:
     @overload
-    def bar(x: int) -> None: ...
+    def bar(self, x: int) -> None: ...
 
     @overload
-    def bar(x: str) -> None: ...
+    def bar(self, x: str) -> None: ...
 
-    def bar(x: int | str) -> None:
+    def bar(self, x: int | str) -> None:
         pass

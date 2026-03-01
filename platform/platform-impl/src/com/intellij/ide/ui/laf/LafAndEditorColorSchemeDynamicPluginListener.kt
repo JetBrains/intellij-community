@@ -20,8 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 private class LafAndEditorColorSchemeDynamicPluginListener : DynamicPluginListener {
-  override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-    service<LafDynamicPluginManager>().pluginLoaded()
+  override fun pluginsLoaded() {
+    service<LafDynamicPluginManager>().pluginsLoaded()
   }
 
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
@@ -89,7 +89,7 @@ internal class LafDynamicPluginManager(private val coroutineScope: CoroutineScop
     (serviceIfCreated<LafManager>() as? LafManagerImpl)?.applyScheduledLaF(laf)
   }
 
-  fun pluginLoaded() {
+  fun pluginsLoaded() {
     reloadColorSchemesAndApplyScheduledLaF()
     isUpdatingPlugin = false
     themeIdBeforePluginUpdate = null

@@ -2,7 +2,9 @@
 package com.intellij.cce.interpreter
 
 import com.intellij.cce.actions.Action
-import com.intellij.cce.interpreter.InterpretationOrder.*
+import com.intellij.cce.interpreter.InterpretationOrder.LINEAR
+import com.intellij.cce.interpreter.InterpretationOrder.RANDOM
+import com.intellij.cce.interpreter.InterpretationOrder.REVERSED
 import kotlin.random.Random
 
 enum class InterpretationOrder {

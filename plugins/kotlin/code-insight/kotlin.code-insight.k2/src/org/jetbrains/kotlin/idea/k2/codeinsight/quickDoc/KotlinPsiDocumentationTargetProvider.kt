@@ -3,7 +3,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.backend.documentation.*
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationTargetProvider
+import com.intellij.platform.backend.documentation.InlineDocumentation
+import com.intellij.platform.backend.documentation.InlineDocumentationProvider
+import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
 import com.intellij.psi.PsiDocCommentBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile

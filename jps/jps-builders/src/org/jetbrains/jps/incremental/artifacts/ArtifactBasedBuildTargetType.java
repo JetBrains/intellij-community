@@ -9,7 +9,11 @@ import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildTarget> extends BuildTargetType<T> {
   protected ArtifactBasedBuildTargetType(String typeId, boolean fileBased) {

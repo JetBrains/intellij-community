@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.k2.metaModel
 
+import com.intellij.devkit.workspaceModel.metaModel.MetaModelBuilderException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
 import com.intellij.devkit.workspaceModel.metaModel.impl.CompiledObjModuleImpl
 import com.intellij.devkit.workspaceModel.metaModel.impl.ObjAnnotationImpl
@@ -15,11 +16,20 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.sourcePsi
+import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 
@@ -36,11 +46,10 @@ internal fun KaSession.inheritors(
   // can be rewritten using org.jetbrains.kotlin.idea.searching.inheritors.KotlinSearchUtilKt.findAllInheritors
   val psiClass = javaPsiFacade.findClass(classSymbol.javaClassFqn, scope) ?: return emptyList()
   return ClassInheritorsSearch.search(psiClass, scope, true, true, false)
-    .asIterable()
     .filterNot { it.isAnonymous }
     .sortedBy { it.qualifiedName } // Sorting is needed for consistency in case of regeneration
-    .mapNotNull {
-      KotlinFullClassNameIndex[it.qualifiedName!!, it.project, scope].firstOrNull()
+    .mapNotNull { psiClass ->
+      psiClass.qualifiedName?.let { KotlinFullClassNameIndex[it, psiClass.project, scope].firstOrNull() }
     }
 }
 
@@ -85,7 +94,7 @@ internal val KaClassLikeSymbol.packageName: String
   get() = packageOrDie.asString()
 
 internal val KaClassLikeSymbol.packageOrDie: FqName
-  get() = classId?.packageFqName ?: error("$name has no package")
+  get() = classId?.packageFqName ?: throw MetaModelBuilderException("$name has no package", sourcePsiSafe())
 
 internal fun KaSession.getPackageSymbol(classSymbol: KaClassSymbol): KaPackageSymbol? =
   classSymbol.classId?.packageFqName?.let { findPackage(it) }
@@ -142,9 +151,21 @@ internal fun KaSession.createObjTypeStub(symbol: KaClassSymbol, module: Compiled
   val propertyAnnotations = symbol.annotations
     .mapNotNull { it.classId?.asSingleFqName() }
     .map { ObjAnnotationImpl(it.asString(), it.pathSegments().map { segment -> segment.asString() }) }
+  
+  val identifier = symbol.name?.identifier ?: throw MetaModelBuilderException("Could not get identifier of ${symbol.name}", symbol.sourcePsiSafe())
 
-  return ObjClassImpl(module, symbol.name?.identifier!!, openness, symbol.sourcePsi(), propertyAnnotations)
+  return ObjClassImpl(module, identifier, openness, symbol.sourcePsi(), propertyAnnotations)
 }
 
 internal fun KaSession.isParent(kaType: KaAnnotated) =
   kaType.isAnnotatedBy(WorkspaceModelDefaults.PARENT_ANNOTATION.classId)
+
+internal fun KaSession.isEntityReference(kaType: KaType?): Boolean {
+  if (kaType !is KaClassType) return false
+  if (kaType.isSubtypeOf(StandardClassIds.List) || kaType.isSubtypeOf(StandardClassIds.Set)) {
+    val typeArgument = kaType.typeArguments.firstNotNullOf { it.type }
+    return isEntityReference(typeArgument)
+  }
+  val classSymbol = kaType.expandedSymbol ?: return false
+  return classSymbol.classKind == KaClassKind.INTERFACE && kaType.isSubtypeOf(WorkspaceModelDefaults.WORKSPACE_ENTITY.classId)
+}

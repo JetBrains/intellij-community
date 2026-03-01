@@ -2,7 +2,15 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.SyntaxTraverser;
 import org.jetbrains.annotations.Nullable;
 
 

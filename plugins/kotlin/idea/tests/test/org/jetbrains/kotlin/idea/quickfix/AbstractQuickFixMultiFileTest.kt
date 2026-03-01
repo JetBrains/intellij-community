@@ -3,7 +3,8 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File

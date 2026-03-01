@@ -2,7 +2,12 @@
 package com.intellij.refactoring.rename.inplace
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.BiStatePresentation
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.PresentationListener
+import com.intellij.codeInsight.hints.presentation.PresentationRenderer
+import com.intellij.codeInsight.hints.presentation.ScaleAwarePresentationFactory
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
@@ -10,10 +15,17 @@ import com.intellij.ide.DataManager
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INLINE_REFACTORING_SETTINGS_DEFAULT
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INLINE_REFACTORING_SETTINGS_FOCUSED
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INLINE_REFACTORING_SETTINGS_HOVERED
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.ColorKey
@@ -41,7 +53,11 @@ import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Insets
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
@@ -151,7 +167,9 @@ object TemplateInlayUtil {
         .setRequestFocus(true)
         .addListener(object : JBPopupListener {
           override fun onClosed(event: LightweightWindowEvent) {
-            presentation.isSelected = false
+            WriteIntentReadAction.run {
+              presentation.isSelected = false
+            }
           }
         })
         .createPopup()
@@ -246,7 +264,9 @@ object TemplateInlayUtil {
       if (textOccurrences != null) {
         processor.setToSearchForTextOccurrences(elementToRename, textOccurrences)
       }
-      restart.run()
+      WriteIntentReadAction.run {
+        restart.run()
+      }
     }
   }
 
@@ -379,8 +399,10 @@ object TemplateInlayUtil {
               .selected(it)
               .applyToComponent {
                 addActionListener {
-                  commentsStringsOccurrences = isSelected
-                  optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
+                  WriteIntentReadAction.run {
+                    commentsStringsOccurrences = isSelected
+                    optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
+                  }
                 }
               }.gap(RightGap.SMALL)
               .focused()

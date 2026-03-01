@@ -2,14 +2,17 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 import org.jetbrains.kotlin.j2k.buildList
 
+@K1Deprecation
 enum class AnnotationUseTarget(val id: String) {
     File("file"), Param("param"), Get("get"), Set("set"), Field("field")
 }
 
+@K1Deprecation
 class Annotation(val name: Identifier,
                  val arguments: List<Pair<Identifier?, DeferredElement<Expression>>>,
                  val newLineAfter: Boolean,
@@ -52,6 +55,7 @@ class Annotation(val name: Identifier,
     }
 }
 
+@K1Deprecation
 class AnnotationConstructorCall(name: Identifier, arguments: List<Pair<Identifier?, DeferredElement<Expression>>>) : Expression() {
     private val annotation = Annotation(name, arguments, false)
 
@@ -60,6 +64,7 @@ class AnnotationConstructorCall(name: Identifier, arguments: List<Pair<Identifie
     }
 }
 
+@K1Deprecation
 class Annotations(val annotations: List<Annotation>) : Element() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(annotations, "")

@@ -9,7 +9,11 @@ import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor
 import java.io.File
 import kotlin.test.assertEquals

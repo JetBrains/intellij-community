@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.findMostSpecificExistingFileOrNewDefault
-import kotlin.collections.flatMap
 import kotlin.test.assertEquals
 
 object AggregatedExternalLibrariesChecker : AbstractTestChecker<AggregatedExternalLibrariesConfiguration>() {

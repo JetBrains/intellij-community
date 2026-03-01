@@ -9,8 +9,9 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
+import java.awt.Font;
 
 /**
  * This class is aimed to help {@linkplain EditorImpl the editor} when the user extensively modifies the longest line

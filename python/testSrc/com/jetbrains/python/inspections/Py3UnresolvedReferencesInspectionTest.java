@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -28,6 +29,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -559,6 +561,44 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                            print("Something more from", self)
                            super().do_smth()
                            super().<warning descr="Cannot find reference 'non_existing' in 'A | ABC'">non_existing</warning>()
+                   """);
+  }
+
+  // PY-76922
+  public void testIntersectionMemberAttributeAccess() {
+    doTest();
+  }
+
+  // PY-86608
+  public void testFromImportComprehensionVariableLeak() {
+    doMultiFileTest();
+  }
+
+  // PY-86608
+  public void testFromImportComprehensionVariableLeakUnstubbed() {
+    String testDir = getTestCaseDirectory() + "FromImportComprehensionVariableLeak";
+    myFixture.copyDirectoryToProject(testDir, "");
+    PsiFile cPy = myFixture.configureFromTempProjectFile("c.py");
+
+    FileASTNode cPyNode = cPy.getNode();
+    assertTrue(cPyNode.isParsed());
+
+    PsiFile aPy = myFixture.configureFromTempProjectFile("a.py");
+
+    configureInspection();
+
+    assertSdkRootsNotParsed(aPy);
+    Reference.reachabilityFence(cPyNode);
+  }
+
+  // PY-87343
+  public void testNewTypeUnion() {
+    doTestByText("""
+                   from typing import NewType
+                   
+                   MyId = NewType("MyId", int)
+                   
+                   val: MyId | None = None
                    """);
   }
 }

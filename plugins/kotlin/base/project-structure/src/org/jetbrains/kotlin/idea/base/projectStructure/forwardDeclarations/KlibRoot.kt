@@ -2,21 +2,17 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
 import com.intellij.openapi.diagnostic.logger
-import org.jetbrains.kotlin.idea.base.util.asKotlinLogger
-import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.library.ToolingSingleFileKlibResolveStrategy
-import org.jetbrains.kotlin.library.resolveSingleFileKlib
+import org.jetbrains.kotlin.library.loader.KlibLoader
+import org.jetbrains.kotlin.library.loader.reportLoadingProblemsIfAny
 
 internal data class KLibRoot(
     val libraryRoot: String,
 ) {
-    val resolvedKotlinLibrary: KotlinLibrary by lazy {
-        resolveSingleFileKlib(
-            libraryFile = File(libraryRoot),
-            logger = LOG.asKotlinLogger(),
-            strategy = ToolingSingleFileKlibResolveStrategy
-        )
+    val resolvedKotlinLibrary: KotlinLibrary? by lazy {
+        val klibLoadingResult = KlibLoader { libraryPaths(libraryRoot) }.load()
+        klibLoadingResult.reportLoadingProblemsIfAny { _, message -> LOG.warn(message) }
+        klibLoadingResult.librariesStdlibFirst.singleOrNull()
     }
 }
 

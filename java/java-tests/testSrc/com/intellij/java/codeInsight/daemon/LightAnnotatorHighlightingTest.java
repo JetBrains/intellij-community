@@ -1,15 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.DaemonAnnotatorsRespondToChangesTest;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -27,32 +33,34 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Dimension;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
-public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase {
+public class LightAnnotatorHighlightingTest extends ProductionLightDaemonAnalyzerTestCase {
   public void testInjectedAnnotator() {
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(XmlFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyAnnotator()}, () ->
       doTest(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".xml",true,false)
@@ -68,21 +76,19 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         """);
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
       assertEmpty(highlightErrors());
-      List<HighlightInfo> fileLevel =
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
+      List<HighlightInfo> fileLevel = myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile());
       HighlightInfo info = assertOneElement(fileLevel);
       assertTrue(MyFileLevelAnnotator.isMy(info));
 
       type("\n\n");
       assertEmpty(highlightErrors());
-      fileLevel =
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
+      fileLevel = myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile());
       info = assertOneElement(fileLevel);
       assertTrue(MyFileLevelAnnotator.isMy(info));
       type("//xxx"); //disable top level annotation
       List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
       assertEmpty(warnings);
-      fileLevel = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
+      fileLevel = myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile());
       assertEmpty(fileLevel);
     });
   }
@@ -127,7 +133,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testAnnotatorMustNotSpecifyCrazyRangeForCreatedAnnotation() {
-    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, this::runMyAnnotators);
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, () -> runMyAnnotators());
   }
   private void runMyAnnotators() {
     @org.intellij.lang.annotations.Language("JAVA")
@@ -137,20 +143,13 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       }
       """;
     configureFromFileText("x.java", text);
-    ((EditorImpl)getEditor()).getScrollPane().getViewport().setSize(1000, 1000);
-    @NotNull Editor editor = getEditor();
+    EditorImpl editor = (EditorImpl)getEditor();
+    editor.getScrollPane().getViewport().setSize(1000, 1000);
     assertEquals(getFile().getTextRange(), editor.calculateVisibleRange());
 
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
-    TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    try {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject()))
-        .runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, null);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), editor.getDocument());
   }
 
   public static class MyCrazyAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
@@ -293,7 +292,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       }
 
       @Override
-      public @NotNull QuickFix @Nullable [] getFixes() {
+      public @NotNull QuickFix<?> @Nullable [] getFixes() {
         return QuickFix.EMPTY_ARRAY;
       }
     };
@@ -561,7 +560,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     configureFromFileText("foo.txt", "hello<caret>");
     DisabledQuickFixAnnotator.FIX_ENABLED = true;
     assertEmpty(doHighlighting());
-    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     DisabledQuickFixAnnotator.FIX_ENABLED = false;
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new DisabledQuickFixAnnotator()}, ()-> {
       assertOneElement(highlightErrors());
@@ -569,7 +568,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
                     .stream()
                     .filter(i -> IntentionActionDelegate.unwrap(i) instanceof EmptyIntentionAction)
                     .toList()); // nothing, not even EmptyIntentionAction
-      DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
+      myDaemonCodeAnalyzer.restart(getTestName(false));
       DisabledQuickFixAnnotator.FIX_ENABLED = true;
       assertNotEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())); // maybe a lot of CleanupIntentionAction, FixAllIntention etc
     });

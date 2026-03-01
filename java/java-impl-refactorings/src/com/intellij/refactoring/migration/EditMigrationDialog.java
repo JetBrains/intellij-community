@@ -6,12 +6,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.*;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 

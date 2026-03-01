@@ -25,7 +25,7 @@ internal fun createSelectInTargetAction(target: SelectInTarget, context: SelectI
     SelectInTargetAction(SelectInTargetActionImpl(target, context))
   }
 
-private class SelectInTargetActionGroup(
+internal class SelectInTargetActionGroup(
   private val impl: SelectInTargetActionImpl<CompositeSelectInTarget>,
 ) : ActionGroup(), DumbAware {
 
@@ -49,7 +49,7 @@ private class SelectInTargetActionGroup(
 
 }
 
-private class SelectInTargetAction(
+internal class SelectInTargetAction(
   private val impl: SelectInTargetActionImpl<*>
 ) : DumbAwareAction() {
 
@@ -65,7 +65,7 @@ private class SelectInTargetAction(
 
 }
 
-private class SelectInTargetActionImpl<T : SelectInTarget>(
+internal class SelectInTargetActionImpl<T : SelectInTarget>(
   val target: T,
   val selectInContext: SelectInContext,
 ) {

@@ -6,7 +6,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.execution.ParametersListUtil
 import com.sun.jna.Memory
-import com.sun.jna.platform.win32.*
+import com.sun.jna.platform.win32.Kernel32
+import com.sun.jna.platform.win32.WinBase
+import com.sun.jna.platform.win32.WinDef
+import com.sun.jna.platform.win32.WinError
+import com.sun.jna.platform.win32.WinNT
+import com.sun.jna.platform.win32.WinUser
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
 import org.jetbrains.annotations.ApiStatus

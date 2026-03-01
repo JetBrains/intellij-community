@@ -14,11 +14,19 @@ import git4idea.GitLocalBranch;
 import git4idea.GitReference;
 import git4idea.GitTag;
 import git4idea.validators.GitRefNameValidator;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -124,7 +132,8 @@ public final class GitRefUtil {
     else {
       String currentRevision = repository.getCurrentRevision();
       if (currentRevision != null) {
-        return repository.getTagHolder().getTag(currentRevision);
+        List<GitTag> tags = GitRepositoryTagsHolderKt.getTagsForCommit(repository.getTagsHolder(), currentRevision);
+        return ContainerUtil.getFirstItem(tags);
       }
     }
     return null;

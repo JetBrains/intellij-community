@@ -4,7 +4,11 @@ package com.intellij.psi.impl.search;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
-import com.intellij.concurrency.*;
+import com.intellij.concurrency.AsyncFuture;
+import com.intellij.concurrency.AsyncUtil;
+import com.intellij.concurrency.ConcurrencyUtils;
+import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
@@ -17,25 +21,57 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.IntRef;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.indexing.BinaryFileSourceProvider;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.psi.search.FileRankerMlService;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiSearchRequest;
+import com.intellij.psi.search.PsiSearchScopeUtil;
+import com.intellij.psi.search.QuerySearchRequest;
+import com.intellij.psi.search.RequestResultProcessor;
+import com.intellij.psi.search.ScopeOptimizer;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.SearchSession;
+import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -60,7 +96,22 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -229,14 +280,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (text.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
-    ProgressIndicator progress = getOrCreateIndicator();
     if (searchScope instanceof GlobalSearchScope) {
-      StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
-                                                   searchContext == UsageSearchContext.IN_STRINGS,
-                                                   options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
+      return ConcurrencyUtils.runWithIndicatorOrContextCancellation((__) -> {
+        ProgressIndicator progress = getOrCreateIndicator();
+        StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
+                                                     searchContext == UsageSearchContext.IN_STRINGS,
+                                                     options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
 
-      return processElementsWithTextInGlobalScope((GlobalSearchScope)searchScope, searcher, searchContext,
-                                                  options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, session, progress, processor);
+        return processElementsWithTextInGlobalScope((GlobalSearchScope)searchScope, searcher, searchContext,
+                                                    options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, session, progress, processor);
+      });
     }
     LocalSearchScope scope = (LocalSearchScope)searchScope;
     PsiElement[] scopeElements = scope.getScope();
@@ -267,7 +320,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return processor.toString();
       }
     };
-    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, localProcessor);
+    return JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(scopeElements), localProcessor);
   }
 
   private @Nullable("null means we did not find common container files") Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
@@ -831,40 +884,42 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     Map<SearchRequestCollector, Processor<? super PsiReference>> collectors = new HashMap<>();
     collectors.put(collector, processor);
 
-    ProgressIndicator progress = getOrCreateIndicator();
-    if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
-      return false;
-    }
-    do {
-      Map<TextIndexQuery, Collection<RequestWithProcessor>> globals = new HashMap<>();
-      List<Computable<Boolean>> customs = new ArrayList<>();
-      Set<RequestWithProcessor> locals = new LinkedHashSet<>();
-      Map<RequestWithProcessor, Processor<? super CandidateFileInfo>> localProcessors = new HashMap<>();
-      distributePrimitives(collectors, locals, globals, customs, localProcessors);
-      if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
+    return ConcurrencyUtils.runWithIndicatorOrContextCancellation((__) -> {
+      ProgressIndicator progress = getOrCreateIndicator();
+      if (appendCollectorsFromQueryRequests(progress, collectors) == QueryRequestsRunResult.STOPPED) {
         return false;
       }
-      for (RequestWithProcessor local : locals) {
-        progress.checkCanceled();
-        if (!processSingleRequest(local.request, local.refProcessor)) {
+      do {
+        Map<TextIndexQuery, Collection<RequestWithProcessor>> globals = new HashMap<>();
+        List<Computable<Boolean>> customs = new ArrayList<>();
+        Set<RequestWithProcessor> locals = new LinkedHashSet<>();
+        Map<RequestWithProcessor, Processor<? super CandidateFileInfo>> localProcessors = new HashMap<>();
+        distributePrimitives(collectors, locals, globals, customs, localProcessors);
+        if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
           return false;
         }
-      }
-      for (Computable<Boolean> custom : customs) {
-        progress.checkCanceled();
-        if (!custom.compute()) {
+        for (RequestWithProcessor local : locals) {
+          progress.checkCanceled();
+          if (!processSingleRequest(local.request, local.refProcessor)) {
+            return false;
+          }
+        }
+        for (Computable<Boolean> custom : customs) {
+          progress.checkCanceled();
+          if (!custom.compute()) {
+            return false;
+          }
+        }
+        QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
+        if (result == QueryRequestsRunResult.STOPPED) {
           return false;
         }
+        else if (result == QueryRequestsRunResult.UNCHANGED) {
+          return true;
+        }
       }
-      QueryRequestsRunResult result = appendCollectorsFromQueryRequests(progress, collectors);
-      if (result == QueryRequestsRunResult.STOPPED) {
-        return false;
-      }
-      else if (result == QueryRequestsRunResult.UNCHANGED) {
-        return true;
-      }
-    }
-    while (true);
+      while (true);
+    });
   }
 
   private static @NotNull ProgressIndicator getOrCreateIndicator() {

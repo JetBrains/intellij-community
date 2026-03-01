@@ -16,7 +16,21 @@ import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclarationBase
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
@@ -24,10 +38,29 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
-import org.jetbrains.kotlin.idea.KotlinIcons.*
 import org.jetbrains.kotlin.idea.base.util.KotlinSingleClassFileAnalyzer
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassInitializer
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
@@ -41,8 +74,8 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
     private fun Icon.addExpectActualMarker(element: PsiElement): Icon {
         val declaration = (element as? KtNamedDeclaration) ?: return this
         val additionalIcon = when {
-            isExpectDeclaration(declaration) -> EXPECT
-            isMatchingExpected(declaration) -> ACTUAL
+            isExpectDeclaration(declaration) -> KotlinIcons.EXPECT
+            isMatchingExpected(declaration) -> KotlinIcons.ACTUAL
             else -> return this
         }
 
@@ -67,7 +100,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                 psiElement.isScript() -> psiElement.scriptIcon()
                 else -> {
                     val mainClass = KotlinSingleClassFileAnalyzer.getSingleClass(psiElement)
-                    if (mainClass != null) getIcon(mainClass, flags) else FILE
+                    if (mainClass != null) getIcon(mainClass, flags) else KotlinIcons.FILE
                 }
             }
         }
@@ -148,13 +181,13 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                 val isMember = symbol.location == KaSymbolLocation.CLASS
                 when {
                     (symbol as? KaNamedFunctionSymbol)?.isSuspend == true -> when {
-                        isMember -> SUSPEND_METHOD
-                        else -> SUSPEND_FUNCTION
+                        isMember -> KotlinIcons.SUSPEND_METHOD
+                        else -> KotlinIcons.SUSPEND_FUNCTION
                     }
 
                     symbol.isExtension -> when {
-                        isAbstract -> ABSTRACT_EXTENSION_FUNCTION
-                        else -> EXTENSION_FUNCTION
+                        isAbstract -> KotlinIcons.ABSTRACT_EXTENSION_FUNCTION
+                        else -> KotlinIcons.EXTENSION_FUNCTION
                     }
 
                     isMember -> when {
@@ -162,37 +195,37 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                         else -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
                     }
 
-                    else -> FUNCTION
+                    else -> KotlinIcons.FUNCTION
                 }
             }
 
             is KaClassSymbol -> {
                 when (symbol.classKind) {
                     KaClassKind.CLASS -> when {
-                        isAbstract -> ABSTRACT_CLASS
-                        else -> CLASS
+                        isAbstract -> KotlinIcons.ABSTRACT_CLASS
+                        else -> KotlinIcons.CLASS
                     }
 
-                    KaClassKind.ENUM_CLASS -> ENUM
-                    KaClassKind.ANNOTATION_CLASS -> ANNOTATION
-                    KaClassKind.INTERFACE -> INTERFACE
-                    KaClassKind.ANONYMOUS_OBJECT, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT -> OBJECT
+                    KaClassKind.ENUM_CLASS -> KotlinIcons.ENUM
+                    KaClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
+                    KaClassKind.INTERFACE -> KotlinIcons.INTERFACE
+                    KaClassKind.ANONYMOUS_OBJECT, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
                 }
             }
 
-            is KaValueParameterSymbol -> PARAMETER
+            is KaValueParameterSymbol -> KotlinIcons.PARAMETER
             is KaLocalVariableSymbol -> when {
-                symbol.isVal -> VAL
-                else -> VAR
+                symbol.isVal -> KotlinIcons.VAL
+                else -> KotlinIcons.VAR
             }
 
             is KaPropertySymbol -> when {
-                symbol.isVal -> FIELD_VAL
-                else -> FIELD_VAR
+                symbol.isVal -> KotlinIcons.FIELD_VAL
+                else -> KotlinIcons.FIELD_VAR
             }
 
             is KaTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)
-            is KaTypeAliasSymbol -> TYPE_ALIAS
+            is KaTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
 
             else -> {
                 LOG.warn("No icon for symbol: $symbol")
@@ -256,75 +289,68 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
         }
 
         private fun PsiFile.scriptIcon(): Icon = when {
-            virtualFile.name.endsWith(".gradle.kts") -> GRADLE_SCRIPT
-            else -> SCRIPT
+            virtualFile.name.endsWith(".gradle.kts") -> KotlinIcons.GRADLE_SCRIPT
+            else -> KotlinIcons.SCRIPT
         }
 
         private fun PsiElement.getBaseIcon(): Icon? = when (this) {
             is KtPackageDirective -> AllIcons.Nodes.Package
-            is KtFile, is KtLightClassForFacade -> FILE
+            is KtFile, is KtLightClassForFacade -> KotlinIcons.FILE
             is KtScript -> (parent as? KtFile)?.scriptIcon()
             is KtLightClass -> navigationElement.getBaseIcon()
             is KtNamedFunction -> when {
-                receiverTypeReference != null ->
-                    if (KtPsiUtil.isAbstract(this)) ABSTRACT_EXTENSION_FUNCTION else EXTENSION_FUNCTION
+                receiverTypeReference != null -> when {
+                    KtPsiUtil.isAbstract(this) -> KotlinIcons.ABSTRACT_EXTENSION_FUNCTION
+                    else -> KotlinIcons.EXTENSION_FUNCTION
+                }
 
-                getStrictParentOfType<KtNamedDeclaration>() is KtClass ->
-                    if (KtPsiUtil.isAbstract(this)) {
-                        PlatformIcons.ABSTRACT_METHOD_ICON
-                    } else {
-                        if (this.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) {
-                            SUSPEND_METHOD
-                        } else {
-                            IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
-                        }
-                    }
+                getStrictParentOfType<KtNamedDeclaration>() is KtClass -> when {
+                    KtPsiUtil.isAbstract(this) -> PlatformIcons.ABSTRACT_METHOD_ICON
+                    this.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true -> KotlinIcons.SUSPEND_METHOD
+                    else -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
+                }
 
                 else -> when {
-                    this.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true -> SUSPEND_FUNCTION
-                    else -> FUNCTION
+                    this.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true -> KotlinIcons.SUSPEND_FUNCTION
+                    else -> KotlinIcons.FUNCTION
                 }
             }
 
             is KtConstructor<*> -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
             is KtLightMethod -> when (val u = unwrapped) {
-                is KtProperty -> if (!u.hasBody()) PlatformIcons.ABSTRACT_METHOD_ICON else
-                    IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
-
+                is KtProperty if (!u.hasBody()) -> PlatformIcons.ABSTRACT_METHOD_ICON
                 else -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
             }
 
             is KtLightParameter -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable)
-            is KtFunctionLiteral -> LAMBDA
+            is KtFunctionLiteral -> KotlinIcons.LAMBDA
             is KtClass -> when {
-                isInterface() -> INTERFACE
-                isEnum() -> ENUM
-                isAnnotation() -> ANNOTATION
-                this is KtEnumEntry && getPrimaryConstructorParameterList() == null -> ENUM
-                else -> when {
-                    isAbstract() -> ABSTRACT_CLASS
-                    else -> CLASS
-                }
+                isInterface() -> KotlinIcons.INTERFACE
+                isEnum() -> KotlinIcons.ENUM
+                isAnnotation() -> KotlinIcons.ANNOTATION
+                this is KtEnumEntry && getPrimaryConstructorParameterList() == null -> KotlinIcons.ENUM
+                isAbstract() -> KotlinIcons.ABSTRACT_CLASS
+                else -> KotlinIcons.CLASS
             }
 
-            is KtObjectDeclaration -> OBJECT
+            is KtObjectDeclaration -> KotlinIcons.OBJECT
             is KtParameter -> when {
                 KtPsiUtil.getClassIfParameterIsProperty(this) != null -> when {
-                    isMutable -> FIELD_VAR
-                    else -> FIELD_VAL
+                    isMutable -> KotlinIcons.FIELD_VAR
+                    else -> KotlinIcons.FIELD_VAL
                 }
 
-                else -> PARAMETER
+                else -> KotlinIcons.PARAMETER
             }
 
             is KtProperty -> when {
-                isVar -> FIELD_VAR
-                else -> FIELD_VAL
+                isVar -> KotlinIcons.FIELD_VAR
+                else -> KotlinIcons.FIELD_VAL
             }
 
-            is KtScriptInitializer -> LAMBDA
-            is KtClassInitializer -> CLASS_INITIALIZER
-            is KtTypeAlias -> TYPE_ALIAS
+            is KtScriptInitializer -> KotlinIcons.LAMBDA
+            is KtClassInitializer -> KotlinIcons.CLASS_INITIALIZER
+            is KtTypeAlias -> KotlinIcons.TYPE_ALIAS
             is KtAnnotationEntry -> (shortName?.asString() == JvmFileClassUtil.JVM_NAME_SHORT).ifTrue {
                 val grandParent = parent.parent
                 when (grandParent) {
@@ -336,7 +362,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
             is PsiClass -> (this is KtLightClassForDecompiledDeclarationBase).ifTrue {
                 val origin = (this as? KtLightClass)?.kotlinOrigin
                 //TODO (light classes for decompiled files): correct presentation
-                if (origin != null) origin.getBaseIcon() else CLASS
+                if (origin != null) origin.getBaseIcon() else KotlinIcons.CLASS
             } ?: getBaseIconUnwrapped()
 
             else -> getBaseIconUnwrapped()

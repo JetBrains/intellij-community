@@ -4,7 +4,11 @@
 package com.intellij.util.progress
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.isInCancellableContext
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

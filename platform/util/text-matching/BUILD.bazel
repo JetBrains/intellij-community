@@ -5,7 +5,7 @@ jvm_library(
   name = "text-matching",
   module_name = "intellij.platform.util.text.matching",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvm/**/*.kt", "srcJvm/**/*.java", "srcJvm/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/util/base",
@@ -17,16 +17,17 @@ jvm_library(
 jvm_library(
   name = "text-matching_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form", "testJvm/**/*.kt", "testJvm/**/*.java", "testJvm/**/*.form"], allow_empty = True),
   associates = [":text-matching"],
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test",
-    "@lib//:kotlin-test-junit",
+    "@lib//:kotlin-test-junit5",
     "@lib//:junit5",
   ]
 )

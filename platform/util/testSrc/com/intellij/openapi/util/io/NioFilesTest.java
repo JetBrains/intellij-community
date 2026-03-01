@@ -12,16 +12,26 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.util.io.IoTestUtil.*;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWorkingWslDistribution;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class NioFilesTest {
@@ -262,14 +272,14 @@ public class NioFilesTest {
     assertEquals(42, runAndGetExitValue(script.toString()));
   }
 
-  private static int runAndGetExitValue(String command) throws IOException, InterruptedException {
+  private static int runAndGetExitValue(String... command) throws IOException, InterruptedException {
     var process = Runtime.getRuntime().exec(command);
     if (process.waitFor(30, TimeUnit.SECONDS)) {
       return process.exitValue();
     }
     else {
       process.destroy();
-      throw new AssertionError("Timed out and killed: " + command);
+      throw new AssertionError("Timed out and killed: " + List.of(command));
     }
   }
 

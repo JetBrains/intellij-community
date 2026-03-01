@@ -5,15 +5,13 @@ import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.util.EventDispatcher
 import git4idea.GitBranch
 import git4idea.GitRemoteBranch
-import git4idea.remote.hosting.knownRepositories
 import git4idea.ui.branch.MergeDirectionModel
-import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 internal class GitLabMergeRequestCreateDirectionModel(
-  private val repositoriesManager: GitLabProjectsManager,
-  override val baseRepo: GitLabProjectMapping
+  private val createVm: GitLabMergeRequestCreateViewModel
 ) : MergeDirectionModel<GitLabProjectMapping> {
+  override val baseRepo: GitLabProjectMapping = createVm.projectMapping
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   override var baseBranch: GitRemoteBranch? = null
@@ -37,7 +35,7 @@ internal class GitLabMergeRequestCreateDirectionModel(
   }
 
   override fun getKnownRepoMappings(): List<GitLabProjectMapping> {
-    return repositoriesManager.knownRepositories.toList()
+    return createVm.getAllKnownProjects()
   }
 
   override fun setHead(repo: GitLabProjectMapping?, branch: GitBranch?) {

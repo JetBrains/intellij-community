@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -12,7 +16,11 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.NegatingGotoInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Objects;
+import java.util.Set;
 
 import static java.util.stream.Collectors.toList;
 

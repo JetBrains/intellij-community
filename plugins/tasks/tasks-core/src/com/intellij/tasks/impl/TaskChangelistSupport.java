@@ -18,7 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 
 @VisibleForTesting
 public final class TaskChangelistSupport implements EditChangelistSupport {

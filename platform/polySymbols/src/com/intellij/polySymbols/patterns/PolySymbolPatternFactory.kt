@@ -2,7 +2,14 @@
 package com.intellij.polySymbols.patterns
 
 import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.patterns.impl.*
+import com.intellij.polySymbols.patterns.impl.CompletionAutoPopupPattern
+import com.intellij.polySymbols.patterns.impl.ComplexPattern
+import com.intellij.polySymbols.patterns.impl.ComplexPatternConfigProvider
+import com.intellij.polySymbols.patterns.impl.RegExpPattern
+import com.intellij.polySymbols.patterns.impl.SequencePattern
+import com.intellij.polySymbols.patterns.impl.SingleSymbolReferencePattern
+import com.intellij.polySymbols.patterns.impl.StaticPattern
+import com.intellij.polySymbols.patterns.impl.SymbolReferencePattern
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryStack
 import org.jetbrains.annotations.ApiStatus

@@ -1,5 +1,38 @@
 # Jewel Release Notes
 
+## v0.34 (2026-02-17)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2025.3.3, 2026.1 EAP       | 1.10.0                        |
+
+### ‚ö†Ô∏è Important Changes
+
+* **JEWEL-1221** TabStrip is not using the HorizontallyScrollableContainer as it mandates some behavior that should not apply to the TabStrip ([#3376](https://github.com/JetBrains/intellij-community/pull/3376))
+  * All functionality should remain the same
+* **JEWEL-741** [Source breaking change!] The `mimeType: MimeType?` parameter name from `FencedCodeBlock` class was changed to `language: String?`, which takes the raw string for the code block language identifier. This won't introduce binary nor behavioural changes since `MimeType` is a value class that is seen as `String?` by the compiler ([#3171](https://github.com/JetBrains/intellij-community/pull/3171))
+* **JEWEL-954** Added popup advertisement support with new `PopupAd` component, `PopupAdStyle` theming, and `adContent` parameter to `PopupContainer` and `Menu` components ([#3358](https://github.com/JetBrains/intellij-community/pull/3358))
+* **JEWEL-1224** Bumped CMP version to 1.10.0
+
+### New features
+
+* **JEWEL-741** Markdown code blocks fall back to TextMate token-based highlighting when semantic highlighting is unavailable and the TextMate plugin is installed. ([#3171](https://github.com/JetBrains/intellij-community/pull/3171))
+* **JEWEL-954** Popups now have an ad content slot in which can be used to add a helper text to the menu ([#3358](https://github.com/JetBrains/intellij-community/pull/3358))
+* **JEWEL-992** Input Fields: Added automatic cursor hiding on macOS when typing. The cursor hides while typing and reappears when the mouse moves, matching the native macOS behavior seen in IntelliJ Platform text fields ([#3372](https://github.com/JetBrains/intellij-community/pull/3372))
+
+### Bug fixes
+
+* **JEWEL-1188** Fixed caret not moving when clicking in an editable combo box text field while its popup is visible ([#3352](https://github.com/JetBrains/intellij-community/pull/3352))
+* **JEWEL-1199** JewelComposePanelWrapper now handles focus on Swing Interop components without stealing the focus when it gets clicked/focused ([#3368](https://github.com/JetBrains/intellij-community/pull/3368))
+* **JEWEL-1240** Fixed improper positioning of the scrollbar in undecorated `TextArea`s ([#3391](https://github.com/JetBrains/intellij-community/pull/3391))
+* **JEWEL-741** Fixed a bug where the mime type string for the Go language was actually returning MimeType.YAML ([#3171](https://github.com/JetBrains/intellij-community/pull/3171))
+* **JEWEL-741** Fixed a bug where the `displayName` wasn't returning the correct display name for mime types that also defined a `role` ([#3171](https://github.com/JetBrains/intellij-community/pull/3171))
+
+### Deprecated API
+
+* **JEWEL-741** `MimeType` value class has been deprecated, along with all of its functions, variables and extensions ([#3171](https://github.com/JetBrains/intellij-community/pull/3171))
+* **JEWEL-741** `CodeHighlighter.highlight(code: String, mimeType: MimeType?)` has been deprecated. Please use `highlight(code: String, language: String)` ([#3171](https://github.com/JetBrains/intellij-community/pull/3171))
+
 ## v0.33 (2025-12-19)
 
 | Min supported IJP versions | Compose Multiplatform version |
@@ -41,7 +74,7 @@ Last release of 2025, with plenty of fixes and new features. See you in 2026! ü
 * **JEWEL-1013, JEWEL-1016** Fixed missing popup shadows for CMP-based popups ([#3253](https://github.com/JetBrains/intellij-community/pull/3253))
     * This does not affect native popups, as they delegate the shadow drawing to the OS and they always had the correct shadow
 * **JEWEL-1057** Fixed a bug in decorated window action icons (close, maximize, and minimize) where they weren't properly showing on Linux targets ([#3310](https://github.com/JetBrains/intellij-community/pull/3310))
-* **JEWEL-1061** Fixed several issues with buttons, most of whom only impact split buttons ([#3283](https://github.com/JetBrains/intellij-community/pull/3283))
+* **JEWEL-1061** Fixed several issues with buttons, most of which only impact split buttons ([#3283](https://github.com/JetBrains/intellij-community/pull/3283))
     * Fixed a bug with `*SplitButton`s where the chevron would get squashed if the button wasn't wide enough to fit both the main and secondary content
     * Fixed a bug with `*SplitButton`s where the divider height was limited, and would not grow with the button's height if it gets taller than the minimum height
     * Fixed several bugs with `*Button` colours in standalone, especially in the disabled state, to realign them with Swing
@@ -70,7 +103,7 @@ Last release of 2025, with plenty of fixes and new features. See you in 2026! ü
 
 ### Deprecated API
 
-* **JEWEL-1067** `ScrollingSynchronizer#scrollToLine` is now marked as non-extendable (`@ApiStatus.NonExtendable`), in favor of new methods `ScrollingSynchronizer#scrollToCoordinate` and `ScrollingSynchronizer#findYCoordinateToScroll` ([#3287](https://github.com/JetBrains/intellij-community/pull/3287)) ([#3287](https://github.com/JetBrains/intellij-community/pull/3287))
+* **JEWEL-1067** `ScrollingSynchronizer#scrollToLine` is now marked as non-extendable (`@ApiStatus.NonExtendable`), in favor of new methods `ScrollingSynchronizer#scrollToCoordinate` and `ScrollingSynchronizer#findYCoordinateToScroll` ([#3287](https://github.com/JetBrains/intellij-community/pull/3287))
 
 ## v0.32.1 (2025-12-01)
 

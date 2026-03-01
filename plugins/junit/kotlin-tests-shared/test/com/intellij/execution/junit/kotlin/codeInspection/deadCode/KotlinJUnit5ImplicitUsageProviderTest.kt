@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection.deadCode
 
 import com.intellij.junit.testFramework.JUnit5ImplicitUsageProviderTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode.K1
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
@@ -30,11 +31,51 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
   }
 
   fun `test implicit usage of parameter in parameterized test`() {
+    // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
+    if (pluginMode == K1) return
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+        class MyTest {
+          @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
+          fun byName(name: String, <warning descr="Parameter \"flag\" is never used">flag</warning>: Boolean = false) { }
+        }
+     """.trimIndent())
+  }
+
+  fun `test implicit usage of multiple parameters in parameterized test`() {
+    // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
+    if (pluginMode == K1) return
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.params.provider.Arguments
+      import java.util.stream.Stream
+      
+      class MyTest {
+        companion object {
+          @JvmStatic
+          fun source(): Stream<Arguments> = Stream.of(
+            Arguments.of("a", 1, true),
+            Arguments.of("b", 2, false)
+          )
+        }
+        
+        @org.junit.jupiter.params.ParameterizedTest(name = "{0} vs {1}")
+        @org.junit.jupiter.params.provider.MethodSource("source")
+        fun testMultiple(name: String, value: Int, <warning descr="Parameter \"flag\" is never used">flag</warning>: Boolean) {
+        }
+      }
+   """.trimIndent())
+  }
+
+  fun `test unused parameter when not in display name`() {
+    // KotlinHighlightVisitor ignores parameter checking for EntryPoints.
+    // @see org.jetbrains.kotlin.checkers.KotlinHighlightVisitorCustomTest#testNoUnusedParameterWhenCustom()
+    if (pluginMode == K1) return
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MyTest {
-        @org.junit.jupiter.params.ParameterizedTest(name = "{0}")
-        fun byName(name: String) {
-          println(name)
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.ValueSource(strings = ["a"])
+        fun test(<warning descr="Parameter \"unused\" is never used">unused</warning>: String) {
         }
       }
    """.trimIndent())

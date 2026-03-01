@@ -8,6 +8,9 @@ import java.util.HashMap;
  * {@link java.util.ArrayList}
  * {@link java.util.HashMap description}
  * @author Bas
+ *
+ * @see <a href="https://jetbrains.com">Check out our cool website !</a>
+ * and our even better <a href="https://www.jetbrainsmerchandise.com">merch</a> !
  */
 public class MarkdownDocumentationCommentsMigration {
   <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
@@ -387,6 +390,13 @@ final class LookupWithIndentsBuilder {
  * 
  * Two Sheeps,
  * ...zzz}
+ * 
+ * {@linkplain String}
+ * <br>
+ * {@linkplain String I am a string, but with a label}
+ * 
+ * {@linkplain String#copyValueOf(char[])}
+ * 
  * <p>
  * <code>Single line code block with html tag</code>
  * <p>
@@ -483,7 +493,7 @@ class OhMyLinks {}
 <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
  * I like my *asteriks* and _underscores_.
  * <p>
- * And let's not forget about my friend the `backticks` !
+ * And let's not forget about my friend the `backticks` (and ~~~squigly lines~~~) !
  * <br>
  * Some fun things include:
  * ## Title like structs

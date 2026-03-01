@@ -3,7 +3,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

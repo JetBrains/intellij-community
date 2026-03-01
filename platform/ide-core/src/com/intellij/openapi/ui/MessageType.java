@@ -6,8 +6,8 @@ import com.intellij.notification.NotificationType;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 
 public final class MessageType {
 

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtTypeParameter
 
 internal object MoveTypeParameterConstraintFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {

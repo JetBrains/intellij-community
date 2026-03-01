@@ -2,7 +2,20 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
@@ -10,7 +23,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public final class ExpectedTypeUtil {
   private static final Logger LOG = Logger.getInstance(ExpectedTypeUtil.class);

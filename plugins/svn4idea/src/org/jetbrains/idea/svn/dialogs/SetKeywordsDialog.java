@@ -12,10 +12,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 

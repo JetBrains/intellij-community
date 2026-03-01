@@ -12,7 +12,12 @@ import kotlinx.coroutines.awaitCancellation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.pullrequest.data.service.*
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRMentionableUsersProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCreationService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInteractionState
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 @ApiStatus.Internal
@@ -29,6 +34,7 @@ class GHPRDataContext internal constructor(
   internal val reactionsService: GHReactionsService,
   internal val htmlImageLoader: AsyncHtmlImageLoader,
   internal val avatarIconsProvider: GHAvatarIconsProvider,
+  internal val mentionableUsersProvider: GHPRMentionableUsersProvider,
   internal val reactionIconsProvider: IconsProvider<GHReactionContent>,
   internal val interactionState: GHPRPersistentInteractionState,
 ) {

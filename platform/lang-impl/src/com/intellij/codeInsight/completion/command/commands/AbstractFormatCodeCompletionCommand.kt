@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 import com.intellij.codeInsight.completion.command.CommandProvider
@@ -62,7 +63,10 @@ abstract class AbstractFormatCodeCompletionCommand(private val context: CommandC
         CodeStyleManager.getInstance(psiFile.getProject()).reformat(target)
         val origText = context.psiFile.text
         val modifiedText = psiFile.text
-        if (origText == modifiedText) return@tryToCalculateCommandCompletionPreview IntentionPreviewInfo.Html(ActionsBundle.message("action.ReformatCode.description"))
+        if (origText == modifiedText) {
+          val contentHtml = CodeInsightBundle.message("command.completion.reformat.nothing")
+          return@tryToCalculateCommandCompletionPreview IntentionPreviewInfo.Html(contentHtml)
+        }
         IntentionPreviewInfo.CustomDiff(context.psiFile.fileType, null, origText, modifiedText, true)
       },
       context = context,

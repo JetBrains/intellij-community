@@ -8,6 +8,7 @@ import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -31,7 +32,9 @@ interface TerminalToolWindowTabsManager {
   fun createTabBuilder(): TerminalToolWindowTabBuilder
 
   /**
-   * Close the given tool window tab and terminate the underlying shell process.
+   * Close the given tab and terminate the underlying shell process.
+   *
+   * Supports both tool-window attached tabs and tabs created with `shouldAddToToolWindow(false)`.
    */
   @RequiresEdt
   fun closeTab(tab: TerminalToolWindowTab)
@@ -55,6 +58,7 @@ interface TerminalToolWindowTabsManager {
   @RequiresEdt
   fun attachTab(view: TerminalView, contentManager: ContentManager?): TerminalToolWindowTab
 
+  @Deprecated("Use TerminalTabsManagerListener.TOPIC instead")
   fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener)
 
   companion object {
@@ -76,11 +80,34 @@ fun TerminalToolWindowTabsManager.findTabByContent(content: Content): TerminalTo
 @ApiStatus.Experimental
 interface TerminalTabsManagerListener {
   /**
-   * Called when the terminal tab is added to the terminal tool window.
+   * Called only once after the terminal view is created for the tool window tab.
+   * But before the terminal tab is added to the tool window.
+   */
+  fun terminalViewCreated(view: TerminalView) {}
+
+  /**
+   * Called after the terminal tab is added to the terminal tool window.
+   *
    * Note that this method is fired both when a new terminal tab is created ([TerminalToolWindowTabBuilder.createTab])
    * and when the terminal tab is attached to the tool window ([TerminalToolWindowTabsManager.attachTab]).
-   * So, if you need to perform some actions with [TerminalView] only once, check that they are not performed again
-   * (for example, when the tab is attached back to the tool window).
+   * So, if you need to perform some actions with [TerminalView] only once, prefer using [terminalViewCreated]
    */
-  fun tabAdded(tab: TerminalToolWindowTab)
+  fun tabAdded(tab: TerminalToolWindowTab) {}
+
+  /**
+   * Called after the terminal tab is detached from the terminal tool window.
+   * For example, when the terminal tab is moved to the editor tab.
+   *
+   * Note, that [TerminalToolWindowTab.content] is already disposed at this moment.
+   */
+  fun tabDetached(tab: TerminalToolWindowTab) {}
+
+  companion object {
+    @JvmField
+    @Topic.ProjectLevel
+    val TOPIC: Topic<TerminalTabsManagerListener> = Topic.create(
+      "Terminal ToolWindow Tabs Manager",
+      TerminalTabsManagerListener::class.java,
+    )
+  }
 }

@@ -4,7 +4,7 @@ package com.intellij.platform.ide.progress;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 
 @Internal
 public final class ComponentModalTaskOwner implements ModalTaskOwner {

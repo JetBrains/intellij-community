@@ -8,7 +8,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Iterator;
 import java.util.Objects;
@@ -268,14 +273,19 @@ public final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttri
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    MultiRoutingFsPath paths = (MultiRoutingFsPath)o;
-    return Objects.equals(myDelegate, paths.myDelegate) &&
-           Objects.equals(myFileSystem, paths.myFileSystem);
+    if (o instanceof MultiRoutingFsPath paths) {
+      boolean isAbsolute = isAbsolute();
+      return isAbsolute == paths.isAbsolute()
+             && Objects.equals(myFileSystem, paths.myFileSystem)
+             && (myDelegate.equals(paths.myDelegate) || !isAbsolute && myDelegate.toString().equals(paths.myDelegate.toString()));
+    }
+    return false;
   }
 
   @Override
   public int hashCode() {
-    return myDelegate.hashCode() * 31 + myFileSystem.hashCode();
+    int result = myFileSystem.hashCode();
+    result = 31 * result + (isAbsolute() ? myDelegate.hashCode() : myDelegate.toString().hashCode());
+    return result;
   }
 }

@@ -17,6 +17,7 @@ import git4idea.config.GitConfigUtil
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.repo.GitRepositoryManager
+import git4idea.repo.tags
 
 private val LOG = logger<GitTroubleInfoCollector>()
 
@@ -115,7 +116,7 @@ internal class GitTroubleInfoCollector : TroubleInfoCollector, PluginAware {
   private fun StringBuilder.writeGitReposStats(project: Project) {
     section("Git repositories stats") {
       GitRepositoryManager.getInstance(project).repositories.forEach {
-        val tags = it.tagHolder.getTags().size
+        val tags = it.tagsHolder.tags.size
         val remoteBranches = it.branches.remoteBranches.size
         val localBranches = it.branches.localBranches.size
 

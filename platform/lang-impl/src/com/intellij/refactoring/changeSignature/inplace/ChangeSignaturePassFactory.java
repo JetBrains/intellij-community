@@ -22,7 +22,7 @@ import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
 
 final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Override

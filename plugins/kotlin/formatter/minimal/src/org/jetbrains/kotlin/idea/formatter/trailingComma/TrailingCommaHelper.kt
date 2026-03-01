@@ -15,7 +15,12 @@ import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespace
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.nextLeaf
 import org.jetbrains.kotlin.psi.psiUtil.prevLeaf

@@ -2,8 +2,17 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
-import junit.framework.TestCase.*
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.*
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertNull
+import junit.framework.TestCase.assertTrue
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.ReflectionLogger
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.Static
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflectiveGetter
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameter
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.returnType
 import org.junit.Test
 import java.net.URLClassLoader
 

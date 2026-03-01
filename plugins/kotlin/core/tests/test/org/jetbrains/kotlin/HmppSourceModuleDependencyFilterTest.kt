@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin
 
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.HmppSourceModuleDependencyFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.kmp.SourceModuleDependenciesFilterCandidate.*
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.SourceModuleDependenciesFilterCandidate.KlibLibraryDependency
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.SourceModuleDependenciesFilterCandidate.NonKlibLibraryDependency
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms

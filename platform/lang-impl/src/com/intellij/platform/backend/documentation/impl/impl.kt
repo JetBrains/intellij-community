@@ -10,12 +10,29 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.platform.backend.documentation.*
+import com.intellij.platform.backend.documentation.AsyncDocumentation
+import com.intellij.platform.backend.documentation.AsyncLinkResolveResult
+import com.intellij.platform.backend.documentation.AsyncResolvedTarget
+import com.intellij.platform.backend.documentation.ContentUpdater
+import com.intellij.platform.backend.documentation.DocumentationData
+import com.intellij.platform.backend.documentation.DocumentationLinkHandler
+import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.LinkResolveResult
+import com.intellij.platform.backend.documentation.ResolvedTarget
 import com.intellij.util.AsyncSupplier
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 
-internal fun DocumentationTarget.documentationRequest(): DocumentationRequest {
+@ApiStatus.Internal
+fun DocumentationTarget.documentationRequest(): DocumentationRequest {
   ApplicationManager.getApplication().assertReadAccessAllowed()
   return DocumentationRequest(createPointer(), computePresentation())
 }
@@ -148,7 +165,8 @@ private fun <X> resolveLinkInReadAction(
   }
 }
 
-private fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {
+@VisibleForTesting
+fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {
   for (handler in DocumentationLinkHandler.EP_NAME.extensionList) {
     ProgressManager.checkCanceled()
     return handler.resolveLink(target, url) ?: continue

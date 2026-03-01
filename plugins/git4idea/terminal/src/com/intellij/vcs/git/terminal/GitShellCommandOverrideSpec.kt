@@ -10,9 +10,13 @@ import git4idea.GitRemoteBranch
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.terminal.block.completion.spec.*
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellArgumentContext
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandContext
+import org.jetbrains.plugins.terminal.block.completion.spec.project
 
 internal const val COLUMN_SPLIT_CHARACTER = '\t'
 
@@ -163,12 +167,11 @@ private val localOrRemoteBranchesGenerator: ShellRuntimeDataGenerator<List<Shell
 }
 
 private fun branchSuggestion(name: String, description: @Nls String? = null, priority: Int = 50): ShellCompletionSuggestion {
-  return ShellCompletionSuggestion(
-    name,
-    description = description,
-    priority = priority,
-    icon = AllIcons.Vcs.Branch
-  )
+  return ShellCompletionSuggestion(name) {
+    if (description != null) description(description)
+    priority(priority)
+    icon(AllIcons.Vcs.Branch)
+  }
 }
 
 private fun ShellCommandContext.trackingOptions() {
@@ -180,11 +183,9 @@ private fun ShellCommandContext.trackingOptions() {
     }
     argument {
       displayName(GitTerminalBundle.message("option.track.arg2.name"))
-      isOptional = true
+      optional()
     }
-    exclusiveOn = listOf(
-      "--no-track"
-    )
+    exclusiveOn(listOf("--no-track"))
   }
   option("--no-track") {
     description(GitTerminalBundle.message("option.notrack.description"))
@@ -193,11 +194,9 @@ private fun ShellCommandContext.trackingOptions() {
     }
     argument {
       suggestions(localBranchesGenerator)
-      isOptional = true
+      optional()
     }
-    exclusiveOn = listOf(
-      "-t", "--track"
-    )
+    exclusiveOn(listOf("-t", "--track"))
   }
 }
 
@@ -205,7 +204,10 @@ private fun ShellArgumentContext.addHeadSuggestions() {
   suggestions {
     listOf(
       ShellCompletionSuggestion("HEAD", description = GitTerminalBundle.message("suggestion.head.description")),
-      ShellCompletionSuggestion("HEAD~<N>", description = GitTerminalBundle.message("suggestion.headn.description"), insertValue = "HEAD~")
+      ShellCompletionSuggestion("HEAD~<N>") {
+        description(GitTerminalBundle.message("suggestion.headn.description"))
+        insertValue("HEAD~")
+      }
     )
   }
 }
@@ -222,8 +224,8 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
 
         suggestions(allBranchesGenerator)
 
-        isOptional = true
-        isVariadic = true
+        optional()
+        variadic()
       }
     }
 
@@ -235,8 +237,8 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
 
         suggestions(allBranchesGenerator)
 
-        isOptional = true
-        isVariadic = true
+        optional()
+        variadic()
       }
     }
 
@@ -248,48 +250,47 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
         }
         suggestions(allBranchesGenerator)
         suggestions(remotesGenerator)
-        isOptional = true
-        isVariadic = false
+        optional()
       }
       argument {
         displayName(GitTerminalBundle.message("rebase.arg2.name"))
         suggestions(localBranchesGenerator)
-        isOptional = true
+        optional()
       }
     }
     subcommand("push") {
       argument {
         displayName(GitTerminalBundle.message("push.arg1.name"))
         suggestions(remotesGenerator)
-        isOptional = true
+        optional()
       }
       argument {
         displayName(GitTerminalBundle.message("push.arg2.name"))
         suggestions(localBranchesGenerator)
-        isOptional = true
+        optional()
       }
     }
     subcommand("pull") {
       option("--rebase") {
-        separator = "="
+        separator("=")
         description(GitTerminalBundle.message("pull.opt-rebase.description"))
         argument {
           displayName(GitTerminalBundle.message("pull.opt-rebase.arg1.name"))
           suggestions("false", "true", "merges", "preserve", "interactive")
           suggestions(remotesGenerator)
-          isOptional = true
+          optional()
         }
       }
 
       argument {
         displayName(GitTerminalBundle.message("pull.arg1.name"))
         suggestions(remotesGenerator)
-        isOptional = true
+        optional()
       }
       argument {
         displayName(GitTerminalBundle.message("pull.arg2.name"))
         suggestions(localBranchesGenerator)
-        isOptional = true
+        optional()
       }
     }
     subcommand("remote") {
@@ -317,16 +318,16 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
       argument {
         displayName(GitTerminalBundle.message("fetch.arg1.name"))
         suggestions(remotesGenerator)
-        isOptional = true
+        optional()
       }
       argument {
         displayName(GitTerminalBundle.message("fetch.arg2.name"))
         suggestions(localBranchesGenerator)
-        isOptional = true
+        optional()
       }
       argument {
         displayName(GitTerminalBundle.message("fetch.arg3.name"))
-        isOptional = true
+        optional()
       }
     }
     subcommand("stash") {
@@ -338,7 +339,7 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
           }
           argument {
             displayName(GitTerminalBundle.message("stash.branch.arg2.name"))
-            isOptional = true
+            optional()
           }
         }
       }
@@ -354,7 +355,7 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
             )
           }
           suggestions(localOrRemoteBranchesGenerator)
-          isVariadic = true
+          variadic()
         }
       }
       option("-d", "--delete") {
@@ -367,7 +368,7 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
             )
           }
           suggestions(localOrRemoteBranchesGenerator)
-          isVariadic = true
+          variadic()
         }
       }
       option("-m", "--move") {
@@ -398,16 +399,16 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
         argument {
           displayName(GitTerminalBundle.message("branch.opt-set-upstream.arg1.name"))
           suggestions(allBranchesGenerator)
-          isOptional = true
+          optional()
         }
       }
       option("--set-upstream-to") {
         description(GitTerminalBundle.message("branch.opt-set-upstream.description"))
-        separator = "="
+        separator("=")
         argument {
           displayName(GitTerminalBundle.message("branch.opt-set-upstream.arg1.name"))
           suggestions(allBranchesGenerator)
-          isOptional = true
+          optional()
         }
       }
       option("--unset-upstream") {
@@ -415,7 +416,7 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
         argument {
           displayName(GitTerminalBundle.message("branch.opt-unset-upstream.arg1.name"))
           suggestions(localBranchesGenerator)
-          isOptional = true
+          optional()
         }
       }
       trackingOptions()
@@ -436,15 +437,15 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
 
         suggestions(allBranchesGenerator)
 
-        isOptional = true
+        optional()
       }
       argument {
         displayName(GitTerminalBundle.message("checkout.arg2.name"))
 
         suggestions(ShellDataGenerators.fileSuggestionsGenerator(false))
 
-        isVariadic = true
-        isOptional = true
+        variadic()
+        optional()
       }
     }
     subcommand("merge") {
@@ -457,8 +458,8 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
 
         suggestions(allBranchesGenerator)
 
-        isVariadic = true
-        isOptional = true
+        variadic()
+        optional()
       }
     }
     subcommand("switch") {
@@ -475,7 +476,7 @@ internal val gitOverrideSpec = ShellCommandSpec("git") {
       }
       argument {
         displayName(GitTerminalBundle.message("switch.arg2.name"))
-        isOptional = true
+        optional()
       }
     }
   }

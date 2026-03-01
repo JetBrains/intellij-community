@@ -26,7 +26,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test grouping events of the same suite comes from different tasks`(gradleVersion: GradleVersion) {
-    testJunit5Project(gradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       writeText("src/test/java/org/example/AppTest.java", """
         |package org.example;
         |import $jUnitTestAnnotationClass;
@@ -632,7 +632,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
         operation.addProgressListener(ProgressListener {})
       }
     }
-    testJunit5Project(gradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       writeText("src/test/java/org/example/AppTest.java", """
         |package org.example;
         |import $jUnitTestAnnotationClass;
@@ -675,7 +675,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
   @AllGradleVersionsSource
   fun `test Gradle test distribution nodes are hidden by default`(gradleVersion: GradleVersion) {
     assumeThatGradleIsAtLeast(gradleVersion, "7.5")
-    testJunit5Project(gradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       // Project configuration without an existing directory is not allowed
       runBlocking {
         edtWriteAction {

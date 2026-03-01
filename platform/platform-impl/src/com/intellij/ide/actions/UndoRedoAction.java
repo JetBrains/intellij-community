@@ -2,7 +2,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoManagerProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,9 +26,9 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JRootPane;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
 
 
 public abstract class UndoRedoAction extends DumbAwareAction implements LightEditCompatible {
@@ -97,9 +102,9 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     boolean isActionInProgress,
     boolean isActionPerformed
   ) {
-    for (UndoManagerProvider provider : UndoManagerProvider.EP_NAME.getExtensionList()) {
-      UndoManager providedManager = provider.getUndoManager(dataContext);
-      if (providedManager != null) return providedManager;
+    UndoManager providedManager = getProvidedUndoManager(dataContext);
+    if (providedManager != null) {
+      return providedManager;
     }
     Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (component instanceof JTextComponent && !ClientProperty.isTrue(component, IGNORE_SWING_UNDO_MANAGER)) {
@@ -125,6 +130,20 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     }
     Project project = getProject(editor, dataContext);
     return project != null && !project.isDefault() ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
+  }
+
+  private static @Nullable UndoManager getProvidedUndoManager(DataContext dataContext) {
+    try {
+      for (UndoManagerProvider provider : UndoManagerProvider.EP_NAME.getExtensionList()) {
+        UndoManager providedManager = provider.getUndoManager(dataContext);
+        if (providedManager != null) {
+          return providedManager;
+        }
+      }
+    } catch (Throwable e) {
+      LOG.error(e);
+    }
+    return null;
   }
 
   private static @Nullable Project getProject(FileEditor editor, DataContext dataContext) {

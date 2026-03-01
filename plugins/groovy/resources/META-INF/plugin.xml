@@ -17,12 +17,13 @@
     <module name="intellij.groovy.duplicates"/>
     <module name="intellij.groovy.duplicatesDetection"/>
     <module name="intellij.groovy.git"/>
-    <module name="intellij.groovy/ant"/>
-    <module name="intellij.groovy/byte-code-viewer"/>
+    <module name="intellij.groovy.ant"/>
+    <module name="intellij.groovy.copyright"/>
+    <module name="intellij.groovy.byteCodeViewer"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.properties"/>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.java.unscramble"/>
     <module name="intellij.properties.backend"/>
@@ -30,7 +31,6 @@
     <module name="intellij.regexp"/>
   </dependencies>
 
-  <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
@@ -380,6 +380,8 @@
                  description="Enable type inference with using info from explicitly typed closures"/>
     <registryKey key="groovy.flat.dfa" defaultValue="true"
                  description="Merges all control flows graphs in method"/>
+    <registryKey key="ide.dfa.time.limit.online" defaultValue="1000"
+                 description="Time limit (in milliseconds) that is allowed to analyze data flow for one method"/>
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
@@ -504,6 +506,7 @@
                                order="last"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.plugins.groovy.refactoring.rename.GroovyAutomaticOverloadsRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.plugins.groovy.refactoring.rename.GroovyAutomaticParametersRenamerFactory"/>
 
     <rename.inplace.resolveSnapshotProvider language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshotProvider"/>

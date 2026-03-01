@@ -5,7 +5,6 @@ import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -53,7 +52,7 @@ internal class EditorConfigIndentOptionsProvider : FileIndentOptionsProvider() {
 
 
   private fun applyCodeStyleSettings(project: Project,
-                                     properties: ResourceProperties,
+                                     properties: Map<String, String>,
                                      file: VirtualFile,
                                      settings: CodeStyleSettings): CommonCodeStyleSettings.IndentOptions? {
     // Apply indent options

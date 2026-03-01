@@ -6,7 +6,9 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GraphicsConfiguration;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 

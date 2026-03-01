@@ -9,7 +9,10 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.fixes.RemoveElementWithoutFormatterFix
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NL
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ARROW
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_SEMI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause

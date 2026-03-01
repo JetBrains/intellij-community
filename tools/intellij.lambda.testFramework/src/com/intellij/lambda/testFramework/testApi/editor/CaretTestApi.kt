@@ -2,9 +2,15 @@ package com.intellij.lambda.testFramework.testApi.editor
 
 import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.callActionByShortcut
-import com.intellij.lambda.testFramework.testApi.editor.ArrowType.*
+import com.intellij.lambda.testFramework.testApi.editor.ArrowType.DOWN
+import com.intellij.lambda.testFramework.testApi.editor.ArrowType.LEFT
+import com.intellij.lambda.testFramework.testApi.editor.ArrowType.RIGHT
+import com.intellij.lambda.testFramework.testApi.editor.ArrowType.UP
 import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
-import com.intellij.openapi.actionSystem.IdeActions.*
+import com.intellij.openapi.actionSystem.IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN
+import com.intellij.openapi.actionSystem.IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT
+import com.intellij.openapi.actionSystem.IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT
+import com.intellij.openapi.actionSystem.IdeActions.ACTION_EDITOR_MOVE_CARET_UP
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.LogicalPosition

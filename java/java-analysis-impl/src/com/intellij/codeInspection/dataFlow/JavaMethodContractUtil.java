@@ -1,11 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.StaticAnalysisAnnotationManager;
 import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
@@ -13,6 +23,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -20,7 +31,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Methods to operate on Java contracts
@@ -167,8 +183,14 @@ public final class JavaMethodContractUtil {
     }
   }
 
+  /**
+   * TODO: replace with external annotations when annotations for Java 26+ will be supported
+   */
+  private static final CallMatcher ADDITIONAL_PURE_METHODS =
+      CallMatcher.instanceCall("java.lang.LazyConstant", "get", "isInitialized");
+
   static @NotNull ContractInfo getContractInfo(@NotNull PsiMethod method) {
-    if (PsiUtil.isAnnotationMethod(method) || method instanceof LightRecordMethod) {
+    if (PsiUtil.isAnnotationMethod(method) || method instanceof LightRecordMethod || ADDITIONAL_PURE_METHODS.methodMatches(method)) {
       return ContractInfo.PURE;
     }
     return CachedValuesManager.getCachedValue(method, () -> {

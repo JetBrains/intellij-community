@@ -6,6 +6,7 @@ import com.intellij.java.codeserver.core.JavaPsiEnumUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -13,22 +14,88 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDiamondType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimaryPattern;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.JavaClassSupers;
+import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
 final class GenericsChecker {
+  private static final Logger LOG = Logger.getInstance(GenericsChecker.class);
   private final @NotNull JavaErrorVisitor myVisitor;
   private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
   // stored "clashing signatures" errors for the method (if the key is a PsiModifierList of the method), or the class (if the key is a PsiModifierList of the class)
@@ -357,13 +424,6 @@ final class GenericsChecker {
                                                 @NotNull PsiTypeElement typeElement2Highlight,
                                                 @Nullable PsiReferenceParameterList referenceParameterList) {
     PsiClass referenceClass = type instanceof PsiClassType classType ? classType.resolve() : null;
-    PsiType psiType = substitutor.substitute(classParameter);
-    if (psiType instanceof PsiClassType && !(PsiUtil.resolveClassInType(psiType) instanceof PsiTypeParameter)) {
-      if (GenericsUtil.checkNotInBounds(type, psiType, referenceParameterList)) {
-        myVisitor.report(JavaErrorKinds.TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH.create(typeElement2Highlight));
-        return;
-      }
-    }
 
     PsiClassType[] bounds = classParameter.getSuperTypes();
     for (PsiType bound : bounds) {
@@ -575,7 +635,21 @@ final class GenericsChecker {
         if (psiClass.findMethodsBySignature(method, false).length > 0) continue;
         PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) continue;
-        PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY);
+        PsiSubstitutor containingClassSubstitutor =
+          TypeConversionUtil.getMaybeSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY);
+        if (containingClassSubstitutor == null) {
+          LOG.error("Inconsistent hierarchy:\n"
+                    + "psiClass = " + psiClass + "; " + psiClass.getContainingFile().getVirtualFile() + "\n"
+                    + "\\- resolveScope = " + psiClass.getResolveScope() + "\n"
+                    + "superClass = " + superClass + "; " + superClass.getContainingFile().getVirtualFile() + "\n"
+                    + "\\- resolveScope = " + superClass.getResolveScope() + "\n"
+                    + "method = " + method.getName() + "; " + hms + "\n"
+                    + "containingClass = " + containingClass + "; " + containingClass.getContainingFile().getVirtualFile() + "\n"
+                    + "\\- resolveScope = " + containingClass.getResolveScope() + "\n");
+          JavaClassSupers.getInstance().reportHierarchyInconsistency(containingClass, psiClass);
+          JavaClassSupers.getInstance().reportHierarchyInconsistency(containingClass, superClass);
+          containingClassSubstitutor = PsiSubstitutor.EMPTY;
+        }
         PsiSubstitutor finalSubstitutor = PsiSuperMethodUtil
           .obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
         MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);

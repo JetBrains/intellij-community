@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.jetbrains.python.documentation.PythonDocumentationProvider
@@ -185,6 +186,16 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
       def f(fn: Callable[[Any], int]):
           ...
       f(lambda x: (x := "hello"))
+      """)
+  }
+
+  fun testExpressionInsideLambdaAsArgumentTypedAsUnion() {
+    doTest("expr", "int", """
+      from typing import Callable
+      
+      def f(fn: str|Callable[[int], object]):
+          ...
+      f(lambda expr: {})
       """)
   }
 
@@ -868,6 +879,32 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
       """)
   }
 
+  fun testDoubleStarredExpressionElementAsArgumentCombiningUnpackedTypedDictAndOtherParameterTypes() {
+    doTest("expr", "str", """
+      from typing import TypedDict, Unpack
+      
+      class FArgs(TypedDict):
+          s: str
+          n: int
+    
+      def f(a: str, **kwargs: Unpack[FArgs]):
+          pass
+      
+      f(**{"s": "foo", "n": 123, "a": expr})
+      """)
+  }
+
+  fun testDoubleStarredExpressionElementAsArgumentBothKwargsAndNamedParameter() {
+    fixme("Requires constructing an anonymous TypedDict with `extra_items=int`", ComparisonFailure::class.java) {
+      doTest("expr", "str", """
+      def f(a: str, **kwargs: int):
+          pass
+      
+      f(**{"a": expr, "n": 123})
+      """)
+    }
+  }
+
   fun testGenericMethodArgument() {
     doTest("expr", "str", """
       class Box[T]:
@@ -1041,6 +1078,14 @@ class PyExpectedTypeJudgmentTest : PyTestCase() {
       
       def main() -> Generator[int]:
           yield from expr
+      """)
+  }
+
+  @TestFor(issues = ["PY-87340"])
+  fun testMismatchOfExpectedAndActualTupleSize() {
+    doTest("x", "int", """
+      def check() -> tuple[bool, int, int]:
+          return true, x
       """)
   }
 

@@ -12,7 +12,12 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtTypeAlias
 
 object KotlinInlineRefactoringFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP

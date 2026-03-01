@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
+import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.repository.PyPackageRepository
@@ -16,8 +16,9 @@ class CondaPackage(
 ) : PythonPackage(name, version, editableMode) {
   override val sourceRepoIcon: Icon = if (installedWithPip) {
     PythonParserIcons.PythonFile
-  } else {
-    PythonIcons.Python.Anaconda
+  }
+  else {
+    PythonCommunityImplCondaIcons.Anaconda
   }
 
   override fun toString(): String {

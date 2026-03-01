@@ -6,7 +6,9 @@ import com.intellij.internal.ui.sandbox.addText
 import com.intellij.internal.ui.sandbox.initWithText
 import com.intellij.openapi.Disposable
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 import javax.swing.JTextArea

@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git.rpc
 
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
+import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.vcs.git.ref.GitCurrentRef
 import com.intellij.vcs.git.ref.GitFavoriteRefs
 import com.intellij.vcs.git.ref.GitReferenceName
@@ -128,7 +128,7 @@ class GitRepositoryDto(
   val shortName: String,
   val state: GitRepositoryStateDto,
   val favoriteRefs: GitFavoriteRefs,
-  val root: VirtualFileId,
+  val root: FilePathDto,
 )
 
 @Serializable

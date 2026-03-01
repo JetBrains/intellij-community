@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.getFunctionTypeKind
@@ -30,18 +31,22 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 fun KotlinType.isFunctionOfAnyKind() = constructor.declarationDescriptor?.getFunctionTypeKind() != null
 
+@K1Deprecation
 fun KotlinType?.isMap(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean {
     val classDescriptor = classDescriptor() ?: return false
     return classDescriptor.name.asString().endsWith("Map") && classDescriptor.isSubclassOf(builtIns.map)
 }
 
+@K1Deprecation
 fun KotlinType?.isIterable(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean {
     val classDescriptor = classDescriptor() ?: return false
     return classDescriptor.isListOrSet(builtIns) || classDescriptor.isSubclassOf(builtIns.iterable)
 }
 
+@K1Deprecation
 fun KotlinType?.isCollection(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean {
     val classDescriptor = classDescriptor() ?: return false
     return classDescriptor.isListOrSet(builtIns) || classDescriptor.isSubclassOf(builtIns.collection)
@@ -52,9 +57,11 @@ internal fun KotlinType.isReadOnlyCollectionOrMap(builtIns: KotlinBuiltIns): Boo
     return leftDefaultType in listOf(builtIns.list.defaultType, builtIns.set.defaultType, builtIns.map.defaultType)
 }
 
+@K1Deprecation
 fun KotlinType?.isList(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean =
     classDescriptor()?.isList(builtIns) == true
 
+@K1Deprecation
 fun KotlinType?.isSet(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean =
     classDescriptor()?.isSet(builtIns) == true
 
@@ -70,10 +77,12 @@ private fun ClassDescriptor.isSet(builtIns: KotlinBuiltIns): Boolean =
 private fun KotlinType?.classDescriptor(): ClassDescriptor? =
     this?.constructor?.declarationDescriptor as? ClassDescriptor
 
+@K1Deprecation
 fun KtCallExpression.isCalling(fqName: FqName, context: BindingContext? = null): Boolean {
     return isCalling(listOf(fqName), context)
 }
 
+@K1Deprecation
 fun KtCallExpression.isCalling(fqNames: List<FqName>, context: BindingContext? = null): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
@@ -82,10 +91,12 @@ fun KtCallExpression.isCalling(fqNames: List<FqName>, context: BindingContext? =
     return targetFqNames.any { resolvedCall.isCalling(it) }
 }
 
+@K1Deprecation
 fun ResolvedCall<out CallableDescriptor>.isCalling(fqName: FqName): Boolean {
     return resultingDescriptor.fqNameSafe == fqName
 }
 
+@K1Deprecation
 fun ResolvedCall<*>.hasLastFunctionalParameterWithResult(context: BindingContext, predicate: (KotlinType) -> Boolean): Boolean {
     val lastParameter = resultingDescriptor.valueParameters.lastOrNull() ?: return false
     val lastArgument = valueArguments[lastParameter]?.arguments?.singleOrNull() ?: return false
@@ -112,10 +123,12 @@ fun ResolvedCall<*>.hasLastFunctionalParameterWithResult(context: BindingContext
     return predicate(resultType)
 }
 
+@K1Deprecation
 fun KtCallExpression.implicitReceiver(context: BindingContext): ImplicitReceiver? {
     return getResolvedCall(context)?.getImplicitReceiverValue()
 }
 
+@K1Deprecation
 fun KtCallExpression.receiverType(context: BindingContext): KotlinType? {
     return (getQualifiedExpressionForSelector())?.receiverExpression?.getResolvedCall(context)?.resultingDescriptor?.returnType
         ?: implicitReceiver(context)?.type

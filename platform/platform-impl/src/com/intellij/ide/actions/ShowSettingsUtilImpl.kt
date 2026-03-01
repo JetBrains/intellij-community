@@ -20,7 +20,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.TabbedConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
@@ -61,46 +61,12 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     @JvmStatic
     @Deprecated("Use showSettings instead")
     fun getDialog(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?): DialogWrapper {
-      return createDialogWrapper(
-        project = project,
-        groups = groups,
-        toSelect = toSelect,
-        filter = null,
-        isModal = true,
-      )
+      return createDialogWrapper(project, groups, toSelect, filter = null, isModal = true)
     }
 
     @JvmStatic
     fun showSettings(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?) {
-      showInternal(project = project, groups = groups, toSelect = toSelect, filter = null)
-    }
-
-    private fun showInternal(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?, filter: String?) {
-      if (project != null &&
-          project != ProjectManager.getInstance().defaultProject &&
-          useNonModalSettingsWindow() &&
-          ModalityState.current() == ModalityState.nonModal()) {
-        runWithModalProgressBlocking(project, IdeBundle.message("settings.modal.opening.message")) {
-          val settingsFile = SettingsVirtualFileHolder.getInstance(project).getOrCreate(toSelect) {
-            val dialog = createDialogWrapper(
-              project = project,
-              groups = groups,
-              toSelect = toSelect,
-              filter = filter,
-              isModal = false,
-            ) as SettingsDialog
-            dialog.peer.rootPane.isFocusCycleRoot = true
-            dialog.peer.rootPane.focusTraversalPolicy = IdeFocusTraversalPolicy()
-            dialog
-          }
-          val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-          val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true, requestFocus = true)
-          fileEditorManager.openFile(settingsFile, options)
-        }
-      }
-      else {
-        createDialogWrapper(project, groups, toSelect, filter, true).show()
-      }
+      (getInstance() as ShowSettingsUtilImpl).doShow(project, groups, toSelect, filter = null)
     }
 
     /**
@@ -120,19 +86,37 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
      */
     @JvmStatic
     fun getConfigurables(project: Project?, withIdeSettings: Boolean, checkNonDefaultProject: Boolean): List<Configurable> {
-      return configurables(project = project, withIdeSettings = withIdeSettings, checkNonDefaultProject = checkNonDefaultProject).toList()
+      return configurables(project, withIdeSettings, checkNonDefaultProject).toList()
     }
 
     fun configurables(project: Project?, withIdeSettings: Boolean, checkNonDefaultProject: Boolean): Sequence<Configurable> {
-      return sequence {
-        for (configurable in ConfigurableExtensionPointUtil.getConfigurables(
-          if (withIdeSettings) project else currentOrDefaultProject(project),
-          withIdeSettings,
-          checkNonDefaultProject,
-        )) {
+      suspend fun SequenceScope<Configurable>.collect(configurables: Array<Configurable>) {
+        for (configurable in configurables) {
           yield(configurable)
           if (configurable is Configurable.Composite) {
-            collect(configurable.configurables)
+            val configurables = runCatching {
+              (configurable as Configurable.Composite).configurables
+            }.getOrLogException(LOG)
+
+            configurables?.let {
+              collect(configurables = configurables)
+            }
+          }
+        }
+      }
+
+      return sequence {
+        val project = if (withIdeSettings) project else currentOrDefaultProject(project)
+        for (configurable in ConfigurableExtensionPointUtil.getConfigurables(project, withIdeSettings, checkNonDefaultProject)) {
+          yield(configurable)
+          if (configurable is Configurable.Composite) {
+            val configurables = runCatching {
+              configurable.configurables
+            }.getOrLogException(LOG)
+
+            configurables?.let {
+              collect(configurables)
+            }
           }
         }
       }
@@ -144,7 +128,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
         .takeIf { !it.configurables.isEmpty() }
       val configurableToSelect = if (idToSelect == null) null else ConfigurableVisitor.findById(idToSelect, listOf(group))
 
-      showInternal(project, listOf<ConfigurableGroup>(group!!), configurableToSelect, filter)
+      (getInstance() as ShowSettingsUtilImpl).doShow(project, listOf(group!!), configurableToSelect, filter)
     }
 
     @JvmStatic
@@ -153,9 +137,32 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     }
   }
 
+  @ApiStatus.Internal
+  protected open fun doShow(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?, filter: String?) {
+    if (project != null &&
+        project != ProjectManager.getInstance().defaultProject &&
+        useNonModalSettingsWindow() &&
+        ModalityState.current() == ModalityState.nonModal()) {
+      runWithModalProgressBlocking(project, IdeBundle.message("settings.modal.opening.message")) {
+        val settingsFile = SettingsVirtualFileHolder.getInstance(project).getOrCreate(toSelect) {
+          val dialog = createDialogWrapper(project, groups, toSelect, filter, isModal = false) as SettingsDialog
+          dialog.peer.rootPane.isFocusCycleRoot = true
+          dialog.peer.rootPane.focusTraversalPolicy = IdeFocusTraversalPolicy()
+          dialog
+        }
+        val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+        val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true, requestFocus = true)
+        fileEditorManager.openFile(settingsFile, options)
+      }
+    }
+    else {
+      createDialogWrapper(project, groups, toSelect, filter, isModal = true).show()
+    }
+  }
+
   override fun showSettingsDialog(project: Project, vararg groups: ConfigurableGroup) {
     runCatching {
-      showInternal(project = project, groups = groups.asList(), toSelect = null, filter = null)
+      doShow(project, groups.asList(), toSelect = null, filter = null)
     }.getOrLogException(LOG)
   }
 
@@ -166,15 +173,9 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     ThreadingAssertions.assertBackgroundThread()
 
     if (!project.isDefault && useNonModalSettingsWindow()) {
-      withModalProgress(project = project, title = IdeBundle.message("settings.modal.opening.message")) {
+      withModalProgress(project, title = IdeBundle.message("settings.modal.opening.message")) {
         val settingsFile = SettingsVirtualFileHolder.getInstance(project).getOrCreate(toSelect = null) {
-          val dialog = createDialogWrapper(
-            project = project,
-            groups = groups,
-            toSelect = null,
-            filter = null,
-            isModal = false,
-          ) as SettingsDialog
+          val dialog = createDialogWrapper(project, groups, toSelect = null, filter = null, isModal = false) as SettingsDialog
           dialog.peer.rootPane.isFocusCycleRoot = true
           dialog.peer.rootPane.focusTraversalPolicy = IdeFocusTraversalPolicy()
           dialog
@@ -187,13 +188,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     else {
       val settingsDialogFactory = serviceAsync<SettingsDialogFactory>()
       withContext(Dispatchers.EDT) {
-        settingsDialogFactory.create(
-          project = project,
-          groups = filterEmptyGroups(groups),
-          configurable = null,
-          filter = null,
-          isModal = true,
-        ).show()
+        settingsDialogFactory.create(project, filterEmptyGroups(groups), configurable = null, filter = null, isModal = true).show()
       }
     }
   }
@@ -231,41 +226,29 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   override fun showSettingsDialog(project: Project?, nameToSelect: String) {
     val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true)
     val groups = if (group.configurables.isEmpty()) emptyList() else listOf(group)
-    showSettings(project = project, groups = groups, toSelect = findPreselectedByDisplayName(nameToSelect, groups))
+    showSettings(project, groups, toSelect = findPreselectedByDisplayName(nameToSelect, groups))
   }
 
   override fun showSettingsDialog(project: Project, toSelect: Configurable?) {
     val groups = listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true))
-    showSettings(project = project, groups = groups, toSelect = toSelect)
+    showSettings(project, groups, toSelect)
   }
 
-  override fun editConfigurable(project: Project, configurable: Configurable): Boolean {
-    return editConfigurable(project = project, dimensionServiceKey = createDimensionKey(configurable), configurable = configurable)
+  override fun editConfigurable(project: Project?, configurable: Configurable): Boolean {
+    return editConfigurable(project, createDimensionKey(configurable), configurable)
   }
 
-  override fun editConfigurable(project: Project, dimensionServiceKey: String, configurable: Configurable): Boolean {
-    return editConfigurable(
-      project = project,
-      dimensionServiceKey = dimensionServiceKey,
-      configurable = configurable,
-      showApplyButton = isWorthToShowApplyButton(configurable),
-    )
+  override fun editConfigurable(project: Project?, dimensionServiceKey: String, configurable: Configurable): Boolean {
+    return editConfigurable(project, dimensionServiceKey, configurable, isWorthToShowApplyButton(configurable))
   }
 
   override fun editConfigurable(
-    project: Project,
+    project: Project?,
     dimensionServiceKey: String,
     configurable: Configurable,
     showApplyButton: Boolean,
   ): Boolean {
-    return editConfigurable(
-      parent = null,
-      project = project,
-      configurable = configurable,
-      dimensionKey = dimensionServiceKey,
-      advancedInitialization = null,
-      showApplyButton = showApplyButton,
-    )
+    return editConfigurable(parent = null, project, configurable, dimensionServiceKey, advancedInitialization = null, showApplyButton)
   }
 
   override fun editConfigurable(project: Project?, configurable: Configurable, advancedInitialization: Runnable?): Boolean {
@@ -291,11 +274,11 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 
   override fun editConfigurable(parent: Component?, configurable: Configurable): Boolean {
-    return editConfigurable(parent = parent, configurable = configurable, advancedInitialization = null)
+    return editConfigurable(parent, configurable, advancedInitialization = null)
   }
 
   override fun editConfigurable(parent: Component?, displayName: String): Boolean {
-    return editConfigurable(parent = parent, displayName = displayName, advancedInitialization = null as Runnable?)
+    return editConfigurable(parent, displayName, advancedInitialization = null as Runnable?)
   }
 
   override fun editConfigurable(parent: Component?, displayName: String, advancedInitialization: Runnable?): Boolean {
@@ -321,14 +304,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 
   override fun editConfigurable(parent: Component, dimensionServiceKey: String, configurable: Configurable): Boolean {
-    return editConfigurable(
-      parent = parent,
-      project = null,
-      configurable = configurable,
-      dimensionKey = dimensionServiceKey,
-      advancedInitialization = null,
-      showApplyButton = isWorthToShowApplyButton(configurable),
-    )
+    return editConfigurable(parent, project = null, configurable, dimensionServiceKey, advancedInitialization = null, isWorthToShowApplyButton(configurable))
   }
 
   override fun closeSettings(@NotNull project: Project, @NotNull component: Component) {
@@ -356,22 +332,8 @@ private fun createDialogWrapper(
   filter: String?,
   isModal: Boolean,
 ): DialogWrapper {
-  return SettingsDialogFactory.getInstance().create(
-    project = currentOrDefaultProject(project),
-    groups = filterEmptyGroups(groups),
-    configurable = toSelect,
-    filter = filter,
-    isModal = isModal,
-  )
-}
-
-private suspend fun SequenceScope<Configurable>.collect(configurables: Array<Configurable>) {
-  for (configurable in configurables) {
-    yield(configurable)
-    if (configurable is Configurable.Composite) {
-      collect(configurables = (configurable as Configurable.Composite).configurables)
-    }
-  }
+  val project = currentOrDefaultProject(project)
+  return SettingsDialogFactory.getInstance().create(project, filterEmptyGroups(groups), toSelect, filter, isModal)
 }
 
 private fun findPreselectedByDisplayName(preselectedConfigurableDisplayName: String, groups: List<ConfigurableGroup>): Configurable? {
@@ -401,15 +363,8 @@ private fun editConfigurable(
   advancedInitialization: (() -> Unit)?,
   showApplyButton: Boolean,
 ): Boolean {
-  val consumer = if (advancedInitialization == null) null else { _: Configurable? -> advancedInitialization() }
-  return editConfigurable(
-    parent = parent,
-    project = project,
-    configurable = configurable,
-    advancedInitialization = consumer,
-    dimensionKey = dimensionKey,
-    showApplyButton = showApplyButton,
-  )
+  val advancedInitialization = if (advancedInitialization == null) null else { _: Configurable? -> advancedInitialization() }
+  return editConfigurable(parent, project, configurable, advancedInitialization, dimensionKey, showApplyButton)
 }
 
 private fun <T : Configurable> editConfigurable(
@@ -421,20 +376,13 @@ private fun <T : Configurable> editConfigurable(
   showApplyButton: Boolean,
 ): Boolean {
   val editor = if (parent == null) {
-    SettingsDialogFactory.getInstance().create(project = project,
-                                               key = dimensionKey,
-                                               configurable = configurable,
-                                               showApplyButton = showApplyButton,
-                                               showResetButton = false)
+    SettingsDialogFactory.getInstance().create(project, dimensionKey, configurable, showApplyButton, showResetButton = false)
   }
   else {
-    SettingsDialogFactory.getInstance().create(parent = parent,
-                                               key = dimensionKey,
-                                               configurable = configurable,
-                                               showApplyButton = showApplyButton,
-                                               showResetButton = false)
+    SettingsDialogFactory.getInstance().create(parent, dimensionKey, configurable, showApplyButton, showResetButton = false)
   }
   if (advancedInitialization != null) {
+    @Suppress("UsagesOfObsoleteApi")
     UiNotifyConnector.Once.installOn(editor.contentPane, object : Activatable {
       override fun showNotify() {
         advancedInitialization(configurable)
@@ -445,25 +393,24 @@ private fun <T : Configurable> editConfigurable(
 }
 
 private fun useNonModalSettingsWindow(): Boolean {
-  if (System.getProperty("ide.ui.non.modal.settings.window") != null) {
-    return System.getProperty("ide.ui.non.modal.settings.window").toBoolean()
-  }
-  return getBoolean("ide.ui.non.modal.settings.window")
+  return System.getProperty("ide.ui.non.modal.settings.window")?.toBoolean()
+         ?: AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window")
 }
 
-// ShowSettingsAction in a deprecated language
 internal fun scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized(project: Project) {
   project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
     launch {
       (serviceAsync<SearchableOptionsRegistrar>() as? SearchableOptionsRegistrarImpl)?.initialize()
     }
 
+    fun createConfigurableGroups(): List<ConfigurableGroup> = listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(project, true))
+
     if (project.isDefault) {
-      serviceAsync<ShowSettingsUtil>().showSettingsDialog(project, createConfigurableGroups(project))
+      serviceAsync<ShowSettingsUtil>().showSettingsDialog(project, createConfigurableGroups())
     }
     else {
       (project.serviceAsync<StartupManager>() as StartupManagerEx).waitForInitProjectActivities(IdeBundle.message("settings.modal.opening.message"))
-      serviceAsync<ShowSettingsUtil>().showSettingsDialog(project, createConfigurableGroups(project))
+      serviceAsync<ShowSettingsUtil>().showSettingsDialog(project, createConfigurableGroups())
     }
 
     if (LOG.isDebugEnabled()) {
@@ -475,8 +422,4 @@ internal fun scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized(proj
       }
     }
   }
-}
-
-private fun createConfigurableGroups(project: Project): List<ConfigurableGroup> {
-  return listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(project, true))
 }

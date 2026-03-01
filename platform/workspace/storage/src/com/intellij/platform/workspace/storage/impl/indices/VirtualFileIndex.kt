@@ -19,7 +19,11 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.persistentHashSetOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 

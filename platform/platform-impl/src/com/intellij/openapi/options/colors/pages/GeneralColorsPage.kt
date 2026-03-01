@@ -177,6 +177,8 @@ $customSeveritiesDemoText"""
                       EditorColors.NOTIFICATION_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
       ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selection.background"),
                       EditorColors.SELECTION_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
+      ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selection.background.inactive"),
+                      EditorColors.SELECTION_BACKGROUND_COLOR_INACTIVE, ColorDescriptor.Kind.BACKGROUND),
       ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selection.foreground"),
                       EditorColors.SELECTION_FOREGROUND_COLOR, ColorDescriptor.Kind.FOREGROUND),
       ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.sticky.lines.background"),
@@ -253,7 +255,7 @@ $customSeveritiesDemoText"""
                       ColorDescriptor.Kind.BACKGROUND),
       ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.preview.border.color"), EditorColors.PREVIEW_BORDER_COLOR,
                       ColorDescriptor.Kind.BACKGROUND))
-    private val NEW_COLOR_DESCRIPTORS = patchDescriptorsForNewUI(COLOR_DESCRIPTORS)
+    private val NEW_COLOR_DESCRIPTORS by lazy { patchDescriptorsForNewUI(COLOR_DESCRIPTORS) }
     private val ADDITIONAL_HIGHLIGHT_DESCRIPTORS: @NonNls MutableMap<String, TextAttributesKey>? = HashMap()
 
     init {

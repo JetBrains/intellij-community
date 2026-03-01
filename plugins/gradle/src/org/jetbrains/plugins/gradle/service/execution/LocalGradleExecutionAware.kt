@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey

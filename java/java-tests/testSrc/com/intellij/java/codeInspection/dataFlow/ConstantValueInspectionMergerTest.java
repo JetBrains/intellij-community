@@ -10,11 +10,13 @@ import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import org.jdom.JDOMException;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ConstantValueInspectionMergerTest extends LightJavaCodeInsightFixtureTestCase5 {
   private static final String OLD_DISABLED = """

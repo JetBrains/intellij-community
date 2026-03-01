@@ -40,8 +40,9 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression resultExpr = getResultExpression();
     if (resultExpr != null) {
-      return PyTypingTypeProvider.wrapInGeneratorType(context.getType(resultExpr), null, PyBuiltinCache.getInstance(this).getNoneType(),
-                                                      this);
+      return PyTypingTypeProvider.wrapInGeneratorType(context.getType(resultExpr), null,
+                                                             PyBuiltinCache.getInstance(this).getNoneType(),
+                                                             this);
     }
     return null;
   }

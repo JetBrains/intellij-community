@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.assignment.plugin.AbstractAssignPluginResolutionAltererExtension
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.scripting.definitions.isScript
 
+@K1Deprecation
 class IdeAssignPluginResolutionAltererExtension(private val project: Project) : AbstractAssignPluginResolutionAltererExtension() {
     override fun getAnnotationFqNames(modifierListOwner: KtModifierListOwner?): List<String> {
         if (modifierListOwner == null) {

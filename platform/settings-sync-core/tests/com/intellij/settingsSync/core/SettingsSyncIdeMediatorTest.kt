@@ -6,7 +6,11 @@ import com.intellij.configurationStore.getStateSpec
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.registerComponentInstance

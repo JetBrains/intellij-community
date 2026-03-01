@@ -3,7 +3,9 @@ package de.plushnikov.intellij.plugin.inspection.modifiers;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 
-import static com.intellij.psi.PsiModifier.*;
+import static com.intellij.psi.PsiModifier.FINAL;
+import static com.intellij.psi.PsiModifier.PRIVATE;
+import static com.intellij.psi.PsiModifier.STATIC;
 
 /**
  * @author Rowicki Michał

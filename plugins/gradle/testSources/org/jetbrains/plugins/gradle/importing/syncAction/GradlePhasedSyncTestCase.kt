@@ -40,7 +40,8 @@ abstract class GradlePhasedSyncTestCase : GradleProjectResolverTestCase() {
       GradleModelFetchPhase.PROJECT_MODEL_PHASE,
       GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE,
       GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE,
-      GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE
+      GradleModelFetchPhase.SCRIPT_MODEL_PHASE,
+      GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE,
     )
 
     val DEFAULT_SYNC_PHASES: List<GradleSyncPhase> = listOf(

@@ -4,7 +4,13 @@ package com.intellij.openapi.roots.ui.configuration
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBUI

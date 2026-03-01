@@ -15,7 +15,12 @@
  */
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileCopyEvent;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileMoveEvent;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;

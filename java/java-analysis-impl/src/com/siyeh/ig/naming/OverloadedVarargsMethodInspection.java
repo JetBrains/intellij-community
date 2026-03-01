@@ -2,7 +2,13 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;

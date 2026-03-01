@@ -4,7 +4,16 @@ package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;

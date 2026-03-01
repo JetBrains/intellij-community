@@ -7,7 +7,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.EventListener;
 import java.util.List;
 

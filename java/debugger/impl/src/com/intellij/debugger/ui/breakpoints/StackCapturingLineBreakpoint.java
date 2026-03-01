@@ -3,8 +3,19 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.AsyncStackTraceProvider;
+import com.intellij.debugger.engine.AsyncStacksUtils;
+import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JavaStackFrame;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.SyntheticMethodBreakpoint;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.Evaluator;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -21,12 +32,17 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
-import com.sun.jdi.*;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.Location;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +118,9 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
 
   public static void createAll(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
+    if (Registry.is("debugger.async.stacks.via.breakpoints", false)) {
+      DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
+    }
   }
 
   public static void clearCaches(DebugProcessImpl debugProcess) {

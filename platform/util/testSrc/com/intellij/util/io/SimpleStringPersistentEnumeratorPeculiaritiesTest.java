@@ -12,7 +12,9 @@ import java.nio.file.Path;
 
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
 /** Test for non-standard parts of {@link SimpleStringPersistentEnumerator} behavior */
 public class SimpleStringPersistentEnumeratorPeculiaritiesTest {

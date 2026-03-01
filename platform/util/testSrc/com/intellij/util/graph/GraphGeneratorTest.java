@@ -18,7 +18,11 @@ package com.intellij.util.graph;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertFalse;
 

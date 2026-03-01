@@ -19,7 +19,8 @@ package org.jetbrains.sqlite
 
 import com.intellij.openapi.diagnostic.logger
 import java.io.IOException
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 
 internal abstract class SqliteDb {
   // tracer for statements to avoid unfinalized statements on db close

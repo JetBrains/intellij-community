@@ -30,8 +30,11 @@ import kotlin.io.path.pathString
 import kotlin.script.experimental.annotations.KotlinScript
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.configurationDependencies
+import kotlin.script.experimental.host.with
 import kotlin.script.experimental.jvm.JvmDependency
+import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
+import kotlin.script.experimental.jvm.jvm
 import kotlin.script.templates.ScriptTemplateDefinition
 
 /**
@@ -59,9 +62,15 @@ fun loadDefinitionsFromTemplates(
             val template =
                 loader.loadClass(templateClassName).kotlin // do not use `Path::toFile` here as it might break the path format of non-local file system
             val templateClasspathAsFiles = templateClasspath.map { File(it.toString()) }
-            val hostConfiguration = ScriptingHostConfiguration(baseHostConfiguration) {
-                configurationDependencies(JvmDependency(templateClasspathAsFiles))
-            }
+            val hostConfiguration =
+                baseHostConfiguration.with {
+                    jvm {
+                        if (classpath.isNotEmpty()) {
+                            configurationDependencies.append(JvmDependency(templateClasspathAsFiles))
+                            baseClassLoader(loader)
+                        }
+                    }
+                }
 
             when {
                 template.annotations.firstIsInstanceOrNull<KotlinScript>() != null ->

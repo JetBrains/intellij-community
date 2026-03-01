@@ -4,7 +4,8 @@ package com.intellij.ui.wizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.NlsActions;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import java.awt.event.ActionEvent;
 
 public abstract class WizardAction extends AbstractAction {

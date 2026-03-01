@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightVariableBase;
 import com.intellij.util.IncorrectOperationException;

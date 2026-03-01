@@ -2,7 +2,13 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.find.impl.TextSearchRightActionAction
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil

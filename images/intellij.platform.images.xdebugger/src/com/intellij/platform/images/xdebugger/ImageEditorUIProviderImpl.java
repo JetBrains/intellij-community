@@ -5,8 +5,10 @@ import com.intellij.platform.debugger.impl.frontend.frame.ImageEditorUIProvider;
 import org.intellij.images.editor.impl.ImageEditorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import java.awt.GraphicsEnvironment;
+import java.awt.Transparency;
 
 class ImageEditorUIProviderImpl implements ImageEditorUIProvider {
   @Override

@@ -2,6 +2,7 @@
 package com.intellij.threadDumpParser;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.Test;
@@ -9,7 +10,9 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ThreadDumpParserTest {
   @Test
@@ -799,6 +802,7 @@ public class ThreadDumpParserTest {
     assertTrue(threads.get(3).isVirtual());
   }
 
+  @PerformanceUnitTest
   @Test
 	public void testVeryLongLineParsingPerformance() {
     final String spaces = " ".repeat(1_000_000);

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.slicer
 import com.intellij.psi.PsiCall
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 
+@K1Deprecation
 object ReceiverSliceProducer : SliceProducer {
     override fun produce(usage: UsageInfo, mode: KotlinSliceAnalysisMode, parent: SliceUsage): Collection<SliceUsage> {
         val refElement = usage.element ?: return emptyList()

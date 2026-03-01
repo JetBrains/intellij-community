@@ -12,7 +12,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.psi.*
+import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.ResolvableCollisionUsageInfo
@@ -27,7 +31,12 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.AbstractKtReference
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 /**

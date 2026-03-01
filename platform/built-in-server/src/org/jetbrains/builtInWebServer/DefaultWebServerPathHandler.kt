@@ -20,7 +20,7 @@ import org.jetbrains.io.send
 import java.nio.file.Files
 import java.nio.file.Path
 
-private class DefaultWebServerPathHandler : WebServerPathHandler {
+internal class DefaultWebServerPathHandler : WebServerPathHandler {
   private val FILE_HANDLER_EP_NAME = ExtensionPointName<WebServerFileHandler>("org.jetbrains.webServerFileHandler")
 
   override fun process(

@@ -11,8 +11,20 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyLiteralExpression
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.PySlashParameter
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -20,7 +32,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
 
-  companion object {
+  object Helper {
     val showForClassConstructorCalls: Option = Option("python.show.class.constructor.call.parameter.names",
                                                       PyBundle.messagePointer(
                                                         "inlay.parameters.python.show.class.constructor.call.parameter.names"),
@@ -46,7 +58,7 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
 
     val callable = mapping.callableType?.callable
 
-    if (callable == null || (PyUtil.isInitOrNewMethod(callable) && !showForClassConstructorCalls.isEnabled())) {
+    if (callable == null || (PyUtil.isInitOrNewMethod(callable) && !Helper.showForClassConstructorCalls.isEnabled())) {
       return emptyList()
     }
 
@@ -63,7 +75,7 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
           return info
         }
         if (argument !is PyKeywordArgument) {
-          if (argument.isLiteralArgument() || showForNonLiteralArguments.isEnabled()) {
+          if (argument.isLiteralArgument() || Helper.showForNonLiteralArguments.isEnabled()) {
             info.add(InlayInfo("${parameter.name}", argument.textOffset))
           }
         }
@@ -156,8 +168,8 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
   }
 
   override fun getSupportedOptions() =
-    listOf(showForClassConstructorCalls,
-           showForNonLiteralArguments)
+    listOf(Helper.showForClassConstructorCalls,
+           Helper.showForNonLiteralArguments)
 
   override fun isBlackListSupported(): Boolean = true
 }

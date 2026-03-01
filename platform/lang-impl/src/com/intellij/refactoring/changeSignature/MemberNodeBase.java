@@ -18,7 +18,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
 
 public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNode {
   protected final M myMethod;

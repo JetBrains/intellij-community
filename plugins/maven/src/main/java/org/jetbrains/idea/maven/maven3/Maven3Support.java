@@ -22,7 +22,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.idea.maven.MavenClasspathBuilder.*;
+import static org.jetbrains.idea.maven.MavenClasspathBuilder.addDir;
+import static org.jetbrains.idea.maven.MavenClasspathBuilder.addMavenLibs;
+import static org.jetbrains.idea.maven.MavenClasspathBuilder.addMavenServerLibraries;
 import static org.jetbrains.idea.maven.utils.MavenUtil.locateModuleOutput;
 
 public class Maven3Support implements MavenVersionAwareSupportExtension {

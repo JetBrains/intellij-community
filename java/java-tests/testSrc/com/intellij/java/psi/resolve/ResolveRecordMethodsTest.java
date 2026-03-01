@@ -2,7 +2,18 @@
 package com.intellij.java.psi.resolve;
 
 import com.intellij.lang.jvm.JvmParameter;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PsiTreeUtil;

@@ -4,13 +4,32 @@ package com.intellij.lang;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileMoveEvent;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.util.CachedValue;
@@ -24,13 +43,21 @@ import com.intellij.xml.util.JspFileTypeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UAnnotated;
+import org.jetbrains.uast.UAnnotation;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UImportStatement;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UVariable;
+import org.jetbrains.uast.UastLanguagePlugin;
 import org.jetbrains.uast.util.ClassSet;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.jetbrains.uast.util.ClassSetKt.*;
+import static org.jetbrains.uast.util.ClassSetKt.classSetOf;
+import static org.jetbrains.uast.util.ClassSetKt.classSetsUnion;
+import static org.jetbrains.uast.util.ClassSetKt.isInstanceOf;
 
 /**
  * This ModificationTracker is incremented if changes in file (class) of VFS could change the number of stereotype components scanned
@@ -114,9 +141,12 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
         return;
       }
 
-      if (!file.isDirectory() &&
-          isIgnoredFileType(file.getFileType())) {
-        return;
+      if (!file.isDirectory()) {
+        // avoid reading file content, file name -> file type should be enough for a short circuit
+        var fileTypeByName = FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence());
+        if (isIgnoredFileType(fileTypeByName)) {
+          return;
+        }
       }
 
       incModificationCount();

@@ -6,7 +6,14 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.psi.*
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.console.PyConsoleOptions

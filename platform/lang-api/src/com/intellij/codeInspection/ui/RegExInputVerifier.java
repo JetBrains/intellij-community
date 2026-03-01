@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInspection.ui;
 
-import javax.swing.*;
+import javax.swing.InputVerifier;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import java.text.ParseException;
 
 public class RegExInputVerifier extends InputVerifier {

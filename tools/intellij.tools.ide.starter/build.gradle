@@ -47,15 +47,14 @@ dependencies {
   implementation "org.apache.httpcomponents:httpmime:4.5.14"
   implementation "org.jetbrains.intellij.deps:gradle-api:8.5"
   implementation "org.kodein.di:kodein-di-jvm:7.20.2"
-  implementation "org.rauschig:jarchivelib:1.2.0"
   implementation "com.jetbrains.qodana:qodana-sarif:0.2.113"
   implementation 'com.github.stephenc.monte:monte-screen-recorder:0.7.7.0'
   implementation "io.opentelemetry:opentelemetry-api:$otel_version"
   implementation "io.opentelemetry:opentelemetry-sdk:$otel_version"
 
   implementation 'io.qameta.allure:allure-java-commons:2.25.0'
+  // it is ok to have dependency with LATEST-TRUNK-SNAPSHOT version, as starter is not intended to be build by clients and we want the most recent changes and put them int fat jar
   api("com.jetbrains.intellij.tools:ide-starter-bus:LATEST-TRUNK-SNAPSHOT")
-  // TODO: change versions to LATEST-EAP-SNAPSHOT or remove completely in next EAP
 
   implementation("com.jetbrains.intellij.tools:ide-util-common:LATEST-TRUNK-SNAPSHOT")
   implementation("com.jetbrains.intellij.tools:ide-performance-testing-commands:LATEST-TRUNK-SNAPSHOT")
@@ -64,7 +63,9 @@ dependencies {
   implementation('com.jetbrains.intellij.platform:lang-impl:LATEST-TRUNK-SNAPSHOT')
   implementation('com.jetbrains.intellij.platform:core:LATEST-TRUNK-SNAPSHOT')
   implementation('com.jetbrains.intellij.platform:runtime-repository:LATEST-TRUNK-SNAPSHOT')
-  implementation('com.github.oshi:oshi-core:6.8.2')
+  implementation('com.github.oshi:oshi-core:6.9.2')
+  implementation('org.apache.commons:commons-compress:1.27.1')
+  implementation('commons-io:commons-io:2.18.0')
 }
 
 configurations {

@@ -3,7 +3,13 @@ package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JpsAnnotationRootType;
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
+import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
+import org.jetbrains.jps.model.java.JpsJavaDependenciesRootsEnumerator;
+import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;

@@ -12,7 +12,11 @@ import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldOrPropertyFixProviders
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 

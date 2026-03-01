@@ -25,4 +25,22 @@ jvm_library(
     "//platform/dvcs-impl:vcs-dvcs-impl",
   ]
 )
+
+jvm_library(
+  name = "vcs-git-commit-modal_test_lib",
+  module_name = "intellij.vcs.git.commit.modal",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":vcs-git-commit-modal",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.vcs.git.commit.modal` end

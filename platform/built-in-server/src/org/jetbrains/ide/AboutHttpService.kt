@@ -1,9 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.ide
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -11,13 +8,20 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.isLocalOrigin
 import com.intellij.util.io.jackson.array
+import com.intellij.util.io.jackson.createGenerator
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.io.jackson.writeBooleanField
+import com.intellij.util.io.jackson.writeNumberField
+import com.intellij.util.io.jackson.writeStringField
 import com.intellij.util.io.origin
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.RestService.Companion.getBooleanParameter
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.util.DefaultPrettyPrinter
 import java.io.OutputStream
 
 /**
@@ -49,21 +53,10 @@ internal class AboutHttpService : RestService() {
 
   override fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
     val originAllowed = super.isOriginAllowed(request)
-    if (originAllowed == OriginCheckResult.FORBID && request.isJetBrainsAcademyPluginRelated()) {
+    if (originAllowed == OriginCheckResult.FORBID && isJetBrainsAcademyPluginRelated(request)) {
       return OriginCheckResult.ALLOW
     }
     return originAllowed
-  }
-
-  /**
-   * [JetBrains Academy](https://plugins.jetbrains.com/plugin/10081-jetbrains-academy) plugin requires IDE to respond with its version
-   * from hyperskill.org and academy.jetbrains.com sites
-   */
-  private fun HttpRequest.isJetBrainsAcademyPluginRelated(): Boolean {
-    val origin = origin ?: return false
-    val hyperskillRegex = Regex("https://([a-z0-9-]+\\.)*hyperskill\\.org$")
-    val academyJetbrainsRegex = Regex("https://([a-z0-9-.]+)\\.jetbrains\\.com$")
-    return origin.matches(hyperskillRegex) || origin.matches(academyJetbrainsRegex)
   }
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
@@ -74,8 +67,19 @@ internal class AboutHttpService : RestService() {
   }
 }
 
-fun writeApplicationInfoJson(out: OutputStream, urlDecoder: QueryStringDecoder?, isLocalOrigin: Boolean) {
-  JsonFactory().createGenerator(out).useDefaultPrettyPrinter().use { writer ->
+/**
+ * [JetBrains Academy](https://plugins.jetbrains.com/plugin/10081-jetbrains-academy) plugin requires IDE to respond with its version
+ * from hyperskill.org and academy.jetbrains.com sites
+ */
+private fun isJetBrainsAcademyPluginRelated(request: HttpRequest): Boolean {
+  val origin = request.origin ?: return false
+  val hyperskillRegex = Regex("https://([a-z0-9-]+\\.)*hyperskill\\.org$")
+  val academyJetbrainsRegex = Regex("https://([a-z0-9-.]+)\\.jetbrains\\.com$")
+  return origin.matches(hyperskillRegex) || origin.matches(academyJetbrainsRegex)
+}
+
+private fun writeApplicationInfoJson(out: OutputStream, urlDecoder: QueryStringDecoder?, isLocalOrigin: Boolean) {
+  JsonFactory().createGenerator(out, DefaultPrettyPrinter()).use { writer ->
     writer.obj {
       writeAboutJson(writer)
 
@@ -99,7 +103,7 @@ fun writeApplicationInfoJson(out: OutputStream, urlDecoder: QueryStringDecoder?,
   }
 }
 
-fun writeAboutJson(writer: JsonGenerator) {
+private fun writeAboutJson(writer: JsonGenerator) {
   var appName = ApplicationInfo.getInstance().fullApplicationName
   if (!PlatformUtils.isIdeaUltimate()) {
     val productName = ApplicationNamesInfo.getInstance().productName

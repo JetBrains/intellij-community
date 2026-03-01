@@ -7,7 +7,11 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.platform.plugins.parser.impl.*
+import com.intellij.platform.pluginSystem.parser.impl.LoadedXIncludeReference
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
+import com.intellij.platform.pluginSystem.parser.impl.consume
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.testFramework.PlatformTestUtil
@@ -206,21 +210,6 @@ class PluginManagerTest {
   }
 
   @Test
-  fun testIdentifyPreInstalledPlugins() {
-    val pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled")
-    val bundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), true)
-    val updated = loadDescriptorInTest(pluginsPath.resolve("updated"))
-    val expectedPluginId = updated.getPluginId()
-    assertEquals(expectedPluginId, bundled.getPluginId())
-
-    val bundledList = DiscoveredPluginsList(listOf(bundled), PluginsSourceContext.Bundled)
-    val customList = DiscoveredPluginsList(listOf(updated), PluginsSourceContext.Custom)
-
-    assertPluginPreInstalled(expectedPluginId, listOf(bundledList, customList))
-    assertPluginPreInstalled(expectedPluginId, listOf(customList, bundledList))
-  }
-
-  @Test
   @Throws(IOException::class)
   fun testSymlinkInConfigPath() {
     IoTestUtil.assumeSymLinkCreationIsSupported()
@@ -252,26 +241,6 @@ class PluginManagerTest {
   companion object {
     private val testDataPath: String
       get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort"
-
-    private fun assertPluginPreInstalled(expectedPluginId: PluginId?, pluginLists: List<DiscoveredPluginsList>) {
-      val loadingResult = PluginLoadingResult()
-      loadingResult.initAndAddAll(
-        descriptorLoadingResult = PluginDescriptorLoadingResult.build(pluginLists),
-        initContext = PluginInitializationContext.buildForTest(
-          essentialPlugins = emptySet(),
-          disabledPlugins = emptySet(), // TODO refactor the test
-          expiredPlugins = emptySet(),
-          brokenPluginVersions = emptyMap(),
-          getProductBuildNumber = { BuildNumber.fromString("2042.42")!! },
-          requirePlatformAliasDependencyForLegacyPlugins = false,
-          checkEssentialPlugins = false,
-          explicitPluginSubsetToLoad = null,
-          disablePluginLoadingCompletely = false,
-          currentProductModeId = ProductMode.MONOLITH.id,
-        )
-      )
-      Assert.assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId))
-    }
 
     @Throws(IOException::class, XMLStreamException::class)
     private fun doPluginSortTest(testDataName: String?, isBundled: Boolean) {
@@ -395,16 +364,13 @@ class PluginManagerTest {
         descriptor.jarFiles = emptyList()
       }
       loadingContext.close()
-      val result = PluginLoadingResult()
-      val pluginList = DiscoveredPluginsList(plugins, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom)
-      result.initAndAddAll(
-        descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
-        initContext = initContext
+      val discoveredPlugins = PluginsDiscoveryResult.build(
+        listOf(DiscoveredPluginsList(plugins, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom))
       )
       return PluginManagerCore.initializePlugins(
         descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
         initContext = initContext,
-        loadingResult = result,
+        discoveredPlugins = discoveredPlugins,
         coreLoader = PluginManagerTest::class.java.getClassLoader(),
         parentActivity = null
       )

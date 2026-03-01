@@ -3,7 +3,12 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -21,7 +26,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.util.cancelOnDispose
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
@@ -104,7 +113,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
             propertyName != state::myHorizontalScrollJump.name &&
             propertyName != state::myIsBlockCursor.name &&
             propertyName != state::myIsFullLineHeightCursor.name &&
-            propertyName != state::myIsAnimatedCaret.name &&
+            propertyName != state::myIsSmoothCaretMovement.name &&
             propertyName != state::myIsWhitespacesShown.name &&
             propertyName != state::myIsLeadingWhitespacesShown.name &&
             propertyName != state::myIsInnerWhitespacesShown.name &&
@@ -129,10 +138,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
           fireEditorRefresh()
         }
 
-        if (propertyName == state::myIsBlockCursor.name || propertyName == state::myIsAnimatedCaret.name ||
+        if (propertyName == state::myIsBlockCursor.name || propertyName == state::myIsSmoothCaretMovement.name ||
             propertyName == state::myIsFullLineHeightCursor.name) {
           editor?.updateCaretCursor()
           editor?.contentComponent?.repaint()
+        }
+
+        if (propertyName == state::myIsSmoothCaretBlinking.name) {
+          editor?.restartCaretBlinking()
         }
 
         if (propertyName == state::myStickyLinesShownForLanguage.name) {
@@ -452,8 +465,16 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     state.myIsFullLineHeightCursor = `val`
   }
 
-  override fun isAnimatedCaret(): Boolean {
-    return state.myIsAnimatedCaret
+  override fun isSmoothCaretMovement(): Boolean {
+    return state.myIsSmoothCaretMovement
+  }
+
+  override fun setSmoothCaretMovement(useSmoothCaretMovement: Boolean) {
+    state.myIsSmoothCaretMovement = useSmoothCaretMovement
+  }
+
+  override fun getCaretEasing(): EditorSettings.CaretEasing {
+    return state.myCaretEasing
   }
 
   override fun isCaretRowShown(): Boolean {
@@ -509,6 +530,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
   override fun setCaretBlinkPeriod(blinkPeriod: Int) {
     state.myCaretBlinkingPeriod = blinkPeriod
+  }
+
+  override fun isSmoothCaretBlinking(): Boolean {
+    return state.myIsSmoothCaretBlinking
+  }
+
+  override fun setSmoothCaretBlinking(`val`: Boolean) {
+    state.myIsSmoothCaretBlinking = `val`
   }
 
   override fun isDndEnabled(): Boolean {

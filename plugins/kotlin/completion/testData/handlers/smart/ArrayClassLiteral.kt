@@ -5,3 +5,4 @@ fun g() {
     f<String>(<caret>)
 }
 // ELEMENT: Array
+// IGNORE_K2

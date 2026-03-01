@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.core.util
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 
 
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
  * @param withMeAsRoot if 'true' the output contains only a subtree with 'this' as a root; otherwise entire tree is provided
  * @param indentStep specifies indentation of child nodes relative the their parens.
  */
+@K1Deprecation
 fun PsiElement.printTree(withMeAsRoot: Boolean = false, indentStep: Int = 3): String {
 
     fun PsiElement.printTreeInternal(

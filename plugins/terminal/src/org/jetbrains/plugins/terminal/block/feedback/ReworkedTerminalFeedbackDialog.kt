@@ -7,7 +7,13 @@ import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.dialog.uiBlocks.*
+import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxGroupBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData
+import com.intellij.platform.feedback.dialog.uiBlocks.DescriptionBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.RatingBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable

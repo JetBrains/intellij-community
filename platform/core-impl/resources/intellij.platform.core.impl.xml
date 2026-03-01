@@ -7,6 +7,9 @@
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

@@ -4,7 +4,7 @@ package com.intellij.tasks.trello.model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * This is a stub definition intended to be used with Google GSON. Its fields are initialized reflectively.

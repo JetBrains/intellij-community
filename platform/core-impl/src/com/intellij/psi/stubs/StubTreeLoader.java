@@ -12,11 +12,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -111,9 +118,9 @@ public abstract class StubTreeLoader {
       msg += ", file.class=" + psiFile.getClass();
       msg += ", file.lang=" + psiFile.getLanguage();
       msg += ", modStamp=" + psiFile.getModificationStamp();
-      msg += ", psi.length=" + psiFile.getTextLength();
 
       if (!compiled) {
+        msg += ", psi.length=" + psiFile.getTextLength();
         String text = psiFile.getText();
         PsiFile fromText =
           PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(psiFile.getName(), psiFile.getFileType(), text);

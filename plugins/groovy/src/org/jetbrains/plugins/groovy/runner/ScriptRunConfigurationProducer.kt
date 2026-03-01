@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.runner
 
+import com.intellij.codeInsight.TestFrameworks
 import com.intellij.execution.JavaExecutionUtil
 import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
@@ -47,7 +48,11 @@ class ScriptRunConfigurationProducer : LazyRunConfigurationProducer<GroovyScript
       return null
     }
     val clazz = GroovyRunnerPsiUtil.getRunningClass(element) ?: return null
-    if (clazz.containingClass != null || (clazz !is GroovyScriptClass && !isRunnable(clazz) && !GroovyConfigUtils.isAtLeastGroovy50(clazz))) {
+
+    val isAtLeastGroovy50 = GroovyConfigUtils.isAtLeastGroovy50(clazz)
+    if (clazz.containingClass != null ||
+        (clazz !is GroovyScriptClass && !isRunnable(clazz) && !isAtLeastGroovy50) ||
+        (isAtLeastGroovy50 && TestFrameworks.getInstance().isTestClass(clazz))) {
       return null
     }
     return Data(location, element, clazz, file, virtualFile, scriptType)

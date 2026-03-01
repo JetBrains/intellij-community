@@ -4,12 +4,21 @@ package org.jetbrains.jps.dependency.diff;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.impl.Containers;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.lazyIterable;
+import static org.jetbrains.jps.util.Iterators.map;
 
 public interface Difference {
 

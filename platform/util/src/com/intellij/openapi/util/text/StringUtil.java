@@ -7,7 +7,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.LineSeparator;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FreezableArrayList;
 import com.intellij.util.text.CharArrayUtil;
@@ -15,8 +20,13 @@ import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
 import com.intellij.util.text.VersionComparatorUtil;
 import kotlin.jvm.internal.Ref;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
@@ -27,7 +37,13 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.time.Duration;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
@@ -457,14 +473,22 @@ public class StringUtil {
               // special string like ~java or _java; keep it as is
               continue;
             }
-            if (!isPreposition(s, start, i - 1, ourOtherNonCapitalizableWords)) {
-              boolean firstWord = start == 0 || isPunctuation(prevPrevChar);
-              boolean lastWord = i >= length - 1|| isPunctuation(s.charAt(i + 1));
-              if (!title || firstWord || lastWord || !isPreposition(s, start, i - 1, wordsToIgnore)) {
-                if (buffer == null) {
-                  buffer = new StringBuilder(s);
-                }
-                buffer.setCharAt(start, title ? toUpperCase(currChar) : toLowerCase(currChar));
+
+            if (!isPreposition(s, start, i - 1, ourOtherNonCapitalizableWords)) {  // keep unchanged special words
+              if (buffer == null) {
+                buffer = new StringBuilder(s);
+              }
+
+              if (!title) {
+                buffer.setCharAt(start, toLowerCase(currChar));
+              }
+              else {
+                boolean firstWord = start == 0 || isPunctuation(prevPrevChar);
+                boolean lastWord = i >= length - 1|| isPunctuation(s.charAt(i + 1));
+                // Prepositions may occur in both upper/lower case in Title capitalization:
+                // Example: Compare with the Latest Repository Version In…
+                buffer.setCharAt(start, firstWord || lastWord || !isPreposition(s, start, i - 1, wordsToIgnore)
+                                        ? toUpperCase(currChar) : toLowerCase(currChar));
               }
             }
           }
@@ -475,7 +499,7 @@ public class StringUtil {
   }
 
   private static boolean isPunctuation(char c) {
-    return c == '.' || c == '!' || c == ':' || c == '?';
+    return c == '.' || c == '!' || c == ':' || c == '?' || c == '…';
   }
 
   private static final String[] ourLowerCaseWords = {
@@ -1749,6 +1773,17 @@ public class StringUtil {
     }
 
     return true;
+  }
+
+  @Contract(pure = true)
+  public static boolean endsWithIgnoreWhitespaces(@NotNull CharSequence text, @NotNull CharSequence suffix) {
+    int i = text.length();
+    for (; i > 0; i--) {
+      if (!Strings.isWhiteSpace(text.charAt(i - 1))) {
+        break;
+      }
+    }
+    return endsWith(text, 0, i, suffix);
   }
 
   @Contract(pure = true)

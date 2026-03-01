@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class DisableKotlinInlayHintsAction(
     @NlsActions.ActionText hideDescription: String,
     private val hintType: HintType,

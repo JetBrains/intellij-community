@@ -15,7 +15,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
 
 public final class TemplateProjectDirectoryGenerator<T> extends DirectoryProjectGeneratorBase<T> {
   private final LocalArchivedTemplate myTemplate;

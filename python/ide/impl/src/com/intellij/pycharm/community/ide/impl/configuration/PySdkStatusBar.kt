@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
@@ -28,12 +29,13 @@ import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.shortenNameInPopup
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 private const val ID: String = "pythonInterpreterWidget"
 
 fun isDataSpellInterpreterWidgetEnabled(): Boolean = PlatformUtils.isDataSpell() && Registry.`is`("dataspell.interpreter.widget")
 
-private class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
+internal class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
 
   override fun getDisplayName(): String = PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name")
@@ -45,7 +47,7 @@ private class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget = PySdkStatusBar(project, scope)
 }
 
-private class PySwitchSdkAction : DumbAwareAction(PyBundle.message("switch.python.interpreter"), null, null) {
+internal class PySwitchSdkAction : DumbAwareAction(PyBundle.message("switch.python.interpreter"), null, null) {
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = e.getData(CommonDataKeys.VIRTUAL_FILE) != null && e.project != null
   }
@@ -68,6 +70,15 @@ private class PySdkStatusBar(project: Project, scope: CoroutineScope) : EditorBa
                                                                                                   isWriteableFileRequired = false,
                                                                                                   scope = scope) {
   private var module: Module? = null
+
+  override fun install(statusBar: StatusBar) {
+    super.install(statusBar)
+    // statusBar.currentEditor resolves asynchronously via serviceAsync chain (with null as initial value);
+    // subscribe to it so the widget re-evaluates once the editor becomes available
+    scope.launch {
+      statusBar.currentEditor.collect { update() }
+    }
+  }
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
     module = findModule(file) ?: return WidgetState.HIDDEN

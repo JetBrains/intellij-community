@@ -12,7 +12,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyLiteralExpression
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
-import org.jetbrains.plugins.groovy.lang.resolve.imports.*
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticStarImport
 import java.util.Locale
 
 internal const val configDelegateFqn = "ch.qos.logback.classic.gaffer.ConfigurationDelegate"

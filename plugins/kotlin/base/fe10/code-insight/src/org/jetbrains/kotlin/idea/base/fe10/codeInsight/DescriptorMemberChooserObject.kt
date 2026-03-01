@@ -10,6 +10,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import javax.swing.Icon
 
+@K1Deprecation
 open class DescriptorMemberChooserObject(
     psiElement: PsiElement,
     open val descriptor: DeclarationDescriptor

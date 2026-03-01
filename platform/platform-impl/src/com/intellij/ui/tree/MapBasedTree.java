@@ -9,11 +9,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.unmodifiableList;
 
 @ApiStatus.Internal
 public final class MapBasedTree<K, N> {

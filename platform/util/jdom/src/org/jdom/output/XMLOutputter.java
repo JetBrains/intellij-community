@@ -56,10 +56,29 @@
 
 package org.jdom.output;
 
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.CDATA;
+import org.jdom.Comment;
+import org.jdom.Content;
+import org.jdom.DocType;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.EntityRef;
+import org.jdom.IllegalDataException;
+import org.jdom.Namespace;
+import org.jdom.ProcessingInstruction;
+import org.jdom.Text;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.util.List;
 
 /**

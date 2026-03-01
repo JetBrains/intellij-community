@@ -19,10 +19,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.LayoutManager;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.vcs.log.ui.details.commit.CommitDetailsPanelKt.getCommitDetailsBackground;
 

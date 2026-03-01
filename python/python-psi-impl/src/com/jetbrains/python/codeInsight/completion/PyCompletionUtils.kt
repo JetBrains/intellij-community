@@ -6,7 +6,11 @@ import com.intellij.codeInsight.completion.AutoCompletionContext
 import com.intellij.codeInsight.completion.AutoCompletionDecision
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupElementRenderer
+import com.intellij.codeInsight.lookup.TailTypeDecorator
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil

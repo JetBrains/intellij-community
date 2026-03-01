@@ -6,9 +6,11 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.AWTEvent;
 
 @ApiStatus.Internal
 public final class StaticAnchoredButton extends AnchoredButton {

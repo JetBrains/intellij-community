@@ -14,7 +14,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager
+import java.awt.Point
+import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel

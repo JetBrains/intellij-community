@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacement
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
+@K1Deprecation
 class DeprecatedSymbolUsageFix(
     element: KtReferenceExpression,
     replaceWith: ReplaceWithData

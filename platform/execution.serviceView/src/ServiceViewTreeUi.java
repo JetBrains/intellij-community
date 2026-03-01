@@ -11,7 +11,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.platform.navbar.frontend.ui.NavBarBorder;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollableContentBorder;
+import com.intellij.ui.Side;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -20,9 +26,16 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.util.Set;
 
 final class ServiceViewTreeUi implements ServiceViewUi {

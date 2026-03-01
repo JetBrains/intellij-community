@@ -3,10 +3,7 @@ package de.plushnikov.intellij.plugin.extension;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiRecordComponent;
-import com.intellij.testFramework.LightProjectDescriptor;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
-import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Tests for {@link LombokRenameFieldReferenceProcessor}

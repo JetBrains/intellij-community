@@ -10,12 +10,20 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.JavaElementVisitor
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiModifierList
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Contract
-import java.util.*
+import java.util.Arrays
 import java.util.function.Predicate
 import java.util.stream.Collectors
 

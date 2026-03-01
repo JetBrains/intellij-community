@@ -7,7 +7,12 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.*
+import com.intellij.psi.util.descendantsOfType
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentsOfType
+import com.intellij.psi.util.startOffset
 import com.intellij.util.DocumentUtil
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.renumberInBulk

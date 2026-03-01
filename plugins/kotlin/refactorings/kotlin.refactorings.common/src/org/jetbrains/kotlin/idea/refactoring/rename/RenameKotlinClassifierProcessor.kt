@@ -17,7 +17,12 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtTypeAlias
 
 class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
 

@@ -18,6 +18,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:platform-test_framework-ui-intellij-remoterobot-remote-fixtures",
     "//platform/built-in-server-api:builtInServer",
+    "@lib//:kotlin-stdlib",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/platform-util-io-impl:ide-util-io-impl",
@@ -31,5 +32,28 @@ jvm_library(
     "@lib//:platform-test_framework-ui-intellij-remoterobot-robot-server-core",
   ],
   runtime_deps = ["@lib//:okhttp"]
+)
+
+jvm_library(
+  name = "ui_test_lib",
+  module_name = "intellij.platform.testFramework.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:platform-test_framework-ui-intellij-remoterobot-remote-fixtures",
+    "@lib//:platform-test_framework-ui-intellij-remoterobot-robot-server-core",
+  ],
+  runtime_deps = [
+    ":ui",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/built-in-server-api:builtInServer_test_lib",
+    "//platform/built-in-server:builtInServer-impl_test_lib",
+    "//platform/platform-util-netty:ide-util-netty_test_lib",
+    "//platform/platform-util-io-impl:ide-util-io-impl_test_lib",
+    "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+    "//libraries/netty/buffer:buffer_test_lib",
+    "//libraries/gson:gson_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.testFramework.ui` end

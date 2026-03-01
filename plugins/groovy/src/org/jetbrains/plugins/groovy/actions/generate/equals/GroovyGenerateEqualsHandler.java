@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.actions.generate.equals;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.generation.*;
+import com.intellij.codeInsight.generation.ClassMember;
+import com.intellij.codeInsight.generation.GenerateMembersHandlerBase;
+import com.intellij.codeInsight.generation.GenerationInfo;
+import com.intellij.codeInsight.generation.PsiElementClassMember;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.ui.GenerateEqualsWizard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;

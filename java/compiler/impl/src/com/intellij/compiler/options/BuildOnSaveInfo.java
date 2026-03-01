@@ -2,7 +2,11 @@
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.ide.actionsOnSave.*;
+import com.intellij.ide.actionsOnSave.ActionOnSaveBackedByOwnConfigurable;
+import com.intellij.ide.actionsOnSave.ActionOnSaveComment;
+import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
+import com.intellij.ide.actionsOnSave.ActionOnSaveInfo;
+import com.intellij.ide.actionsOnSave.ActionOnSaveInfoProvider;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.ui.components.ActionLink;
 import org.jetbrains.annotations.NotNull;

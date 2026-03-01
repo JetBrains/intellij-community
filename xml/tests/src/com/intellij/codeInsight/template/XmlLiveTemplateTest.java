@@ -2,7 +2,12 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.emmet.EmmetOptions;
-import com.intellij.codeInsight.template.impl.*;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.EmptyNode;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

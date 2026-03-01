@@ -1,21 +1,23 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl.actions;
 
 import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionService;
-import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.TemplateActionContext;
-import com.intellij.codeInsight.template.impl.*;
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
+import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateCustomAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.application.RuntimeFlagsKt;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -24,23 +26,14 @@ import com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class ChooseItemAction extends EditorAction implements HintManagerImpl.ActionToIgnore,
-                                                                       LatencyAwareEditorAction,
-                                                                       ActionRemoteBehaviorSpecification {
+public abstract class ChooseItemAction extends EditorAction implements HintManagerImpl.ActionToIgnore, LatencyAwareEditorAction {
   public ChooseItemAction(Handler handler) {
     super(handler);
-  }
-
-  @Override
-  @ApiStatus.Internal
-  public final @Nullable ActionRemoteBehavior getBehavior() {
-    return CodeCompletionAction.getCompletionBehavior();
   }
 
   public static class Handler extends EditorActionHandler {
@@ -100,12 +93,17 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
     final PsiFile file = lookup.getPsiFile();
     if (file == null) return false;
 
+    if (RuntimeFlagsKt.isEditorLockFreeTypingEnabled()) {
+      // TODO: rework for lock-free typing, commitDocument requires WIL/WL on EDT
+      return false;
+    }
+
     final Editor editor = lookup.getEditor();
     final int offset = editor.getCaretModel().getOffset();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
 
     final LiveTemplateLookupElement liveTemplateLookup = ContainerUtil.findInstance(lookup.getItems(), LiveTemplateLookupElement.class);
-    if (liveTemplateLookup == null || !liveTemplateLookup.sudden) {
+    if (liveTemplateLookup == null || !liveTemplateLookup.isSudden()) {
       // Lookup doesn't contain sudden live templates. It means that
       // - there are no live template with given key:
       //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action).

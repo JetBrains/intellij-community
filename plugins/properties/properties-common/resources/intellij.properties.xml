@@ -15,7 +15,7 @@
     <lang.syntaxHighlighter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesHighlighterImpl"/>
     <lang.commenter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCommenter"/>
 
-    <applicationService serviceInterface="com.intellij.lang.properties.PropertiesUtilService"
+    <applicationService serviceInterface="com.intellij.lang.properties.PropertiesUtilService" open="true"
                         serviceImplementation="com.intellij.lang.properties.PropertiesUtilService$Empty"/>
 
     <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.editor.PropertiesFoldingBuilder"/>

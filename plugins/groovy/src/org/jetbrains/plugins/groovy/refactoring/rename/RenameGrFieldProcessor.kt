@@ -1,7 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.rename
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiQualifiedReference
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.MethodReferencesSearch
@@ -26,8 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle.message
-import java.util.*
-import kotlin.collections.HashMap
 
 open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
 

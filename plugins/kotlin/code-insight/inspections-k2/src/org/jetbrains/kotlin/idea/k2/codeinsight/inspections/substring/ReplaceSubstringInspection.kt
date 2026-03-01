@@ -10,7 +10,14 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.isPure
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 
 abstract class ReplaceSubstringInspection: KotlinApplicableInspectionBase.Simple<KtDotQualifiedExpression, Unit>() {
     override fun buildVisitor(

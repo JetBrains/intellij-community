@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.codegen.impl.metadata
 
 import com.intellij.workspaceModel.codegen.deft.meta.TypeProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.impl.metadata.model.*
 import com.intellij.workspaceModel.codegen.impl.metadata.model.getAbstractClassMetadataConstructor
 import com.intellij.workspaceModel.codegen.impl.metadata.model.getClassMetadataConstructor
 import com.intellij.workspaceModel.codegen.impl.metadata.model.getEnumClassMetadataConstructor
@@ -17,7 +16,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFinalSubCla
  * Supported classes types:
  * * final classes [ValueType.FinalClass]
  * * objects [ValueType.Object]
- * * enum entries [ValueType.EnumEntry]
+ * * enum entries [ValueType.Enum]
  * * known classes [ValueType.Blob]
  * * abstract classes [ValueType.AbstractClass]
  * * enum classes [ValueType.Enum]
@@ -45,7 +44,6 @@ internal class ClassMetadataBuilder(private val propertyBuilder: MetadataBuilder
       is ValueType.Object<*> -> obj.buildObject(propertyBuilder)
       is ValueType.AbstractClass<*> -> obj.buildAbstractClass(this)
       is ValueType.Enum<*> -> obj.buildEnum(propertyBuilder)
-      else -> unsupportedType(obj)
     }
   }
 

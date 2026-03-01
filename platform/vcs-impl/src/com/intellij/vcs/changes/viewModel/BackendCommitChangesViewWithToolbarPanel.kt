@@ -3,11 +3,17 @@ package com.intellij.vcs.changes.viewModel
 
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListAdapter
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
+import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.RemoteRevisionsCache
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import com.intellij.openapi.vcs.changes.ui.ChangesViewDnDSupport
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.openapi.vcs.changes.ui.installDndWithShelvesSupport
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.problems.ProblemListener
@@ -26,7 +32,7 @@ internal class BackendCommitChangesViewWithToolbarPanel(changesView: ChangesList
     busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, Runnable { scheduleRefresh() })
     busConnection.subscribe(ChangeListListener.TOPIC, OnChangeListsUpdate(this))
 
-    ChangesViewDnDSupport.install(project, changesView, cs.asDisposable())
+    changesView.installDndWithShelvesSupport(cs.asDisposable())
 
     super.initPanel()
   }
@@ -60,8 +66,6 @@ private class OnChangeListsUpdate(private val panel: CommitChangesViewWithToolba
 
   override fun changedFileStatusChanged() {
     panel.scheduleRefresh()
-    val changeListManager = ChangeListManagerImpl.getInstanceImpl(panel.project)
-    ChangesViewManager.getInstance(panel.project).updateProgressComponent(changeListManager.getAdditionalUpdateInfo())
   }
 }
 

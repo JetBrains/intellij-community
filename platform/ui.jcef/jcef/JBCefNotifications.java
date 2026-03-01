@@ -16,8 +16,12 @@ import com.intellij.ui.LightColors;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public final class JBCefNotifications {
   public static @Nullable EditorNotificationPanel createEditorNotificationPanel(Editor editor, JBCefHealthMonitor.Status status) {

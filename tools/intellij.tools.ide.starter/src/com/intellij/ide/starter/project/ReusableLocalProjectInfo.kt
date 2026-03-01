@@ -7,7 +7,12 @@ import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.tools.ide.util.common.logOutput
 import org.kodein.di.instance
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.path.name
+import kotlin.io.path.notExists
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 

@@ -9,6 +9,7 @@
     <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
     <module name="intellij.libraries.mvstore"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>

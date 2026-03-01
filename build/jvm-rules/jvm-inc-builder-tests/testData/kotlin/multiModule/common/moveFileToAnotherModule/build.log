@@ -1,0 +1,22 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_moveFileToAnotherModule-module1.kotlin_module
+End of files
+Compiling files:
+  kotlin/multiModule/common/moveFileToAnotherModule/module1/b.kt
+End of files
+Cleaning output files:
+  b/B.class
+  b/BKt.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_moveFileToAnotherModule-module2.kotlin_module
+  usage/UseClassBKt.class
+  usage/UseFunBKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/moveFileToAnotherModule/module2/useClassB.kt
+  kotlin/multiModule/common/moveFileToAnotherModule/module2/useFunB.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -15,4 +15,13 @@ jvm_library(
   exports = ["@lib//:test_n_g"],
   runtime_deps = ["@lib//:test_n_g"]
 )
+
+jvm_library(
+  name = "testng_test_lib",
+  module_name = "intellij.libraries.testng",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:test_n_g"],
+  runtime_deps = [":testng"]
+)
 ### auto-generated section `build intellij.libraries.testng` end

@@ -15,9 +15,17 @@
  */
 package org.jetbrains.jps.model.java.impl;
 
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsAnnotationRootType;
+import org.jetbrains.jps.model.java.JpsJavaDependenciesRootsEnumerator;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.module.impl.JpsDependenciesRootsEnumeratorBase;
 
 import java.util.function.Consumer;

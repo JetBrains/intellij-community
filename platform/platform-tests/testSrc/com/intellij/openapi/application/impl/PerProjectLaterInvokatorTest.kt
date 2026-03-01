@@ -3,7 +3,9 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityStateListener
-import com.intellij.openapi.application.impl.LaterInvocator.*
+import com.intellij.openapi.application.impl.LaterInvocator.enterModal
+import com.intellij.openapi.application.impl.LaterInvocator.invokeLater
+import com.intellij.openapi.application.impl.LaterInvocator.leaveModal
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.SkipInHeadlessEnvironment

@@ -4,7 +4,13 @@ import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.rename.api.*
+import com.intellij.refactoring.rename.api.FileOperation
+import com.intellij.refactoring.rename.api.ModifiableRenameUsage
+import com.intellij.refactoring.rename.api.PsiModifiableRenameUsage
+import com.intellij.refactoring.rename.api.RenameUsage
+import com.intellij.refactoring.rename.api.RenameUsageSearchParameters
+import com.intellij.refactoring.rename.api.RenameUsageSearcher
+import com.intellij.refactoring.rename.api.idFileRangeUpdater
 import com.intellij.util.Query
 import com.intellij.util.text.StringOperation
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory

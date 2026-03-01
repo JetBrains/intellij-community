@@ -12,7 +12,14 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.ArrayChunk;
+import com.jetbrains.python.debugger.IPyDebugProcess;
+import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PyFrameAccessor;
+import com.jetbrains.python.debugger.PyReferringObjectsValue;
+import com.jetbrains.python.debugger.PyThreadInfo;
+import com.jetbrains.python.debugger.PyUserTypeRenderer;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.tables.TableCommandParameters;
@@ -21,7 +28,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**

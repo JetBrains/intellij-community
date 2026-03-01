@@ -18,8 +18,12 @@ import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.Activatable
-import kotlinx.coroutines.*
-import java.lang.Runnable
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 internal class DocumentationToolWindowUpdater(

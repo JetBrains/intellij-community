@@ -5,8 +5,13 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 public class TextIcon implements Icon {
 

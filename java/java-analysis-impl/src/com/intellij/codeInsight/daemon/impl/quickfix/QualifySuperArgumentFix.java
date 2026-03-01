@@ -4,7 +4,15 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSuperExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;

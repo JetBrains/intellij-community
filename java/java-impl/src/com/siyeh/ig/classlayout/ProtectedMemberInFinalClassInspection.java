@@ -24,7 +24,23 @@ import com.intellij.modcommand.ModCommandBatchQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -39,6 +55,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+// TODO(bartekpacia): Move to the "intelij.java.impl.inspections" module
+//  once the situation with ModifierFix in "intellij.java.impl" depending on this class is resolved.
 public final class ProtectedMemberInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override

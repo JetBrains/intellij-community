@@ -4,14 +4,10 @@ package org.jetbrains.kotlin.idea.fir.run
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
 
 abstract class AbstractKotlinTestNavigationTest : KotlinLightCodeInsightFixtureTestCase() {
 

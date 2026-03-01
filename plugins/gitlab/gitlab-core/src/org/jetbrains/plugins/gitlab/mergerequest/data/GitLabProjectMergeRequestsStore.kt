@@ -3,13 +3,34 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.api.HttpStatusErrorException
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
+import com.intellij.collaboration.async.childScope
+import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import git4idea.remote.GitRemoteUrlCoordinates
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
@@ -24,7 +45,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestList
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.startGitLabRestETagListLoaderIn
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
-import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.util.concurrent.ConcurrentHashMap
 
 interface GitLabProjectMergeRequestsStore {
@@ -55,17 +75,19 @@ interface GitLabProjectMergeRequestsStore {
                              targetBranchName: String? = null): List<GitLabMergeRequestByBranchDTO>
 }
 
-class CachingGitLabProjectMergeRequestsStore(private val project: Project,
-                                             parentCs: CoroutineScope,
-                                             private val api: GitLabApi,
-                                             private val glMetadata: GitLabServerMetadata?,
-                                             private val projectMapping: GitLabProjectMapping,
-                                             private val currentUser: GitLabUserDTO,
-                                             private val tokenRefreshFlow: Flow<Unit>) : GitLabProjectMergeRequestsStore {
+class CachingGitLabProjectMergeRequestsStore(
+  private val project: Project,
+  parentCs: CoroutineScope,
+  private val api: GitLabApi,
+  private val glMetadata: GitLabServerMetadata?,
+  private val currentUser: GitLabUserDTO,
+  private val tokenRefreshFlow: Flow<Unit>,
+  private val projectCoordinates: GitLabProjectCoordinates,
+  private val projectId: String,
+  private val gitRemote: GitRemoteUrlCoordinates,
+) : GitLabProjectMergeRequestsStore {
 
   private val cs = parentCs.childScope(this::class)
-
-  private val glProject: GitLabProjectCoordinates = projectMapping.repository
 
   private val detailsCache = Caffeine.newBuilder()
     .weakValues()
@@ -79,10 +101,11 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
   override fun getListLoaderIn(cs: CoroutineScope, searchQuery: String): ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO> {
     val loader = startGitLabRestETagListLoaderIn(
       cs,
-      getMergeRequestListURI(glProject, searchQuery),
+      api.rest.getMergeRequestListURI(projectId, searchQuery),
       { it.id },
 
-      requestReloadFlow = tokenRefreshFlow.withInitial(Unit)
+      requestReloadFlow = tokenRefreshFlow.withInitial(Unit),
+      shouldTryToLoadAll = false
     ) { uri, etag ->
       api.rest.loadUpdatableJsonList<GitLabMergeRequestShortRestDTO>(
         GitLabApiRequestName.REST_GET_MERGE_REQUESTS, uri, etag
@@ -122,7 +145,15 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
         .withInitial(iid)
         .map { mrId -> runCatchingUser { loadMergeRequest(mrId) } } // TODO: create from cached details
         .transformConsecutiveSuccesses {
-          mapScoped { mrData -> LoadedGitLabMergeRequest(project, this, api, glMetadata, projectMapping, currentUser, mrData) }
+          mapScoped { mrData -> LoadedGitLabMergeRequest(project,
+                                                         this,
+                                                         api,
+                                                         glMetadata,
+                                                         projectCoordinates,
+                                                         projectId,
+                                                         gitRemote,
+                                                         currentUser,
+                                                         mrData) }
         }
         .shareIn(cs, SharingStarted.WhileSubscribed(0, 1000), 1)
       // this the model will only be alive while it's needed
@@ -133,7 +164,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
                                       sourceBranchName: String,
                                       targetBranchName: String?): List<GitLabMergeRequestByBranchDTO> =
     withContext(Dispatchers.IO) {
-      val body = api.graphQL.findMergeRequestsByBranch(projectMapping.repository, state, sourceBranchName, targetBranchName).body()
+      val body = api.graphQL.findMergeRequestsByBranch(projectCoordinates.projectPath, state, sourceBranchName, targetBranchName).body()
       body!!.nodes
     }
 
@@ -146,7 +177,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
   @Throws(HttpStatusErrorException::class, IllegalStateException::class)
   private suspend fun loadMergeRequest(iid: String): GitLabMergeRequestDTO {
     return withContext(Dispatchers.IO) {
-      val body = api.graphQL.loadMergeRequest(glProject, iid).body()
+      val body = api.graphQL.loadMergeRequest(projectCoordinates.projectPath, iid).body()
       if (body == null) {
         api.rest.getCurrentUser() // Exception is generated automatically if status code >= 400
         error(CollaborationToolsBundle.message("graphql.errors", "empty response"))

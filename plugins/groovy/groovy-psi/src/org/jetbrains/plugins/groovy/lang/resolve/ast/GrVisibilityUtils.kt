@@ -3,7 +3,12 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.ast
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferStringAttribute

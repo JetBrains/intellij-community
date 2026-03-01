@@ -23,23 +23,20 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ModuleSourcePackagingElementEntityImpl(private val dataSource: ModuleSourcePackagingElementEntityData) : ModuleSourcePackagingElementEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ModuleSourcePackagingElementEntityImpl(private val dataSource: ModuleSourcePackagingElementEntityData) :
+  ModuleSourcePackagingElementEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
                                                                                 PackagingElementEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
-
-    private val connections = listOf<ConnectionId>(
-      PARENTENTITY_CONNECTION_ID,
-    )
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
+                                                                                true)
+    private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID)
 
   }
 
   override val parentEntity: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
-
   override val module: ModuleId?
     get() {
       readField("module")
@@ -57,8 +54,9 @@ internal class ModuleSourcePackagingElementEntityImpl(private val dataSource: Mo
   }
 
 
-  internal class Builder(result: ModuleSourcePackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleSourcePackagingElementEntity, ModuleSourcePackagingElementEntityData>(
-    result), ModuleSourcePackagingElementEntity.Builder {
+  internal class Builder(result: ModuleSourcePackagingElementEntityData?) :
+    ModifiableWorkspaceEntityBase<ModuleSourcePackagingElementEntity, ModuleSourcePackagingElementEntityData>(result),
+    ModuleSourcePackagingElementEntity.Builder {
     internal constructor() : this(ModuleSourcePackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -71,15 +69,13 @@ internal class ModuleSourcePackagingElementEntityImpl(private val dataSource: Mo
           error("Entity ModuleSourcePackagingElementEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -112,7 +108,6 @@ internal class ModuleSourcePackagingElementEntityImpl(private val dataSource: Mo
         changedProperty.add("entitySource")
 
       }
-
     override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
@@ -132,25 +127,24 @@ internal class ModuleSourcePackagingElementEntityImpl(private val dataSource: Mo
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
-          // Setting backref of the list
+// Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
@@ -167,6 +161,7 @@ internal class ModuleSourcePackagingElementEntityImpl(private val dataSource: Mo
 
     override fun getEntityClass(): Class<ModuleSourcePackagingElementEntity> = ModuleSourcePackagingElementEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -191,7 +186,7 @@ internal class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<Modu
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    // TODO verify logic
+// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val optionalLink_module = module
     if (optionalLink_module != null) {
@@ -245,8 +240,7 @@ internal class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<Modu
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -256,7 +250,8 @@ internal class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<Modu
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ModuleSourcePackagingElementEntity(entitySource) {
       this.module = this@ModuleSourcePackagingElementEntityData.module
-      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.parentEntity =
+        parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
     }
   }
 
@@ -268,9 +263,7 @@ internal class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<Modu
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ModuleSourcePackagingElementEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.module != other.module) return false
     return true
@@ -279,9 +272,7 @@ internal class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<Modu
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ModuleSourcePackagingElementEntityData
-
     if (this.module != other.module) return false
     return true
   }

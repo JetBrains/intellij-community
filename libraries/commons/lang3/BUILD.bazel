@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:commons-lang3"],
   runtime_deps = ["@lib//:commons-lang3"]
 )
+
+jvm_library(
+  name = "lang3_test_lib",
+  module_name = "intellij.libraries.commons.lang3",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:commons-lang3"],
+  runtime_deps = [":lang3"]
+)
 ### auto-generated section `build intellij.libraries.commons.lang3` end

@@ -1325,10 +1325,75 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            def func(c: Callable[[T], None]):
                                pass
                            
+                           def accepts_str(x: str) -> None:
+                               pass
+                           
+                           func(<warning descr="Expected type '(T ≤: int) -> None', got '(x: str) -> None' instead">accepts_str</warning>)
+                           """)
+    );
+  }
+
+  // PY-37876
+  public void testGenericParameterOfTwoExpectedCallableParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import Callable, TypeVar, assert_type
+                           
+                           class BadType(int, str):
+                               pass
+                           
+                           T = TypeVar('T')
+                           
+                           def func(c1: Callable[[T], None], c2: Callable[[T], None]) -> T:
+                               pass
+                           
+                           def accepts_str(x: str) -> None:
+                               pass
+                           
+                           def accepts_int(x: int) -> None:
+                               pass
+                           
+                           res = func(accepts_str, accepts_int)
+                           assert_type(res, "str & int")
+                           """)
+    );
+  }
+
+  public void testBoundedGenericParameterOfExpectedCallableReturn2() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import Callable, TypeVar
+                           
+                           T = TypeVar('T', bound=int)
+                           
+                           def func(c: Callable[[], T]):
+                               pass
+                           
+                           def returns_str() -> str:
+                               pass
+                           
+                           func(<warning descr="Expected type '() -> T ≤: int', got '() -> str' instead">returns_str</warning>)
+                           """)
+    );
+  }
+
+  public void testConstraintGenericParameterOfExpectedCallableParameter2() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import Callable, TypeVar
+                           
+                           T = TypeVar('T', int, bool) # using constraint here
+                           
+                           def func(c: Callable[[T], None]):
+                               pass
+                           
                            def accepts_anything(x: str) -> None:
                                pass
                            
-                           func(<warning descr="Expected type '(T ≤: int) -> None', got '(x: str) -> None' instead">accepts_anything</warning>)
+                           func(<warning descr="Expected type '(T ≤: int | bool) -> None', got '(x: str) -> None' instead">accepts_anything</warning>)
                            """)
     );
   }
@@ -1711,13 +1776,13 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () ->
         doTestByText("""
                        from enum import StrEnum, Enum
-
+                       
                        class EmptyStrEnum(StrEnum):
                            pass
                        
                        class EmptyStrMixin(str, Enum):
                            pass
-
+                       
                        def test_empty_str_enum(x: EmptyStrEnum):
                            s: str = x.value
                            i: int = <warning descr="Expected type 'int', got 'str' instead">x.value</warning>

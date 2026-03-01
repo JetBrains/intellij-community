@@ -10,10 +10,19 @@ import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadScrollPane;
+import com.intellij.uiDesigner.radComponents.RadSplitPane;
+import com.intellij.uiDesigner.radComponents.RadTabbedPane;
+import com.intellij.uiDesigner.radComponents.XYLayoutManagerImpl;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
 

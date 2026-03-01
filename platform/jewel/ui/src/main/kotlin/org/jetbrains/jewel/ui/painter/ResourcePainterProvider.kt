@@ -50,8 +50,21 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
 
     private val cache = ConcurrentHashMap<Int, Painter>()
 
+    @Suppress("HttpUrlsUsage")
     private val documentBuilderFactory =
-        DocumentBuilderFactory.newDefaultInstance().apply { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
+        DocumentBuilderFactory.newDefaultInstance().apply {
+            isValidating = false
+            setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+            setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+            setFeature("http://xml.org/sax/features/external-general-entities", false)
+            setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+            setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false)
+            setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+            setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "")
+            setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "")
+            isXIncludeAware = false
+            isExpandEntityReferences = false
+        }
 
     private fun Scope.resolveHint(hint: PainterHint) {
         with(hint) {

@@ -1,7 +1,11 @@
 package com.intellij.tools.ide.metrics.collector
 
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.OpenTelemetryMetersJsonImporter
-import com.intellij.tools.ide.metrics.collector.meters.*
+import com.intellij.tools.ide.metrics.collector.meters.DoubleCounterToMetricConverter
+import com.intellij.tools.ide.metrics.collector.meters.DoubleGaugeToMetricConverter
+import com.intellij.tools.ide.metrics.collector.meters.DoubleHistogramMeterToMetricConverter
+import com.intellij.tools.ide.metrics.collector.meters.LongCounterToMetricConverter
+import com.intellij.tools.ide.metrics.collector.meters.LongGaugeToMetricConverter
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.util.common.logError

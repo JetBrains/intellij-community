@@ -18,6 +18,8 @@ fun Finder.checkBox(@Language("xpath") xpath: String? = null) = x(xpath ?: "//di
 
 fun Finder.checkBox(locator: QueryBuilder.() -> String) = x(JCheckBoxUi::class.java) {locator()}
 
+fun Finder.checkBoxWithName(name: String) = x(JCheckBoxUi::class.java) { byAccessibleName(name) }
+
 class JCheckBoxUi(data: ComponentData) : UiComponent(data) {
   private val checkboxComponent by lazy { driver.cast(component, JCheckBox::class) }
 
@@ -37,7 +39,7 @@ class JCheckBoxUi(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun isSelected() = checkboxComponent.isSelected()
+  fun isSelected(): Boolean = checkboxComponent.isSelected()
 }
 
 fun JCheckBoxUi.waitSelected(selected: Boolean, timeout: Duration = 5.seconds) {

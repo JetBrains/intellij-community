@@ -2,7 +2,21 @@
 package com.intellij.editorconfig.frontend.highlighting
 
 import com.intellij.editorconfig.common.EditorConfigBundle
-import com.intellij.editorconfig.common.syntax.psi.*
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigAsteriskPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigCharClassExclamation
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigCharClassLetter
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDoubleAsteriskPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigFlatOptionKey
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigFlatPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOption
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueIdentifier
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigQualifiedOptionKey
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigQuestionPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigRawOptionValue
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigRootDeclarationKey
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigRootDeclarationValue
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigPsiImplUtils.VALID_ESCAPES
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity

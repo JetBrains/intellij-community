@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.FacetModel;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.impl.FrameworkDetectionUtil;

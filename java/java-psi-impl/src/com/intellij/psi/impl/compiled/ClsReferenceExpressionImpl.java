@@ -2,7 +2,16 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;

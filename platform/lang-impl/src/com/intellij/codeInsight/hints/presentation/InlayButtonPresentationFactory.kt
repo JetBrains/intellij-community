@@ -3,15 +3,16 @@ package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.InlayPresentationFactory
-import com.intellij.codeInsight.hints.presentation.InlayButtonPresentationFactory.InlayButtonPresentationBuilder.InlayButtonPresentation
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INLAY_BUTTON_HINT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
+import java.awt.Graphics2D
 import java.util.EnumSet
 import javax.swing.Icon
 
@@ -30,6 +31,7 @@ open class InlayButtonPresentationFactory(
     private const val ICON_TEXT_LEFT_PADDING = 4
     private const val HINT_LEFT_PADDING = 8
     private const val CLOSE_LEFT_PADDING = 8
+    private const val ADDITIONAL_SPACING_BETWEEN_COMPONENTS = 2
     private const val DEFAULT_BORDER_WIDTH = 1
 
     val onePixelBorderProvider: InsetValueProvider = object : InsetValueProvider {
@@ -82,10 +84,8 @@ open class InlayButtonPresentationFactory(
   private fun createPaddedPresentation(
     base: InlayPresentation,
     left: Int = 0,
-  ): InlayButtonPresentation {
-    return InlayButtonPresentation(
-      DynamicInsetPresentation(base, CenteredInsetValueProvider(base, textMetricsStorage, left))
-    )
+  ): InlayPresentation {
+    return DynamicInsetPresentation(base, CenteredInsetValueProvider(base, textMetricsStorage, left))
   }
 
   private fun textWithoutPadding(text: String, isSmall: Boolean): InlayPresentation {
@@ -145,17 +145,25 @@ open class InlayButtonPresentationFactory(
       return this
     }
 
-    fun build(): InlayPresentation = factory.delegate.withCursorOnHover(
+    fun build(): InlayPresentation = build(ADDITIONAL_SPACING_BETWEEN_COMPONENTS)
+
+    fun build(spacingBetweenComponents: Int): InlayPresentation = factory.createPaddedPresentation(
+      factory.delegate.withCursorOnHover(
         withInlayAttributes(border(), factory.defaultAttributesKey), Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      )
+      ),
+      left = spacingBetweenComponents
+    ).wrapWithStorageCheckpoint()
 
     fun buildFocused(): InlayPresentation = factory.delegate.withCursorOnHover(
       withInlayAttributes(border(2), factory.focusedAttributesKey), Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    )
+    ).wrapWithStorageCheckpoint()
 
     fun buildHovered(): InlayPresentation = factory.delegate.withCursorOnHover(
       withInlayAttributes(border(), factory.hoveredAttributesKey), Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    )
+    ).wrapWithStorageCheckpoint()
+
+    private fun InlayPresentation.wrapWithStorageCheckpoint(): InlayPresentation =
+      TextMetricsStorageCheckpointPresentation(factory.delegate.textMetricsStorage, this)
 
     private fun withInlayAttributes(base: InlayPresentation, attributes: TextAttributesKey): InlayPresentation {
       return WithAttributesPresentation(base, attributes, factory.editor,
@@ -191,8 +199,6 @@ open class InlayButtonPresentationFactory(
         down = onePixelBorderProvider.down
       )
     }
-
-    internal class InlayButtonPresentation(delegate: InlayPresentation) : StaticDelegatePresentation(delegate)
   }
 }
 
@@ -225,7 +231,7 @@ class TextInsetValueProvider(
   val isSmall: Boolean,
 ) : InsetValueProvider {
   override val top: Int
-    get() = textMetricsStorage.getFontMetrics(isSmall).fontHeight - textMetricsStorage.getFontMetrics(isSmall).fontBaseline
+    get() = textMetricsStorage.getFontMetrics(isSmall).run { fontHeight - fontBaseline }
 }
 
 @ApiStatus.Internal
@@ -237,4 +243,17 @@ class RoundCornersInsetValueProvider(
     get() = presentation.height / 2
   override val right: Int
     get() = left * rightCornerRadius / InlayButtonPresentationFactory.DEFAULT_CORNER_RADIUS
+}
+
+@ApiStatus.Internal
+class TextMetricsStorageCheckpointPresentation(
+  private val textMetricsStorage: InlayTextMetricsStorage,
+  delegate: InlayPresentation
+) : StaticDelegatePresentation(delegate) {
+  override fun paint(g: Graphics2D, attributes: TextAttributes) {
+    textMetricsStorage.checkpoint { super.paint(g, attributes) }
+  }
+
+  override val height: Int get() = textMetricsStorage.checkpoint { super.height }
+  override val width: Int get() = textMetricsStorage.checkpoint { super.width }
 }

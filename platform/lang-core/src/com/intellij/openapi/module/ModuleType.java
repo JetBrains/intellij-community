@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Defines a technology (language, framework, etc) to which a particular {@link Module} instance is related. Each {@link Module} belongs to

@@ -29,4 +29,26 @@ jvm_library(
     "//spellchecker/xml",
   ]
 )
+
+jvm_library(
+  name = "xml_test_lib",
+  module_name = "intellij.grazie.xml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":xml",
+    "//plugins/grazie/src:core_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//xml/xml-psi-impl:psi-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//xml/impl:impl_test_lib",
+    "//spellchecker:spellchecker_test_lib",
+    "//spellchecker/xml:xml_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.grazie.xml` end

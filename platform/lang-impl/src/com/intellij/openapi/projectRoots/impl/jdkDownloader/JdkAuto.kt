@@ -14,12 +14,23 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.JdkUtil
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
+import com.intellij.openapi.projectRoots.isMockSdk
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ui.configuration.*
+import com.intellij.openapi.roots.ui.configuration.SdkDetector
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener
+import com.intellij.openapi.roots.ui.configuration.UnknownSdk
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkFixConfigurator
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkMultipleDownloadsFix
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.util.Computable
@@ -43,7 +54,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 
-private class JdkAutoHint: BaseState() {
+internal class JdkAutoHint: BaseState() {
   val name by string()
   val path: String? by string()
   val version by string()
@@ -52,12 +63,12 @@ private class JdkAutoHint: BaseState() {
   val includeJars by list<String>()
 }
 
-private class JdkAutoHints : BaseState() {
+internal class JdkAutoHints : BaseState() {
   @get:XCollection
   val jdks by list<JdkAutoHint>()
 }
 
-private class JdkAutoHintService(private val project: Project) : SimplePersistentStateComponent<JdkAutoHints>(JdkAutoHints()) {
+internal class JdkAutoHintService(private val project: Project) : SimplePersistentStateComponent<JdkAutoHints>(JdkAutoHints()) {
   override fun loadState(state: JdkAutoHints) {
     super.loadState(state)
 

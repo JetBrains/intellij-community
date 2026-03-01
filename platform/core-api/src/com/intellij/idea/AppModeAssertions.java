@@ -3,43 +3,20 @@ package com.intellij.idea;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PlatformUtils;
-import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.ApiStatus;
 
 import static com.intellij.util.PlatformUtils.PLATFORM_PREFIX_KEY;
 
-@Internal
+@ApiStatus.Internal
 public final class AppModeAssertions {
-
   private static final class Holder {
     private static final Logger LOG = Logger.getInstance(AppModeAssertions.class);
   }
 
   private AppModeAssertions() { }
 
-  public static boolean isFrontend() {
-    return PlatformUtils.isJetBrainsClient();
-  }
-
-  public static boolean isBackend() {
-    return AppMode.isRemoteDevHost();
-  }
-
-  public static boolean isMonolith() {
-    return !isFrontend() && !isBackend();
-  }
-
-  /**
-   * Checks if a frontend operation is permitted to be performed in the current product mode.
-   *
-   * @return `true` in the frontend and monolith mode
-   */
-  public static boolean checkFrontend() {
-    return !isBackend();
-  }
-
   public static void assertFrontend(boolean hard) {
-    if (checkFrontend()) {
+    if (!AppMode.isRemoteDevHost()) {
       return;
     }
     Error e = new AppModeAssertionError("frontend");
@@ -51,17 +28,8 @@ public final class AppModeAssertions {
     }
   }
 
-  /**
-   * Checks if a backend operation is permitted to be performed in the current product mode.
-   *
-   * @return `true` in the backend and monolith mode
-   */
-  public static boolean checkBackend() {
-    return !isFrontend();
-  }
-
   public static void assertBackend(boolean hard) {
-    if (checkBackend()) {
+    if (!PlatformUtils.isJetBrainsClient()) {
       return;
     }
     Error e = new AppModeAssertionError("backend");
@@ -73,12 +41,12 @@ public final class AppModeAssertions {
     }
   }
 
-  static final class AppModeAssertionError extends AssertionError {
-
-    AppModeAssertionError(@NotNull String expectedMode) {
-      super("The operations is allowed only in " + expectedMode +
-            "; Platform prefix: " + System.getProperty(PLATFORM_PREFIX_KEY, "not defined") +
-            "; getPlatformPrefix: " + PlatformUtils.getPlatformPrefix()
+  private static final class AppModeAssertionError extends AssertionError {
+    private AppModeAssertionError(String expectedMode) {
+      super(
+        "The operations is allowed only in " + expectedMode +
+        "; Platform prefix: " + System.getProperty(PLATFORM_PREFIX_KEY, "not defined") +
+        "; getPlatformPrefix: " + PlatformUtils.getPlatformPrefix()
       );
     }
   }

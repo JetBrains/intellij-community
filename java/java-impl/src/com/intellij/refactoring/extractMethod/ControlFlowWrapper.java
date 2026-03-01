@@ -4,8 +4,25 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowOptions;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.Instruction;
+import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
+import com.intellij.psi.controlFlow.WriteVariableInstruction;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,7 +33,12 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class ControlFlowWrapper {

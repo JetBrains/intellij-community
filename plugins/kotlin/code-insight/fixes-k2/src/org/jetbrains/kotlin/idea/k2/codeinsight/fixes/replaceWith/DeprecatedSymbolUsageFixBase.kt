@@ -38,7 +38,29 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacement
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInline
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
+import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtIsExpression
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
 internal object DeprecationFixFactory {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.stats
 
 /**
@@ -13,4 +13,16 @@ internal object AnsiColors {
   const val BLUE = "\u001B[34m"
   const val CYAN = "\u001B[36m"
   const val GRAY = "\u001B[90m"
+}
+
+/**
+ * ANSI-aware style helper that returns color codes or empty strings based on [useAnsi] flag.
+ */
+class AnsiStyle(private val useAnsi: Boolean) {
+  val reset: String get() = if (useAnsi) AnsiColors.RESET else ""
+  val bold: String get() = if (useAnsi) AnsiColors.BOLD else ""
+  val red: String get() = if (useAnsi) AnsiColors.RED else ""
+  val yellow: String get() = if (useAnsi) AnsiColors.YELLOW else ""
+  val blue: String get() = if (useAnsi) AnsiColors.BLUE else ""
+  val gray: String get() = if (useAnsi) AnsiColors.GRAY else ""
 }

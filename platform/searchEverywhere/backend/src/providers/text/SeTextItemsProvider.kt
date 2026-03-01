@@ -13,10 +13,26 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeLegacyItem
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SePreviewInfo
+import com.intellij.platform.searchEverywhere.SePreviewInfoFactory
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeSearchScopesProvider
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTextSearchItemPresentation
-import com.intellij.platform.searchEverywhere.providers.*
+import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
+import com.intellij.platform.searchEverywhere.providers.ScopeChooserActionProviderDelegate
+import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
+import com.intellij.platform.searchEverywhere.providers.SeTextFilter
+import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
+import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -55,21 +71,24 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     get() = contributor.fullGroupName
   override val contributor: SearchEverywhereContributor<Any> get() = contributorWrapper.contributor
   private val findModel = FindManager.getInstance(project).findInProjectModel
-  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
+  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate.createOrNull(contributorWrapper)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
 
     val textFilter = SeTextFilter.from(params.filter)
 
-    val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-      scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-        if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+    scopeProviderDelegate?.let { scopeProviderDelegate ->
+      val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+        scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
+          if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+        }
+      } ?: run {
+        textFilter?.selectedScopeId
       }
-    } ?: run {
-      textFilter?.selectedScopeId
+
+      scopeProviderDelegate.applyScope(scopeToApply, false)
     }
-    applyScope(scopeToApply)
 
     var originalModel: FindModel? = null
     val isAllTab: Boolean = SeEverywhereFilter.isAllTab(params.filter) == true
@@ -114,12 +133,8 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     return contributor.showInFindResults()
   }
 
-  private fun applyScope(scopeId: String?) {
-    scopeProviderDelegate.applyScope(scopeId, false)
-  }
-
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? {
-    return scopeProviderDelegate.searchScopesInfo.getValue()
+    return scopeProviderDelegate?.searchScopesInfo?.getValue()
   }
 
   override suspend fun performExtendedAction(item: SeItem): Boolean {

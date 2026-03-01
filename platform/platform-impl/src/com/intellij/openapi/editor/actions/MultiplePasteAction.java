@@ -3,9 +3,16 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.PasteProvider;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
@@ -14,9 +21,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
 import javax.swing.text.DefaultEditorKit;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -67,9 +75,10 @@ public final class MultiplePasteAction extends AnAction implements DumbAware {
       }
       final AnAction pasteAction = ActionManager.getInstance().getAction(chooser.getExitCode() == getPasteSimpleExitCode()
                                                                            ? IdeActions.ACTION_EDITOR_PASTE_SIMPLE : IdeActions.ACTION_PASTE);
-      if (pasteAction != null) {
+      var dataContextForEvent = DataManager.getInstance().getDataContext(focusedComponent);
+      if (pasteAction != null && PlatformDataKeys.PASTE_PROVIDER.getData(dataContextForEvent) != null) {
         AnActionEvent newEvent = new AnActionEvent(e.getInputEvent(),
-                                                   DataManager.getInstance().getDataContext(focusedComponent),
+                                                   dataContextForEvent,
                                                    e.getPlace(), e.getPresentation(),
                                                    ActionManager.getInstance(),
                                                    e.getModifiers());
@@ -104,12 +113,6 @@ public final class MultiplePasteAction extends AnAction implements DumbAware {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) return !editor.isViewer();
     Action pasteAction = ((JComponent)component).getActionMap().get(DefaultEditorKit.pasteAction);
-    if (pasteAction == null) {
-      PasteProvider provider = e.getData(PlatformDataKeys.PASTE_PROVIDER);
-      if (provider != null) {
-        return true;
-      }
-    }
     return pasteAction != null;
   }
 

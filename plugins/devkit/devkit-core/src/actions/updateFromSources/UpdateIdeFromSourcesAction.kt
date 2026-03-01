@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.openapi.actionSystem.ActionManager
@@ -16,17 +16,15 @@ internal sealed class UpdateIdeFromSourcesActionBase(private val forceShowSettin
 
     if (forceShowSettings || settings.showSettings) {
       val oldWorkIdePath = settings.actualIdePath
-      val ok = UpdateFromSourcesDialog(project, forceShowSettings).showAndGet()
-      if (!ok) {
-        return
-      }
 
-      val updatedState = settings
-      if (oldWorkIdePath != updatedState.actualIdePath) {
-        updatedState.workIdePathsHistory.remove(oldWorkIdePath)
-        updatedState.workIdePathsHistory.remove(updatedState.actualIdePath)
-        updatedState.workIdePathsHistory.add(0, updatedState.actualIdePath)
-        updatedState.workIdePathsHistory.add(0, oldWorkIdePath)
+      val ok = UpdateFromSourcesDialog(project, forceShowSettings).showAndGet()
+      if (!ok) return
+
+      if (oldWorkIdePath != settings.actualIdePath) {
+        settings.workIdePathsHistory.remove(oldWorkIdePath)
+        settings.workIdePathsHistory.remove(settings.actualIdePath)
+        settings.workIdePathsHistory.add(0, settings.actualIdePath)
+        settings.workIdePathsHistory.add(0, oldWorkIdePath)
       }
     }
 

@@ -1,19 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.server
 
+import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
+import fleet.rpc.EndpointKind
 import fleet.rpc.core.TransportMessage
 import fleet.util.UID
 import fleet.util.channels.use
 import fleet.util.logging.logger
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
-import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
-import fleet.rpc.EndpointKind
+import kotlinx.coroutines.withContext
 
 class ServerRequestDispatcher(private val connectionListener: ConnectionListener?) : RequestDispatcher {
 
@@ -53,7 +63,7 @@ class ServerRequestDispatcher(private val connectionListener: ConnectionListener
             val existing = connections.put(route, send)
             if (existing != null) {
               log.warn { "Replaced existing ${route}, will close previous socket" }
-              existing.close(RuntimeException("Replaced by other connection with same uid ${route}"))
+              existing.close(RuntimeException("Replaced by other connection with same uid $route"))
             }
             log.info { "Notify $route is connected" }
             broadcastSafely(TransportMessage.RouteOpened(route))
@@ -82,7 +92,7 @@ class ServerRequestDispatcher(private val connectionListener: ConnectionListener
                       }
                     }
                     else -> {
-                      log.warn { "Good endpoints should send only TransportMessage.Envelope, but ${route} sends ${message}" }
+                      log.warn { "Good endpoints should send only TransportMessage.Envelope, but $route sends $message" }
                     }
                   }
                 }
@@ -112,11 +122,11 @@ class ServerRequestDispatcher(private val connectionListener: ConnectionListener
   }
 
   private suspend fun broadcastSafely(message: TransportMessage) {
-    connections.forEach { (k, v) ->
-      log.trace { "Broadcasting $message to ${k}" }
+    connections.entries.forEach { (k, v) ->
+      log.trace { "Broadcasting $message to $k" }
       //      coroutineContext.job.ensureActive()
       runCatching { v.send(message) }.onFailure { ex ->
-        log.trace(ex) { "failed to broadcast $message to ${k}" }
+        log.trace(ex) { "failed to broadcast $message to $k" }
       }
     }
   }

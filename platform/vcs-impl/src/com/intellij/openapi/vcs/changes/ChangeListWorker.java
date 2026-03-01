@@ -20,12 +20,26 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.changes.ChangesViewChangeIdCache;
+import com.intellij.vcs.changes.ChangesViewChangeIdProvider;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -871,7 +885,7 @@ public final class ChangeListWorker {
       Map<ListData, Set<Change>> mapping = getChangesMapping();
       myReadOnlyChangesCache = mapping;
       if (myMainWorker) {
-        ChangesViewChangeIdCache.getInstance(myProject).updateChangeListsCache(mapping.values());
+        ChangesViewChangeIdProvider.getInstance(myProject).updateChangeListsCache(mapping.values());
       }
     }
 

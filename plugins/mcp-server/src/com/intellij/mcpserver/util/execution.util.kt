@@ -10,7 +10,11 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.rows
+import com.intellij.ui.dsl.builder.text
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext

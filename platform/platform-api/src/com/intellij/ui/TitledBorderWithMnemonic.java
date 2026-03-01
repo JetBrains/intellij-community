@@ -5,7 +5,15 @@ import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * @author Konstantin Bulenkov

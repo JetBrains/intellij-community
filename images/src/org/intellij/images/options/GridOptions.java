@@ -18,7 +18,7 @@ package org.intellij.images.options;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Grid layer options

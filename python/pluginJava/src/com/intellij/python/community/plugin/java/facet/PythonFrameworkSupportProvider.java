@@ -10,7 +10,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 
 final class PythonFrameworkSupportProvider extends FrameworkSupportProvider {

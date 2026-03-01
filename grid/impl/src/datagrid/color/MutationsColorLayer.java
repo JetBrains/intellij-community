@@ -1,6 +1,12 @@
 package com.intellij.database.datagrid.color;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridMutator;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.MutationType;
 import com.intellij.database.datagrid.mutating.MutationData;
 import com.intellij.database.run.ui.grid.CellAttributes;
 import com.intellij.database.run.ui.grid.CellAttributesKey;
@@ -9,7 +15,7 @@ import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class MutationsColorLayer implements ColorLayer {
 

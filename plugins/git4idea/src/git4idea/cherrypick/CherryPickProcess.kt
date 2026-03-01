@@ -46,7 +46,8 @@ internal class GitCherryPickProcess(
 
   private val totalCommitsToCherryPick = commits.size
 
-  private var currentCommitCounter = 0
+  private var currentCommitCounter = 1
+  private lateinit var currentCommits: Collection<VcsCommitMetadata>
 
   fun isSuccess() = successfullyCherryPickedCount == totalCommitsToCherryPick
 
@@ -96,8 +97,12 @@ internal class GitCherryPickProcess(
     }
   }
 
-  override fun executeForCommitChunk(repository: GitRepository, commits: List<VcsCommitMetadata>, successfulCommits: MutableSet<VcsCommitMetadata>, alreadyPicked: MutableSet<VcsCommitMetadata>): Boolean {
+  override fun onSuccessfulCommitsAdded(commits: Collection<VcsCommitMetadata>) {
     currentCommitCounter += commits.size
+    updateCherryPickIndicator()
+  }
+
+  override fun executeForCommitChunk(repository: GitRepository, commits: List<VcsCommitMetadata>, successfulCommits: MutableSet<VcsCommitMetadata>, alreadyPicked: MutableSet<VcsCommitMetadata>): Boolean {
     val result = super.executeForCommitChunk(repository, commits, successfulCommits, alreadyPicked)
     if (result) {
       successfullyCherryPickedCount += commits.size
@@ -111,32 +116,31 @@ internal class GitCherryPickProcess(
   }
 
   override fun applyChanges(repository: GitRepository, commits: Collection<VcsCommitMetadata>, listeners: List<GitLineHandlerListener>): GitCommandResult {
-    indicator?.let {
-      updateCherryPickIndicatorText(it, commits)
-    }
-    val result = Git.getInstance().cherryPick(
+    currentCommits = commits
+    updateCherryPickIndicator()
+    return Git.getInstance().cherryPick(
       repository,
       commits.map { it.id.asString() },
       AUTO_COMMIT,
       commits.all { commit -> shouldAddSuffix(repository, commit.id) },
       *listeners.toTypedArray()
     )
-    indicator?.fraction = currentCommitCounter.toDouble() / totalCommitsToCherryPick
-    return result
   }
 
-  private fun updateCherryPickIndicatorText(indicator: ProgressIndicator, commits: Collection<VcsCommitMetadata>) {
-    indicator.text = if (totalCommitsToCherryPick > 1) {
+  private fun updateCherryPickIndicator() {
+    indicator?.fraction = currentCommitCounter.toDouble() / totalCommitsToCherryPick
+
+    indicator?.text = if (totalCommitsToCherryPick > 1) {
       DvcsBundle.message(
         "cherry.picking.process.commit",
-        StringUtil.trimMiddle(commits.joinToString { it.subject }, 30),
+        StringUtil.trimMiddle(currentCommits.joinToString { it.subject }, 30),
         currentCommitCounter,
         totalCommitsToCherryPick
       )
     } else {
       DvcsBundle.message(
         "cherry.picking.process.commit.single",
-        StringUtil.trimMiddle(commits.joinToString { it.subject }, 30)
+        StringUtil.trimMiddle(currentCommits.joinToString { it.subject }, 30)
       )
     }
   }

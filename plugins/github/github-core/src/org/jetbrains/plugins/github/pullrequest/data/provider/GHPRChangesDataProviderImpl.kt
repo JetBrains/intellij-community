@@ -9,11 +9,15 @@ import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.filePath
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.data.GHCommit

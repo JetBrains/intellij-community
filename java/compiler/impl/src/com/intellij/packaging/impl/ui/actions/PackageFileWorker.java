@@ -29,7 +29,11 @@ import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -176,7 +180,7 @@ public final class PackageFileWorker {
   private static JBZipFile getOrCreateZipFile(File archiveFile) throws IOException {
     FileUtil.createIfDoesntExist(archiveFile);
     try {
-      return new JBZipFile(archiveFile);
+      return new JBZipFile(archiveFile.toPath(), false);
     }
     catch (IllegalArgumentException e) {
       throw new IOException(e);

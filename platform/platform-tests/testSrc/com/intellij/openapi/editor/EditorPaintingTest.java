@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
-import com.intellij.codeInsight.daemon.impl.IndentsPass;
+import com.intellij.codeInsight.daemon.impl.indentGuide.IndentGuidePass;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -10,19 +10,32 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.util.Collections;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
 public class EditorPaintingTest extends EditorPaintingTestCase {
+  private void setNewSelectionEnabled(boolean enabled) {
+    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(!enabled);
+  }
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
     initText("foo");
@@ -147,7 +160,29 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResultWithGutterForNewUI();
   }
 
+  private void runTestBlockInlaysWithSelection() throws Exception {
+    initText("line 1\nline 2\na");
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
+    checkResult();
+  }
+
   public void testBlockInlaysWithSelection() throws Exception {
+    setNewSelectionEnabled(false);
+    runTestBlockInlaysWithSelection();
+  }
+
+  public void testBlockInlaysWithNewSelection() throws Exception {
+    setNewSelectionEnabled(true);
+    runTestBlockInlaysWithSelection();
+  }
+
+  public void testBlockInlaysWithNewSelection2() throws Exception {
+    setNewSelectionEnabled(true);
+
     initText("line 1\nline 2\n");
     addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
     addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
@@ -156,12 +191,34 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
-  public void testMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
-    initText("  \n");
+  public void testBlockInlaysAboveWithNewSelection() throws Exception {
+    setNewSelectionEnabled(true);
+    initText("\n\nline 1\nline 2\n");
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(2), true);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    for (int i = 0; i < 2; i++) {
+      executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+    }
+    checkResult();
+  }
+
+  private void runTestMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
+    initText("  \n ");
     addBlockInlay(0);
     executeAction(IdeActions.ACTION_SELECT_ALL);
     getEditor().getSettings().setRightMargin(1);
     checkResult();
+  }
+
+  public void testMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
+    setNewSelectionEnabled(false);
+    runTestMarginIsShownOverSelectionInBlockInlayRange();
+  }
+
+  public void testMarginIsShownOverSelectionInBlockInlayRangeWithNewSelection() throws Exception {
+    setNewSelectionEnabled(true);
+    runTestMarginIsShownOverSelectionInBlockInlayRange();
   }
 
   public void testIndentGuideOverBlockInlayWithSoftWraps() throws Exception {
@@ -289,10 +346,20 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResultWithGutterForNewUI();
   }
 
-  public void testCustomFoldRegionInsideSelection() throws Exception {
+  private void runTestCustomFoldRegionInsideSelection() throws Exception {
     initText("<selection>\ntext\n<caret></selection>");
     addCustomLinesFolding(1, 1);
     checkResult();
+  }
+
+  public void testCustomFoldRegionInsideSelection() throws Exception {
+    setNewSelectionEnabled(false);
+    runTestCustomFoldRegionInsideSelection();
+  }
+
+  public void testCustomFoldRegionInsideSelectionWithNewSelection() throws Exception {
+    setNewSelectionEnabled(true);
+    runTestCustomFoldRegionInsideSelection();
   }
 
   private void addCustomLinesFolding(int startLine, int endLine) {
@@ -301,7 +368,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   private void runIndentsPass() {
-    IndentsPass indentsPass = ActionUtil.underModalProgress(getProject(), "", ()->new IndentsPass(getProject(), getEditor(), getFile()));
+    IndentGuidePass indentsPass = ActionUtil.underModalProgress(getProject(), "", ()->new IndentGuidePass(getProject(), getEditor(), getFile()));
     indentsPass.doCollectInformation(new EmptyProgressIndicator());
     indentsPass.doApplyInformationToEditor();
   }

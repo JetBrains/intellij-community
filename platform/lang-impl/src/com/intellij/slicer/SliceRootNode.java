@@ -8,8 +8,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JTree;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public final class SliceRootNode extends SliceNode {
   private final SliceUsage myRootUsage;

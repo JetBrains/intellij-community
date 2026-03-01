@@ -3,7 +3,16 @@ package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.*;
+import com.intellij.psi.Bottom;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeVariable;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRareRefactoringsBundle;
 import com.intellij.refactoring.typeCook.Settings;

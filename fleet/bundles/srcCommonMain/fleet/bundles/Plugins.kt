@@ -1,6 +1,5 @@
 package fleet.bundles
 
-import fleet.util.logging.KLoggers
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -321,6 +320,14 @@ data class PluginLayer(
 
 @Serializable(with = PluginPartsSerializer::class)
 data class PluginParts(val layers: Map<LayerSelector, PluginLayer>)
+
+@Serializable
+sealed interface ResourcesEntry {
+  @Serializable
+  data class Content(val name: String, val content: String) : ResourcesEntry
+  @Serializable
+  data class RelativePath(val path: String): ResourcesEntry
+}
 
 @Serializable
 sealed interface Coordinates {

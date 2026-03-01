@@ -23,7 +23,7 @@ import com.intellij.util.indexing.testEntities.WithReferenceTestEntityBuilder
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

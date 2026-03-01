@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add.v2.pipenv
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.platform.eel.provider.localEel
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel

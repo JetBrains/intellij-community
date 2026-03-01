@@ -8,7 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeBuilder;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -27,7 +31,11 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.commit.CommitMode;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -145,7 +153,7 @@ public abstract class AbstractVcs extends StartedActivated {
    *
    * @return the commit mode to enforce for this VCS, or null to apply the project's default
    */
-  public @Nullable CommitMode getForcedCommitMode() {
+  public @Nullable CommitMode getForcedCommitMode(@NotNull CommitMode originalMode) {
     return null;
   }
 

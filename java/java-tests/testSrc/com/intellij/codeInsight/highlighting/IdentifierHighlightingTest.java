@@ -2,7 +2,13 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterUpdater;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult;
+import com.intellij.codeInsight.daemon.impl.IdentifierOccurrence;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.ex.MarkupModelEx;

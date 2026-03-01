@@ -14,7 +14,11 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
-import git4idea.push.*
+import git4idea.push.GitPushOperation
+import git4idea.push.GitPushSource
+import git4idea.push.GitPushSupport
+import git4idea.push.GitPushTarget
+import git4idea.push.GitPushTargetType
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.validators.GitRefNameValidator

@@ -4,7 +4,13 @@ package org.jetbrains.plugins.terminal.session.impl
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.impl.dto.*
+import org.jetbrains.plugins.terminal.session.impl.dto.StyleRangeDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalBlocksModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalFilterResultInfoDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalHyperlinksModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalOutputModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStartupOptionsDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
 import kotlin.time.TimeMark
 
 @ApiStatus.Internal
@@ -65,7 +71,7 @@ data class TerminalCommandStartedEvent(val command: String) : TerminalShellInteg
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int, val currentDirectory: String) : TerminalShellIntegrationEvent
+data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int, val currentDirectory: String?) : TerminalShellIntegrationEvent
 
 @ApiStatus.Internal
 @Serializable
@@ -77,7 +83,11 @@ data object TerminalPromptFinishedEvent : TerminalShellIntegrationEvent
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalAliasesReceivedEvent(val aliases: TerminalAliasesInfo) : TerminalShellIntegrationEvent
+data class TerminalAliasesReceivedEvent(val aliasesRaw: String) : TerminalShellIntegrationEvent
+
+@ApiStatus.Internal
+@Serializable
+data class TerminalCompletionFinishedEvent(val result: String) : TerminalShellIntegrationEvent
 
 /**
  * A backend-only event indicating that there may be hyperlink events to pull from the highlighter.

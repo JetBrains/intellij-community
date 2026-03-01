@@ -15,11 +15,12 @@
  */
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.Nls;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class InspectionLIfeCycleTest extends LightDaemonAnalyzerTestCase {
+public class InspectionLIfeCycleTest extends ProductionLightDaemonAnalyzerTestCase {
   public void testInspectionFinishedCalledOnce() {
     String text = """
       class LQF {
@@ -86,7 +87,7 @@ public class InspectionLIfeCycleTest extends LightDaemonAnalyzerTestCase {
     };
     enableInspectionTool(tool);
 
-    List<HighlightInfo> infos = highlightErrors();
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
     assertEmpty(infos);
 
     assertEquals(1, startedCount.get());

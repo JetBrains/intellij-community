@@ -3,7 +3,11 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -14,7 +18,7 @@ import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement implements PsiClassObjectAccessExpression, Constants {
   private static final Logger LOG = Logger.getInstance(PsiClassObjectAccessExpressionImpl.class);

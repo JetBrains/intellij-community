@@ -7,18 +7,23 @@ import com.intellij.openapi.externalSystem.util.environment.Environment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.projectRoots.impl.DependentSdkType;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -34,6 +39,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -45,17 +52,32 @@ public final class ExternalSystemJdkUtil {
   public static final String USE_PROJECT_JDK = "#USE_PROJECT_JDK";
   public static final String USE_JAVA_HOME = "#JAVA_HOME";
 
+  /**
+   * @deprecated Use {@link ExternalSystemJdkUtil#resolveJdkName(Project, String)} instead.
+   */
+  @Deprecated
   @Contract("_, null -> null")
   public static @Nullable Sdk getJdk(@Nullable Project project, @Nullable String jdkName) throws ExternalSystemJdkException {
-    return resolveJdkName(getProjectJdk(project), jdkName);
+    return resolveJdkName(project, jdkName);
+  }
+
+  @Contract("_, null -> null")
+  public static @Nullable Sdk resolveJdkName(@Nullable Project project, @Nullable String jdkName) throws ExternalSystemJdkException {
+    return matchJdkName(jdkName, () -> getProjectJdk(project));
   }
 
   @Contract("_, null -> null")
   public static @Nullable Sdk resolveJdkName(@Nullable Sdk projectSdk, @Nullable String jdkName) throws ExternalSystemJdkException {
+    return matchJdkName(jdkName, () -> projectSdk);
+  }
+
+  @Contract("null, _ -> null")
+  private static @Nullable Sdk matchJdkName(@Nullable String jdkName, @NotNull Supplier<Sdk> projectSdkSupplier) {
     return switch (jdkName) {
       case null -> null;
       case USE_INTERNAL_JAVA -> getInternalJdk();
       case USE_PROJECT_JDK -> {
+        Sdk projectSdk = projectSdkSupplier.get();
         if (projectSdk == null) {
           throw new ProjectJdkNotFoundException();
         }
@@ -80,7 +102,8 @@ public final class ExternalSystemJdkUtil {
 
     // Workaround for projects without project Jdk
     SdkType jdkType = getJavaSdkType();
-    return ProjectJdkTable.getInstance()
+    var jdkTable = project == null ? ProjectJdkTable.getInstance() : ProjectJdkTable.getInstance(project);
+    return jdkTable
       .getSdksOfType(jdkType).stream()
       .filter(it -> isValidJdk(it))
       .max(jdkType.versionComparator())
@@ -89,8 +112,16 @@ public final class ExternalSystemJdkUtil {
 
   private static @NotNull Sdk getJavaHomeJdk() {
     String javaHome = getJavaHome();
-    if (StringUtil.isEmptyOrSpaces(javaHome)) throw new UndefinedJavaHomeException();
-    if (!isValidJdk(javaHome)) throw new InvalidJavaHomeException(javaHome);
+    if (StringUtil.isEmptyOrSpaces(javaHome)) {
+      throw new UndefinedJavaHomeException();
+    }
+    Sdk sdk = findJdkInSdkTableByPath(javaHome);
+    if (sdk != null) {
+      return sdk;
+    }
+    if (!isValidJdk(javaHome)) {
+      throw new InvalidJavaHomeException(javaHome);
+    }
     return ExternalSystemJdkProvider.getInstance().createJdk(null, javaHome);
   }
 
@@ -139,18 +170,19 @@ public final class ExternalSystemJdkUtil {
     return pair(USE_INTERNAL_JAVA, getInternalJdk());
   }
 
-  private static Sdk findProjectJDK(@NotNull Project project, SdkType javaSdkType) {
+  private static @Nullable Sdk findProjectJDK(@NotNull Project project, @NotNull SdkType javaSdkType) {
     Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     Stream<Sdk> projectSdks = Stream.concat(Stream.of(projectSdk),
                                             Stream.of(ModuleManager.getInstance(project).getModules()).map(module -> ModuleRootManager
                                               .getInstance(module).getSdk()));
     return projectSdks
       .filter(sdk -> sdk != null && sdk.getSdkType() == javaSdkType && isValidJdk(sdk) && JdkUtil.isCompatible(sdk, project))
-      .findFirst().orElse(null);
+      .findFirst()
+      .orElse(null);
   }
 
-  @Contract("null -> null")
-  private static @Nullable Sdk findReferencedJdk(Sdk projectSdk) {
+  @Contract("_, null -> null")
+  private static @Nullable Sdk findReferencedJdk(@Nullable Project project, @Nullable Sdk projectSdk) {
     if (projectSdk != null
         && projectSdk.getSdkType() instanceof DependentSdkType
         && projectSdk.getSdkType() instanceof JavaSdkType sdkType) {
@@ -159,7 +191,8 @@ public final class ExternalSystemJdkUtil {
         return null;
       }
       final String jdkPath = FileUtil.toSystemIndependentName(new File(sdkBinPath).getParent());
-      return ContainerUtil.find(ProjectJdkTable.getInstance().getAllJdks(), sdk -> {
+      var jdkTable = project == null ? ProjectJdkTable.getInstance() : ProjectJdkTable.getInstance(project);
+      return ContainerUtil.find(jdkTable.getAllJdks(), sdk -> {
         final String homePath = sdk.getHomePath();
         return homePath != null && FileUtil.toSystemIndependentName(homePath).equals(jdkPath);
       });
@@ -168,13 +201,13 @@ public final class ExternalSystemJdkUtil {
     }
   }
 
-  private static @Nullable Sdk findReferencedJdk(Project project) {
+  private static @Nullable Sdk findReferencedJdk(@NotNull Project project) {
     Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    return findReferencedJdk(projectSdk);
+    return findReferencedJdk(project, projectSdk);
   }
 
   public static @NotNull Sdk resolveDependentJdk(@NotNull Sdk sdk) {
-    Sdk parentSdk = findReferencedJdk(sdk);
+    Sdk parentSdk = findReferencedJdk(null, sdk);
     if (parentSdk == null) return sdk;
     return parentSdk;
   }
@@ -221,7 +254,7 @@ public final class ExternalSystemJdkUtil {
     }
     try {
       Path path = Path.of(homePath);
-      return JdkUtil.checkForJdk(path) && JdkUtil.checkForJre(homePath);
+      return JdkUtil.checkForJdk(path) && JdkUtil.checkForJre(path);
     }
     catch (InvalidPathException exception) {
       return false;
@@ -249,43 +282,28 @@ public final class ExternalSystemJdkUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Sdk lookupJdkByName(@NotNull String sdkName, @Nullable EelDescriptor eel) {
+  public static @Nullable Sdk lookup(@NotNull Project project, @NotNull Function<SdkLookupBuilder, SdkLookupBuilder> customizer) {
     return SdkLookupUtil.lookupSdkBlocking(((builder) -> {
-      if (eel != null) {
-        builder = builder.withEel(eel);
-      }
-      return builder.withSdkName(sdkName)
-        .withSdkType(getJavaSdkType())
-        .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP);
+      return customizer.apply(
+        builder.withProject(project)
+          .withSdkType(getJavaSdkType())
+          .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)
+      );
     }));
   }
 
   @ApiStatus.Internal
-  public static @Nullable Sdk lookupJdkByVersion(@NotNull JavaVersion javaVersion, @Nullable EelDescriptor eel) {
-    return SdkLookupUtil.lookupSdkBlocking(
-      (builder) -> {
-        if (eel != null) {
-          builder = builder.withEel(eel);
-        }
-        return builder.withVersionFilter(it -> matchJavaVersion(javaVersion, it))
-          .withSdkType(getJavaSdkType())
-          .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP);
-      }
-    );
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Sdk lookupJdkByPath(@NotNull String sdkHome) {
-    var jdk = findJdkInSdkTableByPath(sdkHome);
+  public static @NotNull Sdk lookupJdkByPath(@NotNull Project project, @NotNull String sdkHome) {
+    var jdk = findJdkInSdkTableByPath(project, sdkHome);
     if (jdk != null) {
       return jdk;
     }
     return WriteAction.computeAndWait(() -> {
-      var effectiveJdk = findJdkInSdkTableByPath(sdkHome);
+      var effectiveJdk = findJdkInSdkTableByPath(project, sdkHome);
       if (effectiveJdk != null) {
         return effectiveJdk;
       }
-      return createJdk(sdkHome);
+      return createJdk(project, sdkHome);
     });
   }
 
@@ -298,8 +316,8 @@ public final class ExternalSystemJdkUtil {
   }
 
   @RequiresWriteLock
-  private static @NotNull Sdk createJdk(@NotNull String sdkHome) {
-    var sdkTable = ProjectJdkTable.getInstance();
+  private static @NotNull Sdk createJdk(@NotNull Project project, @NotNull String sdkHome) {
+    var sdkTable = ProjectJdkTable.getInstance(project);
     var jdkProvider = ExternalSystemJdkProvider.getInstance();
     var jdkType = jdkProvider.getJavaSdkType();
     var jdkName = jdkType.suggestSdkName(null, sdkHome);
@@ -312,7 +330,12 @@ public final class ExternalSystemJdkUtil {
 
   @ApiStatus.Internal
   public static @Nullable Sdk findJdkInSdkTableByPath(@NotNull String jdkHome) {
-    var sdkTable = ProjectJdkTable.getInstance();
+    return findJdkInSdkTableByPath(null, jdkHome);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Sdk findJdkInSdkTableByPath(@Nullable Project project, @NotNull String jdkHome) {
+    var sdkTable = project == null ? ProjectJdkTable.getInstance() : ProjectJdkTable.getInstance(project);
     var allJdks = sdkTable.getSdksOfType(getJavaSdkType());
     return ContainerUtil.find(allJdks, it -> FileUtil.pathsEqual(jdkHome, it.getHomePath()));
   }

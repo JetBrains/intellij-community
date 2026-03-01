@@ -1,10 +1,9 @@
-from _typeshed import StrPath
-from typing import IO, AnyStr
+from _typeshed import StrPath, SupportsRead
 from typing_extensions import Self
 
 __tracebackhide__: bool
 
-def contents_of(file: IO[AnyStr] | StrPath, encoding: str = "utf-8") -> str: ...
+def contents_of(file: SupportsRead[str] | StrPath, encoding: str = "utf-8") -> str: ...
 
 class FileMixin:
     def exists(self) -> Self: ...

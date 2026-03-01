@@ -1,16 +1,21 @@
 package com.intellij.terminal.frontend.view.completion
 
-import com.google.common.base.Ascii
-import com.intellij.codeInsight.completion.CompletionProcessEx
-import com.intellij.codeInsight.completion.CompletionService
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupEx
+import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.LookupManagerListener
+import com.intellij.codeInsight.lookup.LookupPresentation
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.view.impl.TerminalInput
@@ -65,20 +70,13 @@ internal class TerminalLookupManagerListener : LookupManagerListener {
 
 private class TerminalLookupListener : LookupListener {
   override fun beforeItemSelected(event: LookupEvent): Boolean {
-    val terminalInput = event.lookup.editor.getUserData(TerminalInput.Companion.KEY) ?: return false
     val item = event.item
-    val lookup = event.lookup as LookupImpl
-    val completionChar = event.completionChar
-
     if (item == null || !item.isValid() || item is EmptyLookupItem) {
       return false
     }
 
-    val commandSize = lookup.itemPattern(item).length
-    if (commandSize > 0) {
-      terminalInput.sendBytes(ByteArray(commandSize) { Ascii.DEL })
-    }
-    terminalInput.sendString(item.lookupString)
+    insertTerminalCompletionItem(event.lookup as LookupImpl, item)
+
     // if one of the listeners returns false - the item is not inserted
     return false
   }
@@ -116,16 +114,6 @@ private class TerminalLookupListener : LookupListener {
   }
 
   /**
-   * Adds [TerminalCommandCompletion.COMPLETING_COMMAND_KEY] to the lookup once it is shown.
-   */
-  override fun lookupShown(event: LookupEvent) {
-    val process = CompletionService.getCompletionService().currentCompletion as? CompletionProcessEx ?: return
-    val command = process.getUserData(TerminalCommandCompletion.COMPLETING_COMMAND_KEY) ?: return
-    val lookup = event.lookup as? LookupImpl ?: return
-    lookup.putUserData(TerminalCommandCompletion.COMPLETING_COMMAND_KEY, command)
-  }
-
-  /**
    * Stores the last selected item in the lookup by [TerminalCommandCompletion.LAST_SELECTED_ITEM_KEY].
    */
   override fun currentItemChanged(event: LookupEvent) {
@@ -139,15 +127,23 @@ private class TerminalLookupListener : LookupListener {
  * Set's the [AllIcons.Actions.Execute] icon for the selected item in the lookup if it matches the user input.
  * To indicate that insertion of the item will cause immediate execution of the command.
  */
-private class TerminalSelectedItemIconUpdater(private val lookup: Lookup) : PrefixChangeListener {
+private class TerminalSelectedItemIconUpdater(private val lookup: LookupImpl) : PrefixChangeListener {
   private var curSelectedItem: LookupElement? = null
 
   override fun afterAppend(c: Char) {
-    updateSelectedItemIcon()
+    scheduleUpdate()
   }
 
   override fun afterTruncate() {
-    updateSelectedItemIcon()
+    scheduleUpdate()
+  }
+
+  private fun scheduleUpdate() {
+    invokeLater(ModalityState.stateForComponent(lookup.component)) {
+      if (!lookup.isLookupDisposed) {
+        updateSelectedItemIcon()
+      }
+    }
   }
 
   private fun updateSelectedItemIcon() {
@@ -160,6 +156,7 @@ private class TerminalSelectedItemIconUpdater(private val lookup: Lookup) : Pref
     if (canExecuteWithChosenItem(selectedItem.lookupString, typedPrefix)) {
       selectedItem.getTerminalIcon()?.forceIcon(AllIcons.Actions.Execute)
       curSelectedItem = selectedItem
+      lookup.list.repaint()
     }
     else {
       resetSelectedItemIcon()
@@ -169,6 +166,7 @@ private class TerminalSelectedItemIconUpdater(private val lookup: Lookup) : Pref
   private fun resetSelectedItemIcon() {
     curSelectedItem?.getTerminalIcon()?.useDefaultIcon()
     curSelectedItem = null
+    lookup.list.repaint()
   }
 
   private fun LookupElement.getTerminalIcon(): TerminalStatefulDelegatingIcon? {

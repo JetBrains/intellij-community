@@ -7,8 +7,9 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JViewport;
+import java.awt.Rectangle;
 import java.util.Collections;
 import java.util.List;
 

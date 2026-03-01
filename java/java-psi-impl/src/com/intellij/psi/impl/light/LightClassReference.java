@@ -1,7 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;

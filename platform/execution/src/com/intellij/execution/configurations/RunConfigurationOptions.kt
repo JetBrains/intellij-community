@@ -3,7 +3,12 @@ package com.intellij.execution.configurations
 
 import com.intellij.execution.ui.FragmentedSettings
 import com.intellij.openapi.components.BaseState
-import com.intellij.util.xmlb.annotations.*
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.Transient
+import com.intellij.util.xmlb.annotations.XCollection
 
 @Tag("predefined_log_file")
 class PredefinedLogFile() : BaseState() {

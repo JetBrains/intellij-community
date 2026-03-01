@@ -11,7 +11,15 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.LineMarkerRenderer;
+import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
+import com.intellij.openapi.editor.markup.MarkupEditorFilter;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.impl.NonCancelableIndicator;
@@ -24,14 +32,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.Objects;
 
 /**
  * Implementation of the markup element for the editor and document.
  */
 @ApiStatus.Internal
-public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
+sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   permits PersistentRangeHighlighterImpl {
   private static final Logger LOG = Logger.getInstance(RangeHighlighterImpl.class);
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
@@ -86,7 +95,9 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
 
     registerInTree((DocumentEx)model.getDocument(), start, end, greedyToLeft, greedyToRight, layer);
     if (LOG.isTraceEnabled()) {
-      LOG.trace("RangeHighlighterImpl: create " + this+"; "+getId()+(ProgressIndicatorProvider.getGlobalProgressIndicator() == null ? "" : "; progress=" +ProgressIndicatorProvider.getGlobalProgressIndicator()));
+      ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      LOG.trace("RangeHighlighterImpl: create " + this + "; " + getId() +
+                (progress == null || progress instanceof NonCancelableIndicator ? "" : "; progress=" + progress));
     }
   }
 
@@ -481,10 +492,10 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   public @NonNls String toString() {
     return "RangeHighlighter: " +
            (isValid() ? "" : "(invalid)")
-           +"("+getStartOffset()+","+getEndOffset()+")"
-           +"; layer:"+getLayer()
-           +(getErrorStripeTooltip() == null ? "" : "; tooltip: "+getErrorStripeTooltip())
-           +(getTextAttributesKey() == null ? "" : "; textAttributeKey: "+getTextAttributesKey())
+           + debugOffsets()
+           + "; layer:" + getLayer()
+           + (getErrorStripeTooltip() == null ? "" : "; tooltip: "+getErrorStripeTooltip())
+           + (getTextAttributesKey() == null ? "" : "; textAttributeKey: "+getTextAttributesKey())
       ;
   }
 }

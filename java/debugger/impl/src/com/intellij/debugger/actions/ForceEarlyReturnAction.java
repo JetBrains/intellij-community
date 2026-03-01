@@ -19,7 +19,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
@@ -35,7 +34,6 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Objects;
 
 public class ForceEarlyReturnAction extends DebuggerAction {

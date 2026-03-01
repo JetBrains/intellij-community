@@ -5,14 +5,24 @@ import com.michaelbaranov.microba.calendar.VetoPolicy;
 import com.michaelbaranov.microba.common.PolicyEvent;
 import com.michaelbaranov.microba.common.PolicyListener;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.DateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
 
 class AuxPanel extends JPanel implements PropertyChangeListener, PolicyListener {
 

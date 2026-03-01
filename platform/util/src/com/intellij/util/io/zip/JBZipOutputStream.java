@@ -4,14 +4,25 @@ package com.intellij.util.io.zip;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.zip.*;
+import java.util.zip.CRC32;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 
-import static com.intellij.util.io.zip.JBZipFile.*;
+import static com.intellij.util.io.zip.JBZipFile.DWORD;
+import static com.intellij.util.io.zip.JBZipFile.LFH_OFFSET_FOR_CRC;
+import static com.intellij.util.io.zip.JBZipFile.SHORT;
+import static com.intellij.util.io.zip.JBZipFile.WORD;
 
 final class JBZipOutputStream {
   private static final int ZIP64_MIN_VERSION = 45;
@@ -460,7 +471,7 @@ final class JBZipOutputStream {
   public void putNextEntryBytes(JBZipEntry entry, byte[] bytes) throws IOException {
     prepareNextEntry(entry);
     crc.reset();
-    crc.update(bytes);
+    crc.update(bytes, 0, bytes.length);
     entry.setCrc(crc.getValue());
 
     final byte[] outputBytes;

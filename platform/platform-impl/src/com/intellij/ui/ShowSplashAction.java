@@ -8,7 +8,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.platform.ide.bootstrap.Splash;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.event.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Objects;
 
 import static com.intellij.platform.ide.bootstrap.SplashManagerKt.blockingLoadSplashImage;

@@ -16,7 +16,11 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public final class CatchStatement extends Statement {
   public enum CatchStatementType{

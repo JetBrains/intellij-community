@@ -29,4 +29,28 @@ jvm_library(
   ],
   exports = ["//platform/extensions"]
 )
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.platform.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "//platform/extensions",
+    "//platform/extensions:extensions_test_lib",
+  ],
+  runtime_deps = [
+    ":core",
+    "//platform/util:util_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/util/progress:progress_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.core` end

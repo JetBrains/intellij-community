@@ -12,7 +12,11 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.FoldingModel
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.MarkupModel
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +24,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
-import java.util.*
+import java.util.NavigableMap
+import java.util.TreeMap
 import kotlin.math.max
 
 /**

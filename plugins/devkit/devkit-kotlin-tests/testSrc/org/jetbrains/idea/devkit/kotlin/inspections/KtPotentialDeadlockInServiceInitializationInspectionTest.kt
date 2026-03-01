@@ -39,6 +39,7 @@ class KtPotentialDeadlockInServiceInitializationInspectionTest : PotentialDeadlo
       ${if (lightService) "import com.intellij.openapi.components.Service" else ""}
       
       ${if (lightService) "@Service" else ""}
+      @Suppress("DEPRECATION") 
       internal class TestService {
         var v1: String = ReadAction.<error descr="Do not run read actions during service initialization">compute</error><String, RuntimeException> { "any" }
         var v2: String = getV2()
@@ -106,7 +107,7 @@ class KtPotentialDeadlockInServiceInitializationInspectionTest : PotentialDeadlo
       // language=kotlin
       """
       import com.intellij.openapi.application.*
-      
+      @Suppress("DEPRECATION")
       internal class NotAService {
         var v1: String = ReadAction.compute<String, RuntimeException> { "any" }
         var v2: String = getV2()
@@ -188,6 +189,7 @@ class KtPotentialDeadlockInServiceInitializationInspectionTest : PotentialDeadlo
       
       @Service(Service.Level.PROJECT)
       @State(name = "TestSettings")
+      @Suppress("DEPRECATION")
       internal class TestSettings : PersistentStateComponent<TestSettings.State?> {
         internal class State {
           var testValue: Boolean = true
@@ -244,12 +246,12 @@ class KtPotentialDeadlockInServiceInitializationInspectionTest : PotentialDeadlo
       import com.intellij.openapi.project.ProjectCloseListener
       import com.intellij.util.Alarm
       
-      
+      @Suppress("DEPRECATION")
       @Service
       internal class TestService {
         private val myListener1: ProjectCloseListener
         private val myListener2: ProjectCloseListener
-        private val myAlarm = <warning descr="[DEPRECATION] 'constructor Alarm()' is deprecated. Please use flow or at least pass coroutineScope">Alarm</warning>()
+        private val myAlarm = Alarm()
       
         init {
           myListener1 = object : ProjectCloseListener {
@@ -277,5 +279,4 @@ class KtPotentialDeadlockInServiceInitializationInspectionTest : PotentialDeadlo
     )
     myFixture.checkHighlighting()
   }
-
 }

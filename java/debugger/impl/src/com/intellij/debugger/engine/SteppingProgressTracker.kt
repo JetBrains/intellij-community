@@ -71,7 +71,7 @@ internal class SteppingProgressTracker(private val debuggerProcessImpl: DebugPro
   }
 }
 
-private class CancelingSteppingListener : SteppingListener {
+internal class CancelingSteppingListener : SteppingListener {
   override fun beforeSteppingStarted(suspendContext: SuspendContextImpl, steppingAction: SteppingAction) {
     val debuggerProcessImpl: DebugProcessImpl = suspendContext.debugProcess
     val filter: LightOrRealThreadInfo? = debuggerProcessImpl.requestsManager.filterThread

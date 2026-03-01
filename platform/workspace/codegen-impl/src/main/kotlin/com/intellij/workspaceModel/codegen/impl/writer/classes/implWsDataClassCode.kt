@@ -114,8 +114,8 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         }
       }
 
-      sectionNl("override fun getRequiredParents(): List<Class<out WorkspaceEntity>>") {
-        line("val res = mutableListOf<Class<out WorkspaceEntity>>()")
+      sectionNl("override fun getRequiredParents(): List<Class<out $WorkspaceEntity>>") {
+        line("val res = mutableListOf<Class<out $WorkspaceEntity>>()")
         allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
           val parentType = it.valueType
           if (parentType !is ValueType.Optional) {
@@ -131,7 +131,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         line("if (other == null) return false")
         line("if (this.javaClass != other.javaClass) return false")
 
-        lineWrapped("other as $javaDataName")
+        line("other as $javaDataName")
 
         list(allFields.noRefs().noSymbolicId()) {
           "if (this.$name != other.$name) return false"
@@ -145,7 +145,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         line("if (other == null) return false")
         line("if (this.javaClass != other.javaClass) return false")
 
-        lineWrapped("other as $javaDataName")
+        line("other as $javaDataName")
 
         list(allFields.noRefs().noEntitySource().noSymbolicId()) {
           "if (this.$name != other.$name) return false"
@@ -173,12 +173,11 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       }
 
       if (keyFields.isNotEmpty()) {
-        line()
         section("override fun equalsByKey(other: Any?): Boolean") {
           line("if (other == null) return false")
           line("if (this.javaClass != other.javaClass) return false")
 
-          lineWrapped("other as $javaDataName")
+          line("other as $javaDataName")
 
           list(keyFields) {
             "if (this.$name != other.$name) return false"
@@ -186,7 +185,6 @@ fun ObjClass<*>.implWsDataClassCode(): String {
 
           line("return true")
         }
-        line()
         section("override fun hashCodeByKey(): Int") {
           line("var result = javaClass.hashCode()")
           list(keyFields) {

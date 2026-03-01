@@ -10,7 +10,10 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.*;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PSI_ELEMENT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PSI_ELEMENT_ARRAY;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PSI_FILE;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.VIRTUAL_FILE_ARRAY;
 
 final class VirtualFileRule {
   static @Nullable VirtualFile getData(@NotNull DataMap dataProvider) {

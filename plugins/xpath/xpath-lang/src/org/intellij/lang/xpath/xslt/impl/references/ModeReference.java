@@ -21,8 +21,17 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +49,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class ModeReference extends SimpleAttributeReference implements PsiPolyVariantReference, EmptyResolveMessageProvider {
   private final boolean myIsDeclaration;

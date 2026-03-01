@@ -2,8 +2,8 @@
 package org.editorconfig.language.codeinsight
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.editorconfig.language.codeinsight.refactoring.EditorConfigRenameHandler
 
 class EditorConfigRefactoringTest : BasePlatformTestCase() {

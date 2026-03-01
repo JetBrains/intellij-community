@@ -10,4 +10,46 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/test/compose",
   ]
 )
+
+jvm_library(
+  name = "compose-all-tests-k2_test_lib",
+  module_name = "kotlin.compose-all-tests.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":compose-all-tests-k2",
+    "//plugins/kotlin/tests-compose:tests-compose_test_lib",
+    "//plugins/kotlin/jvm-debugger/test/compose:compose_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests",
+    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests_test_lib",
+    "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests",
+    "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting-tests",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting-tests_test_lib",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight-tests",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight-tests_test_lib",
+    "//plugins/kotlin/code-insight/line-markers:kotlin-codeInsight-lineMarkers-tests",
+    "//plugins/kotlin/code-insight/line-markers:kotlin-codeInsight-lineMarkers-tests_test_lib",
+    "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates-tests",
+    "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates-tests_test_lib",
+    "//plugins/kotlin/code-insight/postfix-templates:kotlin-codeInsight-postfixTemplates-tests",
+    "//plugins/kotlin/code-insight/postfix-templates:kotlin-codeInsight-postfixTemplates-tests_test_lib",
+    "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java-tests",
+    "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java-tests_test_lib",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting-tests",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting-tests_test_lib",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-tests",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-tests_test_lib",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-tests",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-tests_test_lib",
+    "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename-tests",
+    "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename-tests_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.compose-all-tests.k2` end

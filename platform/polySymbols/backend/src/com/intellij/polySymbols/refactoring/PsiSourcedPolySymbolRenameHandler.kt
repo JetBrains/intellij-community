@@ -14,7 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
 
-private class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler {
+internal class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler {
 
   private var symbol: PsiSourcedPolySymbol? = null
 

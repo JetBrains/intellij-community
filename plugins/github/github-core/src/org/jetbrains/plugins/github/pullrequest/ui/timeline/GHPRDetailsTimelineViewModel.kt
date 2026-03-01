@@ -15,7 +15,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -77,7 +82,7 @@ class GHPRDetailsTimelineViewModel internal constructor(
     data.state,
     data.title.convertToHtml(project),
     data.body,
-    data.body.convertToHtml(project),
+    data.body.convertToHtml(project, dataContext.repositoryDataService.repositoryMapping.repository.serverPath),
     data.headRefId,
     data.headRefName,
     data.viewerCanUpdate,

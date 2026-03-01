@@ -12,7 +12,12 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.nj2k.tree.JKClass
 import org.jetbrains.kotlin.nj2k.tree.JKMethod
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.types.JKClassType
+import org.jetbrains.kotlin.nj2k.types.JKNoType
+import org.jetbrains.kotlin.nj2k.types.JKType
+import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
+import org.jetbrains.kotlin.nj2k.types.asType
+import org.jetbrains.kotlin.nj2k.types.toJK
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 

@@ -14,13 +14,21 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.CustomReferenceConverter;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<T>> implements CustomReferenceConverter<List<T>> {
 

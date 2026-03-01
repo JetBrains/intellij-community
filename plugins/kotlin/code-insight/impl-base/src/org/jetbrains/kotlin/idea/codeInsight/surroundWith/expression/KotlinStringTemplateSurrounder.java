@@ -8,7 +8,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.KtConstantExpression;
+import org.jetbrains.kotlin.psi.KtExpression;
+import org.jetbrains.kotlin.psi.KtPsiFactory;
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry;
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression;
 
 public class KotlinStringTemplateSurrounder extends KotlinExpressionSurrounder {
     @Override

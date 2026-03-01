@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.vcs.VcsUtil
 import com.intellij.util.ui.tree.TreeUtil
 
@@ -16,6 +17,7 @@ internal class SelectInChangesViewAction : DumbAwareAction(), ActionRemoteBehavi
     val view = event.getData(ChangesListView.DATA_KEY) ?: return
     val file = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR)?.file ?: return
     view.selectFile(file)
+    IdeFocusManager.getInstance(event.project).requestFocus(view, false)
   }
 
   override fun update(event: AnActionEvent) {

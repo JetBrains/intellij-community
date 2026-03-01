@@ -21,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @Serializable
 data class ExecutionEnvironmentProxyDto(
+  val executionId: Long,
   val runProfileName: @NlsSafe String,
   val runConfigurationTypeId: String,
   val environmentContentToReuseDescriptorId: RunContentDescriptorIdImpl?,
@@ -44,6 +45,7 @@ fun ExecutionEnvironment.toDto(cs: CoroutineScope): ExecutionEnvironmentProxyDto
     }
   }
   return ExecutionEnvironmentProxyDto(
+    environment.executionId,
     proxy.getRunProfileName(), proxy.getRunConfigurationTypeId(),
     environment.contentToReuse?.id as RunContentDescriptorIdImpl?,
     proxy.getIcon().rpcId(), proxy.getRerunIcon().rpcId(),

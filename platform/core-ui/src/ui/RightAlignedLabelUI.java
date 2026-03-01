@@ -3,10 +3,17 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicLabelUI;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 public final class RightAlignedLabelUI extends BasicLabelUI {
   @Override

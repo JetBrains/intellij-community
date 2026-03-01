@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2.configurations.impl
 
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -11,234 +11,697 @@ import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl : MetadataStorageBase() {
-  override fun initializeMetadata() {
-    val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
-    val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
-    val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
-    val primitiveTypeStringNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "String")
+    override fun initializeMetadata() {
+        val primitiveTypeLongNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Long")
+        val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
+        val primitiveTypeByteNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Byte")
+        val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
+        val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
+        val primitiveTypeStringNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "String")
+        val primitiveTypeIntNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = true, type = "Int")
+        val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
 
-    var typeMetadata: StorageTypeMetadata
+        var typeMetadata: StorageTypeMetadata
 
-    typeMetadata = FinalClassMetadata.ObjectMetadata(
-      fqName = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsKotlinScriptEntitySource", properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                            withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+        typeMetadata = FinalClassMetadata.ObjectMetadata(
+            fqName = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsKotlinScriptEntitySource",
+            properties = listOf(
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "virtualFileUrl",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = true,
+                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                    ),
+                    withDefault = false
+                )
+            ),
+            supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource")
+        )
 
-    addMetadata(typeMetadata)
+        addMetadata(typeMetadata)
 
-    typeMetadata = FinalClassMetadata.ObjectMetadata(
-      fqName = "org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptEntitySource", properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                            withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+        typeMetadata = FinalClassMetadata.ObjectMetadata(
+            fqName = "org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptEntitySource",
+            properties = listOf(
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "virtualFileUrl",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = true,
+                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                    ),
+                    withDefault = false
+                )
+            ),
+            supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource")
+        )
 
-    addMetadata(typeMetadata)
+        addMetadata(typeMetadata)
 
-    typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId",
+        typeMetadata = FinalClassMetadata.ClassMetadata(
+            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+            properties = listOf(
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "hash",
+                    valueType = primitiveTypeLongNotNullable,
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "presentableName",
+                    valueType = primitiveTypeStringNotNullable,
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "tag",
+                    valueType = primitiveTypeByteNotNullable,
+                    withDefault = false
+                )
+            ),
+            supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
+        )
+
+        addMetadata(typeMetadata)
+
+        typeMetadata = FinalClassMetadata.ClassMetadata(
+            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId",
+            properties = listOf(
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "classes",
+                    valueType = ValueTypeMetadata.ParameterizedType(
+                        generics = listOf(
+                            ValueTypeMetadata.SimpleType.CustomType(
+                                isNullable = false,
+                                typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                            )
+                        ), primitive = primitiveTypeListNotNullable
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "presentableName",
+                    valueType = primitiveTypeStringNotNullable,
+                    withDefault = false
+                )
+            ),
+            supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
+        )
+
+        addMetadata(typeMetadata)
+
+        typeMetadata = EntityMetadata(
+            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity",
+            entityDataFqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.impl.KotlinScriptEntityData",
+            supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+            properties = listOf(
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "entitySource",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = false,
+                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "virtualFileUrl",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = false,
+                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "dependencies",
+                    valueType = ValueTypeMetadata.ParameterizedType(
+                        generics = listOf(
+                            ValueTypeMetadata.SimpleType.CustomType(
+                                isNullable = false,
+                                typeMetadata = FinalClassMetadata.ClassMetadata(
+                                    fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId",
+                                    properties = listOf(
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "classes",
+                                            valueType = ValueTypeMetadata.ParameterizedType(
+                                                generics = listOf(
+                                                    ValueTypeMetadata.SimpleType.CustomType(
+                                                        isNullable = false,
+                                                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                                                    )
+                                                ), primitive = primitiveTypeListNotNullable
+                                            ),
+                                            withDefault = false
+                                        ),
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "presentableName",
+                                            valueType = primitiveTypeStringNotNullable,
+                                            withDefault = false
+                                        )
+                                    ),
+                                    supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
+                                )
+                            )
+                        ), primitive = primitiveTypeListNotNullable
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "sdkId",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = true,
+                        typeMetadata = FinalClassMetadata.ClassMetadata(
+                            fqName = "com.intellij.platform.workspace.jps.entities.SdkId",
+                            properties = listOf(
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "name",
+                                    valueType = primitiveTypeStringNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "presentableName",
+                                    valueType = primitiveTypeStringNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "type",
+                                    valueType = primitiveTypeStringNotNullable,
+                                    withDefault = false
+                                )
+                            ),
+                            supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
+                        )
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "configuration",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = true,
+                        typeMetadata = FinalClassMetadata.ClassMetadata(
+                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+                            properties = listOf(
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "hash",
+                                    valueType = primitiveTypeLongNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "presentableName",
+                                    valueType = primitiveTypeStringNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "tag",
+                                    valueType = primitiveTypeByteNotNullable,
+                                    withDefault = false
+                                )
+                            ),
+                            supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
+                        )
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "relatedModuleIds",
+                    valueType = ValueTypeMetadata.ParameterizedType(
+                        generics = listOf(
+                            ValueTypeMetadata.SimpleType.CustomType(
+                                isNullable = false,
+                                typeMetadata = FinalClassMetadata.ClassMetadata(
+                                    fqName = "com.intellij.platform.workspace.jps.entities.ModuleId",
+                                    properties = listOf(
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "name",
+                                            valueType = primitiveTypeStringNotNullable,
+                                            withDefault = false
+                                        ),
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "presentableName",
+                                            valueType = primitiveTypeStringNotNullable,
+                                            withDefault = false
+                                        )
+                                    ),
+                                    supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
+                                )
+                            )
+                        ), primitive = primitiveTypeListNotNullable
+                    ),
+                    withDefault = true
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false, isKey = false, isOpen = false, name = "reports", valueType = ValueTypeMetadata.ParameterizedType(
+                        generics = listOf(
+                            ValueTypeMetadata.SimpleType.CustomType(
+                                isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(
+                                    fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData", properties = listOf(
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "code",
+                                            valueType = primitiveTypeIntNotNullable,
+                                            withDefault = false
+                                        ),
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "exceptionMessage",
+                                            valueType = primitiveTypeStringNullable,
+                                            withDefault = false
+                                        ),
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "locationData",
+                                            valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                isNullable = true, typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                    fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.LocationData",
                                                     properties = listOf(
-                                                      OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
-                                                                          name = "classes", valueType = ValueTypeMetadata.ParameterizedType(
-                                                          generics = listOf(ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                      fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
-                                                          primitive = primitiveTypeListNotNullable), withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
-                                                                          name = "presentableName",
-                                                                          valueType = primitiveTypeStringNotNullable, withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
-                                                                          name = "sources", valueType = ValueTypeMetadata.ParameterizedType(
-                                                          generics = listOf(ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                      fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
-                                                          primitive = primitiveTypeListNotNullable), withDefault = false)),
-                                                    supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
+                                                        OwnPropertyMetadata(
+                                                            isComputable = false,
+                                                            isKey = false,
+                                                            isOpen = false,
+                                                            name = "end",
+                                                            valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                isNullable = true,
+                                                                typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                    fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.PositionData",
+                                                                    properties = listOf(
+                                                                        OwnPropertyMetadata(
+                                                                            isComputable = false,
+                                                                            isKey = false,
+                                                                            isOpen = false,
+                                                                            name = "absolutePos",
+                                                                            valueType = primitiveTypeIntNullable,
+                                                                            withDefault = false
+                                                                        ),
+                                                                        OwnPropertyMetadata(
+                                                                            isComputable = false,
+                                                                            isKey = false,
+                                                                            isOpen = false,
+                                                                            name = "col",
+                                                                            valueType = primitiveTypeIntNotNullable,
+                                                                            withDefault = false
+                                                                        ),
+                                                                        OwnPropertyMetadata(
+                                                                            isComputable = false,
+                                                                            isKey = false,
+                                                                            isOpen = false,
+                                                                            name = "line",
+                                                                            valueType = primitiveTypeIntNotNullable,
+                                                                            withDefault = false
+                                                                        )
+                                                                    ),
+                                                                    supertypes = listOf()
+                                                                )
+                                                            ),
+                                                            withDefault = false
+                                                        ),
+                                                        OwnPropertyMetadata(
+                                                            isComputable = false,
+                                                            isKey = false,
+                                                            isOpen = false,
+                                                            name = "start",
+                                                            valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                isNullable = false,
+                                                                typeMetadata = FinalClassMetadata.KnownClass(fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.PositionData")
+                                                            ),
+                                                            withDefault = false
+                                                        )
+                                                    ),
+                                                    supertypes = listOf()
+                                                )
+                                            ),
+                                            withDefault = false
+                                        ),
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "message",
+                                            valueType = primitiveTypeStringNotNullable,
+                                            withDefault = false
+                                        ),
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "severity",
+                                            valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                isNullable = false,
+                                                typeMetadata = FinalClassMetadata.EnumClassMetadata(
+                                                    fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.SeverityData",
+                                                    properties = listOf(),
+                                                    supertypes = listOf("java.io.Serializable", "kotlin.Comparable", "kotlin.Enum"),
+                                                    values = listOf("DEBUG", "ERROR", "FATAL", "INFO", "WARNING")
+                                                )
+                                            ),
+                                            withDefault = false
+                                        ),
+                                        OwnPropertyMetadata(
+                                            isComputable = false,
+                                            isKey = false,
+                                            isOpen = false,
+                                            name = "sourcePath",
+                                            valueType = primitiveTypeStringNullable,
+                                            withDefault = false
+                                        )
+                                    ), supertypes = listOf()
+                                )
+                            )
+                        ), primitive = primitiveTypeListNotNullable
+                    ), withDefault = true
+                )
+            ),
+            extProperties = listOf(),
+            isAbstract = false
+        )
 
-    addMetadata(typeMetadata)
+        addMetadata(typeMetadata)
 
-    typeMetadata = EntityMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity",
-                                  entityDataFqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.impl.KotlinScriptEntityData",
-                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "dependencies",
-                            valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
-                              ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(
-                                fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId",
-                                properties = listOf(
-                                  OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "classes",
-                                                      valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
-                                                        ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
-                                                                                                      primitive = primitiveTypeListNotNullable),
-                                                      withDefault = false),
-                                  OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName",
-                                                      valueType = primitiveTypeStringNotNullable, withDefault = false),
-                                  OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "sources",
-                                                      valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
-                                                        ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
-                                                                                                      primitive = primitiveTypeListNotNullable),
-                                                      withDefault = false)),
-                                supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")))),
-                                                                            primitive = primitiveTypeListNotNullable), withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "configuration",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
-                                                                                typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                  fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
-                                                                                  properties = listOf(
-                                                                                    OwnPropertyMetadata(isComputable = false, isKey = false,
-                                                                                                        isOpen = false, name = "data",
-                                                                                                        valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                          isNullable = false,
-                                                                                                          typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                            fqName = "kotlin.ByteArray")),
-                                                                                                        withDefault = false)),
-                                                                                  supertypes = listOf())), withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "sdkId",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
-                                                                                typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                  fqName = "com.intellij.platform.workspace.jps.entities.SdkId",
-                                                                                  properties = listOf(
-                                                                                    OwnPropertyMetadata(isComputable = false, isKey = false,
-                                                                                                        isOpen = false, name = "name",
-                                                                                                        valueType = primitiveTypeStringNotNullable,
-                                                                                                        withDefault = false),
-                                                                                    OwnPropertyMetadata(isComputable = false, isKey = false,
-                                                                                                        isOpen = false,
-                                                                                                        name = "presentableName",
-                                                                                                        valueType = primitiveTypeStringNotNullable,
-                                                                                                        withDefault = false),
-                                                                                    OwnPropertyMetadata(isComputable = false, isKey = false,
-                                                                                                        isOpen = false, name = "type",
-                                                                                                        valueType = primitiveTypeStringNotNullable,
-                                                                                                        withDefault = false)),
-                                                                                  supertypes = listOf(
-                                                                                    "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "reports",
-                            valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
-                              ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(
-                                fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData", properties = listOf(
-                                  OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "code",
-                                                      valueType = primitiveTypeIntNotNullable, withDefault = false),
-                                  OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "exceptionMessage",
-                                                      valueType = primitiveTypeStringNullable, withDefault = false),
-                                  OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "location",
-                                                      valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
-                                                                                                          typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                            fqName = "kotlin.script.experimental.api.SourceCode\$Location")),
-                                                      withDefault = false),
-                                  OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "message",
-                                                      valueType = primitiveTypeStringNotNullable, withDefault = false),
-                                  OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "severity",
-                                                      valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                          typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                            fqName = "kotlin.script.experimental.api.ScriptDiagnostic\$Severity")),
-                                                      withDefault = false),
-                                  OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "sourcePath",
-                                                      valueType = primitiveTypeStringNullable, withDefault = false)),
-                                supertypes = listOf()))), primitive = primitiveTypeListNotNullable), withDefault = true)),
-                                  extProperties = listOf(), isAbstract = false)
+        typeMetadata = EntityMetadata(
+            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity",
+            entityDataFqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.impl.KotlinScriptLibraryEntityData",
+            supertypes = listOf(
+                "com.intellij.platform.workspace.storage.WorkspaceEntity",
+                "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"
+            ),
+            properties = listOf(
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "entitySource",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = false,
+                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "classes",
+                    valueType = ValueTypeMetadata.ParameterizedType(
+                        generics = listOf(
+                            ValueTypeMetadata.SimpleType.CustomType(
+                                isNullable = false,
+                                typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                            )
+                        ), primitive = primitiveTypeListNotNullable
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "usedInScripts",
+                    valueType = ValueTypeMetadata.ParameterizedType(
+                        generics = listOf(
+                            ValueTypeMetadata.SimpleType.CustomType(
+                                isNullable = false,
+                                typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                            )
+                        ), primitive = primitiveTypeSetNotNullable
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "sources",
+                    valueType = ValueTypeMetadata.ParameterizedType(
+                        generics = listOf(
+                            ValueTypeMetadata.SimpleType.CustomType(
+                                isNullable = false,
+                                typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                            )
+                        ), primitive = primitiveTypeSetNotNullable
+                    ),
+                    withDefault = true
+                ),
+                OwnPropertyMetadata(
+                    isComputable = true,
+                    isKey = false,
+                    isOpen = false,
+                    name = "symbolicId",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = false,
+                        typeMetadata = FinalClassMetadata.ClassMetadata(
+                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId",
+                            properties = listOf(
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "classes",
+                                    valueType = ValueTypeMetadata.ParameterizedType(
+                                        generics = listOf(
+                                            ValueTypeMetadata.SimpleType.CustomType(
+                                                isNullable = false,
+                                                typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")
+                                            )
+                                        ), primitive = primitiveTypeListNotNullable
+                                    ),
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "presentableName",
+                                    valueType = primitiveTypeStringNotNullable,
+                                    withDefault = false
+                                )
+                            ),
+                            supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
+                        )
+                    ),
+                    withDefault = false
+                )
+            ),
+            extProperties = listOf(),
+            isAbstract = false
+        )
 
-    addMetadata(typeMetadata)
+        addMetadata(typeMetadata)
 
-    typeMetadata = EntityMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity",
-                                  entityDataFqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.impl.KotlinScriptLibraryEntityData",
-                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
-                                                      "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"),
-                                  properties = listOf(
-                                    OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
-                                                        valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                            typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                              fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                                                        withDefault = false),
-                                    OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "classes",
-                                                        valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
-                                                          ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                  typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                    fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
-                                                                                                        primitive = primitiveTypeListNotNullable),
-                                                        withDefault = false),
-                                    OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "sources",
-                                                        valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
-                                                          ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                  typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                    fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
-                                                                                                        primitive = primitiveTypeListNotNullable),
-                                                        withDefault = false),
-                                    OwnPropertyMetadata(isComputable = true, isKey = false, isOpen = false, name = "symbolicId",
-                                                        valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                            typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                              fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId",
-                                                                                                              properties = listOf(
-                                                                                                                OwnPropertyMetadata(
-                                                                                                                  isComputable = false,
-                                                                                                                  isKey = false,
-                                                                                                                  isOpen = false,
-                                                                                                                  name = "classes",
-                                                                                                                  valueType = ValueTypeMetadata.ParameterizedType(
-                                                                                                                    generics = listOf(
-                                                                                                                      ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                        isNullable = false,
-                                                                                                                        typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                          fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
-                                                                                                                    primitive = primitiveTypeListNotNullable),
-                                                                                                                  withDefault = false),
-                                                                                                                OwnPropertyMetadata(
-                                                                                                                  isComputable = false,
-                                                                                                                  isKey = false,
-                                                                                                                  isOpen = false,
-                                                                                                                  name = "presentableName",
-                                                                                                                  valueType = primitiveTypeStringNotNullable,
-                                                                                                                  withDefault = false),
-                                                                                                                OwnPropertyMetadata(
-                                                                                                                  isComputable = false,
-                                                                                                                  isKey = false,
-                                                                                                                  isOpen = false,
-                                                                                                                  name = "sources",
-                                                                                                                  valueType = ValueTypeMetadata.ParameterizedType(
-                                                                                                                    generics = listOf(
-                                                                                                                      ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                        isNullable = false,
-                                                                                                                        typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                          fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
-                                                                                                                    primitive = primitiveTypeListNotNullable),
-                                                                                                                  withDefault = false)),
-                                                                                                              supertypes = listOf(
-                                                                                                                "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
-                                                        withDefault = false)), extProperties = listOf(), isAbstract = false)
+        typeMetadata = EntityMetadata(
+            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
+            entityDataFqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.impl.ScriptCompilationConfigurationEntityData",
+            supertypes = listOf(
+                "com.intellij.platform.workspace.storage.WorkspaceEntity",
+                "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId"
+            ),
+            properties = listOf(
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "entitySource",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = false,
+                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "data",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = false,
+                        typeMetadata = FinalClassMetadata.KnownClass(fqName = "kotlin.ByteArray")
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = false,
+                    isKey = false,
+                    isOpen = false,
+                    name = "identity",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = false,
+                        typeMetadata = FinalClassMetadata.ClassMetadata(
+                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+                            properties = listOf(
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "hash",
+                                    valueType = primitiveTypeLongNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "presentableName",
+                                    valueType = primitiveTypeStringNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "tag",
+                                    valueType = primitiveTypeByteNotNullable,
+                                    withDefault = false
+                                )
+                            ),
+                            supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
+                        )
+                    ),
+                    withDefault = false
+                ),
+                OwnPropertyMetadata(
+                    isComputable = true,
+                    isKey = false,
+                    isOpen = false,
+                    name = "symbolicId",
+                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                        isNullable = false,
+                        typeMetadata = FinalClassMetadata.ClassMetadata(
+                            fqName = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+                            properties = listOf(
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "hash",
+                                    valueType = primitiveTypeLongNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "presentableName",
+                                    valueType = primitiveTypeStringNotNullable,
+                                    withDefault = false
+                                ),
+                                OwnPropertyMetadata(
+                                    isComputable = false,
+                                    isKey = false,
+                                    isOpen = false,
+                                    name = "tag",
+                                    valueType = primitiveTypeByteNotNullable,
+                                    withDefault = false
+                                )
+                            ),
+                            supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")
+                        )
+                    ),
+                    withDefault = false
+                )
+            ),
+            extProperties = listOf(),
+            isAbstract = false
+        )
 
-    addMetadata(typeMetadata)
-  }
+        addMetadata(typeMetadata)
+    }
 
-  override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity", metadataHash = -904523740)
-    addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity", metadataHash = -366522520)
-    addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId", metadataHash = -1990443645)
-    addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
-                    metadataHash = -1162660984)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = 51502100)
-    addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData", metadataHash = -579968699)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1656635705)
-    addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptEntitySource", metadataHash = 396445436)
-    addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsKotlinScriptEntitySource",
-                    metadataHash = -809979893)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -2087540107)
-  }
-
+    override fun initializeMetadataHash() {
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity", metadataHash = -1579312771)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity", metadataHash = 748449801)
+        addMetadataHash(
+            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity",
+            metadataHash = 734280406
+        )
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId", metadataHash = 1246211390)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = 206069110)
+        addMetadataHash(
+            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationIdentity",
+            metadataHash = -1310517564
+        )
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData", metadataHash = -305007550)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.LocationData", metadataHash = -1954134759)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.PositionData", metadataHash = 224932890)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.SeverityData", metadataHash = -1336558338)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1236719437)
+        addMetadataHash(
+            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptEntitySource",
+            metadataHash = 396445436
+        )
+        addMetadataHash(
+            typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsKotlinScriptEntitySource",
+            metadataHash = -809979893
+        )
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 1880685048)
+    }
 }

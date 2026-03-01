@@ -3,20 +3,54 @@ package com.intellij.compiler;
 
 import org.intellij.lang.annotations.Language;
 
-import javax.tools.*;
-import java.io.*;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.FileObject;
+import javax.tools.ForwardingJavaFileManager;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author Bas Leijdekkers
  */
 public final class JavaInMemoryCompiler {
 
+  private final JavaCompiler myCompiler = createJavaCompiler();
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private final JavaMemFileManager myFileManager = new JavaMemFileManager();
-  private final JavaCompiler myCompiler = ToolProvider.getSystemJavaCompiler();
+  private final JavaMemFileManager myFileManager = new JavaMemFileManager(myCompiler);
+
+  private static JavaCompiler createJavaCompiler() {
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    if (compiler == null) {
+      //workaround for IJPL-229691
+      try {
+        compiler = (JavaCompiler)Class.forName("com.sun.tools.javac.api.JavacTool").getMethod("create").invoke(null);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return compiler;
+  }
 
   public JavaInMemoryCompiler(File... classpath) {
     try {
@@ -31,8 +65,20 @@ public final class JavaInMemoryCompiler {
    * @return the compiled classes as a map (a class Name -> the class compiled content)
    */
   public Map<String, byte[]> compile(String className, @Language("JAVA") String code) {
+    return compile(Collections.singletonMap(className, code));
+  }
+
+  /**
+   * Compiles the given Java source classes.
+   * @param sources mapping from dot-separated class names to their source code
+   * @return the compiled classes as a map (a class Name -> the class compiled content)
+   */
+  public Map<String, byte[]> compile(Map<String, String> sources) {
     final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-    final Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(new JavaSourceFromString(className, code));
+    final List<JavaSourceFromString> compilationUnits = new ArrayList<>();
+    for (Map.Entry<String, String> entry : sources.entrySet()) {
+      compilationUnits.add(new JavaSourceFromString(entry.getKey(), entry.getValue()));
+    }
     final Iterable<String> options = Collections.singletonList("-g"); // generate debugging info.
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final OutputStreamWriter out = new OutputStreamWriter(System.err, StandardCharsets.UTF_8);
@@ -48,7 +94,7 @@ public final class JavaInMemoryCompiler {
       throw new RuntimeException(writer.toString());
     }
     final List<InMemoryClassFile> classFiles = myFileManager.getClassFiles();
-    final Map<String, byte[]> result = new HashMap<>(2);
+    final Map<String, byte[]> result = new HashMap<>(classFiles.size());
     for (InMemoryClassFile classFile : classFiles) {
       result.put(classFile.getClassName(), classFile.getBytes());
     }
@@ -99,8 +145,8 @@ public final class JavaInMemoryCompiler {
 
     private final List<InMemoryClassFile> myClassFiles = new ArrayList<>(2);
 
-    public JavaMemFileManager() {
-      super(ToolProvider.getSystemJavaCompiler().getStandardFileManager(null, null, null));
+    public JavaMemFileManager(JavaCompiler compiler) {
+      super(compiler.getStandardFileManager(null, null, null));
     }
 
     @Override

@@ -2,7 +2,9 @@
 package com.intellij.compilation.charts.ui
 
 import com.intellij.compilation.charts.impl.CompilationChartsViewModel
-import com.intellij.compilation.charts.ui.CompilationChartsTopic.*
+import com.intellij.compilation.charts.ui.CompilationChartsTopic.FILTER
+import com.intellij.compilation.charts.ui.CompilationChartsTopic.MODULE
+import com.intellij.compilation.charts.ui.CompilationChartsTopic.STATISTIC
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider

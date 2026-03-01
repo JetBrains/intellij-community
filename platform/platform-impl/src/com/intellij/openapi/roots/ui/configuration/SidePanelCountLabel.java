@@ -9,9 +9,13 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 public final class SidePanelCountLabel extends JLabel {
   private boolean mySelected;

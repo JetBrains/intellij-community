@@ -38,6 +38,7 @@
 
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.core.script.shared.ScriptingSettingsFUSCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

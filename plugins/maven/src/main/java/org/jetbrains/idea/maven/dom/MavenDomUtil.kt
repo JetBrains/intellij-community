@@ -27,8 +27,18 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.xml.*
-import org.jetbrains.idea.maven.dom.model.*
+import com.intellij.util.xml.DomElement
+import com.intellij.util.xml.DomFileElement
+import com.intellij.util.xml.DomManager
+import com.intellij.util.xml.DomService
+import com.intellij.util.xml.DomUtil
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency
+import org.jetbrains.idea.maven.dom.model.MavenDomParent
+import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
+import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
+import org.jetbrains.idea.maven.dom.model.MavenDomProperties
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0
@@ -84,7 +94,7 @@ object MavenDomUtil {
     if (rootTag == null || "project" != rootTag.getName()) return false
 
     val xmlns = rootTag.getAttributeValue("xmlns")
-    if (xmlns != "http://maven.apache.org/POM/4.1.0" && xmlns != "https://maven.apache.org/POM/4.1.0"){
+    if (xmlns != "http://maven.apache.org/POM/4.1.0" && xmlns != "https://maven.apache.org/POM/4.1.0") {
       return false
     }
 
@@ -244,6 +254,7 @@ object MavenDomUtil {
     val file = getVirtualFile(element)
     if (file == null) return null
     val manager = MavenProjectsManager.getInstance(element.getProject())
+    if (!manager.isInitialized) return null
     return manager.findProject(file)
   }
 

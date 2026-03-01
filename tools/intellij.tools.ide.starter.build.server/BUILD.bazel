@@ -33,4 +33,22 @@ jvm_library(
     "@lib//:opentelemetry",
   ]
 )
+
+jvm_library(
+  name = "ide-starter-build-server_test_lib",
+  module_name = "intellij.tools.ide.starter.build.server",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_ide-starter-build-server",
+  runtime_deps = [
+    ":ide-starter-build-server",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/build-scripts:build-scripts_test_lib",
+    "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
+    "//platform/util:util_test_lib",
+    "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
+    "//libraries/junit5:junit5_test_lib",
+    "//libraries/junit5-launcher:junit5-launcher_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tools.ide.starter.build.server` end

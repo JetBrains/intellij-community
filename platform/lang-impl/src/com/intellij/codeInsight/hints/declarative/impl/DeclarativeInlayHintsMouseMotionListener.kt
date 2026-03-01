@@ -89,6 +89,10 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
         val listener = DeclarativeInlayHintsKeyListener(editor)
         editor.contentComponent.addKeyListener(listener)
         EditorUtil.disposeWithEditor(editor, listener)
+        EditorUtil.disposeWithEditor(editor) {
+          if (inlayKeyListener == listener)
+            inlayKeyListener = null
+        }
         inlayKeyListener = listener
       }
     }

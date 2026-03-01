@@ -9,10 +9,19 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeModel
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesTreeModel.Companion.create
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.PATH_COMPARATOR
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.platform.lvcs.impl.ActivityDiffData
 import com.intellij.platform.lvcs.impl.ActivityFileChange
 import com.intellij.platform.lvcs.impl.DirectoryDiffMode
@@ -117,7 +126,7 @@ private open class PresentableChangeNode(presentableChange: PresentableChange, p
     super.render(tree, renderer, selected, expanded, hasFocus)
     val speedSearch = TreeSpeedSearch.getSupply(tree)
     if (speedSearch?.isPopupActive != true) {
-      val matchedFragments = activityMatcher?.matchingFragments(renderer.getCharSequence(true).toString())
+      val matchedFragments = activityMatcher?.match(renderer.getCharSequence(true).toString())?.map { TextRange.create(it.startOffset, it.endOffset) }
       SpeedSearchUtil.applySpeedSearchHighlighting(renderer, matchedFragments, selected)
     }
   }

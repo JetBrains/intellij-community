@@ -2,7 +2,12 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.ActiveIcon;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.popup.PopupState;

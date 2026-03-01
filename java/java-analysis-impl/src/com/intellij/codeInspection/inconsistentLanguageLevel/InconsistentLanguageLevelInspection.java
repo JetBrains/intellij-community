@@ -3,7 +3,13 @@ package com.intellij.codeInspection.inconsistentLanguageLevel;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;

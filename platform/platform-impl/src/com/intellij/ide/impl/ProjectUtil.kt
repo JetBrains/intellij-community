@@ -15,7 +15,13 @@ import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
 import com.intellij.ide.impl.ProjectUtil.isSameProject
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
@@ -78,8 +84,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.Result
-import kotlin.getOrThrow
 
 private val LOG = logger<ProjectUtil>()
 private var ourProjectPath: String? = null
@@ -184,11 +188,15 @@ object ProjectUtil {
       }
     }
 
-    val storePathManager = serviceAsync<ProjectStorePathManager>()
-    val descriptor = withContext(Dispatchers.IO) {
-      storePathManager.getStoreDescriptor(file)
-    }
-    if (descriptor.testStoreDirectoryExistsForProjectRoot()) {
+    // `isDirectory` test here is for backward compatibility with 252: in 252 we never entered this method with regular files - only with
+    // directories. The problem here is that any regular file now has a storeDescriptor (getStoreDescriptor return type is not nullable),
+    // which evaluates to `regularFile.parent.resolve(".idea")`, which, if exists, pushes IDE to open a new project, instead of a file in
+    // the opened project. This is a tiny quick-fix for 253. We should rework the project open flow to avoid this strange check here.
+    if (Files.isDirectory(file) && isValidProjectPath(file)) {
+      val descriptor = withContext(Dispatchers.IO) {
+        serviceAsync<ProjectStorePathManager>().getStoreDescriptor(file)
+      }
+
       LOG.info("Opening existing project with .idea at $file")
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
       val options = options.copy(
@@ -549,18 +557,15 @@ object ProjectUtil {
 
       LOG.debug { "$location: open file $file" }
       if (projectToClose == null) {
-        val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
-        if (processor != null) {
-          val opened = FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
-            processor.openProjectAndFile(file = file, tempProject = false)
+        val openedProject = FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
+          CommandLineProjectOpenProcessor.openProjectAndFile(file = file, tempProject = false)
+        }
+        if (openedProject != null) {
+          if (result == null) {
+            result = openedProject
           }
-          if (opened != null) {
-            if (result == null) {
-              result = opened
-            }
-            else {
-              FUSProjectHotStartUpMeasurer.openingMultipleProjects(false, list.size, false)
-            }
+          else {
+            FUSProjectHotStartUpMeasurer.openingMultipleProjects(false, list.size, false)
           }
         }
       }

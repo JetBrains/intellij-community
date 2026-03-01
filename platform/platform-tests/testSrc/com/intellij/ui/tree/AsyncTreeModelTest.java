@@ -20,10 +20,16 @@ import org.jetbrains.concurrency.Promises;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.swing.*;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -35,7 +41,12 @@ import java.util.function.Supplier;
 
 import static com.intellij.diagnostic.ThreadDumper.dumpThreadsToString;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public final class AsyncTreeModelTest {
   /**

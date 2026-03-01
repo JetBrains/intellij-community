@@ -6,8 +6,8 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
 @GeneratedCodeApiVersion(3)
@@ -16,7 +16,8 @@ interface MavenProjectsTreeSettingsEntityBuilder : WorkspaceEntityBuilder<MavenP
   var importedFilePaths: MutableList<String>
 }
 
-internal object MavenProjectsTreeSettingsEntityType : EntityType<MavenProjectsTreeSettingsEntity, MavenProjectsTreeSettingsEntityBuilder>() {
+internal object MavenProjectsTreeSettingsEntityType :
+  EntityType<MavenProjectsTreeSettingsEntity, MavenProjectsTreeSettingsEntityBuilder>() {
   override val entityClass: Class<MavenProjectsTreeSettingsEntity> get() = MavenProjectsTreeSettingsEntity::class.java
   operator fun invoke(
     importedFilePaths: List<String>,

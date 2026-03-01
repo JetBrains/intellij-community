@@ -6,7 +6,9 @@ import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
 import java.util.Objects;
 
 import static java.lang.Math.ceil;

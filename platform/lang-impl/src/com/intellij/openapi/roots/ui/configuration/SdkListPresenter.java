@@ -11,7 +11,12 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.CellRendererPanel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.IconUtil;
@@ -24,13 +29,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.ActionItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.InvalidSdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.NoneSdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.ProjectSdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SuggestedItem;
 
 public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);

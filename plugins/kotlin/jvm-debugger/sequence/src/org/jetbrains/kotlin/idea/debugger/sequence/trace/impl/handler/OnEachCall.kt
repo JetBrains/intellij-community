@@ -8,8 +8,10 @@ import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.StreamCallType
 import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes
 
+@K1Deprecation
 class OnEachCall(private val elementsType: GenericType, lambda: String) : IntermediateStreamCall {
     private val args: List<CallArgument> = listOf(CallArgumentImpl(KotlinSequenceTypes.ANY.genericTypeName, lambda))
 

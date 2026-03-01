@@ -5,7 +5,12 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
@@ -16,7 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Use {@link DomService#getDomFileCandidates}.

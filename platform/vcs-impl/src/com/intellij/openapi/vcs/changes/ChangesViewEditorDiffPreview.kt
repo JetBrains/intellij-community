@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider
+import com.intellij.openapi.vcs.changes.actions.diff.ChangesViewShowDiffActionProvider
 import com.intellij.openapi.vcs.changes.actions.diff.WrapperCombinedBlockProducer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
@@ -39,8 +39,8 @@ internal class ChangesViewEditorDiffPreview(
       changesView.diffRequests.collectLatest { (diffAction, clientId) ->
         withExplicitClientId(clientId) {
           when (diffAction) {
-            ChangesViewDiffAction.TRY_SHOW_PREVIEW -> {
-              if (!isSplitterPreviewPresent() && !changesView.isModelUpdateInProgress()) {
+            ChangesViewDiffAction.SINGLE_CLICK_DIFF_PREVIEW -> {
+              if (!isSplitterPreviewPresent()) {
                 val opened = openPreview(false)
                 if (!opened) closePreview()
               }
@@ -71,7 +71,7 @@ internal class ChangesViewEditorDiffPreview(
     CommitToolWindowUtil.openDiff(ChangesViewContentManager.LOCAL_CHANGES, this, requestFocus)
 
   override fun updateDiffAction(event: AnActionEvent) {
-    ShowDiffFromLocalChangesActionProvider.updateAvailability(event)
+    ChangesViewShowDiffActionProvider.updateAvailability(event)
   }
 
   @CalledInAny

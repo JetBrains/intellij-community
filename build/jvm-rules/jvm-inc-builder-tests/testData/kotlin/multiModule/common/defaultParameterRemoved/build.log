@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_defaultParameterRemoved-module1.kotlin_module
+  a/A.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/defaultParameterRemoved/module1/a.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_defaultParameterRemoved-module2.kotlin_module
+  usage/UsageKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/defaultParameterRemoved/module2/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

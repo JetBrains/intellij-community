@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_duplicatedClass-module2.kotlin_module
+  UseAKt.class
+  UseUtilsKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/duplicatedClass/module2/useA.kt
+  kotlin/multiModule/common/duplicatedClass/module2/useUtils.kt
+End of files
+------------------------------------------
+Exit code: OK

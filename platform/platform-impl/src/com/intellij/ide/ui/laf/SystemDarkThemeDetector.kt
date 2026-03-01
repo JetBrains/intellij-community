@@ -1,14 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf
 
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
@@ -21,7 +22,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
-import java.util.*
+import java.util.Locale
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 
@@ -35,6 +36,7 @@ sealed class SystemDarkThemeDetector {
       return when {
         SystemInfoRt.isMac -> MacOSDetector(syncFunction)
         SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
+        SystemInfoRt.isLinux -> LinuxThemeDetector(syncFunction)
         else -> EmptyDetector
       }
     }
@@ -57,8 +59,9 @@ private abstract class AsyncDetector : SystemDarkThemeDetector() {
 
   override fun check(parameter: Boolean?) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      RegistryManager.getInstance()
       val isDark = isDark()
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
         syncFunction.accept(isDark, parameter)
       }
     }
@@ -156,6 +159,31 @@ private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boo
     }
     catch (_: Throwable) {}
     return false
+  }
+}
+
+private class LinuxThemeDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>) : AsyncDetector() {
+
+  private val service: DBusSettingsMonitorService
+    get() = service()
+
+  override val detectionSupported: Boolean
+    get() {
+      return service.isServiceAllowed && isDarkScheme() != null
+    }
+
+  init {
+    service.setDarkSchemeListener {
+      syncFunction.accept(it, null)
+    }
+  }
+
+  override fun isDark(): Boolean {
+    return isDarkScheme() == true
+  }
+
+  private fun isDarkScheme(): Boolean? {
+    return service.darkScheme.value
   }
 }
 

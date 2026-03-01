@@ -1,6 +1,12 @@
 package com.intellij.database.run.ui;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.run.ui.grid.ResizableCellEditorsSupport;
 import com.intellij.database.run.ui.grid.editors.GridCellEditor;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorFactory;
@@ -19,8 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;

@@ -10,8 +10,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 /**
  * @author Dmitry Batkovich

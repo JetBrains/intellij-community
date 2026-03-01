@@ -22,14 +22,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil;
 import org.jetbrains.idea.maven.utils.MavenUIUtil;
 
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
-import static org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure.MavenStructureDisplayMode.*;
+import static org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure.MavenStructureDisplayMode.SHOW_ALL;
+import static org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure.MavenStructureDisplayMode.SHOW_GOALS;
+import static org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure.MavenStructureDisplayMode.SHOW_PROJECTS;
 
 @ApiStatus.Internal
 public abstract class MavenSimpleNode extends CachingSimpleNode implements MavenNode {

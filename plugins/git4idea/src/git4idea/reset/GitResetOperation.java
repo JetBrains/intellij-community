@@ -33,14 +33,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static git4idea.GitNotificationIdsHolder.*;
-import static git4idea.GitUtil.*;
+import static git4idea.GitNotificationIdsHolder.RESET_FAILED;
+import static git4idea.GitNotificationIdsHolder.RESET_PARTIALLY_FAILED;
+import static git4idea.GitNotificationIdsHolder.RESET_SUCCESSFUL;
+import static git4idea.GitUtil.findLocalChangesForPaths;
+import static git4idea.GitUtil.getHead;
+import static git4idea.GitUtil.toAbsolute;
+import static git4idea.GitUtil.updateAndRefreshChangedVfs;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.RESET;
 
 public class GitResetOperation {
-
   private final @NotNull Project myProject;
   private final @Unmodifiable @NotNull Map<GitRepository, @NotNull String> myCommits;
   private final @NotNull GitResetMode myMode;
@@ -49,13 +57,23 @@ public class GitResetOperation {
   private final @NotNull VcsNotifier myNotifier;
   private final @NotNull GitBranchUiHandlerImpl myUiHandler;
   private final @NotNull OperationPresentation myPresentation;
+  private final @NotNull SmartResetPolicy mySmartResetPolicy;
 
   public GitResetOperation(@NotNull Project project,
                            @NotNull Map<GitRepository, Hash> targetCommits,
                            @NotNull GitResetMode mode,
                            @NotNull ProgressIndicator indicator) {
     this(project, ContainerUtil.map2Map(targetCommits.entrySet(), e -> Pair.create(e.getKey(), e.getValue().asString())),
-         mode, indicator, new OperationPresentation());
+         mode, indicator, new OperationPresentation(), SmartResetPolicy.PROPOSE);
+  }
+
+  public GitResetOperation(@NotNull Project project,
+                           @NotNull Map<GitRepository, Hash> targetCommits,
+                           @NotNull GitResetMode mode,
+                           @NotNull ProgressIndicator indicator,
+                           @NotNull SmartResetPolicy smartResetPolicy) {
+    this(project, ContainerUtil.map2Map(targetCommits.entrySet(), e -> Pair.create(e.getKey(), e.getValue().asString())),
+         mode, indicator, new OperationPresentation(), smartResetPolicy);
   }
 
   public GitResetOperation(@NotNull Project project,
@@ -63,6 +81,15 @@ public class GitResetOperation {
                            @NotNull GitResetMode mode,
                            @NotNull ProgressIndicator indicator,
                            @NotNull OperationPresentation operationPresentation) {
+    this(project, targetCommits, mode, indicator, operationPresentation, SmartResetPolicy.PROPOSE);
+  }
+
+  public GitResetOperation(@NotNull Project project,
+                           @NotNull @Unmodifiable Map<GitRepository, @NotNull String> targetCommits,
+                           @NotNull GitResetMode mode,
+                           @NotNull ProgressIndicator indicator,
+                           @NotNull OperationPresentation operationPresentation,
+                           @NotNull SmartResetPolicy smartResetPolicy) {
     myProject = project;
     myCommits = targetCommits;
     myMode = mode;
@@ -71,9 +98,14 @@ public class GitResetOperation {
     myGit = Git.getInstance();
     myNotifier = VcsNotifier.getInstance(project);
     myUiHandler = new GitBranchUiHandlerImpl(myProject, indicator);
+    mySmartResetPolicy = smartResetPolicy;
   }
 
   public boolean execute() {
+    return execute(true);
+  }
+
+  public boolean execute(boolean notify) {
     saveAllDocuments();
     Map<GitRepository, GitCommandResult> results = new HashMap<>();
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message(myPresentation.activityName), GitActivity.Reset)) {
@@ -86,7 +118,7 @@ public class GitResetOperation {
         Hash startHash = getHead(repository);
 
         GitCommandResult result = myGit.reset(repository, myMode, target, detector);
-        if (!result.success() && detector.isDetected()) {
+        if (!result.success() && detector.isDetected() && mySmartResetPolicy == SmartResetPolicy.PROPOSE) {
           GitCommandResult smartResult = proposeSmartReset(detector, repository, target);
           if (smartResult != null) {
             result = smartResult;
@@ -100,7 +132,9 @@ public class GitResetOperation {
         repository.getResolvedConflictsFilesHolder().invalidate();
       }
     }
-    notifyResult(results);
+    if (notify) {
+      notifyResult(results);
+    }
 
     return ContainerUtil.all(results.values(), GitCommandResult::success);
   }
@@ -193,5 +227,10 @@ public class GitResetOperation {
      * {0} success repos, {1} failure repos, {2} error message
      */
     public String notificationPartialFailureMessage = "git.reset.partially.failed.notification.msg";
+  }
+
+  public enum SmartResetPolicy {
+    PROPOSE, // shows a smart operation dialog offering to shelve/stash changes before reset
+    FAIL     // fails the operation immediately if local changes would be overwritten
   }
 }

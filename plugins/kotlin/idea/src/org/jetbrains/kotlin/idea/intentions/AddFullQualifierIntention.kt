@@ -9,25 +9,37 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
     KotlinBundle.messagePointer("add.full.qualifier")

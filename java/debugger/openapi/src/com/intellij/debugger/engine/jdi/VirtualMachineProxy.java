@@ -16,7 +16,9 @@
 package com.intellij.debugger.engine.jdi;
 
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -39,4 +41,12 @@ public interface VirtualMachineProxy {
   List<ReferenceType> nestedTypes(ReferenceType refType);
 
   List<ReferenceType> classesByName(@NotNull String s);
+
+  /**
+   * Should be called in the debugger manager thread only.
+   */
+  @ApiStatus.Experimental
+  static @NotNull VirtualMachineProxy getCurrent() {
+    return DebuggerUtils.getInstance().getVmProxy();
+  }
 }

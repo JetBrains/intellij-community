@@ -1,9 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEditService
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -27,7 +31,8 @@ import java.nio.file.Path
 class ProjectWindowAction(
   @param:NlsSafe val projectName: @NlsSafe String,
   val projectLocation: Path,
-  previous: ProjectWindowAction?
+  previous: ProjectWindowAction?,
+  val excludedFromProjectWindowSwitchOrder: Boolean = false,
 ) : ToggleAction(IdeBundle.message("action.switch.project.text")), DumbAware {
   private var myPrevious: ProjectWindowAction? = null
   private var myNext: ProjectWindowAction? = null

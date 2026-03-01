@@ -2,7 +2,11 @@
 package com.intellij.framework.detection;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.ObjectPattern;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.StandardPatterns;
+import com.intellij.patterns.StringPattern;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;

@@ -67,11 +67,14 @@ internal class TestMetaInfoExtension : BeforeAllCallback, BeforeEachCallback, Ex
    * Calculates a real test data path based on class annotations (resolves $CONTENT_ROOT placeholder).
    */
   override fun beforeAll(context: ExtensionContext) {
-    val testClassInfo = getAnnotation(context, TestClassInfo::class.java)
-                        ?: error("Add ${TestClassInfo::class} class level")
-
     val testDataPathWithPlaceholders = getAnnotation(context, TestDataPath::class.java)?.value
-    val testDataPath = testDataPathWithPlaceholders?.let { testClassInfo.resolvePath(it) }
+
+    val testDataPath = testDataPathWithPlaceholders?.let { pathWithPlaceholders ->
+      val testClassInfo = getAnnotation(context, TestClassInfo::class.java)
+                          ?: error("Add ${TestClassInfo::class} class level")
+
+      testClassInfo.resolvePath(pathWithPlaceholders)
+    }
 
     val data = TestClassInfoData(
       testDataPath = testDataPath,

@@ -13,8 +13,16 @@ import org.jetbrains.plugins.groovy.extensions.impl.StringTypeCondition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 
-import static com.intellij.psi.CommonClassNames.*;
-import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Priority.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_BOOLEAN;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
+import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Priority.ALWAYS_ON_TOP;
+import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Priority.AS_LOCAL_VARIABLE;
+import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Priority.NORMAL;
+import static org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor.Priority.UNLIKELY;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 
 public interface NamedArgumentDescriptor {

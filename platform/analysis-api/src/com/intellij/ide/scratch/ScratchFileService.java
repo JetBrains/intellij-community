@@ -53,7 +53,8 @@ public abstract class ScratchFileService implements VirtualFileEnumerationAware 
   public static @Nullable RootType findRootType(@Nullable VirtualFile file) {
     if (file == null || !file.isInLocalFileSystem()) return null;
     VirtualFile parent = file.isDirectory() ? file : file.getParent();
-    return getInstance().getRootType(parent);
+    ScratchFileService instance = getInstance();
+    return instance == null ? null : instance.getRootType(parent);
   }
 
   public static @NotNull Set<VirtualFile> getAllRootPaths() {

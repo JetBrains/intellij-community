@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemEntity
 import fleet.kernel.change
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow

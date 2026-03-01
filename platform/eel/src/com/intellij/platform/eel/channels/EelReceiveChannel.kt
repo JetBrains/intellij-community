@@ -23,6 +23,8 @@ interface EelReceiveChannel {
   @ThrowsChecked(EelReceiveChannelException::class)
   suspend fun receive(dst: ByteBuffer): ReadResult
 
+  // TODO Think about adding a method `receiveDirect` that accepts only `DirectByteBuffer`.
+
   /**
    * Behaves like [java.io.InputStream.available]. Especially, it may return false-negative results.
    * I.e., it is possible that [available] returns 0 even though it's possible to read something immediately.

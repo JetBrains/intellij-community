@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.parsing.xml
 
-import com.intellij.lang.*
+import com.intellij.lang.ASTNode
+import com.intellij.lang.LightPsiParser
+import com.intellij.lang.LighterASTNode
+import com.intellij.lang.LighterASTTokenNode
+import com.intellij.lang.PsiBuilder
+import com.intellij.lang.PsiParser
 import com.intellij.lang.impl.PsiBuilderImpl
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Ref

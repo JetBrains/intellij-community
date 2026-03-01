@@ -7,7 +7,15 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
+import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory.highlightName
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
@@ -25,7 +33,10 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticName
 import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinFunctionCallSemanticAnalyzer.Companion.getHighlightInfoTypeForCallFromExtension
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtValueArgumentName
 
 internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {

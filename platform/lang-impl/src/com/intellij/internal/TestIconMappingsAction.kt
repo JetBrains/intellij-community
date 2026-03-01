@@ -4,16 +4,16 @@ package com.intellij.internal
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 
 /**
  * @author Konstantin Bulenkov
  */
-private class TestIconMappingsAction : DumbAwareAction() {
+internal class TestIconMappingsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val errors = mutableListOf<String>()
     val mappings = runWithModalProgressBlocking(e.project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(), "") {

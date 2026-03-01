@@ -6,8 +6,10 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService
 
+@K1Deprecation
 class LookupCancelWatcher : EditorFactoryListener {
     override fun editorReleased(event: EditorFactoryEvent) {
         val editor = event.editor
@@ -16,6 +18,7 @@ class LookupCancelWatcher : EditorFactoryListener {
     }
 }
 
+@K1Deprecation
 class LookupCancelWatcherListener : LookupManagerListener {
     override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
         if (newLookup == null) return

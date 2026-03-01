@@ -7,7 +7,12 @@ import andel.intervals.IntervalsQuery
 import andel.operation.Op
 import andel.operation.Operation
 import andel.operation.isIdentity
-import andel.text.*
+import andel.text.CharOffset
+import andel.text.Text
+import andel.text.TextRange
+import andel.text.charSequence
+import andel.text.intersectsNonStrict
+import andel.text.lineEndOffset
 import fleet.util.CancellationToken
 import fleet.util.takeWhileInclusive
 import kotlin.math.min

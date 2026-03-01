@@ -4,7 +4,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -122,6 +128,16 @@ public final class PySelfType implements PyTypeParameterType, PyClassType {
   @Override
   public @NotNull Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
     return myScopeClassType.getMemberNames(inherited, context);
+  }
+
+  @Override
+  public @NotNull List<@NotNull PyTypeMember> getAllMembers(@NotNull PyResolveContext resolveContext) {
+    return myScopeClassType.getAllMembers(resolveContext);
+  }
+
+  @Override
+  public @NotNull List<@NotNull PyTypeMember> findMember(@NotNull String name, @NotNull PyResolveContext resolveContext) {
+    return myScopeClassType.findMember(name, resolveContext);
   }
 
   @Override

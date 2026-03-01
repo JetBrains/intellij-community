@@ -1,0 +1,29 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_propertyNullabilityChanged-a.kotlin_module
+  foo/A$x$1.class
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/propertyNullabilityChanged/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_propertyNullabilityChanged-a.kotlin_module
+  foo/UseAChildKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/propertyNullabilityChanged/a/useAChild.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_propertyNullabilityChanged-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/propertyNullabilityChanged/a/A.kt
+  kotlin/classHierarchyAffected/propertyNullabilityChanged/a/useAChild.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
   public GenerateGetterHandler() {

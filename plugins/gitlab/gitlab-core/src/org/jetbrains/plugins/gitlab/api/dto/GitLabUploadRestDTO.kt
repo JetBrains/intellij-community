@@ -11,9 +11,5 @@ import org.jetbrains.plugins.gitlab.api.SinceGitLab
  */
 @SinceGitLab("15.10")
 class GitLabUploadRestDTO(
-  @SinceGitLab("17.3") val id: String,
-  val alt: @NlsSafe String,
-  val url: @NlsSafe String,
-  @SinceGitLab("17.1") val fullPath: @NlsSafe String,
   val markdown: @NlsSafe String,
 )

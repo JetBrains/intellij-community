@@ -3,7 +3,16 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
@@ -179,6 +188,20 @@ public final class OrderEntryUtil {
     System.arraycopy(entries, 0, newEntries, 0, toReplace);
     newEntries[toReplace] = newEntry;
     System.arraycopy(entries, toReplace + 1, newEntries, toReplace + 1, entries.length - toReplace - 2);
+    model.rearrangeOrderEntries(newEntries);
+  }
+
+  /**
+   * Moves last {@code length} entries in {@code model} to {@code toIndex}.
+   * The first of moved entries will be at {@code toIndex}, the second - at {@code toIndex + 1}, etc.
+   */
+  public static void moveLastOrderEntries(@NotNull ModifiableRootModel model, int toIndex, int length) {
+    OrderEntry[] entries = model.getOrderEntries();
+    if (toIndex < 0 || length <= 0 || toIndex + length > entries.length) return;
+    OrderEntry[] newEntries = new OrderEntry[entries.length];
+    System.arraycopy(entries, 0, newEntries, 0, toIndex);
+    System.arraycopy(entries, entries.length - length, newEntries, toIndex, length);
+    System.arraycopy(entries, toIndex, newEntries, toIndex + length, entries.length - toIndex - length);
     model.rearrangeOrderEntries(newEntries);
   }
 

@@ -4,4 +4,3 @@
   library: jackson-databind
   files:
   - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2/jackson-databind-2.jar
-  - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2/jackson-annotations-2.jar

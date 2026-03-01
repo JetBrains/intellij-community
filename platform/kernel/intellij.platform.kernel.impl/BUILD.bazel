@@ -23,4 +23,20 @@ jvm_library(
     "//platform/util/coroutines",
   ]
 )
+
+jvm_library(
+  name = "impl_test_lib",
+  module_name = "intellij.platform.kernel.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":impl",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.kernel.impl` end

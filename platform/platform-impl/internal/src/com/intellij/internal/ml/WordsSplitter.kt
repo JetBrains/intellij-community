@@ -4,7 +4,7 @@ package com.intellij.internal.ml
 import com.intellij.ide.ui.search.PorterStemmerUtil
 import com.intellij.util.text.NameUtilCore
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Locale
 
 @ApiStatus.Internal
 class WordsSplitter private constructor(private val skipLess: Int,

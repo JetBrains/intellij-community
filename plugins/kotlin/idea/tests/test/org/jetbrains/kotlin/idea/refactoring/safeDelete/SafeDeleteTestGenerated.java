@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete;
 
@@ -311,6 +311,11 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("overrideWithUsages.kt")
         public void testOverrideWithUsages() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteFunction/kotlinFunction/overrideWithUsages.kt");
+        }
+
+        @TestMetadata("unsafeWithImportUsage.kt")
+        public void testUnsafeWithImportUsage() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteFunction/kotlinFunction/unsafeWithImportUsage.kt");
         }
 
         @TestMetadata("withDefinitelyNotNullType.kt")
@@ -1072,6 +1077,31 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("propertyParam2.kt")
         public void testPropertyParam2() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/propertyParam2.kt");
+        }
+
+        @TestMetadata("recursiveComplexExpression.kt")
+        public void testRecursiveComplexExpression() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/recursiveComplexExpression.kt");
+        }
+
+        @TestMetadata("recursiveMixedUsage.kt")
+        public void testRecursiveMixedUsage() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/recursiveMixedUsage.kt");
+        }
+
+        @TestMetadata("recursivePassThrough.kt")
+        public void testRecursivePassThrough() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/recursivePassThrough.kt");
+        }
+
+        @TestMetadata("recursivePassThroughDifferentReceiver.kt")
+        public void testRecursivePassThroughDifferentReceiver() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/recursivePassThroughDifferentReceiver.kt");
+        }
+
+        @TestMetadata("recursivePassThroughNamed.kt")
+        public void testRecursivePassThroughNamed() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/recursivePassThroughNamed.kt");
         }
 
         @TestMetadata("safeUsages1.kt")

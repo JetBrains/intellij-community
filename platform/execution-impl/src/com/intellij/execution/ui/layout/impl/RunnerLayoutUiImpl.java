@@ -25,8 +25,11 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 
 public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
   private final RunnerLayout myLayout;

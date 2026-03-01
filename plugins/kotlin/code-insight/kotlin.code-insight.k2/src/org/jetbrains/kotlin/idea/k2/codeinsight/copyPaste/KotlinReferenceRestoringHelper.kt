@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.openapi.util.TextRange
@@ -13,13 +13,19 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.psi.canBeUsedInImport
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
+import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
 import org.jetbrains.kotlin.idea.references.KtMultiReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -38,7 +44,9 @@ internal object KotlinReferenceRestoringHelper {
 
             val elements = sourceFile.collectElementsOfTypeInRange<KtElement>(startOffset, endOffset)
                 .filterNot { it is KtSimpleNameExpression && !it.canBeUsedInImport() }
-                .filter { it.mainReference is KaSymbolBasedReference }
+                .filter { element ->
+                    element.mainReference.let { it is KaSymbolBasedReference && it !is KtDefaultAnnotationArgumentReference }
+                }
 
             val infos = elements.map { element ->
                 KotlinSourceReferenceInfo(

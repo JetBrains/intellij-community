@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import org.jetbrains.yaml.YAMLElementTypes
 
-private class YamlQuoteHandler : QuoteHandler {
+internal class YamlQuoteHandler : QuoteHandler {
 
   private fun isQuote(it: Char?) = it == '"' || it == '\''
 

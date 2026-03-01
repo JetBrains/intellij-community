@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebugProcessEvents
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.RequestHint
+import com.intellij.debugger.engine.StepIntoMethodBreakpoint
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.SteppingBreakpoint

@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.LightOrRealThreadInfo
+import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.RequestHint
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.statistics.Engine

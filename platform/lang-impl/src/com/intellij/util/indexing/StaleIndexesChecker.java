@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,8 +34,9 @@ public final class StaleIndexesChecker {
     return REUSE_DELETED_FILE_IDS && (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isEAP());
   }
 
+  /** @param knownStaleIds ids to not check */
   static @NotNull IntSet checkIndexForStaleRecords(@NotNull UpdatableIndex<?, ?, FileContent, ?> index,
-                                                   IntSet knownStaleIds,
+                                                   @NotNull IntSet knownStaleIds,
                                                    boolean onStartup) throws StorageException {
     IndexExtension<?, ?, FileContent> extension = index.getExtension();
     IndexId<?, ?> indexId = extension.getName();

@@ -4,7 +4,12 @@ package com.jetbrains.python.refactoring.classes.membersManager;
 import com.google.common.collect.FluentIterable;
 import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 

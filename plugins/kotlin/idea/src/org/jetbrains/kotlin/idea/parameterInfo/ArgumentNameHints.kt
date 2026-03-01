@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.prevLeafs
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.extractParameterNameFromFunctionTypeArgument
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -17,14 +18,22 @@ import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.isAnnotationConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 fun provideArgumentNameHints(element: KtCallElement): List<InlayInfo> {
     if (element.valueArguments.none { it.getArgumentExpression()?.isUnclearExpression() == true }) return emptyList()
     val ctx = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)

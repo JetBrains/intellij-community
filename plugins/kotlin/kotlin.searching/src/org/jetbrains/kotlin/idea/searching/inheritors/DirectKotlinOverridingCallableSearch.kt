@@ -10,7 +10,11 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
-import com.intellij.util.*
+import com.intellij.util.AbstractQuery
+import com.intellij.util.CollectionQuery
+import com.intellij.util.Processor
+import com.intellij.util.Query
+import com.intellij.util.QueryFactory
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.asJava.toLightMethods

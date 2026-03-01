@@ -2,8 +2,31 @@
 # Temporary
 # =========
 
-# Added in Python 3.12.13 (parameter `scripting`)
-html.parser.HTMLParser.__init__
+# Incompatible changes introduced in Python 3.12.11
+# (Remove once 3.12.11 becomes available for GitHub Actions)
+html.parser.HTMLParser.set_cdata_mode # parameter `escapable`
+genericpath.__all__
+genericpath.ALLOW_MISSING
+(ntpath.__all__)?
+(ntpath.ALLOW_MISSING)?
+(ntpath.realpath)?
+(os.path.__all__)?
+(os.path.ALLOW_MISSING)?
+(os.path.realpath)?
+(posixpath.__all__)?
+(posixpath.ALLOW_MISSING)?
+(posixpath.realpath)?
+tarfile.LinkFallbackError
+tarfile.TarFile._extract_member
+tarfile.TarFile.makelink_with_filter
+
+# Incompatible changes introduced in Python 3.12.13
+# (Remove once 3.12.13 becomes available for GitHub Actions)
+html.parser.HTMLParser.__init__ # parameter `scripting`
+pyexpat.XMLParserType.SetAllocTrackerActivationThreshold
+pyexpat.XMLParserType.SetAllocTrackerMaximumAmplification
+xml.parsers.expat.XMLParserType.SetAllocTrackerActivationThreshold
+xml.parsers.expat.XMLParserType.SetAllocTrackerMaximumAmplification
 
 
 # ============
@@ -14,14 +37,6 @@ html.parser.HTMLParser.__init__
 fcntl.F_OFD_GETLK
 fcntl.F_OFD_SETLK
 fcntl.F_OFD_SETLKW
-
-
-# =======
-# <= 3.12
-# =======
-
-# Added in Python 3.12.11 (parameter `escapable`)
-html.parser.HTMLParser.set_cdata_mode
 
 
 # =============================================================

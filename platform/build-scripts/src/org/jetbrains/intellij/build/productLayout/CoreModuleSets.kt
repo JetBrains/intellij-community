@@ -96,11 +96,17 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.imgscalr")
     embeddedModule("intellij.libraries.ini4j")
     embeddedModule("intellij.libraries.ion")
+    embeddedModule("intellij.libraries.jackson.annotations")
     embeddedModule("intellij.libraries.jackson")
     embeddedModule("intellij.libraries.jackson.jr.objects")
     embeddedModule("intellij.libraries.jackson.databind")
     embeddedModule("intellij.libraries.jackson.dataformat.yaml")
     embeddedModule("intellij.libraries.jackson.module.kotlin")
+    embeddedModule("intellij.libraries.jackson3")
+    embeddedModule("intellij.libraries.jackson3.jr.objects")
+    embeddedModule("intellij.libraries.jackson3.databind")
+    embeddedModule("intellij.libraries.jackson3.dataformat.yaml")
+    embeddedModule("intellij.libraries.jackson3.module.kotlin")
     embeddedModule("intellij.libraries.java.websocket")
     embeddedModule("intellij.libraries.javax.annotation")
     // used by intellij.platform.util.jdom, so, embedded
@@ -130,6 +136,9 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.velocity")
     embeddedModule("intellij.libraries.xtext.xbase")
     embeddedModule("intellij.libraries.xz")
+    // Temporary embedded while opentelemetry-exporter-otlp-common library remains embedded due to a dependency (IJPL-233394)
+    embeddedModule("intellij.libraries.opentelemetry.sdk.autoconfigure.spi")
+    embeddedModule("intellij.libraries.opentelemetry.exporter.sender.jdk")
   }
 
   /**
@@ -169,6 +178,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.ktor.io")
     embeddedModule("intellij.libraries.ktor.utils")
     embeddedModule("intellij.libraries.ktor.network.tls")
+    embeddedModule("intellij.libraries.ktor.server.cio")
     embeddedModule("intellij.libraries.ktor.client")
     embeddedModule("intellij.libraries.ktor.client.cio")
   }
@@ -237,14 +247,21 @@ object CoreModuleSets {
   fun corePlatform(): ModuleSet = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core", includeDependencies = true) {
     moduleSet(librariesPlatform())
 
+    embeddedModule("intellij.platform.diagnostic.telemetry")
+
     embeddedModule("intellij.platform.util.ex")
     embeddedModule("intellij.platform.util.ui")
+    embeddedModule("intellij.platform.util.coroutines")
 
     embeddedModule("intellij.platform.locking.impl")
 
     embeddedModule("intellij.platform.core")
     embeddedModule("intellij.platform.core.ui")
     embeddedModule("intellij.platform.core.impl")
+    embeddedModule("intellij.platform.indexing")
+    embeddedModule("intellij.platform.projectFrame")
+    embeddedModule("intellij.platform.welcomeScreen")
+    embeddedModule("intellij.platform.welcomeScreen.impl")
 
     embeddedModule("intellij.platform.projectModel")
     embeddedModule("intellij.platform.projectModel.impl")
@@ -333,6 +350,7 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.eel.impl")
     embeddedModule("intellij.platform.diff")
     embeddedModule("intellij.platform.diff.impl")
+    embeddedModule("intellij.platform.util.diff")
     embeddedModule("fleet.andel")
 
     // Temporary: lang.impl incorrectly depends on xstream (should be removed)
@@ -352,6 +370,8 @@ object CoreModuleSets {
     embeddedModule("fleet.reporting.api")
     embeddedModule("fleet.reporting.shared")
     embeddedModule("fleet.rhizomedb")
+    embeddedModule("fleet.rhizomedb.transactor")
+    embeddedModule("fleet.rhizomedb.transactor.rebase")
     embeddedModule("fleet.rpc")
     embeddedModule("fleet.util.codepoints")
     embeddedModule("fleet.util.core")

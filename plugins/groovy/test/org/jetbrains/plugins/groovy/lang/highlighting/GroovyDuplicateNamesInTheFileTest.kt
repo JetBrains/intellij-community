@@ -79,6 +79,10 @@ class GroovyDuplicateNamesInTheFileTest : GrHighlightingTestBase() {
 
   fun testOnlyFirstOccurenceIsNotHighlighted() = doTest()
 
+  fun testTypeParameterInDifferentMethodsIsNotHighlighted() = doTest()
+
+  fun testTypeParameterInClassAndMethodIsNotHighlighted() = doTest()
+
 
   private fun doTest() {
     doTest(false)

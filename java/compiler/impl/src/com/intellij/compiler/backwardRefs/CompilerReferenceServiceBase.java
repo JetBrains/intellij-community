@@ -50,7 +50,11 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlin.collections.ArraysKt;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
@@ -58,7 +62,11 @@ import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -190,7 +198,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         VirtualFile guessedProjectDir = ProjectUtil.guessProjectDir(project);
         String basePath = guessedProjectDir == null ? project.getBasePath() : guessedProjectDir.getCanonicalPath();
         if (basePath != null) {
-          File file = new File(basePath);
+          Path file = Path.of(basePath);
           FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
           return sensitivity.toBooleanWithDefault(SystemInfo.isFileSystemCaseSensitive);
         }

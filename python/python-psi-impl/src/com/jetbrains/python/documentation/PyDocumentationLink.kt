@@ -23,7 +23,13 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.highlighting.PyHighlighter
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyTypeAliasStatement
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyTypeParser
 import com.jetbrains.python.psi.types.TypeEvalContext

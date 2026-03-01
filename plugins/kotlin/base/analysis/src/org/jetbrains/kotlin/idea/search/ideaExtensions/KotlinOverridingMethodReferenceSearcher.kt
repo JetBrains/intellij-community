@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.impl.search.MethodTextOccurrenceProcessor
 import com.intellij.psi.impl.search.MethodUsagesSearcher
 import com.intellij.psi.search.SearchScope
@@ -11,14 +15,14 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.asJava.canHaveOverride
 import org.jetbrains.kotlin.asJava.canHaveSyntheticGetter
 import org.jetbrains.kotlin.asJava.canHaveSyntheticSetter
 import org.jetbrains.kotlin.asJava.syntheticAccessors
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess

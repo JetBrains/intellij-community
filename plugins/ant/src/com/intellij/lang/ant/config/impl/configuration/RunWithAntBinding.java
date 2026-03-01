@@ -22,7 +22,9 @@ import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.config.AbstractProperty;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JRadioButton;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;

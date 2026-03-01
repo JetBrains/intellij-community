@@ -4,7 +4,11 @@ package com.intellij.openapi.util.io;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.system.OS;
-import com.sun.jna.*;
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinNT;
@@ -19,9 +23,16 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystemException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
@@ -132,96 +143,97 @@ public final class FileSystemUtil {
   }
 
   /**
+   * Detects case-sensitivity of the directory:
+   * - first by calling platform-specific APIs if possible,
+   * - then falling back to querying its attributes via different names.
+   */
+  @ApiStatus.Internal
+  public static @NotNull FileAttributes.CaseSensitivity readDirectoryCaseSensitivity(@NotNull Path dir) {
+    FileAttributes.CaseSensitivity detected = readDirectoryCaseSensitivityByNativeAPI(dir);
+    if (detected.isKnown()) return detected;
+    // native queries failed, fallback to the Java nio:
+    return readDirectoryCaseSensitivityComparingTwoChildren(dir);
+  }
+
+  /**
    * Detects case-sensitivity of the directory containing {@code anyChild} (or {@code anyChild} itself, if it happens to be
    * a filesystem root) - first by calling platform-specific APIs if possible, then falling back to querying its attributes
    * via different names.
    */
   @ApiStatus.Internal
-  public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull java.io.File anyChild) {
-    FileAttributes.CaseSensitivity detected = readCaseSensitivityByNativeAPI(anyChild);
+  public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull Path anyChild) {
+    FileAttributes.CaseSensitivity detected = readParentCaseSensitivityByNativeAPI(anyChild);
     if (detected.isKnown()) return detected;
     // native queries failed, fallback to the Java I/O:
-    return readCaseSensitivityByJavaIO(anyChild);
+    return readParentCaseSensitivityByJavaNio(anyChild);
   }
 
   @VisibleForTesting
   @ApiStatus.Internal
-  public static @NotNull FileAttributes.CaseSensitivity readCaseSensitivityByJavaIO(@NotNull java.io.File anyChild) {
+  public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaNio(@NotNull Path anyChild) {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
-    java.io.File parent = anyChild.getParentFile();
+    Path parent = anyChild.getParent();
     if (parent == null) {
-      String probe = findCaseToggleableChild(anyChild);
-      if (probe == null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): no toggleable child, parent=null isDirectory=" + anyChild.isDirectory());
-        }
-        return FileAttributes.CaseSensitivity.UNKNOWN;
-      }
-      parent = anyChild;
-      anyChild = new java.io.File(parent, probe);
+      return readDirectoryCaseSensitivityComparingTwoChildren(anyChild);
     }
 
-    String name = anyChild.getName();
-    String altName = toggleCase(name);
-    if (altName.equals(name)) {
+    String name = anyChild.getFileName().toString();
+    String toggledCaseName = toggleCase(name);
+    if (toggledCaseName.equals(name)) {
       // we have a bad case of non-alphabetic file name
-      name = findCaseToggleableChild(parent);
-      if (name == null) {
-        if (LOG.isDebugEnabled()) {
-          String[] list = null;
-          try {
-            list = parent.list();
-          }
-          catch (Exception ignored) { }
-          if (list == null) {
-            LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): parent.list() failed");
-          }
-          else {
-            LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): no toggleable child among " + list.length + " siblings");
-            if (LOG.isTraceEnabled()) LOG.trace("readParentCaseSensitivityByJavaIO(" + anyChild + "): " + Arrays.toString(list));
-          }
-        }
-        // we can't find any file with a case-toggleable name
-        return FileAttributes.CaseSensitivity.UNKNOWN;
-      }
-      altName = toggleCase(name);
+      return readDirectoryCaseSensitivityComparingTwoChildren(parent);
     }
+    else {
+      return readParentCaseSensitivityComparingToSibling(anyChild, anyChild.resolveSibling(toggledCaseName));
+    }
+  }
 
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull FileAttributes.CaseSensitivity readDirectoryCaseSensitivityComparingTwoChildren(Path parent) {
+    String probe = findCaseToggleableChild(parent);
+    if (probe == null) {
+      // we can't find any file with a case-toggleable name
+      return FileAttributes.CaseSensitivity.UNKNOWN;
+    }
+    return readParentCaseSensitivityComparingToSibling(parent.resolve(probe), parent.resolve(toggleCase(probe)));
+  }
+
+  private static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityComparingToSibling(@NotNull Path anyChild, @NotNull Path toggledCasePath) {
     try {
-      String altPath = normalizePath(parent.getPath() + '/' + altName);
-      FileAttributes newAttributes;
+      FileAttributes toggledCaseAttributes;
 
       try {
-        newAttributes = getAttributesNotNull(Paths.get(altPath));
+        toggledCaseAttributes = getAttributesNotNull(toggledCasePath);
       }
       catch (NoSuchFileException e) {
-        if (!anyChild.exists()) {
+        if (!Files.exists(anyChild)) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): does not exist");
           }
           return FileAttributes.CaseSensitivity.UNKNOWN;
         }
-        LOG.trace(e.getClass().getName() + ": " + altPath);
-        newAttributes = null;
+        LOG.trace(e.getClass().getName() + ": " + toggledCasePath);
+        toggledCaseAttributes = null;
       }
       catch (IOException e) {
-        LOG.debug(altPath, e);
-        newAttributes = null;
+        LOG.debug(toggledCasePath.toString(), e);
+        toggledCaseAttributes = null;
       }
       catch (InvalidPathException e) {
         LOG.debug(e);
-        newAttributes = null;
+        toggledCaseAttributes = null;
       }
 
-      if (newAttributes == null) {
+      if (toggledCaseAttributes == null) {
         // couldn't find this file by other-cased name, so deduce FS is sensitive
         return FileAttributes.CaseSensitivity.SENSITIVE;
       }
       // if a changed-case file is found, there is a slim chance that the FS is still case-sensitive,
       // but there are two files with a different case
-      java.io.File altCanonicalFile = new java.io.File(altPath).getCanonicalFile();
-      String altCanonicalName = altCanonicalFile.getName();
-      if (altCanonicalName.equals(name) || altCanonicalName.equals(anyChild.getCanonicalFile().getName())) {
+      Path altCanonicalFile = toggledCasePath.toRealPath(LinkOption.NOFOLLOW_LINKS);
+      String altCanonicalName = altCanonicalFile.getFileName().toString();
+      if (altCanonicalName.equals(anyChild.getFileName().toString()) || altCanonicalName.equals(anyChild.toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString())) {
         // nah, these two are really the same file
         return FileAttributes.CaseSensitivity.INSENSITIVE;
       }
@@ -237,10 +249,16 @@ public final class FileSystemUtil {
 
   @VisibleForTesting
   @ApiStatus.Internal
-  public static @NotNull FileAttributes.CaseSensitivity readCaseSensitivityByNativeAPI(@NotNull java.io.File anyChild) {
+  public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByNativeAPI(@NotNull Path anyChild) {
+    Path parent = anyChild.getParent();
+    return readDirectoryCaseSensitivityByNativeAPI(parent != null ? parent : anyChild);
+  }
+
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull FileAttributes.CaseSensitivity readDirectoryCaseSensitivityByNativeAPI(@NotNull Path directory) {
     if (JnaLoader.isLoaded()) {
-      java.io.File parent = anyChild.getParentFile();
-      String path = (parent != null ? parent : anyChild).getAbsolutePath();
+      String path = directory.toAbsolutePath().toString();
       if (OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(10, 0) && WINDOWS_CS_API_AVAILABLE && OSAgnosticPathUtil.isAbsoluteDosPath(path)) {
         return getNtfsCaseSensitivity(path);
       }
@@ -271,8 +289,8 @@ public final class FileSystemUtil {
 
   // returns a child whose name can be used for querying by different-case names (e.g. "child.txt" vs. "CHILD.TXT")
   // or `null` if there are none (e.g., there's only one child "123.456")
-  private static @Nullable String findCaseToggleableChild(java.io.File dir) {
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath())) {
+  private static @Nullable String findCaseToggleableChild(Path dir) {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
       for (Path path : stream) {
         String name = path.getFileName().toString();
         if (!name.toLowerCase(Locale.getDefault()).equals(name.toUpperCase(Locale.getDefault()))) {
@@ -281,6 +299,20 @@ public final class FileSystemUtil {
       }
     }
     catch (Exception ignored) { }
+    if (LOG.isDebugEnabled()) {
+      List<Path> list = null;
+      try {
+        list = NioFiles.list(dir);
+      }
+      catch (Exception ignored) { }
+      if (list == null) {
+        LOG.debug("findCaseToggleableChild(" + dir + "): dir.list() failed");
+      }
+      else {
+        LOG.debug("findCaseToggleableChild(" + dir + "): no toggleable child among " + list.size() + " siblings");
+        if (LOG.isTraceEnabled()) LOG.trace("findCaseToggleableChild(" + dir + "): " + list);
+      }
+    }
     return null;
   }
 
@@ -309,14 +341,18 @@ public final class FileSystemUtil {
 
       NtOsKrnl.FILE_CASE_SENSITIVE_INFORMATION_P fileInformation = new NtOsKrnl.FILE_CASE_SENSITIVE_INFORMATION_P();
 
-      int result = ntOsKrnl.NtQueryInformationFile(
-        handle,
-        new NtOsKrnl.IO_STATUS_BLOCK_P(),
-        fileInformation,
-        fileInformation.size(),
-        NtOsKrnl.FileCaseSensitiveInformation);
-
-      kernel32.CloseHandle(handle);
+      int result;
+      try {
+        result = ntOsKrnl.NtQueryInformationFile(
+          handle,
+          new NtOsKrnl.IO_STATUS_BLOCK_P(),
+          fileInformation,
+          fileInformation.size(),
+          NtOsKrnl.FileCaseSensitiveInformation);
+      }
+      finally {
+        kernel32.CloseHandle(handle);
+      }
 
       if (result != 0) {
         // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55

@@ -13,7 +13,11 @@ import org.gradle.internal.time.Time
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
-import org.gradle.tooling.internal.consumer.*
+import org.gradle.tooling.internal.consumer.ConnectionParameters
+import org.gradle.tooling.internal.consumer.DefaultConnectionParameters
+import org.gradle.tooling.internal.consumer.Distribution
+import org.gradle.tooling.internal.consumer.DistributionFactory
+import org.gradle.tooling.internal.consumer.ProjectConnectionCloseListener
 import org.gradle.tooling.internal.protocol.InternalBuildProgressListener
 import java.io.File
 import java.net.URI
@@ -64,11 +68,6 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
 
   override fun useDistribution(gradleDistribution: URI?): GradleConnector {
     distribution = TargetGradleDistribution(distributionFactory.getDistribution(gradleDistribution))
-    return this
-  }
-
-  fun useClasspathDistribution(): GradleConnector {
-    distribution = TargetGradleDistribution(distributionFactory.classpathDistribution)
     return this
   }
 

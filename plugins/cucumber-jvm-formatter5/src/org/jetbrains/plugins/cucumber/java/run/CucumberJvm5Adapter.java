@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.cucumber.java.run;
 
 import gherkin.pickles.Pickle;
-import io.cucumber.plugin.event.*;
+import io.cucumber.plugin.event.HookTestStep;
+import io.cucumber.plugin.event.PickleStepTestStep;
+import io.cucumber.plugin.event.TestCase;
+import io.cucumber.plugin.event.TestStep;
+import io.cucumber.plugin.event.TestStepFinished;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

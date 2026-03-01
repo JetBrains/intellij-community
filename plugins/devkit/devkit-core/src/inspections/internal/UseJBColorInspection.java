@@ -10,7 +10,15 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
@@ -22,12 +30,19 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UImportStatement;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.USimpleNameReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.generate.UastElementFactory;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-import java.awt.*;
+import java.awt.Color;
 
 @ApiStatus.Internal
 public final class UseJBColorInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {

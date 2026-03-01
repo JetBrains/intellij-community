@@ -4,7 +4,12 @@ package com.intellij.ide.bookmark.actions
 import com.intellij.ide.bookmark.BookmarksManagerImpl
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.bookmark.ui.tree.GroupNode
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPromoter
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.util.ui.tree.TreeUtil

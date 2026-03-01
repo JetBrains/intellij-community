@@ -3,7 +3,11 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.intention.impl.SealClassAction;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModDisplayMessage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -11,7 +15,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,7 +34,11 @@ import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.jetCheck.PropertyChecker;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
 

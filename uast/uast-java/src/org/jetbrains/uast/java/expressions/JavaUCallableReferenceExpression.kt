@@ -15,9 +15,18 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethodReferenceExpression
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class JavaUCallableReferenceExpression(

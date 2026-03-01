@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.uast.testFramework.common
 
+import com.intellij.platform.uast.testFramework.env.findElementByText
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UResolvable
-import com.intellij.platform.uast.testFramework.env.findElementByText
 import org.junit.Assert.assertEquals
 
 interface ResolveTestBase {

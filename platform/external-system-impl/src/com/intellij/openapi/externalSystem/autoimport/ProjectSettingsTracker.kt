@@ -238,7 +238,7 @@ class ProjectSettingsTracker(
 
   init {
     projectAware.subscribe(ProjectListener(), parentDisposable)
-    whenNewFilesCreated(settingsAsyncSupplier::invalidate, parentDisposable)
+    whenNewFilesCreated({ settingsAsyncSupplier.invalidate() }, parentDisposable)
     subscribeOnDocumentsAndVirtualFilesChanges(settingsAsyncSupplier, ProjectSettingsListener(), parentDisposable)
   }
 

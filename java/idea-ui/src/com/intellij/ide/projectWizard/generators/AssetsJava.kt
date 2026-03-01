@@ -15,7 +15,7 @@ import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
 import com.intellij.pom.java.JavaFeature
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.StringJoiner
 
 private const val DEFAULT_FILE_NAME = "Main.java"
 private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME = "SampleCodeWithOnboardingTips.java"
@@ -25,11 +25,6 @@ private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "Sa
 private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "SampleCodeWithRenderedOnboardingTipsInstanceMain.java"
 
 object AssetsJava {
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("The onboarding tips generated unconditionally")
-  fun getJavaSampleTemplateName(generateOnboardingTips: Boolean): String =
-    getJavaSampleTemplateName()
 
   @ApiStatus.Internal
   fun getJavaSampleTemplateName(intent: ProjectWizardJdkIntent?): String {

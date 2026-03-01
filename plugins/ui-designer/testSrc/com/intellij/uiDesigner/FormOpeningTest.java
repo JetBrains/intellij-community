@@ -14,7 +14,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 /**

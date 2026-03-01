@@ -5,9 +5,19 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.SmartList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -135,6 +145,22 @@ public final class ObjectNode {
       node.assertNoReferencesKept(disposableClass);
     }
   }
+
+  /**
+   * Use to check that no objects matching the predicate are reachable from the current node
+   *
+   * @param predicate the predicate to test objects against; returns {@code true} for objects that should not be present
+   * @throws AssertionError if any object matching the predicate is found in the tree rooted at this node
+   */
+  @TestOnly
+  void assertNoReferencesKept(@NotNull Predicate<Object> predicate) {
+    assert !predicate.test(getObject());
+    for (ObjectNode node : myChildren.getAllNodes()) {
+      node.assertNoReferencesKept(predicate);
+    }
+  }
+
+
 
   ObjectNode findChildNode(@NotNull Disposable object) {
     return myChildren.findChildNode(object);

@@ -13,10 +13,10 @@ import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.stepId
 internal object NewUiOnboardingStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("new.ui.onboarding", 3)
+  private val GROUP: EventLogGroup = EventLogGroup("new.ui.onboarding", 4)
 
   enum class OnboardingStartingPlace {
-    WELCOME_DIALOG, CONFIGURE_NEW_UI_TOOLWINDOW
+    WELCOME_DIALOG
   }
 
   enum class OnboardingStopReason {

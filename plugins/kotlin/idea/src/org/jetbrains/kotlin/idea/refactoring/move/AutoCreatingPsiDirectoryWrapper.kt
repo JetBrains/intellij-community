@@ -5,7 +5,9 @@ package org.jetbrains.kotlin.idea.refactoring.move
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.refactoring.MoveDestination
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 sealed class AutoCreatingPsiDirectoryWrapper {
     class ByPsiDirectory(private val psiDirectory: PsiDirectory) : AutoCreatingPsiDirectoryWrapper() {
         override fun getPackageName(): String = JavaDirectoryService.getInstance()!!.getPackage(psiDirectory)?.qualifiedName ?: ""
@@ -21,5 +23,7 @@ sealed class AutoCreatingPsiDirectoryWrapper {
     abstract fun getOrCreateDirectory(source: PsiDirectory): PsiDirectory
 }
 
+@K1Deprecation
 fun MoveDestination.toDirectoryWrapper() = AutoCreatingPsiDirectoryWrapper.ByMoveDestination(this)
+@K1Deprecation
 fun PsiDirectory.toDirectoryWrapper() = AutoCreatingPsiDirectoryWrapper.ByPsiDirectory(this)

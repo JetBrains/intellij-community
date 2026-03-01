@@ -16,7 +16,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-private class ShowTipsAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.BackendOnly {
+internal class ShowTipsAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.BackendOnly {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project

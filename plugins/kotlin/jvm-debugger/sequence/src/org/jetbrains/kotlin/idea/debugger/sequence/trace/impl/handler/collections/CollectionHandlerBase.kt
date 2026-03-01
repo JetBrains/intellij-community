@@ -8,7 +8,9 @@ import com.intellij.debugger.streams.core.trace.dsl.Expression
 import com.intellij.debugger.streams.core.trace.dsl.Variable
 import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.core.wrapper.StreamCall
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 abstract class CollectionHandlerBase(
     order: Int, private val dsl: Dsl,
     private val call: StreamCall, private val internalHandler: BothSemanticsHandler

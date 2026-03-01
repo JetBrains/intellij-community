@@ -1,18 +1,31 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.frontend"/>
-    <module name="intellij.platform.execution.impl.frontend"/>
+    <module name="intellij.platform.rpc.topics.frontend"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
     <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.platform.debugger.impl.ui"/>
-    <module name="intellij.platform.debugger.impl.rpc"/>
-    <module name="intellij.platform.rpc.topics.frontend"/>
+    <module name="intellij.platform.execution.impl.frontend"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
   <extensionPoints>
-    <extensionPoint name="xdebugger.customQuickEvaluateActionProvider"
-                    interface="com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.imageEditorUIProvider"
                     interface="com.intellij.platform.debugger.impl.frontend.frame.ImageEditorUIProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.frontendLineBreakpointAttachmentProvider"
+                    interface="com.intellij.platform.debugger.impl.frontend.FrontendXLineBreakpointAttachmentProvider" dynamic="true"/>
   </extensionPoints>
   <actions resource-bundle="messages.FrontendDebuggerImplBundle">
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
@@ -24,8 +37,6 @@
     <action id="XDebugger.Split.Enable" class="com.intellij.platform.debugger.impl.frontend.EnabledSplitDebuggerAction" internal="true"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>
-    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerEventsListener"/>
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
     <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>

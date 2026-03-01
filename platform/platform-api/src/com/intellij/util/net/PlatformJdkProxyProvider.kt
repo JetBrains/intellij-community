@@ -7,23 +7,24 @@ import java.net.Authenticator
 import java.net.ProxySelector
 
 internal object PlatformJdkProxyProvider {
-  val proxySelector: ProxySelector = IdeProxySelector(asProxyConfigurationProvider(ProxySettings::getInstance))
-  val authenticator: Authenticator = IdeProxyAuthenticator(asProxyAuthentication(ProxyAuthentication::getInstance))
-}
+  val proxySelector: ProxySelector = IdeProxySelector {
+    ProxySettings.getInstance().getProxyConfiguration()
+  }
 
-private fun asProxyConfigurationProvider(getProxySettings: () -> ProxySettings): ProxyConfigurationProvider =
-  ProxyConfigurationProvider { getProxySettings().getProxyConfiguration() }
+  val authenticator: Authenticator = IdeProxyAuthenticator(object : ProxyAuthentication {
+    private val proxyAuthentication: ProxyAuthentication
+      get() = ProxyAuthentication.getInstance()
 
-private fun asProxyAuthentication(getProxyAuthentication: () -> ProxyAuthentication): ProxyAuthentication = object : ProxyAuthentication {
-  override fun getKnownAuthentication(host: String, port: Int): Credentials? =
-    getProxyAuthentication().getKnownAuthentication(host, port)
+    override fun getKnownAuthentication(host: String, port: Int): Credentials? =
+      proxyAuthentication.getKnownAuthentication(host, port)
 
-  override fun getPromptedAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? =
-    getProxyAuthentication().getPromptedAuthentication(prompt, host, port)
+    override fun getPromptedAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? =
+      proxyAuthentication.getPromptedAuthentication(prompt, host, port)
 
-  override fun isPromptedAuthenticationCancelled(host: String, port: Int): Boolean =
-    getProxyAuthentication().isPromptedAuthenticationCancelled(host, port)
+    override fun isPromptedAuthenticationCancelled(host: String, port: Int): Boolean =
+      proxyAuthentication.isPromptedAuthenticationCancelled(host, port)
 
-  override fun enablePromptedAuthentication(host: String, port: Int) =
-    getProxyAuthentication().enablePromptedAuthentication(host, port)
+    override fun enablePromptedAuthentication(host: String, port: Int) =
+      proxyAuthentication.enablePromptedAuthentication(host, port)
+  })
 }

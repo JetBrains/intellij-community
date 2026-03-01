@@ -23,7 +23,7 @@ internal class ShowWorkspaceFileStateAction : DumbAwareAction() {
 
     val fileSets = WorkspaceFileIndex
       .getInstance(project)
-      .findFileSets(virtualFile, true, true, true, true, true, true)
+      .findFileSets(virtualFile, true, true, true, true, true, true, true)
 
     val baseListPopupStep = object : BaseListPopupStep<WorkspaceFileSet>("Workspace File State", fileSets) {
       override fun isSpeedSearchEnabled() = true

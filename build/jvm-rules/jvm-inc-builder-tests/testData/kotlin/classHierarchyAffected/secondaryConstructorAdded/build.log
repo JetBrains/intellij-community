@@ -1,0 +1,30 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  META-INF/kotlin_classHierarchyAffected_secondaryConstructorAdded-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/secondaryConstructorAdded/a/A.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  AConstructorFunctionKt.class
+End of files
+Cleaning output files:
+  AChild.class
+  CreateAFromIntKt.class
+  CreateAFromStringKt.class
+  META-INF/kotlin_classHierarchyAffected_secondaryConstructorAdded-a.kotlin_module
+  UseAKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/secondaryConstructorAdded/a/A.kt
+  kotlin/classHierarchyAffected/secondaryConstructorAdded/a/AChild.kt
+  kotlin/classHierarchyAffected/secondaryConstructorAdded/a/createAFromInt.kt
+  kotlin/classHierarchyAffected/secondaryConstructorAdded/a/createAFromString.kt
+  kotlin/classHierarchyAffected/secondaryConstructorAdded/a/useA.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,17 +1,29 @@
 package com.intellij.remoteDev.tests.impl.utils
 
-import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.ThreadDumper
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.blockingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.TimeoutException
+import kotlin.io.path.appendText
+import kotlin.io.path.createFile
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
-val coroutineDumpPrefix: String = "CoroutineDump:"
+val threadDumpFileNameSubstring: String = "thread-dump"
 
 @ApiStatus.Internal
 suspend fun <T> withTimeoutDumping(
@@ -29,13 +41,17 @@ suspend fun <T> withTimeoutDumping(
       withTimeout(timeout) { deferred.await() }
     }
     catch (e: TimeoutCancellationException) {
-      //println(buildString {
-      //  appendLine(message)
-      //  // see com.intellij.testFramework.common.TimeoutKt.timeoutRunBlocking
-      //  appendLine(ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false).rawDump)
-      //})
+      val threadDump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), true).rawDump
+      val insideIde = ApplicationManager.getApplication() != null
+      val fileWithThreadDump = if (insideIde) {
+        val logDir = PathManager.getLogDir()
+        logDir.resolve(getArtifactsFileName(title, threadDumpFileNameSubstring, "log"))
+      } else null
 
-      val coroutinesDump = dumpCoroutines(outerScope)
+      if (fileWithThreadDump != null) {
+        fileWithThreadDump.createFile()
+        fileWithThreadDump.appendText(threadDump)
+      }
       val failMessage = outerScope.async { failMessageProducer?.invoke() }.await()
       throw TimeoutException(buildString {
         append("$title[timeout=$timeout] failed:")
@@ -43,10 +59,14 @@ suspend fun <T> withTimeoutDumping(
         if (!failMessage.isNullOrBlank()) {
           appendLine(failMessage)
         }
-        appendLine("------------")
-        appendLine(coroutineDumpPrefix)
-        appendLine(coroutinesDump)
-        append("------------")
+        if (fileWithThreadDump != null) {
+          appendLine("Thread dump can be found at file:///${fileWithThreadDump}")
+        }
+        else {
+          appendLine("------------")
+          appendLine(threadDump)
+          append("------------")
+        }
       })
     }
   }.also {

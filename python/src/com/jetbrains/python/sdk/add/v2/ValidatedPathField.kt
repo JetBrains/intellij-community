@@ -7,9 +7,10 @@ import com.intellij.execution.target.getTargetType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.and
@@ -20,6 +21,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getParentOfType
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
@@ -27,6 +29,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
@@ -48,8 +51,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionListener
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.Icon
+import javax.swing.JPanel
+import javax.swing.JRootPane
 import javax.swing.JTextField
 import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
@@ -142,6 +151,16 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
         textInputFlow.value = text
       }
     })
+
+    createBrowseFolderListener(browseFolderDialogTitle, isFileSelectionMode)?.also {
+      addActionListener(it)
+    }
+
+    textField.addFocusListener(object : FocusAdapter() {
+      override fun focusLost(e: FocusEvent) {
+        validationAction.doValidate()
+      }
+    })
   }
 
   private fun registerPropertyCallbacks() {
@@ -189,7 +208,20 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
     this.scope = scope
     registerPropertyCallbacks()
 
-    scope.launch(Dispatchers.UI) {
+    val rootPane = this.getParentOfType<JRootPane>()
+    val topPanel = ComponentUtil.findParentByCondition(this) { it.parent !is JPanel }
+
+    listOfNotNull(topPanel, rootPane).forEach { component ->
+      component.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent?) {
+          if (!this@ValidatedPathField.isVisible) return
+          validationAction.doValidate()
+        }
+      })
+    }
+
+
+    scope.launch(Dispatchers.EDT) {
       textInputFlow
         .debounce(50) // setText method is a combination of two calls - remove + insert, should count them as 1
         .map {
@@ -286,6 +318,7 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
   missingExecutableText: @Nls String?,
   installAction: ActionLink? = null,
   isFileSelectionMode: Boolean = true,
+  venvExistenceValidationState: ObservableProperty<VenvExistenceValidationState>? = null,
 ): ValidatedPathField<T, P, VP> {
 
   val validatedPathField = ValidatedPathField(
@@ -304,15 +337,28 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
     ).visibleIf(pathValidator.backProperty.transform { it?.pathHolder == null }.and(pathValidator.isDirtyValue.not()))
   }
 
+  val initialValidationRequestor = (validationRequestor
+    and WHEN_PROPERTY_CHANGED(pathValidator.isDirtyValue)
+    and WHEN_PROPERTY_CHANGED(pathValidator.backProperty))
+
+  val finalValidationRequestor = if (venvExistenceValidationState != null) {
+    initialValidationRequestor and WHEN_PROPERTY_CHANGED(venvExistenceValidationState)
+  }
+  else initialValidationRequestor
+
   row(labelText) {
     cell(validatedPathField)
       .align(AlignX.FILL)
-      .validationRequestor(validationRequestor
-                             and WHEN_PROPERTY_CHANGED(pathValidator.isDirtyValue)
-                             and WHEN_PROPERTY_CHANGED(pathValidator.backProperty)
-      )
+      .validationRequestor(finalValidationRequestor)
       .validationOnInput { component ->
         if (!component.isVisible) return@validationOnInput null
+
+        val isVenvOverridden = when (venvExistenceValidationState?.get()) {
+          is VenvExistenceValidationState.Warning -> true
+          is VenvExistenceValidationState.Invisible, is VenvExistenceValidationState.Error, null -> false
+        }
+
+        if (isVenvOverridden) return@validationOnInput null
 
         val pyErrorMessage = pathValidator.backProperty.get()?.validationResult?.errorOrNull?.message
 

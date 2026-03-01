@@ -9,7 +9,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import org.jetbrains.idea.devkit.debugger.DevKitDebuggerBundle
 
-private class DisableIDEStateAction : AnAction() {
+internal class DisableIDEStateAction : AnAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
   override fun update(e: AnActionEvent) {
     if (!DevKitDebuggerSettings.getInstance().showIdeState) {

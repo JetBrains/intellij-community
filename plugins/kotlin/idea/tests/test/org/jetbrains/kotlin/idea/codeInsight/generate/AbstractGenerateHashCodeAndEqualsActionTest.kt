@@ -2,26 +2,9 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.generate
 
-import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.actions.CodeInsightAction
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 
-abstract class AbstractGenerateHashCodeAndEqualsActionTest : AbstractCodeInsightActionTest() {
+abstract class AbstractK1GenerateHashCodeAndEqualsActionTest: AbstractGenerateHashCodeAndEqualsActionTest() {
     override fun createAction(fileText: String): CodeInsightAction = KotlinGenerateEqualsAndHashcodeAction()
-
-    override fun doTest(path: String) {
-        val fileText = FileUtil.loadFile(dataFile(), true)
-
-        val codeInsightSettings = CodeInsightSettings.getInstance()
-        val useInstanceOfOnEqualsParameterOld = codeInsightSettings.USE_INSTANCEOF_ON_EQUALS_PARAMETER
-
-        try {
-            codeInsightSettings.USE_INSTANCEOF_ON_EQUALS_PARAMETER = InTextDirectivesUtils.isDirectiveDefined(fileText, "// USE_IS_CHECK")
-            super.doTest(path)
-        } finally {
-            codeInsightSettings.USE_INSTANCEOF_ON_EQUALS_PARAMETER = useInstanceOfOnEqualsParameterOld
-        }
-    }
 }

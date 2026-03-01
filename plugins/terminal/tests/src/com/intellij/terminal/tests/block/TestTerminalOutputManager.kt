@@ -10,7 +10,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.ExperimentalUI
-import org.jetbrains.plugins.terminal.block.output.*
+import org.jetbrains.plugins.terminal.block.output.CommandBlock
+import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
+import org.jetbrains.plugins.terminal.block.output.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.output.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
+import org.jetbrains.plugins.terminal.block.output.TextWithHighlightings
+import org.jetbrains.plugins.terminal.block.output.textRange
+import org.jetbrains.plugins.terminal.block.output.withCommand
+import org.jetbrains.plugins.terminal.block.output.withPrompt
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.junit.Assert
 

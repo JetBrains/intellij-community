@@ -3,7 +3,12 @@ package com.intellij.terminal.completion.engine
 
 import com.intellij.terminal.completion.ShellArgumentSuggestion
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
-import com.intellij.terminal.completion.spec.*
+import com.intellij.terminal.completion.spec.ShellAliasSuggestion
+import com.intellij.terminal.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellOptionSpec
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
 
 internal class ShellCommandTreeSuggestionsProvider(
   private val context: ShellRuntimeContext,
@@ -14,6 +19,7 @@ internal class ShellCommandTreeSuggestionsProvider(
       is ShellCommandNode -> getSuggestionsForSubcommand(node)
       is ShellOptionNode -> getSuggestionsForOption(node)
       is ShellArgumentNode -> node.parent?.let { getSuggestionsOfNext(it) } ?: emptyList()
+      is ShellUnknownNode -> node.parent?.let { getSuggestionsOfNext(it) } ?: emptyList()
       else -> emptyList()
     }
     return filterSuggestionsByPrefix(suggestions.distinctBy { it.name })
@@ -123,7 +129,7 @@ internal class ShellCommandTreeSuggestionsProvider(
   private suspend fun getArgumentSuggestions(arg: ShellArgumentSpec): List<ShellCompletionSuggestion> {
     val suggestions = mutableListOf<ShellCompletionSuggestion>()
     for (generator in arg.generators) {
-      val result = generatorsExecutor.execute(context, generator)
+      val result = generatorsExecutor.execute(context, generator) ?: emptyList()
       // Wrap ordinary completion suggestions into ShellArgumentSuggestion to be able to get the argument spec in ShellCommandTreeBuilder
       val adjustedSuggestions = result.map { if (it !is ShellCommandSpec && it !is ShellAliasSuggestion) ShellArgumentSuggestion(it, arg) else it }
       suggestions.addAll(adjustedSuggestions)
@@ -147,10 +153,10 @@ internal class ShellCommandTreeSuggestionsProvider(
   }
 
   private suspend fun ShellCommandSpec.getSubcommands(): List<ShellCommandSpec> {
-    return generatorsExecutor.execute(context, subcommandsGenerator)
+    return generatorsExecutor.execute(context, subcommandsGenerator) ?: emptyList()
   }
 
   private suspend fun ShellCommandSpec.getAllOptions(): List<ShellOptionSpec> {
-    return generatorsExecutor.execute(context, allOptionsGenerator)
+    return generatorsExecutor.execute(context, allOptionsGenerator) ?: emptyList()
   }
 }

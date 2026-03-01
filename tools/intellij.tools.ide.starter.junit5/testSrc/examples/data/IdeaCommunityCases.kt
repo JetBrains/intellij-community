@@ -2,7 +2,6 @@ package examples.data
 
 import com.intellij.ide.starter.ide.IdeProductProvider
 import com.intellij.ide.starter.project.GitHubProject
-import com.intellij.ide.starter.project.RemoteArchiveProjectInfo
 import com.intellij.ide.starter.project.TestCaseTemplate
 
 object IdeaCommunityCases : TestCaseTemplate(IdeProductProvider.IC) {

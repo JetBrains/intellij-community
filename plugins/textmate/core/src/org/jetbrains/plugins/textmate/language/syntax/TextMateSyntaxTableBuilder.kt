@@ -125,12 +125,13 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
     captures.entries().forEach { (key, value) ->
       key.toIntOrNull()?.let { index ->
         val captureDict = value.plist
-        val captureName = captureDict.getPlistValue(Constants.NAME_KEY)
-        if (captureName != null) {
-          map[index] = TextMateRawCapture.Name(interner.intern(captureName.string.orEmpty()))
+        map[index] = if (captureDict.contains(Constants.PATTERNS_KEY)) {
+          TextMateRawCapture.Rule(loadRealNode(captureDict, parent))
         }
         else {
-          map[index] = TextMateRawCapture.Rule(loadRealNode(captureDict, parent))
+          captureDict.getPlistValue(Constants.NAME_KEY)?.let { captureName ->
+             TextMateRawCapture.Name(interner.intern(captureName.string.orEmpty()))
+          }
         }
         maxGroupIndex = max(maxGroupIndex, index)
       }

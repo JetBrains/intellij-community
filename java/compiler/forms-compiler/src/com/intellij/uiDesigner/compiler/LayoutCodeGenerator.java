@@ -8,7 +8,8 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Dimension;
 
 public abstract class LayoutCodeGenerator {
   static final Method ourSetLayoutMethod = Method.getMethod("void setLayout(java.awt.LayoutManager)");

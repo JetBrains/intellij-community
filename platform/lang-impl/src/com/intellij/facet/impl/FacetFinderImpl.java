@@ -2,7 +2,13 @@
 
 package com.intellij.facet.impl;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetFinder;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetRootsProvider;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.ProjectWideFacetListener;
+import com.intellij.facet.ProjectWideFacetListenersRegistry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -19,7 +25,11 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class FacetFinderImpl extends FacetFinder {
   private static final Logger LOG = Logger.getInstance(FacetFinderImpl.class);

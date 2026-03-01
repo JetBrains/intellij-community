@@ -6,7 +6,28 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -18,12 +39,16 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.NULL;
 import static com.intellij.util.ObjectUtils.tryCast;
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a way to indicate whether method execution is already finished

@@ -175,7 +175,7 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
     addTest("span#one.two[title data]", "<span id=\"one\" class=\"two\" title=\"\" data=\"\"></span>");
     addTest("span[title=Hello]", "<span title=\"Hello\"></span>");
     addTest("span[title=\"Hello world\"]", "<span title=\"Hello world\"></span>");
-    addTest("span[title=\"Hello world\"]", "<span title=\"Hello world\"></span>");
+    addTestWithName("span[title=\"Hello world\"]", "span[title=\"Hello world\"] #2", "<span title=\"Hello world\"></span>");
     addTest("span[title=\"Hello world\" data=other]", "<span title=\"Hello world\" data=\"other\"></span>");
     addTest("span[title=\"Hello world\" data=other attr2 attr3]",
             "<span title=\"Hello world\" data=\"other\" attr2=\"\" attr3=\"\"></span>");
@@ -192,7 +192,7 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
     addTest("a[title=Google http://google.com]", "<a href=\"http://google.com\" title=\"Google\"></a>");
     addTest("img[image.png]", "<img src=\"image.png\" alt=\"\">");
     addTest("link[style.css]", "<link rel=\"stylesheet\" href=\"style.css\">");
-    addTest("script", "<script></script>");
+    addTestWithName("script", "script #2", "<script></script>");
     addTest("script[src]", "<script src=\"\"></script>");
     addTest("script[file.js]", "<script src=\"file.js\"></script>");
     addTest("script[/packages/requiejs/require.js]", "<script src=\"/packages/requiejs/require.js\"></script>");
@@ -214,13 +214,13 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
     addTestWithInit("div.editor[a. title=test]", "<div class=\"editor\" a title=\"test\">|</div>", compactBooleanAllowed(true));
 
     addTestWithInit("b[a.]", "<b a=\"a\"></b>", compactBooleanAllowed(false));
-    addTestWithInit("track[default]", "<track default=\"default\">", compactBooleanAllowed(false));
+    addTestWithName("track[default]", "track[default] #2", "<track default=\"default\">", compactBooleanAllowed(false));
 
-    addTestWithInit("button:d", "<button disabled></button>", compactBooleanAllowed(true));
-    addTestWithInit("button:d", "<button disabled=\"disabled\"></button>", compactBooleanAllowed(false));
+    addTestWithName("button:d", "button:d #2", "<button disabled></button>", compactBooleanAllowed(true));
+    addTestWithName("button:d", "button:d #3", "<button disabled=\"disabled\"></button>", compactBooleanAllowed(false));
 
     addTestWithInit("input[title]", "<input type=\"text\" title=\"\">", null);
-    addTestWithInit("input[title]", "<input type=\"text\" title>", (fixture, testRootDisposable) -> {
+    addTestWithName("input[title]", "input[title] #2", "<input type=\"text\" title>", (fixture, testRootDisposable) -> {
       final HtmlUnknownBooleanAttributeInspection inspection = new HtmlUnknownBooleanAttributeInspection();
       inspection.updateAdditionalEntries("title", testRootDisposable);
       fixture.enableInspections(inspection);
@@ -234,7 +234,7 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
           <td>|</td>
           <td>|</td>
       </tr>""", withAddEndEditPoint(false));
-    addTestWithPositionCheck("tr>td+td+td", """
+    addTestWithNameWithPositionCheck("tr>td+td+td", "tr>td+td+td #2", """
       <tr>
           <td>|</td>
           <td>|</td>
@@ -252,7 +252,7 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
   }
 
   private void addExpandosTests() {
-    addTest("dl+", "<dl><dt></dt><dd></dd></dl>");
+    addTestWithName("dl+", "dl+ #2", "<dl><dt></dt><dd></dd></dl>");
     addTest("div+div>dl+", "<div></div><div><dl><dt></dt><dd></dd></dl></div>");
   }
 
@@ -338,10 +338,10 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
   }
 
   private void addGroupMultiplicationTests() {
-    addTest("(span.i$)*3", "<span class=\"i1\"></span><span class=\"i2\"></span><span class=\"i3\"></span>");
-    addTest("p.p$*2>(i.i$+b.b$)*3",
+    addTestWithName("(span.i$)*3", "(span.i$)*3 #2", "<span class=\"i1\"></span><span class=\"i2\"></span><span class=\"i3\"></span>");
+    addTestWithName("p.p$*2>(i.i$+b.b$)*3", "p.p$*2>(i.i$+b.b$)*3 #2",
             "<p class=\"p1\"><i class=\"i1\"></i><b class=\"b1\"></b><i class=\"i2\"></i><b class=\"b2\"></b><i class=\"i3\"></i><b class=\"b3\"></b></p><p class=\"p2\"><i class=\"i1\"></i><b class=\"b1\"></b><i class=\"i2\"></i><b class=\"b2\"></b><i class=\"i3\"></i><b class=\"b3\"></b></p>");
-    addTest("(p.i$+ul>li.i$*2>span.s$)*3",
+    addTestWithName("(p.i$+ul>li.i$*2>span.s$)*3", "(p.i$+ul>li.i$*2>span.s$)*3 #2",
             "<p class=\"i1\"></p><ul><li class=\"i1\"><span class=\"s1\"></span></li><li class=\"i2\"><span class=\"s2\"></span></li></ul><p class=\"i2\"></p><ul><li class=\"i1\"><span class=\"s1\"></span></li><li class=\"i2\"><span class=\"s2\"></span></li></ul><p class=\"i3\"></p><ul><li class=\"i1\"><span class=\"s1\"></span></li><li class=\"i2\"><span class=\"s2\"></span></li></ul>");
   }
 
@@ -401,6 +401,18 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
 
   private void addTestWithPositionCheck(String source, String expected, @Nullable TestInitializer setUp) {
     addTestWithPositionCheck(source, expected, setUp, "html");
+  }
+
+  private void addTestWithName(String source, String name, String expected) {
+    addTestWithName(source, name, expected, null);
+  }
+
+  private void addTestWithName(String source, String name, String expected, @Nullable TestInitializer setUp) {
+    super.addTestWithName(source, name, expected, setUp, "html");
+  }
+
+  private void addTestWithNameWithPositionCheck(String source, String name, String expected, @Nullable TestInitializer setUp) {
+    super.addTestWithNameWithPositionCheck(source, name, expected, setUp, "html");
   }
 
   @NotNull

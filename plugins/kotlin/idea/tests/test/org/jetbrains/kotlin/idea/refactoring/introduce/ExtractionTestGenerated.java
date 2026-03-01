@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce;
 
@@ -18,13 +18,13 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
+public abstract class ExtractionTestGenerated extends AbstractK1ExtractionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceVariable")
-    public abstract static class IntroduceVariable extends AbstractExtractionTest {
+    public abstract static class IntroduceVariable extends AbstractK1ExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/anonymousObjects")
-        public static class AnonymousObjects extends AbstractExtractionTest {
+        public static class AnonymousObjects extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -88,7 +88,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/collectionElement")
-        public static class CollectionElement extends AbstractExtractionTest {
+        public static class CollectionElement extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -132,10 +132,10 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/explicateTypeArguments")
-        public abstract static class ExplicateTypeArguments extends AbstractExtractionTest {
+        public abstract static class ExplicateTypeArguments extends AbstractK1ExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceVariable/explicateTypeArguments/smartCast")
-            public static class SmartCast extends AbstractExtractionTest {
+            public static class SmartCast extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -159,7 +159,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceVariable/explicateTypeArguments")
-            public static class Uncategorized extends AbstractExtractionTest {
+            public static class Uncategorized extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -204,7 +204,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/extractToScope")
-        public static class ExtractToScope extends AbstractExtractionTest {
+        public static class ExtractToScope extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -293,7 +293,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/multiDeclarations")
-        public static class MultiDeclarations extends AbstractExtractionTest {
+        public static class MultiDeclarations extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -357,7 +357,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/multiDollarStringTemplates")
-        public static class MultiDollarStringTemplates extends AbstractExtractionTest {
+        public static class MultiDollarStringTemplates extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -521,7 +521,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/qualifiers")
-        public static class Qualifiers extends AbstractExtractionTest {
+        public static class Qualifiers extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -615,7 +615,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/script")
-        public static class Script extends AbstractExtractionTest {
+        public static class Script extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -644,7 +644,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/stringTemplates")
-        public static class StringTemplates extends AbstractExtractionTest {
+        public static class StringTemplates extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -758,7 +758,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable")
-        public static class Uncategorized extends AbstractExtractionTest {
+        public static class Uncategorized extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1283,10 +1283,10 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/extractFunction")
-    public abstract static class ExtractFunction extends AbstractExtractionTest {
+    public abstract static class ExtractFunction extends AbstractK1ExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/basic")
-        public static class Basic extends AbstractExtractionTest {
+        public static class Basic extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1622,6 +1622,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/suspendCallWithExtractedParameter.kt");
             }
 
+            @TestMetadata("targetRendering.kt")
+            public void testTargetRendering() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/targetRendering.kt");
+            }
+
             @TestMetadata("topLevelValUnderSmartCast.kt")
             public void testTopLevelValUnderSmartCast() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/topLevelValUnderSmartCast.kt");
@@ -1645,7 +1650,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/contextParameters")
-        public static class ContextParameters extends AbstractExtractionTest {
+        public static class ContextParameters extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1709,10 +1714,10 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/controlFlow")
-        public abstract static class ControlFlow extends AbstractExtractionTest {
+        public abstract static class ControlFlow extends AbstractK1ExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/conditionalJumps")
-            public static class ConditionalJumps extends AbstractExtractionTest {
+            public static class ConditionalJumps extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1776,7 +1781,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/default")
-            public static class Default extends AbstractExtractionTest {
+            public static class Default extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1825,7 +1830,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/definiteReturns")
-            public static class DefiniteReturns extends AbstractExtractionTest {
+            public static class DefiniteReturns extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1884,7 +1889,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/evaluateExpression")
-            public static class EvaluateExpression extends AbstractExtractionTest {
+            public static class EvaluateExpression extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1968,7 +1973,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/exitPointEquivalence")
-            public static class ExitPointEquivalence extends AbstractExtractionTest {
+            public static class ExitPointEquivalence extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2027,7 +2032,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/initializer")
-            public static class Initializer extends AbstractExtractionTest {
+            public static class Initializer extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2076,7 +2081,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/outputValues")
-            public static class OutputValues extends AbstractExtractionTest {
+            public static class OutputValues extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2265,7 +2270,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/returnTypeCandidates")
-            public static class ReturnTypeCandidates extends AbstractExtractionTest {
+            public static class ReturnTypeCandidates extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2294,7 +2299,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/throws")
-            public static class Throws extends AbstractExtractionTest {
+            public static class Throws extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2353,7 +2358,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/unextractable")
-            public static class Unextractable extends AbstractExtractionTest {
+            public static class Unextractable extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2408,7 +2413,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/defaultContainer")
-        public static class DefaultContainer extends AbstractExtractionTest {
+        public static class DefaultContainer extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2457,7 +2462,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/delegation")
-        public static class Delegation extends AbstractExtractionTest {
+        public static class Delegation extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2486,7 +2491,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/duplicates")
-        public static class Duplicates extends AbstractExtractionTest {
+        public static class Duplicates extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2570,10 +2575,10 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/initializers")
-        public abstract static class Initializers extends AbstractExtractionTest {
+        public abstract static class Initializers extends AbstractK1ExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/initializers/accessors")
-            public static class Accessors extends AbstractExtractionTest {
+            public static class Accessors extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2607,7 +2612,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/initializers/classes")
-            public static class Classes extends AbstractExtractionTest {
+            public static class Classes extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2641,7 +2646,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/initializers/functions")
-            public static class Functions extends AbstractExtractionTest {
+            public static class Functions extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2715,7 +2720,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/initializers/properties")
-            public static class Properties extends AbstractExtractionTest {
+            public static class Properties extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2770,7 +2775,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/multiline")
-        public static class Multiline extends AbstractExtractionTest {
+        public static class Multiline extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2804,7 +2809,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/optIn")
-        public static class OptIn extends AbstractExtractionTest {
+        public static class OptIn extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2868,10 +2873,10 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/parameters")
-        public abstract static class Parameters extends AbstractExtractionTest {
+        public abstract static class Parameters extends AbstractK1ExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/candidateTypes")
-            public static class CandidateTypes extends AbstractExtractionTest {
+            public static class CandidateTypes extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2970,7 +2975,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/capturedFunctions")
-            public static class CapturedFunctions extends AbstractExtractionTest {
+            public static class CapturedFunctions extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3009,7 +3014,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/extractSuper")
-            public static class ExtractSuper extends AbstractExtractionTest {
+            public static class ExtractSuper extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3043,7 +3048,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/extractThis")
-            public static class ExtractThis extends AbstractExtractionTest {
+            public static class ExtractThis extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3177,7 +3182,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/it")
-            public static class It extends AbstractExtractionTest {
+            public static class It extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3211,7 +3216,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/misc")
-            public static class Misc extends AbstractExtractionTest {
+            public static class Misc extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3420,7 +3425,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/nonDenotableTypes")
-            public static class NonDenotableTypes extends AbstractExtractionTest {
+            public static class NonDenotableTypes extends AbstractK1ExtractionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3475,7 +3480,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/script")
-        public static class Script extends AbstractExtractionTest {
+        public static class Script extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -3504,7 +3509,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/stringTemplates")
-        public static class StringTemplates extends AbstractExtractionTest {
+        public static class StringTemplates extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -3603,7 +3608,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/typeParameters")
-        public static class TypeParameters extends AbstractExtractionTest {
+        public static class TypeParameters extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -3708,10 +3713,10 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceProperty")
-    public abstract static class IntroduceProperty extends AbstractExtractionTest {
+    public abstract static class IntroduceProperty extends AbstractK1ExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceProperty/script")
-        public static class Script extends AbstractExtractionTest {
+        public static class Script extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -3740,7 +3745,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceProperty/stringTemplates")
-        public static class StringTemplates extends AbstractExtractionTest {
+        public static class StringTemplates extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -3834,7 +3839,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceProperty")
-        public static class Uncategorized extends AbstractExtractionTest {
+        public static class Uncategorized extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4039,10 +4044,10 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceParameter")
-    public abstract static class IntroduceParameter extends AbstractExtractionTest {
+    public abstract static class IntroduceParameter extends AbstractK1ExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter/multiline")
-        public static class Multiline extends AbstractExtractionTest {
+        public static class Multiline extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4076,7 +4081,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter/script")
-        public static class Script extends AbstractExtractionTest {
+        public static class Script extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4105,7 +4110,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter/stringTemplates")
-        public static class StringTemplates extends AbstractExtractionTest {
+        public static class StringTemplates extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4204,7 +4209,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter")
-        public static class Uncategorized extends AbstractExtractionTest {
+        public static class Uncategorized extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4495,6 +4500,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/simpleNameWithDefaultValueSubstitution.kt");
             }
 
+            @TestMetadata("skipObjectLiteral.kt")
+            public void testSkipObjectLiteral() throws Exception {
+                runTest("testData/refactoring/introduceParameter/skipObjectLiteral.kt");
+            }
+
             @TestMetadata("substituteBinaryExpressions.kt")
             public void testSubstituteBinaryExpressions() throws Exception {
                 runTest("testData/refactoring/introduceParameter/substituteBinaryExpressions.kt");
@@ -4618,7 +4628,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter/variableConversion")
-        public static class VariableConversion extends AbstractExtractionTest {
+        public static class VariableConversion extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4643,10 +4653,10 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceLambdaParameter")
-    public abstract static class IntroduceLambdaParameter extends AbstractExtractionTest {
+    public abstract static class IntroduceLambdaParameter extends AbstractK1ExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceLambdaParameter/multiline")
-        public static class Multiline extends AbstractExtractionTest {
+        public static class Multiline extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4680,7 +4690,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceLambdaParameter/stringTemplates")
-        public static class StringTemplates extends AbstractExtractionTest {
+        public static class StringTemplates extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4774,7 +4784,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceLambdaParameter")
-        public static class Uncategorized extends AbstractExtractionTest {
+        public static class Uncategorized extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4849,7 +4859,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceJavaParameter")
-    public static class IntroduceJavaParameter extends AbstractExtractionTest {
+    public static class IntroduceJavaParameter extends AbstractK1ExtractionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4878,7 +4888,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceTypeParameter")
-    public static class IntroduceTypeParameter extends AbstractExtractionTest {
+    public static class IntroduceTypeParameter extends AbstractK1ExtractionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4922,7 +4932,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceTypeAlias")
-    public static class IntroduceTypeAlias extends AbstractExtractionTest {
+    public static class IntroduceTypeAlias extends AbstractK1ExtractionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5101,10 +5111,10 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceConstant")
-    public abstract static class IntroduceConstant extends AbstractExtractionTest {
+    public abstract static class IntroduceConstant extends AbstractK1ExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceConstant/binaryExpression")
-        public static class BinaryExpression extends AbstractExtractionTest {
+        public static class BinaryExpression extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -5233,7 +5243,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceConstant/dotQualifiedExpression")
-        public static class DotQualifiedExpression extends AbstractExtractionTest {
+        public static class DotQualifiedExpression extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -5297,7 +5307,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceConstant/stringTemplates")
-        public static class StringTemplates extends AbstractExtractionTest {
+        public static class StringTemplates extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -5361,7 +5371,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceConstant")
-        public static class Uncategorized extends AbstractExtractionTest {
+        public static class Uncategorized extends AbstractK1ExtractionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -5406,7 +5416,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/extractSuperclass")
-    public static class ExtractSuperclass extends AbstractExtractionTest {
+    public static class ExtractSuperclass extends AbstractK1ExtractionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5520,7 +5530,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/extractInterface")
-    public static class ExtractInterface extends AbstractExtractionTest {
+    public static class ExtractInterface extends AbstractK1ExtractionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

@@ -23,7 +23,7 @@ class PyTemporarilyIgnoredFileProviderTest {
 
     val ignored = path.resolve("ignored")
 
-    PyTemporarilyIgnoredFileProvider.ignoreRoot(ignored, disable)
+    PyTemporarilyIgnoredFileProvider.Helper.ignoreRoot(ignored, disable)
     val sut = PyTemporarilyIgnoredFileProvider()
 
     assertTrue(sut.isIgnoredFile(project.get(), LocalFilePath(ignored.pathString, true)))

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import java.awt.*;
+import java.awt.Robot;
 import java.util.ArrayList;
 import java.util.List;
 

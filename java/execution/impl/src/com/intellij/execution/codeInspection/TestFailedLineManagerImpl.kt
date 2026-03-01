@@ -33,10 +33,15 @@ import com.intellij.testIntegration.TestFailedLineManager
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getContainingUFile
+import org.jetbrains.uast.getContainingUMethod
+import org.jetbrains.uast.toUElementOfType
 import javax.swing.Icon
 
-private class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileEditorManagerListener {
+internal class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileEditorManagerListener {
   private val testStorage = TestStateStorage.getInstance(project)
 
   private val cache = FactoryMap.create<VirtualFile, MutableMap<String, TestInfoCache>> { hashMapOf() }

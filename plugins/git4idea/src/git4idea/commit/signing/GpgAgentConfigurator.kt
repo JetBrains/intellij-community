@@ -414,7 +414,7 @@ internal data class GpgAgentPaths(
   }
 }
 
-private class GpgAgentConfiguratorStartupActivity : ProjectActivity {
+internal class GpgAgentConfiguratorStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.serviceAsync<GpgAgentConfigurator>().init()
   }

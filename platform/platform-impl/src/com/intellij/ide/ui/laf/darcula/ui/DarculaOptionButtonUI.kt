@@ -2,7 +2,9 @@
 package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.LW
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.getButtonTextColor
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getDisabledTextColor
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isDefaultButton
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
@@ -11,7 +13,11 @@ import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.scale
-import java.awt.*
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Paint
+import java.awt.RenderingHints
 import java.awt.geom.Rectangle2D
 import javax.swing.AbstractButton
 import javax.swing.JComponent

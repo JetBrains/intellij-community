@@ -10,7 +10,11 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -839,6 +843,71 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  // PY-87075
+  public void testTypeParameter_variance_with_default() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_inv() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_co() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_contra() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_not_affected_1() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_not_affected_2() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeParameter_variance_on_its_declaration() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_co() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_contra() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_inv() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_in_init() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_not_affected_1() {
+    checkHTMLOnly();
+  }
+
+  // PY-87075
+  public void testTypeVar_variance_not_affected_2() {
+    checkHTMLOnly();
+  }
+
   // PY-64074
   public void testTypeKeyword() {
     checkHTMLOnly();
@@ -848,7 +917,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   public void testTypeAliasStatement() {
     checkHTMLOnly();
   }
-  
+
   // PY-78119
   public void testNeverType() {
     checkHTMLOnly();
@@ -877,6 +946,11 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...", ignored -> {
       checkHTMLOnly();
     });
+  }
+
+  // PY-76922
+  public void testIntersectionType() {
+    checkHTMLOnly();
   }
 
   @Override

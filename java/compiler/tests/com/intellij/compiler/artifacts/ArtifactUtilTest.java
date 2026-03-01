@@ -7,7 +7,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.impl.artifacts.*;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
+import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
+import com.intellij.packaging.impl.artifacts.ParentElementProcessor;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

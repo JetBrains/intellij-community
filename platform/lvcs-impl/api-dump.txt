@@ -157,7 +157,6 @@ c:com.intellij.history.core.changes.PutLabelChange
 - <init>(java.io.DataInput):V
 - accept(com.intellij.history.core.changes.ChangeVisitor):V
 - affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
-- affectsMatching(java.util.regex.Pattern):Z
 - affectsPath(java.lang.String):Z
 - affectsProject(java.lang.String):Z
 - getContentsToPurge():java.util.List
@@ -194,7 +193,6 @@ a:com.intellij.history.core.changes.StructuralChange
 - p:<init>(J,java.lang.String):V
 - p:<init>(java.io.DataInput):V
 - affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
-- affectsMatching(java.util.regex.Pattern):Z
 - affectsPath(java.lang.String):Z
 - affectsProject(java.lang.String):Z
 - p:cannotRevert(java.lang.String,Z):V
@@ -293,8 +291,6 @@ f:com.intellij.history.core.tree.RootEntry
 - write(java.io.DataOutput):V
 c:com.intellij.history.integration.IdeaGateway
 - <init>():V
-- acquireAndClearCurrentContent(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):com.intellij.openapi.util.Pair
-- acquireAndUpdateActualContent(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):com.intellij.openapi.util.Pair
 - areContentChangesVersioned(com.intellij.openapi.vfs.VirtualFile):Z
 - areContentChangesVersioned(java.lang.String):Z
 - createEntryForDeletion(com.intellij.openapi.vfs.VirtualFile):com.intellij.history.core.tree.Entry
@@ -313,7 +309,6 @@ c:com.intellij.history.integration.IdeaGateway
 - getPathOrUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - ps:getVersionedFilterData():com.intellij.history.integration.IdeaGateway$VersionedFilterData
 - isVersioned(com.intellij.openapi.vfs.VirtualFile):Z
-- isVersioned(com.intellij.openapi.vfs.VirtualFile,Z):Z
 - s:iterateDBChildren(com.intellij.openapi.vfs.VirtualFile):java.lang.Iterable
 - s:loadAndIterateChildren(com.intellij.openapi.vfs.VirtualFile):java.lang.Iterable
 - registerUnsavedDocuments(com.intellij.history.core.LocalHistoryFacade):V

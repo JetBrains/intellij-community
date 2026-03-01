@@ -20,8 +20,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButton;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 

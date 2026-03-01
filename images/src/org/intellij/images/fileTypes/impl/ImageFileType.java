@@ -7,7 +7,7 @@ import org.intellij.images.ImagesBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class ImageFileType extends UserBinaryFileType {
   public static final ImageFileType INSTANCE = new ImageFileType();

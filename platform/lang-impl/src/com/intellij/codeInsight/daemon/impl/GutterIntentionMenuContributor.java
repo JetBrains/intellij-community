@@ -18,7 +18,12 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class GutterIntentionMenuContributor implements IntentionMenuContributor {

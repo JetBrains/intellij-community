@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -17,7 +22,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.addColumn;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.getDynamicColumns;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.isVisible;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.removeColumn;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.supportsColumnsToggling;
 
 @ApiStatus.Internal
 public final class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {

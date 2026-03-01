@@ -31,8 +31,14 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 public class InvocationExprent extends Exprent {
   private static final int INVOKE_SPECIAL = 1;
@@ -451,20 +457,15 @@ public class InvocationExprent extends Exprent {
       int paramType = parameters.get(0).getExprType().getType();
 
       // special handling for ambiguous types
-      if (parameters.get(0).type == EXPRENT_CONST) {
-        // 'Integer.valueOf(1)' has '1' type detected as TYPE_BYTECHAR
-        // 'Integer.valueOf(40_000)' has '40_000' type detected as TYPE_CHAR
-        // so we check the type family instead
-        if (parameters.get(0).getExprType().getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
-          if (className.equals("java/lang/Integer")) {
-            return true;
-          }
-        }
-
-        if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
-          if (className.equals("java/lang/Character")) {
-            return true;
-          }
+      // 'Integer.valueOf(1)' has '1' type detected as TYPE_BYTECHAR
+      // 'Integer.valueOf(40_000)' has '40_000' type detected as TYPE_CHAR
+      // so we check the type family instead
+      if (parameters.get(0).getExprType().getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
+        if (className.equals("java/lang/Integer") ||
+            className.equals("java/lang/Byte") ||
+            className.equals("java/lang/Short") ||
+            className.equals("java/lang/Character")) {
+          return true;
         }
       }
 

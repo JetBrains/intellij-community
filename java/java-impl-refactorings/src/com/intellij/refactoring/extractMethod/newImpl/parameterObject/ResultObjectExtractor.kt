@@ -11,7 +11,16 @@ import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.pom.java.JavaFeature
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler

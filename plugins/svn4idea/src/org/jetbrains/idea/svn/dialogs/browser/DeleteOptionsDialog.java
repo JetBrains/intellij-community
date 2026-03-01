@@ -11,8 +11,11 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.dialogs.browser.CopyOptionsDialog.configureRecentMessagesComponent;

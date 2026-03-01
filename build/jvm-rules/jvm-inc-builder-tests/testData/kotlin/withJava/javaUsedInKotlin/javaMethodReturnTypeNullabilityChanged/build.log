@@ -1,0 +1,28 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/javaMethodReturnTypeNullabilityChanged/a/A.java
+End of files
+Cleaning output files:
+  AChild.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_javaMethodReturnTypeNullabilityChanged-a.kotlin_module
+  UseAKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/javaMethodReturnTypeNullabilityChanged/a/AChild.kt
+  kotlin/withJava/javaUsedInKotlin/javaMethodReturnTypeNullabilityChanged/a/useA.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_javaMethodReturnTypeNullabilityChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/javaMethodReturnTypeNullabilityChanged/a/AChild.kt
+  kotlin/withJava/javaUsedInKotlin/javaMethodReturnTypeNullabilityChanged/a/useA.kt
+End of files
+------------------------------------------
+Exit code: OK

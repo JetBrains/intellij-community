@@ -6,7 +6,11 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
@@ -16,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Arrays;
 import java.util.List;
 

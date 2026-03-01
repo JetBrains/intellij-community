@@ -7,12 +7,14 @@ import com.intellij.debugger.streams.core.wrapper.QualifierExpression
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.core.wrapper.impl.StreamChainImpl
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.impl.KotlinChainTransformerImpl
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class CollectionChainTransformer : ChainTransformer<KtCallExpression> {
     private val transformer = KotlinChainTransformerImpl(KotlinCollectionsTypeExtractor())
 

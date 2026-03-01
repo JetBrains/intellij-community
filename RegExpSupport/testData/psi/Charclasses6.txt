@@ -8,5 +8,5 @@ REGEXP_FILE
         RegExpCharImpl: <b>
           PsiElement(CHARACTER)('b')
         RegExpCharImpl: <->
-          PsiElement(MINUS)('-')
+          PsiElement(CHARACTER)('-')
         PsiElement(CLASS_END)(']')

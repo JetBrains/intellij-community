@@ -25,13 +25,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImplKt.toVirtualFileUrl;
-import static com.intellij.workspaceModel.ide.ProjectRootEntityKt.unregisterProjectRootBlocking;
-
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImplKt.toVirtualFileUrl;
+import static com.intellij.workspaceModel.ide.ProjectRootEntityKt.unregisterProjectRootBlocking;
 
 @ApiStatus.Internal
 public class DetachExternalProjectAction extends ExternalSystemNodeAction<ProjectData> {

@@ -13,35 +13,48 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.render
-import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementSink.AccumulatingSinkMessage
 import org.jetbrains.kotlin.idea.completion.impl.k2.ParallelCompletionRunner.Companion.MAX_CONCURRENT_COMPLETION_THREADS
+import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2ChainCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.replaceTypeParametersWithStarProjections
+import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionCollectResultsEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionCommonSectionDataSetupEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSectionEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getAnnotationLiteralExpectedType
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getEqualityExpectedType
-import org.jetbrains.kotlin.idea.util.positionContext.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.ClassifierLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext.Companion.getAnnotationLiteralExpectedType
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext.Companion.getEqualityExpectedType
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtThrowExpression
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
-import java.util.*
+import java.util.ArrayDeque
+import java.util.LinkedList
+import java.util.PriorityQueue
 
 
 internal class K2CompletionRunnerResult(
@@ -80,15 +93,19 @@ internal interface K2CompletionRunner {
             }
         }
 
+        /**
+         * Runs chain completion, returning true if any new results were added by chain completion.
+         */
         @OptIn(KaImplementationDetail::class)
         fun runChainCompletion(
             originalPositionContext: KotlinNameReferencePositionContext,
             completionResultSet: CompletionResultSet,
             parameters: KotlinFirCompletionParameters,
             chainCompletionContributors: List<K2ChainCompletionContributor>,
-        ) {
-            val explicitReceiver = originalPositionContext.explicitReceiver ?: return
+        ): Boolean {
+            val explicitReceiver = originalPositionContext.explicitReceiver ?: return false
 
+            var addedAnyElements = false
             completionResultSet.runRemainingContributors(parameters.delegate) { completionResult ->
                 val lookupElement = completionResult.lookupElement
                 if (lookupElement.`object` !is KotlinLookupObject) {
@@ -156,11 +173,14 @@ internal interface K2CompletionRunner {
                             contributor.createChainedLookupElements(receiverExpression, nameToImport)
                                 .forEach { lookupElement ->
                                     completionResultSet.addElement(lookupElement)
+                                    addedAnyElements = true
                                 }
                         }
                     }
                 }
             }
+
+            return addedAnyElements
         }
     }
 }
@@ -184,6 +204,7 @@ private fun createWeighingContext(
                 nameExpression.expectedType != null -> nameExpression.expectedType
                 nameExpressionParent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
                 nameExpressionParent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
+                nameExpressionParent is KtThrowExpression -> buildClassType(StandardClassIds.Throwable)
                 else -> null
             }
             if (parameters.completionType == CompletionType.SMART
@@ -393,7 +414,6 @@ private class ParallelCompletionRunner : K2CompletionRunner {
         get() = Runtime.getRuntime().availableProcessors().coerceIn(1..MAX_CONCURRENT_COMPLETION_THREADS)
 
     private fun <P : KotlinRawPositionContext> handleElement(
-        currentSection: K2CompletionSection<P>,
         resultSet: CompletionResultSet,
         registeredChainContributors: MutableList<K2ChainCompletionContributor>,
         registeredSinks: SharedPriorityQueue<Pair<K2CompletionSection<P>, K2AccumulatingLookupElementSink>, K2ContributorSectionPriority>.LocalInstance,
@@ -417,7 +437,9 @@ private class ParallelCompletionRunner : K2CompletionRunner {
 
         is AccumulatingSinkMessage.RegisterChainContributor -> registeredChainContributors.add(element.chainContributor)
 
-        is AccumulatingSinkMessage.RegisterLaterSectionSink -> registeredSinks.addLocal(currentSection to element.sink)
+        is AccumulatingSinkMessage.RegisterLaterSectionSink ->
+            @Suppress("UNCHECKED_CAST")
+            registeredSinks.addLocal(element.section as K2CompletionSection<P> to element.sink)
     }
 
     private class WeighingContextCreationImpossibleException : RuntimeException()
@@ -447,7 +469,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
                 addLaterSection = { section ->
                     val laterSectionSink = K2AccumulatingLookupElementSink()
                     localQueueInstance.addLocal(section to laterSectionSink)
-                    sectionSink.registerLaterSection(section.priority, laterSectionSink)
+                    sectionSink.registerLaterSection(section, section.priority, laterSectionSink)
                 },
             )
 
@@ -475,16 +497,24 @@ private class ParallelCompletionRunner : K2CompletionRunner {
 
             val (currentSection, sectionSink) = entry
 
-            sectionSink.consumeElements { element ->
-                handleElement(
-                    currentSection = currentSection,
-                    resultSet = resultSet,
-                    registeredChainContributors = registeredChainContributors,
-                    registeredSinks = registeredSinks,
-                    element = element
-                )
+            val event = CompletionCollectResultsEvent(
+                contributorName = currentSection.contributor::class.simpleName ?: "Unknown",
+                sectionName = currentSection.name.takeIf { it != currentSection.contributor::class.simpleName }
+            )
+
+            event.timeEvent {
+                sectionSink.consumeElements { element ->
+                    handleElement(
+                        resultSet = resultSet,
+                        registeredChainContributors = registeredChainContributors,
+                        registeredSinks = registeredSinks,
+                        element = element
+                    )
+                }
+
+                event.consumedElements = sectionSink.addedElementCount
+                addedElements += sectionSink.addedElementCount
             }
-            addedElements += sectionSink.addedElementCount
         }
 
         return K2CompletionRunnerResult(

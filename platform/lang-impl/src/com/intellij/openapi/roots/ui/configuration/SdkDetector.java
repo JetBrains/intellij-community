@@ -22,7 +22,12 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -154,20 +159,6 @@ public class SdkDetector {
 
   private static boolean isDetectorEnabled() {
     return Registry.is("sdk.detector.enabled");
-  }
-
-  /**
-   * Run Sdk detection assuming called in a background thread
-   *
-   * @deprecated Please use {@link SdkDetector#detectSdks(Project, SdkType, ProgressIndicator, DetectedSdkListener)}
-   */
-  @Deprecated(forRemoval = true)
-  public void detectSdks(
-    @NotNull SdkType type,
-    @NotNull ProgressIndicator indicator,
-    @NotNull DetectedSdkListener callback
-  ) {
-    detectSdks(null, type, indicator, callback);
   }
 
   /**

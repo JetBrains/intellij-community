@@ -5,7 +5,6 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ProjectRootManager
-import java.nio.file.Path
 
 class MavenAsyncUtil {
   companion object {

@@ -2,8 +2,7 @@ package com.intellij.ide.starter.driver.engine
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.impl.JmxHost
-import com.intellij.ide.starter.coroutine.perClassSupervisorScope
-import com.intellij.ide.starter.ide.IDERemDevTestContext
+import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.IDECommandLine
@@ -14,8 +13,10 @@ import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logError
 import io.qameta.allure.Allure
-import kotlinx.coroutines.*
-import java.util.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import java.util.UUID
 import kotlin.time.Duration
 
 class LocalDriverRunner : DriverRunner {
@@ -27,7 +28,7 @@ class LocalDriverRunner : DriverRunner {
     EventsBus.subscribeOnce(process) { event: IdeLaunchEvent ->
       process.complete(event.ideProcess)
     }
-    val runResult = perClassSupervisorScope.async {
+    val runResult = scopeForProcesses.async {
       Allure.getLifecycle().setCurrentTestCase(currentStep.orElse(UUID.randomUUID().toString()))
       try {
         context.runIdeSuspending(commandLine,

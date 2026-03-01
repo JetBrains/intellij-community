@@ -1,7 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLambdaExpressionType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;

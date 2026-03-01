@@ -34,10 +34,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.project.ProjectStoreOwner;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.PathUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -48,7 +46,11 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -436,8 +438,8 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   // The idea ext plugin uses API that was deprecated in Gradle 6.0.
   @TargetVersions({"4.7+", "!6.0"})
   public void testIdeaPostProcessingHook() throws Exception {
-    File layoutFile = new File(getProjectPath(), "test_output.txt");
-    assertThat(layoutFile).doesNotExist();
+    File testOutputFile = new File(getProjectPath(), "test_output.txt");
+    assertThat(testOutputFile).doesNotExist();
 
     importProject(
       createBuildScriptBuilder()
@@ -449,7 +451,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
                           withIDEADir { File dir ->
                               def f = file("test_output.txt")
                               f.createNewFile()
-                              f.text = "Expected file content"
+                              f.text = "Expected file content\\nFiles: ${dir.listFiles().collect { it.name }.sort()}"
                           } \s
                         }
                       }""")
@@ -466,13 +468,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
     assertThat(afterSyncTasks).containsExactly("processIdeaSettings");
 
-    String ideaDir = PathUtil.toSystemIndependentName(((ProjectStoreOwner)getMyProject()).getComponentStore()
-      .getProjectFilePath().getParent().toAbsolutePath().toString());
-
-    String moduleFile = getModule("project").getModuleFilePath();
-    assertThat(layoutFile)
+    assertThat(testOutputFile)
       .exists()
-      .hasContent("Expected file content");
+      .hasContent("Expected file content\nFiles: [project, testIdeaPostProcessingHook.ipr, testIdeaPostProcessingHook.iws]");
   }
 
   @Test

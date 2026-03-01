@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;

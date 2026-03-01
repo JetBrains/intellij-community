@@ -6,7 +6,11 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import org.apache.velocity.VelocityContext
-import org.jetbrains.plugins.gradle.jvmcompat.*
+import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
+import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
+import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataStorage
+import org.jetbrains.plugins.gradle.jvmcompat.asSafeJsonObject
+import org.jetbrains.plugins.gradle.jvmcompat.asSafeString
 import kotlin.reflect.typeOf
 
 internal object KotlinWizardVersionParser : IdeVersionedDataParser<KotlinWizardVersionState>() {

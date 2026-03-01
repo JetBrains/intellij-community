@@ -8,7 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenIndexId;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.model.RepositoryKind;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.server.AsyncMavenServerIndexer;
+import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
+import org.jetbrains.idea.maven.server.MavenServerIndexerException;
+import org.jetbrains.idea.maven.server.MavenServerProcessCanceledException;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;

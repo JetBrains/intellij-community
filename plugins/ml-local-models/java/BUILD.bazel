@@ -26,4 +26,23 @@ jvm_library(
     "//platform/lang-api:lang",
   ]
 )
+
+jvm_library(
+  name = "java_test_lib",
+  module_name = "intellij.ml.models.local.java",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":java",
+    "//java/java-impl:impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//plugins/ml-local-models:ml-models-local_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.ml.models.local.java` end

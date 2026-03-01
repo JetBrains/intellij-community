@@ -13,8 +13,12 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModified
+import training.dsl.TaskContext
+import training.dsl.showEndOfLessonDialogAndFeedbackForm
 import training.learn.LearnBundle
 import training.learn.NewUsersOnboardingExperimentAccessor
 import training.learn.course.LessonProperties
@@ -23,7 +27,11 @@ import training.learn.lesson.general.run.clearBreakpoints
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
-import training.util.*
+import training.util.LessonEndInfo
+import training.util.getActionById
+import training.util.getCallBackActionId
+import training.util.invokeActionForFocusContext
+import training.util.isToStringContains
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 

@@ -4,7 +4,13 @@ package com.intellij.notification;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -14,16 +20,27 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.util.NlsContexts.*;
+import static com.intellij.openapi.util.NlsContexts.LinkLabel;
+import static com.intellij.openapi.util.NlsContexts.NotificationContent;
+import static com.intellij.openapi.util.NlsContexts.NotificationSubtitle;
+import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
 
 /**
  * <p>A notification has an optional title and subtitle, mandatory content (plain text or HTML), and optional actions.</p>

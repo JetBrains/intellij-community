@@ -11,7 +11,6 @@ import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.ide.starter.utils.replaceSpecialCharactersWithHyphens
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
-import com.intellij.tools.ide.util.common.starterLogger
 import com.intellij.tools.ide.util.common.withRetryBlocking
 import org.apache.http.HttpRequest
 import org.apache.http.auth.UsernamePasswordCredentials
@@ -23,7 +22,11 @@ import java.io.InputStreamReader
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 fun <T : HttpRequest> T.withAuth(): T = this.apply {
   val teamCityCI by lazy { CIServer.instance.asTeamCity() }
@@ -31,10 +34,9 @@ fun <T : HttpRequest> T.withAuth(): T = this.apply {
   addHeader(BasicScheme().authenticate(UsernamePasswordCredentials(teamCityCI.userName, teamCityCI.password), this, null))
 }
 
-private val LOG = starterLogger<TeamCityClient>()
-
 // TODO: move on to use TeamCityRest client library or stick with Okhttp
 object TeamCityClient {
+  private val logger = com.intellij.openapi.diagnostic.logger<TeamCityClient>()
   private val teamCityURI by lazy { di.direct.instance<URI>(tag = "teamcity.uri") }
 
   // temporary directory, where artifact will be moved for preparation for publishing
@@ -50,7 +52,7 @@ object TeamCityClient {
       additionalRequestActions(this)
     }
 
-    LOG.debug("Request to TeamCity: $fullUrl")
+    logger.debug("Request to TeamCity: $fullUrl")
 
     val result = withRetryBlocking(messageOnFailure = "Failure during request to TeamCity") {
       HttpClient.sendRequest(request) {
@@ -92,7 +94,7 @@ object TeamCityClient {
   }
 
   private fun printTcArtifactsPublishMessage(spec: String) {
-    LOG.debug(" !!teamcity[publishArtifacts '$spec'] ") //we need this to see in the usual IDEA log
+    logger.debug(" !!teamcity[publishArtifacts '$spec'] ") //we need this to see in the usual IDEA log
     logOutput(" ##teamcity[publishArtifacts '$spec'] ")
   }
 
@@ -108,14 +110,14 @@ object TeamCityClient {
     artifactName: String = source.fileName.toString(),
     zipContent: Boolean = true,
     artifactForPublishingDir: Path = TeamCityClient.artifactForPublishingDir,
-  ) {
-    LOG.debug("TeamCity publishTeamCityArtifacts ${source.fileName}")
+  ): String? {
+    logger.debug("TeamCity publishTeamCityArtifacts ${source.fileName}")
     val sanitizedArtifactPath = artifactPath.replaceSpecialCharactersWithHyphens()
     val sanitizedArtifactName = artifactName.replaceSpecialCharactersWithHyphens()
 
     if (!source.exists()) {
-      LOG.debug("TeamCity artifact $source does not exist")
-      return
+      logger.debug("TeamCity artifact $source does not exist")
+      return null
     }
     var suffix: String
     var nextSuffix = 0
@@ -123,7 +125,8 @@ object TeamCityClient {
     val (artifactFullName, artifactExtension) = if ('.' in sanitizedArtifactName) {
       val dotIndex = sanitizedArtifactName.indexOf('.') //Find the first dot to avoid breaking .tar.gz etc.
       sanitizedArtifactName.take(dotIndex) to sanitizedArtifactName.substring(dotIndex)
-    } else {
+    }
+    else {
       sanitizedArtifactName to ""
     }
     do {
@@ -133,33 +136,40 @@ object TeamCityClient {
     }
     while (artifactDir.exists())
 
-    LOG.debug("Creating directories for artifact publishing ${artifactDir.toUri()}")
+    logger.debug("Creating directories for artifact publishing ${artifactDir.toUri()}")
     artifactDir.deleteRecursivelyQuietly()
     artifactDir.createDirectories()
 
-    if (source.isDirectory()) {
+    val (artifactCiPattern, targetArtifactPathOnCi, actualArtifactPathOnCi) = if (source.isDirectory()) {
       Files.walk(source).use { files ->
         for (path in files) {
           path.copyTo(target = artifactDir.resolve(source.relativize(path)), overwrite = true)
         }
       }
-      if (zipContent) {
-        printTcArtifactsPublishMessage("${artifactDir.toRealPath()}/** => $sanitizedArtifactPath/$sanitizedArtifactName$suffix.zip")
+      val artifactPathOnCi = if (zipContent) {
+        "$sanitizedArtifactPath/$sanitizedArtifactName$suffix.zip"
       }
       else {
-        printTcArtifactsPublishMessage("${artifactDir.toRealPath()}/** => $sanitizedArtifactPath$suffix")
+        "$sanitizedArtifactPath$suffix"
       }
+
+      Triple("${artifactDir.toRealPath()}/**", artifactPathOnCi, artifactPathOnCi)
     }
     else {
       val tempFile = artifactDir
       source.copyTo(tempFile, overwrite = true)
       if (zipContent) {
-        printTcArtifactsPublishMessage("${tempFile.toRealPath()} => $sanitizedArtifactPath/${sanitizedArtifactName + suffix}.zip")
+        val artifactPath = "$sanitizedArtifactPath/${sanitizedArtifactName + suffix}.zip"
+        Triple("${tempFile.toRealPath()}", artifactPath, artifactPath)
       }
       else {
-        printTcArtifactsPublishMessage("${tempFile.toRealPath()} => $sanitizedArtifactPath")
+        Triple("${tempFile.toRealPath()}", sanitizedArtifactPath, "$sanitizedArtifactPath/${tempFile.fileName}")
       }
     }
+
+    printTcArtifactsPublishMessage("$artifactCiPattern => $targetArtifactPathOnCi")
+
+    return actualArtifactPathOnCi
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion.test.handlers;
 
@@ -279,6 +279,30 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("WithoutDeclarationTypeArgument.kt")
             public void testWithoutDeclarationTypeArgument() throws Exception {
                 runTest("../../completion/testData/handlers/basic/contextReceivers/WithoutDeclarationTypeArgument.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/handlers/basic/contextSensitiveResolution")
+        public static class ContextSensitiveResolution extends AbstractHighLevelBasicCompletionHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("dontQualifyQualifiedEnum.kt")
+            public void testDontQualifyQualifiedEnum() throws Exception {
+                runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/dontQualifyQualifiedEnum.kt");
+            }
+
+            @TestMetadata("qualifyEnum.kt")
+            public void testQualifyEnum() throws Exception {
+                runTest("../../completion/testData/handlers/basic/contextSensitiveResolution/qualifyEnum.kt");
             }
         }
 
@@ -1127,9 +1151,19 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/staticMembers/importFromObject.kt");
             }
 
+            @TestMetadata("ImportJavaStaticField.kt")
+            public void testImportJavaStaticField() throws Exception {
+                runTest("../../completion/testData/handlers/basic/staticMembers/ImportJavaStaticField.kt");
+            }
+
             @TestMetadata("ImportJavaStaticMethod.kt")
             public void testImportJavaStaticMethod() throws Exception {
                 runTest("../../completion/testData/handlers/basic/staticMembers/ImportJavaStaticMethod.kt");
+            }
+
+            @TestMetadata("JavaStaticField.kt")
+            public void testJavaStaticField() throws Exception {
+                runTest("../../completion/testData/handlers/basic/staticMembers/JavaStaticField.kt");
             }
 
             @TestMetadata("JavaStaticMethod.kt")

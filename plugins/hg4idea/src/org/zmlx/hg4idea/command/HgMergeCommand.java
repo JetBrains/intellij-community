@@ -37,7 +37,9 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.MERGE_EXCEPTION;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.MERGE_WARNING;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.MERGE_WITH_ANCESTOR_SKIPPED;
 import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgMergeCommand {

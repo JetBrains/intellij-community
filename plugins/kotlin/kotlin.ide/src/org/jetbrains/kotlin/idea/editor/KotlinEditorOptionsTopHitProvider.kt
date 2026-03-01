@@ -3,10 +3,6 @@ package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.OptionDescription
-import com.intellij.openapi.options.ex.ConfigurableWrapper
-import kotlin.sequences.filterIsInstance
-import kotlin.sequences.map
-import kotlin.sequences.toList
 
 class KotlinEditorOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
     override fun getId(): String = ID

@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<FrontendViewportDataCache<*>>()
 
-private const val WINDOW_LINES_COUNT = 100
+private const val WINDOW_LINES_COUNT = 30
 
 internal class FrontendViewportDataCache<T>(
   private val loadData: suspend (firstIndex: Int, lastIndexInclusive: Int) -> List<T>?,
@@ -28,8 +28,8 @@ internal class FrontendViewportDataCache<T>(
       return
     }
     val currentCache = windowCache
-    if (currentCache == null || currentCache.shouldBeUpdated(viewport, currentStamp)) {
-      val (firstIndex, lastIndex) = indicesToLoad(viewport, lastPossibleIndex)
+    val (firstIndex, lastIndex) = indicesToLoad(viewport, lastPossibleIndex)
+    if (currentCache == null || currentCache.shouldBeUpdated(firstIndex, lastIndex, currentStamp)) {
       // TODO: we may optimize it more by reusing already calculated lines,
       //   since now we recalculate full viewport when indices to load are changed even a bit.
       val newData = loadData(firstIndex, lastIndex)
@@ -124,8 +124,8 @@ internal class FrontendViewportDataCache<T>(
     private val lastIndex: Int,
     private val data: List<T>,
   ) {
-    fun shouldBeUpdated(viewport: ViewportInfo, currentStamp: Long): Boolean {
-      return modificationStamp != currentStamp || firstIndex != viewport.firstVisibleIndex || lastIndex != viewport.lastVisibleIndexInclusive
+    fun shouldBeUpdated(firstIndex: Int, lastIndex: Int, currentStamp: Long): Boolean {
+      return modificationStamp != currentStamp || firstIndex < this.firstIndex || lastIndex > this.lastIndex
     }
 
     fun getDataForIndex(index: Int, currentStamp: Long): T? {

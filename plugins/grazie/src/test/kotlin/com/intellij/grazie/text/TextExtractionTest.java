@@ -12,12 +12,21 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPlainText;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
@@ -243,6 +252,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     checkHtmlXml(false);
   }
 
+  @PerformanceUnitTest
   public void testLargeXmlPerformance() {
     String text = "<!DOCTYPE rules [\n" +
                   IntStreamEx.range(0, 1000).mapToObj(i -> "<!ENTITY pnct" + i + " \"x\">\n").joining() +
@@ -264,6 +274,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
       .start();
   }
 
+  @PerformanceUnitTest
   public void testLargeXmlWithUnclosedDoctypePerformance() {
     String text = "<!DOCTYPE rules [\n<!ENTITY some \"x\">\n<rules> " +
                   IntStreamEx.range(0, 10_000).mapToObj(i -> "<tag> content" + i + "</tag>\n").joining() +
@@ -334,6 +345,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testBuildingPerformance_concatenation() {
     String text = "<a/>b".repeat(10_000);
     String expected = "b".repeat(10_000);
@@ -344,6 +356,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testBuildingPerformance_removingIndents() {
     String text = "  b\n".repeat(10_000);
     String expected = "b\n".repeat(10_000).trim();
@@ -355,6 +368,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testBuildingPerformance_removingHtml() {
     String text = "b<unknownTag>x</unknownTag>".repeat(10_000);
     String expected = "b".repeat(10_000);
@@ -366,6 +380,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testBuildingPerformance_removingNbsp() {
     String text = "b&nbsp;".repeat(10_000);
     String expected = StringsKt.trim("b ".repeat(10_000)).toString();
@@ -377,6 +392,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testBuildingPerformance_longTextFragment() {
     String line = "here's some relative long text that helps make this text fragment a bit longer than it could have been otherwise";
     String text = ("\n\n\n" + line).repeat(10_000);
@@ -389,6 +405,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     }).start();
   }
 
+  @PerformanceUnitTest
   public void testBuildingPerformance_complexPsi() {
     String link = "{@link foo.bar.goo1.goo2.goo3.goo4.goo5.goo6.goo7#zoo(x.x1.x2.x3,y.y1.y2.y3,z.z1.z2.z3)}";
     var text = "/** @return something if " + link.repeat(10_000) + " is not too expensive */";

@@ -36,6 +36,27 @@ public class MavenModel extends MavenModelBase {
     myBuild = new MavenBuild();
   }
 
+  protected MavenModel(@NotNull MavenModel other) {
+    super(other);
+    myMavenId = other.myMavenId;
+    myParent = other.myParent;
+    myPackaging = other.myPackaging;
+    myName = other.myName;
+
+    myProfiles = new CopyOnWriteArrayList<>();
+    for (MavenProfile p : other.myProfiles) {
+      myProfiles.add(p.copy());
+    }
+
+    myBuild = other.myBuild.copy();
+  }
+
+  @Override
+  public MavenModel copy() {
+    return new MavenModel(this);
+  }
+
+
   public MavenId getMavenId() {
     return myMavenId;
   }

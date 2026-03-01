@@ -31,8 +31,8 @@ public class RehighlightAllEditors implements MadTestingAction {
   public void performCommand(@NotNull Environment env) {
     env.logMessage(toString());
     for (FileEditor editor : FileEditorManager.getInstance(myProject).getAllEditors()) {
-      if (editor instanceof TextEditor) {
-        highlightEditor(((TextEditor)editor).getEditor(), myProject);
+      if (editor instanceof TextEditor te) {
+        highlightEditor(te.getEditor(), myProject);
       }
     }
   }

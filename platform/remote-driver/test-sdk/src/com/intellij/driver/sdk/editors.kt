@@ -5,7 +5,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
-import com.intellij.driver.sdk.remoteDev.GuestNavigationService
+import com.intellij.driver.sdk.remoteDev.FrontendGuestNavigationService
 import com.intellij.driver.sdk.ui.remote.ColorRef
 import java.awt.Point
 import java.awt.Rectangle
@@ -59,6 +59,7 @@ interface Document {
   fun getLineNumber(offset: Int): Int
   fun getLineStartOffset(line: Int): Int
   fun getLineEndOffset(line: Int): Int
+  fun getLineCount(): Int
 }
 
 @Remote("com.intellij.openapi.editor.CaretModel")
@@ -69,10 +70,17 @@ interface CaretModel {
   fun getAllCarets(): List<Caret>
   fun moveToOffset(offset: Int)
   fun getOffset(): Int
+  fun getCurrentCaret(): Caret
 }
 @Remote("com.intellij.openapi.editor.Caret")
 interface Caret {
   fun getLogicalPosition(): LogicalPosition
+  fun getVisualAttributes(): CaretVisualAttributes
+}
+
+@Remote("com.intellij.openapi.editor.CaretVisualAttributes")
+interface CaretVisualAttributes {
+  fun getColor(): ColorRef?
 }
 
 @Remote("com.intellij.openapi.editor.ScrollingModel")
@@ -89,6 +97,7 @@ interface ScrollType {
 @Remote("com.intellij.openapi.editor.InlayModel")
 interface InlayModel {
   fun getInlineElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
+  fun getBlockElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
   fun getAfterLineEndElementsForLogicalLine(logicalLine: Int): List<Inlay>
 }
 
@@ -181,10 +190,13 @@ interface SelectionModel {
 interface TextAttributes {
   fun getEffectType(): EffectType
   fun getEffectColor(): ColorRef?
+  fun getForegroundColor(): ColorRef
 }
 
 @Remote("com.intellij.openapi.editor.markup.EffectType")
-interface EffectType
+interface EffectType {
+  fun name(): String
+}
 
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {
   return withContext(OnDispatcher.EDT) {
@@ -203,7 +215,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
       fileToOpen
     }
     else {
-      val service = service(GuestNavigationService::class, project)
+      val service = service(FrontendGuestNavigationService::class, project)
       withContext(OnDispatcher.EDT) {
         service.navigateViaBackend(relativePath, 0)
         waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,

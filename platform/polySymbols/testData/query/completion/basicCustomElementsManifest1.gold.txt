@@ -5,7 +5,7 @@
   source: {
    matchedName: "html/elements/<pattern>",
    name: "my-element",
-   origin: "basic@null (<none>)",
+   origin: "basic (<none>)",
    complete: true,
    priority: NORMAL,
    has-pattern: true,

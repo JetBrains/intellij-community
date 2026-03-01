@@ -3,14 +3,16 @@ package com.intellij.ide.gdpr;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.junit5.TestApplication;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -245,6 +247,15 @@ public class ConsentsTest {
       assertEquals(userConsent, loaded);
       assertEquals(userConsent.isAccepted(), loaded.isAccepted());
     }
+  }
+
+  @Test
+  public void testReadMissingDefaultConsent() {
+    // IJPL-228578 NPE appeared in Android Studio where default set of bundled consents is different
+    Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions(JSON_CONSENTS_DATA, JSON_CONSENTS_DATA);
+
+    var permission = data.getFirst().getAiDataCollectionPermission();
+    assertEquals(ConsentOptions.Permission.UNDEFINED, permission, "There must be no permission for missing default consent");
   }
 
   private static Consent lookupConsent(@NotNull String consentId, @NotNull List<Consent> container) {

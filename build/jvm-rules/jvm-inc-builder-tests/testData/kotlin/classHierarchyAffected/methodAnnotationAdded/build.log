@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_methodAnnotationAdded-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/methodAnnotationAdded/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_methodAnnotationAdded-a.kotlin_module
+  foo/AChild.class
+  foo/UseAChildKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/methodAnnotationAdded/a/AChild.kt
+  kotlin/classHierarchyAffected/methodAnnotationAdded/a/useAChild.kt
+End of files
+------------------------------------------
+Exit code: OK

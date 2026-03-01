@@ -13,7 +13,8 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JLabel;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.ResourceBundle;

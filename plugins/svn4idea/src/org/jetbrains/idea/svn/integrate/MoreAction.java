@@ -12,7 +12,11 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 public abstract class MoreAction extends DumbAwareAction implements CustomComponentAction {
   protected final JLabel myLabel;

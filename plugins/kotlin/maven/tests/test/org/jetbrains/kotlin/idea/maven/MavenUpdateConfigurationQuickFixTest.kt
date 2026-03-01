@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.runAll
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -87,26 +88,31 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
         )
     }
 
+    @Ignore("KTIJ-36424")
     @Test
     fun testUpdateLanguageVersion() = runBlocking {
         doTest("Set module language version to 1.1")
     }
 
+    @Ignore("KTIJ-36424")
     @Test
     fun testUpdateLanguageVersionProperty() = runBlocking {
         doTest("Set module language version to 1.1")
     }
 
+    @Ignore("KTIJ-36424")
     @Test
     fun testUpdateApiVersion() = runBlocking {
         doTest("Set module API version to 1.1")
     }
 
+    @Ignore("KTIJ-36424")
     @Test
     fun testUpdateLanguageAndApiVersion() = runBlocking {
         doTest("Set module language version to 1.1")
     }
 
+    @Ignore("KTIJ-35962")
     @Test
     fun testAddKotlinReflect() = runBlocking {
         doTest("Add 'kotlin-reflect.jar' to the classpath")

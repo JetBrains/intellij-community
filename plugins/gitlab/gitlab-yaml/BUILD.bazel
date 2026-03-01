@@ -30,18 +30,23 @@ jvm_library(
   associates = [":vcs-gitlab-yaml"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//plugins/gitlab/gitlab-core:vcs-gitlab_test_lib",
     "//plugins/yaml/backend",
     "//plugins/yaml/backend:backend_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/util/base",
+    "//platform/util/base:base_test_lib",
     "//plugins/yaml",
     "//plugins/yaml:yaml_test_lib",
     "//platform/analysis-impl",
+    "//platform/analysis-impl:analysis-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//json/backend/tests",
     "//json/backend/tests:tests_test_lib",
   ]
 )

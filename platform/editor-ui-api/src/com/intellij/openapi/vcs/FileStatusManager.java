@@ -10,7 +10,7 @@ import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public abstract class FileStatusManager {
   protected static final Logger LOG = Logger.getInstance(FileStatusManager.class);

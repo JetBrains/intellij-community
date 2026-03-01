@@ -9,8 +9,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import javax.swing.SwingConstants;
+import java.awt.Component;
 import java.util.function.Function;
 
 @ApiStatus.Internal

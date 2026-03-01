@@ -28,6 +28,30 @@ build --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
 build --java_language_version=21
 build --java_runtime_version=remotejdk_21
 
+# Why we register a local Java toolchain override here:
+# 1) This module intentionally sets `BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1` below,
+#    so `rules_cc` local C++ autoconfiguration is disabled.
+# 2) During analysis, `rules_jvm_external` tool targets (for example
+#    AddJarManifestEntry) still resolve the Java toolchain type and may select
+#    `@rules_java//toolchains:toolchain_jdk_21`.
+# 3) That upstream toolchain wires
+#    `proguard_allowlister = @bazel_tools//tools/jdk:proguard_whitelister`.
+# 4) `proguard_whitelister` is a `py_binary`, and rules_python adds an implicit
+#    dependency on `@bazel_tools//tools/launcher:launcher_maker`.
+# 5) On Linux/macOS non-Windows paths, this resolves to
+#    `@bazel_tools//src/tools/launcher:launcher_maker`, which is C++ and needs a
+#    resolvable `@bazel_tools//tools/cpp:toolchain_type`.
+# 6) With local C++ autodetection disabled, this produces:
+#    "Unable to find a CC toolchain using toolchain resolution."
+# 7) `--java_toolchain`/`--host_java_toolchain` are insufficient for this path,
+#    because toolchain resolution for external tool actions can still choose the
+#    registered upstream Java toolchain.
+# 8) We therefore register our local toolchain definition via `--extra_toolchains`;
+#    the local toolchain is defined in BUILD.bazel and replaces
+#    `proguard_allowlister` with a no-op executable, removing the C++ edge while
+#    preserving the rest of the JDK21 toolchain behavior.
+build --extra_toolchains=//:jps_to_bazel_toolchain_jdk_21_definition
+
 # https://bazel.build/docs/bazel-and-java#config-build-tools-java
 # A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
 # That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version
@@ -63,7 +87,9 @@ common --enable_platform_specific_config
 common --incompatible_enable_proto_toolchain_resolution
 
 # Do not depend on external environment
-build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common --action_env BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
+startup --noautodetect_server_javabase
 
 # Remote-caches related
 #common --remote_cache=https://packages.jetbrains.team/files/p/ij/intellij-bazel-cache
@@ -76,5 +102,21 @@ common:ci --announce_rc
 # TeamCity-specific options
 common:teamcity --show_progress_rate_limit=30
 
+# Avoid
+# Exception in thread "main" java.io.IOException: Error getting terminal size: GetConsoleScreenBufferInfo error 6
+# 	at coursier.jniutils.WindowsAnsiTerminal.terminalSize(WindowsAnsiTerminal.java:10)
+common:windows --repo_env=COURSIER_NO_TERM=true
+common:windows --repo_env=COURSIER_PROGRESS=false
+# Enable on Bazel 9
+# common --experimental_strict_repo_env
+
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
 common --repo_env=ANDROID_HOME=
+
+common --incompatible_enable_proto_toolchain_resolution
+common --@protobuf//bazel/toolchains:prefer_prebuilt_protoc=true
+
+try-import %workspace%/../../../../build/remote_cache.bazelrc
+
+# Enable remote downloader config w/ allowed hosts and caching proxies
+common --downloader_config=../../../build/bazel_downloader.cfg

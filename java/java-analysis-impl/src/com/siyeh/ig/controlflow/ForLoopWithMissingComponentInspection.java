@@ -16,7 +16,18 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEmptyStatement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;

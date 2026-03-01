@@ -5,7 +5,12 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleRootModel
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.testFramework.JavaModuleTestCase

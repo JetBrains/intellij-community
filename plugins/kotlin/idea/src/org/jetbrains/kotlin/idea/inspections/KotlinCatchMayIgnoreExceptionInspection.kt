@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.siyeh.InspectionGadgetsBundle
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.quickfix.RenameToUnderscoreFix
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
+@K1Deprecation
 class KotlinCatchMayIgnoreExceptionInspection : AbstractKotlinInspection() {
     var ignoreCatchBlocksWithComments: Boolean = true
 

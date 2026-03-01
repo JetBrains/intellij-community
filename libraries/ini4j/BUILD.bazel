@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-ini4j-ini4j"],
   runtime_deps = ["@lib//:libraries-ini4j-ini4j"]
 )
+
+jvm_library(
+  name = "ini4j_test_lib",
+  module_name = "intellij.libraries.ini4j",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-ini4j-ini4j"],
+  runtime_deps = [":ini4j"]
+)
 ### auto-generated section `build intellij.libraries.ini4j` end

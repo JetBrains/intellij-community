@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.kotlin.searching" />
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
+    <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
   </component>
 </module>

@@ -1,2 +1,5 @@
+com.intellij.platform.workspace.storage.EntityPointer
+- *a:classHashcode():I
+- *a:isPointerToEntityOfSameTypeAs(com.intellij.platform.workspace.storage.EntityPointer):Z
 com.intellij.platform.workspace.storage.EntityStorage
 - *a:hasReferrers(com.intellij.platform.workspace.storage.SymbolicEntityId):Z

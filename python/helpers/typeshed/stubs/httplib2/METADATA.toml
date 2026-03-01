@@ -1,2 +1,2 @@
-version = "0.31.*"
+version = "0.31.2"
 upstream_repository = "https://github.com/httplib2/httplib2"

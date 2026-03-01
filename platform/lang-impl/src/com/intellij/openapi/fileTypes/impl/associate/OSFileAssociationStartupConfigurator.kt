@@ -17,7 +17,7 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.util.messages.SimpleMessageBusConnection
 import org.jetbrains.annotations.Nls
 
-private class OSFileAssociationStartupConfigurator : ApplicationActivity {
+internal class OSFileAssociationStartupConfigurator : ApplicationActivity {
   override suspend fun execute() {
     val preferences = serviceAsync<OSFileAssociationPreferences>()
     if (preferences.fileTypeNames.isEmpty() || !preferences.ideLocationChanged()) {

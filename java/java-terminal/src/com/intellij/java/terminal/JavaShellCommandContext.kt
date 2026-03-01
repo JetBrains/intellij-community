@@ -15,10 +15,9 @@ class JavaShellCommandContext private constructor(private val propertyMap: Map<S
 
   companion object {
     private const val PROPERTY_SEPARATOR = " = "
-    const val JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND: String = "java -XshowSettings:properties -version"
 
     suspend fun create(context: ShellRuntimeContext): JavaShellCommandContext? {
-      val result = context.runShellCommand(JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND)
+      val result = context.createProcessBuilder("java").args("-XshowSettings:properties", "-version").execute()
       if (result.exitCode != 0) return null
       val propertyMap = result.output.split('\n').dropLastWhile { it.isBlank() }.asSequence().map { it.trim() }
         .filter { it.contains(PROPERTY_SEPARATOR) }.mapNotNull {

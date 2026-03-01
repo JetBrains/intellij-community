@@ -1,10 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ModalityStateListener;
+import com.intellij.openapi.application.ThreadingSupport;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProgressManager;
@@ -12,7 +17,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -21,10 +30,16 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EDT;
 import kotlin.jvm.Volatile;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Window;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -46,7 +61,6 @@ public final class LaterInvocator {
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.nonModal());// guarded by ourModalityStack
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
     EventDispatcher.create(ModalityStateListener.class);
-  private static final FlushQueue ourEdtQueue = new FlushQueue();
   @Volatile
   private static NonBlockingFlushQueue ourNonBlockingEdtQueue = null;
 
@@ -99,17 +113,7 @@ public final class LaterInvocator {
     if (expired.value(null)) {
       return;
     }
-    if (useNonBlockingFlushQueue()) {
-      ourNonBlockingEdtQueue.push(modalityState, runnable, needsWriteIntentLock, expired);
-    } else {
-      ourEdtQueue.push(modalityState, expired, runnable);
-    }
-  }
-
-  private static boolean useNonBlockingFlushQueue() {
-    // non-blocking flush queue can either be explicitly disabled, or be null, like in ServerApplication
-    // it is currently a TODO: use non-blocking flush queue in code server
-    return ThreadingRuntimeFlagsKt.getUseNonBlockingFlushQueue() && ourNonBlockingEdtQueue != null;
+    ourNonBlockingEdtQueue.push(modalityState, runnable, needsWriteIntentLock, expired);
   }
 
   @RequiresBackgroundThread
@@ -369,12 +373,9 @@ public final class LaterInvocator {
   }
 
   static boolean isFlushNow(@NotNull Runnable runnable) {
-    if (useNonBlockingFlushQueue()) {
-      return ourNonBlockingEdtQueue.isFlushNow(runnable);
-    } else {
-      return ourEdtQueue.isFlushNow(runnable);
-    }
+    return ourNonBlockingEdtQueue.isFlushNow(runnable);
   }
+
   public static void pollWriteThreadEventsOnce() {
     LOG.assertTrue(!EDT.isCurrentThreadEdt());
     LOG.assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired());
@@ -382,25 +383,20 @@ public final class LaterInvocator {
 
   @TestOnly
   public static @NotNull Object getLaterInvocatorEdtQueue() {
-    if (useNonBlockingFlushQueue()) {
-      return ourNonBlockingEdtQueue;
-    } else {
-      return ourEdtQueue.getQueue();
-    }
+    return ourNonBlockingEdtQueue;
   }
 
   @RequiresEdt
   private static void reincludeSkippedItemsAndRequestFlush() {
-    if (useNonBlockingFlushQueue()) {
-      ourNonBlockingEdtQueue.onModalityChanged();
-    } else {
-      ourEdtQueue.reincludeSkippedItems();
-    }
+    ourNonBlockingEdtQueue.onModalityChanged();
   }
 
   @RequiresEdt
   public static void purgeExpiredItems() {
-    ourEdtQueue.purgeExpiredItems();
+    if (ourNonBlockingEdtQueue != null) {
+      // in com.intellij.ml.llm.daemon.insight.handler.provider.caches.CancellingExecutorTest, leaks are checked without instantiation of application
+      ourNonBlockingEdtQueue.purgeExpiredItems();
+    }
   }
 
   /**

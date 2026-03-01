@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.PsiShortNamesCache
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 
+@K1Deprecation
 class AllClassesCompletion(
     private val parameters: CompletionParameters,
     private val kotlinIndicesHelper: KotlinIndicesHelper,

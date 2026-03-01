@@ -9,7 +9,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.unique;
 
 /**
  * A readonly composite graph view on top of several graph parts

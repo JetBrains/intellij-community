@@ -3,10 +3,11 @@ package com.intellij.java.psi.codeStyle.arrangement;
 
 import java.util.List;
 
-import static com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.ABSTRACT;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME;
 
 /**

@@ -44,7 +44,7 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
 
   private val logData = VcsProjectLog.getInstance(repository.project).dataManager
   private val storage = logData?.storage
-  private val pack = logData?.dataPack
+  private val pack = logData?.graphData
 
   @Suppress("UNCHECKED_CAST")
   private val permanentGraph = pack?.permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex>

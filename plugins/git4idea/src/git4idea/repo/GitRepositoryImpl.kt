@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.ApiStatus
  * @param rootDir Root of the repository (parent directory of '.git' file/directory).
  * @param gitDir  '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
  */
+@ApiStatus.ScheduledForRemoval // Should become internal
+@Deprecated("Use GitRepository instead")
 class GitRepositoryImpl private constructor(
   project: Project,
   rootDir: VirtualFile,
@@ -47,7 +50,8 @@ class GitRepositoryImpl private constructor(
   private val untrackedFilesHolder: GitUntrackedFilesHolder
   private val resolvedFilesHolder: GitResolvedMergeConflictsFilesHolder
   private val tagHolder: GitTagHolder
-  private val workingTreeHolder: GitWorkingTreeHolder
+  private val tagsHolder: GitRepositoryTagsHolder
+  private val workingTreeHolder: GitWorkingTreeHolderImpl
 
   @Volatile
   private var repoInfo: GitRepoInfo
@@ -70,8 +74,13 @@ class GitRepositoryImpl private constructor(
     Disposer.register(this, resolvedFilesHolder)
 
     tagHolder = GitTagHolder(this)
-    workingTreeHolder = GitWorkingTreeHolder(this)
+    tagsHolder = GitRepositoryTagsHolderImpl(this)
+
+    workingTreeHolder = GitWorkingTreeHolderImpl(this)
     repoInfo = readRepoInfo()
+    runBlockingMaybeCancellable {
+      workingTreeHolder.updateState()
+    }
   }
 
   @Deprecated("Deprecated in Java")
@@ -91,6 +100,7 @@ class GitRepositoryImpl private constructor(
     return untrackedFilesHolder
   }
 
+  @ApiStatus.Internal
   override fun getResolvedConflictsFilesHolder(): GitResolvedMergeConflictsFilesHolder {
     return resolvedFilesHolder
   }
@@ -101,6 +111,10 @@ class GitRepositoryImpl private constructor(
 
   override fun getTagHolder(): GitTagHolder {
     return tagHolder
+  }
+
+  override fun getTagsHolder(): GitRepositoryTagsHolder {
+    return tagsHolder
   }
 
   override fun getWorkingTreeHolder(): GitWorkingTreeHolder {
@@ -173,6 +187,11 @@ class GitRepositoryImpl private constructor(
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val previousInfo = repoInfo
     repoInfo = readRepoInfo()
+    if (previousInfo.currentBranch != repoInfo.currentBranch) {
+      runBlockingMaybeCancellable {
+        workingTreeHolder.updateState()
+      }
+    }
     notifyIfRepoChanged(this, previousInfo, repoInfo)
   }
 
@@ -251,8 +270,7 @@ class GitRepositoryImpl private constructor(
         val updater = GitRepositoryUpdater(this, this.repositoryFiles)
         updater.installListeners()
         notifyIfRepoChanged(this, null, initialRepoInfo)
-        tagHolder.reload()
-        workingTreeHolder.reload()
+        tagsHolder.scheduleReload()
         this.untrackedFilesHolder.invalidate()
         this.resolvedConflictsFilesHolder.invalidate()
       }

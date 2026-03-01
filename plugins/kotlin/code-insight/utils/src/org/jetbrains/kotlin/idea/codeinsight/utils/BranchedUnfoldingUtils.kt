@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.util.reformat
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
 object BranchedUnfoldingUtils {

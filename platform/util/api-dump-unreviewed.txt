@@ -583,7 +583,6 @@ f:com.intellij.openapi.util.JDOMUtil
 - s:write(org.jdom.Element,java.nio.file.Path):V
 - s:write(org.jdom.Element,java.nio.file.Path,java.lang.String):V
 - s:write(org.jdom.Parent,java.io.File):V
-- s:write(org.jdom.Parent,java.io.File,java.lang.String):V
 - s:write(org.jdom.Parent,java.io.OutputStream):V
 - s:write(org.jdom.Parent,java.io.OutputStream,java.lang.String):V
 - s:write(org.jdom.Parent,java.io.Writer,java.lang.String):V
@@ -1889,7 +1888,6 @@ f:com.intellij.util.JavaModuleOptions
 - s:readOptions(java.io.InputStream,com.intellij.util.system.OS):java.util.List
 - s:readOptions(java.nio.file.Path,com.intellij.util.system.OS):java.util.List
 f:com.intellij.util.KotlinUtils
-- sf:alsoIfNull(java.lang.Object,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:applyIf(java.lang.Object,Z,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:getValue(java.util.concurrent.atomic.AtomicReference,java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
 - sf:runIf(Z,kotlin.jvm.functions.Function0):java.lang.Object
@@ -2005,7 +2003,6 @@ f:com.intellij.util.ObjectUtils
 - s:notNull(java.lang.Object,com.intellij.openapi.util.NotNullFactory):java.lang.Object
 - s:notNull(java.lang.Object,java.lang.Object):java.lang.Object
 - s:nullizeByCondition(java.lang.Object,java.util.function.Predicate):java.lang.Object
-- s:nullizeIfDefaultValue(java.lang.Object,java.lang.Object):java.lang.Object
 - s:objectInfo(java.lang.Object):java.lang.String
 - s:sentinel(java.lang.String):java.lang.Object
 - s:sentinel(java.lang.String,java.lang.Class):java.lang.Object
@@ -2297,6 +2294,7 @@ f:com.intellij.util.concurrency.SynchronizedClearableLazy
 - <init>(kotlin.jvm.functions.Function0):V
 - f:compareAndDrop(java.lang.Object):Z
 - f:drop():java.lang.Object
+- f:dropSynchronously():java.lang.Object
 - get():java.lang.Object
 - f:getValue():java.lang.Object
 - f:getValueIfInitialized():java.lang.Object
@@ -4203,12 +4201,6 @@ f:com.intellij.util.io.PersistentMapInMemory
 - processKeys(com.intellij.util.Processor):Z
 - put(java.lang.Object,java.lang.Object):V
 - remove(java.lang.Object):V
-f:com.intellij.util.io.PersistentMapWalPlayer
-- java.io.Closeable
-- <init>(com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer,java.nio.file.Path):V
-- close():V
-- f:getVersion():I
-- f:readWal():kotlin.sequences.Sequence
 c:com.intellij.util.io.PersistentStringEnumerator
 - com.intellij.util.io.AbstractStringEnumerator
 - com.intellij.util.io.DataEnumeratorEx
@@ -4368,49 +4360,6 @@ f:com.intellij.util.io.VoidDataExternalizer
 - <init>():V
 - read(java.io.DataInput):java.lang.Void
 - save(java.io.DataOutput,java.lang.Void):V
-a:com.intellij.util.io.WalEvent
-- a:getKey():java.lang.Object
-f:com.intellij.util.io.WalEvent$AppendEvent
-- com.intellij.util.io.WalEvent
-- <init>(java.lang.Object,B[]):V
-- f:component1():java.lang.Object
-- f:component2():B[]
-- f:copy(java.lang.Object,B[]):com.intellij.util.io.WalEvent$AppendEvent
-- bs:copy$default(com.intellij.util.io.WalEvent$AppendEvent,java.lang.Object,B[],I,java.lang.Object):com.intellij.util.io.WalEvent$AppendEvent
-- equals(java.lang.Object):Z
-- f:getData():B[]
-- getKey():java.lang.Object
-- hashCode():I
-f:com.intellij.util.io.WalEvent$CorruptionEvent
-- com.intellij.util.io.WalEvent
-- sf:INSTANCE:com.intellij.util.io.WalEvent$CorruptionEvent
-- getKey():java.lang.Void
-f:com.intellij.util.io.WalEvent$PutEvent
-- com.intellij.util.io.WalEvent
-- <init>(java.lang.Object,java.lang.Object):V
-- f:component1():java.lang.Object
-- f:component2():java.lang.Object
-- f:copy(java.lang.Object,java.lang.Object):com.intellij.util.io.WalEvent$PutEvent
-- bs:copy$default(com.intellij.util.io.WalEvent$PutEvent,java.lang.Object,java.lang.Object,I,java.lang.Object):com.intellij.util.io.WalEvent$PutEvent
-- equals(java.lang.Object):Z
-- getKey():java.lang.Object
-- f:getValue():java.lang.Object
-- hashCode():I
-f:com.intellij.util.io.WalEvent$RemoveEvent
-- com.intellij.util.io.WalEvent
-- <init>(java.lang.Object):V
-- f:component1():java.lang.Object
-- f:copy(java.lang.Object):com.intellij.util.io.WalEvent$RemoveEvent
-- bs:copy$default(com.intellij.util.io.WalEvent$RemoveEvent,java.lang.Object,I,java.lang.Object):com.intellij.util.io.WalEvent$RemoveEvent
-- equals(java.lang.Object):Z
-- getKey():java.lang.Object
-- hashCode():I
-f:com.intellij.util.io.WriteAheadLogKt
-- sf:getDebugWalRecords():Z
-- sf:restoreHashMapFromWal(java.nio.file.Path,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer):java.util.Map
-- sf:restoreMemoryEnumeratorFromWal(java.nio.file.Path,com.intellij.util.io.KeyDescriptor):java.util.List
-- sf:restorePersistentMapFromWal(java.nio.file.Path,java.nio.file.Path,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer):com.intellij.util.io.PersistentMap
-- sf:setDebugWalRecords(Z):V
 f:com.intellij.util.io.ZipUtil
 - s:addDirToZipRecursively(java.util.zip.ZipOutputStream,java.io.File,java.io.File,java.lang.String,java.io.FileFilter,java.util.Set):Z
 - s:addFileOrDirRecursively(java.util.zip.ZipOutputStream,java.io.File,java.io.File,java.lang.String,java.io.FileFilter,java.util.Set):Z
@@ -4571,14 +4520,6 @@ com.intellij.util.io.storage.RecordDataOutput
 - java.io.DataOutput
 - a:close():V
 - a:getRecordId():I
-com.intellij.util.io.storage.RefCountingContentStorage
-- com.intellij.util.io.CleanableStorage
-- com.intellij.util.io.storage.IStorage
-- a:acquireNewRecord():I
-- a:acquireRecord(I):V
-- a:getRecordsCount():I
-- a:getRefCount(I):I
-- a:releaseRecord(I):V
 c:com.intellij.util.io.storage.Storage
 - com.intellij.util.io.storage.IStorage
 - <init>(java.nio.file.Path):V
@@ -4636,24 +4577,6 @@ com.intellij.util.io.zip.JBZipExtraField
 - a:getLocalFileDataLength():com.intellij.util.io.zip.ZipShort
 - a:parseFromCentralDirectoryData(B[],I,I):V
 - a:parseFromLocalFileData(B[],I,I):V
-c:com.intellij.util.io.zip.JBZipFile
-- java.io.Closeable
-- <init>(java.io.File):V
-- <init>(java.io.File,java.lang.String):V
-- <init>(java.io.File,java.nio.charset.Charset):V
-- <init>(java.io.File,java.nio.charset.Charset,Z):V
-- <init>(java.io.File,java.nio.charset.Charset,Z,com.intellij.util.ThreeState):V
-- <init>(java.io.File,Z):V
-- <init>(java.lang.String):V
-- <init>(java.lang.String,java.lang.String):V
-- <init>(java.nio.channels.SeekableByteChannel,java.nio.charset.Charset,Z,com.intellij.util.ThreeState):V
-- close():V
-- eraseEntry(com.intellij.util.io.zip.JBZipEntry):V
-- gc():V
-- getEncoding():java.nio.charset.Charset
-- getEntries():java.util.List
-- getEntry(java.lang.String):com.intellij.util.io.zip.JBZipEntry
-- getOrCreateEntry(java.lang.String):com.intellij.util.io.zip.JBZipEntry
 f:com.intellij.util.io.zip.Zip64ExtraField
 - com.intellij.util.io.zip.JBZipExtraField
 - <init>(com.intellij.util.io.zip.ZipUInt64,com.intellij.util.io.zip.ZipUInt64,com.intellij.util.io.zip.ZipUInt64):V

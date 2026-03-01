@@ -75,7 +75,7 @@ class JdkDownload : SdkDownload {
     parentComponent: JComponent?,
     project: Project?,
     selectedSdk: Sdk?,
-    sdkFilter: Predicate<Any>?,
+    sdkFilter: Predicate<JdkItem>?,
     sdkCreatedCallback: Consumer<in SdkDownloadTask>,
   ) {
     if (project?.isDisposed == true) return
@@ -90,13 +90,14 @@ class JdkDownload : SdkDownload {
     sdkModel: SdkModel,
     parentComponent: JComponent,
     selectedSdk: Sdk?,
+    sdkFilter: Predicate<JdkItem>?,
   ): SdkDownloadTask? {
     val dataContext = DataManager.getInstance().getDataContext(parentComponent)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
     if (project?.isDisposed == true) return null
     val extension = dataContext.getData(JDK_DOWNLOADER_EXT)
     val selectJdkButtonText = ProjectBundle.message("dialog.button.select.jdk")
-    val (jdkItem, jdkHome) = selectJdkAndPath(project, sdkTypeId, parentComponent, extension, null, selectJdkButtonText) ?: return null
+    val (jdkItem, jdkHome) = selectJdkAndPath(project, sdkTypeId, parentComponent, extension, sdkFilter, selectJdkButtonText) ?: return null
     return JdkDownloadTask(jdkItem, JdkInstallRequestInfo(jdkItem, jdkHome), project)
   }
 
@@ -122,7 +123,7 @@ class JdkDownload : SdkDownload {
     sdkTypeId: SdkTypeId,
     parentComponent: JComponent?,
     extension: JdkDownloaderDialogHostExtension?,
-    sdkFilter: Predicate<Any>?,
+    sdkFilter: Predicate<JdkItem>?,
     okActionText: @NlsContexts.Button String,
   ): Pair<JdkItem, Path>? {
     val items = try {

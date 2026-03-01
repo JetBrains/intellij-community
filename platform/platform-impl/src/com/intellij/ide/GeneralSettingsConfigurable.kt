@@ -15,8 +15,20 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
 import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
 import com.intellij.ui.IdeUICustomization
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.asRange
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.PlatformUtils
+import com.intellij.util.io.TrashBin
 
 private val model: GeneralSettings
   get() = GeneralSettings.getInstance()
@@ -25,6 +37,8 @@ private val myChkReopenLastProject: CheckboxDescriptor
   get() = CheckboxDescriptor(IdeUICustomization.getInstance().projectMessage("checkbox.reopen.last.project.on.startup"), model::isReopenLastProject)
 private val myConfirmExit: CheckboxDescriptor
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"), model::isConfirmExit)
+private val myDeleteToBin
+  get() = CheckboxDescriptor(IdeBundle.message("checkbox.delete.to.trash.bin"), model::isDeletingToBin)
 private val myChkSyncOnFrameActivation
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"), model::isSyncOnFrameActivation)
 private val myChkSyncInBackground
@@ -41,6 +55,7 @@ internal val allOptionDescriptors: List<BooleanOptionDescription>
     listOfNotNull(
       myChkReopenLastProject.takeIf { ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup },
       myConfirmExit.takeIf { IdeLifecycleUiCustomization.getInstance().canShowExitConfirmation },
+      myDeleteToBin,
       myChkSyncOnFrameActivation,
       myChkSyncInBackground,
       myChkSaveOnFrameDeactivation,
@@ -59,7 +74,7 @@ internal val allOptionDescriptors: List<BooleanOptionDescription>
  * A new instance of the specified class will be created each time then the Settings dialog is opened.
  */
 @Suppress("unused")
-private class GeneralSettingsConfigurable :
+internal class GeneralSettingsConfigurable :
   BoundCompositeSearchableConfigurable<SearchableConfigurable>(IdeBundle.message("title.general"), "preferences.general"),
   SearchableConfigurable
 {
@@ -113,7 +128,12 @@ private class GeneralSettingsConfigurable :
         }
       }
 
-      group(IdeBundle.message("settings.general.autosave")) {
+      group(IdeBundle.message("settings.general.files")) {
+        if (TrashBin.isSupported()) {
+          row {
+            checkBox(myDeleteToBin)
+          }.bottomGap(BottomGap.SMALL)
+        }
         row {
           val autoSaveCheckbox = checkBox(myChkAutoSaveIfInactive).gap(RightGap.SMALL)
           intTextField(GeneralSettings.SAVE_FILES_AFTER_IDLE_SEC.asRange())

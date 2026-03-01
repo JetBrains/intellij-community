@@ -6,9 +6,14 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.util.descriptors.ConfigFileItem
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.KotlinModuleKind
 
 interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
@@ -93,6 +98,7 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
                 version, flushNeeded, entitySource, init
             )
 
+        @ApiStatus.ScheduledForRemoval
         @Deprecated(message = "Use new API instead")
         @JvmOverloads
         @JvmStatic

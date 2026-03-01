@@ -14,7 +14,7 @@ are important to the project's success.
       but [contact us](README.md#discussion) before starting significant work.
     * Create your stubs, considering [what to include](#what-to-include) and
       conforming to the [coding style](https://typing.readthedocs.io/en/latest/guides/writing_stubs.html#style-guide).
-4. Optionally [format and check your stubs](#code-formatting).
+4. Optionally [format and check your stubs](#stub-content-and-style).
 5. Optionally [run the tests](tests/README.md).
 6. [Submit your changes](#submitting-changes) by opening a pull request.
 7. Make sure that all tests in CI are passing.
@@ -55,8 +55,6 @@ Note that some tests require extra setup steps to install the required dependenc
   <td>Linux / macOS / WSL</td>
   <td>
 
-  On Linux and macOS, you will be able to run the full test suite on Python
-  3.9-3.12.
   To install the necessary requirements, run the following commands from a
   terminal window:
 
@@ -134,7 +132,7 @@ there represents a PyPI distribution, and contains the following:
   source distribution.
 * (Rarely) some docs specific to a given type stub package in `README` file.
 
-When a third party stub is added or
+When a third-party stub is added or
 modified, an updated version of the corresponding distribution will be
 automatically uploaded to PyPI within a few hours.
 Each time this happens the least significant
@@ -186,7 +184,7 @@ supported:
   stubs for other reasons than the upstream library shipping with type
   information.
 * `upload` (optional): This field is set to `false` to prevent automatic
-  uploads to PyPI. This should only used in special cases, e.g. when the stubs
+  uploads to PyPI. This should only be used in special cases, e.g. when the stubs
   break the upload.
 * `partial_stub` (optional): This field marks the type stub package as
   [partial](https://peps.python.org/pep-0561/#partial-stub-packages). This is for
@@ -344,20 +342,20 @@ the latest mypy (`pip install -r requirements-tests.txt`) before running the scr
 
 ### Supported type system features
 
-Since PEP 484 was accepted, there have been many other PEPs that added
-new features to the Python type system. In general, new features can
-be used in typeshed as soon as the PEP has been accepted and implemented
-and most type checkers support the new feature.
+Since [PEP 484](https://peps.python.org/pep-0484/) was accepted, there have been
+many other PEPs that added new features to the Python type system. In general,
+new features can be used in typeshed as soon as the PEP has been accepted and
+implemented and most type checkers support the new feature.
 
 Supported features include:
-- [PEP 544](https://peps.python.org/pep-0544/) (Protocol)
+- [PEP 544](https://peps.python.org/pep-0544/) (`Protocol`)
 - [PEP 585](https://peps.python.org/pep-0585/) (builtin generics)
-- [PEP 586](https://peps.python.org/pep-0586/) (Literal)
-- [PEP 591](https://peps.python.org/pep-0591/) (Final/@final)
-- [PEP 589](https://peps.python.org/pep-0589/) (TypedDict)
+- [PEP 586](https://peps.python.org/pep-0586/) (`Literal`)
+- [PEP 591](https://peps.python.org/pep-0591/) (`Final`/`@final`)
+- [PEP 589](https://peps.python.org/pep-0589/) (`TypedDict`)
 - [PEP 604](https://peps.python.org/pep-0604/) (`Foo | Bar` union syntax)
-- [PEP 612](https://peps.python.org/pep-0612/) (ParamSpec)
-- [PEP 647](https://peps.python.org/pep-0647/) (TypeGuard):
+- [PEP 612](https://peps.python.org/pep-0612/) (`ParamSpec`)
+- [PEP 647](https://peps.python.org/pep-0647/) (`TypeGuard`):
   see [#5406](https://github.com/python/typeshed/issues/5406)
 - [PEP 655](https://peps.python.org/pep-0655/) (`Required` and `NotRequired`)
 - [PEP 673](https://peps.python.org/pep-0673/) (`Self`)

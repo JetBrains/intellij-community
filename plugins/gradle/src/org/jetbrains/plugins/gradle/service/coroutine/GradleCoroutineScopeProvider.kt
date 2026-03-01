@@ -5,8 +5,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use plugin-level (Gradle common, Gradle-Java, Gradle-Kotlin, etc) GradleCoroutineScopeService instead")
 class GradleCoroutineScopeProvider(val cs: CoroutineScope) {
   companion object {

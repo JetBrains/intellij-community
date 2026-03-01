@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Setter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Function
@@ -150,7 +151,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
       set(value) = component.setSelected(value)
   }
 
-  @Deprecated("use {@link #checkBox(String, Getter, Setter)} instead", level = DeprecationLevel.ERROR)
+  @Deprecated("use {@link #checkBox(String, Getter, Setter)} instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   protected fun checkBox(fieldName: @NonNls String, title: @NlsContexts.Checkbox String?) {
     myFields.add(CheckboxField(fieldName, title))
@@ -200,7 +201,9 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
               level = DeprecationLevel.WARNING)
   @ApiStatus.ScheduledForRemoval
   override fun createComponent(): JComponent {
-    return ConfigurableBuilderHelper.createBeanPanel(this, components)
+    return panel {
+      appendBeanConfigurableContent(this@BeanConfigurable, components)
+    }
   }
 
   /**
@@ -209,7 +212,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
    * [ConfigurableWithOptionDescriptors] (if applicable).
    */
   final override fun Panel.createContent() {
-    ConfigurableBuilderHelper.integrateBeanPanel(this, this@BeanConfigurable, components, groupTopGap)
+    integrateBeanPanel(this, this@BeanConfigurable, components, groupTopGap)
   }
 
   override fun isModified(): Boolean {
@@ -235,4 +238,38 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
   protected val components: List<JComponent>
     @ApiStatus.Internal
     get() = myFields.map { it.component }
+}
+
+private fun integrateBeanPanel(rootPanel: Panel, beanConfigurable: BeanConfigurable<*>, components: List<JComponent>, groupTopGap: TopGap? = null) {
+  rootPanel.appendBeanConfigurableContent(beanConfigurable, components, groupTopGap)
+  rootPanel.onApply { beanConfigurable.apply() }
+  rootPanel.onIsModified { beanConfigurable.isModified() }
+  rootPanel.onReset { beanConfigurable.reset() }
+}
+
+private fun Panel.appendBeanConfigurableContent(
+  beanConfigurable: BeanConfigurable<*>, components: List<JComponent>,
+  groupTopGap: TopGap? = null,
+) {
+  val title = beanConfigurable.title
+
+  if (title != null) {
+    val group = group(title) {
+      appendBeanFields(components)
+    }
+    if (groupTopGap != null) {
+      group.topGap(groupTopGap)
+    }
+  }
+  else {
+    appendBeanFields(components)
+  }
+}
+
+private fun Panel.appendBeanFields(components: List<JComponent>) {
+  for (component in components) {
+    row {
+      cell(component)
+    }
+  }
 }

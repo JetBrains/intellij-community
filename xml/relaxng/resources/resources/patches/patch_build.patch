@@ -1,13 +1,12 @@
 diff --git a/build/build.py b/build/build.py
-index f3ab4a83..919a6576 100755
---- a/build/build.py
-+++ b/build/build.py
-@@ -1846,7 +1846,7 @@ def main(argv):
-             elif arg == 'checkout':
-                 pass
-             elif arg == 'build':
--                release.buildAll()
-+                buildSchemaDrivers()
-             elif arg == 'docker-build':
-                 dockerBuild()
-             elif arg == 'docker-run':
+--- a/build/build.py	(revision 2718ae6ca0ff39b1194c6cba66ace0e77cc45809)
++++ b/build/build.py	(date 1770809444251)
+@@ -2585,7 +2585,7 @@
+         elif task == 'checkout':
+             pass
+         elif task == 'build':
+-            release.buildAll()
++            buildSchemaDrivers()
+         elif task == 'docker-build':
+             dockerBuild()
+         elif task == 'docker-run':

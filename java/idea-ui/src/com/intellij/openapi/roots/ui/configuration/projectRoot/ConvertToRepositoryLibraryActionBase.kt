@@ -28,7 +28,11 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
@@ -37,7 +41,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.Properties
 
 private val LOG = logger<ConvertToRepositoryLibraryActionBase>()
 

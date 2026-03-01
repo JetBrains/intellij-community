@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.keymap.impl
@@ -10,7 +10,16 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.KeyboardAwareFocusOwner
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.EmptyAction
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
@@ -18,9 +27,9 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
@@ -35,7 +44,11 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.StatusBar.Info.set
 import com.intellij.openapi.wm.impl.FloatingDecorator
@@ -50,10 +63,14 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.matching.KeyboardLayoutUtil
 import com.intellij.util.ui.MacUIUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -64,8 +81,19 @@ import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.util.*
-import javax.swing.*
+import java.util.Collections
+import java.util.function.Supplier
+import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JFrame
+import javax.swing.JPopupMenu
+import javax.swing.JRootPane
+import javax.swing.JWindow
+import javax.swing.KeyStroke
+import javax.swing.MenuElement
+import javax.swing.MenuSelectionManager
+import javax.swing.RootPaneContainer
+import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.ComboPopup
 import javax.swing.text.JTextComponent
 
@@ -380,6 +408,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       KeyEvent.KEY_TYPED == e.id && isPressedWasProcessed -> true
       //see IDEADEV-8615
       KeyEvent.KEY_RELEASED == e.id && KeyEvent.VK_ALT == e.keyCode && isPressedWasProcessed -> true
+      KeyEvent.KEY_PRESSED == e.id -> true
       else -> {
         state = KeyState.STATE_INIT
         isPressedWasProcessed = false
@@ -538,44 +567,53 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     fireBeforeShortcutTriggered(shortcut, actions, context)
 
-    val chosen = WriteIntentReadAction.compute(Computable {
-      val chosen = Utils.runUpdateSessionForInputEvent(
+    val chosen = runInReadActionConditionally(actions) {
+      Utils.runUpdateSessionForInputEvent(
         actions, e, wrappedContext, place, processor, presentationFactory
       ) { rearranged, updater, events ->
         doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
       }
-      val doPerform = chosen != null && !this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)
+    }
+    val doPerform = chosen != null && !this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)
 
-      LOG.trace { "updateResult: chosen=$chosen, doPerform=$doPerform" }
-      val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
-      if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
-        ignoreNextKeyTypedEvent = true
-      }
+    LOG.trace { "updateResult: chosen=$chosen, doPerform=$doPerform" }
+    val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
+    if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
+      ignoreNextKeyTypedEvent = true
+    }
 
-      if (doPerform) {
-        doPerformActionInner(e, processor, chosen.action, chosen.event)
-        logTimeMillis(chosen.startedAt, chosen.action)
-      }
-      else if (hasSecondStroke) {
-        waitSecondStroke(chosen.action, chosen.event.presentation)
-      }
-      else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
-        val actionManager = ActionManager.getInstance()
-        showDumbModeBalloonLater(project = project,
-                                 message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb),
-                                 expired = { e.isConsumed },
-                                 actionIds = actions.mapNotNull { action -> actionManager.getId(action) }) {
-          // invokeLater to make sure correct dataContext is taken from focus
-          ApplicationManager.getApplication().invokeLater {
-            DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
-              processAction(e, place, dataContext, actions, processor, presentationFactory, shortcut)
-            }
+    if (doPerform) {
+      doPerformActionInner(e, processor, chosen.action, chosen.event)
+      logTimeMillis(chosen.startedAt, chosen.action)
+    }
+    else if (hasSecondStroke) {
+      waitSecondStroke(chosen.action, chosen.event.presentation)
+    }
+    else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
+      val actionManager = ActionManager.getInstance()
+      showDumbModeBalloonLater(project = project,
+                               message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb),
+                               expired = { e.isConsumed },
+                               actionIds = actions.mapNotNull { action -> actionManager.getId(action) }) {
+        // invokeLater to make sure correct dataContext is taken from focus
+        ApplicationManager.getApplication().invokeLater {
+          DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
+            processAction(e, place, dataContext, actions, processor, presentationFactory, shortcut)
           }
         }
       }
-      chosen
-    })
+    }
     return chosen != null
+  }
+
+  // inlining here to reduce the number of service stacktraces
+  @Suppress("NOTHING_TO_INLINE")
+  private inline fun <T> runInReadActionConditionally(actions: List<AnAction>, supplier: Supplier<T>): T {
+    return if (actions.any(Utils::isLockRequired)) {
+      ReadAction.computeBlocking<T, Throwable>(supplier::get)
+    } else {
+      supplier.get()
+    }
   }
 
   /**

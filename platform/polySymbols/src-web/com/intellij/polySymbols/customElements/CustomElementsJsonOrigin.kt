@@ -3,14 +3,18 @@ package com.intellij.polySymbols.customElements
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.psi.PsiElement
-import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.customElements.json.SourceReference
-import org.jetbrains.annotations.ApiStatus.Internal
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
+import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
-@Internal
-interface CustomElementsJsonOrigin : PolySymbolOrigin {
-  override val library: String
+@ApiStatus.Internal
+interface CustomElementsJsonOrigin {
+  val library: String
+
+  val version: String?
+
+  val typeSupport: PolySymbolTypeSupport?
 
   fun resolveSourceSymbol(source: SourceReference, cacheHolder: UserDataHolderEx): PsiElement?
 

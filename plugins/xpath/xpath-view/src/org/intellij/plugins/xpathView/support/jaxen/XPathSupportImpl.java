@@ -27,7 +27,11 @@ import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.support.jaxen.extensions.FunctionImplementation;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.intellij.plugins.xpathView.util.NamespaceCollector;
-import org.jaxen.*;
+import org.jaxen.JaxenException;
+import org.jaxen.SimpleNamespaceContext;
+import org.jaxen.UnresolvableException;
+import org.jaxen.XPath;
+import org.jaxen.XPathFunctionContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

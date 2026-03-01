@@ -30,11 +30,20 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache
 import com.jetbrains.python.psi.resolve.fromSdk
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyClassTypeImpl
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.NonNls
 

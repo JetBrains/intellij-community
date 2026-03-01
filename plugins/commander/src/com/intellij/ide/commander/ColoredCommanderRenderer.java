@@ -15,8 +15,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JList;
+import java.awt.Color;
+import java.awt.Component;
 
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
   private final CommanderPanel myCommanderPanel;

@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
-import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntityBuilder
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity

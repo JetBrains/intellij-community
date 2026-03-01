@@ -6,9 +6,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.function.Supplier;
 

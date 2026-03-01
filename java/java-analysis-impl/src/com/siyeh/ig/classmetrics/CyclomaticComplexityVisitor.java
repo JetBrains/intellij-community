@@ -15,7 +15,24 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiWhileStatement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 

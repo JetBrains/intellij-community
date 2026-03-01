@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.APP)
@@ -24,6 +25,9 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
   private val eventLoggerProvidersExt: AtomicReference<Map<String, Collection<StatisticsEventLoggerProvider>>> =
     AtomicReference(calculateEventLogProviderExt())
 
+  // Cache for empty providers by [recorderId] to avoid creating new instances on every call
+  private val emptyProviders: MutableMap<String, StatisticsEventLoggerProvider> = ConcurrentHashMap()
+
   init {
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME)) {
       EP_NAME.addChangeListener(coroutineScope) { eventLoggerProviders.set(calculateEventLogProvider()) }
@@ -31,14 +35,19 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
     }
   }
 
+  private fun getOrCreateEmptyProvider(recorderId: String): StatisticsEventLoggerProvider {
+    return emptyProviders.computeIfAbsent(recorderId) { EmptyStatisticsEventLoggerProvider(recorderId) }
+  }
+
   fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider =
-    eventLoggerProviders.get()[recorderId] ?: EmptyStatisticsEventLoggerProvider(recorderId)
+    eventLoggerProviders.get()[recorderId] ?: getOrCreateEmptyProvider(recorderId)
 
   fun getEventLogProviders(): Collection<StatisticsEventLoggerProvider> =
     eventLoggerProviders.get().values
 
   fun getEventLogProvidersExt(recorderId: String): Collection<StatisticsEventLoggerProvider> =
-    eventLoggerProvidersExt.get()[recorderId] ?: listOf(EmptyStatisticsEventLoggerProvider(recorderId))
+    eventLoggerProvidersExt.get()[recorderId]
+    ?: listOf(getOrCreateEmptyProvider(recorderId))
 
   private fun calculateEventLogProvider(): Map<String, StatisticsEventLoggerProvider> {
     return calculateEventLogProviderExt().mapValues {
@@ -47,7 +56,7 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
         else PluginUtils.getPluginDescriptorOrPlatformByClassName(provider::class.java.name)
           ?.let { plugin -> PluginManagerCore.isDevelopedExclusivelyByJetBrains(plugin) }
           ?: false
-      } ?: EmptyStatisticsEventLoggerProvider(it.key)
+      } ?: getOrCreateEmptyProvider(it.key)
     }
   }
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.awt.event.MouseEvent
 import java.util.concurrent.atomic.AtomicReference
 
+@K1Deprecation
 object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
     override fun `fun`(element: PsiElement): String? {
         val ktDeclaration = element.getParentOfType<KtDeclaration>(false) ?: return null
@@ -68,6 +70,7 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
     }
 }
 
+@K1Deprecation
 class SuperDeclarationMarkerNavigationHandler : GutterIconNavigationHandler<PsiElement>, TestableLineMarkerNavigator {
     override fun navigate(e: MouseEvent?, element: PsiElement?) {
         e?.let { getTargetsPopupDescriptor(element)?.showPopup(e) }
@@ -95,11 +98,13 @@ class SuperDeclarationMarkerNavigationHandler : GutterIconNavigationHandler<PsiE
     }
 }
 
+@K1Deprecation
 data class ResolveWithParentsResult(
     val descriptor: CallableMemberDescriptor?,
     val overriddenDescriptors: Collection<CallableMemberDescriptor>
 )
 
+@K1Deprecation
 fun resolveDeclarationWithParents(element: KtDeclaration): ResolveWithParentsResult {
     val descriptor = if (element is KtParameter)
         element.propertyDescriptor
@@ -112,5 +117,6 @@ fun resolveDeclarationWithParents(element: KtDeclaration): ResolveWithParentsRes
 }
 
 // TODO: copy-paste
+@K1Deprecation
 val KtParameter.propertyDescriptor: PropertyDescriptor?
     get() = this.resolveToDescriptorIfAny(BodyResolveMode.FULL) as? PropertyDescriptor

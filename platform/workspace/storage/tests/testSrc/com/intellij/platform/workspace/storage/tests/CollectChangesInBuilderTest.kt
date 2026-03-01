@@ -6,11 +6,31 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.testEntities.entities.SecondSampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyOptionalOneToOneChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyOptionalOneToOneParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifySecondSampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyXChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyXParentEntity
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @Suppress("UNCHECKED_CAST")
 class CollectChangesInBuilderTest {

@@ -17,7 +17,11 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class GenerateManagedDependencyAction extends GenerateDomElementAction {
   public GenerateManagedDependencyAction() {

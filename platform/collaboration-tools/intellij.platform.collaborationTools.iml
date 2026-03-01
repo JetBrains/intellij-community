@@ -44,7 +44,7 @@
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.markdown" />
-    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />

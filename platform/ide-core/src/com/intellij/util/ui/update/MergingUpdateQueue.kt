@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.util.ui.update
@@ -238,17 +238,13 @@ open class MergingUpdateQueue @JvmOverloads constructor(
   }
 
   fun cancelAllUpdates() {
-    synchronized(scheduledUpdates) {
-      for (each in getAllScheduledUpdates()) {
-        try {
-          each.setRejected()
-        }
-        catch (_: CancellationException) {
-        }
-      }
+    val allScheduledUpdates = synchronized(scheduledUpdates) {
+      val updates = getAllScheduledUpdates()
       scheduledUpdates.clear()
-      finishActivity()
+      updates
     }
+    allScheduledUpdates.forEachGuaranteed(Update::setRejected)
+    finishActivity()
   }
 
   private fun getAllScheduledUpdates(): List<Update> = scheduledUpdates.values().flatMap { it.keys }
@@ -370,9 +366,11 @@ open class MergingUpdateQueue @JvmOverloads constructor(
         }
         else {
           // caused by forced restart
+          val updatesToReject = ArrayList<Update>()
           synchronized(scheduledUpdates) {
-            remainingUpdates.forEachGuaranteed(this::put)
+            remainingUpdates.forEachGuaranteed { put(it, updatesToReject) }
           }
+          updatesToReject.forEachGuaranteed(Update::setRejected)
         }
         throw e
       }
@@ -506,30 +504,35 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     }
 
     val active = isActive
-    synchronized(scheduledUpdates) {
-      try {
-        if (eatThisOrOthers(update)) {
-          return
-        }
+    val updatesToReject = ArrayList<Update>()
+    try {
+      synchronized(scheduledUpdates) {
+        try {
+          if (eatThisOrOthers(update, updatesToReject)) {
+            return@synchronized
+          }
 
-        if (active && scheduledUpdates.isEmpty) {
-          restartTimer()
-        }
-        put(update)
+          if (active && scheduledUpdates.isEmpty) {
+            restartTimer()
+          }
+          put(update, updatesToReject)
 
-        if (restartOnAdd) {
-          restartTimer()
+          if (restartOnAdd) {
+            restartTimer()
+          }
+        }
+        finally {
+          if (isEmpty) {
+            finishActivity()
+          }
         }
       }
-      finally {
-        if (isEmpty) {
-          finishActivity()
-        }
-      }
+    } finally {
+      updatesToReject.forEachGuaranteed(Update::setRejected)
     }
   }
 
-  private fun eatThisOrOthers(update: Update): Boolean {
+  private fun eatThisOrOthers(update: Update, updatesToReject: MutableList<Update>): Boolean {
     val updates = scheduledUpdates.get(update.priority)
     if (updates != null && updates.containsKey(update)) {
       return false
@@ -537,13 +540,13 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
     for (eachInQueue in getAllScheduledUpdates()) {
       if (eachInQueue.canEat(update)) {
-        update.setRejected()
+        updatesToReject.add(update)
         return true
       }
 
       if (update.canEat(eachInQueue)) {
         scheduledUpdates.get(eachInQueue.priority).remove(eachInQueue)
-        eachInQueue.setRejected()
+        updatesToReject.add(eachInQueue)
       }
     }
     return false
@@ -554,14 +557,14 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     execute(listOf(update))
   }
 
-  private fun put(update: Update) {
+  private fun put(update: Update, updatesToReject: MutableList<Update>) {
     val updates: MutableMap<Update, Update> = scheduledUpdates.cacheOrGet(update.priority, LinkedHashMap())
     val existing = updates.remove(update)
+    updates.put(update, update)
     if (existing != null && existing !== update) {
       existing.setProcessed()
-      existing.setRejected()
+      updatesToReject.add(existing)
     }
-    updates.put(update, update)
   }
 
   override fun dispose() {

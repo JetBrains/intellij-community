@@ -2,7 +2,18 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.CoreFormatterUtil;
+import com.intellij.formatting.FormatTextRange;
+import com.intellij.formatting.FormatTextRanges;
+import com.intellij.formatting.FormatterEx;
+import com.intellij.formatting.FormatterTagHandler;
+import com.intellij.formatting.FormattingMode;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.FormattingProgressCallback;
+import com.intellij.formatting.FormattingProgressCallbackFactory;
+import com.intellij.formatting.InjectedFormattingOptionsProvider;
+import com.intellij.formatting.VirtualFormattingImplKt;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -33,7 +44,11 @@ import com.intellij.util.text.TextRangeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public final class CodeFormatterFacade {
 

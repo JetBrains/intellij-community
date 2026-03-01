@@ -9,7 +9,11 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
-import org.testng.*;
+import org.testng.IClass;
+import org.testng.ISuite;
+import org.testng.ITestContext;
+import org.testng.ITestNGMethod;
+import org.testng.ITestResult;
 import org.testng.internal.TestResult;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
@@ -19,7 +23,11 @@ import org.testng.xml.XmlTest;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class TestNGTreeHierarchyTest {
 

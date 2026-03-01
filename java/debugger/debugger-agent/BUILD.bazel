@@ -7,4 +7,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = ["@lib//:java-debugger-agent-holder-debugger-agent"]
 )
+
+jvm_library(
+  name = "java-debugger-agent-holder_test_lib",
+  module_name = "intellij.java.debugger.agent.holder",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":java-debugger-agent-holder"]
+)
 ### auto-generated section `build intellij.java.debugger.agent.holder` end

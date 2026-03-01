@@ -14,7 +14,11 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
@@ -33,6 +37,18 @@ class TokenLoginInputPanelFactory(
   fun createIn(
     cs: CoroutineScope,
     serverFieldDisabled: Boolean,
+    tokenNote: @NlsContexts.DetailedDescription String?,
+    errorPresenter: ErrorStatusPresenter<Throwable>?,
+    footer: Panel.() -> Unit = { }
+  ): DialogPanel {
+    return createIn(cs, serverFieldDisabled, null, tokenNote, errorPresenter, footer)
+  }
+
+  @JvmOverloads
+  fun createIn(
+    cs: CoroutineScope,
+    serverFieldDisabled: Boolean,
+    serverNote: @NlsContexts.DetailedDescription String?,
     tokenNote: @NlsContexts.DetailedDescription String?,
     errorPresenter: ErrorStatusPresenter<Throwable>?,
     footer: Panel.() -> Unit = { }
@@ -61,6 +77,7 @@ class TokenLoginInputPanelFactory(
           .bindText(model::serverUri)
           .align(AlignX.FILL)
           .resizableColumn()
+          .comment(serverNote, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
           .enabledIf(progressModel.toComponentPredicate(!serverFieldDisabled))
           .validationOnApply {
             when {

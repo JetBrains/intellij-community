@@ -18,7 +18,12 @@ import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
 import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
-import org.jetbrains.plugins.terminal.view.*
+import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalLineIndex
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelSnapshot
 
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.

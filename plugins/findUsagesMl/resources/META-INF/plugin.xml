@@ -11,10 +11,11 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.json"/>
-    <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.intellij.java"/>
-    <module name="intellij.platform.ml.logs"/>
+    <module name="intellij.java.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.commons.text"/>
+    <module name="intellij.platform.ml.logs"/>
+    <!-- endregion -->
   </dependencies>
   <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">

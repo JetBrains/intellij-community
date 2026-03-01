@@ -36,7 +36,9 @@ def init_altair_render():
             return "pycharm-altair-image", body
 
     def pycharm_renderer(spec):
+        saved_renderer = alt.renderers.active
         image_str = None
+        html_str = ""
         try:
             alt.renderers.enable("png")
             png_renderer = alt.renderers.get()
@@ -44,9 +46,17 @@ def init_altair_render():
             image_str = base64.b64encode(image_bytes).decode("utf8")
         except:
             debug("Failed to render image")
-        alt.renderers.enable("html")
-        html_renderer = alt.renderers.get()
-        html_str = html_renderer(spec)['text/html']
+        finally:
+            alt.renderers.enable(saved_renderer)
+
+        try:
+            alt.renderers.enable("html")
+            html_renderer = alt.renderers.get()
+            html_str = html_renderer(spec)['text/html']
+        except:
+            debug("Failed to render HTML")
+        finally:
+            alt.renderers.enable(saved_renderer)
         display(DisplayDataObject(html_str, image_str))
 
     alt.renderers.register("browser", pycharm_renderer)

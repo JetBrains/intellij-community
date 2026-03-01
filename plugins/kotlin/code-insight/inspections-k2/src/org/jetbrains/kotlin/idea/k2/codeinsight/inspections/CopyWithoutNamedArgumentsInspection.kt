@@ -16,7 +16,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.DataClassResolver
 

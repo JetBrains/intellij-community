@@ -3,7 +3,20 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildSecondEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.MiddleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentAbEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.RightEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentAbEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyRightEntity
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

@@ -6,8 +6,20 @@ import com.intellij.cce.evaluable.PROMPT_PROPERTY
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import com.intellij.openapi.diagnostic.thisLogger
-import kotlinx.html.*
+import kotlinx.html.BODY
+import kotlinx.html.DIV
+import kotlinx.html.InputType
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.id
+import kotlinx.html.input
+import kotlinx.html.label
+import kotlinx.html.onChange
+import kotlinx.html.pre
+import kotlinx.html.script
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.unsafe
 import org.apache.commons.lang3.StringEscapeUtils
 
 

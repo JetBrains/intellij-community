@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class)
 
 package com.intellij.util.indexing.contentQueue
 
 import com.intellij.openapi.application.readActionUndispatched
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -32,9 +33,13 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.SystemProperties.getBooleanProperty
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.FileIndexingResult
 import com.intellij.util.indexing.IndexingFlag.unlockFile
+import com.intellij.util.indexing.IndexingStamp
 import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles
+import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.contentQueue.dev.IndexWriter
 import com.intellij.util.indexing.contentQueue.dev.TOTAL_WRITERS_NUMBER
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
@@ -44,8 +49,15 @@ import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.FileNotFoundException
@@ -176,7 +188,7 @@ class IndexUpdateRunner(
 
     val filesToIndexCount = fileSet.size()
     TRACER.spanBuilder("doIndexFiles").setAttribute("files", filesToIndexCount.toLong()).useWithScope {
-      withContext(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash}")) {
+      withContext(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash})")) {
         //Ideally, we should launch a coroutine for each file in a fileSet, and let the coroutine scheduler do it's job
         // of distributing the load across available CPUs.
         // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
@@ -203,14 +215,16 @@ class IndexUpdateRunner(
 
                 ensureActive()
               }
+              LOG.debug("Coroutine $workerNo has finished gracefully")
             }
-            //FIXME RC: for profiling, remove afterwards
             catch (e: Throwable) {
-              LOG.info("Coroutine $workerNo finished exceptionally", e)
+              if (e !is ControlFlowException) {
+                LOG.warn("Coroutine $workerNo finished exceptionally", e)
+              }
+              else {
+                LOG.warn("Coroutine $workerNo finished exceptionally: ${e.message}")
+              }
               throw e
-            }
-            finally {
-              LOG.info("Coroutine $workerNo finished gracefully")
             }
           }
         }
@@ -287,7 +301,7 @@ class IndexUpdateRunner(
       statistics: IndexingFileSetStatistics,
     ) {
       val file = fileIndexingRequest.file
-      if( !fileIndexingRequest.isDeleteRequest && !file.isValid ){
+      if (!fileIndexingRequest.isDeleteRequest && !file.isValid) {
         //this is a bandage for the annoying 'Alien file...' errors in tests: in real life it shouldn't be possible to come
         //  here with an invalid file, but in a (badly isolated) tests it could happen
         LOG.warn("Invalid (alien?) file: #${(file as VirtualFileWithId).id}")
@@ -304,11 +318,18 @@ class IndexUpdateRunner(
         val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
         val excluded = readActionUndispatched {
           val isIndexable = workspaceFileIndex.isIndexable(file)
-          val belongsToContentNonIndexable = workspaceFileIndex.findFileSet(file, true, false, includeContentNonIndexableSets = true, false, false, false) != null
+          val belongsToNonIndexable = workspaceFileIndex.findFileSet(file,
+                                                                     true,
+                                                                     false,
+                                                                     includeContentNonIndexableSets = true,
+                                                                     false,
+                                                                     false,
+                                                                     includeExternalNonIndexableSets = true,
+                                                                     false) != null
           // We don't want to just exclude all !isIndexable,
           // because they may be contributed by an indexing contributor while WorkspaceFileIndex is not aware about it.
           // We only want to exclude the files that are explicitly registered as non indexable.
-          ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) || (!isIndexable && belongsToContentNonIndexable)
+          ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) || (!isIndexable && belongsToNonIndexable)
         }
         if (excluded) {
           val counter = badFileCounter.incrementAndGet()
@@ -514,7 +535,7 @@ class IndexUpdateRunner(
 
     fun getPresentableLocationBeingIndexed(project: Project, file: VirtualFile): @NlsSafe String {
       var actualFile = file
-      if (actualFile.fileSystem is ArchiveFileSystem) {
+      if (actualFile.isValid && actualFile.fileSystem is ArchiveFileSystem) {
         actualFile = VfsUtil.getLocalFile(actualFile)
       }
       var path = getProjectRelativeOrAbsolutePath(project, actualFile)
@@ -581,7 +602,9 @@ private class UsedMemorySoftLimiter(private val softLimitOfTotalBytesUsed: Long)
     while (true) { //CAS-loop
       val _totalBytesUsed = totalBytesUsed.get()
       if (_totalBytesUsed > softLimitOfTotalBytesUsed) {
-        yield()
+        //Without this delay most of cpu time is spent inside coroutine scheduler since it is spinning non-stop
+        //This bug is reproducible with big Jupyter files 100mb or more, we need a time to parse it and other coroutines wait the parse finish
+        delay(10)
         continue
       }
 

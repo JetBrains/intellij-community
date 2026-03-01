@@ -10,18 +10,32 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.StopBuildException;
+import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.maven.MavenJpsBundle;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
-import org.jetbrains.jps.maven.model.impl.*;
+import org.jetbrains.jps.maven.model.impl.MavenFilteredJarConfiguration;
+import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
+import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
+import org.jetbrains.jps.maven.model.impl.MavenResourceRootDescriptor;
+import org.jetbrains.jps.maven.model.impl.MavenResourcesTarget;
+import org.jetbrains.jps.maven.model.impl.MavenResourcesTargetType;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.jetbrains.jps.incremental.messages.CompilerMessage.getTextFromThrowable;
 

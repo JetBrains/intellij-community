@@ -1,29 +1,41 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_IO;
 
 public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocalInspectionTool {
 
+  private static final CallMatcher CAN_BE_IO_PRINT =
+    CallMatcher.anyOf(CallMatcher.staticCall(JAVA_LANG_IO, "println")
+                        .parameterCount(0)
+                        .allowStaticUnresolved(),
+                      CallMatcher.staticCall(JAVA_LANG_IO, "println", "print")
+                        .parameterCount(1)
+                        .allowStaticUnresolved());
+
   private static final CallMatcher IO_PRINT =
-    CallMatcher.anyOf(
-      CallMatcher.staticCall(JAVA_LANG_IO, "println")
-        .parameterCount(0)
-        .allowStaticUnresolved(),
-      CallMatcher.staticCall(JAVA_LANG_IO, "println", "print")
-        .parameterCount(1)
-        .allowStaticUnresolved()
-    );
+    CallMatcher.anyOf(CallMatcher.staticCall(JAVA_LANG_IO, "println")
+                        .parameterCount(0),
+                      CallMatcher.staticCall(JAVA_LANG_IO, "println", "print")
+                        .parameterCount(1));
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -38,19 +50,35 @@ public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocal
         if (!isIOPrint(expression)) return;
 
         PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        holder.registerProblem(methodExpression,
-                               JavaBundle.message("inspection.migrate.from.java.lang.io.name"),
-                               new ConvertIOToSystemOutFix(referenceName));
+        ConvertIOToSystemOutFix fix = new ConvertIOToSystemOutFix(expression, referenceName);
+        holder.problem(methodExpression, JavaBundle.message("inspection.migrate.from.java.lang.io.name"))
+          .fix(fix)
+          .register();
       }
     };
   }
 
-  private static class ConvertIOToSystemOutFix extends PsiUpdateModCommandQuickFix {
+  public static @Nullable ModCommandAction createCanBeIOFix(@NotNull PsiElement psi) {
+    if (!(psi instanceof PsiReferenceExpression)) return null;
+    if (!(psi.getParent() instanceof PsiReferenceExpression parentReference)) return null;
+    if (!(parentReference.getParent() instanceof PsiMethodCallExpression methodCallExpression)) return null;
+    if (!canBeIOPrint(methodCallExpression)) return null;
+    String referenceName = methodCallExpression.getMethodExpression().getReferenceName();
+    if (referenceName == null) return null;
+    return new MigrateFromJavaLangIoInspection.ConvertIOToSystemOutFix(methodCallExpression, referenceName)
+      .withPresentation(presentation -> presentation.withPriority(PriorityAction.Priority.HIGH));
+  }
+
+  public static class ConvertIOToSystemOutFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
 
     @NotNull
     private final String methodName;
 
-    private ConvertIOToSystemOutFix(@NotNull String name) { methodName = name; }
+    private ConvertIOToSystemOutFix(@NotNull PsiMethodCallExpression expression,
+                                    @NotNull String name) {
+      super(expression);
+      methodName = name;
+    }
 
     @Override
     public @NotNull String getFamilyName() {
@@ -58,19 +86,17 @@ public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    public @NotNull String getName() {
-      return JavaBundle.message("inspection.migrate.from.java.lang.io.fix.name", "System.out." + methodName + "()");
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression element) {
+      return Presentation.of(JavaBundle.message("inspection.migrate.from.java.lang.io.fix.name", "System.out." + methodName + "()"));
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiMethodCallExpression methodCall)) return;
-      replaceToSystemOut(methodCall);
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression element, @NotNull ModPsiUpdater updater) {
+      replaceToSystemOut(element);
     }
   }
 
-  static void replaceToSystemOut(@NotNull PsiMethodCallExpression methodCall) {
+  public static void replaceToSystemOut(@NotNull PsiMethodCallExpression methodCall) {
     PsiReferenceExpression methodExpr = methodCall.getMethodExpression();
     String methodName = methodExpr.getReferenceName();
     if (methodName == null) return;
@@ -82,6 +108,11 @@ public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocal
 
   private static boolean isIOPrint(@NotNull PsiMethodCallExpression expression) {
     if (!IO_PRINT.test(expression)) return false;
+    return MigrateToJavaLangIoInspection.callIOAndSystemIdentical(expression.getArgumentList());
+  }
+
+  private static boolean canBeIOPrint(@NotNull PsiMethodCallExpression expression) {
+    if (!CAN_BE_IO_PRINT.test(expression)) return false;
     return MigrateToJavaLangIoInspection.callIOAndSystemIdentical(expression.getArgumentList());
   }
 }

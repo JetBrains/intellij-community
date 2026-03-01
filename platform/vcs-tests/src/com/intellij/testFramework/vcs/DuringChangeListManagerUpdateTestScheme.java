@@ -5,7 +5,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.committed.MockDelayingChangeProvider;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -15,6 +21,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -127,10 +134,12 @@ public class DuringChangeListManagerUpdateTestScheme {
     assert changes.size() == files.length : "size: " + changes.size() + " " + debugRealListContent(list);
 
     for (Change change : changes) {
-      final VirtualFile vf = change.getAfterRevision().getFile().getVirtualFile();
+      ContentRevision afterRevision = change.getAfterRevision();
+      assert afterRevision != null : "afterRevision is null for " + change;
+      Path changePath = Path.of(afterRevision.getFile().getPath());
       boolean found = false;
       for (VirtualFile file : files) {
-        if (file.equals(vf)) {
+        if (file.toNioPath().equals(changePath)) {
           found = true;
           break;
         }

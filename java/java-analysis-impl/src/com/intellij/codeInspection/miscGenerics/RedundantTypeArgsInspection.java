@@ -1,14 +1,36 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.compiler.JavacQuirksInspectionVisitor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -42,22 +64,13 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
-        final PsiType[] typeArguments = expression.getTypeArguments();
-        if (typeArguments.length > 0) {
-          checkCallExpression(expression.getMethodExpression(), typeArguments, expression, inspectionManager, problems, isOnTheFly);
-        }
+        checkCallExpression(expression, inspectionManager, problems, isOnTheFly);
       }
 
       @Override
       public void visitNewExpression(@NotNull PsiNewExpression expression) {
         super.visitNewExpression(expression);
-        final PsiType[] typeArguments = expression.getTypeArguments();
-        if (typeArguments.length > 0) {
-          final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
-          if (classReference != null) {
-            checkCallExpression(classReference, typeArguments, expression, inspectionManager, problems, isOnTheFly);
-          }
-        }
+        checkCallExpression(expression, inspectionManager, problems, isOnTheFly);
       }
 
       @Override
@@ -71,11 +84,11 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static void checkCallExpression(final PsiJavaCodeReferenceElement reference,
-                                          final PsiType[] typeArguments,
-                                          PsiCallExpression expression,
+  private static void checkCallExpression(PsiCallExpression expression,
                                           final InspectionManager inspectionManager,
                                           final List<? super ProblemDescriptor> problems, boolean isOnTheFly) {
+    final PsiType[] typeArguments = expression.getTypeArguments();
+    if (typeArguments.length == 0) return;
     PsiExpressionList argumentList = expression.getArgumentList();
     if (argumentList == null) return;
     PsiReferenceParameterList typeArgumentList = expression.getTypeArgumentList();
@@ -84,8 +97,7 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
         return;
       }
     }
-    final JavaResolveResult resolveResult = reference.advancedResolve(false);
-
+    final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
     final PsiElement element = resolveResult.getElement();
     if (element instanceof PsiMethod method && resolveResult.isValidResult()) {
       final PsiTypeParameter[] typeParameters = method.getTypeParameters();

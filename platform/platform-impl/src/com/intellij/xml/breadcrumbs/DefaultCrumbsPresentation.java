@@ -15,7 +15,7 @@
  */
 package com.intellij.xml.breadcrumbs;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class DefaultCrumbsPresentation extends CrumbPresentation {
   @Override

@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.imports.canBeAddedToImport
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -16,11 +17,21 @@ import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class ImportMemberIntention : SelfTargetingOffsetIndependentIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
     KotlinBundle.messagePointer("add.import.for.member")

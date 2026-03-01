@@ -2,11 +2,11 @@
 package com.intellij.platform.util.io.storages.durablemap.dev;
 
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors;
+import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLogOverMMappedFile;
 import com.intellij.platform.util.io.storages.durablemap.DurableMapTestBase;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
-import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Disabled;

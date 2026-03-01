@@ -8,7 +8,12 @@ import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.psi.util.PsiTypesUtil
@@ -17,7 +22,14 @@ import com.intellij.uast.UastVisitorAdapter
 import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.findContaining
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.sourcePsiElement
 
 private inline val ANNOTATION_NAME get() = ApiStatus.NonExtendable::class.java.canonicalName!!
 

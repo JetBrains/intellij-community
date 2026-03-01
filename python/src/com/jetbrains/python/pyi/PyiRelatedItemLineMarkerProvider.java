@@ -8,7 +8,11 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -16,7 +20,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
 

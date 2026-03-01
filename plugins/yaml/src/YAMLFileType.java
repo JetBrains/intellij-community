@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class YAMLFileType extends LanguageFileType {
   public static final YAMLFileType YML = new YAMLFileType();

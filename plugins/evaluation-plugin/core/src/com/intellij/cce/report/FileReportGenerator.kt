@@ -4,15 +4,24 @@ package com.intellij.cce.report
 import com.intellij.cce.workspace.SessionSerializer
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
-import kotlinx.html.*
+import kotlinx.html.HEAD
+import kotlinx.html.body
+import kotlinx.html.h1
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.link
+import kotlinx.html.meta
+import kotlinx.html.script
 import kotlinx.html.stream.createHTML
+import kotlinx.html.title
+import kotlinx.html.unsafe
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileWriter
 import java.io.OutputStreamWriter
 import java.nio.file.Path
 import java.text.DecimalFormat
-import java.util.*
+import java.util.Base64
 import java.util.zip.GZIPOutputStream
 
 abstract class FileReportGenerator(

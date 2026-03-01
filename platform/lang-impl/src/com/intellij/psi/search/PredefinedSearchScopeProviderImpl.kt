@@ -11,7 +11,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor

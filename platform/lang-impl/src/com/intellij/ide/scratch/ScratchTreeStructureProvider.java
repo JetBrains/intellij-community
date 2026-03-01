@@ -2,7 +2,13 @@
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.NodeSortOrder;
+import com.intellij.ide.projectView.NodeSortSettings;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
@@ -12,7 +18,11 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DataSnapshot;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataRule;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -47,7 +57,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 /**

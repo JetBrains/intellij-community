@@ -2,7 +2,11 @@
 package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
+import org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.runAll
 import java.nio.file.Paths
 import kotlin.io.path.div
 import kotlin.io.path.readLines

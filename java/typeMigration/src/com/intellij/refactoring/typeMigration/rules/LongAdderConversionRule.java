@@ -2,7 +2,17 @@
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;

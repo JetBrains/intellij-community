@@ -8,7 +8,11 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 

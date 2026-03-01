@@ -23,4 +23,21 @@ jvm_library(
     "//libraries/ktor/io",
   ]
 )
+
+jvm_library(
+  name = "downloader_test_lib",
+  module_name = "intellij.platform.buildScripts.downloader",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k17",
+  runtime_deps = [
+    ":downloader",
+    "//libraries/commons/compress:compress_test_lib",
+    "//libraries/commons/io:io_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+    "//libraries/ktor/client:client_test_lib",
+    "//libraries/ktor/io:io_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.buildScripts.downloader` end

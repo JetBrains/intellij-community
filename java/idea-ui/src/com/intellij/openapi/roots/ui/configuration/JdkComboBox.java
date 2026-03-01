@@ -17,7 +17,10 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.ListModel;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;

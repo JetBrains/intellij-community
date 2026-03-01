@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
@@ -14,9 +14,17 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowedError
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason
-import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason.*
+import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason.CodeCallerForbadeSkipping
+import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason.FilterIncompatibleAsAppIndexingRequestIdChangedSinceLastScanning
+import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason.FilterIncompatibleAsFilterIsInvalidated
+import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason.FilterIncompatibleAsFullScanningIsNotCompleted
+import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason.FilterIncompatibleAsNotLoadedFromDisc
+import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason.FilterIncompatibleAsPersistentFilterIsDisabled
+import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason.RegistryForbadeSkipping
 import com.intellij.util.indexing.InitialScanningSkipReporter.NotSeenIdsBasedFullScanningDecision
-import com.intellij.util.indexing.InitialScanningSkipReporter.NotSeenIdsBasedFullScanningDecision.*
+import com.intellij.util.indexing.InitialScanningSkipReporter.NotSeenIdsBasedFullScanningDecision.DirtyFileIdsCompatibleWithFullScanningSkip
+import com.intellij.util.indexing.InitialScanningSkipReporter.NotSeenIdsBasedFullScanningDecision.NoSkipDirtyFileIdsWereMissed
+import com.intellij.util.indexing.InitialScanningSkipReporter.NotSeenIdsBasedFullScanningDecision.NoSkipDirtyFileQueuePintsToIncorrectPosition
 import com.intellij.util.indexing.InitialScanningSkipReporter.SourceOfScanning
 import com.intellij.util.indexing.ReusingPersistentFilterCondition.IS_FILTER_LOADED_FROM_DISK
 import com.intellij.util.indexing.UnindexedFilesScanner.Companion.LOG
@@ -26,22 +34,28 @@ import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesServic
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder
 import com.intellij.util.indexing.projectFilter.usePersistentFilesFilter
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
 
+/** Key in [Project]: `null` before first scanning => [FirstScanningState.REQUESTED] => [FirstScanningState.PERFORMED] */
 @JvmField
 internal val FIRST_SCANNING_REQUESTED: Key<FirstScanningState> = Key.create("FIRST_SCANNING_REQUESTED")
-private val dumbModeThreshold: Int
-  get() = Registry.intValue("scanning.dumb.mode.threshold", 20)
 
 internal enum class FirstScanningState {
   REQUESTED, PERFORMED
 }
 
 private val initialScanningLock = ReentrantLock()
+
+private val dumbModeThreshold: Int get() = Registry.intValue("scanning.dumb.mode.threshold", 20)
+
 private val PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED = Key<Boolean>("PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED")
 
 internal fun scanAndIndexProjectAfterOpen(project: Project,
@@ -57,12 +71,12 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           partialScanningType: ScanningType,
                                           registeredIndexesWereCorrupted: Boolean,
                                           sourceOfScanning: SourceOfScanning): Job {
-  FileBasedIndex.getInstance().loadIndexes()
+  val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+  fileBasedIndex.loadIndexes()
   val isFilterInvalidated = initialScanningLock.withLock {
     ConcurrencyUtil.computeIfAbsent(project, FIRST_SCANNING_REQUESTED) { FirstScanningState.REQUESTED }
     project.getUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED) == true
   }
-  val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
 
   val filterHolder = fileBasedIndex.indexableFilesFilterHolder
   val appCurrent = ApplicationManager.getApplication().getService(AppIndexingDependenciesService::class.java).getCurrent()
@@ -73,13 +87,13 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val scanningCheckState = SkippingScanningCheckState(allowSkippingFullScanning, filterUpToDateUnsatisfiedConditions, notSeenIds)
   val skippingScanningUnsatisfiedConditions = SkippingFullScanningCondition.entries.filter { !it.canSkipFullScanning(scanningCheckState) }
   return if (skippingScanningUnsatisfiedConditions.isEmpty()) {
-    LOG.info("Full scanning on startup will be skipped for project ${project.name}")
+    LOG.info("Full scanning on startup will be skipped for project [${project.name}]")
     val allNotSeenIds = (notSeenIds as AllNotSeenDirtyFileIds).result.plus(additionalOrphanDirtyFiles)
     InitialScanningSkipReporter.reportPartialInitialScanningScheduled(project, sourceOfScanning, projectDirtyFilesQueue, allNotSeenIds.size)
     scheduleDirtyFilesScanning(project, allNotSeenIds, projectDirtyFilesQueue, coroutineScope, indexingReason, partialScanningType)
   }
   else {
-    LOG.info("Full scanning on startup will NOT be skipped for project ${project.name} because of following unsatisfied conditions:\n" +
+    LOG.info("Full scanning on startup will NOT be skipped for project [${project.name}] because of following unsatisfied conditions:\n" +
              skippingScanningUnsatisfiedConditions.joinToString("\n") { "${it.name}: ${it.explain(scanningCheckState)}" })
     val reasonsForFullScanning = skippingScanningUnsatisfiedConditions.flatMap { it.getFullScanningReasons(scanningCheckState) }
     val allNotSeenIds = if (notSeenIds is AllNotSeenDirtyFileIds) notSeenIds.result.plus(additionalOrphanDirtyFiles) else additionalOrphanDirtyFiles
@@ -110,6 +124,7 @@ internal fun invalidateProjectFilterIfFirstScanningNotRequested(project: Project
       false
     }
     else {
+      LOG.info("First scanning is not yet requested (project=${project.name}), current scanning request will be ignored and full scanning on startup will be performed instead.")
       setProjectFilterIsInvalidated(project, true)
       true
     }
@@ -174,8 +189,10 @@ private fun scheduleDirtyFilesScanning(
                          DirtyFilesIndexableFilesIterator(projectDirtyFilesFromOrphanQueue, true))
 
   val scanningIterators = CompletableDeferred(ScanningIterators(indexingReason, iterators, null, partialScanningType))
-  UnindexedFilesScanner(project, true, true,
-                        projectDirtyFiles.asCompletableFuture(),
+  UnindexedFilesScanner(project,
+                        onProjectOpen = true,
+                        isIndexingFilesFilterUpToDate = true,
+                        startCondition = projectDirtyFiles.asCompletableFuture(),
                         scanningParameters = scanningIterators)
     .queue()
   return projectDirtyFiles
@@ -248,30 +265,32 @@ private class AllNotSeenDirtyFileIds(val result: Collection<Int>) : GetNotSeenDi
 }
 
 private suspend fun findProjectFiles(project: Project, dirtyFilesIds: Collection<Int>, limit: Int = -1): List<VirtualFile> {
-  return readAction {
-    val fs = ManagingFS.getInstance()
-    val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-    var exceptionLogged = false
-    dirtyFilesIds.asSequence()
-      .mapNotNull { fileId ->
-        try {
-          val file = fs.findFileById(fileId)
-          if (file != null && fileBasedIndex.belongsToProjectIndexableFiles(file, project)) file else null
-        }
-        catch (e: VfsRootAccessNotAllowedError) {
-          if (!exceptionLogged) {
-            LOG.debug("VfsRootAccessNotAllowedError occurred. " +
-                      "Probably previous test with different rules for project roots saved these files to dirty files queue. " +
-                      "Example of error:", e)
-            exceptionLogged = true
-          }
-          null
-        }
-      }.run {
-        if (limit <= 0) this
-        else this.take(limit)
-      }.toList()
+  val fs = ManagingFS.getInstance()
+  val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+  var exceptionLogged = false
+  val projectFiles = mutableListOf<VirtualFile>()
+  val dirtyFilesIds = dirtyFilesIds.run {
+    if (limit <= 0) this
+    else this.take(limit)
   }
+  for (fileId in dirtyFilesIds) {
+    try {
+      val file = fs.findFileById(fileId)
+      // Blocking read action because the lambda is fast and the number of files can be large.
+      // And the previous solution was de-facto blocking because somebody (me) forgot checkCancelled.
+      val inProject = file != null && readAction { fileBasedIndex.belongsToProjectIndexableFiles(file, project) }
+      if (inProject) projectFiles.add(file)
+    }
+    catch (e: VfsRootAccessNotAllowedError) {
+      if (!exceptionLogged) {
+        LOG.debug("VfsRootAccessNotAllowedError occurred. " +
+                  "Probably previous test with different rules for project roots saved these files to dirty files queue. " +
+                  "Example of error:", e)
+        exceptionLogged = true
+      }
+    }
+  }
+  return projectFiles
 }
 
 private suspend fun scheduleForIndexing(someProjectDirtyFilesFiles: List<VirtualFile>, project: Project, fileBasedIndex: FileBasedIndexImpl, limit: Int) {

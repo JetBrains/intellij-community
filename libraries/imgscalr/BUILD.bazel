@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-imgscalr-imgscalr"],
   runtime_deps = ["@lib//:libraries-imgscalr-imgscalr"]
 )
+
+jvm_library(
+  name = "imgscalr_test_lib",
+  module_name = "intellij.libraries.imgscalr",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-imgscalr-imgscalr"],
+  runtime_deps = [":imgscalr"]
+)
 ### auto-generated section `build intellij.libraries.imgscalr` end

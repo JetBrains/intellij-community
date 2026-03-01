@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 
-private class HighlightingReaderModeProvider : ReaderModeProvider {
+internal class HighlightingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     if (!fileIsOpenAlready) {
       return
@@ -33,7 +33,7 @@ private class HighlightingReaderModeProvider : ReaderModeProvider {
   }
 }
 
-private class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvider(), DumbAware {
+internal class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvider(), DumbAware {
   override fun getDefaultSetting(project: Project, file: VirtualFile): FileHighlightingSetting? {
     val readerModeSettings = ReaderModeSettings.getInstance(project)
     if (readerModeSettings.enabled && !readerModeSettings.showWarnings && file.isValid && ReaderModeSettings.matchMode(project, file)) {
@@ -45,7 +45,7 @@ private class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettin
   }
 }
 
-private class LigaturesReaderModeProvider : ReaderModeProvider {
+internal class LigaturesReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val scheme = editor.colorsScheme
     scheme.isUseLigatures =
@@ -58,7 +58,7 @@ private class LigaturesReaderModeProvider : ReaderModeProvider {
   }
 }
 
-private class FontReaderModeProvider : ReaderModeProvider {
+internal class FontReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val lineSpacing = AppEditorFontOptions.getInstance().fontPreferences.lineSpacing
     setLineSpacing(editor, if (readerMode && ReaderModeSettings.getInstance(project).increaseLineSpacing) { lineSpacing * 1.2f } else lineSpacing)
@@ -71,7 +71,7 @@ private class FontReaderModeProvider : ReaderModeProvider {
   }
 }
 
-private class DocsRenderingReaderModeProvider : ReaderModeProvider {
+internal class DocsRenderingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     DocRenderManager.setDocRenderingEnabled(editor, if (readerMode) {
       ReaderModeSettings.getInstance(project).showRenderedDocs
@@ -81,7 +81,7 @@ private class DocsRenderingReaderModeProvider : ReaderModeProvider {
   }
 }
 
-private class VisualFormattingLayerReaderModeProvider : ReaderModeProvider {
+internal class VisualFormattingLayerReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val settings = ReaderModeSettings.getInstance(project).getVisualFormattingCodeStyleSettings(project)
     if (readerMode && settings != null) {

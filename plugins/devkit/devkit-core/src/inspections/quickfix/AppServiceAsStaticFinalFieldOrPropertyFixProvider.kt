@@ -13,7 +13,11 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.BaseRefactoringProcessor

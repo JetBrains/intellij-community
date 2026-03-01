@@ -3,7 +3,11 @@ package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.inline.InlineObjectProcessor;

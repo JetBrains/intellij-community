@@ -83,6 +83,8 @@ f:com.intellij.codeInsight.CodeInsightSettings
 com.intellij.codeInsight.TargetElementEvaluatorEx
 - com.intellij.codeInsight.TargetElementEvaluator
 - a:isIdentifierPart(com.intellij.psi.PsiFile,java.lang.CharSequence,I):Z
+c:com.intellij.codeInsight.completion.BaseCompletionService
+- defaultSorter(com.intellij.codeInsight.completion.BaseCompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 com.intellij.codeInsight.completion.CompletionLookupArranger
 - sf:PREFIX_CHANGES:com.intellij.openapi.util.Key
 - sf:WEIGHING_CONTEXT:com.intellij.openapi.util.Key
@@ -90,6 +92,13 @@ com.intellij.codeInsight.completion.CompletionLookupArranger
 - a:addElement(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.CompletionSorter,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.codeInsight.lookup.LookupElementPresentation):V
 - a:arrangeItems():com.intellij.openapi.util.Pair
 - a:itemMatcher(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.completion.PrefixMatcher
+com.intellij.codeInsight.completion.CopyFileUpdateTask
+- a:ensureUpdatedAndGetNewOffsets():com.intellij.codeInsight.completion.OffsetsInFile
+f:com.intellij.codeInsight.completion.OffsetsInFile
+- f:replaceInCopy(com.intellij.psi.PsiFile,I,I,java.lang.String):com.intellij.codeInsight.completion.CopyFileUpdateTask
+c:com.intellij.codeInsight.completion.impl.CamelHumpMatcher
+- matchingDegree(java.lang.String,java.util.List):I
+- matchingFragments(java.lang.String):java.util.List
 c:com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 - sf:AUTOREPARSE_DELAY_DEFAULT:I
 com.intellij.codeInsight.daemon.ReferenceImporter
@@ -210,6 +219,10 @@ com.intellij.codeInsight.daemon.impl.IntentionActionFilter
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - accept(com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile):Z
 - accept(com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,I):Z
+f:com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
+- com.intellij.codeInspection.ProblemDescriptorBase
+- <init>(com.intellij.codeInspection.ProblemDescriptorBase,java.lang.String):V
+- getReportingToolShortName():java.lang.String
 com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 - com.intellij.codeInsight.intention.IntentionActionWithOptions
 - belongsToMyFamily(com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption):Z
@@ -219,6 +232,8 @@ com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - registerErrorQuickFix(com.intellij.psi.PsiErrorElement,com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder):V
+Fa:com.intellij.codeInsight.lookup.Classifier
+- s:empty():com.intellij.codeInsight.lookup.Classifier
 c:com.intellij.codeInsight.lookup.EqTailType
 - com.intellij.codeInsight.ModNavigatorTailType
 - p:isSpaceAroundAssignmentOperators(com.intellij.psi.PsiFile,I):Z
@@ -240,6 +255,11 @@ com.intellij.codeInsight.template.TemplateEditingListener
 com.intellij.codeInsight.template.TemplateManagerListener
 - java.util.EventListener
 - a:templateStarted(com.intellij.codeInsight.template.impl.TemplateState):V
+com.intellij.codeInsight.template.impl.ModCommandAwareTemplateOptionalProcessor
+- com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
+- a:processText(com.intellij.codeInsight.template.Template,com.intellij.openapi.editor.ModNavigator,com.intellij.openapi.editor.RangeMarker):V
+- processText(com.intellij.openapi.project.Project,com.intellij.codeInsight.template.Template,com.intellij.openapi.editor.Document,com.intellij.openapi.editor.RangeMarker,com.intellij.openapi.editor.Editor):V
+c:com.intellij.codeInsight.template.impl.TemplateImpl
 com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -251,6 +271,7 @@ com.intellij.codeInsight.template.impl.TemplateOptionalProcessor
 com.intellij.codeInsight.template.impl.TemplatePreprocessor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:preprocessTemplate(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,java.lang.String,java.lang.String):V
+com.intellij.codeInspection.AggregateResultsInspection
 a:com.intellij.codeInspection.InspectionManagerBase
 - createProblemDescriptor(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String,com.intellij.codeInspection.ProblemHighlightType,java.lang.String,Z,com.intellij.codeInspection.LocalQuickFix[]):com.intellij.codeInspection.ProblemDescriptor
 com.intellij.codeInspection.InspectionToolResultExporter

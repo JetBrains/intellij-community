@@ -12,7 +12,7 @@ import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.Collections
 
 @Suppress("ObjectPropertyName")
 @OptIn(ExperimentalSerializationApi::class)

@@ -14,6 +14,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Function
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDec
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
     private data class FileUsagesWrapper(
         val psiFile: KtFile,

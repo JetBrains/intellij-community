@@ -3,7 +3,26 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -23,7 +42,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.List;
 

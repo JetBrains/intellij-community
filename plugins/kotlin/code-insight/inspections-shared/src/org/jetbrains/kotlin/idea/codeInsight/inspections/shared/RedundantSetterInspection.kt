@@ -14,28 +14,44 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeCompletelyDeleted
+import org.jetbrains.kotlin.idea.codeinsight.utils.getOverriddenProperty
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.propertyAccessorVisitor
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 
 internal class RedundantSetterInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return propertyAccessorVisitor { accessor ->
             val rangeInElement = accessor.namePlaceholder.textRange?.shiftRight(-accessor.startOffset) ?: return@propertyAccessorVisitor
-            if (accessor.isRedundantSetter()) {
-                val canBeCompletelyDeleted = accessor.canBeCompletelyDeleted()
-                val messageKey = if (canBeCompletelyDeleted) "redundant.setter" else "redundant.setter.body"
+            val canBeCompletelyDeleted = accessor.canBeCompletelyDeleted()
+            if (accessor.isRedundantSetter(canBeCompletelyDeleted = canBeCompletelyDeleted)) {
+                if (accessor.isInheritedWithWeakerAccessPrivilege() && canBeCompletelyDeleted && accessor.bodyExpression == null) return@propertyAccessorVisitor
+                val deleteSetterBodyOnly = !canBeCompletelyDeleted || (accessor.isInheritedWithWeakerAccessPrivilege() && accessor.bodyExpression != null)
+                val messageKey = if (deleteSetterBodyOnly) "redundant.setter.body" else "redundant.setter"
                 holder.registerProblem(
                     accessor,
                     KotlinBundle.message(messageKey),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                     rangeInElement,
-                    RemoveRedundantSetterFix(canBeCompletelyDeleted)
+                    RemoveRedundantSetterFix(!deleteSetterBodyOnly)
                 )
             }
         }
+    }
+
+    private fun KtPropertyAccessor.isInheritedWithWeakerAccessPrivilege(): Boolean {
+        if (!property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
+        val overriddenProperty = property.getOverriddenProperty() ?: return false
+        val overriddenPropertyVisibility =
+            overriddenProperty.setter?.visibilityModifierTypeOrDefault() ?: overriddenProperty.visibilityModifierTypeOrDefault()
+        overriddenPropertyVisibility.toVisibility().compareTo(visibilityModifierTypeOrDefault().toVisibility())
+            ?.let { return it < 0 }
+        return false
     }
 }
 
@@ -48,6 +64,6 @@ private class RemoveRedundantSetterFix(private val canBeCompletelyDeleted: Boole
 
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val accessor = element as? KtPropertyAccessor ?: return
-        removeRedundantSetter(accessor)
+        removeRedundantSetter(accessor, canBeCompletelyDeleted)
     }
 }

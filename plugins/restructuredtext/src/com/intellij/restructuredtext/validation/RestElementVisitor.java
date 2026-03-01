@@ -2,7 +2,13 @@
 package com.intellij.restructuredtext.validation;
 
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.restructuredtext.psi.*;
+import com.intellij.restructuredtext.psi.RestDirectiveBlock;
+import com.intellij.restructuredtext.psi.RestElement;
+import com.intellij.restructuredtext.psi.RestInlineBlock;
+import com.intellij.restructuredtext.psi.RestReference;
+import com.intellij.restructuredtext.psi.RestReferenceTarget;
+import com.intellij.restructuredtext.psi.RestRole;
+import com.intellij.restructuredtext.psi.RestTitle;
 
 /**
  * User : catherine

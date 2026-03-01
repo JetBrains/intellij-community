@@ -11,24 +11,60 @@ import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.components.asKaType
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
+import org.jetbrains.kotlin.analysis.api.components.builtinTypes
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaDefinitelyNotNullTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
+import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
+import org.jetbrains.kotlin.analysis.api.types.KaClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
+import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.useSiteSession
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider
@@ -39,7 +75,38 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyDelegate
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeList
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtTypeParameterList
+import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.renderer.render
@@ -174,12 +241,22 @@ object K2CreateFunctionFromUsageUtil {
         val parameterNameAsString = getArgumentName()?.asName?.asString()
         val argumentExpression = getArgumentExpression()
         val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: argumentExpression?.let { NAME_SUGGESTER.suggestExpressionNames(it) }
-        var expectedArgumentType = argumentExpression?.expressionType
+        var expectedArgumentType = argumentExpression?.expressionType?.approximateAnonymousObjectToSupertypeOrSelf()
         if (expectedArgumentType != null && receiverType is KaClassType) {
             expectedArgumentType = guessAccessibleTypeByArguments(receiverType, expectedArgumentType)
         }
         val jvmParameterType = expectedArgumentType?.convertToJvmType(argumentExpression!!)
-        val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType.create(expectedArgumentType, jvmParameterType)
+        val expectedType = when (jvmParameterType) {
+                    null if expectedArgumentType != null ->
+                        ExpectedTypeWithNullability.createExpectedKotlinType(
+                            PsiType.getJavaLangObject(
+                                argumentExpression!!.manager,
+                                argumentExpression.resolveScope
+                            ), Nullability.UNKNOWN
+                        )
+                    null -> ExpectedTypeWithNullability.INVALID_TYPE
+                    else -> ExpectedKotlinType.create(expectedArgumentType, jvmParameterType)
+                }
         val names = parameterNames?.toList() ?: listOf(defaultParameterName)
         val nameArray = (if (isTheOnlyAnnotationParameter && parameterNameAsString==null) listOf("value") + names else names).toTypedArray()
         return expectedParameter(expectedType, *nameArray)

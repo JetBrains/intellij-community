@@ -15,10 +15,16 @@ import org.intellij.images.options.impl.ImageEditorColorSchemeSettingsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;

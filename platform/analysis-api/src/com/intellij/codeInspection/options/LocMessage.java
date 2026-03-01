@@ -3,11 +3,12 @@ package com.intellij.codeInspection.options;
 
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a localized message to be displayed in options UI. Can be either simple message or split-string (see {@link #splitLabel()}).
  */
-public sealed interface LocMessage permits PlainMessage {
+public sealed interface LocMessage permits PlainMessage, EmptyMessage {
   /**
    * @return a localized message
    */
@@ -25,4 +26,19 @@ public sealed interface LocMessage permits PlainMessage {
   }
   
   record PrefixSuffix(@NotNull @Nls String prefix, @NotNull @Nls String suffix) {}
+
+  /**
+   * @param message message text (in split-label context, may contain '|')
+   * @return a {@link LocMessage} object representing that text
+   */
+  static @NotNull LocMessage of(@Nullable @Nls String message) {
+    return message == null || message.isEmpty() ? EmptyMessage.INSTANCE : new PlainMessage(message);
+  }
+
+  /**
+   * @return an empty message
+   */
+  static @NotNull LocMessage empty() {
+    return EmptyMessage.INSTANCE;
+  }
 }

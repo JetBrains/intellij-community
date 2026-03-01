@@ -11,6 +11,13 @@ public class VarargParameterFixTest extends IGQuickFixesTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new VarargParameterInspection());
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         @Documented
+                         @Retention(RetentionPolicy.CLASS)
+                         @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
+                         public @interface NotNull {}
+                         """);
     myRelativePath = "jdk/vararg_parameter";
     myDefaultHint = InspectionGadgetsBundle.message("variable.argument.method.quickfix");
   }

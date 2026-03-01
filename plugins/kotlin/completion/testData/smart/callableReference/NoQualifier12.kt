@@ -20,3 +20,5 @@ class Outer
 // ABSENT: ::Inner
 // EXIST: ::Nested
 // EXIST: ::Outer
+
+// IGNORE_K2

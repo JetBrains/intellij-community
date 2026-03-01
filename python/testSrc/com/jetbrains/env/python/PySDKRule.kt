@@ -3,17 +3,18 @@ package com.jetbrains.env.python
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.tools.SdkCreationRequest.LocalPython
-import com.jetbrains.python.tools.SdkCreationRequest.RemotePython
-import com.jetbrains.python.tools.createSdk
+import com.intellij.python.test.env.common.SdkCreationRequest.LocalPython
+import com.intellij.python.test.env.common.SdkCreationRequest.RemotePython
+import com.intellij.python.test.env.common.createSdk
+import com.intellij.python.test.env.junit4.JUnit4FactoryHolder
 import kotlinx.coroutines.runBlocking
 import org.junit.rules.ExternalResource
 
 
 /**
  * Creates python SDK either local (if [targetConfigProducer] is null) or target.
- * In case of target, it should have [com.jetbrains.python.tools.PYTHON_PATH_ON_TARGET]
- * Locals are search automatically like in [com.intellij.python.community.testFramework.testEnv.PyEnvTestSettings] or using [com.jetbrains.python.sdk.flavors.PythonSdkFlavor.suggestLocalHomePaths]
+ * In case of target, it should have [com.intellij.python.test.env.common.PYTHON_PATH_ON_TARGET]
+ * Locals are search automatically like in [com.jetbrains.env.PyEnvTestSettings] or using [com.jetbrains.python.sdk.flavors.PythonSdkFlavor.suggestLocalHomePaths]
  */
 class PySDKRule(private val targetConfigProducer: (() -> TargetEnvironmentConfiguration)?) : ExternalResource() {
 
@@ -24,7 +25,7 @@ class PySDKRule(private val targetConfigProducer: (() -> TargetEnvironmentConfig
   private lateinit var autoClosable: AutoCloseable
 
   override fun before() {
-    val (sdk, autoClosable) = runBlocking { createSdk(targetConfigProducer?.let { RemotePython(it()) } ?: LocalPython()) }
+    val (sdk, autoClosable) = runBlocking { JUnit4FactoryHolder.getOrCreate().createSdk(targetConfigProducer?.let { RemotePython(it()) } ?: LocalPython) }
     this.sdk = sdk
     this.autoClosable = autoClosable
   }

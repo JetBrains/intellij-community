@@ -9,7 +9,9 @@ import com.intellij.compilation.charts.events.ModuleStartChartEvent
 import com.intellij.compilation.charts.events.StatisticChartEvent
 import com.intellij.compilation.charts.impl.CompilationChartsViewModel.Filter
 import com.intellij.compilation.charts.ui.CompilationChartsTopic
-import com.intellij.compilation.charts.ui.CompilationChartsTopic.*
+import com.intellij.compilation.charts.ui.CompilationChartsTopic.FILTER
+import com.intellij.compilation.charts.ui.CompilationChartsTopic.MODULE
+import com.intellij.compilation.charts.ui.CompilationChartsTopic.STATISTIC
 import com.intellij.compilation.charts.ui.CompilationChartsView
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModuleManager

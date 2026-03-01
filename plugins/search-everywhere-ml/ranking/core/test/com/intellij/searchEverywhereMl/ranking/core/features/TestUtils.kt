@@ -2,7 +2,11 @@
 
 package com.intellij.searchEverywhereMl.ranking.core.features
 
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import org.junit.Assert
 
 internal inline fun <reified T> List<EventPair<*>>.findFeature(field: EventField<T>): EventPair<T>? = find {

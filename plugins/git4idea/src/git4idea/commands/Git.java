@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,6 +8,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitBranch;
+import git4idea.GitWorkingTree;
 import git4idea.branch.GitRebaseParams;
 import git4idea.push.GitPushParams;
 import git4idea.repo.GitRemote;
@@ -340,4 +342,16 @@ public interface Git {
 
   @Nullable
   GitObjectType getObjectTypeEnum(@NotNull GitRepository repository, @NotNull String object);
+
+  @NotNull
+  GitCommandResult deleteWorkingTree(@NotNull Project project, @NotNull GitWorkingTree tree);
+
+  @NotNull
+  GitCommandResult listWorktrees(@NotNull GitRepository repository, GitLineHandlerListener @NotNull ... listeners);
+
+  @NotNull
+  GitCommandResult createWorkingTree(@NotNull GitRepository repository,
+                                     @NotNull FilePath workingTreePath,
+                                     @NotNull GitBranch sourceBranch,
+                                     @Nullable String newBranchName);
 }

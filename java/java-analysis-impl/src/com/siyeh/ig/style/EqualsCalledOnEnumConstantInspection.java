@@ -3,7 +3,11 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;

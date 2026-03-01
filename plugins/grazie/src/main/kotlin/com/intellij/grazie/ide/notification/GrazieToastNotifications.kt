@@ -8,7 +8,11 @@ import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.detection.toLanguage
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.remote.GrazieRemote
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project

@@ -1,6 +1,7 @@
 package com.intellij.mcpserver.util
 
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import kotlinx.serialization.Serializable
 
@@ -9,10 +10,16 @@ enum class TruncateMode {
   START, MIDDLE, END, NONE
 }
 
-const val truncatedMarker: String = "<<<...content truncated...>>>"
-const val maxTextLength: Int = 64 * 1024
+internal const val truncatedMarker: String = "<<<...content truncated...>>>"
+internal const val maxTextLength: Int = 64 * 1024
 
-fun truncateText(text: String, maxLinesCount: Int, maxTextLength: Int = com.intellij.mcpserver.util.maxTextLength, truncateMode: TruncateMode = TruncateMode.START, truncatedMarker: String = com.intellij.mcpserver.util.truncatedMarker): String {
+internal fun truncateText(
+  text: String,
+  maxLinesCount: Int,
+  maxTextLength: Int = com.intellij.mcpserver.util.maxTextLength,
+  truncateMode: TruncateMode = TruncateMode.START,
+  truncatedMarker: String = com.intellij.mcpserver.util.truncatedMarker,
+): String {
   require(maxLinesCount > 2) { "maxLinesCount must be greater than 2" }
   val lines = text.split("\n")
   val truncatedByLinesText = if (lines.size <= maxLinesCount) {
@@ -45,8 +52,21 @@ fun Document.getWholeLinesTextRange(linesRange: IntRange): TextRange {
   return TextRange(startOffset, endOffset)
 }
 
-fun Document.getWholeLinesTextRange(range: TextRange): TextRange {
-  val startLine = getLineNumber(range.startOffset)
-  val endLine = getLineNumber(range.endOffset)
-  return getWholeLinesTextRange(startLine..endLine)
+internal data class UsageSnippetText(
+  val lineNumber: Int,
+  val lineText: String,
+)
+
+internal fun Document.buildUsageSnippetText(textRange: Segment, maxTextChars: Int): UsageSnippetText {
+  val startLineNumber = getLineNumber(textRange.startOffset)
+  val startLineStartOffset = getLineStartOffset(startLineNumber)
+  val endLineNumber = getLineNumber(textRange.endOffset)
+  val endLineEndOffset = getLineEndOffset(endLineNumber)
+  val textBeforeOccurrence = getText(TextRange(startLineStartOffset, textRange.startOffset)).take(maxTextChars)
+  val textInner = getText(TextRange(textRange.startOffset, textRange.endOffset)).take(maxTextChars)
+  val textAfterOccurrence = getText(TextRange(textRange.endOffset, endLineEndOffset)).take(maxTextChars)
+  return UsageSnippetText(
+    lineNumber = startLineNumber + 1,
+    lineText = "$textBeforeOccurrence||$textInner||$textAfterOccurrence",
+  )
 }

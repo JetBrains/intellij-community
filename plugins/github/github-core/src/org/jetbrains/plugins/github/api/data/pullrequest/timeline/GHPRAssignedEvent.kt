@@ -3,9 +3,9 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
-import java.util.*
+import java.util.Date
 
 data class GHPRAssignedEvent(override val actor: GHActor?,
                              override val createdAt: Date,
-                             val user: GHUser)
+                             val user: GHUser?)
   : GHPRTimelineEvent.Simple

@@ -14,12 +14,25 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.internal.rulerguide.BasePreferences.*;
+import static com.intellij.internal.rulerguide.BasePreferences.BACKGROUND_COLOR;
+import static com.intellij.internal.rulerguide.BasePreferences.BASE_COLOR;
+import static com.intellij.internal.rulerguide.BasePreferences.COMPONENT_COLOR;
+import static com.intellij.internal.rulerguide.BasePreferences.ERROR_COLOR;
+import static com.intellij.internal.rulerguide.BasePreferences.FINE_COLOR;
+import static com.intellij.internal.rulerguide.BasePreferences.getAllowedGap;
 
 final class RulerGuidePainter extends AbstractPainter implements Disposable {
 

@@ -6,6 +6,7 @@ import com.intellij.json.JsonElementTypes;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.navigation.SymbolNavigationService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -17,11 +18,14 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaGotoDeclarationSuppressor;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import static com.intellij.model.psi.impl.Declarations.allDeclarationsInElement;
+import static com.intellij.model.psi.impl.ReferencesKt.referencesAt;
 
-public final class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler {
+final class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler {
   @Override
   public PsiElement @Nullable [] getGotoDeclarationTargets(@Nullable PsiElement sourceElement, int offset, Editor editor) {
     boolean shouldSuppressNavigation =
@@ -30,19 +34,27 @@ public final class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHa
 
     final IElementType elementType = PsiUtilCore.getElementType(sourceElement);
     if (elementType != JsonElementTypes.STRING_LITERAL && elementType != JsonElementTypes.DOUBLE_QUOTED_STRING && elementType != JsonElementTypes.SINGLE_QUOTED_STRING) return null;
+
     final JsonStringLiteral literal = PsiTreeUtil.getParentOfType(sourceElement, JsonStringLiteral.class, false);
     if (literal == null) return null;
-    final PsiElement parent = literal.getParent();
+
+    // Give priority to Symbol-based navigation if any plugin provides it on top of JSON Schema
+    if (hasReferencedSymbols(literal, offset)) return null;
+
+    PsiElement parent = literal.getParent();
     if (literal.getReferences().length == 0
         && parent instanceof JsonProperty parentProperty
         && parentProperty.getNameElement() == literal
         && canNavigateToSchema(parentProperty)) {
       final PsiFile containingFile = literal.getContainingFile();
       final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
+
       final VirtualFile file = containingFile.getVirtualFile();
       if (file == null || !service.isApplicableToFile(file)) return null;
+
       final JsonPointerPosition steps = JsonOriginalPsiWalker.INSTANCE.findPosition(literal, true);
       if (steps == null) return null;
+
       final JsonSchemaObject schemaObject = service.getSchemaObject(containingFile);
       if (schemaObject != null) {
         final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, steps, JsonOriginalPsiWalker.INSTANCE.createValueAdapter(parentProperty.getParent()))
@@ -55,7 +67,14 @@ public final class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHa
     return null;
   }
 
-  private static boolean canNavigateToSchema(PsiElement parent) {
-    return Arrays.stream(parent.getReferences()).noneMatch(r -> r instanceof FileReference);
+  private static boolean canNavigateToSchema(@NotNull JsonProperty parent) {
+    return !ContainerUtil.exists(parent.getReferences(), r -> r instanceof FileReference)
+      && allDeclarationsInElement(parent).isEmpty(); // JsonProperty has Symbols contributed by plugins
+  }
+
+  private static boolean hasReferencedSymbols(@NotNull PsiElement literal, int offset) {
+    return StreamEx.of(referencesAt(literal.getContainingFile(), offset))
+      .flatCollection(it -> it.resolveReference())
+      .anyMatch(it -> !SymbolNavigationService.getInstance().getNavigationTargets(literal.getProject(), it).isEmpty());
   }
 }

@@ -4,7 +4,11 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.fileTemplates.*;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.FileTemplatesScheme;
+import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -32,7 +36,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.function.Supplier;
 
 @State(name = "FileTemplateManagerImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))

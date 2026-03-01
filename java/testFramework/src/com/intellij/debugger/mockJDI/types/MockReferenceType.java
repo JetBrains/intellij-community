@@ -12,15 +12,31 @@ import com.intellij.debugger.mockJDI.values.MockValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassObjectReference;
+import com.sun.jdi.Field;
+import com.sun.jdi.InterfaceType;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class MockReferenceType extends MockType implements ReferenceType {
   private static final Logger LOG = Logger.getInstance(MockReferenceType.class);

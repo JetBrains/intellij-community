@@ -19,7 +19,7 @@ private fun createComposeShowcaseComponent(): JComponent {
   }
 }
 
-private class ComposeShowcaseAction : DumbAwareAction() {
+internal class ComposeShowcaseAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

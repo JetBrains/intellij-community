@@ -1,175 +1,136 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core
 
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
-import com.intellij.searchEverywhereMl.isTabWithMlRanking
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider.Companion.BUFFERED_TIMESTAMP
-import com.intellij.ui.components.JBList
+import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultAdapter
+import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchStateChangeReason
+import com.intellij.searchEverywhereMl.ranking.core.adapters.toSearchStateChangeReason
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import javax.swing.ListCellRenderer
+import java.util.UUID
+import java.util.concurrent.TimeUnit.MINUTES
 
-internal val searchEverywhereMlRankingService: SearchEverywhereMlRankingService?
-  get() = SearchEverywhereMlService.EP_NAME.findExtensionOrFail(SearchEverywhereMlRankingService::class.java).takeIf { it.isEnabled() }
 
 @ApiStatus.Internal
 class SearchEverywhereMlRankingService : SearchEverywhereMlService {
-  private val sessionIdCounter = AtomicInteger()
-  private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
-
-  override fun isEnabled(): Boolean {
-    return SearchEverywhereTab.tabsWithLogging.any { it.isTabWithMlRanking() && it.isMlRankingEnabled }
-           || SearchEverywhereMlExperiment.isAllowed
+  companion object {
+    internal val LOG = logger<SearchEverywhereMlRankingService>()
   }
 
-
-  internal fun getCurrentSession(): SearchEverywhereMLSearchSession? {
-    if (isEnabled()) {
-      return activeSession.get()
-    }
-    return null
+  override fun isEnabled(): Boolean {
+    return SearchEverywhereMlFacade.isMlEnabled
   }
 
   override fun onSessionStarted(project: Project?, tabId: String, mixedListInfo: SearchEverywhereMixedListInfo) {
-    if (isEnabled()) {
-      activeSession.updateAndGet {
-        SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet())
-      }!!.onSessionStarted(tabId)
-    }
+    SearchEverywhereMlFacade.onSessionStarted(project, tabId, isNewSearchEverywhere = false,
+                                              providersInfo = SearchResultProvidersInfo.fromMixedListInfo(mixedListInfo))
   }
 
   override fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
                                       element: Any,
                                       priority: Int,
                                       correction: SearchEverywhereSpellCheckResult): SearchEverywhereFoundElementInfo {
-    val foundElementInfoWithoutMl = SearchEverywhereFoundElementInfoWithMl.withoutMl(element, priority, contributor, correction)
-
-    if (!isEnabled()) return foundElementInfoWithoutMl
-    val session = getCurrentSession() ?: return foundElementInfoWithoutMl
-    val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
-
-    val contributorFeatures = state.getContributorFeatures(contributor)
-    val elementFeatures = state.getElementFeatures(element, contributor, contributorFeatures, priority, session.cachedContextInfo, correction)
-
-    val effectiveContributor = if (contributor is SearchEverywhereContributorWrapper) contributor.getEffectiveContributor() else contributor
-
-    val mlWeight = if (shouldCalculateMlWeight(effectiveContributor, state, element)) {
-      state.getMLWeight(session.cachedContextInfo, elementFeatures, contributorFeatures)
-    } else {
-      null
+    val elementInfo = SearchEverywhereFoundElementInfo(UUID.randomUUID().toString(), element, priority, contributor, correction)
+    val searchResultAdapter = SearchResultAdapter.createAdapterFor(elementInfo)
+    val processedSearchResult = try {
+      SearchEverywhereMlFacade.processSearchResult(searchResultAdapter)
+    }
+    catch (e: IllegalStateException) {
+      THROTTLED_LOG.warn(
+        "Missing active Search Everywhere ML session/state. Falling back to default ranking for contributor ${contributor.searchProviderId}",
+        e
+      )
+      return elementInfo
     }
 
-    val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
+    if (processedSearchResult.mlProbability != null) {
+      return elementInfo.withPriority(processedSearchResult.finalPriority)
+    } else {
+      return elementInfo
+    }
+  }
 
-    return if (isShowDiff()) {
-      SearchEverywhereFoundElementInfoBeforeDiff(element, elementId, priority, contributor, mlWeight, elementFeatures, correction)
+  override fun onStateStarted(
+    tabId: String,
+    reason: SearchRestartReason,
+    searchQuery: String,
+    searchScope: ScopeDescriptor?,
+    isSearchEverywhere: Boolean,
+  ) {
+    val changeReason = if (reason == SearchRestartReason.SCOPE_CHANGED) {
+      inferReasonForOldSE(tabId, searchQuery)
     }
     else {
-      SearchEverywhereFoundElementInfoWithMl(element, elementId, priority, contributor, mlWeight, elementFeatures, correction)
+      reason.toSearchStateChangeReason()
+    }
+    SearchEverywhereMlFacade.onStateStarted(tabId, searchQuery, changeReason, searchScope, isSearchEverywhere)
+  }
+
+  private fun inferReasonForOldSE(tabId: String, searchQuery: String): SearchStateChangeReason {
+    val activeSession = SearchEverywhereMlFacade.activeSession ?: return SearchStateChangeReason.SCOPE_CHANGE
+    val previousState = activeSession.activeState ?: activeSession.previousSearchState
+                        ?: return SearchStateChangeReason.SEARCH_START
+
+    val tab = SearchEverywhereTab.getById(tabId)
+    return when {
+      searchQuery != previousState.query -> SearchStateChangeReason.QUERY_CHANGE
+      tab != previousState.tab -> SearchStateChangeReason.TAB_CHANGE
+      else -> SearchStateChangeReason.QUERY_CHANGE // In old SE, scope-only changes are auto-escalation
     }
   }
 
-  private fun shouldCalculateMlWeight(contributor: SearchEverywhereContributor<*>,
-                                      searchState: SearchEverywhereMlSearchState,
-                                      element: Any): Boolean {
-    // If we're showing recently used actions (empty query) then we don't want to apply ML sorting either
-    if (searchState.tab == SearchEverywhereTab.Actions && searchState.query.isEmpty()) return false
-
-    // The element may be an ItemWithPresentation pair - we will unwrap it
-    val actualElement = when (element) {
-      is PSIPresentationBgRendererWrapper.ItemWithPresentation<*> -> element.item
-      else -> element
-    }
-
-    // Do not calculate machine learning weight for semantic items until the ranking models know how to treat them
-    if ((contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(actualElement) == true) {
-      return false
-    }
-
-    return searchState.orderByMl
-  }
-
-  override fun onSearchRestart(tabId: String,
-                               reason: SearchRestartReason,
-                               keysTyped: Int,
-                               backspacesTyped: Int,
-                               searchQuery: String,
-                               searchResults: List<SearchEverywhereFoundElementInfo>,
-                               searchScope: ScopeDescriptor?,
-                               isSearchEverywhere: Boolean) {
-    if (!isEnabled()) return
-
-    getCurrentSession()?.onSearchRestart(
-      reason, tabId, keysTyped, backspacesTyped, searchQuery, searchResults.toInternalType(),
-      searchScope, isSearchEverywhere
-    )
+  override fun onStateFinished(results: List<SearchEverywhereFoundElementInfo>) {
+    SearchEverywhereMlFacade.onStateFinished(results.toAdapter())
   }
 
   override fun onItemSelected(tabId: String, indexes: IntArray, selectedItems: List<Any>,
                               searchResults: List<SearchEverywhereFoundElementInfo>,
                               query: String) {
-    getCurrentSession()?.onItemSelected(indexes, selectedItems, searchResults.toInternalType())
+    val selectedItems = searchResults
+      .mapIndexed { index, info ->  index to SearchResultAdapter.createAdapterFor(info) }
+      .slice(indexes.toList())
+
+    SearchEverywhereMlFacade.onResultsSelected(selectedItems)
   }
 
-  override fun onSearchFinished(searchResults: List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onSearchFinished(searchResults.toInternalType())
+  override fun onSessionFinished() {
+    SearchEverywhereMlFacade.onSessionFinished()
   }
 
   override fun notifySearchResultsUpdated() {
-    getCurrentSession()?.notifySearchResultsUpdated()
+    SearchEverywhereMlFacade.notifySearchResultsUpdated()
   }
 
   override fun onDialogClose() {
-    activeSession.updateAndGet { null }
+    SearchEverywhereMlFacade.onSessionFinished()
   }
 
-  private fun isShowDiff(): Boolean {
-    val key = "search.everywhere.ml.show.diff"
-    return Registry.`is`(key)
+  override fun getExperimentVersion(): Int {
+    return SearchEverywhereMlFacade.experimentVersion
   }
 
-  override fun wrapRenderer(renderer: ListCellRenderer<Any>, listModel: SearchListModel): ListCellRenderer<Any> {
-    return if (isShowDiff()) {
-      SearchEverywhereMLRendererWrapper(renderer, listModel)
-    }
-    else {
-      renderer
-    }
-
+  override fun getExperimentGroup(): Int {
+    return SearchEverywhereMlFacade.experimentGroup
   }
 
-  override fun buildListener(listModel: SearchListModel, resultsList: JBList<Any>, selectionTracker: SEListSelectionTracker): SearchListener? {
-    return if (isShowDiff()) {
-      SearchEverywhereReorderingListener(listModel, resultsList, selectionTracker)
-    }
-    else {
-      null
-    }
+  private fun SearchEverywhereFoundElementInfo.withPriority(priority: Int): SearchEverywhereFoundElementInfo {
+    return SearchEverywhereFoundElementInfo(uuid, element, priority, contributor, correction)
   }
 
-  override fun getExperimentVersion(): Int = SearchEverywhereMlExperiment.VERSION
-
-  override fun getExperimentGroup(): Int = SearchEverywhereMlExperiment.experimentGroup
-
-  override fun addBufferedTimestamp(item: SearchEverywhereFoundElementInfo, timestamp: Long) {
-    (item as? SearchEverywhereFoundElementInfoWithMl)?.let {
-      val session = getCurrentSession() ?: return
-      session.getCurrentSearchState()?.apply {
-        item.addMlFeature(BUFFERED_TIMESTAMP.with(timestamp))
-      }
-    }
-  }
-
-  private fun List<SearchEverywhereFoundElementInfo>.toInternalType(): List<SearchEverywhereFoundElementInfoWithMl> {
+  private fun List<SearchEverywhereFoundElementInfo>.toAdapter(): List<SearchResultAdapter.Raw> {
     return this.map {
-      SearchEverywhereFoundElementInfoWithMl.from(it)
+      SearchResultAdapter.createAdapterFor(it)
     }
   }
 }
+
+private val THROTTLED_LOG = ThrottledLogger(SearchEverywhereMlRankingService.LOG, MINUTES.toMillis(1))

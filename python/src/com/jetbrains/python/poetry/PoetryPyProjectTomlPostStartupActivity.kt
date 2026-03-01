@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
  * This class represents a post-startup activity for PyProjectToml files in a project.
  * It finds valid python versions in PyProjectToml files and saves them in PyProjectTomlPythonVersionsService.
  */
-private class PoetryPyProjectTomlPostStartupActivity : ProjectActivity {
+internal class PoetryPyProjectTomlPostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val modulesRoots = PythonSdkUpdater.getModuleRoots(project)
     for (module in modulesRoots) {
@@ -27,7 +27,7 @@ private class PoetryPyProjectTomlPostStartupActivity : ProjectActivity {
       } ?: continue
       val versionString = poetryFindPythonVersionFromToml(tomlFile, project) ?: continue
 
-      PoetryPyProjectTomlPythonVersionsService.instance.setVersion(module, versionString)
+      PoetryPyProjectTomlPythonVersionsService.getInstance(project).setVersion(module, versionString)
       addDocumentListener(tomlFile, project, module)
     }
   }
@@ -42,18 +42,19 @@ private class PoetryPyProjectTomlPostStartupActivity : ProjectActivity {
    * @param module The VirtualFile representing the module.
    */
   private suspend fun addDocumentListener(tomlFile: VirtualFile, project: Project, module: VirtualFile) {
+    val service = PoetryPyProjectTomlPythonVersionsService.getInstance(project)
     readAction {
       tomlFile.findDocument()?.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
           PyPackageCoroutine.launch(project) {
             val newVersion = poetryFindPythonVersionFromToml(tomlFile, project) ?: return@launch
-            val oldVersion = PoetryPyProjectTomlPythonVersionsService.instance.getVersionString(module)
+            val oldVersion = service.getVersionString(module)
             if (oldVersion != newVersion) {
-              PoetryPyProjectTomlPythonVersionsService.instance.setVersion(module, newVersion)
+              service.setVersion(module, newVersion)
             }
           }
         }
-      }, PoetryPyProjectTomlPythonVersionsService.instance)
+      }, service)
     }
   }
 }

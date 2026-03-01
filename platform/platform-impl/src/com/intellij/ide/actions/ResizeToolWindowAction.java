@@ -3,7 +3,11 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -20,8 +24,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JWindow;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Window;
 import java.util.Collections;
 import java.util.List;
 

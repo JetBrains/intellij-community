@@ -29,7 +29,12 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.*;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PROJECT_CONTEXT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PSI_ELEMENT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PSI_ELEMENT_ARRAY;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PSI_FILE;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.VIRTUAL_FILE;
 import static com.intellij.usages.UsageView.USAGES_KEY;
 import static com.intellij.usages.UsageView.USAGE_TARGETS_KEY;
 

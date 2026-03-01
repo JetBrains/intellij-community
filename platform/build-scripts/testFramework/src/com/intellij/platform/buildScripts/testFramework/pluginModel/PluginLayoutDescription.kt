@@ -3,7 +3,7 @@ package com.intellij.platform.buildScripts.testFramework.pluginModel
 
 import com.intellij.platform.distributionContent.testFramework.FileEntry
 import com.intellij.platform.distributionContent.testFramework.deserializeContentData
-import com.intellij.platform.plugins.testFramework.resolveModuleSet
+import com.intellij.platform.pluginSystem.testFramework.resolveModuleSet
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
@@ -34,12 +34,18 @@ data class PluginLayoutDescription(
   val jpsModulesInClasspath: Set<String>,
 )
 
+/**
+ * Creates a description of plugins using data from IDE and plugins' content.yaml files.
+ * @param includeOnlyPluginsSpecifiedInYamlFile if `true`, checks only bundled and non-bundled plugins specified in [ideContentYamlPath];
+ *                                              if `false`, checks all plugins which has `plugin-content.yaml` file in their content roots.
+ */
 fun createLayoutProviderByContentYamlFiles(
   ideContentYamlPath: Path,
   ultimateHome: Path,
   mainModuleOfCorePlugin: String,
   corePluginDescriptorPath: String,
   nameOfTestWhichGeneratesFiles: String,
+  includeOnlyPluginsSpecifiedInYamlFile: Boolean = false,
   project: JpsProject,
 ): PluginLayoutProvider {
   return YamlFileBasedPluginLayoutProvider(
@@ -47,6 +53,7 @@ fun createLayoutProviderByContentYamlFiles(
     mainModuleOfCorePlugin = mainModuleOfCorePlugin,
     corePluginDescriptorPath = corePluginDescriptorPath,
     nameOfTestWhichGeneratesFiles = nameOfTestWhichGeneratesFiles,
+    includeOnlyPluginsSpecifiedInYamlFile = includeOnlyPluginsSpecifiedInYamlFile,
     project = project,
     ultimateHome = ultimateHome,
   )
@@ -57,31 +64,38 @@ private class YamlFileBasedPluginLayoutProvider(
   private val mainModuleOfCorePlugin: String,
   private val corePluginDescriptorPath: String,
   private val nameOfTestWhichGeneratesFiles: String,
+  private val includeOnlyPluginsSpecifiedInYamlFile: Boolean,
   private val project: JpsProject,
   private val ultimateHome: Path,
 ) : PluginLayoutProvider {
   private val ideContentData by lazy {
     deserializeContentData(ideContentYamlPath.readText())
   }
-
-  private val mergedContentData by lazy {
-    loadMergedContentData()
+  private val mainModulesOfBundledPlugins by lazy {
+    ideContentData.asSequence().flatMap { it.bundled }.mapTo(LinkedHashSet()) { it.mainModule }
+  }
+  private val mainModulesOfNonBundledPlugins by lazy {
+    ideContentData.asSequence().flatMap { it.nonBundled }.mapTo(LinkedHashSet()) { it.mainModule }
   }
 
-  private fun loadMergedContentData(): List<FileEntry> {
+  private val mergedContentDataForEmbeddedModules by lazy {
+    loadMergedDataForEmbeddedModules()
+  }
+
+  private fun loadMergedDataForEmbeddedModules(): List<FileEntry> {
     val baseEntries = ideContentData.toMutableList()
 
     // Collect productModules and productEmbeddedModules separately, expanding module sets
     val productModuleNames = ideContentData
       .asSequence()
       .flatMap { it.productModules }
-      .flatMap { moduleName -> resolveModuleSet(moduleName, ultimateHome) }
+      .flatMap { moduleName -> resolveModuleSet(moduleName, embeddedOnly = true, ultimateHome) }
       .distinct()
 
     val productEmbeddedModuleNames = ideContentData
       .asSequence()
       .flatMap { it.productEmbeddedModules }
-      .flatMap { moduleName -> resolveModuleSet(moduleName, ultimateHome) }
+      .flatMap { moduleName -> resolveModuleSet(moduleName, embeddedOnly = true, ultimateHome) }
       .distinct()
 
     for (moduleName in (productModuleNames + productEmbeddedModuleNames)) {
@@ -115,7 +129,7 @@ private class YamlFileBasedPluginLayoutProvider(
 
   override fun loadCorePluginLayout(): PluginLayoutDescription {
     return toPluginLayoutDescription(
-      entries = mergedContentData,
+      entries = mergedContentDataForEmbeddedModules,
       mainModuleName = mainModuleOfCorePlugin,
       pluginDescriptorPath = corePluginDescriptorPath,
       mainLibDir = "dist.all/lib",
@@ -124,10 +138,13 @@ private class YamlFileBasedPluginLayoutProvider(
   }
 
   override fun loadMainModulesOfBundledPlugins(): List<String> {
-    return ideContentData.flatMap { it.bundled }
+    return mainModulesOfBundledPlugins.toList()
   }
 
   override fun loadPluginLayout(mainModule: JpsModule): PluginLayoutDescription? {
+    if (includeOnlyPluginsSpecifiedInYamlFile && mainModule.name !in mainModulesOfBundledPlugins && mainModule.name !in mainModulesOfNonBundledPlugins) {
+      return null
+    }
     val contentRootUrl = mainModule.contentRootsList.urls.firstOrNull() ?: return null
     val pluginContentPath = "plugin-content.yaml"
     val contentDataPath = JpsPathUtil.urlToNioPath(contentRootUrl).resolve(pluginContentPath)

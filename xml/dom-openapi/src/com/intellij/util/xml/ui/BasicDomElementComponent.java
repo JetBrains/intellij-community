@@ -18,7 +18,7 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;

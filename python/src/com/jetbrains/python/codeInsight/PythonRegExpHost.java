@@ -3,10 +3,18 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.intellij.lang.regexp.*;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
+import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.RegExpTT;
+import org.intellij.lang.regexp.UnicodeCharacterNames;
+import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedCharacter;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

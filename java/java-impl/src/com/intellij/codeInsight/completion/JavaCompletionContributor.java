@@ -1,13 +1,27 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.JavaTailTypes;
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.EqTailType;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
@@ -41,10 +55,87 @@ import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiDeconstructionList;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiImportModuleStatement;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiUsesStatement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ElementExtractorFilter;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.NotFilter;
+import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.classes.NoFinalLibraryClassesFilter;
@@ -70,20 +161,45 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import one.util.streamex.EntryStream;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.completion.JavaQualifierAsArgumentContributor.JavaQualifierAsArgumentStaticMembersProcessor;
-import static com.intellij.patterns.PsiJavaPatterns.*;
+import static com.intellij.patterns.PsiJavaPatterns.elementType;
+import static com.intellij.patterns.PsiJavaPatterns.or;
+import static com.intellij.patterns.PsiJavaPatterns.psiAnnotation;
+import static com.intellij.patterns.PsiJavaPatterns.psiClass;
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
+import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
+import static com.intellij.patterns.PsiJavaPatterns.psiNameValuePair;
+import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
+import static com.intellij.patterns.PsiJavaPatterns.psiReferenceExpression;
+import static com.intellij.patterns.PsiJavaPatterns.string;
+import static com.intellij.patterns.PsiJavaPatterns.virtualFile;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_COMPARABLE;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
@@ -434,6 +550,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet _result) {
+    if (ModCompletionItemProvider.modCommandCompletionEnabled()) return;
     PsiElement position = parameters.getPosition();
     if (!isInJavaContext(position)) {
       return;
@@ -472,24 +589,22 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         shouldAddExpressionVariants && addExpectedTypeMembers(parameters, false, expectedInfos,
                                                               item -> session.registerBatchItems(Collections.singleton(item)));
 
-      if (!ModCompletionItemProvider.modCommandCompletionEnabled()) {
-        if (!smart) {
-          PsiAnnotation anno = findAnnotationWhoseAttributeIsCompleted(position);
-          if (anno != null) {
-            PsiClass annoClass = anno.resolveAnnotationType();
-            mayCompleteReference = mayCompleteValueExpression(position, annoClass);
-            if (annoClass != null) {
-              completeAnnotationAttributeName(result, position, anno, annoClass);
-              JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
-            }
+      if (!smart) {
+        PsiAnnotation anno = findAnnotationWhoseAttributeIsCompleted(position);
+        if (anno != null) {
+          PsiClass annoClass = anno.resolveAnnotationType();
+          mayCompleteReference = mayCompleteValueExpression(position, annoClass);
+          if (annoClass != null) {
+            completeAnnotationAttributeName(result, position, anno, annoClass);
+            JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
           }
         }
+      }
 
-        PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
-        if (ref instanceof PsiLabelReference labelRef) {
-          session.registerBatchItems(processLabelReference(labelRef));
-          result.stopHere();
-        }
+      PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
+      if (ref instanceof PsiLabelReference labelRef) {
+        session.registerBatchItems(processLabelReference(labelRef));
+        result.stopHere();
       }
 
       List<LookupElement> refSuggestions = Collections.emptyList();
@@ -863,7 +978,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       if (forcedTail != null && !(element instanceof JavaPsiClassReferenceElement)) {
         element = new TailTypeDecorator<>(element) {
           @Override
-          protected TailType computeTailType(InsertionContext context) {
+          protected TailType computeTailType(@NotNull InsertionContext context) {
             if (context.getCompletionChar() == ':' && forcedTail == JavaTailTypes.CASE_ARROW) {
               return TailTypes.caseColonType();
             }
@@ -897,7 +1012,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (parameters.getInvocationCount() > 0) {
-      items.addAll(getInnerScopeVariables(parameters, position));
+      items.addAll(getInnerScopeVariables(position));
     }
 
     if (ref.getQualifier() instanceof PsiExpression qualifierExpression &&
@@ -945,56 +1060,12 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return null;
   }
 
-  private static @Unmodifiable Collection<LookupElement> getInnerScopeVariables(CompletionParameters parameters, PsiElement position) {
-    PsiElement container = BringVariableIntoScopeFix.getContainer(position);
-    if (container == null) return Collections.emptyList();
-    Map<String, Optional<PsiLocalVariable>> variableMap =
-      EntryStream.ofTree(container, (depth, element) -> depth > 2 ? null : StreamEx.of(element.getChildren()))
-      .values()
-      .select(PsiCodeBlock.class)
-      .flatArray(PsiCodeBlock::getStatements)
-      .select(PsiDeclarationStatement.class)
-      .flatArray(PsiDeclarationStatement::getDeclaredElements)
-      .select(PsiLocalVariable.class)
-      .remove(var -> PsiTreeUtil.isAncestor(var, position, true))
-      .toMap(PsiLocalVariable::getName, Optional::of, (v1, v2) -> Optional.empty());
-    PsiResolveHelper helper = JavaPsiFacade.getInstance(parameters.getOriginalFile().getProject()).getResolveHelper();
-    variableMap.values().removeAll(Collections.singleton(Optional.<PsiLocalVariable>empty()));
-    variableMap.keySet().removeIf(name -> helper.resolveReferencedVariable(name, position) != null);
-    int offset = position.getTextRange().getStartOffset();
-    variableMap.values().removeIf(v -> v.orElseThrow().getTextRange().getStartOffset() > offset);
-    if (variableMap.isEmpty()) return Collections.emptyList();
-    return ContainerUtil.map(variableMap.values(), optVar -> {
-      assert optVar.isPresent();
-      PsiLocalVariable variable = optVar.get();
-      String place = getPlace(variable);
-      return new VariableLookupItem(variable, JavaBundle.message("completion.inner.scope.tail.text", place)).setPriority(-1);
-    });
-  }
-
-  private static @Nls @NotNull String getPlace(PsiLocalVariable variable) {
-    String place = JavaBundle.message("completion.inner.scope");
-    PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-    PsiElement statement = block == null ? null : block.getParent();
-    if (statement instanceof PsiTryStatement) {
-      place = ((PsiTryStatement)statement).getFinallyBlock() == block ? JavaKeywords.TRY + "-" + JavaKeywords.FINALLY : JavaKeywords.TRY;
-    }
-    else if (statement instanceof PsiCatchSection) {
-      place = JavaKeywords.CATCH;
-    }
-    else if (statement instanceof PsiSynchronizedStatement) {
-      place = JavaKeywords.SYNCHRONIZED;
-    }
-    else if (statement instanceof PsiBlockStatement) {
-      PsiElement parent = statement.getParent();
-      if (parent instanceof PsiWhileStatement) {
-        place = JavaKeywords.WHILE;
-      }
-      else if (parent instanceof PsiIfStatement) {
-        place = ((PsiIfStatement)parent).getThenBranch() == statement ? JavaKeywords.IF + "-then" : JavaKeywords.IF + "-" + JavaKeywords.ELSE;
-      }
-    }
-    return place;
+  private static @Unmodifiable Collection<LookupElement> getInnerScopeVariables(PsiElement position) {
+    List<PsiLocalVariable> list = BringVariableIntoScopeFix.findInnerScopeVariables(position);
+    return ContainerUtil.map(list, variable -> 
+      new VariableLookupItem(
+        variable, JavaBundle.message("completion.inner.scope.tail.text", BringVariableIntoScopeFix.getVariableDeclarationPlace(variable)))
+        .setPriority(-1));
   }
 
   private static @NotNull List<LookupElement> completePermitsListReference(@NotNull CompletionParameters parameters,
@@ -1319,7 +1390,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
   }
 
-  static @Nullable PsiJavaCodeReferenceElement getAnnotationNameIfInside(@Nullable PsiElement position) {
+  @ApiStatus.Internal
+  public static @Nullable PsiJavaCodeReferenceElement getAnnotationNameIfInside(@Nullable PsiElement position) {
     PsiAnnotation anno = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
     PsiJavaCodeReferenceElement ref = anno == null ? null : anno.getNameReferenceElement();
     return ref != null && PsiTreeUtil.isAncestor(ref, position, false) ? ref : null;

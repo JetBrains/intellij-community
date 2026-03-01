@@ -14,10 +14,25 @@ import com.intellij.uiDesigner.actions.SplitAction;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.propertyInspector.properties.*;
+import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IndentProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MarginProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
 import java.util.List;
 
 

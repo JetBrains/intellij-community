@@ -31,7 +31,11 @@ import org.jetbrains.kotlin.idea.debugger.core.getJvmInternalName
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.isSyntheticDefaultMethodPossiblyConvertedToStatic
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type
 

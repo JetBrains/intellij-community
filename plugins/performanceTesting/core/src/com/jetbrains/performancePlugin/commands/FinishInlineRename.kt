@@ -7,6 +7,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -63,7 +64,11 @@ class FinishInlineRename(text: String, line: Int) : AbstractCommand(text, line) 
       }
     })
     WriteAction.runAndWait<Throwable> {
-      val templateState = TemplateManagerImpl.getTemplateState(FileEditorManager.getInstance(context.project).selectedTextEditor!!)
+      val fileEditorManager = FileEditorManager.getInstance(context.project)
+      val editor = fileEditorManager.selectedTextEditor
+        ?: fileEditorManager.getAllEditors().filterIsInstance<TextEditor>().firstOrNull()?.editor
+        ?: throw IllegalStateException("Couldn't get text editor")
+      val templateState = TemplateManagerImpl.getTemplateState(editor)
       templateState?.nextTab()
     }
     return actionCallback.toPromise()

@@ -16,10 +16,21 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.asRecursiveLogString
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.generate.UParameterInfo
 import org.jetbrains.uast.generate.replace
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElementOfType
 import kotlin.test.fail as kfail
 
 class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
@@ -246,7 +257,6 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
 
     private fun dummyContextFile(): KtFile = myFixture.configureByText("file.kt", "fun foo() {}") as KtFile
 
-    @Suppress("SuspiciousPackagePrivateAccess")//workaround for KTIJ-35504
     fun `test method call generation with generics restoring 1 parameter with 1 existing`() {
         val receiver = myFixture.configureByKotlinExpression("receiver.kt", "A")
         val arg = myFixture.configureByKotlinExpression("arg.kt", "\"a\"")

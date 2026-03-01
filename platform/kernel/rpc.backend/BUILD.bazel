@@ -25,4 +25,24 @@ jvm_library(
     "//fleet/rpc.server",
   ]
 )
+
+jvm_library(
+  name = "rpc.backend_test_lib",
+  module_name = "intellij.platform.rpc.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/kernel/rpc",
+    "//platform/kernel/rpc:rpc_test_lib",
+    "//fleet/rpc.server",
+    "//fleet/rpc.server:rpc.server_test_lib",
+  ],
+  runtime_deps = [
+    ":rpc.backend",
+    "//platform/util:util_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/kernel/rpc:rpc_test_lib",
+    "//fleet/rpc.server:rpc.server_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.rpc.backend` end

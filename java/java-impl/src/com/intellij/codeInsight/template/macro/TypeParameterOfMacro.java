@@ -1,8 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.template.*;
-import com.intellij.psi.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -6,8 +6,17 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -26,7 +35,15 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableActions;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -38,8 +55,32 @@ import com.intellij.uiDesigner.actions.ShowJavadocAction;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.propertyInspector.properties.*;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.ButtonGroupProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.ClassToBindProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IndentProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.LayoutManagerProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MarginProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadHSpacer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadVSpacer;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.IndentedIcon;
@@ -49,20 +90,40 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.AbstractCellEditor;
+import javax.swing.ActionMap;
+import javax.swing.Icon;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.plaf.TableUI;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EventObject;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 public final class PropertyInspectorTable extends JBTable implements UiDataProvider {
   private static final Logger LOG = Logger.getInstance(PropertyInspectorTable.class);
@@ -619,7 +680,7 @@ public final class PropertyInspectorTable extends JBTable implements UiDataProvi
    */
   @Override
   public boolean editCellAt(final int row, final int column, final EventObject e){
-    final boolean result = super.editCellAt(row, column, e);
+    final boolean result = WriteIntentReadAction.compute(() -> super.editCellAt(row, column, e));
     final Rectangle cellRect = getCellRect(row, column, true);
     repaint(cellRect);
     return result;
@@ -662,22 +723,24 @@ public final class PropertyInspectorTable extends JBTable implements UiDataProvi
       return;
     }
     myStoppingEditing = true;
-    final Property property=myProperties.get(editingRow);
-    final PropertyEditor editor=property.getEditor();
-    editor.removePropertyEditorListener(myPropertyEditorListener);
-    try {
-      if (myEditor != null && !myEditor.isUndoRedoInProgress()) {
-        final Object value = editor.getValue();
-        setValueAt(value, editingRow, editingColumn);
+    WriteIntentReadAction.run(() -> {
+      final Property property=myProperties.get(editingRow);
+      final PropertyEditor editor=property.getEditor();
+      editor.removePropertyEditorListener(myPropertyEditorListener);
+      try {
+        if (myEditor != null && !myEditor.isUndoRedoInProgress()) {
+          final Object value = editor.getValue();
+          setValueAt(value, editingRow, editingColumn);
+        }
       }
-    }
-    catch (final Exception exc) {
-      showInvalidInput(exc);
-    }
-    finally {
-      removeEditor();
-      myStoppingEditing = false;
-    }
+      catch (final Exception exc) {
+        showInvalidInput(exc);
+      }
+      finally {
+        removeEditor();
+        myStoppingEditing = false;
+      }
+    });
   }
 
   private static void showInvalidInput(final Exception exc) {

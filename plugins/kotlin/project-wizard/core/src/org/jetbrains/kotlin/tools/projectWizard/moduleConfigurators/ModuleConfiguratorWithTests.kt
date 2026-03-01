@@ -8,7 +8,12 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ArtifactBasedLibraryDependencyIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyKind
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyType
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinArbitraryDependencyIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.LibraryDependencyIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.maven.MavenOnlyPluginIR
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator.Companion.testFramework

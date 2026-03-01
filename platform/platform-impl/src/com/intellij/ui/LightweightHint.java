@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -19,10 +18,21 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.JRootPane;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.event.EventListenerList;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -261,8 +271,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       .setCancelOnClickOutside(myCancelOnClickOutside)
       .setBelongsToGlobalPopupStack(myBelongsToGlobalPopupStack)
       .setCancelCallback(() -> {
-        //maybe readaction
-        ReadAction.run(this::onPopupCancel);
+        onPopupCancel();
         return true;
       })
       .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)

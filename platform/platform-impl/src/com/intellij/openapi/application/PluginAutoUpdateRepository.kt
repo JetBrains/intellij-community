@@ -39,10 +39,23 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import javax.swing.JComponent
+import kotlin.Boolean
 import kotlin.Result
-import kotlin.io.path.*
+import kotlin.String
+import kotlin.Suppress
+import kotlin.collections.joinToString
+import kotlin.collections.map
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.exists
+import kotlin.io.path.isReadable
+import kotlin.io.path.isRegularFile
+import kotlin.runCatching
+import kotlin.synchronized
+import kotlin.takeIf
+import kotlin.to
 
 @ApiStatus.Internal
 object PluginAutoUpdateRepository {
@@ -122,7 +135,7 @@ object PluginAutoUpdateRepository {
 /**
  * Internal action for debugging purposes
  */
-private class PluginsAutoUpdateRepositoryViewAction : AnAction() {
+internal class PluginsAutoUpdateRepositoryViewAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     ApplicationManager.getApplication().invokeLater({ Viewer(e.project).showAndGet() }, ModalityState.nonModal())
   }

@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -122,15 +123,17 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
   }
 
   private boolean installTracker() {
-    Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
-    if (document == null) return false;
+    return ReadAction.compute(() -> {
+      Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
+      if (document == null) return false;
 
-    LineStatusTrackerManager.getInstance(myProject).requestTrackerFor(document, this);
+      LineStatusTrackerManager.getInstance(myProject).requestTrackerFor(document, this);
 
-    DocumentContent beforeContent = (DocumentContent)getContents().get(0);
-    CharSequence beforeText = beforeContent.getDocument().getImmutableCharSequence();
-    LineStatusTrackerManager.getInstanceImpl(myProject).offerTrackerContent(document, beforeText);
-    return true;
+      DocumentContent beforeContent = (DocumentContent)getContents().getFirst();
+      CharSequence beforeText = beforeContent.getDocument().getImmutableCharSequence();
+      LineStatusTrackerManager.getInstanceImpl(myProject).offerTrackerContent(document, beforeText);
+      return true;
+    });
   }
 
   private void releaseTracker() {

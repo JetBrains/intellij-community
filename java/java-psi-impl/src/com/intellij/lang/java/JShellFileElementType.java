@@ -3,7 +3,8 @@ package com.intellij.lang.java;
 
 import com.intellij.java.syntax.JavaSyntaxDefinition;
 import com.intellij.java.syntax.parser.JShellParser;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.platform.syntax.psi.ParsingDiagnostics;
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilder;
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory;

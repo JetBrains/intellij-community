@@ -9,6 +9,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -18,27 +19,42 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Listen for daemon finish events and schedule {@link com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl.OptimizeImportsFix} to run in EDT if they are still relevant.
  * This service is needed for batching all these import fix requests in one place to avoid overhead of registering individual Disposables/listeners for each file in {@link UnusedImportsVisitor}
  */
+@VisibleForTesting
 @Service(Service.Level.PROJECT)
-final class OptimizeImportRestarter implements Disposable {
+@ApiStatus.Internal
+public final class OptimizeImportRestarter implements Disposable {
   private final Project myProject;
   private final List<OptimizeRequest> queue = new ArrayList<>(); // guarded by queue
+  private final Set<Future<?>> scheduledFutures = ContainerUtil.newConcurrentSet(); // futures (from RA.nonblocking) of requests for autoimports are stored here to be able to wait for them in tests
 
   private record OptimizeRequest(@NotNull PsiFile psiFile, long modificationStampBefore, @NotNull ModCommandAction optimizeFix) {
   }
 
-  static OptimizeImportRestarter getInstance(Project project) {
+  @ApiStatus.Internal
+  public static OptimizeImportRestarter getInstance(Project project) {
     return project.getService(OptimizeImportRestarter.class);
   }
 
@@ -62,6 +78,10 @@ final class OptimizeImportRestarter implements Disposable {
   private void clear() {
     synchronized (queue) {
       queue.clear();
+      for (Future<?> future : scheduledFutures) {
+        future.cancel(false);
+      }
+      scheduledFutures.clear();
     }
   }
 
@@ -90,14 +110,19 @@ final class OptimizeImportRestarter implements Disposable {
         continue;
       }
       ActionContext context = ActionContext.from(null, psiFile);
-      if (optimizeFix.getPresentation(context) == null) continue;
-      ReadAction.nonBlocking(() -> optimizeFix.getPresentation(context) != null ? optimizeFix.perform(context) : ModCommand.nop())
-        .expireWhen(() -> myProject.isDisposed() || psiFile.getModificationStamp() != request.modificationStampBefore())
-        .finishOnUiThread(ModalityState.defaultModalityState(),
-                          command -> CommandProcessor.getInstance().executeCommand(
-                            myProject, () -> ModCommandExecutor.getInstance().executeInBatch(context, command),
-                            CodeInsightBundle.message("process.optimize.imports"), null))
-        .submit(AppExecutorUtil.getAppExecutorService());
+      if (optimizeFix.getPresentation(context) == null) {
+        continue;
+      }
+      CancellablePromise<@NotNull ModCommand> future =
+        ReadAction.nonBlocking(() -> optimizeFix.getPresentation(context) != null ? optimizeFix.perform(context) : ModCommand.nop())
+          .expireWhen(() -> myProject.isDisposed() || psiFile.getModificationStamp() != request.modificationStampBefore())
+          .finishOnUiThread(ModalityState.defaultModalityState(),
+                            command -> CommandProcessor.getInstance().executeCommand(
+                              myProject, () -> ModCommandExecutor.getInstance().executeInBatch(context, command),
+                              CodeInsightBundle.message("process.optimize.imports"), null))
+          .submit(AppExecutorUtil.getAppExecutorService());
+      scheduledFutures.add(future);
+      future.onProcessed(__->scheduledFutures.remove(future));
     }
   }
 
@@ -106,6 +131,14 @@ final class OptimizeImportRestarter implements Disposable {
     synchronized (queue) {
       queue.add(new OptimizeRequest(psiFile, modificationStampBefore, optimizeFix));
     }
+  }
+
+  @RequiresBackgroundThread
+  @TestOnly
+  public void waitForScheduledOptimizeImportRequestsInTests() throws ExecutionException, InterruptedException {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    ThreadingAssertions.assertBackgroundThread(); // because futures are completed in EDT
+    ConcurrencyUtil.getAll(scheduledFutures);
   }
 
   @Override

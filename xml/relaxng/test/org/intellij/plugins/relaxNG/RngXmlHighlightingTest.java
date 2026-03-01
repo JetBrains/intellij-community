@@ -17,11 +17,8 @@ package org.intellij.plugins.relaxNG;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import org.intellij.plugins.testUtil.CopyFile;
 
 import java.util.ArrayList;

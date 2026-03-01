@@ -5,9 +5,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.terminal.completion.spec.ShellFileInfo
 import com.intellij.terminal.completion.spec.ShellFileInfo.Type.DIRECTORY
 import com.intellij.terminal.completion.spec.ShellFileInfo.Type.FILE
-import com.intellij.terminal.completion.spec.ShellName
 import com.intellij.terminal.frontend.view.completion.ShellCommandExecutorReworked
-import com.intellij.terminal.frontend.view.completion.ShellFileSystemSupportImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
@@ -17,7 +15,8 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.spec.IS_REWORKED_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.getChildFiles
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellFileInfoImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorProcessExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellFileSystemSupportImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -110,12 +109,15 @@ internal class TerminalCompletionFilesCalculationTest : BasePlatformTestCase() {
 
   private fun getChildFiles(currentDirectory: String, path: String): List<ShellFileInfo> = runBlocking {
     val eelDescriptor = LocalEelDescriptor
+    val processExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor, baseEnvVariables = emptyMap())
     val context = ShellRuntimeContextImpl(
-      currentDirectory,
-      typedPrefix = path,
-      ShellName("test"),
-      ShellCommandExecutorReworked(eelDescriptor),
-      ShellFileSystemSupportImpl(eelDescriptor)
+      currentDirectory = currentDirectory,
+      envVariables = emptyMap(),
+      commandTokens = listOf(path),
+      definedShellName = null,
+      generatorCommandsRunner = ShellCommandExecutorReworked(processExecutor),
+      generatorProcessExecutor = processExecutor,
+      fileSystemSupport = ShellFileSystemSupportImpl(eelDescriptor)
     )
     context.putUserData(IS_REWORKED_KEY, true)
     context.getChildFiles(path)
@@ -147,6 +149,6 @@ internal class TerminalCompletionFilesCalculationTest : BasePlatformTestCase() {
   }
 
   private fun fileInfo(name: String, type: ShellFileInfo.Type): ShellFileInfo {
-    return ShellFileInfoImpl(name, type)
+    return ShellFileInfo.create(name, type)
   }
 }

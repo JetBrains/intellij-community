@@ -29,6 +29,9 @@ sealed interface SeItemData {
   fun fetchItemIfExists(): SeItem?
 }
 
+/**
+ * Factory for creating [SeItemData] instances
+ */
 @ApiStatus.Experimental
 class SeItemDataFactory {
   suspend fun createItemData(
@@ -42,6 +45,8 @@ class SeItemDataFactory {
     val additionalInfo = additionalInfo.toMutableMap()
 
     if (item is SeLegacyItem) {
+      additionalInfo[SeItemDataKeys.PROVIDER_SORT_WEIGHT] = item.contributor.sortWeight.toString()
+
       computeCatchingOrNull(true, { e -> "Couldn't add language info (${providerId.value}): $e" }) {
         PSIPresentationBgRendererWrapper.toPsi(item.rawObject)?.let {
           readAction {
@@ -76,6 +81,8 @@ class SeItemDataImpl internal constructor(
 ): SeItemData {
   val isCommand: Boolean get() = additionalInfo[SeItemDataKeys.IS_COMMAND]?.toBoolean() == true
 
+  val isSemantic: Boolean get() = additionalInfo[SeItemDataKeys.IS_SEMANTIC]?.toBoolean() == true
+
   override fun fetchItemIfExists(): SeItem? {
     return itemRef.derefOrNull()?.findItemOrNull()
   }
@@ -85,6 +92,10 @@ class SeItemDataImpl internal constructor(
   }
 
   fun withPresentation(presentation: SeItemPresentation): SeItemDataImpl {
+    return SeItemDataImpl(uuid, providerId, weight, presentation, uuidsToReplace, additionalInfo, itemRef)
+  }
+
+  fun withWeight(weight: Int): SeItemDataImpl {
     return SeItemDataImpl(uuid, providerId, weight, presentation, uuidsToReplace, additionalInfo, itemRef)
   }
 
@@ -99,6 +110,9 @@ class SeItemDataImpl internal constructor(
 @get:ApiStatus.Internal
 val SeItemData.isCommand: Boolean get() = (this as SeItemDataImpl).isCommand
 
+@get:ApiStatus.Internal
+val SeItemData.isSemantic: Boolean get() = (this as SeItemDataImpl).isSemantic
+
 @ApiStatus.Internal
 fun SeItemData.contentEquals(other: Any?): Boolean = (this as SeItemDataImpl).contentEquals(other)
 
@@ -107,3 +121,6 @@ fun SeItemData.withUuidToReplace(uuidToReplace: List<String>): SeItemData = (thi
 
 @ApiStatus.Internal
 fun SeItemData.withPresentation(presentation: SeItemPresentation): SeItemData = (this as SeItemDataImpl).withPresentation(presentation)
+
+@ApiStatus.Internal
+fun SeItemData.withWeight(weight: Int): SeItemData = (this as SeItemDataImpl).withWeight(weight)

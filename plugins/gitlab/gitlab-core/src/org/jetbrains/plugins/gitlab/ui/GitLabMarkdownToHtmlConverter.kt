@@ -44,9 +44,8 @@ import org.intellij.markdown.parser.sequentialparsers.impl.MathParser
 import org.intellij.markdown.parser.sequentialparsers.impl.ReferenceLinkParser
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.plugins.gitlab.api.GitLabId
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.projectApiUri
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 import java.nio.file.InvalidPathException
@@ -59,8 +58,9 @@ import java.nio.file.InvalidPathException
 class GitLabMarkdownToHtmlConverter(
   private val project: Project,
   private val repository: GitRepository,
-  projectCoordinates: GitLabProjectCoordinates,
-  projectId: GitLabId,
+  serverPath: GitLabServerPath,
+  projectId: String,
+  private val projectPath: GitLabProjectPath,
 ) {
 
   companion object {
@@ -70,9 +70,8 @@ class GitLabMarkdownToHtmlConverter(
     internal const val OPEN_MR_LINK_PREFIX = "glmergerequest:"
   }
 
-  private val projectWebUrlBase: String = projectCoordinates.serverPath.toString() + "/-/project/" + projectId.guessRestId()
-  private val projectApiUri: URI = projectCoordinates.restApiUri
-  private val projectPath: GitLabProjectPath = projectCoordinates.projectPath
+  private val projectWebUrlBase: String = "$serverPath/-/project/$projectId"
+  private val projectApiUri: URI = serverPath.projectApiUri(projectId)
 
   /**
    * Makes file links relative to the git repository root or to the external root.
@@ -122,13 +121,19 @@ class GitLabMarkdownToHtmlConverter(
       val referenceLinkProvider = GitLabReferenceLinksGeneratingProvider(linkMap, baseURI,
                                                                          absolutizeAnchorLinks,
                                                                          linkProcessor).makeXssSafe(useSafeLinks)
-
+      val inlineLinkProvider = GitLabLinkGeneratingProvider(linkProcessor).makeXssSafe(useSafeLinks)
       return map + hashMapOf(
         MarkdownElementTypes.IMAGE to
-          GitLabImageWithSettingsGeneratingProvider(linkMap, baseURI, projectApiUri, absolutizeAnchorLinks).makeXssSafe(useSafeLinks),
+          GitLabImageWithSettingsGeneratingProvider(linkMap,
+                                                    baseURI,
+                                                    projectApiUri,
+                                                    absolutizeAnchorLinks,
+                                                    inlineLinkProvider,
+                                                    referenceLinkProvider)
+            .makeXssSafe(useSafeLinks),
         GFMElementTypes.STRIKETHROUGH to SimpleInlineTagProvider("strike", 2, -2),
         MarkdownElementTypes.CODE_FENCE to CodeFenceSyntaxHighlighterGeneratingProvider(htmlSyntaxHighlighter),
-        MarkdownElementTypes.INLINE_LINK to GitLabLinkGeneratingProvider(linkProcessor).makeXssSafe(useSafeLinks),
+        MarkdownElementTypes.INLINE_LINK to inlineLinkProvider,
         MarkdownElementTypes.FULL_REFERENCE_LINK to referenceLinkProvider,
         MarkdownElementTypes.SHORT_REFERENCE_LINK to referenceLinkProvider,
       )
@@ -216,6 +221,8 @@ class GitLabMarkdownToHtmlConverter(
     baseURI: URI?,
     projectApiUri: URI,
     absolutizeAnchorLinks: Boolean,
+    private val customInlineLinkProvider: LinkGeneratingProvider,
+    private val customReferenceLinkProvider: LinkGeneratingProvider,
   ) : ImageGeneratingProvider(linkMap, baseURI) {
 
     val imageLinkProcessor = ImageLinkDestinationProcessor(projectApiUri)
@@ -236,8 +243,32 @@ class GitLabMarkdownToHtmlConverter(
       return null
     }
 
+    /**
+     * We have two types of URLs: one for getting images through API and for opening in a browser, this is for a browser link
+     */
+    private fun getLinkRenderInfo(text: String, node: ASTNode): RenderInfo? {
+      node.findChildOfType(MarkdownElementTypes.INLINE_LINK)?.let { linkNode ->
+        return customInlineLinkProvider.getRenderInfo(text, linkNode)
+      }
+      (node.findChildOfType(MarkdownElementTypes.FULL_REFERENCE_LINK)
+       ?: node.findChildOfType(MarkdownElementTypes.SHORT_REFERENCE_LINK))
+        ?.let { linkNode ->
+          return customReferenceLinkProvider.getRenderInfo(text, linkNode)
+        }
+      return null
+    }
+
     override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
+      val linkInfo = getLinkRenderInfo(text, node)
+      if (linkInfo == null) {
+        super.renderLink(visitor, text, node, info)
+        return
+      }
+      visitor.consumeTagOpen(node, "p", """class="custom_image"""")
+      visitor.consumeTagOpen(node, "a", "href=\"${makeAbsoluteUrl(linkInfo.destination)}\"")
       super.renderLink(visitor, text, node, info)
+      visitor.consumeTagClose("a")
+      visitor.consumeTagClose("p")
       node.findChildOfType(MARKDOWN_IMAGE_SETTINGS)?.let { linkNode ->
         val textInNode = linkNode.getTextInNode(text)
         val closingIndex = textInNode.indexOf('}')

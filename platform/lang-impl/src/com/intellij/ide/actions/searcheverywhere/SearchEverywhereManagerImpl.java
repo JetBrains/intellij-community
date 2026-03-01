@@ -36,10 +36,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
@@ -82,7 +94,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     Project project = initEvent.getProject();
 
-    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project);
+    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project, true);
     SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
     mySearchEverywhereUI = createView(myProject, contributors, SearchFieldStatisticsCollector.getStartMoment(initEvent));
     contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
@@ -90,6 +102,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     // Handle SE on the Welcome Screen
     if (project == null && ALL_CONTRIBUTORS_GROUP_ID.equals(tabID)) mySearchEverywhereUI.switchToTabOrFirst(tabID);
     else mySearchEverywhereUI.switchToTab(tabID);
+
+    // Inform the ML service about start of search session (opening of SE window)
+    SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
+    if (mlService != null) {
+      mlService.onSessionStarted(myProject, tabID, mySearchEverywhereUI.getMixedListInfo());
+    }
 
     myHistoryIterator = myHistoryList.getIterator(tabID);
     //history could be suppressed by user for some reasons (creating promo video, conference demo etc.)
@@ -175,7 +193,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   @ApiStatus.Internal
-  public static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
+  public static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project, boolean shouldLinkFilesTabContributors) {
     SearchEverywhereMlContributorReplacement.saveInitEvent(initEvent);
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
@@ -190,7 +208,39 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       }
     }
 
+    if (shouldLinkFilesTabContributors) {
+      linkFilesContributors(res);
+    }
+
     return res;
+  }
+
+  @ApiStatus.Internal
+  public static void linkFilesContributors(List<SearchEverywhereContributor<?>> contributors) {
+    // Find the main FileSearchEverywhereContributor
+    FileSearchEverywhereContributor mainFilesContributor = null;
+    for (SearchEverywhereContributor<?> contributor : contributors) {
+      mainFilesContributor = FilesTabSEContributor.asMainFilesContributorOrNull(contributor);
+      if (mainFilesContributor != null) break;
+    }
+
+    if (mainFilesContributor == null) {
+      return; // No main contributor found (shouldn't happen in normal scenarios)
+    }
+
+    // Find all other FilesTabSEContributors (excluding the main one)
+    List<FilesTabSEContributor> otherFilesContributors = new ArrayList<>();
+    for (SearchEverywhereContributor<?> contributor : contributors) {
+      FilesTabSEContributor unwrapped = FilesTabSEContributor.unwrapFilesTabContributorIfPossible(contributor);
+      if (unwrapped != null && !FilesTabSEContributor.isMainFilesContributor(contributor)) {
+        otherFilesContributors.add(unwrapped);
+      }
+    }
+
+    // Link them
+    if (!otherFilesContributors.isEmpty()) {
+      mainFilesContributor.linkFilesTabContributors(otherFilesContributors);
+    }
   }
 
   private void calcPositionAndShow(@NotNull AnActionEvent initEvent,

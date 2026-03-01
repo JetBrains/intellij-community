@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.kotlin
 
-import org.jetbrains.kotlin.idea.KotlinFileType
 import com.intellij.platform.uast.testFramework.common.PsiClassToString
 import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantSingleTestBase
 import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTest
 import com.intellij.platform.uast.testFramework.common.sourcesFromLargeProject
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.junit.Ignore
 import org.junit.Test
 import java.nio.file.Path

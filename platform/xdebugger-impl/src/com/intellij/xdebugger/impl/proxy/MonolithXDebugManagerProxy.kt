@@ -6,28 +6,34 @@ import com.intellij.frontend.FrontendType
 import com.intellij.idea.AppMode
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
+import com.intellij.platform.debugger.impl.rpc.XStackFrameId
 import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.launch
 
-private class MonolithXDebugManagerProxy : XDebugManagerProxy {
+internal class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
     val session = XDebuggerManager.getInstance(project)?.currentSession ?: return null
     return session.asProxy()
@@ -38,8 +44,8 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val sessionImpl = (session as MonolithSessionProxy).sessionImpl
-    return withTemporaryXValueId(value, sessionImpl, block)
+    val sessionImpl = findSessionImpl(session)
+    return withTemporaryXValueIdImpl(value, sessionImpl, block)
   }
 
   // This method is not supported in monolith mode
@@ -53,10 +59,17 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
-    val sessionImpl = (session as MonolithSessionProxy).sessionImpl
+    val sessionImpl = findSessionImpl(session)
     return withCoroutineScopeForId(block) { scope ->
       val (_, id) = stack.getOrStoreGlobally(scope, sessionImpl)
       id
+    }
+  }
+
+  override suspend fun <T> withId(frame: XStackFrame, session: XDebugSessionProxy, block: suspend (XStackFrameId) -> T): T {
+    val sessionImpl = findSessionImpl(session)
+    return withCoroutineScopeForId(block) { scope ->
+      frame.getOrStoreGlobally(scope, sessionImpl)
     }
   }
 
@@ -85,10 +98,18 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun hasBackendCounterpart(xValue: XValue): Boolean {
     return true
   }
+
+  companion object {
+    internal fun findSessionImpl(session: XDebugSessionProxy): XDebugSessionImpl {
+      val monolithSession = XDebuggerEntityConverter.getSessionNonSplitOnly(session) ?: error("Expected to have monolith session: $session")
+      val sessionImpl = monolithSession as XDebugSessionImpl
+      return sessionImpl
+    }
+  }
+
 }
 
-@ApiStatus.Internal
-suspend fun <T> withTemporaryXValueId(
+internal suspend fun <T> withTemporaryXValueIdImpl(
   value: XValue,
   sessionImpl: XDebugSessionImpl,
   block: suspend (XValueId) -> T,

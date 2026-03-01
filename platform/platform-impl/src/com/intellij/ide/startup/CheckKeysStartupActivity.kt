@@ -15,7 +15,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private const val UNDEFINED = "!!!___***undefined***___!!!"
 
-private class CheckKeysStartupActivity : ProjectActivity {
+internal class CheckKeysStartupActivity : ProjectActivity {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || !app.isHeadlessEnvironment) {

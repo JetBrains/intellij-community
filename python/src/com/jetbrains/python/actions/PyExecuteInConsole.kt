@@ -16,7 +16,15 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentManager
 import com.intellij.xdebugger.XDebuggerManager
-import com.jetbrains.python.console.*
+import com.jetbrains.python.console.DescriptorType
+import com.jetbrains.python.console.PyCodeExecutor
+import com.jetbrains.python.console.PyExecuteConsoleCustomizer
+import com.jetbrains.python.console.PyTargetedCodeExecutor
+import com.jetbrains.python.console.PydevConsoleRunner
+import com.jetbrains.python.console.PythonConsoleRunnerFactory
+import com.jetbrains.python.console.PythonConsoleToolWindow
+import com.jetbrains.python.console.PythonConsoleView
+import com.jetbrains.python.console.PythonDebugLanguageConsoleView
 import com.jetbrains.python.run.PythonRunConfiguration
 import java.util.function.Consumer
 import java.util.function.Function

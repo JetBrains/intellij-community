@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir.testFramework" scope="TEST" />
   </component>
 </module>

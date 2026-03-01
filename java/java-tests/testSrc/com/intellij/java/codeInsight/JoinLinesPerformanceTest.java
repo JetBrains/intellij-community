@@ -4,11 +4,13 @@ package com.intellij.java.codeInsight;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
+@PerformanceUnitTest
 public class JoinLinesPerformanceTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override

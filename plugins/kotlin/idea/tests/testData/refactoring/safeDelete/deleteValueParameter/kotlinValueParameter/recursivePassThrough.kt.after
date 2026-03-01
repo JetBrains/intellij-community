@@ -1,0 +1,7 @@
+fun fibu(n: Int): Int =
+    if (n <= 2) 1 else fibu(n - 2) + fibu(n - 1)
+
+fun test() {
+    fibu(5)
+}
+// IGNORE_K1

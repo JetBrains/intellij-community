@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.jps.model.impl.resolver;
 
+import com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
-import com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfiguration;
 
 public class JpsDependencyResolverConfigurationImpl extends JpsElementBase<JpsDependencyResolverConfigurationImpl>
   implements JpsDependencyResolverConfiguration {

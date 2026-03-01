@@ -10,3 +10,5 @@ class C<T1, T2> {
 
 // EXIST: lazy
 // ABSENT: X
+
+// IGNORE_K2

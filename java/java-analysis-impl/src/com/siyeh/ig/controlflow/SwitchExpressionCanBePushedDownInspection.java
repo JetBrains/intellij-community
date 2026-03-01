@@ -8,7 +8,26 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiYieldStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -21,7 +40,11 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public final class SwitchExpressionCanBePushedDownInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override

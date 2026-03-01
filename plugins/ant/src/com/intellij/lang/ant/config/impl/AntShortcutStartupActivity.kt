@@ -17,7 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 
-private class AntShortcutStartupActivity : ProjectActivity {
+internal class AntShortcutStartupActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()

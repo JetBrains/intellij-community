@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots
 
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal class SourceFolderCheckerEntity(val pathRelativeToRoot: Path, val rootType: CheckerContentRootType) {
     override fun toString(): String {
@@ -10,6 +11,7 @@ internal class SourceFolderCheckerEntity(val pathRelativeToRoot: Path, val rootT
         else
             ""
 
-        return "$pathRelativeToRoot$rootTypeDescriptionIfNecessary"
+        // We need invariant separators so the gold files are platform-independent (and work on Windows)
+        return "${pathRelativeToRoot.invariantSeparatorsPathString}$rootTypeDescriptionIfNecessary"
     }
 }

@@ -4,12 +4,11 @@
 package com.intellij.ui.scale
 
 import com.intellij.ui.JreHiDpiUtil
-import com.intellij.ui.scale.ScaleType.*
 import it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectFunction
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.EnumMap
 import java.util.function.DoubleFunction
 
 /**

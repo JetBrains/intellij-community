@@ -35,8 +35,17 @@ import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.CoreIconManager;
-import com.intellij.util.*;
-import com.intellij.util.containers.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
+import com.intellij.util.containers.PeekableIterator;
+import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
@@ -64,9 +73,22 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
@@ -1075,11 +1097,12 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   /**
    * @return true for a test which performs a lot of computations to test resource consumption, not correctness.
    * Such tests should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
-   * If you want your test to be treated as "Performance", include the "Performance" word in its class/method name.
-   * For example: {@code public void testHighlightingPerformance()}
+   * If you want your test to be treated as "Performance", include the "Performance" word in its class or mark
+   * the method as {@link com.intellij.testFramework.PerformanceUnitTest}.
+   * For example: {@code @PerformanceUnitTest public void testHighlightingPerformance()}
    */
   public final boolean isPerformanceTest() {
-    return TestFrameworkUtil.isPerformanceTest(getName(), getClass().getSimpleName());
+    return TestFrameworkUtil.isPerformanceTest(getName(), getClass());
   }
 
   /**
@@ -1089,9 +1112,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */
   public final boolean isStressTest() {
-    String testName = getName();
-    String className = getClass().getSimpleName();
-    return TestFrameworkUtil.isStressTest(testName, className);
+    return TestFrameworkUtil.isStressTest(getName(), getClass());
   }
 
   public static void doPostponedFormatting(@NotNull Project project) {

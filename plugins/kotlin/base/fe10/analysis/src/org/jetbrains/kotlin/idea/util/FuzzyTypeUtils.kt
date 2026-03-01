@@ -3,24 +3,46 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.progress.ProgressIndicatorProvider
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.resolve.calls.inference.CallHandle
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemBuilderImpl
 import org.jetbrains.kotlin.resolve.calls.inference.constraintPosition.ConstraintPositionKind
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.DelegatedTypeSubstitution
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeConstructor
+import org.jetbrains.kotlin.types.TypeConstructorSubstitution
+import org.jetbrains.kotlin.types.TypeProjection
+import org.jetbrains.kotlin.types.TypeProjectionImpl
+import org.jetbrains.kotlin.types.TypeSubstitution
+import org.jetbrains.kotlin.types.TypeSubstitutor
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.checker.StrictEqualityTypeChecker
 import org.jetbrains.kotlin.types.error.ErrorUtils
-import org.jetbrains.kotlin.types.typeUtil.*
+import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.typeUtil.createProjection
+import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
+import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
+import org.jetbrains.kotlin.types.typeUtil.isUnit
+import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.types.typeUtil.makeNullable
+import org.jetbrains.kotlin.types.typeUtil.nullability
 
+@K1Deprecation
 fun CallableDescriptor.fuzzyReturnType() = returnType?.toFuzzyType(typeParameters)
+@K1Deprecation
 fun CallableDescriptor.fuzzyExtensionReceiverType() = extensionReceiverParameter?.type?.toFuzzyType(typeParameters)
 
+@K1Deprecation
 fun FuzzyType.makeNotNullable() = type.makeNotNullable().toFuzzyType(freeParameters)
+@K1Deprecation
 fun FuzzyType.makeNullable() = type.makeNullable().toFuzzyType(freeParameters)
+@K1Deprecation
 fun FuzzyType.nullability() = type.nullability()
 
+@K1Deprecation
 fun FuzzyType.isAlmostEverything(): Boolean {
     if (freeParameters.isEmpty()) return false
     val typeParameter = type.constructor.declarationDescriptor as? TypeParameterDescriptor ?: return false
@@ -31,6 +53,7 @@ fun FuzzyType.isAlmostEverything(): Boolean {
 /**
  * Replaces free parameters inside the type with corresponding type parameters of the class (when possible)
  */
+@K1Deprecation
 fun FuzzyType.presentationType(): KotlinType {
     if (freeParameters.isEmpty()) return type
 
@@ -48,8 +71,10 @@ fun FuzzyType.presentationType(): KotlinType {
     return substitutor.substitute(type, Variance.INVARIANT)!!
 }
 
+@K1Deprecation
 fun KotlinType.toFuzzyType(freeParameters: Collection<TypeParameterDescriptor>) = FuzzyType(this, freeParameters)
 
+@K1Deprecation
 class FuzzyType(val type: KotlinType, freeParameters: Collection<TypeParameterDescriptor>) {
     val freeParameters: Set<TypeParameterDescriptor>
 
@@ -170,6 +195,7 @@ class FuzzyType(val type: KotlinType, freeParameters: Collection<TypeParameterDe
 }
 
 
+@K1Deprecation
 fun TypeSubstitution.hasConflictWith(other: TypeSubstitution, freeParameters: Collection<TypeParameterDescriptor>): Boolean {
     return freeParameters.any { parameter ->
         val type = parameter.defaultType
@@ -182,6 +208,7 @@ fun TypeSubstitution.hasConflictWith(other: TypeSubstitution, freeParameters: Co
     }
 }
 
+@K1Deprecation
 fun TypeSubstitutor.combineIfNoConflicts(other: TypeSubstitutor, freeParameters: Collection<TypeParameterDescriptor>): TypeSubstitutor? {
     if (this.substitution.hasConflictWith(other.substitution, freeParameters)) return null
     return TypeSubstitutor.createChainedSubstitutor(this.substitution, other.substitution)

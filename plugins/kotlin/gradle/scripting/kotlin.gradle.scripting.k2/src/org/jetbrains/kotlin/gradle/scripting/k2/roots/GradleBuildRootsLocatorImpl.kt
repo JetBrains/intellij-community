@@ -7,7 +7,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleScriptInfo
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Legacy
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.New
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings

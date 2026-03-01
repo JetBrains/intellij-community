@@ -10,8 +10,11 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.ScrollPaneConstants;
+import java.awt.Color;
 
 public final class ExtendableEditorSupport {
   private static final Key<JPanel> BUTTON_CONTAINER = Key.create("EditorButtonContainer");

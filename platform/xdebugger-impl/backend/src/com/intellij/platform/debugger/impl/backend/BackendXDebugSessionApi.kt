@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.FrontendDocumentId
@@ -28,6 +28,7 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XExecutionStackGroup
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -56,6 +57,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.rejectedPromise
+import kotlin.collections.map
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto? {
@@ -152,7 +154,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     computeVariants: suspend (XSmartStepIntoHandler<*>, XSourcePosition) -> List<XSmartStepIntoVariant>?,
   ): List<XSmartStepIntoTargetDto>? {
     val session = sessionId.findValue() ?: return null
-    val scope = session.currentSuspendCoroutineScope ?: return null
+    val scope = session.getSuspendContextModel()?.coroutineScope ?: return null
     val handler = session.debugProcess.smartStepIntoHandler ?: return null
     val sourcePosition = session.topFramePosition ?: return null
     try {
@@ -191,20 +193,33 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean, changedByUser: Boolean) {
-    val session = sessionId.findValue() ?: return
-    val executionStackModel = executionStackId.findValue() ?: return
-    val stackFrameModel = frameId.findValue() ?: return
+  override suspend fun setCurrentStackFrame(
+    sessionId: XDebugSessionId,
+    suspendContextId: XSuspendContextId,
+    executionStackId: XExecutionStackId,
+    frameId: XStackFrameId,
+    isTopFrame: Boolean,
+  ) {
     withContext(Dispatchers.EDT) {
-      session.setCurrentStackFrame(executionStackModel.executionStack, stackFrameModel.stackFrame, isTopFrame, changedByUser = changedByUser)
+      val session = sessionId.findValue() ?: return@withContext
+      val suspendContextModel = suspendContextId.findValue() ?: return@withContext
+      val executionStackModel = executionStackId.findValue() ?: return@withContext
+      val stackFrameModel = frameId.findValue() ?: return@withContext
+
+      session.setCurrentStackFrame(suspendContextModel.suspendContext,
+                                   executionStackModel.executionStack,
+                                   stackFrameModel.stackFrame,
+                                   isTopFrame,
+                                   changedByUser = true)
     }
   }
 
-  override suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): Flow<XExecutionStacksEvent> {
+  override suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId, suspendContextId: XSuspendContextId?): Flow<XExecutionStackGroupsEvent> {
     val session = sessionId.findValue() ?: return emptyFlow()
+    val suspendContextModel = suspendContextId?.findValue()
     val scope = session.coroutineScope.childScopeCancelledOnSessionEvents("RunningExecutionStacksScope", session)
-    return createExecutionStacksEventFlow(session, scope) { container ->
-      session.debugProcess.computeRunningExecutionStacks(container)
+    return createExecutionStackGroupEventFlow(session, scope) { container ->
+      session.debugProcess.computeRunningExecutionStacks(container, suspendContextModel?.suspendContext)
     }
   }
 
@@ -223,6 +238,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   ) : Flow<XExecutionStacksEvent> {
     return channelFlow {
       attachAsChildTo(scope)
+      val events = Channel<suspend () -> XExecutionStacksEvent>(Channel.UNLIMITED)
       val container = object : XSuspendContext.XExecutionStackContainer {
         @Volatile
         var obsolete = false
@@ -232,20 +248,30 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
         }
 
         override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
-          val stacks = executionStacks.map { stack ->
-            stack.toRpc(scope, session)
-          }
-          trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
-          if (last) {
-            this@channelFlow.close()
+          events.trySend {
+            val stacks = executionStacks.map { stack ->
+              stack.toRpc(scope, session)
+            }
+            NewExecutionStacksEvent(stacks, last)
           }
         }
 
         override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-          trySend(XExecutionStacksEvent.ErrorOccurred(errorMessage))
+          events.trySend {
+            ErrorOccurredEvent(errorMessage)
+          }
         }
       }
+
       computeExecutionStacks(container)
+
+      for (event in events) {
+        val eventResult = event()
+        trySend(eventResult)
+        if (eventResult is NewExecutionStacksEvent && eventResult.last) {
+          this@channelFlow.close()
+        }
+      }
 
       awaitClose {
         container.obsolete = true
@@ -253,6 +279,66 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }.buffer(Channel.UNLIMITED)
   }
 
+  private fun createExecutionStackGroupEventFlow(
+    session: XDebugSessionImpl,
+    scope: CoroutineScope,
+    computeExecutionStacks: (XSuspendContext.XExecutionStackGroupContainer) -> Unit
+  ) : Flow<XExecutionStackGroupsEvent> {
+    return channelFlow {
+      attachAsChildTo(scope)
+      val events = Channel<suspend () -> XExecutionStackGroupsEvent>(Channel.UNLIMITED)
+      val container = object : XSuspendContext.XExecutionStackGroupContainer {
+        @Volatile
+        var obsolete = false
+
+        override fun isObsolete(): Boolean {
+          return obsolete
+        }
+
+        override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
+          events.trySend {
+            val stacks = executionStacks.map { stack ->
+              stack.toRpc(scope, session)
+            }
+            NewExecutionStacksEvent(stacks, last)
+          }
+        }
+
+        override fun addExecutionStackGroups(executionStackGroups: List<XExecutionStackGroup>, last: Boolean) {
+          events.trySend {
+            val groups = executionStackGroups.map { group ->
+              group.toRpc(scope, session)
+            }
+            NewExecutionStackGroupsEvent(groups, last)
+          }
+        }
+
+        override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
+          events.trySend {
+            ErrorOccurredEvent(errorMessage)
+          }
+        }
+      }
+      computeExecutionStacks(container)
+
+      for (event in events) {
+        val eventResult = event()
+        trySend(eventResult)
+        if (eventResult is NewExecutionStacksEvent && eventResult.last) {
+          this@channelFlow.close()
+        }
+        if (eventResult is NewExecutionStackGroupsEvent && eventResult.last) {
+          this@channelFlow.close()
+        }
+      }
+
+      awaitClose {
+        container.obsolete = true
+      }
+    }.buffer(Channel.UNLIMITED)
+  }
+
+  // TODO use a util function from the shared module
   private fun CoroutineScope.childScopeCancelledOnSessionEvents(name: String, session: XDebugSessionImpl): CoroutineScope =
     childScope(name).also { childScope ->
       val listener = object : XDebugSessionListener {
@@ -309,11 +395,11 @@ internal suspend fun createBackendDocument(
   }
 }
 
-internal fun XDebugSessionImpl.suspendData(): SuspendData? {
-  val suspendContext = suspendContext ?: return null
-  val suspendScope = currentSuspendCoroutineScope ?: return null
-  val suspendContextId = suspendContext.getOrStoreGlobally(suspendScope, this)
-  val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
+internal suspend fun XDebugSessionImpl.suspendData(): SuspendData? {
+  val currentSuspendContextModel = getSuspendContextModel() ?: return null
+  val suspendContext = currentSuspendContextModel.suspendContext
+  val suspendScope = currentSuspendContextModel.coroutineScope
+  val suspendContextDto = XSuspendContextDto(currentSuspendContextModel.id, suspendContext is XSteppingSuspendContext)
   val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, this)
   val stackFrameDto = currentStackFrame?.toRpc(suspendScope, this)
   val topSourcePositionDto = topFramePosition?.toRpc()
@@ -349,16 +435,26 @@ internal fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: XDebugSe
   )
 }
 
-internal fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackDto {
+internal suspend fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackDto {
   val (stack, id) = getOrStoreGlobally(coroutineScope, session)
   return XExecutionStackDto(
     id,
     stack.displayName,
     stack.icon?.rpcId(),
+    stack.iconFlow.map { it?.rpcId() }.toRpc(),
     stack.xExecutionStackDescriptorAsync?.asDeferred(),
     stack.topFrameAsync.thenApply { frame ->
       frame?.toRpc(coroutineScope, session)
     }.asDeferred()
+  )
+}
+
+internal suspend fun XExecutionStackGroup.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackGroupDto {
+  return XExecutionStackGroupDto(
+    groups.map { it.toRpc(coroutineScope, session) },
+    stacks.map { it.toRpc(coroutineScope, session) },
+    this.name,
+    this.icon?.rpcId(),
   )
 }
 
@@ -389,7 +485,7 @@ private fun XStackFrame.canDrop(session: XDebugSessionImpl): ThreeState {
 
 internal fun XStackFrame.computeTextPresentation(): XStackFramePresentation {
   val parts = mutableListOf<XStackFramePresentationFragment>()
-  customizeTextPresentation { fragment, attributes -> parts += XStackFramePresentationFragment(fragment, attributes.toRpc()) }
+  customizeTextPresentation { fragment, attributes -> parts += XStackFramePresentationFragment(fragment, attributes.rpcId()) }
   return XStackFramePresentation(parts, null, null)
 }
 

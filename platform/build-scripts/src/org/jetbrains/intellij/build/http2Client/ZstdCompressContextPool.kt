@@ -7,7 +7,7 @@ import io.netty.util.concurrent.FastThreadLocal
 
 // we cannot use Netty Recycler as we must close ZstdCompressCtx after use of pool
 internal class ZstdCompressContextPool(private val level: Int = 12) {
-  private val pool = object : FastThreadLocal<MutableList<ZstdCompressCtx>>() {
+  private val pool: FastThreadLocal<MutableList<ZstdCompressCtx>> = object : FastThreadLocal<MutableList<ZstdCompressCtx>>() {
     override fun initialValue(): MutableList<ZstdCompressCtx> = ArrayList()
 
     override fun onRemoval(value: MutableList<ZstdCompressCtx>) {

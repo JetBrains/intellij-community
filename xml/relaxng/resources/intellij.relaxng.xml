@@ -1,11 +1,14 @@
 <idea-plugin visibility="public">
   <module value="com.intellij.modules.relaxng"/>
   <dependencies>
-    <module name="intellij.xml.impl"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.impl"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
-    <module name="intellij.platform.backend"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

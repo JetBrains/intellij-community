@@ -32,9 +32,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -71,10 +73,13 @@ public final class FindPopupDirectoryChooser extends JPanel {
 
     ActionListener restartSearchListener = e -> myFindPopupPanel.scheduleResultsUpdate();
     myDirectoryComboBox.addActionListener(restartSearchListener);
+    myDirectoryComboBox.getAccessibleContext().setAccessibleName(FindBundle.message("find.usages.directory.combobox.accessible.name"));
 
     FixedSizeButton mySelectDirectoryButton = new FixedSizeButton(myDirectoryComboBox);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
     mySelectDirectoryButton.setMargin(JBInsets.emptyInsets());
+    mySelectDirectoryButton.getAccessibleContext().setAccessibleName(FindBundle.message(
+      "find.usages.select.directory.button.accessible.name"));
 
     // TODO: Remove this 'if' branch once FindKey is enabled by default. Keep only the 'else' branch.
     if (!FindKey.isEnabled()) {

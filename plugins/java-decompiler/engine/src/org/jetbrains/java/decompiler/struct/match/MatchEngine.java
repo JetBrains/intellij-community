@@ -10,7 +10,12 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Map.entry;
 

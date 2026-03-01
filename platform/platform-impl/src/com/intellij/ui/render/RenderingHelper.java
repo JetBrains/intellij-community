@@ -8,8 +8,12 @@ import com.intellij.ui.ComponentWithExpandableItems;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+import javax.swing.ScrollPaneConstants;
+import java.awt.Rectangle;
 import java.util.Collection;
 
 import static com.intellij.ui.components.JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS;

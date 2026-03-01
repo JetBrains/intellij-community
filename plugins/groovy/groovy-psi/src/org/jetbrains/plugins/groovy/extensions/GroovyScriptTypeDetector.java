@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class GroovyScriptTypeDetector {
 

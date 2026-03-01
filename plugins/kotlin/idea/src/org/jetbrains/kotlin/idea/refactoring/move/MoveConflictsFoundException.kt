@@ -2,4 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.move
 
+import org.jetbrains.kotlin.K1Deprecation
+
+@K1Deprecation
 class MoveConflictsFoundException : Exception()

@@ -18,7 +18,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.List;
 
 public class JavaDocRenderTest extends AbstractEditorTest {
@@ -131,6 +133,21 @@ public class JavaDocRenderTest extends AbstractEditorTest {
                              */
                             package some;""");
     updateRenderedItems(true);
+    verifyItem(0, 19, "whatever");
+  }
+
+  public void testPackageInfoToggle() {
+    EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(false);
+    configureFromFileText("package-info.java",
+                          """
+                            /**
+                             * whatever
+                             */
+                            <caret>package some;""");
+    updateRenderedItems(false);
+    verifyFoldingState();
+    toggleItem();
+    verifyFoldingState(0, 19);
     verifyItem(0, 19, "whatever");
   }
 

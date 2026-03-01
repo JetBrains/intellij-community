@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

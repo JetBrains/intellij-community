@@ -12,17 +12,23 @@ import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.impl.processPerProjectSupport
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 import kotlin.time.Duration.Companion.minutes
 
-private class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListener {
+internal class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListener {
   override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
     if (application.isUnitTestMode || !processPerProjectSupport().isEnabled()) {
       return
@@ -33,7 +39,7 @@ private class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListe
 }
 
 @OptIn(FlowPreview::class)
-private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener : ApplicationActivity {
+internal class ProcessPerProjectSharedConfigFolderApplicationInitializedListener : ApplicationActivity {
   override suspend fun execute() = coroutineScope {
     if (!processPerProjectSupport().isEnabled()) {
       return@coroutineScope

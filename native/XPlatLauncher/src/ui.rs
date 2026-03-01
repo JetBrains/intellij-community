@@ -1,25 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-#[cfg(target_os = "windows")]
-use {
-    std::ffi::CString,
-    windows::core::PCSTR,
-    windows::Win32::UI::WindowsAndMessaging
-};
-
-#[cfg(target_os = "macos")]
-use {
-    core_foundation::base::{CFOptionFlags, SInt32, TCFType},
-    core_foundation::date::CFTimeInterval,
-    core_foundation::string::{CFString, CFStringRef},
-    core_foundation::url::CFURLRef
-};
-
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-use {
-    log::error,
-    native_dialog::{MessageDialog, MessageType}
-};
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 const ERROR_TITLE: &str = "Cannot start the IDE";
 const ERROR_FOOTER: &str =
@@ -28,7 +7,7 @@ const ERROR_FOOTER: &str =
 
 pub fn show_error(gui: bool, error: anyhow::Error) {
     if gui {
-        show_alert_impl(ERROR_TITLE, &format!("{:?}\n\n{}", error, ERROR_FOOTER));
+        show_alert_impl(ERROR_TITLE, &format!("{error:?}\n\n{ERROR_FOOTER}"));
     } else {
         eprintln!("\n=== {ERROR_TITLE} ===\n{error:?}");
     }
@@ -37,6 +16,12 @@ pub fn show_error(gui: bool, error: anyhow::Error) {
 #[cfg(target_os = "windows")]
 #[allow(unused_results)]
 fn show_alert_impl(title: &str, text: &str) {
+    use {
+        std::ffi::CString,
+        windows::core::PCSTR,
+        windows::Win32::UI::WindowsAndMessaging
+    };
+
     let c_caption = CString::new(title).unwrap();
     let c_text = CString::new(text).unwrap();
     unsafe {
@@ -51,6 +36,13 @@ fn show_alert_impl(title: &str, text: &str) {
 #[cfg(target_os = "macos")]
 #[allow(non_snake_case, unused_variables, unused_results)]
 fn show_alert_impl(title: &str, text: &str) {
+    use {
+        core_foundation::base::{CFOptionFlags, SInt32, TCFType},
+        core_foundation::date::CFTimeInterval,
+        core_foundation::string::{CFString, CFStringRef},
+        core_foundation::url::CFURLRef
+    };
+
     extern "C" {
         fn CFUserNotificationDisplayAlert(
             timeout: CFTimeInterval,
@@ -77,13 +69,18 @@ fn show_alert_impl(title: &str, text: &str) {
 
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 fn show_alert_impl(title: &str, text: &str) {
+    use {
+        log::error,
+        native_dialog::{MessageDialog, MessageType}
+    };
+
     let result = MessageDialog::new()
         .set_title(title)
         .set_text(text)
         .set_type(MessageType::Error)
         .show_alert();
     if let Err(e) = result {
-        error!("Failed to show error message: {:?}", e);
-        eprintln!("{}\n{}", title, text);
+        error!("Failed to show error message: {e:?}");
+        eprintln!("{title}\n{text}");
     }
 }

@@ -16,7 +16,7 @@ import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.settings.pandoc.PandocExecutableDetector
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettings
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
-import java.util.*
+import java.util.Locale
 
 internal class MarkdownDocxExportProvider : MarkdownExportProvider {
   override val formatDescription: MarkdownFileActionFormat

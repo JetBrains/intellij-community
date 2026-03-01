@@ -8,8 +8,10 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaElementVisitor
 import com.intellij.psi.PsiAnnotation
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
+@K1Deprecation
 class KotlinJvmAnnotationInJavaInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : JavaElementVisitor() {
         private val KOTLIN_JVM_PACKAGE = "kotlin.jvm."

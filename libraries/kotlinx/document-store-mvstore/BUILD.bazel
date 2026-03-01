@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-kotlinx-document-store-mvstore-kotlinx-document-store-mvstore"],
   runtime_deps = ["@lib//:libraries-kotlinx-document-store-mvstore-kotlinx-document-store-mvstore"]
 )
+
+jvm_library(
+  name = "libraries-kotlinx-document-store-mvstore_test_lib",
+  module_name = "intellij.libraries.kotlinx.document.store.mvstore",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-kotlinx-document-store-mvstore-kotlinx-document-store-mvstore"],
+  runtime_deps = [":libraries-kotlinx-document-store-mvstore"]
+)
 ### auto-generated section `build intellij.libraries.kotlinx.document.store.mvstore` end

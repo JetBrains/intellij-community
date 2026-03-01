@@ -3,7 +3,12 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContributor;

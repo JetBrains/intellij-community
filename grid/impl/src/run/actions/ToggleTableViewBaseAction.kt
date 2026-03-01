@@ -2,10 +2,10 @@ package com.intellij.database.run.actions
 
 import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.color.GridColorModelImpl
+import com.intellij.database.datagrid.color.TableHeatmapColorLayer
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.database.datagrid.color.TableHeatmapColorLayer
 
 abstract class ToggleTableViewBaseAction : DumbAwareToggleAction() {
   override fun update(e: AnActionEvent) {

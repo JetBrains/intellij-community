@@ -8,8 +8,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.ui.IdeaDialog;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
 
 public class PythonPathDialog extends IdeaDialog {
   private final PythonPathEditor myEditor;

@@ -11,7 +11,7 @@ import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 

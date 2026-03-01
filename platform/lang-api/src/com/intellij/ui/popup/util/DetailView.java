@@ -8,7 +8,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 /**
  * @author zajac

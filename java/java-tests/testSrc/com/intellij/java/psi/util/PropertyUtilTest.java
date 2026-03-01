@@ -15,7 +15,11 @@
  */
 package com.intellij.java.psi.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;

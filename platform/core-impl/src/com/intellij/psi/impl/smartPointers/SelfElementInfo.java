@@ -10,10 +10,18 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -157,7 +165,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
                                                          @NotNull CodeInsightContext context,
                                                          @NotNull Project project,
                                                          @NotNull Language language) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
       if (child == null || !child.isValid()) return null;

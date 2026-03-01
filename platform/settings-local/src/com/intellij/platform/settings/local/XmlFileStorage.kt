@@ -15,7 +15,7 @@ import org.jdom.Element
 import java.io.StringReader
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeMap
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 

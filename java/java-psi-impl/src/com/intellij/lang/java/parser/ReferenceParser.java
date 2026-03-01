@@ -13,8 +13,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.java.parser.JavaParserUtil.*;
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.lang.java.parser.JavaParserUtil.emptyElement;
+import static com.intellij.lang.java.parser.JavaParserUtil.error;
+import static com.intellij.lang.java.parser.JavaParserUtil.expectOrError;
+import static com.intellij.lang.java.parser.JavaParserUtil.getLanguageLevel;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DIAMOND_TYPE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXTENDS_BOUND_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPORT_STATIC_REFERENCE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.JAVA_CODE_REFERENCE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.REFERENCE_PARAMETER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_PARAMETER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_PARAMETER_LIST;
 import static com.intellij.util.BitUtil.isSet;
 import static com.intellij.util.BitUtil.set;
 

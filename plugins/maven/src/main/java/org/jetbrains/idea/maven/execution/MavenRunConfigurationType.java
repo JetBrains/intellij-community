@@ -3,7 +3,11 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck;
-import com.intellij.execution.*;
+import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
@@ -31,7 +35,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 
@@ -118,9 +122,12 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
   }
 
   private static @Nullable String getMavenProjectName(final Project project, final MavenRunnerParameters runnerParameters) {
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(runnerParameters.getWorkingDirPath() + "/pom.xml");
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    if (!manager.isMavenizedProject()) return null;
+    final VirtualFile virtualFile =
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(runnerParameters.getWorkingDirPath() + "/pom.xml");
     if (virtualFile != null) {
-      MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(virtualFile);
+      MavenProject mavenProject = manager.findProject(virtualFile);
       if (mavenProject != null) {
         if (!StringUtil.isEmptyOrSpaces(mavenProject.getMavenId().getArtifactId())) {
           return mavenProject.getMavenId().getArtifactId();
@@ -219,7 +226,7 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
   }
 
   public static class MavenRunConfigurationFactory extends ConfigurationFactory {
-    public MavenRunConfigurationFactory(ConfigurationType type) {super(type);}
+    public MavenRunConfigurationFactory(ConfigurationType type) { super(type); }
 
     @Override
     public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
@@ -245,6 +252,9 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
       Project project = cfg.getProject();
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
 
+      if (!projectsManager.isMavenizedProject()) {
+        return cfg;
+      }
       List<MavenProject> projects = projectsManager.getProjects();
       if (projects.size() != 1) {
         return cfg;

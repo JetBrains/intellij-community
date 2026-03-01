@@ -7,7 +7,13 @@ import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.SegmentedButton
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 
 

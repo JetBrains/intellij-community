@@ -2,6 +2,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider;
+import com.intellij.debugger.impl.attach.JavaDebuggerConsoleFilterProvider;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.JavaParameters;

@@ -2,7 +2,7 @@ package fleet.modules.jvm
 
 import fleet.modules.api.FleetModule
 import fleet.modules.api.FleetModuleLayer
-import java.util.*
+import java.util.ServiceLoader
 import kotlin.reflect.KClass
 
 data class JvmFleetModuleLayer(val layer: ModuleLayer) : FleetModuleLayer {
@@ -20,7 +20,7 @@ data class JvmFleetModuleLayer(val layer: ModuleLayer) : FleetModuleLayer {
     }
   }
 
-  override fun findModule(name: String): FleetModule? {
+  override suspend fun findModule(name: String): FleetModule? {
     return layer
       .findModule(name)
       .map(::JvmFleetModule)

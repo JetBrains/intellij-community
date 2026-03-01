@@ -7,15 +7,22 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDraftNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 
 internal object GitLabMergeRequestDiscussionUtil {
-  fun createAllDiscussionsResolvedFlow(mergeRequest: GitLabMergeRequest): Flow<Boolean> {
+  /**
+   * @return `true` if any discussion in a merge request is unresolved. `false` otherwise.
+   */
+  fun createAnyDiscussionsUnresolvedFlow(mergeRequest: GitLabMergeRequest): Flow<Boolean> {
     return mergeRequest.discussions.map { it.getOrNull().orEmpty() }.flatMapLatestEach {
       combine(it.resolvable, it.resolved) { resolvable, resolved -> !resolvable || resolved }
     }.map { resolvedStates ->
-      resolvedStates.all {
-        it
+      resolvedStates.any {
+        !it
       }
     }
   }

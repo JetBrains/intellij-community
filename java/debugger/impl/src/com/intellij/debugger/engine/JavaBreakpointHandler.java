@@ -2,7 +2,14 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.impl.PrioritizedTask;
-import com.intellij.debugger.ui.breakpoints.*;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.breakpoints.JavaCollectionBreakpointType;
+import com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType;
+import com.intellij.debugger.ui.breakpoints.JavaFieldBreakpointType;
+import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
+import com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType;
+import com.intellij.debugger.ui.breakpoints.JavaWildcardMethodBreakpointType;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;

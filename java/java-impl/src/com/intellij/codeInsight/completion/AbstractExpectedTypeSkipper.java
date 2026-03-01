@@ -5,7 +5,14 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -33,7 +40,7 @@ public final class AbstractExpectedTypeSkipper extends CompletionPreselectSkippe
     if (location.getCompletionType() != CompletionType.SMART && !hasEmptyPrefix(location)) return Result.ACCEPT;
     if (DumbService.getInstance(location.getProject()).isDumb()) return Result.ACCEPT;
 
-    CompletionParameters parameters = location.getCompletionParameters();
+    BaseCompletionParameters parameters = location.getBaseCompletionParameters();
     PsiExpression expression = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);
     if (!(expression instanceof PsiNewExpression)) return Result.ACCEPT;
 
@@ -49,7 +56,7 @@ public final class AbstractExpectedTypeSkipper extends CompletionPreselectSkippe
       }
     }
 
-    toImplement += OverrideImplementExploreUtil.getMapToOverrideImplement(psiClass, true)
+    toImplement += (int)OverrideImplementExploreUtil.getMapToOverrideImplement(psiClass, true)
                                                .values()
                                                .stream()
                                                .filter(c -> ((PsiMethod)c.getElement()).hasModifierProperty(PsiModifier.ABSTRACT))
@@ -83,6 +90,6 @@ public final class AbstractExpectedTypeSkipper extends CompletionPreselectSkippe
   }
 
   private static boolean hasEmptyPrefix(CompletionLocation location) {
-    return location.getCompletionParameters().getPosition().getTextRange().getStartOffset() == location.getCompletionParameters().getOffset();
+    return location.getBaseCompletionParameters().getPosition().getTextRange().getStartOffset() == location.getBaseCompletionParameters().getOffset();
   }
 }

@@ -2,11 +2,9 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil

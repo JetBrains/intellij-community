@@ -13,9 +13,8 @@ import java.nio.file.Path
 
 internal class PyTemporarilyIgnoredFileProvider : IgnoredFileProvider {
 
-  companion object {
-    private val LOGGER = Logger.getInstance(PyTemporarilyIgnoredFileProvider::class.java)
-    private val IGNORED_ROOTS = mutableSetOf<Path>()
+  object Helper {
+    internal val IGNORED_ROOTS = mutableSetOf<Path>()
 
     internal fun ignoreRoot(path: Path, parent: Disposable) {
       Disposer.register(
@@ -31,9 +30,13 @@ internal class PyTemporarilyIgnoredFileProvider : IgnoredFileProvider {
     }
   }
 
+  companion object {
+    private val LOGGER = Logger.getInstance(PyTemporarilyIgnoredFileProvider::class.java)
+  }
+
   override fun isIgnoredFile(project: Project, filePath: FilePath): Boolean {
     val path = Path.of(filePath.path)
-    return IGNORED_ROOTS.any { path.startsWith(it) }
+    return Helper.IGNORED_ROOTS.any { path.startsWith(it) }
   }
 
   override fun getIgnoredFiles(project: Project): Set<IgnoredFileDescriptor> = emptySet()

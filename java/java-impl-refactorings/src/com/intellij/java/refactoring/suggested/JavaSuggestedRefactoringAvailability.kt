@@ -2,16 +2,29 @@
 package com.intellij.java.refactoring.suggested
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.suggested.*
+import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
+import com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
+import com.intellij.refactoring.suggested.SuggestedRefactoringData
+import com.intellij.refactoring.suggested.SuggestedRefactoringState
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import com.intellij.refactoring.suggested.SuggestedRenameData
 import com.siyeh.ig.psiutils.VariableNameGenerator
 
 class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactoringSupport) :

@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalElementOfSelf
 import org.jetbrains.kotlin.idea.completion.implCommon.OperatorNameCompletion
-import org.jetbrains.kotlin.idea.completion.lookups.factories.OperatorNameLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.OperatorNameLookupElementFactory
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 
 internal class K2OperatorNameCompletionContributor : K2SimpleCompletionContributor<KotlinTypeNameReferencePositionContext>(
@@ -27,6 +27,6 @@ internal class K2OperatorNameCompletionContributor : K2SimpleCompletionContribut
         OperatorNameCompletion.getApplicableOperators {
             context.prefixMatcher.prefixMatches(it)
         }.map(OperatorNameLookupElementFactory::createLookup)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 }

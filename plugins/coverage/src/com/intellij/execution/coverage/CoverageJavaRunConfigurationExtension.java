@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.coverage;
 
-import com.intellij.coverage.*;
+import com.intellij.coverage.CoverageBundle;
+import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageEngine;
+import com.intellij.coverage.CoverageRunnerData;
+import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.listeners.java.CoverageListener;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.Location;

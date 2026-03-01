@@ -4,7 +4,11 @@ package com.intellij.laf.win10
 import com.intellij.laf.win10.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.util.ui.JBUI.scale
-import java.awt.*
+import java.awt.AlphaComposite
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Graphics2D
+import java.awt.Rectangle
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.UIManager

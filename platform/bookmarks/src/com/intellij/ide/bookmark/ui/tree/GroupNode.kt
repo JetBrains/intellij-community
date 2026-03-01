@@ -2,7 +2,11 @@
 package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.Bookmark
+import com.intellij.ide.bookmark.BookmarkBundle
+import com.intellij.ide.bookmark.BookmarkGroup
+import com.intellij.ide.bookmark.BookmarkProvider
+import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeNodeCache

@@ -3,13 +3,17 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,7 +44,7 @@ public final class EditorScrollingPositionKeeper implements Disposable {
     int caretY = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line);
     if (visibleArea.height > 0 && (caretY + myEditor.getLineHeight() <= visibleArea.y || caretY >= (visibleArea.y + visibleArea.height))) {
       int topLeftCornerOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(visibleArea.getLocation()));
-      myTopLeftCornerMarker = myEditor.getDocument().createRangeMarker(topLeftCornerOffset, topLeftCornerOffset);
+      myTopLeftCornerMarker = myEditor.getUiDocument().createRangeMarker(topLeftCornerOffset, topLeftCornerOffset);
       myViewportShift = myEditor.offsetToXY(topLeftCornerOffset).y - visibleArea.y;
     }
     else {
@@ -90,7 +94,9 @@ public final class EditorScrollingPositionKeeper implements Disposable {
   }
 
   private void disposeMarker() {
-    if (myTopLeftCornerMarker != null) myTopLeftCornerMarker.dispose();
+    if (myTopLeftCornerMarker != null) {
+      myTopLeftCornerMarker.dispose();
+    }
   }
 
   /**

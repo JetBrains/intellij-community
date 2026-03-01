@@ -1,0 +1,13 @@
+// WITH_COROUTINES
+
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.SelectBuilder
+import kotlin.time.Duration.Companion.milliseconds
+
+fun test(builder: SelectBuilder<Unit>) {
+    builder.onTimeout(1000.milliseconds) {
+        doSomething()
+    }
+}
+
+fun doSomething() {}

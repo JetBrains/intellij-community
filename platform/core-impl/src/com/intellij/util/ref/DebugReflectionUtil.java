@@ -2,8 +2,6 @@
 package com.intellij.util.ref;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
@@ -22,7 +20,15 @@ import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public final class DebugReflectionUtil {
@@ -102,7 +108,7 @@ public final class DebugReflectionUtil {
 
   @VisibleForTesting
   @ApiStatus.Internal
-  public static boolean isInitialized(ClassLoader classLoader, @NotNull String rootName) {
+  public static boolean isLoaded(ClassLoader classLoader, @NotNull String rootName) {
     boolean isInitialized = false;
     if (classLoader == null) {
       return false;
@@ -205,8 +211,8 @@ public final class DebugReflectionUtil {
       catch (ClassCastException ignored) {
       }
     }
-    // check for objects leaking via static fields. process initialized classes only
-    if (root instanceof Class && isInitialized(((Class<?>)root).getClassLoader(), ((Class<?>)root).getName())) {
+    // check for objects leaking via static fields. process loaded classes only
+    if (root instanceof Class && isLoaded(((Class<?>)root).getClassLoader(), ((Class<?>)root).getName())) {
         for (Field field : getAllFields((Class<?>)root)) {
           if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
           try {

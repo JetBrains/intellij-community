@@ -5,7 +5,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Window;
 
 public interface ApplicationActivationListener {
   @Topic.AppLevel

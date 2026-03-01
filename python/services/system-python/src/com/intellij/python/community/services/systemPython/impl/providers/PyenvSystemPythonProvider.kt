@@ -6,16 +6,16 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.jetbrains.python.PyToolUIInfo
-import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
+import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-private class PyenvSystemPythonProvider : SystemPythonProvider {
+internal class PyenvSystemPythonProvider : SystemPythonProvider {
   private val LOGGER: Logger = Logger.getInstance(PyenvSystemPythonProvider::class.java)
 
   override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
@@ -44,7 +44,7 @@ private class PyenvSystemPythonProvider : SystemPythonProvider {
         val paths = entries
           .map { versionsDir.resolve(it).resolve("bin").asNioPath() }
 
-        return@withContext collectPythonsInPaths(eelApi, paths, listOf(python3NamePattern))
+        return@withContext collectPythonsInPaths( paths, listOf(python3NamePattern))
       }
       catch (e: RuntimeException) {
         LOGGER.error("failed to discover pyenv pythons", e)

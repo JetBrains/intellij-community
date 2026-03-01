@@ -75,11 +75,11 @@
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.JavaCatchBlockMover" id="catchBlock"
                           order="before statement"/>
 
-    <completion.frontendFriendlyInsertHandler handler="com.intellij.codeInsight.completion.method.DiamondInsertHandler"/>
-    <completion.frontendFriendlyInsertHandler handler="com.intellij.codeInsight.completion.method.RefStartInsertHandler"/>
-    <completion.frontendFriendlyInsertHandler handler="com.intellij.codeInsight.completion.method.FrontendFriendlyParenthesesInsertHandler"/>
-    <completion.frontendFriendlyInsertHandler handler="com.intellij.codeInsight.completion.method.MethodCallInstallerHandler"/>
-    <completion.frontendFriendlyInsertHandler handler="com.intellij.codeInsight.completion.method.NegationInsertHandler"/>
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.method.DiamondInsertHandler"/>
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.method.RefStartInsertHandler"/>
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.method.FrontendFriendlyParenthesesInsertHandler"/>
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.method.MethodCallInstallerHandler"/>
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.method.NegationInsertHandler"/>
 
     <registryKey key="code.style.package.entry.table.check.compatibility"
                  defaultValue="true"
@@ -94,6 +94,10 @@
                              implementationClass="com.intellij.codeInsight.hint.LambdaDeclarationRangeHandler"/>
     <declarationRangeHandler key="com.intellij.psi.PsiMethod"
                              implementationClass="com.intellij.codeInsight.hint.MethodDeclarationRangeHandler"/>
+
+    <codeInsight.completion.command.factory language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory" />
+
+    <completion.frontendFriendlyInsertHandler target="com.intellij.codeInsight.completion.FrontendFriendlyOverridableSpaceInsertHandler"/>
 
   </extensions>
 </idea-plugin>

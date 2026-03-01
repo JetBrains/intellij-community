@@ -73,7 +73,6 @@ class Distribution:
     display_option_names: ClassVar[list[str]]
     negative_opt: ClassVar[dict[str, str]]
     verbose: bool
-    dry_run: bool
     help: bool
     command_packages: str | list[str] | None
     script_name: StrPath | None

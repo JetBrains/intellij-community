@@ -4,6 +4,7 @@ package org.jetbrains.idea.eclipse
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.idea.eclipse.codeStyleMapping.buildEclipseCodeStyleMappingTo
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.MappingDefinitionElement
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.UnexpectedIncomingValue
@@ -42,7 +43,15 @@ class EclipseCodeStyleMappingDefinitionTest : LightPlatformTestCase() {
   }
 
   fun testInvalidEclipseWrapValue() {
-    assertThrows(UnexpectedIncomingValue::class.java) { EclipseWrapValue.decode(6) }
-    assertThrows(UnexpectedIncomingValue::class.java) { EclipseWrapValue.decode(96) }
+    assertThrows(UnexpectedIncomingValue::class.java, object : ThrowableRunnable<Throwable> {
+      override fun run() {
+        EclipseWrapValue.decode(6)
+      }
+    })
+    assertThrows(UnexpectedIncomingValue::class.java, object : ThrowableRunnable<Throwable> {
+      override fun run() {
+        EclipseWrapValue.decode(96)
+      }
+    })
   }
 }

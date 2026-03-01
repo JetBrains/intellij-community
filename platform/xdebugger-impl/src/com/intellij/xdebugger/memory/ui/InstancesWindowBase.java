@@ -9,7 +9,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
 
 public abstract class InstancesWindowBase extends DialogWrapper {
 

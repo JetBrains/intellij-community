@@ -17,7 +17,11 @@ package org.jetbrains.uast.java
 
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaToken
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.uast.UDeclaration

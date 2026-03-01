@@ -7,7 +7,11 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 

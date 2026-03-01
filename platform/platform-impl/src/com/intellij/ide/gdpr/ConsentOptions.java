@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
+import com.intellij.diagnostic.ExceptionAutoReportUtil;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.idea.AppMode;
 import com.intellij.l10n.LocalizationUtil;
@@ -12,14 +13,29 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import kotlin.Pair;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
@@ -38,6 +54,7 @@ public final class ConsentOptions implements ModificationTracker {
   private static final String TRACE_DATA_COLLECTION_NON_COM_OPTION_ID = "ai.trace.data.collection.and.use.noncom.policy";
   private static final String TRACE_DATA_COLLECTION_COM_OPTION_ID = "ai.trace.data.collection.and.use.com.policy";
   private static final String TRACE_DATA_COLLECTION_OPTION_ID = "ai.trace.data.collection.and.use.policy";
+  private static final String EA_AUTO_REPORT_OPTION_ID = "ea.auto.report";
   private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
 
   private final BooleanSupplier myIsEap;
@@ -197,6 +214,10 @@ public final class ConsentOptions implements ModificationTracker {
     return getDefaultConsent(STATISTICS_OPTION_ID);
   }
 
+  public @Nullable Consent getDefaultErrorAutoReportConsent() {
+    return getDefaultConsent(EA_AUTO_REPORT_OPTION_ID);
+  }
+
   public static @NotNull Predicate<Consent> condUsageStatsConsent() {
     return consent -> STATISTICS_OPTION_ID.equals(consent.getId());
   }
@@ -230,6 +251,10 @@ public final class ConsentOptions implements ModificationTracker {
     return consent -> TRACE_DATA_COLLECTION_OPTION_ID.equals(consent.getId());
   }
 
+  public static @NotNull Predicate<Consent> condEAAutoReportConsent() {
+    return consent -> EA_AUTO_REPORT_OPTION_ID.equals(consent.getId());
+  }
+
   /**
    * Warning: For JetBrains products this setting is relevant for release builds only.
    * Statistics sending for JetBrains EAP builds is managed by a separate flag.
@@ -253,6 +278,10 @@ public final class ConsentOptions implements ModificationTracker {
   @TestOnly
   public void setAiDataCollectionPermission(boolean permitted) {
     setPermission(AI_DATA_COLLECTION_OPTION_ID, permitted);
+  }
+
+  public void setEAAutoReportAllowed(boolean permitted) {
+    setPermission(EA_AUTO_REPORT_OPTION_ID, permitted);
   }
 
   private Permission getPermission(String consentId) {
@@ -333,10 +362,16 @@ public final class ConsentOptions implements ModificationTracker {
     if (isEAP()) {
       // for EA builds there is a different option for statistics sending management
       allDefaults.remove(STATISTICS_OPTION_ID);
+      // auto reporting exceptions in EAPs is controlled in `ExceptionEAPAutoReportManager`
+      allDefaults.remove(EA_AUTO_REPORT_OPTION_ID);
     }
     else {
       // EAP feedback consent is relevant to EA builds only
       allDefaults.remove(lookupConsentID(EAP_FEEDBACK_OPTION_ID));
+    }
+
+    if (!ExceptionAutoReportUtil.isAutoReportVisible()) {
+      allDefaults.remove(EA_AUTO_REPORT_OPTION_ID);
     }
 
     for (var it = allDefaults.entrySet().iterator(); it.hasNext(); ) {
@@ -388,6 +423,8 @@ public final class ConsentOptions implements ModificationTracker {
   private @Nullable Consent getDefaultConsent(String consentId) {
     var defaultConsents = loadDefaultConsents();
     var consentMap = defaultConsents.get(consentId);
+    if (consentMap == null) return null;
+
     var defaultConsent = consentMap.get(getDefaultLocale());
     if (defaultConsent == null) return null;
     var localizedConsent = consentMap.get(getCurrentLocale());

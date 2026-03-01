@@ -4,8 +4,6 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.RunManagerListener
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.CompoundRunConfiguration
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.execution.ExecutionEngine
 import com.intellij.execution.multilaunch.execution.ExecutionModel
@@ -14,6 +12,8 @@ import com.intellij.execution.multilaunch.execution.executables.impl.RunConfigur
 import com.intellij.execution.multilaunch.state.ExecutableRowSnapshotFactory
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.CoroutineScope
 
 class MultiLaunchServicesRefreshActivity : ProjectActivity {

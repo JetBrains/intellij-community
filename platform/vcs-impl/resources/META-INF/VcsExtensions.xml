@@ -38,6 +38,7 @@
     <!-- preload only for performance reasons -->
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl" preload="notHeadless"/>
+    <dependencyCollector kind="vcs" implementation="com.intellij.openapi.vcs.impl.MissingVcsPluginAdvertiser"/>
     <!--suppress LightServiceMigrationXML - see DefaultProjectStoreTest (IDE needs to know correct Storage without service being loaded) -->
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.OptionsAndConfirmationsHolder"/>
     <projectService serviceInterface="com.intellij.vcs.console.VcsConsoleTabService"
@@ -96,8 +97,10 @@
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.update.ShowUpdatedDiffActionProvider"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.actions.CompareRevisionsAction"/>
-    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider"/>
-    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider
+      implementation="com.intellij.openapi.vcs.changes.actions.diff.ChangesViewShowDiffActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+      implementation="com.intellij.openapi.vcs.changes.actions.diff.ChangesViewShowDiffActionProvider"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase$ShowStandaloneDiff"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.ShowEditorDiffPreviewActionProvider" order="first"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction" order="last"/>
@@ -137,7 +140,6 @@
     <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.SubjectBodySeparationInspection"/>
     <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.SubjectLimitInspection"/>
     <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.BodyLimitInspection"/>
-    <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.CommitMessageSpellCheckingInspection"/>
 
     <referenceProviderType key="commentsReferenceProvider"
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider"/>
@@ -168,11 +170,9 @@
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.vcs.actions.VcsColorsPageFactory"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangesViewI"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangesViewManager"
-                    testServiceImplementation="com.intellij.openapi.vcs.changes.DummyChangesView"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangesViewManager"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewContentI"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager"
-                    testServiceImplementation="com.intellij.openapi.vcs.changes.ui.DummyChangesViewContentManager"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager"/>
 
     <toolWindow id="Commit" anchor="left" icon="AllIcons.Toolwindows.ToolWindowCommit"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.CommitToolWindowFactory"/>
@@ -185,6 +185,9 @@
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.ChangeViewToolWindowFactory"/>
     <registryKey defaultValue="true" description="Show Version Control tool window in project without VCS" key="vcs.empty.toolwindow.show"/>
+    <registryKey key="vcs.more.plugins.search.query"
+                 defaultValue="/tag:&quot;VCS Integration&quot; /vendor:&quot;JetBrains s.r.o.&quot;"
+                 description="Search query for 'More VCS plugins' link in VCS dialogs"/>
 
     <changesViewContent tabName="Repository"
                         className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
@@ -271,7 +274,7 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI"
                     serviceImplementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.ActiveChangeListTracker"
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.ActiveChangeListTracker" open="true"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ActiveChangeListTrackerImpl"/>
     <gutterMarkPreprocessor implementation="com.intellij.openapi.vcs.ex.ClientIdGutterIconMerge"/>
 
@@ -311,7 +314,7 @@
     <notificationGroup id="Vcs Notifications" displayType="BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.notifications"/>
     <notificationGroup id="Vcs Silent Notifications" displayType="NONE" bundle="messages.VcsBundle" key="notification.group.vcs.silent.notifications"/>
 
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy" open="true"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
 
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$ModuleVcsDetectorStartUpActivity"/>
@@ -421,8 +424,6 @@
               topic="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener"/>
     <listener class="com.intellij.openapi.vcs.actions.AnnotationsLineStatusTrackerListener"
               topic="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener"/>
-    <listener class="com.intellij.vcs.commit.ChangesViewToolWindowRefresher"
-              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </projectListeners>
 </idea-plugin>
 

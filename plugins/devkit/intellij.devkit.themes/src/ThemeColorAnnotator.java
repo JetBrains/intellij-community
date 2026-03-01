@@ -2,7 +2,9 @@
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonElementGenerator;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.impl.JsonPsiImplUtils;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -23,16 +25,17 @@ import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorLineMarkerProvider;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 final class ThemeColorAnnotator implements Annotator, DumbAware {
@@ -42,13 +45,15 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
   private static final int HEX_COLOR_LENGTH_RGB = 7;
   private static final int HEX_COLOR_LENGTH_RGBA = 9;
 
+  private static final Pattern NAMED_COLOR_MASK = Pattern.compile("[\\w-]+");
+
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (!isColorLineMarkerProviderEnabled() || !isTargetElement(element, holder.getCurrentAnnotationSession().getFile())) return;
 
     JsonStringLiteral literal = (JsonStringLiteral)element;
     holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-    .gutterIconRenderer(new MyRenderer(literal.getValue(), literal)).create();
+      .gutterIconRenderer(new MyRenderer(literal.getValue(), literal)).create();
   }
 
   private static boolean isColorLineMarkerProviderEnabled() {
@@ -68,17 +73,16 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
     return isColorCode(text) || isNamedColor(text);
   }
 
-  private static boolean isNamedColor(String text) {
-    return StringUtil.isLatinAlphanumeric(text);
+  static boolean isNamedColor(String text) {
+    return NAMED_COLOR_MASK.matcher(text).matches();
   }
 
-  private static boolean isColorCode(@Nullable String text) {
+  static boolean isColorCode(@Nullable String text) {
     if (!StringUtil.startsWithChar(text, '#')) return false;
     //noinspection ConstantConditions - StringUtil#startsWithChar checks for null
     if (text.length() != HEX_COLOR_LENGTH_RGB && text.length() != HEX_COLOR_LENGTH_RGBA) return false;
     return COLOR_HEX_PATTERN_RGB.matcher(text).matches() || COLOR_HEX_PATTERN_RGBA.matcher(text).matches();
   }
-
 
   private static final class MyRenderer extends GutterIconRenderer implements DumbAware {
     private static final int ICON_SIZE = 12;
@@ -188,16 +192,34 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
       }
     }
 
-    private @Nullable Color findNamedColor(String colorText) {
-      final PsiFile file = myLiteral.getContainingFile();
+    private @Nullable Color findNamedColor(@NotNull String colorText) {
+      PsiFile file = myLiteral.getContainingFile();
       if (!(file instanceof JsonFile)) return null;
-      final List<JsonProperty> colors = ThemeJsonUtil.getNamedColors((JsonFile)file);
-      final JsonProperty namedColor = ContainerUtil.find(colors, property -> property.getName().equals(colorText));
-      if (namedColor == null) return null;
 
-      final JsonValue value = namedColor.getValue();
-      if (!(value instanceof JsonStringLiteral)) return null;
-      return parseColor(((JsonStringLiteral)value).getValue());
+      Map<String, ColorValueDefinition> namedColorsMap = ThemeJsonUtil.getNamedColorsMap((JsonFile)file);
+      String colorValue = findNamedColorValue(colorText, namedColorsMap, new HashSet<>());
+      if (colorValue == null || !colorValue.startsWith("#")) {
+        return null;
+      }
+
+      return parseColor(colorValue);
+    }
+
+    private static @Nullable String findNamedColorValue(@NotNull String colorName,
+                                                        @NotNull Map<String, ColorValueDefinition> namedColorsMap,
+                                                        @NotNull Set<String> visited) {
+      if (!visited.add(colorName)) return null; // cycle detected in resolve!
+
+      var def = namedColorsMap.get(colorName);
+      if (def == null) return null;
+
+      var colorValue = def.colorValue();
+
+      if (colorValue.startsWith("#")) {
+        return colorValue;
+      }
+
+      return findNamedColorValue(colorValue, namedColorsMap, visited);
     }
 
     private static boolean isRgbaColorHex(@NotNull String colorHex) {

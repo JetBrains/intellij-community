@@ -7,9 +7,6 @@ my-app.commonMain
 my-app.commonTest
     targetPlatform = JS/JVM (17)
 
-my-app.includedIntoJvm
-    targetPlatform = JVM (1.8)
-
 my-app.jsMain
     targetPlatform = JS
 

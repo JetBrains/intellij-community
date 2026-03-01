@@ -10,3 +10,5 @@ class Foo(val prop1 : String?, val prop2 : String?){
 // ABSENT: { itemText:"prop2" }
 // EXIST: { itemText:"!! prop2" }
 // EXIST: { itemText:"?: prop2" }
+
+// IGNORE_K2

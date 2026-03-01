@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +15,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.time.Duration
-import java.util.*
+import java.util.Date
 
 @Service(Service.Level.PROJECT)
 @State(name = "GitHubPullRequestState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])

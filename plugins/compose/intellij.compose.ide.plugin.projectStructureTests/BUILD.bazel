@@ -17,10 +17,13 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:junit4",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ]
+  ],
+  runtime_deps = [":ide-plugin-projectStructureTests"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.projectStructureTests` end
 

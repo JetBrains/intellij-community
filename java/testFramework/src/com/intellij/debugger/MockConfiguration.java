@@ -2,14 +2,18 @@
 package com.intellij.debugger;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ModuleRunConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class MockConfiguration implements ModuleRunConfiguration {
   private final Project project;

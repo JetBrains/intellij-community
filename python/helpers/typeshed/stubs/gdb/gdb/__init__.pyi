@@ -76,7 +76,7 @@ _ValueOrInt: TypeAlias = Value | int
 
 @disjoint_base
 class Value:
-    address: Value
+    address: Value | None
     is_optimized_out: bool
     type: Type
     dynamic_type: Type

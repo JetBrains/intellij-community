@@ -3,7 +3,12 @@ package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.lookupDocPopupMinHeight
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.lookupDocPopupWidth
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupEx
+import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI

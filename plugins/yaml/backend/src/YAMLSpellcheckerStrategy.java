@@ -49,6 +49,9 @@ public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implem
           type == YAMLTokenTypes.TEXT ||
           type == YAMLTokenTypes.SCALAR_KEY ||
           type == YAMLTokenTypes.COMMENT) {
+        if (useTextLevelSpellchecking()) {
+          return EMPTY_TOKENIZER;
+        }
 
         if (isInjectedLanguageFragment(element.getParent())) {
           return EMPTY_TOKENIZER;
@@ -58,15 +61,11 @@ public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implem
           return EMPTY_TOKENIZER;
         }
 
-        if (useTextLevelSpellchecking() &&
-            (type == YAMLTokenTypes.SCALAR_KEY ||
-             type == YAMLTokenTypes.TEXT ||
-             type == YAMLTokenTypes.SCALAR_TEXT ||
-             type == YAMLTokenTypes.SCALAR_LIST)) {
-          return EMPTY_TOKENIZER;
-        }
         return TEXT_TOKENIZER;
       } else if (element instanceof YAMLQuotedText) {
+        if (useTextLevelSpellchecking()) {
+          return EMPTY_TOKENIZER;
+        }
         if (isInjectedLanguageFragment(element)) {
           return EMPTY_TOKENIZER;
         }

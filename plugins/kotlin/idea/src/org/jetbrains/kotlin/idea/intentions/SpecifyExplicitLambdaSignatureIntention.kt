@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isError
 
+@K1Deprecation
 open class SpecifyExplicitLambdaSignatureIntention : SelfTargetingOffsetIndependentIntention<KtLambdaExpression>(
     KtLambdaExpression::class.java, KotlinBundle.messagePointer("specify.explicit.lambda.signature")
 ), LowPriorityAction {

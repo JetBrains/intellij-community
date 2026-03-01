@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.DefaultTreeModel;
 
 @ApiStatus.Internal

@@ -2,9 +2,14 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.nullable.NullabilityAnnotationWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -40,14 +45,45 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JVMElementFactories;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSyntheticClass;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -60,11 +96,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser.*;
+import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser.JavaOverrideImplementMemberChooserContainer;
+import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser.create;
+import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser.getChooserTitle;
+import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser.prepare;
 
 public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private static final Logger LOG = Logger.getInstance(OverrideImplementUtil.class);
@@ -160,9 +205,19 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       results.add(result);
     }
 
+    results.forEach(OverrideImplementUtil::deleteAnnotationsRedundantInContainerScope);
     results.removeIf(m -> aClass.findMethodBySignature(m, false) != null);
 
     return results;
+  }
+
+  private static void deleteAnnotationsRedundantInContainerScope(PsiMethod method) {
+    for (PsiAnnotation annotation : PsiTreeUtil.findChildrenOfType(method, PsiAnnotation.class)) {
+      var wrapper = NullabilityAnnotationWrapper.from(annotation);
+      if (wrapper != null && wrapper.findContainerInfoForRedundantAnnotation() != null) {
+        annotation.delete();
+      }
+    }
   }
 
   private static @NotNull PsiClass copyClass(@NotNull PsiClass aClass) {

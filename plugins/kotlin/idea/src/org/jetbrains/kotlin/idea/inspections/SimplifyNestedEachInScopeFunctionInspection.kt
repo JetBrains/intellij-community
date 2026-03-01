@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
@@ -17,7 +18,24 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotatedExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.callExpressionVisitor
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.FUNCTION
 import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
@@ -25,6 +43,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
 
     private abstract class ReferenceTreeVisitor : KtTreeVisitorVoid() {

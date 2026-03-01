@@ -1,6 +1,5 @@
 package com.intellij.sh.formatter
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 

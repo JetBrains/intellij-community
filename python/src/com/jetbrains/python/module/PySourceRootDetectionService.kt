@@ -86,6 +86,12 @@ class PySourceRootDetectionService(
         val module = ModuleUtil.findModuleForFile(sourceRoot, project) ?: return@writeAction
         val model = ModuleRootManager.getInstance(module).modifiableModel
         val entry = MarkRootsManager.findContentEntry(model, sourceRoot) ?: return@writeAction
+        // In general, `markAsSourceRoot` is called only for folders that are not source roots yet.
+        // Double-check in case this method was called twice before the folder was marked as a source root.
+        val isAlreadyMarkedAsSourceRoot = entry.getSourceFolders().any { it.file == sourceRoot }
+        if (isAlreadyMarkedAsSourceRoot) {
+          return@writeAction
+        }
         entry.addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
         model.commit()
 

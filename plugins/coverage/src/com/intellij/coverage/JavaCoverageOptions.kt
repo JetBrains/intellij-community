@@ -15,7 +15,7 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.ArrayUtil
 
-private class JavaCoverageOptions(private val project: Project) : UiDslUnnamedConfigurable.Simple(), CoverageOptions {
+internal class JavaCoverageOptions(private val project: Project) : UiDslUnnamedConfigurable.Simple(), CoverageOptions {
   private val coverageOptionsProvider = JavaCoverageOptionsProvider.getInstance(project)
 
   override fun Panel.createContent() {

@@ -1,8 +1,13 @@
 package com.intellij.lambda.testFramework.testApi.editor
 
 import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.lambda.testFramework.testApi.*
+import com.intellij.lambda.testFramework.testApi.callActionByShortcut
+import com.intellij.lambda.testFramework.testApi.closeDialog
+import com.intellij.lambda.testFramework.testApi.pressKeyStroke
 import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
+import com.intellij.lambda.testFramework.testApi.waitCopiedExactly
+import com.intellij.lambda.testFramework.testApi.waitCopiedNonEmptyString
+import com.intellij.lambda.testFramework.testApi.waitForDialogWrapper
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState

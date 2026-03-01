@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.DnDTarget;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,11 +35,24 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 class TabContentLayout extends ContentLayout implements MorePopupAware {
   static final int MORE_ICON_BORDER = 6;
@@ -84,7 +98,10 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       @Override
       public void paint(Graphics g) {
         g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
-        RectanglePainter.FILL.paint((Graphics2D)g, 0, 0, getWidth(), getHeight(), null);
+        Integer arc = getDropRoundValue();
+        int offsetTop = arc == null ? 0 : JBUI.scale(6);
+        int offsetBottom = arc == null ? 0 : offsetTop * 2 + JBUI.scale(1);
+        RectanglePainter.FILL.paint((Graphics2D)g, 0, offsetTop, getWidth(), getHeight() - offsetBottom, arc);
       }
 
       @Override
@@ -97,6 +114,14 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     for (int i = 0; i < contentManager.getContentCount(); i++) {
       contentAdded(new ContentManagerEvent(this, contentManager.getContent(i), i));
     }
+  }
+
+  private static @Nullable Integer getDropRoundValue() {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null && customization.isRoundedTabDuringDrag()) {
+      return JBUI.CurrentTheme.MainToolbar.Button.hoverArc().get();
+    }
+    return null;
   }
 
   @Override
@@ -373,11 +398,11 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
       if (toDrawTabs == TabsDrawMode.PAINT_ALL) {
         if (each.isSelected()) {
-          tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, each.getTabColor(),
+          tabPainter.paintSelectedTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(),
                                       ui.window.isActive() && ui.isActive(), each.isHovered());
         }
         else {
-          tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, each.getTabColor(),
+          tabPainter.paintTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(),
                               ui.window.isActive(), each.isHovered());
         }
       }
@@ -504,5 +529,18 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   public static int defaultTabLayoutStart() {
     return ExperimentalUI.isNewUI() ? 0 : TAB_LAYOUT_START;
+  }
+
+  public JBTabsPosition getTabsPosition() {
+    return JBTabsPosition.top;
+  }
+
+  public int getTabHOffsetUnscaled() {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization == null) {
+      return 0;
+    }
+
+    return customization.getTabHOffsetUnscaled(UISettings.getInstance().getCompactMode(), getTabsPosition());
   }
 }

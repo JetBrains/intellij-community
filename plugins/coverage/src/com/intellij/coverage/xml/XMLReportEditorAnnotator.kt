@@ -11,7 +11,7 @@ import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.rt.coverage.data.LineData
 import com.intellij.rt.coverage.report.XMLProjectData.LineInfo
 import it.unimi.dsi.fastutil.ints.Int2IntMap
-import java.util.*
+import java.util.TreeMap
 
 internal class XMLReportEditorAnnotator(psiFile: PsiFile?, editor: Editor?) : CoverageEditorAnnotatorImpl(psiFile, editor) {
   override fun collectLinesInFile(suite: CoverageSuitesBundle,

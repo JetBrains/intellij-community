@@ -4,7 +4,14 @@ package com.intellij.filePrediction.logger
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidate
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.LongListEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 

@@ -4,7 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.ui.IconManager;
 import org.intellij.lang.annotations.MagicConstant;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface Iconable {
   int ICON_FLAG_VISIBILITY = 0x0001;

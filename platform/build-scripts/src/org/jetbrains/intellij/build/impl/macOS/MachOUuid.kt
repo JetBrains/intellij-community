@@ -12,7 +12,7 @@ import java.nio.channels.SeekableByteChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.UUID
 
 /**
  * Patches UUID value in the Mach-O [executable] with the [MacDistributionCustomizer.getDistributionUUID].

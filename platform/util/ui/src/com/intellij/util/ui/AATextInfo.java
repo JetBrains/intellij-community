@@ -5,8 +5,8 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.RenderingHints;
 
 /**
  * This utility class is used to multiplex AA requests addressing JDK8 or earlier JDK versions.

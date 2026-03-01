@@ -43,8 +43,16 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Insets
 import java.awt.KeyboardFocusManager
-import java.awt.event.*
-import javax.swing.*
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.KeyEvent
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.KeyStroke
+import javax.swing.LayoutFocusTraversalPolicy
 
 object CodeReviewCommentUIUtil {
 

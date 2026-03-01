@@ -50,37 +50,46 @@ object ReviewDetailsUIUtil {
     ReviewState.NEED_REVIEW -> Avatar.Color.NEED_REVIEW_BORDER
   }
 
-  private const val OLD_UI_LEFT_GAP = 14
-  private const val NEW_UI_LEFT_GAP = 16
+  private const val TOP_GAP = 16
+  private const val TOP_GAP_OLD_UI = 12
+  private const val BOTTOM_GAP = 16
+  private const val BOTTOM_GAP_OLD_UI = 15
+  private const val LEFT_GAP = 16
+  private const val LEFT_GAP_OLD_UI = 14
   private const val RIGHT_GAP = 14
+
+  internal val topGap: Int get() = if (ExperimentalUI.isNewUI()) TOP_GAP else TOP_GAP_OLD_UI
+  internal val bottomGap: Int get() = if (ExperimentalUI.isNewUI()) BOTTOM_GAP else BOTTOM_GAP_OLD_UI
+  internal val leftGap: Int get() = if (ExperimentalUI.isNewUI()) LEFT_GAP else LEFT_GAP_OLD_UI
+  internal val rightGap: Int get() = if (ExperimentalUI.isNewUI()) RIGHT_GAP else 0
 
   @Suppress("UseDPIAwareInsets")
   val TITLE_GAPS: Insets
     get() = CollaborationToolsUIUtil.getInsets(
-      oldUI = Insets(12, OLD_UI_LEFT_GAP, 8, RIGHT_GAP),
-      newUI = Insets(16, NEW_UI_LEFT_GAP, 16, RIGHT_GAP),
+      oldUI = Insets(TOP_GAP_OLD_UI, LEFT_GAP_OLD_UI, 8, RIGHT_GAP),
+      newUI = Insets(TOP_GAP, LEFT_GAP, 16, RIGHT_GAP),
     )
 
   @Suppress("UseDPIAwareInsets")
   val COMMIT_POPUP_BRANCHES_GAPS: Insets
     get() = CollaborationToolsUIUtil.getInsets(
-      oldUI = Insets(0, OLD_UI_LEFT_GAP, 0, RIGHT_GAP),
-      newUI = Insets(0, NEW_UI_LEFT_GAP, 4, RIGHT_GAP),
+      oldUI = Insets(0, LEFT_GAP_OLD_UI, 0, RIGHT_GAP),
+      newUI = Insets(0, LEFT_GAP, 4, RIGHT_GAP),
     )
 
   @Suppress("UseDPIAwareInsets")
 
   val COMMIT_INFO_GAPS: Insets
     get() = CollaborationToolsUIUtil.getInsets(
-      oldUI = Insets(0, OLD_UI_LEFT_GAP, 12, RIGHT_GAP),
-      newUI = Insets(0, NEW_UI_LEFT_GAP, 12, RIGHT_GAP),
+      oldUI = Insets(0, LEFT_GAP_OLD_UI, 12, RIGHT_GAP),
+      newUI = Insets(0, LEFT_GAP, 12, RIGHT_GAP),
     )
 
   @Suppress("UseDPIAwareInsets")
   val STATUSES_GAPS: Insets
     get() = CollaborationToolsUIUtil.getInsets(
-      oldUI = Insets(6, OLD_UI_LEFT_GAP, 10, RIGHT_GAP),
-      newUI = Insets(6, NEW_UI_LEFT_GAP, 10, RIGHT_GAP),
+      oldUI = Insets(6, LEFT_GAP_OLD_UI, 10, RIGHT_GAP),
+      newUI = Insets(6, LEFT_GAP, 10, RIGHT_GAP),
     )
 
   private const val BUTTON_PADDING = 2
@@ -88,8 +97,8 @@ object ReviewDetailsUIUtil {
   @Suppress("UseDPIAwareInsets")
   val ACTIONS_GAPS: Insets
     get() = CollaborationToolsUIUtil.getInsets(
-      oldUI = Insets(0, 11, 15, RIGHT_GAP),
-      newUI = Insets(0, NEW_UI_LEFT_GAP - BUTTON_PADDING, 18, RIGHT_GAP),
+      oldUI = Insets(0, LEFT_GAP_OLD_UI - BUTTON_PADDING, BOTTOM_GAP_OLD_UI, RIGHT_GAP),
+      newUI = Insets(0, LEFT_GAP - BUTTON_PADDING, BOTTOM_GAP, RIGHT_GAP),
     )
 
   val STATUSES_MAX_HEIGHT: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 143, newUI = 149)

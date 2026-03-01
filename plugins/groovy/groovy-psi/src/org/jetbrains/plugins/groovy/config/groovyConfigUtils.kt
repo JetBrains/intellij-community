@@ -9,7 +9,9 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.plugins.groovy.util.LibrariesUtil
-import org.jetbrains.plugins.groovy.util.LibrariesUtil.*
+import org.jetbrains.plugins.groovy.util.LibrariesUtil.SOME_GROOVY_CLASS
+import org.jetbrains.plugins.groovy.util.LibrariesUtil.findJarWithClass
+import org.jetbrains.plugins.groovy.util.LibrariesUtil.getFilesInDirectoryByPattern
 import java.util.jar.Attributes
 import java.util.regex.Pattern
 

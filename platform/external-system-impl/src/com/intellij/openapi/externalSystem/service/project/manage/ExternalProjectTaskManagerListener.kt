@@ -6,7 +6,7 @@ import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskManager
 import com.intellij.task.impl.ProjectTaskManagerListenerExtensionPoint
 
-private class ExternalProjectTaskManagerListener : ProjectTaskManagerListenerExtensionPoint {
+internal class ExternalProjectTaskManagerListener : ProjectTaskManagerListenerExtensionPoint {
   override fun beforeRun(project: Project, context: ProjectTaskContext) {
     ExternalProjectsManagerImpl.getInstance(project).projectTasksBeforeRun(context)
   }

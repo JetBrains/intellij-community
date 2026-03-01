@@ -6,6 +6,10 @@ import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.pom.java.LanguageLevel
 
 class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
+
+  override val sdkLevel: LanguageLevel
+    get() = LanguageLevel.JDK_25
+
   fun `test constructor`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_4)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
@@ -336,7 +340,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       }
     """.trimIndent())
 
-    myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive Types in Patterns, etc.")
+    myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive types in patterns (3rd preview)")
     assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
 
@@ -353,7 +357,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       }
     """.trimIndent())
 
-    myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive Types in Patterns, etc.")
+    myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive types in patterns (3rd preview)")
     assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
 
@@ -381,5 +385,24 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
           }
       }
     """.trimIndent())
+  }
+
+  fun `test method that will be overridden in a future Java version`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.Comparator;
+      
+      class MyComparator implements Comparator<String> {
+          @Override
+          public int compare(String o1, String o2) {
+              return 0;
+          }
+      
+          // this method is introduced in Java 8
+          public Comparator<String> reversed() { 
+              return this;
+          }
+      }
+    """)
   }
 }

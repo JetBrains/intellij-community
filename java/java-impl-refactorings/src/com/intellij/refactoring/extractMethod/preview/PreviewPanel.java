@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.ide.IdeBundle;
@@ -15,10 +15,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
-import com.intellij.ui.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usages.impl.UsageModelTracker;
@@ -29,9 +32,11 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.awt.FlowLayout;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,7 +75,6 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, UiDataProvid
     Disposer.register(this, usageModelTracker);
     usageModelTracker.addListener(isPropertyChange -> updateLater(), this);
 
-    Disposer.register(processor.getProject(), this);
     Disposer.register(this, myTree);
     Disposer.register(this, myDiffPanel);
   }

@@ -3,11 +3,11 @@ package git4idea.repo
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
-import com.intellij.dvcs.repo.rpcId
+import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ConcurrentHashMap
 
@@ -23,14 +23,14 @@ internal class GitRepositoryIdCache(private val project: Project, cs: CoroutineS
   }
 
   fun get(repositoryId: RepositoryId): GitRepository? = cache.compute(repositoryId) { _, value ->
-    value ?: GitRepositoryManager.getInstance(project).repositories.find { it.rpcId() == repositoryId }
+    value ?: GitRepositoryManager.getInstance(project).repositories.find { it.repositoryId() == repositoryId }
   }
 
   fun resolveAll(repositoryIds: List<RepositoryId>): List<GitRepository> {
     val resolved = repositoryIds.mapNotNull(::get)
 
     check(resolved.size == repositoryIds.size) {
-      val resolvedIds = resolved.mapTo(mutableSetOf()) { it.rpcId() }
+      val resolvedIds = resolved.mapTo(mutableSetOf()) { it.repositoryId() }
       val notFound = repositoryIds.filterNot { it in resolvedIds }
       "Failed to resolve repositories: $notFound"
     }

@@ -16,9 +16,21 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
-import org.jetbrains.kotlin.idea.base.psi.*
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -26,12 +38,38 @@ import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.imports.getImportableTargets
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
+import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.idea.util.ShadowedDeclarationsFilter
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.runAction
+import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtDoubleColonExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
@@ -47,6 +85,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findFirstClassifierWithDeprecat
 import org.jetbrains.kotlin.resolve.scopes.utils.findPackage
 import org.jetbrains.kotlin.resolve.source.getPsi
 
+@K1Deprecation
 class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT }) {
     /**
      * If [shortenNestedReferences] is set to true, references potentially deep inside the specified elements are shortened. Any nested

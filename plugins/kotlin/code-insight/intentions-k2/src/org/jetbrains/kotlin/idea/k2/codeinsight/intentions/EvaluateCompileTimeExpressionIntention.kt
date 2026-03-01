@@ -13,7 +13,12 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class EvaluateCompileTimeExpressionIntention : KotlinApplicableModCommandAction<KtBinaryExpression, String>(KtBinaryExpression::class) {

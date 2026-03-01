@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.List;
 
 public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {

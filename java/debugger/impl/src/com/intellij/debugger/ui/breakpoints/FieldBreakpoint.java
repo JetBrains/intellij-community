@@ -26,7 +26,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -45,7 +50,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance(FieldBreakpoint.class);

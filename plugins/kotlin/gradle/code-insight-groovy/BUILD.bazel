@@ -45,4 +45,40 @@ jvm_library(
     "//platform/platform-api:ide",
   ]
 )
+
+jvm_library(
+  name = "kotlin-gradle-codeInsight-groovy_test_lib",
+  module_name = "intellij.kotlin.gradle.codeInsight.groovy",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kotlin-gradle-codeInsight-groovy",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/platforms:platforms_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/project-configuration:project-configuration_test_lib",
+    "//plugins/kotlin/migration:migration_test_lib",
+    "//plugins/kotlin/inspections:inspections_test_lib",
+    "//plugins/kotlin/gradle/gradle:gradle_test_lib",
+    "//plugins/kotlin/gradle/code-insight-common:kotlin-gradle-codeInsight-common_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/groovy/groovy-psi:psi_test_lib",
+    "//plugins/kotlin/project-wizard/core:core_test_lib",
+    "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
+    "//platform/platform-api:ide_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.groovy` end

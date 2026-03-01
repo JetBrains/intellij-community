@@ -2,7 +2,15 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiVariable;
 
 /**
  * Tree filter for searching symbols ('T)

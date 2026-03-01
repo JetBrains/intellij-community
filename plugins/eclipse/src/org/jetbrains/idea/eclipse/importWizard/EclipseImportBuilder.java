@@ -33,7 +33,11 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -57,10 +61,17 @@ import org.jetbrains.idea.eclipse.conversion.EclipseUserLibrariesHelper;
 import org.jetbrains.idea.eclipse.importer.EclipseProjectCodeStyleData;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public final class EclipseImportBuilder extends ProjectImportBuilder<String> implements EclipseProjectWizardContext {
   private static final Logger LOG = Logger.getInstance(EclipseImportBuilder.class);

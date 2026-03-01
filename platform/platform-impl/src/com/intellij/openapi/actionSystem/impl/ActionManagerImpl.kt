@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog", "OVERRIDE_DEPRECATION", "RemoveRedundantQualifierName")
 
 package com.intellij.openapi.actionSystem.impl
@@ -25,11 +25,49 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.onAfterActionInvoked
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.onBeforeActionInvoked
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.*
+import com.intellij.openapi.actionSystem.AbbreviationManager
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionPopupMenu
+import com.intellij.openapi.actionSystem.ActionStub
+import com.intellij.openapi.actionSystem.ActionStubBase
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.Anchor
+import com.intellij.openapi.actionSystem.Constraints
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.DefaultCompactActionGroup
+import com.intellij.openapi.actionSystem.EmptyAction
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.OverridingAction
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.TimerListener
+import com.intellij.openapi.actionSystem.ex.ActionContextElement
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getActionUnavailableMessage
+import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationActivationListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.isEditorLockFreeTypingEnabled
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
@@ -37,8 +75,13 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.EditorThreading
 import com.intellij.openapi.editor.actionSystem.EditorAction
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.ActionProcessor
 import com.intellij.openapi.keymap.impl.KeymapImpl
@@ -46,13 +89,20 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.ProjectType
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.awaitFocusSettlesDown
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import com.intellij.platform.plugins.parser.impl.elements.ActionElement.*
+import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionDescriptorAction
+import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementGroup
+import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementName
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
@@ -62,7 +112,12 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.SlowOperations
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.*
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ChildContext
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.concurrency.ThreadScopeCheckpoint
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.createChildContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.with
 import com.intellij.util.containers.without
@@ -70,12 +125,24 @@ import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xml.dom.XmlElement
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -86,7 +153,7 @@ import java.awt.Component
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.WindowEvent
-import java.util.*
+import java.util.ResourceBundle
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
@@ -1089,15 +1156,19 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   override fun fireBeforeEditorTyping(c: Char, dataContext: DataContext) {
     lastTimeEditorWasTypedIn = System.currentTimeMillis()
     //maybe readaction
-    WriteIntentReadAction.run {
-      publisher().beforeEditorTyping(c, dataContext)
+    EditorThreading.runWritable {
+      if (!isEditorLockFreeTypingEnabled) {
+        publisher().beforeEditorTyping(c, dataContext)
+      }
     }
   }
 
   override fun fireAfterEditorTyping(c: Char, dataContext: DataContext) {
     //maybe readaction
-    WriteIntentReadAction.run {
-      publisher().afterEditorTyping(c, dataContext)
+    EditorThreading.runWritable {
+      if (!isEditorLockFreeTypingEnabled) {
+        publisher().afterEditorTyping(c, dataContext)
+      }
     }
   }
 
@@ -1164,8 +1235,10 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       val providedScope = ActionCoroutineScope(coroutineContext.minusKey(Job.Key) + Dispatchers.Default + CoroutineName("actionPerformed of $actionId"), cs)
       event.installCoroutineScope(providedScope)
       installThreadContext(coroutineContext2.minusKey(ContinuationInterceptor), replace = true) {
-        SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
-          runnable.run()
+        runInWriteIntentConditionally(action) {
+          SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
+            runnable.run()
+          }
         }
       }
       AnActionResult.PERFORMED
@@ -1200,6 +1273,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       is AnActionResult.Ignored -> Unit
     }
     return result
+  }
+
+  // inlining here to reduce the number of service stacktraces
+  @Suppress("NOTHING_TO_INLINE")
+  inline fun runInWriteIntentConditionally(action: AnAction, runnable: Runnable) {
+    if (Utils.isLockRequired(action)) {
+      WriteIntentReadAction.run(runnable)
+    } else {
+      runnable.run()
+    }
   }
 
   @TestOnly
@@ -1237,7 +1320,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val place = place ?: "tryToExecute"
     if (now) {
       try {
-        tryToExecuteNow(action, place, contextComponent, inputEvent, result)
+        @Suppress("DEPRECATION")
+        val dataContext = DataManager.getInstance().let {
+          if (contextComponent == null) it.dataContext else it.getDataContext(contextComponent)
+        }
+        tryToExecuteNow(action, place, contextComponent, inputEvent, result, dataContext)
       }
       finally {
         if (!result.isProcessed) {
@@ -1350,16 +1437,28 @@ private fun doPerformAction(action: AnAction,
   }
 }
 
-private fun tryToExecuteNow(action: AnAction,
-                            place: String,
-                            contextComponent: Component?,
-                            inputEvent: InputEvent?,
-                            callback: ActionCallback) {
+/**
+ * Synchronously updates and executes an action with a custom data context.
+ *
+ * @param action the action to execute
+ * @param place the action place (e.g., "MainMenu", "EditorPopup")
+ * @param contextComponent the component to use as context, may be null
+ * @param inputEvent the input event that triggered the action, may be null
+ * @param callback the callback to be notified of execution result
+ * @param dataContext the custom data context to use for update and execution
+ *
+ * @see ActionManager.tryToExecute for the public API that creates its own DataContext
+ */
+@ApiStatus.Internal
+fun tryToExecuteNow(
+  action: AnAction,
+  place: String,
+  contextComponent: Component?,
+  inputEvent: InputEvent?,
+  callback: ActionCallback,
+  dataContext: DataContext,
+) {
   val presentationFactory = PresentationFactory()
-  @Suppress("DEPRECATION")
-  val dataContext = DataManager.getInstance().let {
-    if (contextComponent == null) it.dataContext else it.getDataContext(contextComponent)
-  }
   val wrappedContext = Utils.createAsyncDataContext(dataContext)
   val actionProcessor = object : ActionProcessor() {}
   val inputEventAdjusted = inputEvent ?: KeyEvent(
@@ -1404,8 +1503,19 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
   val event = AnActionEvent(wrappedContext, presentation, place, uiKind, inputEvent, 0, actionManager)
 
   //todo fix all clients and move locks into them
-  writeIntentReadAction {
+  runOnEdtWithConditionalWriteIntentSuspending(action) {
     doPerformAction(action, event, callback)
+  }
+}
+
+private suspend fun runOnEdtWithConditionalWriteIntentSuspending(action: AnAction, computation: suspend () -> Unit) {
+  val dispatcher = if (Utils.isLockRequired(action)) {
+    Dispatchers.EDT
+  } else {
+    Dispatchers.UI
+  }
+  withContext(dispatcher) {
+    computation()
   }
 }
 

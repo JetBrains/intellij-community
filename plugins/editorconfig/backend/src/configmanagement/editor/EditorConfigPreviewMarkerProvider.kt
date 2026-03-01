@@ -61,7 +61,7 @@ class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor(), DumbAw
       }
   }
 
-  private class ChooseFileAction(private val myHeader: EditorConfigHeader) : DumbAwareAction(message("editor.preview.open")) {
+  internal class ChooseFileAction(private val myHeader: EditorConfigHeader) : DumbAwareAction(message("editor.preview.open")) {
     override fun actionPerformed(e: AnActionEvent) {
       if (myHeader.isValid) {
         val previewFile = Handler.choosePreviewFile(myHeader.project, Handler.getRootDir(myHeader), Handler.getPattern(myHeader.text))

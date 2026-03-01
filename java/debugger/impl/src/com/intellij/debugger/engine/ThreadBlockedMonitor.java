@@ -17,7 +17,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +120,7 @@ public class ThreadBlockedMonitor {
           process.getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
             protected void action() {
-              ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
+              ThreadReferenceProxyImpl threadProxy = VirtualMachineProxyImpl.getCurrent().getThreadReferenceProxy(blockingThread);
               SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
               getCommandManagerThread()
                 .invokeNow(process.createResumeThreadCommand(suspendingContext, threadProxy));
@@ -137,7 +141,7 @@ public class ThreadBlockedMonitor {
       @Override
       protected void action() {
         if (myWatchedThreads.isEmpty()) return;
-        VirtualMachineProxyImpl vmProxy = myProcess.getVirtualMachineProxy();
+        VirtualMachineProxyImpl vmProxy = VirtualMachineProxyImpl.getCurrent();
         //TODO: can we do fast check without suspending all
         vmProxy.suspend();
         try {

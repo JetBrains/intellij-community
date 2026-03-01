@@ -15,9 +15,6 @@
  */
 package com.intellij.diff.comparison
 
-import com.intellij.diff.tools.util.text.LineOffsetsUtil
-import com.intellij.diff.util.Range
-
 class WordComparisonUtilTest : ComparisonUtilTestBase() {
   fun testSimpleCases() {
     lines_inner {

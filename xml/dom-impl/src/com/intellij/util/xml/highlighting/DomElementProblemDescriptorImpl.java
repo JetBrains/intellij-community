@@ -20,7 +20,11 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

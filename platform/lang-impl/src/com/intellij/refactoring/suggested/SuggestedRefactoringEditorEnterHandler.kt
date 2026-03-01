@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.project.Project
 
-private class SuggestedRefactoringEditorEnterHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+internal class SuggestedRefactoringEditorEnterHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
     val project = editor.project
     return isSuggestedRefactoringHintShown(project, editor) || originalHandler.isEnabled(editor, caret, dataContext)

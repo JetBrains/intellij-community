@@ -2,34 +2,6 @@
 # Temporary
 # =========
 
-# Added in Python 3.10.20 (parameter `scripting`)
-html.parser.HTMLParser.__init__
-
-
-# =======
-# <= 3.12
-# =======
-
-# Added in Python 3.10.18 (parameter `escapable`)
-html.parser.HTMLParser.set_cdata_mode
-
-
-# =======
-# <= 3.11
-# =======
-
-# Added in Python 3.10.15
-email._header_value_parser.NLSET
-email._header_value_parser.SPECIALSNL
-email.errors.HeaderWriteError
-email.utils.getaddresses
-email.utils.parseaddr
-
-
-# =======
-# <= 3.10
-# =======
-
 # Incompatible changes introduced in Python 3.10.12
 # (Remove once 3.10.12 becomes available for GitHub Actions)
 shutil.unpack_archive
@@ -46,8 +18,8 @@ tarfile.data_filter
 tarfile.fully_trusted_filter
 tarfile.tar_filter
 
-# Incompatible changes introduced in Python 3.9.14
-# (Remove once 3.9.14 becomes available for GitHub Actions)
+# Incompatible changes introduced in Python 3.10.14
+# (Remove once 3.10.14 becomes available for GitHub Actions)
 pyexpat.XMLParserType.GetReparseDeferralEnabled
 pyexpat.XMLParserType.SetReparseDeferralEnabled
 xml.etree.ElementTree.XMLParser.flush
@@ -58,6 +30,45 @@ xml.parsers.expat.XMLParserType.GetReparseDeferralEnabled
 xml.parsers.expat.XMLParserType.SetReparseDeferralEnabled
 xml.sax.expatreader.ExpatParser.flush
 zipfile.ZipInfo.__slots__
+
+# Incompatible changes introduced in Python 3.10.15
+# (Remove once 3.10.15 becomes available for GitHub Actions)
+email._header_value_parser.NLSET
+email._header_value_parser.SPECIALSNL
+email.errors.HeaderWriteError
+email.utils.getaddresses
+email.utils.parseaddr
+
+# Incompatible changes introduced in Python 3.10.17
+# (Remove once 3.10.17 becomes available for GitHub Actions)
+email._header_value_parser.get_encoded_word
+email._header_value_parser.make_quoted_pairs
+
+# Incompatible changes introduced in Python 3.10.18
+# (Remove once 3.10.18 becomes available for GitHub Actions)
+html.parser.HTMLParser.set_cdata_mode # parameter `escapable`
+genericpath.__all__
+genericpath.ALLOW_MISSING
+(ntpath.__all__)?
+(ntpath.ALLOW_MISSING)?
+(ntpath.realpath)?
+(os.path.__all__)?
+(os.path.ALLOW_MISSING)?
+(os.path.realpath)?
+(posixpath.__all__)?
+(posixpath.ALLOW_MISSING)?
+(posixpath.realpath)?
+tarfile.LinkFallbackError
+tarfile.TarFile._extract_member
+tarfile.TarFile.makelink_with_filter
+
+# Incompatible changes introduced in Python 3.10.20
+# (Remove once 3.10.20 becomes available for GitHub Actions)
+html.parser.HTMLParser.__init__ # parameter `scripting`
+pyexpat.XMLParserType.SetAllocTrackerActivationThreshold
+pyexpat.XMLParserType.SetAllocTrackerMaximumAmplification
+xml.parsers.expat.XMLParserType.SetAllocTrackerActivationThreshold
+xml.parsers.expat.XMLParserType.SetAllocTrackerMaximumAmplification
 
 
 # =============================================================

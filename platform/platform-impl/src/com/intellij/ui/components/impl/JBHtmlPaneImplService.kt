@@ -15,12 +15,9 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Image
 import java.net.URL
-import java.util.*
+import java.util.Dictionary
 import javax.swing.JComponent
 import javax.swing.text.ComponentView
-import javax.swing.text.LabelView
-import javax.swing.text.View
-import javax.swing.text.html.BlockView
 import javax.swing.text.html.StyleSheet
 
 internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {

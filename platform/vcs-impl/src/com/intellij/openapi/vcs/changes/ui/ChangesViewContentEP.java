@@ -75,7 +75,7 @@ public final class ChangesViewContentEP implements PluginAware {
 
   /**
    * Whether tab should be shown in 'Version Control' toolwindow (default) or in 'Commit' toolwindow.
-   * Note, that 'Commit' toolwindow may be disabled, see {@link ChangesViewContentManager#isCommitToolWindowShown(Project)}.
+   * Note, that 'Commit' toolwindow may be disabled, see {@link com.intellij.vcs.commit.CommitModeManager#isCommitToolWindowEnabled(Project)}.
    * <p>
    * Use {@link ChangesViewContentManager#getToolWindowFor(Project, String)} to get actual toolwindow for the tab.
    */

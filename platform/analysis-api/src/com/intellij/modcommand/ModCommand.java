@@ -22,7 +22,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -35,14 +39,27 @@ import java.util.function.Function;
  * Otherwise, there's no purpose in such a command.
  * And to some extent, showing UI could also be considered a modification (of things visible on the screen).
  * <p>
- * All inheritors are records, so the whole state is declarative and readable.
+ * All inheritors are records, so the whole state is declarative and easily readable.
+ * Thanks to this property, every {@link ModCommand} can be easily serialized and sent e.g., over the network, or to a different process.
+ * <p>
  * Instead of creating the commands directly, it's preferred to use static methods in this class to create individual commands.
  * Especially take a look at {@link #psiUpdate} methods which are helpful in most of the cases.
+ *
+ * <h4>Relation to CommandProcessor</h4>
+ * There are also {@link com.intellij.openapi.command.CommandProcessor CommandProcessor} commands,
+ * which are another kind of commands, and they're only very loosely related to ModCommands.
+ * <p>
+ * A ModCommand does not do anything by itself (it may be not executed at all), and it allows only a limited set of actions.
+ * <p>
+ * Meanwhile, a CommandProcessor command is executed immediately in a write action and can contain any custom modifications (e.g., changing arbitrary IDE settings).
+ *
+ * @see ModCommandAction
+ * @see ModCommandExecutor
  */
 public sealed interface ModCommand
   permits ModChooseAction, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage, ModEditOptions,
-          ModHighlight, ModMoveFile, ModNavigate, ModNothing, ModOpenUrl, ModRegisterTabOut, ModShowConflicts, ModStartRename,
-          ModStartTemplate, ModUpdateFileText, ModUpdateReferences, ModUpdateSystemOptions {
+          ModHighlight, ModLaunchEditorAction, ModMoveFile, ModNavigate, ModNothing, ModOpenUrl, ModRegisterTabOut, ModShowConflicts,
+          ModStartRename, ModStartTemplate, ModUpdateFileText, ModUpdateReferences, ModUpdateSystemOptions {
 
   /**
    * @return true if the command does nothing
@@ -67,7 +84,7 @@ public sealed interface ModCommand
     if (next.isEmpty()) return this;
     List<ModCommand> commands = new ArrayList<>(unpack());
     commands.addAll(next.unpack());
-    return commands.size() == 1 ? commands.get(0) : new ModCompositeCommand(commands); 
+    return commands.size() == 1 ? commands.getFirst() : new ModCompositeCommand(commands);
   }
 
   /**
@@ -149,8 +166,8 @@ public sealed interface ModCommand
   }
 
   /**
-   * @param attributes attributes to use for highlighting 
-   * @param elements elements to highlight
+   * @param attributes attributes to use for highlighting
+   * @param elements   elements to highlight
    * @return a command to highlight the elements, assuming that nothing will be changed in the file
    */
   static @NotNull ModCommand highlight(@NotNull TextAttributesKey attributes, @NotNull PsiElement @NotNull ... elements) {
@@ -170,11 +187,11 @@ public sealed interface ModCommand
   }
 
   /**
-   * @param context context PSI element to retrieve a proper copy of the tool
-   * @param inspection inspection instance to update (used as template, should not be changed)
-   * @param updater updater function that receives a separate inspection instance and can change its options.
-   *                Only options accessible via {@link InspectionProfileEntry#getOptionsPane()} will be tracked.
-   * @param <T> inspection class
+   * @param context    context PSI element to retrieve a proper copy of the tool
+   * @param inspection inspection instance to update (used as a template, should not be changed)
+   * @param updater    updater function that receives a separate inspection instance and can change its options.
+   *                   Only options accessible via {@link InspectionProfileEntry#getOptionsPane()} will be tracked.
+   * @param <T>        inspection class
    * @return a command to update an inspection option
    */
   static <T extends InspectionProfileEntry> @NotNull ModCommand updateInspectionOption(
@@ -183,8 +200,8 @@ public sealed interface ModCommand
   }
 
   /**
-   * @param context context PSI element
-   * @param bindId global option locator
+   * @param context  context PSI element
+   * @param bindId   global option locator
    * @param newValue a new value of the option
    * @return a command that updates the given option
    * @see OptionControllerProvider for details
@@ -197,8 +214,8 @@ public sealed interface ModCommand
   }
 
   /**
-   * @param context context PSI element
-   * @param bindId global option locator
+   * @param context     context PSI element
+   * @param bindId      global option locator
    * @param listUpdater function that accepts a mutable list (an old value) and updates it
    * @return a command that updates the given option
    * @see OptionControllerProvider for details
@@ -206,7 +223,7 @@ public sealed interface ModCommand
   @ApiStatus.Experimental
   static @NotNull ModCommand updateOptionList(
     @NotNull PsiElement context, @NotNull @NonNls String bindId, @NotNull Consumer<@NotNull List<@NotNull String>> listUpdater) {
-    @SuppressWarnings("unchecked") 
+    @SuppressWarnings("unchecked")
     List<String> oldValue = (List<String>)Objects.requireNonNull(OptionControllerProvider.getOption(context, bindId));
     List<String> newValue = new ArrayList<>(oldValue);
     listUpdater.accept(newValue);
@@ -230,15 +247,15 @@ public sealed interface ModCommand
   /**
    * @param context     a context of the original action
    * @param copyCleaner a function that updates the document to ignore intermittent changes in the original.
-   *                    This could be useful for completion when prefix is already inserted to the original document,
-   *                    but the final command should be applied to the document without prefix.
+   *                    This could be useful for completion when the prefix is already inserted to the original document,
+   *                    but the final command should be applied to the document without the prefix.
    * @param updater     a function that accepts an updater, so it can query writable copies from it and perform modifications;
    *                    also additional editor operation like caret positioning could be performed
    * @return a command that will perform the corresponding update to the original elements and the editor
    */
   @ApiStatus.Internal
   static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
-                                       @NotNull Consumer<@NotNull Document> copyCleaner, 
+                                       @NotNull Consumer<@NotNull Document> copyCleaner,
                                        @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
     return ModCommandService.getInstance().psiUpdate(context, copyCleaner, updater);
   }
@@ -266,11 +283,11 @@ public sealed interface ModCommand
   }
 
   /**
-   * Generates a command to inserts the specified text into the current position of the context file 
-   * and optionally moves the cursor after the inserted text.
+   * Generates a command to insert the specified text into the current position of the context file.
+   * Optionally moves the cursor after the inserted text.
    *
-   * @param context the action context where the text will be inserted
-   * @param text the text to be inserted
+   * @param context   the action context where the text will be inserted
+   * @param text      the text to be inserted
    * @param moveAfter whether to move the cursor after the inserted text
    * @return a {@code ModCommand} to insert the text at the current position and optionally move the caret after it
    */
@@ -281,11 +298,11 @@ public sealed interface ModCommand
   /**
    * Create an action that depends on a PSI element in the current file.
    *
-   * @param element element
-   * @param title action title
+   * @param element  element
+   * @param title    action title
    * @param function factory to create a final command
-   * @param range range to select
-   * @param <T> type of the element
+   * @param range    range to select
+   * @param <T>      type of the element
    * @return an action suitable to store inside {@link ModChooseAction}
    */
   static @NotNull <T extends PsiElement> ModCommandAction psiBasedStep(
@@ -315,10 +332,10 @@ public sealed interface ModCommand
    * Create an action that depends on a PSI element in the current file and performs PSI update.
    *
    * @param element element
-   * @param title action title
-   * @param action action to perform on non-physical element copy
-   * @param range function to extract a range to select
-   * @param <T> type of the element
+   * @param title   action title
+   * @param action  action to perform on non-physical element copy
+   * @param range   function to extract a range to select
+   * @param <T>     type of the element
    * @return an action suitable to store inside {@link ModChooseAction}
    */
   static @NotNull <T extends PsiElement> ModCommandAction psiUpdateStep(
@@ -353,9 +370,9 @@ public sealed interface ModCommand
    * Create an action that depends on a PSI element in the current file and performs PSI update.
    *
    * @param element element
-   * @param title action title
-   * @param action action to perform on non-physical element copy
-   * @param <T> type of the element
+   * @param title   action title
+   * @param action  action to perform on non-physical element copy
+   * @param <T>     type of the element
    * @return an action suitable to store inside {@link ModChooseAction}
    */
   static @NotNull <T extends PsiElement> ModCommandAction psiUpdateStep(
@@ -366,9 +383,9 @@ public sealed interface ModCommand
   }
 
   /**
-   * @param command a command to tune
-   * @param file a file where we want to navigate
-   * @param offset an offset in the file before the command is executed 
+   * @param command   a command to tune
+   * @param file      a file where we want to navigate
+   * @param offset    an offset in the file before the command is executed
    * @param leanRight if true, lean to the right side when the text was inserted right at the caret position
    * @return an updated command which tries to navigate inside the specified file, taking into account the modifications inside that file
    */
@@ -398,9 +415,9 @@ public sealed interface ModCommand
    * Creates a command that allows user to select arbitrary number of members (but at least one).
    * Initially, all the elements are selected. In batch mode, it's assumed that all the elements are selected.
    *
-   * @param title user-readable title to display in UI
-   * @param elements all elements to select from
-   * @param nextCommand a function to compute the subsequent command based on the selection; will be executed in read-action
+   * @param title       user-readable title to display in UI
+   * @param elements    all elements to select from
+   * @param nextCommand a function to compute the next command based on the selection; will be executed in read-action
    */
   @ApiStatus.Experimental
   static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
@@ -410,13 +427,13 @@ public sealed interface ModCommand
   }
 
   /**
-   * Creates a command that allows user to select arbitrary number of members (but at least one). 
+   * Creates a command that allows user to select arbitrary number of members (but at least one).
    * In batch mode, it's assumed that the default selection is selected.
    *
-   * @param title user-readable title to display in UI
-   * @param elements all elements to select from
+   * @param title            user-readable title to display in UI
+   * @param elements         all elements to select from
    * @param defaultSelection default selection
-   * @param nextCommand a function to compute the subsequent command based on the selection; will be executed in read-action
+   * @param nextCommand      a function to compute the next command based on the selection; will be executed in read-action
    */
   @ApiStatus.Experimental
   static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
@@ -424,9 +441,9 @@ public sealed interface ModCommand
                                                    @NotNull List<? extends OptMultiSelector.@NotNull OptElement> defaultSelection,
                                                    @NotNull Function<@NotNull List<? extends OptMultiSelector.@NotNull OptElement>, ? extends @NotNull ModCommand> nextCommand) {
     class MemberHolder implements OptionContainer {
-      @SuppressWarnings("FieldMayBeFinal") 
+      @SuppressWarnings("FieldMayBeFinal")
       @NotNull List<? extends OptMultiSelector.@NotNull OptElement> myElements = new ArrayList<>(defaultSelection);
-      
+
       @Override
       public @NotNull OptPane getOptionsPane() {
         return OptPane.pane(
@@ -448,13 +465,13 @@ public sealed interface ModCommand
   }
 
   /**
-   * Creates a command that displays a UI and allows users to select a subsequent action from the list.
+   * Creates a command that displays a UI and allows the user to select the next action from the list.
    * Intention preview assumes that the first available action is selected by default.
    * In batch mode, the first option is also selected automatically.
    *
-   * @param title title to display to the user
+   * @param title   title to display to the user
    * @param actions actions to select from. If there's only one action, then it could be executed right away without asking the user.
-   * @see #psiUpdateStep(PsiElement, String, BiConsumer) could be useful as a subsequent step
+   * @see #psiUpdateStep(PsiElement, String, BiConsumer) could be useful as a next step
    */
   static @NotNull ModCommand chooseAction(@NotNull @NlsContexts.PopupTitle String title,
                                           @NotNull List<? extends @NotNull ModCommandAction> actions) {
@@ -462,13 +479,13 @@ public sealed interface ModCommand
   }
 
   /**
-   * Creates a command that displays a UI and allows users to select a subsequent action from the list.
+   * Creates a command that displays a UI and allows the user to select the next action from the list.
    * Intention preview assumes that the first available action is selected by default.
    * In batch mode, the first option is also selected automatically.
    *
-   * @param title title to display to the user
-   * @param actions actions to select from. If there's only one action, then it could be executed right away without asking the user. 
-   * @see #psiUpdateStep(PsiElement, String, BiConsumer) could be useful as a subsequent step
+   * @param title   title to display to the user
+   * @param actions actions to select from. If there's only one action, then it could be executed right away without asking the user.
+   * @see #psiUpdateStep(PsiElement, String, BiConsumer) could be useful as a next step
    */
   static @NotNull ModCommand chooseAction(@NotNull @NlsContexts.PopupTitle String title,
                                           @NotNull ModCommandAction @NotNull ... actions) {
@@ -477,13 +494,12 @@ public sealed interface ModCommand
 
   /**
    * Creates a command to move a file to a specified directory
-   * 
-   * @param file file to move
+   *
+   * @param file   file to move
    * @param target target directory
    * @return a command that moves the file to a specified directory
    */
   static @NotNull ModCommand moveFile(@NotNull VirtualFile file, @NotNull VirtualFile target) {
     return new ModMoveFile(file, new FutureVirtualFile(target, file.getName(), file.getFileType()));
   }
-
 }

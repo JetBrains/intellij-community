@@ -4,7 +4,13 @@ package com.intellij.openapi.application.constraints
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.WeakReferenceDisposableWrapper
 import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.CompletionHandler
+import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.SupervisorJob
 import java.lang.ref.Reference
 
 /**

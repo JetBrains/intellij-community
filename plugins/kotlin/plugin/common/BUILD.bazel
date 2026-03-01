@@ -18,4 +18,12 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "kotlin.plugin.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":common"]
+)
 ### auto-generated section `build kotlin.plugin.common` end

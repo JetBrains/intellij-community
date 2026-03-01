@@ -3,7 +3,14 @@ package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
+import com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
+import com.intellij.platform.workspace.jps.entities.FacetId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.childrenFacets
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.containers.ConcurrentFactoryMap

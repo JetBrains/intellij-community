@@ -11,6 +11,7 @@
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.impl"/>

@@ -5,8 +5,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.FontMetrics;
 
 @ApiStatus.Internal
 public final class DefaultCutStrategy implements TextCutStrategy {

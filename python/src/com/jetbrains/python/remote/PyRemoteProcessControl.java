@@ -3,5 +3,4 @@ package com.jetbrains.python.remote;
 
 public interface PyRemoteProcessControl extends RemoteProcessControl {
 
-  PyRemoteSocketToLocalHostProvider getRemoteSocketToLocalHostProvider();
 }

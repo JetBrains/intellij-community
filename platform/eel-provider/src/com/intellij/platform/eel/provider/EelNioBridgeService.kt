@@ -6,14 +6,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
-import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.utils.WindowsPathUtils
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.FileSystems
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 /**
  * Converts [EelPath], which is likely a path from a remote machine, to a [Path] for the local machine.
@@ -63,7 +64,12 @@ fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? {
   }
 
   @MultiRoutingFileSystemPath
-  val result = parts.fold(root, Path::resolve)
+  val result = when (descriptor.osFamily) {
+    EelOsFamily.Windows -> {
+      WindowsPathUtils.resolveEelPathOntoRoot(root, this)
+    }
+    EelOsFamily.Posix -> parts.fold(root, Path::resolve)
+  }
   LOG.trace {
     "asNioPathOrNull(): path=$this basePath=$root result=$result"
   }
@@ -82,12 +88,9 @@ fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? {
  *     EelPath.parse("/usr", someWslDescriptor)
  * ```
  *
- * @throws IllegalArgumentException if the passed path cannot be mapped to a path corresponding to Eel.
- * It can happen if [this] belongs to a [java.nio.file.FileSystem] that was not registered as a backend of `MultiRoutingFileSystemProvider`
- *
  * @throws EelPathException if the passed path is not an absolute path.
  */
-@Throws(IllegalArgumentException::class, EelPathException::class)
+@Throws(EelPathException::class)
 @ApiStatus.Experimental
 fun Path.asEelPath(): EelPath {
   return asEelPath(getEelDescriptor())
@@ -96,23 +99,24 @@ fun Path.asEelPath(): EelPath {
 /**
  * [descriptor] should be exactly `this.getEelDescriptor()`. This method exists only to avoid calling `getEelDescriptor()` twice.
  */
-@Throws(IllegalArgumentException::class, EelPathException::class)
+@Throws(EelPathException::class)
 @ApiStatus.Experimental
 fun Path.asEelPath(descriptor: EelDescriptor): EelPath {
-  if (fileSystem != FileSystems.getDefault()) {
-    throw IllegalArgumentException("Could not convert $this to EelPath: the path does not belong to the default NIO FileSystem")
-  }
   when (descriptor) {
     is LocalEelDescriptor -> return EelPath.parse(toString(), descriptor)
-    is EelPathBoundDescriptor if (descriptor.osFamily.isPosix) -> {
-      val root = descriptor.rootPath
-      val relative = root.relativize(this)
-      return relative.fold(EelPath.parse("/", descriptor)) { path, part ->
+    is EelPathBoundDescriptor -> {
+      val relative = descriptor.rootPath.relativize(this)
+      val (eelRoot, rest) = when (descriptor.osFamily) {
+        EelOsFamily.Posix -> {
+          "/" to relative
+        }
+        EelOsFamily.Windows -> {
+          WindowsPathUtils.rootRelativeToEelPath(relative)
+        }
+      }
+      return rest.fold(EelPath.parse(eelRoot, descriptor)) { path, part ->
         part.toString().takeIf { it.isNotEmpty() }?.let { path.getChild(it) } ?: path
       }
-    }
-    is EelPathBoundDescriptor -> {
-      TODO() // on Windows, we need additional logic to guess the new root
     }
     else -> {
       throw NoSuchElementException("Cannot find a root for $this")

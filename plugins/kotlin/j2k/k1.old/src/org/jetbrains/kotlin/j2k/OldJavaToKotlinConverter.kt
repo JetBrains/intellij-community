@@ -10,8 +10,13 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.DummyHolder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.j2k.ast.Element
@@ -22,6 +27,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
+@K1Deprecation
 class OldJavaToKotlinConverter(
     private val project: Project,
     private val settings: ConverterSettings
@@ -35,14 +41,14 @@ class OldJavaToKotlinConverter(
     /**
      * Preprocessor and postprocessor extensions are only handled in [NewJavaToKotlinConverter]. Any passed in here will be ignored.
      */
-    override fun filesToKotlin(
+    override suspend fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
-        progressIndicator: ProgressIndicator,
+        bodyFilter: ((PsiElement) -> Boolean)?,
         preprocessorExtensions: List<J2kPreprocessorExtension>,
         postprocessorExtensions: List<J2kPostprocessorExtension>
-    ): FilesResult {
-        val withProgressProcessor = OldWithProgressProcessor(progressIndicator, files)
+    ): ConvertionResult {
+        val withProgressProcessor = OldWithProgressProcessor(null, files)
         val (results, externalCodeProcessing) = ApplicationManager.getApplication().runReadAction(Computable {
             elementsToKotlin(files, withProgressProcessor)
         })
@@ -68,7 +74,7 @@ class OldJavaToKotlinConverter(
             }
         }
 
-        return FilesResult(texts, externalCodeProcessing)
+        return ConvertionResult(files.zip(texts).toMap(), externalCodeProcessing)
     }
 
     override fun elementsToKotlin(inputElements: List<PsiElement>, processor: WithProgressProcessor): Result {

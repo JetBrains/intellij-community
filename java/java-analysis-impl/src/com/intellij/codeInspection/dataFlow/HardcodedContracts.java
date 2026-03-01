@@ -6,7 +6,17 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -18,15 +28,53 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.fail;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnAny;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnBoolean;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnNull;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnParameter;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnThis;
+import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnTrue;
 import static com.intellij.codeInspection.dataFlow.MethodContract.singleConditionContract;
 import static com.intellij.codeInspection.dataFlow.MethodContract.trivialContract;
-import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.FALSE_VALUE;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NOT_NULL_VALUE;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.TRUE_VALUE;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.createConstraintArray;
-import static com.intellij.psi.CommonClassNames.*;
-import static com.siyeh.ig.callMatcher.CallMatcher.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARACTER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_LONG;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_MATH;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.CommonClassNames.JAVA_TIME_LOCAL_DATE;
+import static com.intellij.psi.CommonClassNames.JAVA_TIME_LOCAL_DATE_TIME;
+import static com.intellij.psi.CommonClassNames.JAVA_TIME_LOCAL_TIME;
+import static com.intellij.psi.CommonClassNames.JAVA_TIME_OFFSET_DATE_TIME;
+import static com.intellij.psi.CommonClassNames.JAVA_TIME_OFFSET_TIME;
+import static com.intellij.psi.CommonClassNames.JAVA_TIME_ZONED_DATE_TIME;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAYS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OBJECTS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_QUEUE;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SET;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SORTED_SET;
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.enumValues;
+import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 public final class HardcodedContracts {
   private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = List.of(
@@ -174,6 +222,26 @@ public final class HardcodedContracts {
                     staticCall(JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_LONG, "min").parameterTypes("long", "long")),
               (call, paramCount) -> mathMinMax(false))
+    .register(staticCall(JAVA_LANG_MATH, "clamp").parameterTypes("long", "long", "long"),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail()),
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.argument(1), returnParameter(1)),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.argument(2), returnParameter(2)),
+                trivialContract(returnParameter(0))
+              ))
+    .register(anyOf(
+                staticCall(JAVA_LANG_MATH, "clamp").parameterTypes("float", "float", "float"),
+                staticCall(JAVA_LANG_MATH, "clamp").parameterTypes("double", "double", "double")
+              ),
+              ContractProvider.of(
+                failIfParameterIsNaN(1),
+                failIfParameterIsNaN(2),
+                /* Note that this does not cover the +0.0f -0.0f case */
+                singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail()),
+                singleConditionContract(ContractValue.argument(0), RelationType.LT, ContractValue.argument(1), returnParameter(1)),
+                singleConditionContract(ContractValue.argument(0), RelationType.GT, ContractValue.argument(2), returnParameter(2)),
+                trivialContract(returnParameter(0))
+              ))
     .register(instanceCall(JAVA_LANG_STRING, "startsWith", "endsWith", "contains"),
               ContractProvider.of(
                 singleConditionContract(
@@ -567,6 +635,11 @@ public final class HardcodedContracts {
       return Arrays.asList(failContract, StandardMethodContract.trivialContract(argCount, returnParameter(argIndex)));
     }
     return Collections.singletonList(failContract);
+  }
+
+  /// @return A single contract that fails if the parameter is NaN. Only makes sense for floating point parameters
+  private static @NotNull MethodContract failIfParameterIsNaN(int argIndex) {
+    return singleConditionContract(ContractValue.argument(argIndex), RelationType.NE, ContractValue.argument(argIndex), fail());
   }
 
   /**

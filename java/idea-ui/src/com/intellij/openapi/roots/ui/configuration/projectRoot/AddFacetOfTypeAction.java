@@ -19,8 +19,11 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 class AddFacetOfTypeAction extends DumbAwareAction {
   private final FacetType<?, ?> myFacetType;

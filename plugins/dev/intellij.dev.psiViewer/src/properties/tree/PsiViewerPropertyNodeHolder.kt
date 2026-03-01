@@ -2,7 +2,11 @@ package com.intellij.dev.psiViewer.properties.tree
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.checkCanceled
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 
 class PsiViewerPropertyNodeHolder(
   val node: PsiViewerPropertyNode,

@@ -142,7 +142,7 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
 
   @Override
   public @NotNull String toString() {
-    // A qualified name can be null e.g. for a local function
+    // A qualified name can be null e.g., for a local function
     String scopeName = myScopeOwner != null ? Objects.requireNonNullElse(myScopeOwner.getQualifiedName(), myScopeOwner.getName()) : null;
     return "PyTypeVarType: " + (scopeName != null ? scopeName + ":" : "") + getName();
   }

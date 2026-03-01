@@ -45,7 +45,7 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
 
   val isLoading: Boolean get() = _isLoading
 
-  internal fun isAmendWithoutChangesAllowed(): Boolean = isAmendCommitMode && amendRoot != null
+  internal fun isAmendWithoutChangesAllowed(): Boolean = commitToAmend is CommitToAmend.Last && amendRoot != null
 
   override fun amendCommitModeToggled() {
     val root = amendRoot?.path ?: return super.amendCommitModeToggled()
@@ -55,17 +55,17 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
     workflowHandler.updateDefaultCommitActionName()
     workflowHandler.hideCommitChecksFailureNotification()
     updateAmendCommitState()
-    if (isAmendCommitMode) loadAmendDetails(amendAware, root) else restoreAmendDetails()
+    if (commitToAmend is CommitToAmend.None) restoreAmendDetails() else loadAmendDetails(amendAware, root, commitToAmend)
   }
 
   private fun updateAmendCommitState() {
-    commitContext.commitWithoutChangesRoots = if (isAmendCommitMode) listOfNotNull(amendRoot) else emptyList()
+    commitContext.commitWithoutChangesRoots = if (commitToAmend is CommitToAmend.Last) listOfNotNull(amendRoot) else emptyList()
   }
 
-  private fun loadAmendDetails(amendAware: AmendCommitAware, root: VirtualFile) {
+  private fun loadAmendDetails(amendAware: AmendCommitAware, root: VirtualFile, commitToAmend: CommitToAmend) {
     _isLoading = true
     setEditedCommit(EditedCommitPresentation.Loading)
-    amendDetailsGetter = amendAware.getAmendCommitDetails(root)
+    amendDetailsGetter = amendAware.getAmendCommitDetails(root, commitToAmend)
     amendDetailsGetter?.run {
       onSuccess { setAmendDetails(it) }
       onError { setEditedCommit(null) }
@@ -115,8 +115,14 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   }
 
   private inner class EditedCommitCleaner : CommitterResultHandler {
-    override fun onSuccess() = setEditedCommit(null)
+    override fun onSuccess() {
+      commitToAmend = CommitToAmend.None
+      setEditedCommit(null)
+    }
     override fun onCancel() = Unit
-    override fun onFailure() = setEditedCommit(null)
+    override fun onFailure() {
+      commitToAmend = CommitToAmend.None
+      setEditedCommit(null)
+    }
   }
 }

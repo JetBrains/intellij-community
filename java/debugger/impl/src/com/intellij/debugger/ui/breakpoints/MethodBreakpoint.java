@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodBreakpoint
@@ -24,39 +24,56 @@ import com.intellij.debugger.jdi.ClassesByNameProvider;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.event.MethodExitEvent;
-import com.sun.jdi.request.*;
+import com.sun.jdi.request.BreakpointRequest;
+import com.sun.jdi.request.ClassPrepareRequest;
+import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.request.MethodEntryRequest;
+import com.sun.jdi.request.MethodExitRequest;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -136,45 +153,46 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       request.enable();
     }
 
-    ProgressWindow indicator =
-      new ProgressWindow(true, false, debugProcess.getProject(), JavaDebuggerBundle.message("cancel.emulation"));
-    indicator.setDelayInMillis(2000);
+    MethodBreakpointProgressSupport.getInstance().runWithModalProgress(
+      debugProcess.getProject(),
+      JavaDebuggerBundle.message("cancel.emulation"),
+      2000,
+      indicator -> {
+        AtomicBoolean changed = new AtomicBoolean();
+        Disposable disposable = Disposer.newDisposable("BreakpointsEmulation");
+        XBreakpointListener<XBreakpoint<?>> listener = new XBreakpointListener<XBreakpoint<?>>() {
+          void changed(@NotNull XBreakpoint<?> b) {
+            if (b == breakpoint.getXBreakpoint()) {
+              changed.set(true);
+              indicator.cancel();
+            }
+          }
 
-    AtomicBoolean changed = new AtomicBoolean();
-    XBreakpointListener<XBreakpoint<?>> listener = new XBreakpointListener<XBreakpoint<?>>() {
-      void changed(@NotNull XBreakpoint b) {
-        if (b == breakpoint.getXBreakpoint()) {
-          changed.set(true);
-          indicator.cancel();
+          @Override
+          public void breakpointRemoved(@NotNull XBreakpoint b) {
+            changed(b);
+          }
+
+          @Override
+          public void breakpointChanged(@NotNull XBreakpoint b) {
+            changed(b);
+          }
+        };
+
+        debugProcess.getProject().getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, listener);
+        try {
+          processPreparedSubTypes(baseType,
+                                  (subType, classesByName) ->
+                                    createRequestForPreparedClassEmulated(breakpoint, debugProcess, subType, classesByName, false),
+                                  indicator);
         }
-      }
-
-      @Override
-      public void breakpointRemoved(@NotNull XBreakpoint b) {
-        changed(b);
-      }
-
-      @Override
-      public void breakpointChanged(@NotNull XBreakpoint b) {
-        changed(b);
-      }
-    };
-
-    debugProcess.getProject().getMessageBus().connect(indicator).subscribe(XBreakpointListener.TOPIC, listener);
-    try {
-      ProgressManager.getInstance().executeProcessUnderProgress(
-        () -> processPreparedSubTypes(baseType,
-                                      (subType, classesByName) ->
-                                        createRequestForPreparedClassEmulated(breakpoint, debugProcess, subType, classesByName, false),
-                                      indicator),
-        indicator);
-      if (indicator.isCanceled() && !changed.get()) {
-        breakpoint.disableEmulation();
-      }
-    }
-    catch (ProcessCanceledException e) {
-      breakpoint.disableEmulation();
-    }
+        finally {
+          if (indicator.isCanceled() && !changed.get()) {
+            breakpoint.disableEmulation();
+          }
+          Disposer.dispose(disposable);
+        }
+      });
   }
 
   @Override

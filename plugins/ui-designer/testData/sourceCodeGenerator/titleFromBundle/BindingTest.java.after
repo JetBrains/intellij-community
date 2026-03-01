@@ -47,6 +47,9 @@ public class BindingTest {
 
     private static java.lang.reflect.Method $$$cachedGetBundleMethod$$$ = null;
 
+    /**
+     * @noinspection ALL
+     */
     private String $$$getMessageFromBundle$$$(String path, String key) {
         java.util.ResourceBundle bundle;
         try {

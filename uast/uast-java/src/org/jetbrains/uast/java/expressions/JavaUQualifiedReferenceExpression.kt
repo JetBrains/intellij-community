@@ -6,7 +6,15 @@ import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.UastQualifiedExpressionAccessType
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class JavaUQualifiedReferenceExpression(

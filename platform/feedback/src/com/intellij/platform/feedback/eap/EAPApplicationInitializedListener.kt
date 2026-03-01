@@ -23,7 +23,7 @@ import kotlin.time.Duration.Companion.minutes
 private const val timerStartedKey = "eap.feedback.scheduled"
 private const val eapFeedbackRegistryKey = "eap.feedback.notification.enabled"
 
-private class EAPApplicationInitializedListener : ApplicationActivity {
+internal class EAPApplicationInitializedListener : ApplicationActivity {
   init {
     if (!isEAPEnv()) {
       throw ExtensionNotApplicableException.create()

@@ -103,6 +103,19 @@ object InlineCompletionSkipElementUtils {
     return insertSkipElementsAt(newOffsets)
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  fun List<InlineCompletionElement>.isSkipped(offset: Int): Boolean {
+    var done = 0
+    for (element in this) {
+      done += element.text.length
+      if (done > offset) {
+        return element is InlineCompletionSkipTextElement
+      }
+    }
+    return false
+  }
+
   private fun labelSkipOffsets(elements: List<InlineCompletionElement>): BooleanArray {
     val labels = BooleanArray(elements.sumOf { it.text.length }) { false }
     var offset = 0

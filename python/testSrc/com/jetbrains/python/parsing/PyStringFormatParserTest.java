@@ -13,7 +13,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
-import static com.jetbrains.python.PyStringFormatParser.*;
+import static com.jetbrains.python.PyStringFormatParser.ConstantChunk;
+import static com.jetbrains.python.PyStringFormatParser.FormatStringChunk;
+import static com.jetbrains.python.PyStringFormatParser.NewStyleSubstitutionChunk;
+import static com.jetbrains.python.PyStringFormatParser.PercentSubstitutionChunk;
+import static com.jetbrains.python.PyStringFormatParser.SubstitutionChunk;
+import static com.jetbrains.python.PyStringFormatParser.filterSubstitutions;
+import static com.jetbrains.python.PyStringFormatParser.parseNewStyleFormat;
+import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
 
 
 public class PyStringFormatParserTest extends TestCase {

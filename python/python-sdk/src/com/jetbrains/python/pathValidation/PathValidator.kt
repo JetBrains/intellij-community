@@ -5,8 +5,8 @@ import com.intellij.execution.Platform
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.appxProduct
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.IOException

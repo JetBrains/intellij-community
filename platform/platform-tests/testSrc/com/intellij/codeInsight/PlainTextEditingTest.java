@@ -2,11 +2,16 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -291,6 +296,7 @@ public class PlainTextEditingTest extends EditingTestBase {
     }
   }
 
+  @PerformanceUnitTest
   public void testCalculatingLongLinesPositionPerformanceInEditorWithNoTabs() {
     final String longLine = StringUtil.repeatSymbol(' ', 1000000);
     configureFromFileText("x.txt", longLine);

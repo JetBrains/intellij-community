@@ -3,7 +3,7 @@ package com.intellij.vcs
 
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.MissingResourceException
 
 object VcsLocaleHelper {
   val EN_UTF_LOCALE: Locale = Locale("en_US.UTF-8", "en_US.utf8")

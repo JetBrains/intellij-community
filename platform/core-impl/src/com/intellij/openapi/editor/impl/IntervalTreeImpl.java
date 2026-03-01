@@ -21,7 +21,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.ConcurrentModificationException;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -125,7 +129,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     }
 
     // removes the interval and the node, if node became empty
-    // returns true if node was removed
+    // returns true if the node itself was removed, not just one interval inside
     private boolean removeInterval(@NotNull E key) {
       myTree.checkBelongsToTheTree(key, true);
       myTree.assertUnderWriteLock();
@@ -1075,10 +1079,14 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   @Override
   public boolean removeInterval(@NotNull T interval) {
     if (!interval.isValid()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("ITI.removeInterval=false: node is null; " + interval);
+      }
       return false;
     }
+    boolean r = false;
     try {
-      return runUnderWriteLock(() -> {
+      r = runUnderWriteLock(() -> {
         try {
           incModCount();
           boolean ret = false;
@@ -1093,6 +1101,11 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
               node.removeInterval(interval);
               ret = true;
             }
+            else {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("ITI.removeInterval=false: node lookup is null; " + interval);
+              }
+            }
           }
           return ret;
         }
@@ -1100,6 +1113,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
           setNode(interval, null);
         }
       });
+      return r;
     }
     finally {
       fireAfterRemoved(interval);

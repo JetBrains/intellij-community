@@ -2,8 +2,12 @@
 load("@rules_java//java:defs.bzl", "java_import")
 
 java_import(
-  name = "libwebp",
+  name = "webp-libwebp",
   jars = ["libwebp.jar"],
   visibility = ["//visibility:public"]
 )
+
+exports_files([
+  "libwebp.jar",
+], visibility = ["//visibility:public"])
 ### auto-generated section `local-libs` end

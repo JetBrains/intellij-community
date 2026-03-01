@@ -2,14 +2,20 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.SetValueResult
+import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueModifierApi
+import com.intellij.platform.debugger.impl.rpc.XExpressionDto
+import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.rpc.xExpression
 import com.intellij.xdebugger.frame.XValueModifier
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import kotlinx.coroutines.CompletableDeferred
 
 internal class BackendXDebuggerValueModifierApi : XDebuggerValueModifierApi {
   override suspend fun setValue(xValueId: XValueId, xExpressionDto: XExpressionDto): TimeoutSafeResult<SetValueResult> {
-    val xValue = BackendXValueModel.findById(xValueId)?.xValue ?: return CompletableDeferred(SetValueResult.Success)
+    val model = BackendXValueModel.findById(xValueId) ?: return CompletableDeferred(SetValueResult.Success)
+    val xValue = model.xValue
     val valueSetDeferred = CompletableDeferred<SetValueResult>()
 
     val modifier = xValue.modifier
@@ -21,6 +27,8 @@ internal class BackendXDebuggerValueModifierApi : XDebuggerValueModifierApi {
     modifier.setValue(xExpressionDto.xExpression(), object : XValueModifier.XModificationCallback {
       override fun valueModified() {
         valueSetDeferred.complete(SetValueResult.Success)
+        // Future compute presentations should have the updated presentation
+        model.computeValuePresentation()
       }
 
       override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {

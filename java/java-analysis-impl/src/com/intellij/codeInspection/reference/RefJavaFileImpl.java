@@ -2,7 +2,15 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UastContextKt;

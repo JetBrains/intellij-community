@@ -47,7 +47,7 @@ data class JavaValueObjectReferenceInfo(
   val canGetInstanceInfo: Boolean,
 )
 
-private class JavaValueDescriptorSerializerProvider : CustomXDescriptorSerializerProvider {
+internal class JavaValueDescriptorSerializerProvider : CustomXDescriptorSerializerProvider {
   override fun getSerializer(kind: String): KSerializer<out XDescriptor>? {
     if (kind == JAVA_VALUE_KIND) {
       return JavaValueDescriptor.serializer()

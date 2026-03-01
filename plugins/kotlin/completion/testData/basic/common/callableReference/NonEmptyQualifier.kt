@@ -40,7 +40,6 @@ class C {
     }
 }
 
-// IGNORE_K2
 // EXIST: { lookupString: "class", itemText: "class", attributes: "bold"}
 // EXIST_JAVA_ONLY: { lookupString: "class.java", itemText: "class", tailText: ".java", attributes: "bold" }
 // EXIST: { itemText: "memberFunInA", attributes: "bold", icon: "nodes/abstractMethod.svg" }

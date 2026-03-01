@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -39,8 +39,8 @@ public class UpdateInspectionOptionFixTest extends BasePlatformTestCase {
                    ModifiedOption[bindId=currentProfile.Java8MapApi.options.mySuggestMapGetOrDefault, oldValue=true, newValue=false]]]""", command.toString());
     IntentionPreviewInfo preview = IntentionPreviewUtils.getModCommandPreview(command, myFixture.getActionContext());
     assertTrue(preview instanceof IntentionPreviewInfo.Html);
-    assertEquals("Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.computeIfAbsent</td></tr></table>" +
-                 "Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to Map.getOrDefault</td></tr></table>",
+    assertEquals("Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to &#39;Map.computeIfAbsent()&#39;</td></tr></table>" +
+                 "Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td><td>Suggest conversion to &#39;Map.getOrDefault()&#39;</td></tr></table>",
                  ((IntentionPreviewInfo.Html)preview).content().toString());
   }
   
@@ -52,7 +52,7 @@ public class UpdateInspectionOptionFixTest extends BasePlatformTestCase {
     IntentionPreviewInfo info = fix.generatePreview(myFixture.getActionContext());
     assertTrue(info instanceof IntentionPreviewInfo.Html);
     assertEquals("Uncheck option:<br/><br/><table><tr><td><input readonly=\"true\" type=\"checkbox\"/></td>" +
-                 "<td>Suggest conversion to Map.computeIfAbsent</td></tr></table>", ((IntentionPreviewInfo.Html)info).content().toString());
+                 "<td>Suggest conversion to &#39;Map.computeIfAbsent()&#39;</td></tr></table>", ((IntentionPreviewInfo.Html)info).content().toString());
     assertTrue(((Java8MapApiInspection)InspectionProfileManager.getInstance(getProject()).getCurrentProfile()
       .getUnwrappedTool("Java8MapApi", myFixture.getFile())).mySuggestMapComputeIfAbsent);
     ModCommand command = fix.perform(myFixture.getActionContext());

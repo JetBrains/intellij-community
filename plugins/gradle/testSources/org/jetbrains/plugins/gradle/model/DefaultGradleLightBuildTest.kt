@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcAddedInEditableBuilds
@@ -26,7 +26,7 @@ import java.io.File
 class DefaultGradleLightBuildTest {
 
   @ParameterizedTest
-  @GradleTestSource("8.1, 8.2")
+  @GradleTestSource("8.1.1, 8.2.1")
   fun `test DefaultGradleLightBuild#convertGradleBuilds for simple build`(gradleVersion: GradleVersion) {
     // GIVEN
     val rootProject = mockGradleProject(
@@ -73,7 +73,7 @@ class DefaultGradleLightBuildTest {
   }
 
   @ParameterizedTest
-  @GradleTestSource("8.1, 8.2")
+  @GradleTestSource("8.1.1, 8.2.1")
   fun `test DefaultGradleLightBuild#convertGradleBuilds for composite build`(gradleVersion: GradleVersion) {
     // GIVEN
     val rootProject = mockGradleProject(path = ":", buildTreePath = ":", buildPath = "/rootBuild", gradleVersion = gradleVersion)
@@ -182,7 +182,7 @@ class DefaultGradleLightBuildTest {
    * It's worth running this test for 8.0, because before 8.2 identity path calculation for a project depends on the build hierarchy.
    */
   @ParameterizedTest
-  @GradleTestSource("8.0, $BASE_GRADLE_VERSION")
+  @GradleTestSource("8.0.2, $BASE_GRADLE_VERSION")
   fun `test converted buildSrc has a parent build since Gradle 8,0`(gradleVersion: GradleVersion) {
     val gradleRootProject = mockGradleProject(
       buildPath = "/rootBuild",
@@ -281,7 +281,7 @@ class DefaultGradleLightBuildTest {
    *```
    */
   @ParameterizedTest
-  @GradleTestSource("6.6, 7.6")
+  @GradleTestSource("6.6.1, 7.6.6")
   fun `test converted buildSrc does not have a parent before Gradle 8,0`(gradleVersion: GradleVersion) {
     val gradleRootProject = mockGradleProject(
       buildPath = "/rootBuild",

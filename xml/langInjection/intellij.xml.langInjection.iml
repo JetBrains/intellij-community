@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
-    <orderEntry type="module" module-name="intellij.xpath" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.libraries.jaxen" />

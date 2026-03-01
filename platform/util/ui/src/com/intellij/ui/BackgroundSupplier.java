@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.intellij.ui.render.RenderingUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public interface BackgroundSupplier {
   /**

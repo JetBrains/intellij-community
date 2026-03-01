@@ -14,4 +14,18 @@ jvm_library(
     "//libraries/jackson/databind",
   ]
 )
+
+jvm_library(
+  name = "tools-ide-performanceTesting-commands_test_lib",
+  module_name = "intellij.tools.ide.performanceTesting.commands",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":tools-ide-performanceTesting-commands",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.tools.ide.performanceTesting.commands` end

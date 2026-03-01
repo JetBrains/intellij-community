@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import java.io.File
 import java.nio.file.Path
-import kotlin.collections.forEach
 import kotlin.io.path.name
 
 /**

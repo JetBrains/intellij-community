@@ -9,7 +9,11 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -58,11 +62,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE;
@@ -95,7 +108,7 @@ public final class PythonSdkUpdater {
    * Since this method blocks for the first phase of an update, it's not allowed to call it on threads holding a read or write action.
    * The only exception is made for EDT, in which case a modal progress indicator will be displayed during this first synchronous step.
    * <p>
-   * This method emulates the legacy behavior of {@link #update(Sdk, Project, Component)} and is likely to be removed
+   * This method emulates the legacy behavior of `update` and is likely to be removed
    * or changed in the future. Unless you're sure that a synchronous update is necessary you should rather use
    * {@link #scheduleUpdate(Sdk, Project)} directly.
    *
@@ -173,15 +186,6 @@ public final class PythonSdkUpdater {
   }
 
   /**
-   * @deprecated Use {@link #scheduleUpdate} or {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining}
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public static boolean update(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
-    return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
-  }
-
-  /**
    * Schedule an <i>asynchronous</i> background update of the given SDK.
    * <p>
    * This method may be invoked from any thread. Synchronization guarantees the following properties:
@@ -198,18 +202,6 @@ public final class PythonSdkUpdater {
   @ApiStatus.Internal
   public static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, Boolean withPackageUpdate) {
     scheduleUpdate(sdk, project, new PyUpdateSdkRequestData(withPackageUpdate));
-  }
-
-  /**
-   * Does the same that {@link #scheduleUpdate(Sdk, Project)}, but simply omits the new update request if another one is in progress,
-   * while the former method will schedule the next update after processing the other update.
-   */
-  public static void ensureUpdateScheduled(@NotNull Sdk sdk, @NotNull Project project) {
-    synchronized (ourLock) {
-      if (ourUnderRefresh.contains(sdk) || ourToBeRefreshed.containsKey(sdk)) return;
-      ourUnderRefresh.add(sdk);
-    }
-    ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, new PyUpdateSdkRequestData(true)));
   }
 
   /**
@@ -266,15 +258,16 @@ public final class PythonSdkUpdater {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      if (myProject.isDisposed()) {
-        return;
-      }
-      if (isSdkDisposed()) {
-        return;
-      }
-      // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress
+      PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, mySdk);
+      // Cancel the indicator when the SDK is disposed to terminate any running processes (e.g., skeleton generation).
+      // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress.
       Disposable indicatorDisposable = getIndicatorDisposable(indicator);
-      Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
+      if (mySdk instanceof Disposable sdkDisposable) {
+        Disposer.register(sdkDisposable, indicatorDisposable);
+      }
+      else {
+        Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
+      }
       if (Trigger.LOG.isDebugEnabled()) {
         Trigger.LOG.debug(
           "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
@@ -293,27 +286,28 @@ public final class PythonSdkUpdater {
         // This step also includes setting mapped interpreter paths
         generateSkeletons(mySdk, indicator);
         if (myRequestData.withPackagesUpdate) {
-          refreshPackages(mySdk, indicator);
+          refreshPackages(manager, indicator);
         }
-        addBundledPyiStubsToInterpreterPaths(mySdk);
+        addBundledPyiStubsToInterpreterPaths(manager);
       }
       catch (ExecutionException e) {
         LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
       }
       finally {
         ApplicationManager.getApplication().invokeLater(() -> {
-          Disposer.dispose(indicatorDisposable);
+          if (!isSdkDisposed()) {
+            Disposer.dispose(indicatorDisposable);
+          }
           // restart code analysis
           DaemonCodeAnalyzer.getInstance(myProject).restart(this);
         }, myProject.getDisposed());
       }
     }
 
-    private void addBundledPyiStubsToInterpreterPaths(@NotNull Sdk sdk) {
+    private static void addBundledPyiStubsToInterpreterPaths(@NotNull PythonPackageManager packageManager) {
       List<VirtualFile> allStubRoots = new ArrayList<>();
       ContainerUtil.addIfNotNull(allStubRoots, PyTypeShed.INSTANCE.getThirdPartyStubRoot());
       ContainerUtil.addIfNotNull(allStubRoots, PyBundledStubs.INSTANCE.getRoot());
-      PythonPackageManager packageManager = PythonPackageManager.Companion.forSdk(myProject, sdk);
       Set<String> installedPackageNames = ContainerUtil.map2Set(packageManager.listInstalledPackagesSnapshot(), PythonPackage::getName);
       List<VirtualFile> bundledStubRoots = StreamEx.of(allStubRoots)
         .flatArray(root -> root.getChildren())
@@ -331,8 +325,8 @@ public final class PythonSdkUpdater {
         })
         .toList();
 
-      LOG.info("Bundled .pyi stub roots for SDK " + sdk + ":" + bundledStubRoots);
-      changeSdkModificator(sdk, effectiveModificator -> {
+      LOG.info("Bundled .pyi stub roots for SDK " + packageManager.getSdk() + ":" + bundledStubRoots);
+      changeSdkModificator(packageManager.getSdk(), effectiveModificator -> {
         VirtualFile[] currentRoots = effectiveModificator.getRoots(OrderRootType.CLASSES);
         effectiveModificator.removeAllRoots();
         for (VirtualFile sdkPath : ContainerUtil.concat(List.of(currentRoots), bundledStubRoots)) {
@@ -354,21 +348,12 @@ public final class PythonSdkUpdater {
       };
     }
 
-    private void refreshPackages(@NotNull Sdk sdk, @NotNull ProgressIndicator indicator) {
-      try {
-        LOG.info("Performing background scan of packages for SDK " + getSdkPresentableName(sdk));
-        indicator.setIndeterminate(true);
-        indicator.setText(PyBundle.message("python.sdk.scanning.installed.packages"));
-        indicator.setText2("");
-        if (Disposer.isDisposed((Disposable)sdk)) {
-          return;
-        }
-        PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, sdk);
-        PythonPackageManagerExt.reloadPackagesBlocking(manager);
-      }
-      catch (Throwable e) {
-        LOG.warn(e.getMessage());
-      }
+    private static void refreshPackages(@NotNull PythonPackageManager manager, @NotNull ProgressIndicator indicator) {
+      LOG.info("Performing background scan of packages for SDK " + getSdkPresentableName(manager.getSdk()));
+      indicator.setIndeterminate(true);
+      indicator.setText(PyBundle.message("python.sdk.scanning.installed.packages"));
+      indicator.setText2("");
+      PythonPackageManagerExt.reloadPackagesBlocking(manager);
     }
 
     /**
@@ -380,7 +365,7 @@ public final class PythonSdkUpdater {
         final String sdkPresentableName = getSdkPresentableName(sdk);
         LOG.info("Performing background update of skeletons for SDK " + sdkPresentableName);
         indicator.setText(PyBundle.message("python.sdk.updating.skeletons"));
-        PySkeletonRefresher.refreshSkeletonsOfSdk(myProject, null, skeletonsPath, sdk);
+        PySkeletonRefresher.refreshSkeletonsOfSdk(myProject, skeletonsPath, sdk);
         if (PythonSdkUtil.isRemote(sdk)) {
           updateSdkPaths(sdk, getRemoteSdkMappedPaths(sdk), getProject());
         }
@@ -407,7 +392,7 @@ public final class PythonSdkUpdater {
         if (PythonSdkUtil.isRemote(mySdk)) {
           PythonSdkType.notifyRemoteSdkSkeletonsFail((InvalidSdkException)exception, () -> {
             if (!isSdkDisposed()) {
-              update(mySdk, myProject, null);
+              updateVersionAndPathsSynchronouslyAndScheduleRemaining(mySdk, myProject);
             }
           });
         }
@@ -451,6 +436,7 @@ public final class PythonSdkUpdater {
    * @see #updateVersionAndPathsSynchronouslyAndScheduleRemaining(Sdk, Project)
    */
   @ApiStatus.Internal
+
   public static void updateOrShowError(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
     boolean versionAndPathsUpdated = updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
     if (!versionAndPathsUpdated) {

@@ -7,7 +7,7 @@ fun usage() {
 
 // K1_TYPE: JavaClass() -> <html>JavaClass</html>
 
-// K2_TYPE: JavaClass() -> JavaClass
+// K2_TYPE: JavaClass() -> <b>JavaClass</b>
 
 // FILE: dependency/JavaClass.java
 package dependency;

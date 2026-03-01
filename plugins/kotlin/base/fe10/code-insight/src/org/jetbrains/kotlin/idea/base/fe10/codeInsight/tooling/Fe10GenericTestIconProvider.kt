@@ -1,8 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.base.fe10.analysis.classId
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinTestAvailabilityChecker
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -11,6 +16,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperClassifiers
 
+@K1Deprecation
 object Fe10GenericTestIconProvider : AbstractGenericTestIconProvider() {
     override fun isKotlinTestDeclaration(declaration: KtNamedDeclaration): Boolean =
       when (declaration) {

@@ -1,6 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -9,7 +16,11 @@ import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
-import de.plushnikov.intellij.plugin.util.*;
+import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

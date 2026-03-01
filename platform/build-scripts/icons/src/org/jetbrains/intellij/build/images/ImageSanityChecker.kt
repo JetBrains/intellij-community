@@ -2,8 +2,14 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.intellij.build.images.ImageExtension.*
-import org.jetbrains.intellij.build.images.ImageType.*
+import org.jetbrains.intellij.build.images.ImageExtension.GIF
+import org.jetbrains.intellij.build.images.ImageExtension.PNG
+import org.jetbrains.intellij.build.images.ImageExtension.SVG
+import org.jetbrains.intellij.build.images.ImageType.BASIC
+import org.jetbrains.intellij.build.images.ImageType.DARCULA
+import org.jetbrains.intellij.build.images.ImageType.RETINA
+import org.jetbrains.intellij.build.images.ImageType.RETINA_DARCULA
+import org.jetbrains.intellij.build.images.ImageType.STROKE
 import org.jetbrains.jps.model.module.JpsModule
 import java.awt.Dimension
 import java.nio.file.Path

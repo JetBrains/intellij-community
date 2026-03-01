@@ -20,10 +20,10 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
-import com.intellij.vcs.log.VcsLogRefs;
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
-import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.VcsLogGraphData;
 import com.intellij.vcs.log.impl.VcsGoToRefComparator;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
@@ -39,8 +39,13 @@ import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JComponent;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
@@ -76,8 +81,8 @@ public final class GitRefDialog extends DialogWrapper {
     VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
     if (logManager != null) {
       List<VirtualFile> roots = ContainerUtil.map(repositories, Repository::getRoot);
-      DataPack dataPack = logManager.getDataManager().getDataPack();
-      if (dataPack != DataPack.EMPTY) {
+      VcsLogGraphData dataPack = logManager.getDataManager().getGraphData();
+      if (!(dataPack instanceof VcsLogGraphData.Empty)) {
         VcsGoToRefComparator comparator = new VcsGoToRefComparator(dataPack.getLogProviders());
         return new MyVcsRefCompletionProvider(dataPack.getRefsModel(), roots, comparator);
       }
@@ -129,7 +134,7 @@ public final class GitRefDialog extends DialogWrapper {
   }
 
   private static final class MyVcsRefCompletionProvider extends VcsRefCompletionProvider {
-    MyVcsRefCompletionProvider(@NotNull VcsLogRefs refs,
+    MyVcsRefCompletionProvider(@NotNull VcsLogAggregatedStoredRefs refs,
                                @NotNull Collection<? extends VirtualFile> roots,
                                @NotNull Comparator<? super VcsRef> comparator) {
       super(refs, roots, new VcsRefDescriptor(comparator));

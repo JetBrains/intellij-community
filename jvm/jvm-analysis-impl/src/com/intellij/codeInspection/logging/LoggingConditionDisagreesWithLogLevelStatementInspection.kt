@@ -2,7 +2,11 @@
 package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
@@ -15,9 +19,15 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
 import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.replace
+import org.jetbrains.uast.getQualifiedParentOrThis
+import org.jetbrains.uast.getUastParentOfType
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class LoggingConditionDisagreesWithLogLevelStatementInspection : AbstractBaseUastLocalInspectionTool() {

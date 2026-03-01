@@ -3,7 +3,15 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;

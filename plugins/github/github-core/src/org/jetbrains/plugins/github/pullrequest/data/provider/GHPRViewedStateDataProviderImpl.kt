@@ -2,7 +2,13 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.async.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier

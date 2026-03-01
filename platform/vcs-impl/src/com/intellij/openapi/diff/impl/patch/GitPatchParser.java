@@ -8,7 +8,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.vcsUtil.VcsFileUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ListIterator;
 import java.util.regex.Matcher;

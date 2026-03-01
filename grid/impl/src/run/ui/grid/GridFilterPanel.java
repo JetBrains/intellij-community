@@ -19,7 +19,8 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import static com.intellij.database.datagrid.GridFilterAndSortingComponent.FILTER_PREFERRED_SIZE;
 
@@ -31,7 +32,6 @@ public class GridFilterPanel extends GridEditorPanelBase {
           grid.getDataHookup().getFilterPrefix(),
           grid.getDataHookup().getFilterEmptyText(),
           getFilterDocument(grid));
-    // TODO (anya) [grid]: similar logic for sort panel ((!) note that the sort panel is attached to the filter panel)
     setVisible(grid.getDataHookup().isFilterApplicable());
 
     Function<@NotNull DataGrid, @Nullable GridEditorPanel> getPanel = g -> g.getFilterComponent().getFilterPanel();

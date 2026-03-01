@@ -4,7 +4,11 @@ package com.jetbrains.python.console
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.ParsingTestCase
-import com.jetbrains.python.*
+import com.jetbrains.python.PyLanguageFacade
+import com.jetbrains.python.PyLanguageFacadeImpl
+import com.jetbrains.python.PythonDialectsTokenSetContributor
+import com.jetbrains.python.PythonLanguage
+import com.jetbrains.python.PythonTokenSetContributor
 import com.jetbrains.python.psi.impl.PythonASTFactory
 
 /**

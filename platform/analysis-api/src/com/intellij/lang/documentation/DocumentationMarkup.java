@@ -18,7 +18,6 @@ public interface DocumentationMarkup {
   @ApiStatus.Internal String CLASS_CENTERED = "centered";
   @ApiStatus.Internal String CLASS_BOTTOM = "bottom";
   @ApiStatus.Internal String CLASS_TOP = "top";
-  @ApiStatus.Internal String CLASS_DOWNLOAD_DOCUMENTATION = "download-documentation";
 
   @NlsSafe String DEFINITION_START = "<div class='" + CLASS_DEFINITION + "'><pre>";
   @NlsSafe String DEFINITION_END = "</pre></div>";

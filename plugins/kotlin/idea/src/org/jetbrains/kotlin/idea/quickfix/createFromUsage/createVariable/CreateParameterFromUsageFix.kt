@@ -5,22 +5,38 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableBuilderConfiguration
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallablePlacement
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.PropertyInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.createBuilder
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureConfiguration
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinTypeInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.modify
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.runChangeSignature
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 
+@K1Deprecation
 class CreateParameterFromUsageFix<E : KtElement>(
     originalExpression: E,
     private val dataProvider: (E) -> CreateParameterData<E>?

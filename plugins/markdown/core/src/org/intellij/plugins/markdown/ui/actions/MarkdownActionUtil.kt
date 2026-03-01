@@ -18,10 +18,10 @@ import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.jetbrains.annotations.ApiStatus
-import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 @ApiStatus.Internal
 object MarkdownActionUtil {
@@ -62,7 +62,7 @@ object MarkdownActionUtil {
   fun findMarkdownEditor(event: AnActionEvent, strictMarkdown: Boolean = false): Editor? {
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return null
     return when {
-      if (strictMarkdown) file.language.isMarkdownLanguage() else file.language.supportsMarkdown() ->
+      if (strictMarkdown) file.language.isMarkdownLanguage() else file.language.supportsMarkdown(event.dataContext) ->
         event.getData(CommonDataKeys.EDITOR)
       else -> null
     }

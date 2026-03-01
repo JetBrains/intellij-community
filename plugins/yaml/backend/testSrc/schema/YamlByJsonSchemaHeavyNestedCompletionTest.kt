@@ -2,11 +2,15 @@
 package org.jetbrains.yaml.schema
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.jetbrains.jsonSchema.impl.*
+import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTestBase
 import com.jetbrains.jsonSchema.impl.TestSchemas.open1ThenOpen2Then3Schema
 import com.jetbrains.jsonSchema.impl.TestSchemas.settingWithEnabledShorthand
 import com.jetbrains.jsonSchema.impl.TestSchemas.settingWithEnabledShorthandAndCustomization
+import com.jetbrains.jsonSchema.impl.addShorthandValueHandlerForEnabledField
+import com.jetbrains.jsonSchema.impl.assertThatSchema
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
+import com.jetbrains.jsonSchema.impl.testNestedCompletionsWithPredefinedCompletionsRoot
+import com.jetbrains.jsonSchema.impl.withConfiguration
 import org.intellij.lang.annotations.Language
 import java.io.File
 

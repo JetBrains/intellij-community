@@ -11,7 +11,12 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.ui.withLock
-import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkClickedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 import java.util.concurrent.CancellationException

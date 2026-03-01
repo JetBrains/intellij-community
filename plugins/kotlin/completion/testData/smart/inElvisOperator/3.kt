@@ -18,3 +18,5 @@ fun A.bar(a: A, b: B, c: C, a1: A?, b1: B?, c1: C?) {
 // EXIST: { itemText:"!! a1" }
 // EXIST: { itemText:"!! b1" }
 // ABSENT: { itemText:"!! c1" }
+
+// IGNORE_K2

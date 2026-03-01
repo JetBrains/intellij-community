@@ -15,7 +15,13 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -27,10 +33,13 @@ import com.intellij.ui.EditorTextField;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.awt.*;
+import java.awt.BorderLayout;
 
 public class MultilineEditor extends JPanel {
 

@@ -20,16 +20,25 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.util.List;
 import java.util.Optional;
 
@@ -126,7 +135,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.setOpaque(false);
     topPanel.add(header, BorderLayout.NORTH);
-    topPanel.add(mySearchField, BorderLayout.SOUTH);
+    topPanel.add(wrapSearchField(), BorderLayout.SOUTH);
 
     new WindowMoveListener(this).installTo(topPanel);
 
@@ -148,6 +157,11 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
       setBackground(JBUI.CurrentTheme.BigPopup.headerBackground());
     }
     getAccessibleContext().setAccessibleName(getAccessibleName());
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull JComponent wrapSearchField() {
+    return mySearchField;
   }
 
   protected void addListDataListener(@NotNull AbstractListModel<Object> model) {
@@ -258,11 +272,16 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     if (viewType == ViewType.SHORT) {
       size.height -= suggestionsPanel.getPreferredSize().height;
       if (ExperimentalUI.isNewUI()) {
-        size.height -= JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().bottom +
-                       JBUI.scale(JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT);
+        size.height -= getTextFieldExtraHeight();
       }
     }
     return size;
+  }
+
+  @ApiStatus.Internal
+  protected int getTextFieldExtraHeight() {
+    return JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().bottom +
+           JBUI.scale(JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT);
   }
 
   public void setSearchFinishedHandler(@NotNull Runnable searchFinishedHandler) {

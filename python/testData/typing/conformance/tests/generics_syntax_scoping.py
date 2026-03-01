@@ -38,7 +38,7 @@ print(T)  # E: Runtime error: 'T' is not defined
 def decorator1[
     T, **P, R
 ](x: type[Foo[T]]) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+    raise NotImplementedError
 
 
 @decorator1(Foo[T])  # E: Runtime error: 'T' is not defined
@@ -79,7 +79,7 @@ class Outer1:
 
 
 def decorator2[**P, R](x: int) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+    raise NotImplementedError
 
 
 T = int(0)
@@ -102,23 +102,24 @@ class ClassE[T](Sequence[T]):
 T = int(0)
 
 
-class Outer2[T]:
-    T = int(1)
+def f(a: int, b: str, c: complex):
+    class Outer2[T]:
+        T = a
 
-    assert_type(T, int)
+        assert_type(T, int)
 
-    class Inner1:
-        T = str("")
+        class Inner1:
+            T = b
 
-        assert_type(T, str)
+            assert_type(T, str)
 
-        def inner_method(self):
-            assert_type(T, TypeVar)
+            def inner_method(self):
+                assert_type(T, TypeVar)
 
-    def outer_method(self):
-        T = 3j
+        def outer_method(self):
+            T = c
 
-        assert_type(T, complex)
-
-        def inner_func():
             assert_type(T, complex)
+
+            def inner_func():
+                assert_type(T, complex)

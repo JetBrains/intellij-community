@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 
+@K1Deprecation
 @Deprecated(
     "For source/binary compatibility",
     replaceWith = ReplaceWith("RemoveModifierFixBase")

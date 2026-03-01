@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 
 internal object JdkUtils {
   fun defineJdk(global: JpsGlobal, jdkName: String, homeDir: Path) {

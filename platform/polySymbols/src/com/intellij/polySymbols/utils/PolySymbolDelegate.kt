@@ -7,9 +7,18 @@ import com.intellij.navigation.NavigatableSymbol
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolProperty
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryStack
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.refactoring.impl.PolySymbolDelegatedRenameTargetImpl
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
@@ -24,10 +33,8 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
 
   override val psiContext: PsiElement?
     get() = delegate.psiContext
-  override val origin: PolySymbolOrigin
-    get() = delegate.origin
-  override val qualifiedKind: PolySymbolQualifiedKind
-    get() = delegate.qualifiedKind
+  override val kind: PolySymbolKind
+    get() = delegate.kind
   override val queryScope: List<PolySymbolScope>
     get() = delegate.queryScope
   override val name: String
@@ -44,7 +51,7 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
     get() = delegate.priority
 
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
-    delegate[property]
+    super.get(property) ?: delegate[property]
 
   override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
     delegate.getDocumentationTarget(location)
@@ -61,11 +68,11 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
     ?: emptyList()
 
   override fun getSymbols(
-    qualifiedKind: PolySymbolQualifiedKind,
+    kind: PolySymbolKind,
     params: PolySymbolListSymbolsQueryParams,
     stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
-    (delegate as? PolySymbolScope)?.getSymbols(qualifiedKind, params, stack)
+    (delegate as? PolySymbolScope)?.getSymbols(kind, params, stack)
     ?: emptyList()
 
   override fun getCodeCompletions(
@@ -76,8 +83,8 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
     (delegate as? PolySymbolScope)?.getCodeCompletions(qualifiedName, params, stack)
     ?: emptyList()
 
-  override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-    (delegate as? PolySymbolScope)?.isExclusiveFor(qualifiedKind)
+  override fun isExclusiveFor(kind: PolySymbolKind): Boolean =
+    (delegate as? PolySymbolScope)?.isExclusiveFor(kind)
     ?: false
 
   override val searchTarget: PolySymbolSearchTarget?

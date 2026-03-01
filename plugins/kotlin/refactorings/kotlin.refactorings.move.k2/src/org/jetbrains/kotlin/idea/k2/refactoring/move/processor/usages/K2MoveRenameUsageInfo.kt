@@ -1,9 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages
 
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiImportStatement
+import com.intellij.psi.PsiImportStaticStatement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
@@ -16,7 +28,6 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -34,9 +45,39 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.sortedByOffset
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.addRootPrefix
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.restoreInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.updatableUsageInfo
-import org.jetbrains.kotlin.idea.references.*
+import org.jetbrains.kotlin.idea.references.KtConstructorDelegationReference
+import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
+import org.jetbrains.kotlin.psi.KtDeclarationContainer
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntrySuperclassReferenceExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPropertyDelegate
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolve.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
 
@@ -161,7 +202,7 @@ sealed class K2MoveRenameUsageInfo(
 
     companion object {
         fun find(declaration: KtNamedDeclaration): List<UsageInfo> {
-            markInternalUsages(declaration, declaration)
+            markInternalUsages(declaration)
             return findExternalUsages(declaration)
         }
 
@@ -192,31 +233,41 @@ sealed class K2MoveRenameUsageInfo(
         internal var KtElement.nonUpdatableUsageInfo: K2MoveRenameUsageInfo? by CopyablePsiUserDataProperty(
           Key.create("NON_UPDATABLE_INTERNAL_USAGE_INFO"))
 
+        /**
+         * A hard reference to the AST node to prevent switching back to stubs due to GC pressure.
+         * AST unloading leads to the loss of all user data attached to the elements, including copyable.
+         * In case of missing [updatableUsageInfo] this means incorrect handling of internal usages inside moved declarations.
+         * This user data property is not copyable and should not outlive the [PsiElement].
+         * The user data is attached to the owner [PsiElement] of the referenced [ASTNode].
+         */
+        internal var PsiElement.hardRefToAst: ASTNode? by UserDataProperty(Key.create("HARD_REF_TO_AST"))
+
         fun PsiElement.internalUsageElements(): List<KtElement> =
             collectDescendantsOfType<KDocName>() +
                     collectDescendantsOfType<KtReferenceExpression>() +
                     collectDescendantsOfType<KtForExpression>()
 
         /**
-         * Finds any usage inside [containing].
-         * We need these usages because when moving [containing] to a different package references that where previously imported by default might
+         * Finds any usage inside [containingElement].
+         * We need these usages because when moving [containingElement] to a different package references that where previously imported by default might
          * now require an explicit import.
          * @see com.intellij.codeInsight.ChangeContextUtil.encodeContextInfo for Java implementation
          */
-        fun markInternalUsages(containing: PsiElement, topLevelMoved: KtElement) {
-            containing.internalUsageElements().forEach { refElem ->
+        fun markInternalUsages(containingElement: KtElement) {
+            containingElement.hardRefToAst = containingElement.node
+            containingElement.internalUsageElements().forEach { refElem ->
                 when (refElem) {
                     is KDocName -> {
                         val reference = refElem.mainReference
                         val resolved =
                             reference.multiResolve(incompleteCode = false).firstOrNull()?.element as? PsiNamedElement
-                        if (resolved != null && !PsiTreeUtil.isAncestor(topLevelMoved, resolved, false)) {
+                        if (resolved != null && !PsiTreeUtil.isAncestor(containingElement, resolved, false)) {
                             refElem.updatableUsageInfo = Source(refElem, reference, resolved, true)
                         }
                     }
 
                     is KtReferenceExpression -> {
-                        refElem.markInternalUsageInfo(topLevelMoved)
+                        refElem.markInternalUsageInfo(containingElement)
                     }
 
                     is KtForExpression -> {
@@ -307,6 +358,7 @@ sealed class K2MoveRenameUsageInfo(
                 refExpr.updatableUsageInfo = null
                 refExpr.nonUpdatableUsageInfo = null
             }
+            containing.hardRefToAst = null
         }
 
         /**
@@ -370,7 +422,7 @@ sealed class K2MoveRenameUsageInfo(
         ): Map<PsiFile, List<K2MoveRenameUsageInfo>> {
             val newElements = oldToNewMap.values.toList()
             val topLevelElements = newElements
-                .filter { elem -> newElements.any { otherElem -> elem.isAncestor(otherElem) } }
+                .filter { elem -> newElements.none { otherElem -> otherElem.isAncestor(elem, strict = true) } }
                 .filterIsInstance<KtElement>()
             return topLevelElements
                 .flatMap { decl -> restoreInternalUsages(decl, oldToNewMap, fromCopy) }

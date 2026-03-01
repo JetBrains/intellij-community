@@ -23,9 +23,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.Map;
 import java.util.function.Supplier;
 

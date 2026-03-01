@@ -53,7 +53,7 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
 
-private class PyWelcomeConfigurator : DirectoryProjectConfigurator {
+internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
   override val isEdtRequired: Boolean
     get() = false
 

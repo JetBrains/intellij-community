@@ -6,7 +6,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.services
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.Dispatchers
@@ -44,10 +43,7 @@ class AppCodeVisionInitializationHost {
   suspend fun runForProjectIfNotInitialized(project: Project) {
     val host = project.serviceAsync<CodeVisionHost>()
     withContext(Dispatchers.EDT) {
-      if (!host.isInitialised) {
-        host.initialize()
-        host.finishInitialisation()
-      }
+      host.initializeIfNeeded()
     }
   }
 }

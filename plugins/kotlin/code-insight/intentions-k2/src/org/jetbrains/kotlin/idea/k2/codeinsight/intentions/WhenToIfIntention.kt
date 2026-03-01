@@ -16,7 +16,16 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.combineWhenConditions
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
+import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.buildExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 
 /**

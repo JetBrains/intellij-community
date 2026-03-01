@@ -2,7 +2,9 @@
 package git4idea.index
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.commands.Git

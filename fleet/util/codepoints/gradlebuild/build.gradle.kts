@@ -7,7 +7,6 @@ plugins {
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
   id("fleet.module-publishing-conventions")
-  id("fleet.sdk-repositories-publishing-conventions")
   id("fleet.open-source-module-conventions")
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
@@ -31,9 +30,11 @@ kotlin {
     "-Xjvm-default=all",
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
+    "-Xcontext-parameters",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
     "-Xwasm-kclass-fqn",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   wasmJs {
@@ -64,7 +65,6 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    implementation(project(":fleet.util.core"))
     compileOnly(project(":fleet.util.multiplatform"))
   }
   sourceSets.iosMain.dependencies {

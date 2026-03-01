@@ -5,7 +5,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.patterns.*;
+import com.intellij.patterns.CaseInsensitiveValuePatternCondition;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiNamePatternCondition;
+import com.intellij.patterns.ValuePatternCondition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
@@ -20,7 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -37,20 +46,19 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
 
   PsiReferenceRegistrarImpl() {
     myBindingCache = ConcurrentFactoryMap.createMap(key -> {
-                                                      List<ProviderBinding> result = new SmartList<>();
-                                                      for (Class<?> bindingClass : myBindingsMap.keySet()) {
-                                                        if (bindingClass.isAssignableFrom(key)) {
-                                                          result.add(myBindingsMap.get(bindingClass));
-                                                        }
-                                                      }
-                                                      for (Class<?> bindingClass : myNamedBindingsMap.keySet()) {
-                                                        if (bindingClass.isAssignableFrom(key)) {
-                                                          result.add(myNamedBindingsMap.get(bindingClass));
-                                                        }
-                                                      }
-                                                      return result.toArray(new ProviderBinding[0]);
-                                                    }
-    );
+      List<ProviderBinding> result = new SmartList<>();
+      for (Class<?> bindingClass : myBindingsMap.keySet()) {
+        if (bindingClass.isAssignableFrom(key)) {
+          result.add(myBindingsMap.get(bindingClass));
+        }
+      }
+      for (Class<?> bindingClass : myNamedBindingsMap.keySet()) {
+        if (bindingClass.isAssignableFrom(key)) {
+          result.add(myNamedBindingsMap.get(bindingClass));
+        }
+      }
+      return result.toArray(new ProviderBinding[0]);
+    });
   }
 
   void markInitialized() {
@@ -65,16 +73,20 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   @Override
-  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
-                                                               @NotNull PsiReferenceProvider provider,
-                                                               double priority) {
+  public <T extends PsiElement> void registerReferenceProvider(
+    @NotNull ElementPattern<T> pattern,
+    @NotNull PsiReferenceProvider provider,
+    double priority
+  ) {
     registerReferenceProvider(pattern, provider, priority, null);
   }
 
-  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
-                                                               @NotNull PsiReferenceProvider provider,
-                                                               double priority,
-                                                               @Nullable Disposable parentDisposable) {
+  public <T extends PsiElement> void registerReferenceProvider(
+    @NotNull ElementPattern<T> pattern,
+    @NotNull PsiReferenceProvider provider,
+    double priority,
+    @Nullable Disposable parentDisposable
+  ) {
     if (myInitialized && !ApplicationManager.getApplication().isUnitTestMode() && parentDisposable == null) {
       LOG.error("Reference provider registration is only allowed from PsiReferenceContributor");
     }
@@ -89,9 +101,8 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       List<PatternCondition<? super String>> conditions1 = nameCondition.getNamePattern().getCondition().getConditions();
       for (PatternCondition<? super String> condition1 : conditions1) {
         if (condition1 instanceof ValuePatternCondition) {
-          Collection<String> strings = ((ValuePatternCondition)condition1).getValues();
-          registerNamedReferenceProvider(ArrayUtilRt.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern,
-                                         parentDisposable);
+          @SuppressWarnings({"unchecked", "rawtypes"}) Collection<String> strings = ((ValuePatternCondition)condition1).getValues();
+          registerNamedReferenceProvider(ArrayUtilRt.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern, parentDisposable);
           return;
         }
         if (condition1 instanceof CaseInsensitiveValuePatternCondition) {
@@ -118,7 +129,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
 
         @Override
         public String toString() {
-          return "PsiReferenceRegistrarImpl cleanuper for " + provider +" ("+provider.getClass()+")";
+          return "PsiReferenceRegistrarImpl cleaner for " + provider + " (" + provider.getClass() + ")";
         }
       };
       Disposer.register(parentDisposable, disposable);
@@ -143,14 +154,16 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     clearBindingsCache();
   }
 
-  private void registerNamedReferenceProvider(String @NotNull [] names,
-                                              PsiNamePatternCondition<?> nameCondition,
-                                              @NotNull Class<?> scopeClass,
-                                              boolean caseSensitive,
-                                              @NotNull PsiReferenceProvider provider,
-                                              double priority,
-                                              @NotNull ElementPattern<?> pattern,
-                                              @Nullable Disposable parentDisposable) {
+  private void registerNamedReferenceProvider(
+    String @NotNull [] names,
+    PsiNamePatternCondition<?> nameCondition,
+    @NotNull Class<?> scopeClass,
+    boolean caseSensitive,
+    @NotNull PsiReferenceProvider provider,
+    double priority,
+    @NotNull ElementPattern<?> pattern,
+    @Nullable Disposable parentDisposable
+  ) {
     NamedObjectProviderBinding providerBinding = myNamedBindingsMap.get(scopeClass);
 
     if (providerBinding == null) {
@@ -180,9 +193,10 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   @ApiStatus.Internal
-  @Unmodifiable
-  @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
-                                                                                   @NotNull PsiReferenceService.Hints hints) {
+  @Unmodifiable @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(
+    @NotNull PsiElement element,
+    @NotNull PsiReferenceService.Hints hints
+  ) {
     ProviderBinding[] bindings = myBindingCache.get(element.getClass());
     if (bindings.length == 0) return Collections.emptyList();
 
@@ -192,9 +206,12 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     }
     return ret;
   }
+
   @ApiStatus.Internal
-  public @Unmodifiable @NotNull List<PsiReferenceProvider> getPsiReferenceProvidersByElement(@NotNull PsiElement element,
-                                                                                             @NotNull PsiReferenceService.Hints hints) {
+  public @Unmodifiable @NotNull List<PsiReferenceProvider> getPsiReferenceProvidersByElement(
+    @NotNull PsiElement element,
+    @NotNull PsiReferenceService.Hints hints
+  ) {
     return ContainerUtil.map(getPairsByElement(element, hints), info -> info.provider);
   }
 }

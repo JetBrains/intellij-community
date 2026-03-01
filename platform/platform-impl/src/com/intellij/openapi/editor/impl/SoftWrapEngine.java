@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LanguageLineWrapPositionStrategy;
 import com.intellij.openapi.editor.LineWrapPositionStrategy;
 import com.intellij.openapi.editor.SoftWrap;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
@@ -52,7 +52,7 @@ public final class SoftWrapEngine {
                         int visibleWidth,
                         int relativeIndent) {
     myEditor = editor;
-    myDocument = editor.getDocument();
+    myDocument = editor.getUiDocument();
     myText = myDocument.getImmutableCharSequence();
     myView = editor.myView;
     myStorage = storage;
@@ -68,7 +68,7 @@ public final class SoftWrapEngine {
   public void generate() {
     int startOffset = myEvent.getStartOffset();
     int minEndOffset = myEvent.getMandatoryEndOffset();
-    int maxEndOffset = getEndOffsetUpperEstimate();
+    int maxEndOffset = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, myDocument, myEvent);
     var inlineInlays = myEditor.getInlayModel().getInlineElementsInRange(startOffset, maxEndOffset);
     var afterLineEndInlays = ContainerUtil.filter(
       myEditor.getInlayModel().getAfterLineEndElementsInRange(DocumentUtil.getLineStartOffset(startOffset, myDocument), maxEndOffset),
@@ -211,15 +211,6 @@ public final class SoftWrapEngine {
       offset = prevOffset;
     }
     return -1;
-  }
-
-  private int getEndOffsetUpperEstimate() {
-    int endOffsetUpperEstimate = EditorUtil.getNotFoldedLineEndOffset(myEditor, myEvent.getMandatoryEndOffset());
-    int line = myDocument.getLineNumber(endOffsetUpperEstimate);
-    if (line < myDocument.getLineCount() - 1) {
-      endOffsetUpperEstimate = myDocument.getLineStartOffset(line + 1);
-    }
-    return endOffsetUpperEstimate;
   }
 
   private void generateGridSoftWraps(CharacterGrid grid, int startOffset, int minEndOffset, int maxEndOffset) {

@@ -5,7 +5,10 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.border.LineBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 public class SideBorder extends LineBorder {
   public static final int NONE = 0;

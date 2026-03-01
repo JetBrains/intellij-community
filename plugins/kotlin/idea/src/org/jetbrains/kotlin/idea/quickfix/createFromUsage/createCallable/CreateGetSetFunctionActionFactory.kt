@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtPsiUtil
 
+@K1Deprecation
 abstract class CreateGetSetFunctionActionFactory(private val isGet: Boolean) :
     CreateCallableMemberFromUsageFactory<KtArrayAccessExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtArrayAccessExpression? {

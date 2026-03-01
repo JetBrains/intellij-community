@@ -7,3 +7,5 @@ fun bar(){
 }
 
 // EXIST: ::Date
+
+// IGNORE_K2

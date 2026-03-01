@@ -36,7 +36,12 @@ import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.KeyStroke
+import javax.swing.LayoutFocusTraversalPolicy
 
 private const val EMPTY_GAP = 4
 

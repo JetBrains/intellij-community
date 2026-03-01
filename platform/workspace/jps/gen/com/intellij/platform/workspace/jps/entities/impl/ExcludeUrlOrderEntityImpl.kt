@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("RootsExtensions")
-
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -10,9 +8,9 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -33,17 +31,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrderEntityData) : ExcludeUrlOrderEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrderEntityData) : ExcludeUrlOrderEntity,
+                                                                                              WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java,
-                                                                               ExcludeUrlOrderEntity::class.java,
-                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
-
-    private val connections = listOf<ConnectionId>(
-      CONTENTROOT_CONNECTION_ID,
-    )
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ContentRootEntity::class.java, ExcludeUrlOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    private val connections = listOf<ConnectionId>(CONTENTROOT_CONNECTION_ID)
 
   }
 
@@ -52,7 +46,6 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
       readField("order")
       return dataSource.order
     }
-
   override val contentRoot: ContentRootEntity
     get() = snapshot.extractOneToOneParent(CONTENTROOT_CONNECTION_ID, this)!!
 
@@ -67,8 +60,8 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
   }
 
 
-  internal class Builder(result: ExcludeUrlOrderEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlOrderEntity, ExcludeUrlOrderEntityData>(
-    result), ExcludeUrlOrderEntity.Builder {
+  internal class Builder(result: ExcludeUrlOrderEntityData?) :
+    ModifiableWorkspaceEntityBase<ExcludeUrlOrderEntity, ExcludeUrlOrderEntityData>(result), ExcludeUrlOrderEntity.Builder {
     internal constructor() : this(ExcludeUrlOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -81,16 +74,14 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
           error("Entity ExcludeUrlOrderEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
       index(this, "order", this.order)
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -143,7 +134,6 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
         changedProperty.add("entitySource")
 
       }
-
     private val orderUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
       if (_diff != null) index(this, "order", value)
@@ -166,7 +156,6 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
         getEntityData(true).order = value
         orderUpdater.invoke(value)
       }
-
     override var contentRoot: ContentRootEntityBuilder
       get() {
         val _diff = diff
@@ -186,7 +175,7 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -196,8 +185,7 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoot")
@@ -205,6 +193,7 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
 
     override fun getEntityClass(): Class<ExcludeUrlOrderEntity> = ExcludeUrlOrderEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -261,9 +250,7 @@ internal class ExcludeUrlOrderEntityData : WorkspaceEntityData<ExcludeUrlOrderEn
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ExcludeUrlOrderEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.order != other.order) return false
     return true
@@ -272,9 +259,7 @@ internal class ExcludeUrlOrderEntityData : WorkspaceEntityData<ExcludeUrlOrderEn
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ExcludeUrlOrderEntityData
-
     if (this.order != other.order) return false
     return true
   }

@@ -8,8 +8,11 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import java.awt.Component;
+import java.awt.Dimension;
 
 final class ConfigurableEditorBanner extends SimpleBanner {
   private final JLabel myProjectIcon = new JLabel();

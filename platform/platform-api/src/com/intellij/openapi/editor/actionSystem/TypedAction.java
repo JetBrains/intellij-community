@@ -1,15 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorBundle;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -26,33 +22,114 @@ import static com.intellij.openapi.editor.rd.LocalEditorSupportUtil.assertLocalE
  * Provides services for registering actions which are activated by typing in the editor.
  */
 public abstract class TypedAction {
-  @SuppressWarnings("removal") private static final ExtensionPointName<EditorTypedHandlerBean> EP_NAME =
-    new ExtensionPointName<>("com.intellij.editorTypedHandler");
-  @SuppressWarnings("removal") private static final ExtensionPointName<EditorTypedHandlerBean> RAW_EP_NAME =
-    new ExtensionPointName<>("com.intellij.rawEditorTypedHandler");
+  private static final Logger LOG = Logger.getInstance(TypedAction.class);
 
-  private TypedActionHandler myRawHandler;
-  private @NotNull TypedActionHandler myHandler;
-  private boolean myHandlersLoaded;
+  @SuppressWarnings("removal")
+  private static final ExtensionPointName<EditorTypedHandlerBean> EP_NAME = new ExtensionPointName<>("com.intellij.editorTypedHandler");
+
+  @SuppressWarnings("removal")
+  private static final ExtensionPointName<EditorTypedHandlerBean> RAW_EP_NAME = new ExtensionPointName<>("com.intellij.rawEditorTypedHandler");
 
   public static TypedAction getInstance() {
     return ApplicationManager.getApplication().getService(TypedAction.class);
   }
 
+  private TypedActionHandler rawHandler;
+  private @NotNull TypedActionHandler handler;
+  private boolean handlersLoaded;
+
   public TypedAction() {
-    myHandler = new Handler();
+    handler = new DefaultTypedHandler();
+  }
+
+  public void beforeActionPerformed(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
+    assertLocalEditorSupport(editor);
+    if (rawHandler instanceof TypedActionHandlerEx rawHandlerEx) {
+      rawHandlerEx.beforeExecute(editor, c, context, plan);
+    }
+  }
+
+  public final void actionPerformed(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+    assertLocalEditorSupport(editor);
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      rawHandler.execute(editor, charTyped, dataContext);
+    }
+  }
+
+  /**
+   * Returns the current 'raw' typing handler.
+   */
+  public @NotNull TypedActionHandler getRawHandler() {
+    return rawHandler;
+  }
+
+  /**
+   * Returns the current typing handler.
+   */
+  public @NotNull TypedActionHandler getHandler() {
+    ensureHandlersLoaded();
+    return handler;
+  }
+
+  /**
+   * Replaces the current 'raw' typing handler with the specified handler.
+   * The handler should pass unprocessed typing to the previously registered 'raw' handler.
+   * <p>
+   * 'Raw' handler is a handler directly invoked by the code which handles typing in the editor.
+   * Default 'raw' handler performs some generic logic that has to be done on typing (like checking whether a file has write access,
+   * creating a command instance for the undo subsystem, initiating write action, etc.),
+   * but delegates to 'normal' handler for actual typing logic.
+   *
+   * @param handler the handler to set.
+   * @return the previously registered handler.
+   * @see #getRawHandler()
+   * @see #getHandler()
+   * @see #setupHandler(TypedActionHandler)
+   */
+  public TypedActionHandler setupRawHandler(@NotNull TypedActionHandler handler) {
+    var tmp = rawHandler;
+    rawHandler = handler;
+    if (tmp == null) {
+      loadRawHandlers();
+    }
+    return tmp;
+  }
+
+  /**
+   * Replaces the typing handler with the specified handler.
+   * The handler should pass unprocessed typing to the previously registered handler.
+   *
+   * @param handler the handler to set.
+   * @return the previously registered handler.
+   * @deprecated Use &lt;typedHandler&gt; extension point for registering typing handlers
+   */
+  @Deprecated
+  public @NotNull TypedActionHandler setupHandler(@NotNull TypedActionHandler handler) {
+    ensureHandlersLoaded();
+    var tmp = this.handler;
+    this.handler = handler;
+    return tmp;
+  }
+
+  private void loadRawHandlers() {
+    RAW_EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
+      var handler = getOrCreateHandler(bean, rawHandler, pluginDescriptor);
+      if (handler != null) {
+        rawHandler = handler;
+      }
+      return Unit.INSTANCE;
+    });
   }
 
   private void ensureHandlersLoaded() {
-    if (myHandlersLoaded) {
+    if (handlersLoaded) {
       return;
     }
-
-    myHandlersLoaded = true;
+    handlersLoaded = true;
     EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
-      var handler = getOrCreateHandler(bean, myHandler, pluginDescriptor);
+      var handler = getOrCreateHandler(bean, this.handler, pluginDescriptor);
       if (handler != null) {
-        myHandler = handler;
+        this.handler = handler;
       }
       return Unit.INSTANCE;
     });
@@ -60,7 +137,7 @@ public abstract class TypedAction {
 
   @SuppressWarnings("removal")
   private static @Nullable TypedActionHandler getOrCreateHandler(
-    @SuppressWarnings("removal") EditorTypedHandlerBean bean,
+    @NotNull EditorTypedHandlerBean bean,
     TypedActionHandler originalHandler,
     PluginDescriptor pluginDescriptor
   ) {
@@ -68,7 +145,6 @@ public abstract class TypedAction {
     if (handler != null) {
       return handler;
     }
-
     try {
       var aClass = ApplicationManager.getApplication().<TypedActionHandler>loadClass(bean.implementationClass, pluginDescriptor);
       Constructor<TypedActionHandler> constructor;
@@ -93,114 +169,12 @@ public abstract class TypedAction {
       throw e;
     }
     catch (PluginException e) {
-      Logger.getInstance(TypedAction.class).error(e);
+      LOG.error(e);
       return null;
     }
     catch (Exception e) {
-      Logger.getInstance(TypedAction.class).error(new PluginException(e, pluginDescriptor.getPluginId()));
+      LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
       return null;
-    }
-  }
-
-  private void loadRawHandlers() {
-    RAW_EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
-      var handler = getOrCreateHandler(bean, myRawHandler, pluginDescriptor);
-      if (handler != null) {
-        myRawHandler = handler;
-      }
-      return Unit.INSTANCE;
-    });
-  }
-
-  private static final class Handler implements TypedActionHandler {
-    @Override
-    public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-      if (!EditorModificationUtil.checkModificationAllowed(editor)) {
-        return;
-      }
-
-      var doc = editor.getDocument();
-      doc.startGuardedBlockChecking();
-      try {
-        final var str = String.valueOf(charTyped);
-        CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
-        EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, str, true);
-      }
-      catch (ReadOnlyFragmentModificationException e) {
-        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-      }
-      finally {
-        doc.stopGuardedBlockChecking();
-      }
-    }
-  }
-
-  /**
-   * Returns the current typing handler.
-   */
-  public @NotNull TypedActionHandler getHandler() {
-    ensureHandlersLoaded();
-    return myHandler;
-  }
-
-  /**
-   * Replaces the typing handler with the specified handler.
-   * The handler should pass unprocessed typing to the previously registered handler.
-   *
-   * @param handler the handler to set.
-   * @return the previously registered handler.
-   * @deprecated Use &lt;typedHandler&gt; extension point for registering typing handlers
-   */
-  @Deprecated
-  public @NotNull TypedActionHandler setupHandler(@NotNull TypedActionHandler handler) {
-    ensureHandlersLoaded();
-    var tmp = myHandler;
-    myHandler = handler;
-    return tmp;
-  }
-
-  /**
-   * Returns the current 'raw' typing handler.
-   */
-  public @NotNull TypedActionHandler getRawHandler() {
-    return myRawHandler;
-  }
-
-  /**
-   * Replaces the current 'raw' typing handler with the specified handler.
-   * The handler should pass unprocessed typing to the previously registered 'raw' handler.
-   * <p>
-   * 'Raw' handler is a handler directly invoked by the code which handles typing in the editor.
-   * Default 'raw' handler performs some generic logic that has to be done on typing (like checking whether a file has write access,
-   * creating a command instance for the undo subsystem, initiating write action, etc.),
-   * but delegates to 'normal' handler for actual typing logic.
-   *
-   * @param handler the handler to set.
-   * @return the previously registered handler.
-   * @see #getRawHandler()
-   * @see #getHandler()
-   * @see #setupHandler(TypedActionHandler)
-   */
-  public TypedActionHandler setupRawHandler(@NotNull TypedActionHandler handler) {
-    var tmp = myRawHandler;
-    myRawHandler = handler;
-    if (tmp == null) {
-      loadRawHandlers();
-    }
-    return tmp;
-  }
-
-  public void beforeActionPerformed(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
-    assertLocalEditorSupport(editor);
-    if (myRawHandler instanceof TypedActionHandlerEx) {
-      ((TypedActionHandlerEx)myRawHandler).beforeExecute(editor, c, context, plan);
-    }
-  }
-
-  public final void actionPerformed(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-    assertLocalEditorSupport(editor);
-    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-      myRawHandler.execute(editor, charTyped, dataContext);
     }
   }
 }

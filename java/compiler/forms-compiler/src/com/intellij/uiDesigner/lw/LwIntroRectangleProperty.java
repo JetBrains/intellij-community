@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 public final class LwIntroRectangleProperty extends LwIntrospectedProperty{
   LwIntroRectangleProperty(final String name){

@@ -3,14 +3,24 @@ package com.intellij.vcs.log.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsShortCommitDetails
+import com.intellij.vcs.log.runInEdt
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet

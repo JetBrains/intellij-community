@@ -584,8 +584,6 @@ a:com.intellij.openapi.application.ApplicationInfo
 - getSplashImageUrl():java.lang.String
 - a:getStrictVersion():java.lang.String
 - a:getVersionName():java.lang.String
-- a:hasContextHelp():Z
-- a:hasHelp():Z
 - s:helpAvailable():Z
 - isEAP():Z
 c:com.intellij.openapi.application.ApplicationManager
@@ -715,7 +713,6 @@ a:com.intellij.openapi.application.WriteAction
 - pa:run(com.intellij.openapi.application.Result):V
 - s:run(com.intellij.util.ThrowableRunnable):V
 - s:runAndWait(com.intellij.util.ThrowableRunnable):V
-- s:start():com.intellij.openapi.application.AccessToken
 f:com.intellij.openapi.client.ClientSessionsUtil
 - sf:forEachSession(com.intellij.openapi.application.Application,com.intellij.openapi.client.ClientKind,kotlin.jvm.functions.Function1):V
 - sf:forEachSession(com.intellij.openapi.project.Project,com.intellij.openapi.client.ClientKind,kotlin.jvm.functions.Function1):V
@@ -837,6 +834,7 @@ f:com.intellij.openapi.components.ServiceBean
 f:com.intellij.openapi.components.ServiceDescriptor
 - f:client:com.intellij.openapi.client.ClientKind
 - f:headlessImplementation:java.lang.String
+- f:open:Z
 - f:overrides:Z
 - f:serviceImplementation:java.lang.String
 - f:serviceInterface:java.lang.String
@@ -1133,14 +1131,6 @@ a:com.intellij.openapi.fileEditor.FileDocumentManager
 - a:saveDocument(com.intellij.openapi.editor.Document):V
 - a:saveDocumentAsIs(com.intellij.openapi.editor.Document):V
 - a:saveDocuments(java.util.function.Predicate):V
-c:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
-- sf:NON_WRITABLE:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
-- sf:WRITABLE:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
-- <init>(java.lang.String):V
-- <init>(java.lang.String,javax.swing.event.HyperlinkListener):V
-- getHyperlinkListener():javax.swing.event.HyperlinkListener
-- getReadOnlyMessage():java.lang.String
-- hasWriteAccess():Z
 f:com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 - com.intellij.openapi.fileTypes.FileTypeExtension
 - s:getInstance():com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
@@ -1322,7 +1312,6 @@ a:com.intellij.openapi.progress.Task
 - com.intellij.openapi.progress.TaskInfo
 - pf:myParentComponent:javax.swing.JComponent
 - pf:myProject:com.intellij.openapi.project.Project
-- p:myTitle:java.lang.String
 - f:asBackgroundable():com.intellij.openapi.progress.Task$Backgroundable
 - f:asModal():com.intellij.openapi.progress.Task$Modal
 - f:getCancelText():java.lang.String
@@ -3312,8 +3301,6 @@ c:com.intellij.psi.stubs.SerializerNotFoundException
 - java.lang.Exception
 - <init>(java.lang.String):V
 a:com.intellij.psi.stubs.StubBase
-- com.intellij.psi.stubs.ObjectStubBase
-- com.intellij.psi.stubs.StubElement
 - p:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.stubs.IStubElementType):V
 - compareByOrderWith(com.intellij.psi.stubs.ObjectStubBase):I
 - findChildStubByType(com.intellij.psi.stubs.IStubElementType):com.intellij.psi.stubs.StubElement

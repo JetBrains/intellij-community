@@ -16,7 +16,7 @@ import org.kodein.di.direct
 import org.kodein.di.instance
 import java.io.FileReader
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.div
 
 object JBRResolver {

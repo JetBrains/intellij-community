@@ -14,7 +14,11 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class MavenActionUtil {
   private MavenActionUtil() {
@@ -40,6 +44,7 @@ public final class MavenActionUtil {
     MavenProject result;
     final MavenProjectsManager manager = getProjectsManager(context);
     if (manager == null) return null;
+    if (!manager.isInitialized()) return null;
 
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file != null) {

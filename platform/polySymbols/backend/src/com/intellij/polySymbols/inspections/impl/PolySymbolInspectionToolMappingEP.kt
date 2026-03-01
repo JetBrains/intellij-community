@@ -4,7 +4,11 @@ package com.intellij.polySymbols.inspections.impl
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ExtensionPointUtil
+import com.intellij.openapi.extensions.PluginAware
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.polySymbols.PolySymbolNamespace
 import com.intellij.polySymbols.PolySymbolsBundle

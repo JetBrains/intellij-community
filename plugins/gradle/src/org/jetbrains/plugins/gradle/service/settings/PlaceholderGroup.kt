@@ -3,7 +3,11 @@ package org.jetbrains.plugins.gradle.service.settings
 
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.whenPropertyChanged
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 

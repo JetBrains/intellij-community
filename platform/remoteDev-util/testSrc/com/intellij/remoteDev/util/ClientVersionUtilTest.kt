@@ -4,7 +4,10 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.remoteDev.util.ClientVersionUtil.computeSeparateConfigEnvVariableValue
 import com.intellij.remoteDev.util.ClientVersionUtil.isSeparateConfigSupported
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 

@@ -13,7 +13,12 @@ import com.intellij.testFramework.junit5.impl.TypedStoreKey
 import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.getTyped
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.condition.OS
-import org.junit.jupiter.api.extension.*
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.InvocationInterceptor
+import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.junit.platform.commons.util.AnnotationUtils.findAnnotation
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method

@@ -8,8 +8,16 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.lexer.TokenListImpl
-import com.intellij.platform.syntax.parser.*
+import com.intellij.platform.syntax.parser.OpaqueElementPolicy
+import com.intellij.platform.syntax.parser.ProductionMarkerList
+import com.intellij.platform.syntax.parser.ProductionResult
+import com.intellij.platform.syntax.parser.SyntaxElementTypeRemapper
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
+import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
+import com.intellij.platform.syntax.parser.WhitespaceSkippedCallback
+import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
+import com.intellij.platform.syntax.parser.WhitespacesBinders
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import kotlin.math.abs

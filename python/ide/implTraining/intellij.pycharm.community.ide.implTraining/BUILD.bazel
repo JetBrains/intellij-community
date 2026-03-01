@@ -23,4 +23,20 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
   ]
 )
+
+jvm_library(
+  name = "pycharm-community-ide-implTraining_test_lib",
+  module_name = "intellij.pycharm.community.ide.implTraining",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":pycharm-community-ide-implTraining",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//python/python-features-trainer:featuresTrainer_test_lib",
+    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.pycharm.community.ide.implTraining` end

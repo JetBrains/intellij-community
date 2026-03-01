@@ -36,7 +36,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
@@ -59,6 +59,7 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler> @ApiStatus.
   private val coroutineScope: CoroutineScope?
 ) {
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use constructor with scriptBody")
   constructor(scriptNamePrefix: String, scriptMainClass: Class<out ExternalApp>) :
     this(scriptNamePrefix, scriptMainClass, null, emptyList(), null)

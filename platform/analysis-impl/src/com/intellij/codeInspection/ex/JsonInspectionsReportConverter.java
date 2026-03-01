@@ -12,7 +12,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +30,9 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.DefaultInspectionToolResultExporter.INSPECTION_RESULTS_LANGUAGE;
-import static com.intellij.codeInspection.reference.SmartRefElementPointerImpl.*;
+import static com.intellij.codeInspection.reference.SmartRefElementPointerImpl.ENTRY_POINT;
+import static com.intellij.codeInspection.reference.SmartRefElementPointerImpl.FQNAME_ATTR;
+import static com.intellij.codeInspection.reference.SmartRefElementPointerImpl.TYPE_ATTR;
 
 @ApiStatus.Internal
 public class JsonInspectionsReportConverter implements InspectionsReportConverter {

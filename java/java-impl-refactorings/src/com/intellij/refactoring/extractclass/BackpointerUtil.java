@@ -2,7 +2,12 @@
 
 package com.intellij.refactoring.extractclass;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiThisExpression;
 
 import java.util.function.Predicate;
 

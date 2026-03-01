@@ -6,7 +6,7 @@ import com.intellij.util.io.createDirectories
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_PROPERTIES_FILE_NAME
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.outputStream
 
 @TestApplication

@@ -3,8 +3,8 @@
 
 package com.intellij.platform.testFramework.plugins
 
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import org.intellij.lang.annotations.Language
 
 

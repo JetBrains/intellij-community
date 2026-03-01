@@ -7,7 +7,12 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -31,14 +36,23 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JRootPane
+import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 
 private val LOG = logger<MainMenuButton>()
 

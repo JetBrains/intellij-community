@@ -3,16 +3,25 @@ package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.ui.GraphicsUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics2D
 
-open class RoundWithBackgroundPresentation(
+class RoundWithBackgroundPresentation(
   presentation: InlayPresentation,
-  open val arcWidth: Int,
-  open val arcHeight: Int,
-  val color: Color? = null,
-  val backgroundAlpha : Float = 0.55f
+  override val arcWidth: Int,
+  override val arcHeight: Int,
+  color: Color? = null,
+  backgroundAlpha : Float = 0.55f
+) : AbstractRoundWithBackgroundPresentation(presentation, color, backgroundAlpha)
+
+abstract class AbstractRoundWithBackgroundPresentation(
+  presentation: InlayPresentation,
+  val color: Color?,
+  val backgroundAlpha : Float
 ) : StaticDelegatePresentation(presentation) {
+  abstract val arcWidth: Int
+  abstract val arcHeight: Int
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
     val backgroundColor = color ?: attributes.backgroundColor
     if (backgroundColor != null) {

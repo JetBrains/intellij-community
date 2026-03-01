@@ -7,20 +7,34 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.BranchInfo;
+import com.intellij.tasks.ChangeListInfo;
+import com.intellij.tasks.Comment;
+import com.intellij.tasks.CustomTaskProperty;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskType;
 import com.intellij.tasks.timeTracking.model.WorkItem;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.util.xmlb.annotations.XMap;
 import icons.TasksIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -57,6 +71,9 @@ public class LocalTaskImpl extends LocalTask {
   private List<WorkItem> myWorkItems = new ArrayList<>();
   private Date myLastPost;
   private List<BranchInfo> myBranches = new ArrayList<>();
+
+  private Map<String, CustomTaskProperty> myAdditionalProperties = new HashMap<>();
+  private List<String> myPropertiesToShowInPreview = new ArrayList<>();
 
   /** for serialization */
   public LocalTaskImpl() {
@@ -154,6 +171,9 @@ public class LocalTaskImpl extends LocalTask {
     myProject = issue.getProject();
     myNumber = issue.getNumber();
     myPresentableId = issue.getPresentableId();
+
+    myAdditionalProperties = new HashMap<>(issue.getCustomProperties());
+    myPropertiesToShowInPreview = new ArrayList<>(issue.getPropertiesToShowInPreview());
   }
 
   public void setId(String id) {
@@ -205,6 +225,28 @@ public class LocalTaskImpl extends LocalTask {
   @Override
   public void setUpdated(Date updated) {
     myUpdated = updated;
+  }
+
+  @Override
+  @Property(surroundWithTag = false)
+  @XMap(propertyElementName = "additionalProperties")
+  public @NotNull Map<String, CustomTaskProperty> getCustomProperties() {
+    return myAdditionalProperties;
+  }
+
+  public void setAdditionalProperties(Map<String, CustomTaskProperty> additionalProperties) {
+    myAdditionalProperties = additionalProperties;
+  }
+
+  @Override
+  @Property(surroundWithTag = false)
+  @XCollection(elementName = "previewProperty")
+  public @NotNull List<@NotNull String> getPropertiesToShowInPreview() {
+    return myPropertiesToShowInPreview;
+  }
+
+  public void setPropertiesToShowInPreview(List<String> propertiesToShowInPreview) {
+    myPropertiesToShowInPreview = propertiesToShowInPreview;
   }
 
   @Override

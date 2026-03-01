@@ -28,4 +28,26 @@ jvm_library(
     "//java/java-frontback-impl:frontback-impl",
   ]
 )
+
+jvm_library(
+  name = "frontend_test_lib",
+  module_name = "intellij.java.execution.impl.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":frontend",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//java/execution/shared:shared_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
+    "//java/java-frontback-impl:frontback-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.execution.impl.frontend` end

@@ -25,11 +25,39 @@ jvm_library(
     "//python/python-syntax-core:syntax-core",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-kotlin-annotations-jvm",
+    "//platform/editor-ui-api:editor-ui",
   ],
   exports = [
     "//python/python-parser:parser",
     "//python/python-ast:ast",
   ],
   runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "psi_test_lib",
+  module_name = "intellij.python.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//python/python-parser:parser",
+    "//python/python-parser:parser_test_lib",
+    "//python/python-ast:ast",
+    "//python/python-ast:ast_test_lib",
+  ],
+  runtime_deps = [
+    ":psi",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//python/python-parser:parser_test_lib",
+    "//python/python-ast:ast_test_lib",
+    "//python/python-syntax-core:syntax-core_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.python.psi` end

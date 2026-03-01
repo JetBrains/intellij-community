@@ -16,7 +16,11 @@ import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -33,7 +37,17 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author gregsh

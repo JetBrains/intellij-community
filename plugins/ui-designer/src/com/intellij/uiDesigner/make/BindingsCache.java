@@ -18,7 +18,11 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
 
 final class BindingsCache {
   private static final Logger LOG = Logger.getInstance(BindingsCache.class);

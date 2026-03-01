@@ -19,7 +19,8 @@ import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowLeftToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.projectView
-import com.intellij.driver.sdk.ui.components.elements.*
+import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
+import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.JcefOffScreenViewComponent
@@ -28,9 +29,11 @@ import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.hasFocus
 import com.intellij.driver.sdk.ui.pasteText
+import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForCodeAnalysis
+import com.intellij.driver.sdk.waitNotNull
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -43,7 +46,7 @@ import kotlin.time.Duration.Companion.seconds
 private const val topLevelEditorSearchPattern = "//div[@class='EditorComponentImpl' and not(@accessiblename='Editor')]"
 
 fun Finder.notebookEditor(@Language("xpath") xpath: String? = null): NotebookEditorUiComponent =
-  x(xpath ?: "//div[@class='EditorCompositePanel']",
+  x(xpath ?: "//div[@class='EditorCompositePanel' and .//div[@class='JupyterFileEditorToolbar']]",
     NotebookEditorUiComponent::class.java)
 
 fun Finder.notebookEditor(action: NotebookEditorUiComponent.() -> Unit) {
@@ -54,11 +57,11 @@ fun NotebookEditorUiComponent.waitForHighlighting() {
   driver.waitForCodeAnalysis(file = editor.getVirtualFile())
 }
 
-typealias CellSelector = (List<UiComponent>) -> UiComponent
+typealias CellSelector = (List<UiComponent>) -> UiComponent?
 
-val FirstCell: CellSelector = { it.first() }
-val SecondCell: CellSelector = { it.drop(1).first() }
-val LastCell: CellSelector = { it.last() }
+val FirstCell: CellSelector = { it.firstOrNull() }
+val SecondCell: CellSelector = { it.getOrNull(1) }
+val LastCell: CellSelector = { it.lastOrNull() }
 
 
 class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComponent(data) {
@@ -70,8 +73,15 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = x("//div[@myicon='runAll.svg']")
   private val clearOutputs
     get() = x("//div[@myicon='clearOutputs.svg']")
-  private val restartKernel
-    get() = x("//div[@myicon='restartKernel.svg']")
+
+  class RestartButton(data: ComponentData) : UiComponent(data) {
+    private val actionButtonUi = ActionButtonUi(data)
+    val hasBadge: Boolean get() = actionButtonUi.icon.contains("BadgeIcon")
+  }
+
+  val restartKernelButton: RestartButton
+    get() = x(RestartButton::class.java) { byAttribute("myaction", "Restart Kernel (Restart kernel)") }
+
   private val deleteCell
     get() = x("//div[@myicon='delete.svg']")
   val interruptKernel: UiComponent
@@ -114,10 +124,14 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   override val editorComponent: EditorComponentImpl
     get() = when {
-      data.xpath.contains("EditorCompositePanel") -> driver.cast(
-        editor(topLevelEditorSearchPattern).component,
-        EditorComponentImpl::class
-      )
+      data.xpath.contains("EditorCompositePanel") -> {
+        // Increase timeout from the default 15 seconds to 30 seconds to handle slower CI environments.
+        // The default timeout is resulting in too many flaky tests.
+        driver.cast(
+          editor(topLevelEditorSearchPattern).waitFound(30.seconds).component,
+          EditorComponentImpl::class
+        )
+      }
       else -> super.editorComponent
     }
 
@@ -130,13 +144,37 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     driver.invokeActionWithRetries("NotebookInsertCodeCellAction")
   }
 
-  fun addCodeCell(text: String) {
-    addEmptyCodeCell()
+  fun addEmptyMarkdownCell(): Unit {
+    driver.invokeActionWithRetries("NotebookInsertMarkdownCellAction")
+  }
+
+  fun pasteToCurrentCell(text: String) {
     driver.ui.pasteText(text)
   }
 
+  fun addCodeCell(text: String) {
+    addEmptyCodeCell()
+    pasteToCurrentCell(text)
+  }
+
+  fun addCodeCellWithRetry(text: String) {
+    addEmptyCodeCell()
+    pasteToCellWithRetry(LastCell, text)
+  }
+
   fun addMarkdownCell(content: String) {
-    driver.invokeActionWithRetries("NotebookInsertMarkdownCellAction")
+    addEmptyMarkdownCell()
+    pasteToCurrentCell(content)
+  }
+
+  /**
+   * Adds a new SQL cell to the notebook with the provided content.
+   *
+   * @param content The SQL code to be inserted into the new SQL cell.
+   * @throws IllegalStateException if the notebook does not support SQL cells.
+   */
+  fun addSqlCell(@Language("SQL") content: String) {
+    driver.invokeActionWithRetries("JupyterAddSQLCellAction")
     driver.ui.pasteText(content)
   }
 
@@ -146,9 +184,26 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   fun clearAllOutputs(): Unit = clearOutputs.strictClick()
 
-  fun restartKernel(): Unit = restartKernel.strictClick()
+  fun restartKernel(waitForFinish: Duration? = null) {
+    restartKernelButton.run {
+      strictClick()
+      restartKernelButton.waitNotFound()
+      waitForFinish?.let { waitFound(waitForFinish) }
+    }
+  }
 
-  fun interruptKernel(): Unit = interruptKernel.strictClick()
+  fun interruptKernel() {
+    waitFor("cell the first cell starting execution", timeout = 30.seconds) {
+      areTheCellStartExecuting(0)
+    }
+    // update swing
+    clickOnCell(FirstCell)
+
+    waitFor(timeout = 15.seconds, message = "Interrupt kernel button should present") {
+      interruptKernel.present()
+    }
+    interruptKernel.strictClick()
+  }
 
   fun deleteFirstCell() {
     notebookCellEditors.first().strictClick()
@@ -170,15 +225,21 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
            }
   }
 
+  fun areTheCellStartExecuting(cellNumber: Int): Boolean {
+    val infos = notebookCellExecutionInfos
+    return infos.isNotEmpty() &&
+           infos[cellNumber].getParent().x {
+             contains(byAttribute("defaulticon", "history.svg"))
+           }.notPresent()
+  }
+
   fun clickOnCell(cellSelector: CellSelector) {
-    val cellEditors = notebookCellEditors
-    val cell = cellSelector(cellEditors)
+    val cell = waitNotNull { cellSelector(notebookCellEditors) }
     cell.strictClick()
   }
 
   fun moveMouseOnCell(cellSelector: CellSelector) {
-    val cellEditors = notebookCellEditors
-    val cell = cellSelector(cellEditors)
+    val cell = waitNotNull { cellSelector(notebookCellEditors) }
     cell.moveMouse()
   }
 
@@ -196,6 +257,16 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   fun pasteToCell(cellSelector: CellSelector, text: String) {
     clickOnCell(cellSelector)
     driver.ui.pasteText(text)
+  }
+
+  fun pasteToCellWithRetry(cellSelector: CellSelector, text: String) {
+    waitFor(timeout = 15.seconds) {
+      clickOnCell(cellSelector)
+      driver.ui.pasteText(text)
+      val searchText = text.replace("\n", "").replace(" ", "")
+      val lastCell = waitNotNull { LastCell(notebookCellEditors) }
+      lastCell.getParent().getParent().getAllTexts().asString().replace(" ", "").contains(searchText)
+    }
   }
 
 
@@ -265,6 +336,10 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
 
 fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: NotebookType) {
   ideFrame {
+    waitFor("Project view should present", timeout = 1.minutes) {
+      leftToolWindowToolbar.projectButton.open()
+      projectView().present()
+    }
     projectView {
       projectViewTree.run {
         waitFor("wait for project tree to load", 30.seconds) {
@@ -276,14 +351,19 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
 
     val newFileButton = x { byAccessibleName("New File or Directory…") }
 
-    waitFor(message = "new file popup should present and focused", timeout = 30.seconds) {
-      newFileButton.strictClick()
-      hasFocus(popup())
+    should("New notebook button should be pressed", timeout = 1.minutes) {
+      should(message = "new file popup should present and focused", timeout = 30.seconds) {
+        newFileButton.strictClick()
+        hasFocus(popup())
+      }
+
+      popup().run {
+        waitOneText("${type.typeName} Notebook").strictClick()
+        hasSubtext("New ${type.typeName} Notebook")
+      }
     }
 
     popup().run {
-      waitOneText("${type.typeName} Notebook").strictClick()
-
       keyboard {
         waitFor("expect $name in the popup") {
           driver.ui.pasteText(name)
@@ -292,16 +372,17 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
         enter() // submit the popup
       }
     }
-
-    waitFor("the editor is present", timeout = 1.minutes) {
-      notebookEditor().present()
-    }
     projectView {
       projectViewTree.run {
         waitOneText(message = "File name should present in project tree", timeout = 15.seconds) {
           it.text == "$name.ipynb"
         }
       }
+    }
+  }
+  withNotebookEditor {
+    waitFor("the editor is present", timeout = 1.minutes) {
+      notebookCellEditors.isNotEmpty()
     }
   }
 }
@@ -341,6 +422,17 @@ fun Driver.openLeftToolWindow(stripeButtonName: String) {
   }
 }
 
+fun Driver.closeLeftToolWindow(stripeButtonName: String) {
+  ideFrame {
+    val leftToolbar = xx(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }.list().firstOrNull()
+                      ?: return@ideFrame
+    val varsButton = leftToolbar.stripeButton(stripeButtonName)
+    if (varsButton.present()) {
+      varsButton.close()
+    }
+  }
+}
+
 /**
  * Executes a test block within the context of the notebook editor UI component.
  * Note: only the NotebookEditorUiComponent and its successors are directly available in the context of this block.
@@ -354,14 +446,14 @@ fun Driver.withNotebookEditor(testBody: NotebookEditorUiComponent.() -> Unit): I
   }
 }
 
-fun Driver.openFileWithProjectPanel(fileName: String): IdeaFrameUI = ideFrame {
-  leftToolWindowToolbar.projectButton.open()
+fun Driver.openNotebookWithProjectPanel(fileName: String): IdeaFrameUI = ideFrame {
+  openLeftToolWindow("Project")
   projectView {
     projectViewTree.run {
       waitOneText(fileName).doubleClick()
     }
   }
   waitFor("the editor is present", timeout = 30.seconds) {
-    editor().present()
+    notebookEditor().present()
   }
 }

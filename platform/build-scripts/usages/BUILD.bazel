@@ -22,4 +22,25 @@ jvm_library(
   ],
   runtime_deps = ["//jps/model-impl"]
 )
+
+jvm_library(
+  name = "usages_test_lib",
+  module_name = "intellij.platform.buildScripts.usages",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":usages",
+    "//platform/util:util_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "@community//build:zip_test_lib",
+    "//libraries/hash4j:hash4j_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-impl:model-impl_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.buildScripts.usages` end

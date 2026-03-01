@@ -11,6 +11,7 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
     "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.K1Deprecation",
   ]
 )
 
@@ -32,6 +33,25 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//platform/core-api:core",
     "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/fe10/project-structure",
+  ]
+)
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "kotlin.compiler-plugins.sam-with-receiver.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_common",
+  runtime_deps = [
+    ":common",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.sam-with-receiver.common` end

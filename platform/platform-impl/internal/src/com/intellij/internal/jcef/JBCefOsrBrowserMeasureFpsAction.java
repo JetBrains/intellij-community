@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.jcef;
 
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -10,11 +9,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefFpsMeter;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.Robot;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;

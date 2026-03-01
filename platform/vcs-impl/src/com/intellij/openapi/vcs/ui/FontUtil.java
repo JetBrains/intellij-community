@@ -8,7 +8,9 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 
 public final class FontUtil {

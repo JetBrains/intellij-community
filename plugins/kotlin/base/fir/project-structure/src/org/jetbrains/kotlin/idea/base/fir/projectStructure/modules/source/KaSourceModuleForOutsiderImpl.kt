@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
-import java.util.*
+import java.util.Objects
 
 internal class KaSourceModuleForOutsiderImpl(
     override val entityId: ModuleId,

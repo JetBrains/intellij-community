@@ -19,8 +19,21 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import org.jetbrains.yaml.YAMLElementTypes
 import org.jetbrains.yaml.meta.impl.YamlKeyInsertHandler
-import org.jetbrains.yaml.meta.model.*
-import org.jetbrains.yaml.psi.*
+import org.jetbrains.yaml.meta.model.Field
+import org.jetbrains.yaml.meta.model.YamlAnything
+import org.jetbrains.yaml.meta.model.YamlBooleanType
+import org.jetbrains.yaml.meta.model.YamlMetaType
+import org.jetbrains.yaml.meta.model.YamlNumberType
+import org.jetbrains.yaml.meta.model.YamlStringType
+import org.jetbrains.yaml.meta.model.YamlUnstructuredClass
+import org.jetbrains.yaml.psi.YAMLKeyValue
+import org.jetbrains.yaml.psi.YAMLMapping
+import org.jetbrains.yaml.psi.YAMLScalar
+import org.jetbrains.yaml.psi.YAMLSequence
+import org.jetbrains.yaml.psi.YAMLValue
+import org.jetbrains.yaml.psi.estimatedType
+import org.jetbrains.yaml.psi.findStructuralSiblings
+import org.jetbrains.yaml.psi.getKeysInBetween
 
 class YamlStructuralKeysCompletionContributor : CompletionContributor() {
 

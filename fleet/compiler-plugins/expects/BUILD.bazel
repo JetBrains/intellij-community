@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
 
 resourcegroup(
   name = "expects-compiler-plugin_resources",
@@ -11,11 +12,14 @@ jvm_library(
   srcs = glob(["src/main/kotlin/**/*.kt"], exclude = ["src/main/kotlin/fleet/multiplatform/expects/gradle/ExpectsGradlePlugin.kt"]),
   visibility = ["//visibility:public"],
   deps = [
-    "@rules_jvm//jvm-inc-builder:patched-kotlin-compiler-for-bazel",
+    "@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel",
   ],
   resources = [":expects-compiler-plugin_resources"],
-  # Override jvm_builder and jvm_builder_jvm_flags to use builder without compiler plugins
-  # We need it to build this compiler plugin
-  jvm_builder = "@rules_jvm//jvm-inc-builder:jvm-inc-builder_deploy.jar",
-  jvm_builder_jvm_flags = "@rules_jvm//jvm-inc-builder:jvm-inc-builder-jvm_flags",
+)
+
+kt_compiler_plugin(
+  name = "expects-plugin",
+  id = "jetbrains.fleet.expects-compiler-plugin",
+  visibility = ["//visibility:public"],
+  deps = [":expects-compiler-plugin"],
 )

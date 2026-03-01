@@ -101,7 +101,11 @@ internal class K2AccumulatingLookupElementSink() : K2LookupElementSink {
         class RestartCompletionOnPrefixChange(val prefixCondition: ElementPattern<String>) : AccumulatingSinkMessage
         object RestartCompletionOnAnyPrefixChange : AccumulatingSinkMessage
         class RegisterChainContributor(val chainContributor: K2ChainCompletionContributor) : AccumulatingSinkMessage
-        class RegisterLaterSectionSink(val priority: K2ContributorSectionPriority, val sink: K2AccumulatingLookupElementSink) : AccumulatingSinkMessage
+        class RegisterLaterSectionSink(
+            val priority: K2ContributorSectionPriority,
+            val section: K2CompletionSection<*>,
+            val sink: K2AccumulatingLookupElementSink
+        ) : AccumulatingSinkMessage
     }
 
     // We use batches of LookupElements so they may be added in batches for nicer UX
@@ -138,7 +142,7 @@ internal class K2AccumulatingLookupElementSink() : K2LookupElementSink {
         elementChannel.cancel()
     }
 
-    suspend fun consumeElements(f : (AccumulatingSinkMessage) -> Unit) {
+    suspend fun consumeElements(f: (AccumulatingSinkMessage) -> Unit) {
         elementChannel.consumeEach(f)
     }
 
@@ -154,7 +158,11 @@ internal class K2AccumulatingLookupElementSink() : K2LookupElementSink {
         elementChannel.trySend(RegisterChainContributor(chainContributor))
     }
 
-    fun registerLaterSection(priority: K2ContributorSectionPriority, sink: K2AccumulatingLookupElementSink) {
-        elementChannel.trySend(RegisterLaterSectionSink(priority, sink))
+    fun registerLaterSection(
+        section: K2CompletionSection<*>,
+        priority: K2ContributorSectionPriority,
+        sink: K2AccumulatingLookupElementSink
+    ) {
+        elementChannel.trySend(RegisterLaterSectionSink(priority, section, sink))
     }
 }

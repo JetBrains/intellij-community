@@ -38,7 +38,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
+import static org.jetbrains.plugins.gradle.settings.TestRunner.CHOOSE_PER_TEST;
+import static org.jetbrains.plugins.gradle.settings.TestRunner.GRADLE;
+import static org.jetbrains.plugins.gradle.settings.TestRunner.PLATFORM;
 
 public abstract class GradleTestRunConfigurationProducer extends GradleRunConfigurationProducer {
 

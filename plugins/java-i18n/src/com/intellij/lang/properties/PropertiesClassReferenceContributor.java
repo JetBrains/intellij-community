@@ -3,7 +3,13 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;

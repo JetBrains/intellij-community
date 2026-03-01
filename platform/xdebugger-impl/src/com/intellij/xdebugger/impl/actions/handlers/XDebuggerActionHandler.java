@@ -5,18 +5,26 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
-import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * An abstract handler for debugger-specific actions within the IntelliJ platform.
+ * This class bridges action execution and the debugging sessions, providing a mechanism to perform
+ * and determine the enablement state of debugger actions tied to a specific debugging session.
+ * <p>
+ * The handler is supposed to work with {@link com.intellij.xdebugger.impl.actions.XDebuggerActionBase}.
+ * This handler can be used in monolith or backend IDE but will not work on the frontend.
+ *
+ * @see XDebuggerSplitActionHandler for frontend usages
+ */
 public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
   @Override
   public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
-    XDebugSessionProxy session = DebuggerUIUtil.getSessionProxy(event);
+    XDebugSession session = DebuggerUIUtil.getSession(event);
     if (session != null) {
       perform(session, event.getDataContext());
     }
@@ -25,39 +33,13 @@ public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
   @Override
   public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
     if (LightEdit.owns(project)) return false;
-    XDebugSessionProxy session = DebuggerUIUtil.getSessionProxy(event);
+    XDebugSession session = DebuggerUIUtil.getSession(event);
     return session != null && isEnabled(session, event.getDataContext());
   }
 
-  /**
-   * Override {@link XDebuggerActionHandler#isEnabled(XDebugSessionProxy, DataContext)} instead
-   */
-  @ApiStatus.Obsolete
-  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-    throw new AbstractMethodError("Override isEnabled(XDebugSessionProxy, DataContext) in " + getClass().getName());
-  }
-
-  /**
-   * Override {@link XDebuggerActionHandler#perform(XDebugSessionProxy, DataContext)} instead
-   */
-  @ApiStatus.Obsolete
   @ApiStatus.OverrideOnly
-  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-    throw new AbstractMethodError("Override perform(XDebugSessionProxy, DataContext) in " + getClass().getName());
-  }
+  protected abstract boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext);
 
-  @ApiStatus.Internal
-  protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
-    XDebugSession xDebugSession = XDebuggerEntityConverter.getSession(session);
-    if (xDebugSession == null) return false;
-    return isEnabled(xDebugSession, dataContext);
-  }
-
-  @ApiStatus.Internal
   @ApiStatus.OverrideOnly
-  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
-    XDebugSession xDebugSession = XDebuggerEntityConverter.getSession(session);
-    if (xDebugSession == null) return;
-    perform(xDebugSession, dataContext);
-  }
+  protected abstract void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext);
 }

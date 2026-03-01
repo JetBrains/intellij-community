@@ -14,6 +14,7 @@ import com.intellij.ui.components.JBLabelDecorator
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.onTextChange
 import javax.swing.InputVerifier
@@ -22,6 +23,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
+@K1Deprecation
 class MoveRefactoringActionDialog(
     private val project: Project, private val defaultDirectory: String
 ) : DialogWrapper(project, true) {

@@ -69,9 +69,11 @@ class ExtractModuleFromPackageActionTest {
     extractModule(directory, main, targetSourceRoot)
     val srcRoot = LocalFileSystem.getInstance().findFileByPath(targetSourceRoot)!!
     val xxx = projectModel.moduleManager.findModuleByName("main.xxx")!!
+    val dep1 = projectModel.moduleManager.findModuleByName("dep1")!!
     assertThat(xxx.moduleNioFile).isEqualTo(projectModel.baseProjectDir.rootPath.resolve("xxx/main.xxx.iml"))
     val xxxRoots = ModuleRootManager.getInstance(xxx)
     assertThat(xxxRoots.contentRoots).containsExactly(srcRoot.parent)
+    assertThat(xxxRoots.dependencies).containsExactly(dep1)
     assertThat(xxxRoots.sourceRoots).containsExactly(srcRoot)
     assertThat(xxxRoots.contentEntries.single().sourceFolders.single().packagePrefix).isEqualTo("")
     assertThat(Path.of(targetSourceRoot, "xxx/Main.java")).exists()
@@ -168,12 +170,62 @@ class ExtractModuleFromPackageActionTest {
     }
   }
 
+  @Test
+  fun `extract package referenced from tests of the original module`() {
+    val (main, directory) = prepareProject()
+    projectModel.addSourceRoot(main, "testSrc", JavaSourceRootType.TEST_SOURCE).let {
+      VfsTestUtil.createFile(it, "tests/Test.java", "package tests;\npublic class Test { xxx.Main main; }")
+    }
+
+    extractModule(directory, main, targetSourceRoot = null)
+    val extracted = projectModel.moduleManager.findModuleByName("main.xxx")!!
+
+    val dependenciesOnExtracted = ModuleRootManager.getInstance(main).orderEntries.filterIsInstance<ModuleOrderEntry>().filter { it.module == extracted }
+    assertThat(dependenciesOnExtracted).hasSize(1)
+    assertThat(dependenciesOnExtracted.single().scope).isEqualTo(DependencyScope.TEST)
+  }
+
+  @Test
+  fun `extract package referenced from other classes in the original module`() {
+    val (main, directory) = prepareProject()
+    val mainSrc = ModuleRootManager.getInstance(main).sourceRoots.single()
+    VfsTestUtil.createFile(mainSrc, "main/OtherClass.java", "package main;\npublic class OtherClass { xxx.Main main; }")
+
+    extractModule(directory, main, targetSourceRoot = null)
+    val extracted = projectModel.moduleManager.findModuleByName("main.xxx")!!
+
+    val dependenciesOnExtracted = ModuleRootManager.getInstance(main).orderEntries.filterIsInstance<ModuleOrderEntry>().filter { it.module == extracted }
+    assertThat(dependenciesOnExtracted).hasSize(1)
+    assertThat(dependenciesOnExtracted.single().scope).isEqualTo(DependencyScope.COMPILE)
+  }
+
+  @Test
+  fun `add dependency on module with implicitly referenced superclasses`() {
+    val (main, directory) = prepareProject()
+    val implicitDep = projectModel.createModule("implicitDep")
+    projectModel.addSourceRoot(implicitDep, "implicitDep", JavaSourceRootType.SOURCE).let {
+      VfsTestUtil.createFile(it, "implicitDep/BaseClass.java", "package implicitDep;\npublic class BaseClass {}")
+    }
+    val dep1 = projectModel.moduleManager.findModuleByName("dep1")!!
+    ModuleRootModificationUtil.addDependency(dep1, implicitDep)
+    ModuleRootModificationUtil.addDependency(main, implicitDep)
+    val dep1Src = ModuleRootManager.getInstance(dep1).sourceRoots.single()
+    VfsTestUtil.createFile(dep1Src, "dep1/SubClass.java", "package dep1;\npublic class SubClass extends implicitDep.BaseClass { public void foo() {} }")
+    VfsTestUtil.createFile(directory.virtualFile, "ClassWithMethodCall.java", "package xxx;\npublic class ClassWithMethodCall { public void call() { new dep1.SubClass().foo(); } }")
+
+    extractModule(directory, main, null)
+
+    val xxx = projectModel.moduleManager.findModuleByName("main.xxx")!!
+    val xxxRoots = ModuleRootManager.getInstance(xxx)
+    assertThat(xxxRoots.dependencies).containsExactly(dep1, implicitDep)
+  }
+
   private fun extractModule(directory: PsiDirectory, main: Module, targetSourceRoot: String?) {
     val compilerTester = CompilerTester(projectModel.project, ModuleManager.getInstance(projectModel.project).modules.toList(), disposableRule.disposable)
     val messages = compilerTester.rebuild()
     assertThat(messages.filter { it.category == CompilerMessageCategory.ERROR }).isEmpty()
     runBlocking {
-      projectModel.project.service<ExtractModuleService>().extractModuleFromDirectory(directory, main, "main.xxx",
+      projectModel.project.service<ExtractModuleService>().extractModuleFromDirectory(directory.virtualFile, main, "main.xxx",
                                                                                       targetSourceRoot)
     }
   }
@@ -191,6 +243,7 @@ class ExtractModuleFromPackageActionTest {
     val dep2Src = projectModel.addSourceRoot(dep2, "src", JavaSourceRootType.SOURCE)
     val exportedSrc = projectModel.addSourceRoot(exported, "src", JavaSourceRootType.SOURCE)
     val mainClass = VfsTestUtil.createFile(mainSrc, "xxx/Main.java", "package xxx;\npublic class Main extends dep1.Dep1 { exported.Util u; }")
+    VfsTestUtil.createFile(mainSrc, "xxx/AdditionalClassToExtract.java", "package xxx;\nclass AdditionalClassToExtract { Main main; }")
     VfsTestUtil.createFile(mainSrc, "main/MyClass.java", "package main;\npublic class MyClass { dep2.Dep2 d; }")
     if (addDirectUsageOfExportedModule) {
       VfsTestUtil.createFile(mainSrc, "main/ExportedUsage.java", "package main;\nclass ExportedUsage { exported.Util u; }")

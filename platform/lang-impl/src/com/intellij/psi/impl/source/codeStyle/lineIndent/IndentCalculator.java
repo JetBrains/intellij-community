@@ -18,7 +18,9 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.formatting.Indent.Type.*;
+import static com.intellij.formatting.Indent.Type.CONTINUATION;
+import static com.intellij.formatting.Indent.Type.NORMAL;
+import static com.intellij.formatting.Indent.Type.SPACES;
 
 public class IndentCalculator {
   

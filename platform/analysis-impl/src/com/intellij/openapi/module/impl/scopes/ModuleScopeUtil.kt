@@ -22,7 +22,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 internal fun getOrderEnumeratorForOptions(module: Module, options: Int): OrderEnumerator {
   val en = ModuleRootManager.getInstance(module).orderEntries()

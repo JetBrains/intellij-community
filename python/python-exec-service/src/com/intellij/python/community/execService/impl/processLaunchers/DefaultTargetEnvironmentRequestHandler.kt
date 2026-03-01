@@ -7,7 +7,11 @@ import com.intellij.python.community.execService.spi.TargetEnvironmentRequestHan
 import java.nio.file.Path
 
 class DefaultTargetEnvironmentRequestHandler : TargetEnvironmentRequestHandler {
-  override fun mapUploadRoots(request: TargetEnvironmentRequest, localDirs: Set<Path>): List<TargetEnvironment.UploadRoot> {
+  override fun mapUploadRoots(
+    request: TargetEnvironmentRequest,
+    localDirs: Set<Path>,
+    workingDirToDownload: Path?,
+  ): List<TargetEnvironment.UploadRoot> {
     val result = localDirs.map { localDir ->
       TargetEnvironment.UploadRoot(
         localRootPath = localDir,

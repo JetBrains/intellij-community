@@ -2,7 +2,15 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
-import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;

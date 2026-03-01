@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
-import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.Bookmark
+import com.intellij.ide.bookmark.BookmarkGroup
+import com.intellij.ide.bookmark.BookmarkOccurrence
+import com.intellij.ide.bookmark.BookmarksListener
+import com.intellij.ide.bookmark.BookmarksManager
+import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.Service

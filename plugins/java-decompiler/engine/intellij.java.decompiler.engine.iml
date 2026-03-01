@@ -9,8 +9,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit6" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit6Launcher" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
   </component>

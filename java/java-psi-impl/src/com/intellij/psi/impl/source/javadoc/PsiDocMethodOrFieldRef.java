@@ -4,14 +4,41 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -31,9 +58,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDocTagValue, Constants {
+  private static final List<String> SIGNATURE_TO_REPLACE = Arrays.asList("\\[", "\\]");
+  private static final List<String> SIGNATURE_REPLACEMENT = Arrays.asList("[", "]");
+  
   public PsiDocMethodOrFieldRef() {
     super(DOC_METHOD_OR_FIELD_REF);
   }
@@ -144,7 +179,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     List<String> types = new ArrayList<>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child.getNode().getElementType() == DOC_TYPE_HOLDER) {
-        types.add(child.getText());
+        // JEP-467: Markdown comments have escaped brackets for array types 
+        types.add(Strings.replace(child.getText(), SIGNATURE_TO_REPLACE, SIGNATURE_REPLACEMENT));
       }
     }
 

@@ -18,8 +18,12 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.getRemoteDescriptor
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.AlreadyResolvedLocally
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.DetailsNotLoaded
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.MergeInProgress
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.SourceRepositoryNotFound
 
 typealias GitLabResolveConflictsLocallyViewModel = ResolveConflictsLocallyViewModel<GitLabResolveConflictsLocallyError>
 
@@ -35,7 +39,11 @@ fun GitLabResolveConflictsLocallyViewModel(
   parentCs, project, gitRepository,
   hasConflicts =
     mergeRequest.details.map {
-      it.conflicts && (it.diffRefs == null || it.diffRefs.headSha != it.diffRefs.startSha)
+      when (it.mergeStatus) {
+        GitLabMergeStatus.CHECKING, GitLabMergeStatus.CANNOT_BE_MERGED_RECHECK, GitLabMergeStatus.UNCHECKED -> null
+        GitLabMergeStatus.CAN_BE_MERGED -> false
+        GitLabMergeStatus.CANNOT_BE_MERGED -> true
+      }
     },
   requestOrError =
     combine(

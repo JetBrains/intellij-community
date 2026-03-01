@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.AccessorKind
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.getDefaultInitializer
 
+@K1Deprecation
 class Property(
   val identifier: Identifier,
   annotations: Annotations,
@@ -61,6 +63,7 @@ class Property(
     }
 }
 
+@K1Deprecation
 class PropertyAccessor(
     private val kind: AccessorKind,
     annotations: Annotations,

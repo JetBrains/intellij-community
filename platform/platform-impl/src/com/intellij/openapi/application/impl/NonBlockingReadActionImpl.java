@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -9,7 +9,11 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.constraints.BaseConstrainedExecution;
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -18,7 +22,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.Cancellation;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -31,8 +39,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.RunnableCallable;
-import com.intellij.util.concurrency.*;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ChildContext;
+import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -43,15 +55,36 @@ import kotlin.coroutines.Continuation;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.reflect.KClass;
 import kotlinx.coroutines.Job;
-import org.jetbrains.annotations.*;
+import kotlinx.coroutines.JobKt;
+import kotlinx.coroutines.future.FutureKt;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Async;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -341,6 +374,25 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       }
     }
 
+    @Nullable
+    @Override
+    public T get() {
+      if (!isDone()) {
+        SlowOperations.assertSlowOperationsAreAllowed();
+      }
+      return super.get();
+    }
+
+    @Nullable
+    @Override
+    public T get(long timeout, @NotNull TimeUnit unit) {
+      // allow the 'get-if-finished-fast' pattern
+      if (!isDone() && unit.toMillis(timeout) > 50) {
+        SlowOperations.assertSlowOperationsAreAllowed();
+      }
+      return super.get(timeout, unit);
+    }
+
     private void expireWithDisposables(Disposable @NotNull [] disposables) {
       for (int i = 0; i < disposables.length; i++) {
         Disposable parent = disposables[i];
@@ -561,7 +613,18 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
           finally {
             if (builder.myCoalesceEquality != null) {
-              release();
+              if (AppExecutorUtil.propagateContext()) {
+                // `release` should be called under [myChildContext] as well
+                // since it executes some code to check when to call computation, and this code may rely on the context
+                // e.g. in analyzer: Application and Project are stored in context and `release` uses Application
+                ThreadContext.installThreadContext(myChildContext.getContext(), true, () -> {
+                  release();
+                  return Unit.INSTANCE;
+                });
+              }
+              else {
+                release();
+              }
             }
           }
         };
@@ -590,10 +653,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
             else {
               context = ThreadContext.currentThreadContext();
             }
-            ThreadContext.installThreadContext(context, true, () -> {
-              attemptComputation();
-              return Unit.INSTANCE;
-            });
+            boolean couldRun = ThreadContext.installThreadContext(context, true, this::attemptComputation);
+
+            if (!couldRun) {
+              blockUntilWriteActionIsDone(context);
+            }
 
             if (isDone()) {
               if (isCancelled()) {
@@ -632,6 +696,25 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       }
       finally {
         cleanupIfNeeded();
+      }
+    }
+
+    private static void blockUntilWriteActionIsDone(CoroutineContext context) {
+      ThreadingAssertions.assertNoReadAccess();
+      CompletableFuture<Unit> future = FutureKt.asCompletableFuture(JobKt.Job(context.get(Job.Key)));
+      Objects.requireNonNull(ApplicationManager.getApplication().getThreadingSupport()).runWhenWriteActionIsCompleted(() -> {
+        future.complete(Unit.INSTANCE);
+        return Unit.INSTANCE;
+      });
+      try {
+        future.get();
+      }
+      catch (InterruptedException e) {
+        throw new ProcessCanceledException(e);
+      }
+      catch (ExecutionException e) {
+        // should be impossible
+        throw new RuntimeException(e);
       }
     }
 
@@ -858,7 +941,6 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     for (Submission<?> task : ourTasksForTestMode) {
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
         waitForTask(task);
-        return Unit.INSTANCE;
       });
     }
   }

@@ -5,7 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ThrowableRunnable;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,7 +19,9 @@ import java.util.Date;
 import java.util.Locale;
 
 import static com.intellij.util.io.PageCacheUtils.DEFAULT_PAGE_SIZE;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class PagedFileStorageTest {

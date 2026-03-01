@@ -14,7 +14,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 public class IntentionsUIImpl extends IntentionsUI {
   @ApiStatus.Internal

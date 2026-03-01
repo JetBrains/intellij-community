@@ -4,7 +4,7 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.LayoutManager;
 
 public final class LwToolBar extends LwContainer {
   LwToolBar(String className) {

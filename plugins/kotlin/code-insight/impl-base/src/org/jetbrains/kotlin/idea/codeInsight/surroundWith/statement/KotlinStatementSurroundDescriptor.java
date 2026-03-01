@@ -23,7 +23,10 @@ public class KotlinStatementSurroundDescriptor implements SurroundDescriptor {
             new KotlinFunctionLiteralSurrounder(),
             new KotlinTryFinallySurrounder(),
             new KotlinTryCatchFinallySurrounder(),
-            new KotlinTryCatchSurrounder()
+            new KotlinTryCatchSurrounder(),
+            new KotlinWhileSurrounder(),
+            new KotlinDoWhileSurrounder(),
+            new KotlinForSurrounder()
     };
 
     @Override

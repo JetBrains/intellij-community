@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CommentHolder.CommentNode.Companion.mergeComments
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class AbstractCodeToInlineBuilder(

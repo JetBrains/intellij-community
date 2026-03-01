@@ -1,5 +1,8 @@
 package fleet.bundles
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlin.jvm.JvmInline
 
 class ResolutionException(coordinates: Coordinates, cause: Throwable? = null) : Exception("Can't resolve $coordinates", cause)
@@ -18,14 +21,19 @@ interface CoordinatesResolution {
 @JvmInline
 value class ResolvedFile(val path: String)
 
-suspend fun CoordinatesResolution.resolve(layer: PluginLayer): ResolvedPluginLayer =
+suspend fun CoordinatesResolution.resolve(layer: PluginLayer): ResolvedPluginLayer = coroutineScope {
   ResolvedPluginLayer(modules = layer.modules,
                       modulePath = layer.modulePath.map { moduleCoords ->
-                        resolveModule(moduleCoords)
-                      }.toSet(),
+                        async {
+                          resolveModule(moduleCoords)
+                        }
+                      }.awaitAll().toSet(),
                       resources = layer.resources.filterCoordinatesByPlatform().map {
-                        resolveResource(it)
-                      }.toSet())
+                        async {
+                          resolveResource(it)
+                        }
+                      }.awaitAll().toSet())
+}
 
 suspend fun CoordinatesResolution.resolveParts(descriptor: PluginDescriptor): PluginParts {
   val coordinates = requireNotNull(descriptor.partsCoordinates) {

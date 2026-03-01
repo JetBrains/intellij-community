@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.util.usageInfo;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
 import com.intellij.usageView.UsageInfo;
 
 public class NoConstructorClassUsageInfo extends UsageInfo {

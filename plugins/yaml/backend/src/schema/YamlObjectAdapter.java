@@ -13,7 +13,12 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLAlias;
+import org.jetbrains.yaml.psi.YAMLAnchor;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLValue;
+import org.jetbrains.yaml.psi.YamlTagRecogniser;
 
 import java.util.ArrayList;
 import java.util.Collection;

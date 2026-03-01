@@ -14,7 +14,6 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.InternalThreading;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +25,12 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable;
+import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -35,7 +39,11 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PotemkinProgress;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseHandler;
+import com.intellij.openapi.project.ProjectLocator;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -44,7 +52,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.AsyncFileListener;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -53,7 +66,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.pom.core.impl.PomModelImpl;
-import com.intellij.psi.*;
+import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.ExternalChangeActionUtil;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -61,29 +78,43 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.TransferredWriteActionService;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
-import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -237,7 +268,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       saveDocumentsOnEdt(isExplicit, filter);
     }
     else {
-      runWithBackgroundWriteActionAllowed(() -> doSave(null, isExplicit, filter));
+      doSave(null, isExplicit, filter);
     }
   }
 
@@ -260,15 +291,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     finally {
       myProgress.popState();
     }
-  }
-
-  @RequiresBackgroundThread
-  private static void runWithBackgroundWriteActionAllowed(Runnable runnable) {
-    ThreadContext.installThreadContext(
-      ThreadContext.currentThreadContext().plus(InternalThreading.RunInBackgroundWriteActionMarker.INSTANCE), true, () -> {
-        runnable.run();
-        return Unit.INSTANCE;
-      });
   }
 
   private void doSave(@Nullable PotemkinProgress myProgress, boolean isExplicit, @Nullable Predicate<? super Document> filter) {
@@ -322,14 +344,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       .beforeAnyDocumentSaving(document, explicit);
     if (!myUnsavedDocuments.contains(document)) return;
 
-    if (EDT.isCurrentThreadEdt()) {
-      saveDocumentInWriteSafeEnvironment(document, explicit);
-    }
-    else {
-      runWithBackgroundWriteActionAllowed(() -> {
-        saveDocumentInWriteSafeEnvironment(document, explicit);
-      });
-    }
+    saveDocumentInWriteSafeEnvironment(document, explicit);
   }
 
   private void saveDocumentInWriteSafeEnvironment(@NotNull Document document, boolean explicit) {
@@ -1082,12 +1097,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     @Override
     public void beforeAllDocumentsSaving() {
-      invokeOnEdt(() -> myMultiCaster.beforeAllDocumentsSaving());
+      ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.beforeAllDocumentsSaving());
     }
 
     @Override
     public void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
-      invokeOnEdt(() -> myMultiCaster.beforeAnyDocumentSaving(document, explicit));
+      ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.beforeAnyDocumentSaving(document, explicit));
     }
 
     @Override
@@ -1117,7 +1132,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     @Override
     public void unsavedDocumentDropped(@NotNull Document document) {
-      invokeOnEdt(() -> myMultiCaster.unsavedDocumentDropped(document));
+      if (ApplicationManager.getApplication().isWriteAccessAllowed() && !EDT.isCurrentThreadEdt()) {
+        invokeOnEdt(() -> myMultiCaster.unsavedDocumentDropped(document));
+      } else {
+        ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.unsavedDocumentDropped(document));
+      }
     }
 
     @Override
@@ -1132,7 +1151,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     @Override
     public void afterDocumentSaved(@NotNull Document document) {
-      invokeOnEdt(() -> myMultiCaster.afterDocumentSaved(document));
+      ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.afterDocumentSaved(document));
     }
   }
 }

@@ -6,13 +6,19 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotatedExpression
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
+@K1Deprecation
 class ReplaceObsoleteLabelSyntaxFix(element: KtAnnotationEntry) : KotlinQuickFixAction<KtAnnotationEntry>(element), CleanupFix {
     override fun getFamilyName(): String = KotlinBundle.message("update.obsolete.label.syntax")
     override fun getText(): String = element?.let { KotlinBundle.message("replace.with.label.0.at", it.calleeExpression?.text ?: "") } ?: ""

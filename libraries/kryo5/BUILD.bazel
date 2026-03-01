@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-kryo5-kryo"],
   runtime_deps = ["@lib//:libraries-kryo5-kryo"]
 )
+
+jvm_library(
+  name = "kryo5_test_lib",
+  module_name = "intellij.libraries.kryo5",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-kryo5-kryo"],
+  runtime_deps = [":kryo5"]
+)
 ### auto-generated section `build intellij.libraries.kryo5` end

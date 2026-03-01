@@ -9,16 +9,16 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingTreeView
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
-import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import java.awt.BorderLayout
 import javax.swing.BoxLayout
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.ScrollPaneConstants
@@ -44,6 +44,10 @@ internal class PyPackagesListController(val project: Project, val controller: Py
     emptyText.appendLine(AnimatedIcon.Default.INSTANCE, message("python.toolwindow.packages.description.panel.loading"), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES, null)
   }
 
+  private val noSdkPanel = JBPanelWithEmptyText().apply {
+    emptyText.text = message("python.sdk.no.interpreter.selected")
+  }
+
   val component: JPanel = JPanel(BorderLayout())
 
   init {
@@ -57,7 +61,7 @@ internal class PyPackagesListController(val project: Project, val controller: Py
     setLoadingState(false)
   }
 
-  fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
+  fun resetSearch(installed: List<DisplayablePackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
     tablesView.resetSearch(installed, repos, currentSdk)
     setLoadingState(false)
   }
@@ -78,17 +82,22 @@ internal class PyPackagesListController(val project: Project, val controller: Py
     tablesView.collapseAll()
   }
 
-  fun showErrorResult(errorNode: ErrorNode) {
-    tablesView.showErrorResult(errorNode)
+  @RequiresEdt
+  internal fun showNoSdkMessage() {
+    setContentPanel(noSdkPanel)
   }
 
+  @RequiresEdt
   internal fun setLoadingState(isLoading: Boolean) {
     val newPanel = if (isLoading) loadingPanel else scrollingPackageListComponent
+    setContentPanel(newPanel)
+  }
 
+  private fun setContentPanel(panel: JComponent) {
     val currentComponent = component.components.firstOrNull()
-    if (currentComponent != newPanel) {
+    if (currentComponent != panel) {
       component.removeAll()
-      component.add(newPanel)
+      component.add(panel)
       component.revalidate()
       component.repaint()
     }

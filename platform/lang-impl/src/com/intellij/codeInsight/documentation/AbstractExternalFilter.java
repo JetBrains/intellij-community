@@ -19,7 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
@@ -256,6 +262,10 @@ public abstract class AbstractExternalFilter {
       if (!skipBlockList(read)) {
         appendLine(data, read);
       }
+    }
+
+    if (data.toString().endsWith("<li>\n")) {
+      data.delete(data.length() - 5, data.length());
     }
 
     data.append(HTML_CLOSE);

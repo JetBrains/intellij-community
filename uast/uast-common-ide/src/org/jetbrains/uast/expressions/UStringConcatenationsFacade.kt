@@ -8,7 +8,15 @@ import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.evaluateString
+import org.jetbrains.uast.isConcatenation
+import org.jetbrains.uast.psiLanguageInjectionHost
+import org.jetbrains.uast.toUElementOfExpectedTypes
+import org.jetbrains.uast.toUElementOfType
 
 /**
  * A helper class to work with string concatenations with variables and interpolated strings in a language-abstract way (UAST-based).

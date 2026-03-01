@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.ui.IconManager
 import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -24,14 +25,24 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.OptionalParametersHelper
+import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.TemplateKind
+import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
+import org.jetbrains.kotlin.idea.core.implicitModality
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.quickfix.AddMemberToSupertypeFix.MemberData
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.getOrCreateBody
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
@@ -43,6 +54,7 @@ import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 
+@K1Deprecation
 abstract class AddMemberToSupertypeFix(element: KtCallableDeclaration, private val candidateMembers: List<MemberData>) :
   KotlinQuickFixAction<KtCallableDeclaration>(element), LowPriorityAction {
 
@@ -123,6 +135,7 @@ abstract class AddMemberToSupertypeFix(element: KtCallableDeclaration, private v
         )
 }
 
+@K1Deprecation
 abstract class AddMemberToSupertypeFactory : KotlinSingleIntentionActionFactory() {
     protected fun getCandidateMembers(memberElement: KtCallableDeclaration): List<MemberData> {
         val descriptors = generateCandidateMembers(memberElement)
@@ -184,6 +197,7 @@ abstract class AddMemberToSupertypeFactory : KotlinSingleIntentionActionFactory(
     }
 }
 
+@K1Deprecation
 class AddFunctionToSupertypeFix private constructor(element: KtNamedFunction, functions: List<MemberData>) :
     AddMemberToSupertypeFix(element, functions) {
 
@@ -228,6 +242,7 @@ class AddFunctionToSupertypeFix private constructor(element: KtNamedFunction, fu
     }
 }
 
+@K1Deprecation
 class AddPropertyToSupertypeFix private constructor(element: KtProperty, properties: List<MemberData>) :
     AddMemberToSupertypeFix(element, properties) {
 

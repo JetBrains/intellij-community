@@ -16,6 +16,8 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />

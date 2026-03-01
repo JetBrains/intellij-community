@@ -1,6 +1,8 @@
 package org.jetbrains.jewel.ui.component
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -10,13 +12,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -122,6 +127,21 @@ class TabStripTest {
         onNodeWithText("Test Tab 12").assertIsDisplayed()
     }
 
+    @Test
+    fun `on show scrollbar, size should not change`() =
+        runComposeTest(initiallyOpenTabs = listOf(1, 2)) {
+            val initialHeight =
+                onNodeWithTag("TabStrip").fetchSemanticsNode().let { node ->
+                    with(node.layoutInfo.density) { node.size.height.toDp() }
+                }
+
+            repeat(30) {
+                onNodeWithTag("AddTab").performClick()
+                waitForIdle()
+                onNodeWithTag("TabStrip").assertHeightIsEqualTo(initialHeight)
+            }
+        }
+
     private fun runComposeTest(
         closeable: Boolean = true,
         initiallyOpenTabs: List<Int> = (1..12).toList(),
@@ -133,35 +153,43 @@ class TabStripTest {
             var selectedTabIndex by remember { mutableIntStateOf(initiallySelectedTabIndex) }
             val tabIds = remember { initiallyOpenTabs.toMutableStateList() }
 
-            val tabs =
-                remember(tabIds, selectedTabIndex) {
-                    tabIds.mapIndexed { index, id ->
-                        TabData.Default(
-                            selected = index == selectedTabIndex,
-                            content = { tabState ->
-                                val iconProvider = rememberResourcePainterProvider(AllIconsKeys.Actions.Find)
-                                val icon by iconProvider.getPainter(Stateful(tabState))
-                                SimpleTabContent(label = "Test Tab $id", state = tabState, icon = icon)
-                            },
-                            onClose = {
-                                tabIds.removeAt(index)
-                                if (selectedTabIndex >= index) {
-                                    val maxPossibleIndex = max(0, tabIds.lastIndex)
-                                    selectedTabIndex = (selectedTabIndex - 1).coerceIn(0..maxPossibleIndex)
-                                }
-                            },
-                            onClick = { selectedTabIndex = index },
-                            closable = closeable,
-                        )
+            val tabs by
+                remember(selectedTabIndex) {
+                    derivedStateOf {
+                        tabIds.mapIndexed { index, id ->
+                            TabData.Default(
+                                selected = index == selectedTabIndex,
+                                content = { tabState ->
+                                    val iconProvider = rememberResourcePainterProvider(AllIconsKeys.Actions.Find)
+                                    val icon by iconProvider.getPainter(Stateful(tabState))
+                                    SimpleTabContent(label = "Test Tab $id", state = tabState, icon = icon)
+                                },
+                                onClose = {
+                                    tabIds.removeAt(index)
+                                    if (selectedTabIndex >= index) {
+                                        val maxPossibleIndex = max(0, tabIds.lastIndex)
+                                        selectedTabIndex = (selectedTabIndex - 1).coerceIn(0..maxPossibleIndex)
+                                    }
+                                },
+                                onClick = { selectedTabIndex = index },
+                                closable = closeable,
+                            )
+                        }
                     }
                 }
 
             IntUiTheme {
-                TabStrip(
-                    tabs = tabs,
-                    style = JewelTheme.defaultTabStyle,
-                    modifier = Modifier.focusRequester(focusRequester),
-                )
+                Column {
+                    TabStrip(
+                        tabs = tabs,
+                        style = JewelTheme.defaultTabStyle,
+                        modifier = Modifier.focusRequester(focusRequester).testTag("TabStrip"),
+                    )
+                }
+
+                DefaultButton(onClick = { tabIds.add(tabIds.size + 1) }, modifier = Modifier.testTag("AddTab")) {
+                    Text("Add Tab")
+                }
             }
 
             LaunchedEffect(Unit) { focusRequester.requestFocus() }

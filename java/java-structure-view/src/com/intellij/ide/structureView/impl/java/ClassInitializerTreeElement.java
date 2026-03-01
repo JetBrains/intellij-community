@@ -4,7 +4,11 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 

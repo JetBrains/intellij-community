@@ -6,7 +6,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.UtilBundle
 import com.intellij.util.io.URLUtil
-import java.io.*
+import java.io.File
+import java.io.FileFilter
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.URL
 import java.util.jar.JarFile
 

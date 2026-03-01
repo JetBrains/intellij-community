@@ -276,6 +276,7 @@ public final class ProblemDescriptorUtil {
 
       ProblemDescriptor descriptor = convertToDescriptor(file, severity, startOffset, endOffset, message, isAfterEndOfLine, quickFixes);
       if (descriptor != null) {
+        descriptor.setProblemGroup(annotation.getProblemGroup());
         problems.add(descriptor);
       }
     }

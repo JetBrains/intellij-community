@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -26,7 +25,6 @@ abstract class ModuleManagerEx : ModuleManager() {
     const val MODULE_GROUP_SEPARATOR: String = "/"
 
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstanceEx(project: Project): ModuleManagerEx {
       return getInstance(project) as ModuleManagerEx
     }

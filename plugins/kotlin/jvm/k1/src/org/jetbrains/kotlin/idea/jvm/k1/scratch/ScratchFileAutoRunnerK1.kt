@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchFromHereAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
@@ -59,6 +60,7 @@ private class ScratchFileAutoRunnerK1(private val project: Project) : ScratchFil
     }
 }
 
+@K1Deprecation
 fun getScratchFile(file: VirtualFile, project: Project): ScratchFile? {
     val editor = FileEditorManager.getInstance(project).getSelectedEditor(file) as? TextEditor
     return editor?.findScratchFileEditorWithPreview()?.scratchFile

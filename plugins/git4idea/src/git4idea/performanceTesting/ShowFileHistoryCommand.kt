@@ -23,9 +23,11 @@ import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.resume
 
 
+@ApiStatus.Internal
 class ShowFileHistoryCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   override suspend fun doExecute(context: PlaybackContext) {
     val logManager = VcsProjectLog.awaitLogIsReady(context.project)

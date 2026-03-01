@@ -4,7 +4,13 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.DeleteAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;

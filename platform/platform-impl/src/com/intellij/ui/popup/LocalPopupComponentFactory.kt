@@ -10,10 +10,20 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Dialog
+import java.awt.Frame
+import java.awt.Window
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import javax.swing.*
+import javax.swing.JDialog
+import javax.swing.JRootPane
+import javax.swing.JWindow
+import javax.swing.Popup
+import javax.swing.PopupFactory
+import javax.swing.RootPaneContainer
+import javax.swing.SwingUtilities
 
 open class LocalPopupComponentFactory: PopupComponentFactory {
   override fun createPopupComponent(type: PopupComponentFactory.PopupType,
@@ -118,13 +128,13 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
       val window = window
       if (window != null) {
         fixFlickering(window, false)
+        if (window is JWindow) {
+          window.rootPane.putClientProperty(JBPopup.KEY, myJBPopup)
+        }
       }
       popup.show()
       if (window != null) {
         fixFlickering(window, true)
-        if (window is JWindow) {
-          window.rootPane.putClientProperty(JBPopup.KEY, myJBPopup)
-        }
       }
     }
 

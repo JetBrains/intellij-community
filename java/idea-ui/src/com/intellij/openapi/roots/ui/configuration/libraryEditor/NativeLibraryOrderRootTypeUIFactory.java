@@ -22,7 +22,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class NativeLibraryOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override

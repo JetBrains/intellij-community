@@ -1,5 +1,14 @@
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.common` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_common",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
 
 resourcegroup(
   name = "common_resources",
@@ -13,6 +22,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":common_resources"],
+  kotlinc_opts = ":custom_common",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -46,6 +56,50 @@ jvm_library(
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/lang-impl",
+    "//plugins/kotlin/base/fe10/project-structure",
+  ]
+)
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "kotlin.compiler-plugins.kotlinx-serialization.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_common",
+  runtime_deps = [
+    ":common",
+    "@lib//:kotlin-test",
+    "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/jps:jps_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/fe10/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
+    "//plugins/kotlin/core:core_test_lib",
+    "//plugins/kotlin/idea:idea_test_lib",
+    "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.common` end

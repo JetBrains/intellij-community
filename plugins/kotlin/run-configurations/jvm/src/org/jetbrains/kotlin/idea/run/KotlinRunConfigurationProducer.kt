@@ -21,7 +21,11 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclarationContainer
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 @InternalIgnoreDependencyViolation

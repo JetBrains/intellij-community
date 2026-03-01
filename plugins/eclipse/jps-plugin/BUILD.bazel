@@ -22,4 +22,20 @@ jvm_library(
     "//platform/util/jdom",
   ]
 )
+
+jvm_library(
+  name = "jps_test_lib",
+  module_name = "intellij.eclipse.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":jps",
+    "//platform/util:util_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//plugins/eclipse/common-eclipse-util:common_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.eclipse.jps` end

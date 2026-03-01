@@ -14,7 +14,10 @@ import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.serialization.JpsGlobalSettingsLoading.loadGlobalSettings
 import org.jetbrains.jps.model.serialization.JpsProjectData
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.io.path.Path

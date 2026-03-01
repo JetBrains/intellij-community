@@ -3,9 +3,11 @@ package com.intellij.grazie.spellchecker.dataset
 
 import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase
 import com.intellij.spellchecker.SpellCheckerManager
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 
+@PerformanceUnitTest
 class DataSetPerformanceTest: SpellcheckerInspectionTestCase() {
 
   fun `test misspelled words spellcheck performance`() {

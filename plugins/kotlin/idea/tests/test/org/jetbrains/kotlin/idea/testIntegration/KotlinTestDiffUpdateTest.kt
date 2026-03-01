@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration
 
-import com.intellij.testIntegration.JvmTestDiffUpdateTest
 import com.intellij.openapi.editor.Document
+import com.intellij.testIntegration.JvmTestDiffUpdateTest
 import org.intellij.lang.annotations.Language
 
 @Suppress("NewClassNamingConvention", "SameParameterValue")

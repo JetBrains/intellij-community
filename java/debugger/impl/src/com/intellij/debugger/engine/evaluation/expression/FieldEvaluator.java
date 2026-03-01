@@ -20,7 +20,17 @@ import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.InterfaceType;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +39,6 @@ public class FieldEvaluator implements ModifiableEvaluator {
   private final Evaluator myObjectEvaluator;
   private final TargetClassFilter myTargetClassFilter;
   private final String myFieldName;
-
-  // TODO remove non-final fields, see IDEA-366793
-  @Deprecated
-  private Object myEvaluatedQualifier;
-  @Deprecated
-  private Field myEvaluatedField;
 
   public interface TargetClassFilter {
     TargetClassFilter ALL = refType -> true;
@@ -98,7 +102,7 @@ public class FieldEvaluator implements ModifiableEvaluator {
   }
 
   @Override
-  public @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
+  public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
     Object object = myObjectEvaluator.evaluate(context);
 
     if (object instanceof ReferenceType refType) {
@@ -110,8 +114,6 @@ public class FieldEvaluator implements ModifiableEvaluator {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.static.field", myFieldName));
       }
       MyModifier modifier = new MyModifier(refType, field);
-      myEvaluatedField = field;
-      myEvaluatedQualifier = refType;
       return new ModifiableValue(refType.getValue(field), modifier);
     }
 
@@ -137,8 +139,6 @@ public class FieldEvaluator implements ModifiableEvaluator {
       }
       Object qualifier = field.isStatic() ? refType : objRef;
       MyModifier modifier = new MyModifier(qualifier, field);
-      myEvaluatedQualifier = qualifier;
-      myEvaluatedField = field;
       return new ModifiableValue(field.isStatic() ? refType.getValue(field) : objRef.getValue(field), modifier);
     }
 
@@ -147,14 +147,6 @@ public class FieldEvaluator implements ModifiableEvaluator {
     }
 
     throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.evaluating.field", myFieldName));
-  }
-
-  @Override
-  public Modifier getModifier() {
-    if (myEvaluatedField != null && (myEvaluatedQualifier instanceof ClassType || myEvaluatedQualifier instanceof ObjectReference)) {
-      return new MyModifier(myEvaluatedQualifier, myEvaluatedField);
-    }
-    return null;
   }
 
   @Override

@@ -49,7 +49,12 @@ import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.awt.Dimension
 import java.awt.Rectangle
-import java.awt.event.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel

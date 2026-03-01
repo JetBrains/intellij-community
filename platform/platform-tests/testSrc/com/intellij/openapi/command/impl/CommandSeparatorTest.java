@@ -4,6 +4,7 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.impl.cmd.CmdEvent;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -199,13 +200,17 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
   private static @NotNull CommandSeparator createSeparator(List<State> output) {
     return new CommandSeparator(new SeparatedCommandListener() {
       @Override
-      public void onCommandStarted(@NotNull CmdEvent cmdEvent) {
-        output.add(cmdEvent.isTransparent() ? State.TRANSPARENT_STARTED : State.COMMAND_STARTED);
+      public void onCommandStarted(@NotNull CmdEvent cmdStartEvent) {
+        output.add(cmdStartEvent.isTransparent() ? State.TRANSPARENT_STARTED : State.COMMAND_STARTED);
       }
 
       @Override
-      public void onCommandFinished(@NotNull CmdEvent cmdEvent) {
-        output.add(cmdEvent.isTransparent() ? State.TRANSPARENT_FINISHED : State.COMMAND_FINISHED);
+      public void onCommandFinished(@NotNull CmdEvent cmdFinishEvent) {
+        output.add(cmdFinishEvent.isTransparent() ? State.TRANSPARENT_FINISHED : State.COMMAND_FINISHED);
+      }
+
+      @Override
+      public void onCommandFakeFinished(@NotNull CmdEvent cmdFakeFinishEvent) {
       }
     });
   }

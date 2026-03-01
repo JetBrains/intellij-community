@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
@@ -23,7 +23,12 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorEventListener
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx.Companion.getInstanceExIfCreated
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
@@ -48,7 +53,11 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.io.*
+import com.intellij.util.io.EnumeratorLongDescriptor
+import com.intellij.util.io.EnumeratorStringDescriptor
+import com.intellij.util.io.IOUtil
+import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.StorageLockContext
 import com.intellij.util.messages.Topic
 import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.CoroutineScope
@@ -57,7 +66,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Deque
 import java.util.function.Predicate
 
 private val LOG = Logger.getInstance(IdeDocumentHistoryImpl::class.java)
@@ -213,6 +223,7 @@ open class IdeDocumentHistoryImpl(
   }
 
   override fun onSelectionChanged() {
+    ThreadingAssertions.assertEventDispatchThread()
     if (!reallyExcludeCurrentCommandFromNavigation) {
       currentCommandIsNavigation = true
     }
@@ -582,7 +593,7 @@ open class IdeDocumentHistoryImpl(
     val offset = editor.getCaretModel().offset
     var marker = fileEditor.getUserData(CACHED_CARET_MARKER_KEY)
     if (marker == null || !marker.isValid || marker.startOffset != offset || marker.endOffset != offset) {
-      marker = editor.getDocument().createRangeMarker(offset, offset)
+      marker = editor.getUiDocument().createRangeMarker(offset, offset)
       fileEditor.putUserData(CACHED_CARET_MARKER_KEY, marker)
     }
     return marker

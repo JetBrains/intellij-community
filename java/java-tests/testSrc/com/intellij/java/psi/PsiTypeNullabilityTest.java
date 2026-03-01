@@ -1,8 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
-import com.intellij.codeInsight.*;
-import com.intellij.psi.*;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullabilitySource;
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.TypeNullability;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
@@ -375,6 +386,20 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertNotNull(info);
     TypeNullability typeNullability = info.toTypeNullability();
     assertEquals("NOT_NULL (@NotNullByDefault on package foo)", typeNullability.toString());
+  }
+  
+  public void testMalformedPackageInfo() {
+    myFixture.addFileToProject("org/example/package-info.java", """
+      @NotNullByDefault
+      package org.example2;
+      
+      import org.jetbrains.annotations.NotNullByDefault;""");
+    PsiFile clsFile = myFixture.addFileToProject("org/example/A.java", "package org.example; class A {}");
+    PsiElement context = ((PsiJavaFile)clsFile).getClasses()[0];
+    NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(getProject()).findDefaultTypeUseNullability(context);
+    assertNotNull(info);
+    TypeNullability typeNullability = info.toTypeNullability();
+    assertEquals("NOT_NULL (@NotNullByDefault on package org.example2)", typeNullability.toString());
   }
   
   public void testFBoundResolveUnderNotNull() {

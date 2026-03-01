@@ -8,7 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics.OnboardingStartingPlace
 
-private class StartNewUsersOnboardingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class StartNewUsersOnboardingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     NewUsersOnboardingService.getInstance(project).startOnboarding()

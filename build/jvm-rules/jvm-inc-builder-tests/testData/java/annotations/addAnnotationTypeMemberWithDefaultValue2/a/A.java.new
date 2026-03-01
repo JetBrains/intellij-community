@@ -1,0 +1,4 @@
+public @interface A {
+  Class value();
+  Class value1() default byte.class;
+}

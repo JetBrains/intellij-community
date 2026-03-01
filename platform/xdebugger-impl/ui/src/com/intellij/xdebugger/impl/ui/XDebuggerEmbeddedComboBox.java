@@ -9,9 +9,14 @@ import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComboBoxUI;
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
 
 public class XDebuggerEmbeddedComboBox<T> extends ComboBox<T> {
 

@@ -1,9 +1,10 @@
 <idea-plugin visibility="public">
   <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="Git4Idea"/>
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.platform.collaborationTools.auth"/>
+    <!-- endregion -->
   </dependencies>
 
   <resource-bundle>messages.GithubBundle</resource-bundle>
@@ -82,6 +83,9 @@
     <fileTypeUsageSchemaDescriptor schema="github"
                                    implementationClass="org.jetbrains.plugins.github.extensions.GithubFileTypeSchemaProvider"/>
 
+    <completion.contributor language="any" implementationClass="org.jetbrains.plugins.github.ui.GithubMarkdownCompletionContributor"/>
+    <typedHandler implementation="org.jetbrains.plugins.github.ui.GithubMarkdownTypedHandler"/>
+
     <registryKey defaultValue="true" description="Applying suggested changes" key="github.suggested.changes.apply"/>
 
     <registryKey defaultValue="14" description="Clear 'last seen state' after this many days" key="github.clear.last.seen.state.days"/>
@@ -95,9 +99,6 @@
     <registryKey defaultValue="30"
                  description="Seconds between checking the ETag for the PR list"
                  key="github.pr.list.automatic.refresh.seconds"/>
-    <registryKey defaultValue="true"
-                 description="Disable new ways of adding multiline comments in unified diff"
-                 key="github.pr.new.multiline.comments.disabled"/>"/>
 
     <vcs.github.gistContentsCollector
       implementation="org.jetbrains.plugins.github.DefaultGithubGistContentsCollector"

@@ -17,8 +17,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.psi.impl.file.impl.FileManagerEx
-import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -26,7 +24,11 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
@@ -41,11 +43,15 @@ class CodeInsightContextManagerImpl(
 
   companion object {
     @JvmStatic
-    fun getInstanceImpl(project: Project): CodeInsightContextManagerImpl = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
+    fun getInstanceImpl(project: Project): CodeInsightContextManagerImpl =
+      CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
   }
 
-  private val allContexts: AtomicMapCache<VirtualFile, List<CodeInsightContext>, ConcurrentMap<VirtualFile, List<CodeInsightContext>>> = AtomicMapCache { CollectionFactory.createConcurrentWeakMap() }
-  private val preferredContext: AtomicMapCache<VirtualFile, CodeInsightContext, ConcurrentMap<VirtualFile, CodeInsightContext>> = AtomicMapCache { CollectionFactory.createConcurrentWeakMap() }
+  private val allContexts: AtomicMapCache<VirtualFile, ContextOrArray, ConcurrentMap<VirtualFile, ContextOrArray>> =
+    AtomicMapCache { CollectionFactory.createConcurrentWeakKeySoftValueMap() }
+
+  private val preferredContext: AtomicMapCache<VirtualFile, CodeInsightContext, ConcurrentMap<VirtualFile, CodeInsightContext>> =
+    AtomicMapCache { CollectionFactory.createConcurrentWeakKeySoftValueMap() }
 
   private val _changeFlow = MutableSharedFlow<Unit>()
 
@@ -99,8 +105,8 @@ class CodeInsightContextManagerImpl(
 
     return allContexts.getOrPut(file) {
       log.trace { "requested all contexts of file ${file.path}" }
-      getContextSequence(file).toList()
-    }
+      getContextSequence(file).toContextOrArray()
+    }.wrapToList()
   }
 
   private fun getContextSequence(file: VirtualFile): Sequence<CodeInsightContext> {
@@ -234,7 +240,8 @@ class CodeInsightContextManagerImpl(
       fun subscribeToVfsEvents() {
         // we need only one listener per application
         if (!subscribed.getAndSet(true)) {
-          ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES_BG, InvalidationBulkFileListener())
+          ApplicationManager.getApplication().messageBus.connect()
+            .subscribe(VirtualFileManager.VFS_CHANGES_BG, InvalidationBulkFileListener())
         }
       }
     }
@@ -259,4 +266,32 @@ private fun <T> Sequence<T>.appendIfEmpty(item: T) = sequence {
   if (isEmpty) {
     yield(item)
   }
+}
+
+/**
+ * a single [CodeInsightContext] or an array of [CodeInsightContext]s
+ */
+private typealias ContextOrArray = Any
+
+private fun ContextOrArray.wrapToList(): List<CodeInsightContext> {
+  @Suppress("UNCHECKED_CAST")
+  return when (this) {
+    is Array<*> -> (this as Array<CodeInsightContext>).asList()
+    else -> listOf(this as CodeInsightContext)
+  }
+}
+
+private fun Sequence<CodeInsightContext>.toContextOrArray(): ContextOrArray {
+  val iterator = this.iterator()
+  if (!iterator.hasNext()) return emptyArray<CodeInsightContext>()
+
+  val first = iterator.next()
+  if (!iterator.hasNext()) return first
+
+  val arrayList = ArrayList<CodeInsightContext>()
+  arrayList.add(first)
+  while (iterator.hasNext()) {
+    arrayList.add(iterator.next())
+  }
+  return arrayList.toTypedArray()
 }

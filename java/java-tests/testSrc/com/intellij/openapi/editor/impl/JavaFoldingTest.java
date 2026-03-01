@@ -74,6 +74,7 @@ public class JavaFoldingTest extends JavaFoldingTestCase {
        */
       import java.util.*;
       class Foo { List a; Map b; }
+      <caret>
                               """;
     configure(text);
     FoldRegion foldRegion = myFixture.getEditor().getFoldingModel().getCollapsedRegionAtOffset(0);

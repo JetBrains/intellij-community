@@ -182,6 +182,15 @@ public final class ObjectTree {
       for (Disposable disposable : disposables) {
         myObject2ParentNode.remove(disposable);
       }
+      
+      // Mark CheckedDisposable objects as disposed INSIDE the lock to prevent race condition
+      // where another thread could re-register the disposable between tree removal and dispose() call.
+      for (Disposable disposable : disposables) {
+        if (disposable instanceof Disposer.CheckedDisposableImpl) {
+          ((Disposer.CheckedDisposableImpl)disposable).isDisposed = true;
+        }
+      }
+      
       return disposables;
     });
   }
@@ -204,6 +213,16 @@ public final class ObjectTree {
       for (Disposable disposable : disposables) {
         myObject2ParentNode.remove(disposable);
       }
+
+      // Mark CheckedDisposable objects as disposed INSIDE the lock to prevent race condition
+      // where another thread could re-register the disposable between tree removal and dispose() call.
+      // This is safe because CheckedDisposable.dispose() is idempotent (just sets isDisposed=true).
+      for (Disposable disposable : disposables) {
+        if (disposable instanceof Disposer.CheckedDisposableImpl) {
+          ((Disposer.CheckedDisposableImpl)disposable).isDisposed = true;
+        }
+      }
+
       return disposables;
     });
   }
@@ -243,6 +262,21 @@ public final class ObjectTree {
     synchronized (getTreeLock()) {
       for (ObjectNode node : myObject2ParentNode.values()) {
         node.assertNoReferencesKept(disposableClass);
+      }
+    }
+  }
+
+  /**
+   * Asserts that no objects matching the given predicate are reachable in the Tree.
+   *
+   * @param predicate the predicate to test objects against; returns {@code true} for objects that should not be present
+   * @throws AssertionError if any object matching the predicate is found reachable from any node in the tree
+   */
+  @TestOnly
+  public void assertNoReferenceKeptInTree(@NotNull Predicate<Object> predicate) {
+    synchronized (getTreeLock()) {
+      for (ObjectNode node : myObject2ParentNode.values()) {
+        node.assertNoReferencesKept(predicate);
       }
     }
   }

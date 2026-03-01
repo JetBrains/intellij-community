@@ -15,7 +15,12 @@
  */
 package com.jetbrains.python.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
@@ -48,7 +53,7 @@ import static com.intellij.patterns.StandardPatterns.or;
 public final class PyDocstringCompletionContributor extends CompletionContributor implements DumbAware {
   public PyDocstringCompletionContributor() {
     extend(CompletionType.BASIC,
-           or(psiElement().withParent(DocStringTagCompletionContributor.DOCSTRING_PATTERN), psiComment()),
+           or(psiElement().withParent(DocStringTagCompletionContributor.Helper.DOCSTRING_PATTERN), psiComment()),
            new IdentifierCompletionProvider());
   }
 

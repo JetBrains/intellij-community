@@ -3,9 +3,15 @@ package com.intellij.codeInsight.highlighting
 
 import com.intellij.application.options.editor.EditorOptionsListener
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.daemon.impl.*
+import com.intellij.codeInsight.daemon.impl.DocumentAfterCommitListener
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterUpdater
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManager
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManagerImpl
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
@@ -20,14 +26,25 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.editor.event.SelectionEvent
+import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -37,7 +54,12 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapi.util.getAndUpdateUserData
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
@@ -45,14 +67,19 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.lang.Runnable
 import java.util.concurrent.Executor
 import kotlin.coroutines.CoroutineContext
 
@@ -82,6 +109,11 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       }
     }
 
+    editorFactory.addEditorFactoryListener(object:EditorFactoryListener {
+      override fun editorReleased(event: EditorFactoryEvent) {
+        cancelJob(event.editor)
+      }
+    }, parentDisposable)
     eventMulticaster.addCaretListener(object : CaretListener {
       override fun caretPositionChanged(e: CaretEvent) {
         if (e.caret === e.editor.caretModel.primaryCaret) {
@@ -124,9 +156,9 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(e: DocumentEvent) {
         alarm.cancelAllRequests()
-        editorFactory.editors(e.document, project).forEach {
-          updateHighlighted(project, it, coroutineScope)
-          highlightSelection(project, it, executor)
+        editorFactory.editors(e.document, project).forEach { editor ->
+          updateHighlighted(project, editor, coroutineScope)
+          highlightSelection(project, editor, executor)
         }
       }
     }, parentDisposable)
@@ -178,6 +210,10 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     }
   }
 
+  private fun cancelJob(editor: Editor) {
+    editor.getUserData(BACKGROUND_TASK_KEY)?.cancel()
+  }
+
   private fun clearAllIdentifierHighlighters() {
     for (project in ProjectManager.getInstance().openProjects) {
       for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
@@ -190,17 +226,18 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
 
   private fun onCaretUpdate(editor: Editor, project: Project, executor: Executor, coroutineScope: CoroutineScope) {
     alarm.cancelAllRequests()
-    if (editor.project !== project) return
-
-    // don't update braces in case of the active selection.
-    if (!editor.selectionModel.hasSelection()) {
-      updateHighlighted(project, editor, coroutineScope)
+    if (editor.project == project) {
+      // don't update braces in case of the active selection.
+      if (!editor.selectionModel.hasSelection()) {
+        updateHighlighted(project, editor, coroutineScope)
+      }
+      highlightSelection(project, editor, executor)
     }
-    highlightSelection(project, editor, executor)
   }
 
   @RequiresEdt
   private fun updateHighlighted(project: Project, hostEditor: Editor, coroutineScope: CoroutineScope) {
+    ThreadingAssertions.assertEventDispatchThread()
     val hostDocument = hostEditor.document
     if (hostDocument.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(hostEditor)) {
       return
@@ -210,13 +247,13 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     val needMatching = BackgroundHighlightingUtil.needMatching(hostEditor, CodeInsightSettings.getInstance())
     coroutineScope.launch(context = CoroutineName("BackgroundHighlighter.updateHighlighted(${hostEditor.document})")) {
       val job:Job = coroutineContext.job
-      val oldJob = (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK) {
+      val oldJob = (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK_KEY) {
         job
       }
       oldJob?.cancel()
       // clear user data only after the nested launches completed, since they assume the job is still in the editor user data, see isEditorUpToDate
       job.invokeOnCompletion {
-        (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK) {
+        (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK_KEY) {
           oldJob -> if (oldJob == job) null else oldJob // remove my job, but don't touch the job if not mine because it might be the newest job
         }
       }
@@ -234,7 +271,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       else {
         null
       }
-      // launch nested coroutines that finish only after the main job is finished, to be ble to wait for identifier highlighting to apply, see waitForIdentifierHighlighting
+      // launch nested coroutines that finish only after the main job is finished, to be able to wait for identifier highlighting to apply, see waitForIdentifierHighlighting
       launch(Dispatchers.EDT + modalityState) {
         if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
           applyBraceMatching(project, newEditor, newPsiFile, maybeMatch, needMatching)
@@ -281,12 +318,13 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     documentModStampBefore: Long,
     job: Job,
   ): Boolean {
+    ThreadingAssertions.assertEventDispatchThread()
     return BackgroundHighlightingUtil.isValidEditor(hostEditor)
            && hostEditor.caretModel.offset == offsetBefore
            && (newEditor == hostEditor || BackgroundHighlightingUtil.isValidEditor(newEditor))
            && hostEditor.document.modificationStamp == documentModStampBefore
            && readAction { newPsiFile.isValid() }
-           && hostEditor.getUserData(BACKGROUND_TASK) == job
+           && hostEditor.getUserData(BACKGROUND_TASK_KEY) == job
   }
 
   @RequiresEdt
@@ -297,6 +335,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     maybeMatch: Pair<TextRange, TextRange>?,
     needMatching: Boolean,
   ) {
+    ThreadingAssertions.assertEventDispatchThread()
     val handler = BraceHighlightingHandler(project, newEditor, alarm, newPsiFile)
     if (maybeMatch == null) {
       alarm.cancelAllRequests()
@@ -328,8 +367,11 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       }
     }
 
+    @RequiresBackgroundThread
     @RequiresReadLock
     fun createPass(newPsiFile: PsiFile, hostEditor: Editor, newEditor: Editor): IdentifierHighlighterUpdater? {
+      ThreadingAssertions.assertBackgroundThread()
+      ThreadingAssertions.assertReadAccess()
       if (newPsiFile.isValid) {
         val textLength = newPsiFile.textLength
         val project = newPsiFile.project
@@ -344,19 +386,16 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       return null
     }
 
-    private val BACKGROUND_TASK: Key<Job> = Key.create("BACKGROUND_TASK")
+    private val BACKGROUND_TASK_KEY: Key<Job> = Key.create("BACKGROUND_TASK")
     @TestOnly
+    @RequiresEdt
     fun waitForIdentifierHighlighting(editor: Editor) {
+      ThreadingAssertions.assertEventDispatchThread()
       val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-      val job = hostEditor.getUserData(BACKGROUND_TASK)
+      val job = hostEditor.getUserData(BACKGROUND_TASK_KEY)
       if (job != null) {
         while (!job.isCompleted) {
-          if (EDT.isCurrentThreadEdt()) {
-            UIUtil.dispatchAllInvocationEvents()
-          }
-          else {
-            UIUtil.pump()
-          }
+          UIUtil.dispatchAllInvocationEvents()
         }
       }
       if (LOG.isDebugEnabled) {
@@ -374,6 +413,7 @@ class BackgroundHighlighterPerProject(@JvmField val coroutineScope: CoroutineSco
 
 @RequiresEdt
 private fun selectionRangeToFind(editor: Editor): TextRange? {
+  ThreadingAssertions.assertEventDispatchThread()
   val document = editor.document
   if (document.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(editor)) {
     return null
@@ -407,7 +447,7 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
   val selectionRange = selectionRangeToFind(editor)
   val sequence = document.charsSequence
   val toFind = selectionRange?.subSequence(sequence)?.toString()
-  if (toFind == null || toFind.isBlank() || toFind.contains("\n")) {
+  if (toFind.isNullOrBlank() || toFind.contains("\n")) {
     removeSelectionHighlights(editor)
     return false
   }
@@ -468,7 +508,9 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
   return true
 }
 
+@RequiresEdt
 private fun removeSelectionHighlights(editor: Editor) {
+  ThreadingAssertions.assertEventDispatchThread()
   val highlighters = (editor as UserDataHolderEx).getAndUpdateUserData(SELECTION_HIGHLIGHTS) { null }?.highlighters ?: return
   val markupModel = editor.markupModel
   for (highlighter in highlighters) {

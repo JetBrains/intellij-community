@@ -6,14 +6,27 @@ import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder;
 import com.intellij.debugger.streams.psi.ChainDetector;
 import com.intellij.debugger.streams.psi.ChainTransformer;
 import com.intellij.debugger.streams.psi.PsiUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Vitaliy.Bibaev

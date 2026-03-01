@@ -16,20 +16,27 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.jetbrains.jsonSchema.*;
-import com.jetbrains.jsonSchema.extension.*;
+import com.jetbrains.jsonSchema.JsonPointerUtil;
+import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
+import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
+import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
+import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
+import com.jetbrains.jsonSchema.extension.ContentAwareJsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.JsonSchemaEnabler;
+import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
+import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
+import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -39,7 +46,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -54,7 +68,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
 
   private final @NotNull JsonSchemaCatalogManager myCatalogManager;
-  private final @NotNull JsonSchemaVfsListener.JsonSchemaUpdater mySchemaUpdater;
   private final JsonSchemaProviderFactories myFactories;
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
@@ -79,7 +92,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       myRefs.clear();
       myAnyChangeCount.incrementAndGet();
     });
-    mySchemaUpdater = JsonSchemaVfsListener.startListening(project, this, connection);
+    JsonSchemaVfsListener.startListening(project);
     myCatalogManager.startUpdates();
   }
 
@@ -424,13 +437,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   private @Nullable JsonSchemaVersion getSchemaVersionFromSchemaUrl(@NotNull VirtualFile file) {
     String schemaPropertyValue;
-    if (file instanceof  LightVirtualFile || Registry.is("json.schema.object.v2")) {
-      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myProject).getComputedSchemaRootOrNull(file);
-      if (schemaRootOrNull != null) {
-        schemaPropertyValue = schemaRootOrNull.getSchema();
-        return schemaPropertyValue == null ? null : JsonSchemaVersion.byId(schemaPropertyValue);
-      }
+    JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myProject).getComputedSchemaRootOrNull(file);
+    if (schemaRootOrNull != null) {
+      schemaPropertyValue = schemaRootOrNull.getSchema();
+      return schemaPropertyValue == null ? null : JsonSchemaVersion.byId(schemaPropertyValue);
     }
+
     Ref<String> res = Ref.create(null);
     //noinspection CodeBlock2Expr
     ApplicationManager.getApplication().runReadAction(() -> {

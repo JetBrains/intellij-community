@@ -110,7 +110,7 @@ class JavaAutoRunTrackerService(val project: Project, val scope: CoroutineScope)
   }
 }
 
-private class JavaAutoRunTrackerActivity() : ProjectActivity {
+internal class JavaAutoRunTrackerActivity() : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.service<JavaAutoRunTrackerService>().registerListeners()
   }

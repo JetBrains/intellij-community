@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
@@ -23,7 +23,7 @@ public final class RestoreDefaultLayoutAction extends DumbAwareAction {
       e.getPresentation().setVisible(false);
     }
     e.getPresentation().setEnabled(e.getProject() != null);
-    String activeLayout = ToolWindowDefaultLayoutManager.getInstance().getActiveLayoutName();
+    String activeLayout = ToolWindowDefaultLayoutManager.Companion.getInstance().getActiveLayoutName();
     e.getPresentation().setDescription(
       ToolWindowDefaultLayoutManager.FACTORY_DEFAULT_LAYOUT_NAME.equals(activeLayout)
       ? ActionsBundle.message("action.RestoreFactoryDefaultLayout.description")
@@ -37,7 +37,6 @@ public final class RestoreDefaultLayoutAction extends DumbAwareAction {
     if (project == null) {
       return;
     }
-    ToolWindowManagerEx.getInstanceEx(project).setLayout(ToolWindowDefaultLayoutManager.getInstance().getLayoutCopy());
+    ToolWindowManagerEx.getInstanceEx(project).setLayout(ToolWindowDefaultLayoutManager.Companion.getInstance().getLayoutCopy());
   }
-
 }

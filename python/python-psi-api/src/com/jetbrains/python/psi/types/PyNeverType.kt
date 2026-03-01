@@ -8,7 +8,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 
-class PyNeverType private constructor(private val name: String) : PyType {
+class PyNeverType private constructor(override val name: String) : PyType {
   companion object {
     @JvmField val NEVER: PyNeverType = PyNeverType("Never")
     @JvmField val NO_RETURN: PyNeverType = PyNeverType("NoReturn")
@@ -17,8 +17,7 @@ class PyNeverType private constructor(private val name: String) : PyType {
     fun PyType?.toNoReturnIfNeeded(): PyType? = if (this === NEVER) NO_RETURN else this
   }
 
-  override fun getName(): String = name
-  override fun isBuiltin(): Boolean = true
+  override val isBuiltin: Boolean = true
   override fun assertValid(message: String?) {}
 
   override fun equals(other: Any?): Boolean = other is PyNeverType
@@ -33,11 +32,11 @@ class PyNeverType private constructor(private val name: String) : PyType {
 
   override fun getCompletionVariants(
     completionPrefix: String?,
-    location: PsiElement?,
-    context: ProcessingContext?,
+    location: PsiElement,
+    context: ProcessingContext,
   ): Array<Any> = emptyArray()
 
-  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T {
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T? {
     return visitor.visitPyNeverType(this)
   }
 }

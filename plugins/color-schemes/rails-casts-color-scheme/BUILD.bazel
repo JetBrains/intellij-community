@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":color-scheme-rails_casts_resources"]
 )
+
+jvm_library(
+  name = "color-scheme-rails_casts_test_lib",
+  module_name = "intellij.color.scheme.rails_casts",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":color-scheme-rails_casts"]
+)
 ### auto-generated section `build intellij.color.scheme.rails_casts` end

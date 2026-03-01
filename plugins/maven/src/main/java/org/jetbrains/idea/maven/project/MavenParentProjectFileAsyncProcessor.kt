@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
 

@@ -4,7 +4,9 @@ package org.jetbrains.idea.devkit.run
 import com.intellij.configurationStore.Property
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project

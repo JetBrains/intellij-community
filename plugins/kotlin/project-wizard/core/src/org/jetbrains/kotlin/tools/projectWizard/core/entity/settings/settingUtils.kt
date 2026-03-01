@@ -3,7 +3,12 @@
 package org.jetbrains.kotlin.tools.projectWizard.core.entity.settings
 
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.ParseError
+import org.jetbrains.kotlin.tools.projectWizard.core.ParsingContext
+import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
+import org.jetbrains.kotlin.tools.projectWizard.core.map
+import org.jetbrains.kotlin.tools.projectWizard.core.sequence
+import org.jetbrains.kotlin.tools.projectWizard.core.success
 
 fun ParsingContext.parseSettingsMap(
     path: String,

@@ -23,11 +23,6 @@ final class NewUiUtil {
                        StringUtil.defaultIfEmpty(newVersion, IdeBundle.message("plugin.info.unknown")));
   }
 
-  static @NotNull @NlsSafe String getVersion(@NotNull IdeaPluginDescriptor oldDescriptor,
-                                             @NotNull IdeaPluginDescriptor newDescriptor) {
-    return getUpdateVersionText(oldDescriptor.getVersion(), newDescriptor.getVersion());
-  }
-
   static boolean isDeleted(@Nullable IdeaPluginDescriptor descriptor) {
     return descriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)descriptor).isDeleted();
   }

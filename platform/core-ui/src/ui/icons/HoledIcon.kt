@@ -4,7 +4,11 @@ package com.intellij.ui.icons
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.util.ui.JBScalableIcon
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.RenderingHints
+import java.awt.Shape
 import java.awt.geom.Path2D
 import javax.swing.Icon
 

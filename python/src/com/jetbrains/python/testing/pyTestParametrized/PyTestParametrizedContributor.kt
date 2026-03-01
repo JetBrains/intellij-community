@@ -2,11 +2,20 @@
 package com.jetbrains.python.testing.pyTestParametrized
 
 import com.intellij.patterns.PlatformPatterns
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.BaseReference
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.testing.pyTestFixtures.PARAMETRIZE
 
 private object PyTestReferenceParametrizeProvider : PsiReferenceProvider() {

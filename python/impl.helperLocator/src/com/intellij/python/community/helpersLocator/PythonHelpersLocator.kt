@@ -92,10 +92,6 @@ interface PythonHelpersLocator {
     @RequiresBackgroundThread
     fun findPathStringInHelpers(@NonNls resourceName: String): String = findPathInHelpersPossibleNull(resourceName)?.absolutePathString()
                                                                         ?: ""
-
-    @Deprecated("Use {@link PythonHelpersLocator#findPathInHelpers}.", ReplaceWith("findPathInHelpers(resourceName)"), DeprecationLevel.ERROR)
-    @JvmStatic
-    fun getHelperPath(@NonNls resourceName: String): String = findPathStringInHelpers(resourceName)
   }
 
   @ApiStatus.Internal
@@ -167,4 +163,4 @@ interface PythonHelpersLocator {
   }
 }
 
-private class PythonHelpersLocatorDefault : PythonHelpersLocator
+internal class PythonHelpersLocatorDefault : PythonHelpersLocator

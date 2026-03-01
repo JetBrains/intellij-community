@@ -10,9 +10,12 @@ import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmen
 import com.intellij.execution.configurations.ParameterTargetValuePart
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.LanguageRuntimeType.VolumeType
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeTypeConstants
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -25,6 +28,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
@@ -34,7 +38,6 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.UrlClassLoader
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -50,7 +53,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.charset.UnsupportedCharsetException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Random
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest
@@ -160,27 +163,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     return result
   }
 
-  /**
-   * @param host the hostname the [localPort] is bound to
-   * @param localPort the local port that is listening for the incoming connections
-   * @return the promised value with the host and port the process started on the target may connect to be directed to the local one
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use `TargetEnvironment.getLocalPortBindings` after constructing `TargetEnvironment` instead")
-  fun requestLocalPortBinding(host: String, localPort: Int): TargetValue<HostPort> {
-    val binding = TargetEnvironment.LocalPortBinding(localPort, target = null)
-    request.localPortBindings.add(binding)
-    val result = DeferredTargetValue(HostPort(host, localPort))
-    dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
-      if (targetProgressIndicator.isCanceled || targetProgressIndicator.isStopped) {
-        return@then
-      }
-      val resolvedPortBinding = environment.localPortBindings[binding]
-      result.resolve(resolvedPortBinding?.localEndpoint)
-    }
-    return result
-  }
-
   private class Upload(val volume: TargetEnvironment.UploadableVolume, val relativePath: String)
 
   private fun createUploadRoot(volumeDescriptor: VolumeDescriptor, localRootPath: Path): TargetEnvironment.UploadRoot {
@@ -281,9 +263,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     val commandLineWrapperClass = commandLineWrapperClass()
 
     if (dynamicClasspath) {
-      val cs = StandardCharsets.UTF_8 // todo detect JNU charset from VM options?
       if (javaParameters.isArgFile) {
-        setArgFileParams(javaParameters, vmParameters, dynamicVMOptions, dynamicParameters, cs)
+        setArgFileParams(javaParameters, vmParameters, dynamicVMOptions, dynamicParameters)
         dynamicMainClass = dynamicParameters
       }
       else if (!vmParameters.isExplicitClassPath() && javaParameters.jarPath == null && commandLineWrapperClass != null) {
@@ -292,7 +273,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
                                 dynamicVMOptions, dynamicParameters)
         }
         else if (javaParameters.isClasspathFile) {
-          setCommandLineWrapperParams(javaParameters, vmParameters, commandLineWrapperClass, dynamicVMOptions, dynamicParameters, cs)
+          setCommandLineWrapperParams(javaParameters, vmParameters, commandLineWrapperClass, dynamicVMOptions, dynamicParameters)
         }
       }
       else {
@@ -341,9 +322,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   private fun setArgFileParams(
     javaParameters: SimpleJavaParameters, vmParameters: ParametersList,
     dynamicVMOptions: Boolean, dynamicParameters: Boolean,
-    cs: Charset,
   ) {
-
+    val cs = if (request is LocalTargetEnvironmentRequest) CharsetToolkit.getPlatformCharset() else StandardCharsets.UTF_8
     try {
       val argFile = ArgFile(dynamicVMOptions, cs, platform)
       commandLine.addFileToDeleteOnTermination(argFile.file)
@@ -458,8 +438,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     commandLineWrapper: Class<*>,
     dynamicVMOptions: Boolean,
     dynamicParameters: Boolean,
-    cs: Charset,
   ) {
+    val cs = StandardCharsets.UTF_8
     try {
       val pseudoUniquePrefix = Random().nextInt(Int.MAX_VALUE)
 

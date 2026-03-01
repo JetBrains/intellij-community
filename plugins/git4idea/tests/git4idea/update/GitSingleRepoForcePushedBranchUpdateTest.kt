@@ -7,7 +7,9 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.actions.branch.GitForcePushedBranchUpdateExecutor
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.cd
+import git4idea.test.git
+import git4idea.test.makeCommit
 import java.nio.file.Path
 
 class GitSingleRepoForcePushedBranchUpdateTest : GitForcePushedBranchUpdateBaseTest() {

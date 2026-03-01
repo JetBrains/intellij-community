@@ -3,40 +3,46 @@ package org.jetbrains.plugins.gitlab.mergerequest.api.request
 
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
-import com.intellij.collaboration.util.withQuery
-import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabApiUriQueryBuilder
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
+import org.jetbrains.plugins.gitlab.api.projectApiUrl
+import org.jetbrains.plugins.gitlab.api.withErrorStats
+import org.jetbrains.plugins.gitlab.api.withQuery
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
-import java.net.URLEncoder
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
 
 @SinceGitLab("15.9")
-fun getMergeRequestDraftNotesUri(project: GitLabProjectCoordinates, mrIid: String): URI =
-  project.restApiUri
+fun GitLabApi.Rest.getMergeRequestDraftNotesUri(projectId: String, mrIid: String): URI =
+  projectApiUrl(projectId)
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
     .resolveRelative("draft_notes")
 
-private fun getSpecificMergeRequestDraftNoteUri(project: GitLabProjectCoordinates, mrIid: String, noteId: String): URI =
-  getMergeRequestDraftNotesUri(project, mrIid).resolveRelative(noteId)
+private fun GitLabApi.Rest.getSpecificMergeRequestDraftNoteUri(
+  projectId: String,
+  mrIid: String,
+  noteId: String,
+): URI =
+  getMergeRequestDraftNotesUri(projectId, mrIid).resolveRelative(noteId)
 
 @SinceGitLab("15.10")
 suspend fun GitLabApi.Rest.updateDraftNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   noteId: String,
   position: GitLabMergeRequestDraftNoteRestDTO.Position,
   body: String,
 )
   : HttpResponse<out Unit> {
-  val params = mapOf(
-    "note" to body,
-  ) + createPositionParameters(position)
-
-  val uri = getSpecificMergeRequestDraftNoteUri(project, mrIid, noteId).withParams(params)
+  val uri = getSpecificMergeRequestDraftNoteUri(projectId, mrIid, noteId).withQuery {
+    "note" eq body
+    addDraftNotePositionParameters(position) // have to pass the existing position, otherwise it is reset to null
+  }
   val request = request(uri).PUT(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_UPDATE_DRAFT_NOTE) {
     sendAndAwaitCancellable(request)
@@ -45,12 +51,12 @@ suspend fun GitLabApi.Rest.updateDraftNote(
 
 @SinceGitLab("15.9")
 suspend fun GitLabApi.Rest.deleteDraftNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   noteId: Long,
 )
   : HttpResponse<out Unit> {
-  val uri = getSpecificMergeRequestDraftNoteUri(project, mrIid, noteId.toString())
+  val uri = getSpecificMergeRequestDraftNoteUri(projectId, mrIid, noteId.toString())
   val request = request(uri).DELETE().build()
   return withErrorStats(GitLabApiRequestName.REST_DELETE_DRAFT_NOTE) {
     sendAndAwaitCancellable(request)
@@ -59,11 +65,11 @@ suspend fun GitLabApi.Rest.deleteDraftNote(
 
 @SinceGitLab("15.11")
 suspend fun GitLabApi.Rest.submitDraftNotes(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
 )
   : HttpResponse<out Unit> {
-  val uri = getMergeRequestDraftNotesUri(project, mrIid).resolveRelative("bulk_publish")
+  val uri = getMergeRequestDraftNotesUri(projectId, mrIid).resolveRelative("bulk_publish")
   val request = request(uri).POST(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_SUBMIT_DRAFT_NOTES) {
     sendAndAwaitCancellable(request)
@@ -72,11 +78,11 @@ suspend fun GitLabApi.Rest.submitDraftNotes(
 
 @SinceGitLab("15.10")
 suspend fun GitLabApi.Rest.submitSingleDraftNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   noteId: Long,
 ): HttpResponse<out Unit> {
-  val uri = getSpecificMergeRequestDraftNoteUri(project, mrIid, noteId.toString()).resolveRelative("publish")
+  val uri = getSpecificMergeRequestDraftNoteUri(projectId, mrIid, noteId.toString()).resolveRelative("publish")
   val request = request(uri).PUT(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_SUBMIT_SINGLE_DRAFT_NOTE) {
     sendAndAwaitCancellable(request)
@@ -85,17 +91,15 @@ suspend fun GitLabApi.Rest.submitSingleDraftNote(
 
 @SinceGitLab("16.3")
 suspend fun GitLabApi.Rest.addDraftReplyNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   discussionId: String,
   body: String,
 ): HttpResponse<out GitLabMergeRequestDraftNoteRestDTO> {
-  val params = listOfNotNull(
-    "note" to body,
-    "in_reply_to_discussion_id" to discussionId
-  ).toMap()
-
-  val uri = getMergeRequestDraftNotesUri(project, mrIid).withParams(params)
+  val uri = getMergeRequestDraftNotesUri(projectId, mrIid).withQuery {
+    "note" eq body
+    "in_reply_to_discussion_id" eq discussionId
+  }
   val request = request(uri).POST(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_CREATE_DRAFT_NOTE) {
     loadJsonValue(request)
@@ -104,47 +108,41 @@ suspend fun GitLabApi.Rest.addDraftReplyNote(
 
 @SinceGitLab("15.10")
 suspend fun GitLabApi.Rest.addDraftNote(
-  project: GitLabProjectCoordinates,
+  projectId: String,
   mrIid: String,
   @SinceGitLab("16.3")
   positionOrNull: GitLabDiffPositionInput?,
   body: String,
 ): HttpResponse<out GitLabMergeRequestDraftNoteRestDTO> {
-  val params = mapOf(
-    "note" to body,
-  ) + (positionOrNull?.let(::createPositionParameters) ?: mapOf())
-
-  val uri = getMergeRequestDraftNotesUri(project, mrIid).withParams(params)
+  val uri = getMergeRequestDraftNotesUri(projectId, mrIid).withQuery {
+    "note" eq body
+    positionOrNull?.let { addDiffPositionParameters(it) }
+  }
   val request = request(uri).POST(BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_CREATE_DRAFT_NOTE) {
     loadJsonValue(request)
   }
 }
 
-private fun createPositionParameters(position: GitLabDiffPositionInput): Map<String, String> =
-  listOfNotNull(
-    "position[base_sha]" to position.baseSha,
-    "position[head_sha]" to position.headSha,
-    "position[start_sha]" to position.startSha,
-    position.oldLine?.let { "position[old_line]" to it.toString() },
-    position.newLine?.let { "position[new_line]" to it.toString() },
-    position.paths.newPath?.let { "position[new_path]" to it },
-    position.paths.oldPath?.let { "position[old_path]" to it },
-    "position[position_type]" to "text",
-  ).toMap()
-
-private fun createPositionParameters(position: GitLabMergeRequestDraftNoteRestDTO.Position): Map<String, String> {
-  val result = listOfNotNull(
-    position.baseSha?.let { "position[base_sha]" to it },
-    position.headSha?.let { "position[head_sha]" to it },
-    position.startSha?.let { "position[start_sha]" to it },
-    position.newPath?.let { "position[new_path]" to it },
-    position.oldPath?.let { "position[old_path]" to it },
-    position.oldLine?.let { "position[old_line]" to it.toString() },
-    position.newLine?.let { "position[new_line]" to it.toString() },
-    "position[position_type]" to position.positionType,
-  ).toMap()
-
+private fun GitLabApiUriQueryBuilder.addDraftNotePositionParameters(position: GitLabMergeRequestDraftNoteRestDTO.Position) {
   // If there's no position info (just position type), don't pass it to GitLab.
-  return if (result.size == 1) mapOf() else result
+  if (position.baseSha == null && position.headSha == null && position.startSha == null &&
+      position.newPath == null && position.oldPath == null &&
+      position.oldLine == null && position.newLine == null && position.lineRange == null) {
+    return
+  }
+
+  "position" {
+    "base_sha" eq position.baseSha
+    "head_sha" eq position.headSha
+    "start_sha" eq position.startSha
+    "new_path" eq position.newPath
+    "old_path" eq position.oldPath
+    "old_line" eq position.oldLine
+    "new_line" eq position.newLine
+    "position_type" eq position.positionType
+    position.lineRange?.let { lineRange ->
+      addLineRangeParameters(lineRange)
+    }
+  }
 }

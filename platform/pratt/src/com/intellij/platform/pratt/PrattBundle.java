@@ -2,7 +2,11 @@
 package com.intellij.platform.pratt;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 @ApiStatus.Internal
 public final class PrattBundle {

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.ArrayList;
 
 final class SliceLeafValueClassNode extends SliceLeafValueRootNode {

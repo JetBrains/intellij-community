@@ -15,10 +15,18 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFile
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.assertInstanceOf
+import com.intellij.testFramework.requireIs
 import com.intellij.util.CommonProcessors
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
@@ -27,14 +35,37 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.platform.modification.*
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalScriptModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.projectStructure.*
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfType
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.openapiSdk
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -43,6 +74,7 @@ import org.jetbrains.kotlin.idea.test.util.compileScriptsIntoDirectory
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtScript
@@ -61,28 +93,6 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         get() = KotlinPluginMode.K2
 
     override fun getTestDataDirectory(): File = throw UnsupportedOperationException()
-
-    override fun setUp() {
-        super.setUp()
-
-        val testProjectStructureInsightsProvider = object : ProjectStructureInsightsProvider {
-            override fun isInSpecialSrcDirectory(psiElement: PsiElement): Boolean {
-                if (!RootKindFilter.Companion.projectSources.matches(psiElement)) return false
-                val containingFile = psiElement.containingFile as? KtFile ?: return false
-                val virtualFile = containingFile.virtualFile
-                val index = ProjectFileIndex.getInstance(psiElement.project)
-                val module = index.getModuleForFile(virtualFile) ?: return false
-                return module.name == "buildSrc"
-            }
-        }
-
-        ExtensionTestUtil.maskExtensions(
-          ProjectStructureInsightsProvider.Companion.EP_NAME,
-          ProjectStructureInsightsProvider.Companion.EP_NAME.extensionList +
-          listOf(testProjectStructureInsightsProvider),
-          testRootDisposable
-        )
-    }
 
     fun `test unrelated library`() {
         val moduleWithLibrary = createModule(
@@ -775,7 +785,6 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         }
     }
 
-    @OptIn(K1ModeProjectStructureApi::class)
     fun `test different jdks attached to project modules`() {
         val mockJdkA = IdeaTestUtil.getMockJdk17("module A JDK")
         val mockJdkB = IdeaTestUtil.getMockJdk17("module B JDK")
@@ -798,7 +807,9 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         }
 
         //a class from "jdk" which belongs to 2 order entries
-        val stringClass = JavaPsiFacade.getInstance(project).findClass("java.lang.String", GlobalSearchScope.allScope(project))!!
+        val stringClass = JavaPsiFacade.getInstance(project).findClasses("java.lang.String", GlobalSearchScope.allScope(project))
+            // default module is created with jdk 11 and as it's un
+            .find { it.containingFile.virtualFile.path.contains("1.7") }!!
 
         val contextualModuleB = moduleB.toKaSourceModuleForProduction()!!
         val module1 = stringClass.getKaModuleOfTypeSafe<KaLibraryModule>(project, contextualModuleB)
@@ -901,9 +912,43 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertKaModuleType<KaDanglingFileModule>(file)
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun `test dangling file cannot be analyzed in context module scope`() {
+        // See KT-71135.
+        testDanglingFileElementCannotBeAnalyzedInContextModuleScope(
+            setContextModuleExplicitly = false,
+            selectElement = { it },
+        )
+    }
+
     fun `test dangling file element cannot be analyzed in context module scope`() {
         // See KT-71135.
+        testDanglingFileElementCannotBeAnalyzedInContextModuleScope(
+            setContextModuleExplicitly = false,
+            selectElement = { it.declarations.first() },
+        )
+    }
+
+    fun `test dangling file cannot be analyzed in explicit context module scope`() {
+        // See KT-83777.
+        testDanglingFileElementCannotBeAnalyzedInContextModuleScope(
+            setContextModuleExplicitly = true,
+            selectElement = { it },
+        )
+    }
+
+    fun `test dangling file element cannot be analyzed in explicit context module scope`() {
+        // See KT-83777.
+        testDanglingFileElementCannotBeAnalyzedInContextModuleScope(
+            setContextModuleExplicitly = true,
+            selectElement = { it.declarations.first() },
+        )
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    private fun testDanglingFileElementCannotBeAnalyzedInContextModuleScope(
+        setContextModuleExplicitly: Boolean,
+        selectElement: (KtFile) -> KtElement,
+    ) {
         createModule(
             moduleName = "a",
             srcContentSpec = directoryContent {
@@ -915,15 +960,88 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val sourceKtFile = getFile("A.kt")
         val sourceKaModule = kaModuleWithAssertion<KaSourceModule>(sourceKtFile)
 
-        val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile(name, "A()")
+        val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile("dummy.kt", "class A")
         temporaryFile.originalFile = sourceKtFile
+        if (setContextModuleExplicitly) {
+            temporaryFile.contextModule = sourceKaModule
+        }
         assertKaModuleType<KaDanglingFileModule>(temporaryFile)
+
+        val targetElement = selectElement(temporaryFile)
 
         allowAnalysisOnEdt {
             analyze(sourceKaModule) {
                 assertFalse(
-                    "The dangling file should not be analyzable in the context of its source module.",
-                    temporaryFile.canBeAnalysed(),
+                    "The dangling file element should not be analyzable in the scope of its context module.",
+                    targetElement.canBeAnalysed(),
+                )
+            }
+        }
+    }
+
+    fun `test physical dangling file can be analyzed in own module scope`() {
+        // See KT-83777.
+        testDanglingFileElementCanBeAnalysedInOwnModule(
+            isPhysical = true,
+            selectElement = { it },
+        )
+    }
+
+    fun `test physical dangling file element can be analyzed in own module scope`() {
+        // See KT-83777.
+        testDanglingFileElementCanBeAnalysedInOwnModule(
+            isPhysical = true,
+            selectElement = { it.declarations.first() },
+        )
+    }
+
+    fun `test non-physical dangling file can be analyzed in own module scope`() {
+        // See KT-83777.
+        // This test ensures that the content scope of the dangling file module also supports non-physical files.
+        testDanglingFileElementCanBeAnalysedInOwnModule(
+            isPhysical = false,
+            selectElement = { it },
+        )
+    }
+
+    fun `test non-physical dangling file element can be analyzed in own module scope`() {
+        // See KT-83777.
+        // This test ensures that the content scope of the dangling file module also supports non-physical files.
+        testDanglingFileElementCanBeAnalysedInOwnModule(
+            isPhysical = false,
+            selectElement = { it.declarations.first() },
+        )
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    private fun testDanglingFileElementCanBeAnalysedInOwnModule(
+        isPhysical: Boolean,
+        selectElement: (KtFile) -> KtElement,
+    ) {
+        createModule(
+            moduleName = "a",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("A.kt", "class A")
+                }
+            }
+        )
+        val sourceKtFile = getFile("A.kt")
+        assertKaModuleType<KaSourceModule>(sourceKtFile)
+
+        val temporaryFile = KtPsiFactory.contextual(sourceKtFile, eventSystemEnabled = isPhysical).createFile("dummy.kt", "class A")
+        temporaryFile.originalFile = sourceKtFile
+
+        val danglingFileKaModule = kaModuleWithAssertion<KaDanglingFileModule>(temporaryFile)
+
+        val targetElement = selectElement(temporaryFile)
+
+        allowAnalysisOnEdt {
+            analyze(danglingFileKaModule) {
+                val physicalText = if (isPhysical) "physical" else "non-physical"
+                assertTrue(
+                    "The $physicalText dangling file element should be analyzable in the scope of its own module.",
+                    targetElement.canBeAnalysed(),
                 )
             }
         }

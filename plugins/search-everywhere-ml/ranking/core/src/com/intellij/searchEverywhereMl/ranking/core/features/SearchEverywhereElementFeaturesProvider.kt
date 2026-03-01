@@ -4,10 +4,16 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
+import com.intellij.internal.statistic.eventLog.events.DoubleEventField
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.searchEverywhereMl.ranking.core.searchEverywhereMlRankingService
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMlFacade
 import com.intellij.textMatching.PrefixMatchingType
 import com.intellij.textMatching.PrefixMatchingUtil
 import com.intellij.textMatching.WholeTextMatchUtil
@@ -15,8 +21,9 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.math.round
 
 @ApiStatus.Internal
-abstract class SearchEverywhereElementFeaturesProvider(private val supportedContributorIds: List<String>) {
-  constructor(vararg supportedTabs: Class<out SearchEverywhereContributor<*>>) : this(supportedTabs.map { it.simpleName })
+abstract class SearchEverywhereElementFeaturesProvider(private val supportedProviderIds: Set<String>) {
+  @Deprecated("Specify providerIds as a set of string instead")
+  constructor(vararg supportedTabs: Class<out SearchEverywhereContributor<*>>) : this(supportedTabs.map { it.simpleName }.toSet())
 
   companion object {
     val EP_NAME: ExtensionPointName<SearchEverywhereElementFeaturesProvider> = ExtensionPointName.create("com.intellij.searcheverywhere.ml.searchEverywhereElementFeaturesProvider")
@@ -25,9 +32,9 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       return EP_NAME.extensionList.filter { getPluginInfo(it.javaClass).isDevelopedByJetBrains() }
     }
 
-    fun getFeatureProvidersForContributor(contributorId: String): List<SearchEverywhereElementFeaturesProvider> {
+    fun getFeatureProvidersForContributor(providerId: String): List<SearchEverywhereElementFeaturesProvider> {
       return EP_NAME.extensionList.filter {
-        getPluginInfo(it.javaClass).isDevelopedByJetBrains() && it.isContributorSupported(contributorId)
+        getPluginInfo(it.javaClass).isDevelopedByJetBrains() && it.isSearchResultsProviderSupported(providerId)
       }
     }
 
@@ -35,7 +42,6 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     internal val ML_SCORE_KEY = EventFields.Double("ml_score")
     internal val SIMILARITY_SCORE = EventFields.Double("similarity_score")
     internal val IS_SEMANTIC_ONLY = EventFields.Boolean("is_semantic_only")
-    internal val BUFFERED_TIMESTAMP = EventFields.Long("buffered_timestamp")
 
     internal val PREFIX_SAME_START_COUNT = EventFields.Int("prefix_same_start_count")
     internal val PREFIX_GREEDY_SCORE = EventFields.Double("prefix_greedy_score")
@@ -62,7 +68,7 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
 
     fun getDefaultFields(): List<EventField<*>> {
       return listOf(
-        NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY, BUFFERED_TIMESTAMP,
+        NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY,
         PREFIX_SAME_START_COUNT, PREFIX_GREEDY_SCORE, PREFIX_GREEDY_WITH_CASE_SCORE,
         PREFIX_MATCHED_WORDS_SCORE, PREFIX_MATCHED_WORDS_RELATIVE, PREFIX_MATCHED_WORDS_WITH_CASE_SCORE,
         PREFIX_MATCHED_WORDS_WITH_CASE_RELATIVE, PREFIX_SKIPPED_WORDS, PREFIX_MATCHING_TYPE, PREFIX_EXACT,
@@ -84,8 +90,8 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
    *
    * By default, every feature provider has a list of supported contributors, but it's possible to override this logic.
    */
-  open fun isContributorSupported(contributorId: String): Boolean {
-    return supportedContributorIds.contains(contributorId)
+  open fun isSearchResultsProviderSupported(providerId: String): Boolean {
+    return supportedProviderIds.contains(providerId)
   }
 
   abstract fun getFeaturesDeclarations(): List<EventField<*>>
@@ -133,7 +139,7 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
   }
 
   protected fun getQueryEmbedding(queryText: String, split: Boolean = false): FloatTextEmbedding? {
-    return searchEverywhereMlRankingService?.getCurrentSession()?.getSearchQueryEmbedding(queryText, split)
+    return SearchEverywhereMlFacade.activeSession?.getSearchQueryEmbedding(queryText, split)
   }
 
   fun EventField<*>.tryWith(value: Any): EventPair<*> {

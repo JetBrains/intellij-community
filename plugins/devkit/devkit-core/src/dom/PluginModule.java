@@ -2,7 +2,11 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NameValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 
 @Presentation(icon = "AllIcons.Nodes.Module")

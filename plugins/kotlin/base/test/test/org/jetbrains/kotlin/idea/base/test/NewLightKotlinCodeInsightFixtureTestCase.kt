@@ -20,7 +20,11 @@ import java.io.FileNotFoundException
 import java.lang.reflect.Modifier
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.writeText
 
 abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase(),
                                                           ExpectedPluginModeProvider {

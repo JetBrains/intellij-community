@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
-private class BreadcrumbsInitializingActivity : ProjectActivity {
+internal class BreadcrumbsInitializingActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()

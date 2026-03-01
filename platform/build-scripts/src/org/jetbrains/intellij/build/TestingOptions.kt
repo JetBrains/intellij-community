@@ -6,6 +6,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
 import org.jetbrains.intellij.build.TestingOptions.Companion.ALL_EXCLUDE_DEFINED_GROUP
 import org.jetbrains.intellij.build.TestingOptions.Companion.BOOTSTRAP_SUITE_DEFAULT
+import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
 
 private val OLD_TEST_GROUP = System.getProperty("idea.test.group", TestingOptions.ALL_EXCLUDE_DEFINED_GROUP)
 private val OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
@@ -82,7 +83,9 @@ open class TestingOptions {
   var jvmMemoryOptions: String? = System.getProperty("intellij.build.test.jvm.memory.options", OLD_JVM_MEMORY_OPTIONS)
 
   /**
-   * Specifies a module which classpath will be used to search the test classes.
+   * Specifies a module which classpath will be used to search the test classes by default.
+   *
+   * If [searchScope] is set to `singleModule`, only tests from the main module are searched.
    */
   var mainModule: String? = System.getProperty("intellij.build.test.main.module").nullize(nullizeSpaces = true) ?: OLD_MAIN_MODULE
 
@@ -154,14 +157,6 @@ open class TestingOptions {
   var isEnableCausalProfiling: Boolean = getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
 
   /**
-   * Pattern to match tests in [mainModule] or default main module tests compilation outputs.
-   * Tests from each matched class will be executed in a forked Runtime.
-   *
-   * E.g. "com/intellij/util/ui/standalone/ **Test.class"
-   */
-  var batchTestIncludes: String? = System.getProperty("intellij.build.test.batchTest.includes")
-
-  /**
    * Run only whole classes/packages in forked Runtime
    * Allowed values:
    * * `false`
@@ -205,6 +200,15 @@ open class TestingOptions {
 
   /** Skip running (and collection) of JUnit3/4 tests */
   val shouldSkipJUnit34Tests: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.skip.tests.junit34", false)
+
+  /**
+   * Test search scope, for local runs only.
+   * Allowed values:
+   * - singleModule
+   * - moduleWithDependencies
+   * By default, tests are searched across module dependencies.
+   */
+  val searchScope: String = System.getProperty("intellij.build.test.search.scope", JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized)
 
   /**
    * If `true` then a test process's stdout is redirected to a file,

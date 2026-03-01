@@ -5,9 +5,19 @@ import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.MaximizeDialogKt;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -41,7 +51,14 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.platform.ide.bootstrap.SplashManagerKt;
 import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.*;
+import com.intellij.ui.AppUIUtilKt;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DisposableWindow;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.ToolbarService;
+import com.intellij.ui.WindowDeactivationManager;
+import com.intellij.ui.WindowRoundedCornersManager;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -52,7 +69,13 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.OwnerOptional;
+import com.intellij.util.ui.UIUtil;
 import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -62,9 +85,36 @@ import kotlinx.coroutines.ThreadLocalEventLoop;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLayeredPane;
+import javax.swing.JOptionPane;
+import javax.swing.JRootPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.JTree;
+import javax.swing.LayoutFocusTraversalPolicy;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.GraphicsEnvironment;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -73,6 +123,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+
+import static com.intellij.ide.ui.MaximizeDialogKt.getNormalBounds;
+import static com.intellij.ide.ui.MaximizeDialogKt.setNormalBounds;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @SuppressWarnings("LoggerInitializedWithForeignClass")
@@ -374,6 +427,18 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
+  public boolean isMaximizable() {
+    if (!(myDialog instanceof JDialog jDialog)) return false;
+    return MaximizeDialogKt.isMaximizeButtonShown(jDialog);
+  }
+
+  @Override
+  public void setMaximizable(boolean maximizable) {
+    if (!(myDialog instanceof JDialog jDialog)) return;
+    MaximizeDialogKt.setMaximizeButtonShown(jDialog, maximizable);
+  }
+
+  @Override
   public @NotNull Point getLocation() {
     return myDialog.getLocation();
   }
@@ -444,7 +509,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       var pair = ApplicationManager.getApplication().isWriteAccessAllowed()
                  ? new Pair<>(EmptyCoroutineContext.INSTANCE, emptyFunction)
-                 : IntelliJLockingUtil.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
+                 : IntelliJLockingUtil.getGlobalThreadingSupport().parallelizeLock();
       lockContextWrapper = (r) -> {
         ThreadContext.installThreadContext(pair.getFirst(), true, () -> {
           r.run();
@@ -610,6 +675,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
      */
     private Dimension myInitialSize;
     private String myDimensionServiceKey;
+    private static final String NORMAL_BOUNDS_SUFFIX = "_normalized";
     private boolean myOpened = false;
     private boolean myDisposed = false;
 
@@ -870,14 +936,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           if (LOG.isDebugEnabled()) {
             LOG.debug("The project is " + projectGuess);
           }
-          location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
-          Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
+          var windowStateService = getWindowStateService(projectGuess);
+          location = windowStateService.getLocation(myDimensionServiceKey);
+          Dimension size = windowStateService.getSize(myDimensionServiceKey);
           if (LOG.isDebugEnabled()) {
             LOG.debug("The stored location and size are " + location + " and " + size + (size != null ? ", using them to set the initial bounds" : ""));
           }
           if (size != null) {
             myInitialSize = new Dimension(size);
             _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
+          }
+          var normalBounds = windowStateService.getBounds(myDimensionServiceKey + NORMAL_BOUNDS_SUFFIX);
+          if (normalBounds != null) {
+            setNormalBounds(this, normalBounds);
           }
         }
 
@@ -1081,20 +1152,25 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           final Project projectGuess = guessProjectDependingOnKey(myDimensionServiceKey);
           // Save location
           Point location = getLocation();
-          getWindowStateService(projectGuess).putLocation(myDimensionServiceKey, location);
+          var windowStateService = getWindowStateService(projectGuess);
+          windowStateService.putLocation(myDimensionServiceKey, location);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Saved location: " + location);
           }
           // Save size
           Dimension size = getSize();
           if (!myInitialSize.equals(size)) {
-            getWindowStateService(projectGuess).putSize(myDimensionServiceKey, size);
+            windowStateService.putSize(myDimensionServiceKey, size);
             if (LOG.isDebugEnabled()) {
               LOG.debug("Saved size: " + size + " (the initial size was " + myInitialSize + ")");
             }
           }
           else if (LOG.isDebugEnabled()) {
             LOG.debug("Didn't save size because it's the same as the initial size: " + size);
+          }
+          var normalBounds = getNormalBounds(MyDialog.this);
+          if (normalBounds != null) {
+            windowStateService.putBounds(myDimensionServiceKey + NORMAL_BOUNDS_SUFFIX, normalBounds);
           }
           myOpened = false;
         }

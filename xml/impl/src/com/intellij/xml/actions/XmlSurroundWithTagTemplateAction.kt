@@ -7,7 +7,9 @@ import com.intellij.codeInsight.template.impl.InvokeTemplateAction
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateSettings
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project

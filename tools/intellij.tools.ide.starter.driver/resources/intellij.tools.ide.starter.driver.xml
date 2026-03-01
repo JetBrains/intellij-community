@@ -1,6 +1,9 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.tools.ide.util.common" />
-    <module name="intellij.tools.ide.starter" />
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.tools.ide.starter"/>
+    <module name="intellij.tools.ide.util.common"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

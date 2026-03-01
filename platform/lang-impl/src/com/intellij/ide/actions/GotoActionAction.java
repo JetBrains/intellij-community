@@ -7,7 +7,13 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatistic
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
@@ -19,8 +25,9 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Window;
 import java.awt.event.InputEvent;
 
 import static com.intellij.openapi.actionSystem.ex.ActionUtil.POPUP_HANDLER;

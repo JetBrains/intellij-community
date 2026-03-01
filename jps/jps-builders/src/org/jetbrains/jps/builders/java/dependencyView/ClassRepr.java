@@ -10,9 +10,22 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal

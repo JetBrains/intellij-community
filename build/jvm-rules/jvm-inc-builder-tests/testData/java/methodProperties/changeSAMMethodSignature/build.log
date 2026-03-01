@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Client.class
+  ppp/DataProvider.class
+  ppp/Repository.class
+End of files
+Compiling files:
+  java/methodProperties/changeSAMMethodSignature/a/ppp/Client.java
+  java/methodProperties/changeSAMMethodSignature/a/ppp/DataProvider.java
+  java/methodProperties/changeSAMMethodSignature/a/ppp/Repository.java
+End of files
+Cleaning output files:
+  ppp/Main.class
+End of files
+Compiling files:
+  java/methodProperties/changeSAMMethodSignature/a/ppp/Main.java
+End of files
+------------------------------------------
+Exit code: OK

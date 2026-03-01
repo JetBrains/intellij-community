@@ -8,7 +8,11 @@ import com.intellij.execution.OutputListener;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetProgressIndicator;
@@ -36,7 +40,6 @@ import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -169,10 +172,7 @@ public class PythonTask {
     var additionalData = mySdk.getSdkAdditionalData();
     if (additionalData instanceof PyRemoteSdkAdditionalDataMarker) {
       // Either legacy remote or target SDK
-      if (additionalData instanceof PyRemoteSdkAdditionalData) {
-        handler = executeLegacyRemoteProcess(commandLine, (PyRemoteSdkAdditionalData)additionalData);
-      }
-      else if (additionalData instanceof PyTargetAwareAdditionalData) {
+      if (additionalData instanceof PyTargetAwareAdditionalData) {
         handler = executeTargetBasedProcess((PyTargetAwareAdditionalData)additionalData);
       }
       else {
@@ -311,15 +311,6 @@ public class PythonTask {
     ProcessHandler handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
     ProcessTerminatedListener.attach(handler);
     return handler;
-  }
-
-  private @NotNull ProcessHandler executeLegacyRemoteProcess(@NotNull GeneralCommandLine commandLine,
-                                                             @NotNull PyRemoteSdkAdditionalData additionalData)
-    throws ExecutionException {
-    // give the hint for Docker Compose process starter that this process should be run with `docker-compose run` command
-    // (yep, this is hacky)
-    commandLine.putUserData(PyRemoteProcessStarter.RUN_AS_AUXILIARY_PROCESS, true);
-    return PyRemoteProcessStarter.startLegacyRemoteProcess(additionalData, commandLine, myModule.getProject(), null);
   }
 
 

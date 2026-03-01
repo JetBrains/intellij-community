@@ -14,7 +14,7 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
 
 final class IconObjectRenderer extends AbstractImageRenderer {
   @Override

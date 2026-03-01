@@ -3,6 +3,3 @@
 plugins {
     id("custom<caret>.settings")
 }
-
-// FILE: custom/src/main/kotlin/custom.settings.settings.gradle.kts
-println("custom")

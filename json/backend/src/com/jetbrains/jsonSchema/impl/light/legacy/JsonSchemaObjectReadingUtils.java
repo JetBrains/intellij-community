@@ -4,34 +4,38 @@ package com.jetbrains.jsonSchema.impl.light.legacy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
 import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.*;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaType;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
+import com.jetbrains.jsonSchema.impl.RootJsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.light.nodes.EmptyJsonSchemaObject;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
-import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.isSelfReference;
 
 public final class JsonSchemaObjectReadingUtils {
   private static final Logger LOG = Logger.getInstance(JsonSchemaObjectReadingUtils.class);
-  public static final @NotNull JsonSchemaObject NULL_OBJ = new JsonSchemaObjectImpl("$_NULL_$");
+  public static final @NotNull JsonSchemaObject NULL_OBJ = EmptyJsonSchemaObject.INSTANCE;
 
   public static boolean hasProperties(@NotNull JsonSchemaObject schemaObject) {
     return schemaObject.getPropertyNames().hasNext();
@@ -41,16 +45,10 @@ public final class JsonSchemaObjectReadingUtils {
   /**
    * @deprecated Use {@link  com.jetbrains.jsonSchema.impl.light.JsonSchemaRefResolverKt#resolveRefSchema}
    */
-  @Deprecated()
+  @Deprecated(forRemoval = true)
   public static @Nullable JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaObject schemaNode, @NotNull JsonSchemaService service) {
     final String ref = schemaNode.getRef();
     assert !StringUtil.isEmptyOrSpaces(ref);
-
-    if (schemaNode instanceof JsonSchemaObjectImpl schemaImpl) {
-      var refsStorage = schemaImpl.getComputedRefsStorage(service.getProject());
-      var schemaObject = refsStorage.getOrDefault(ref, NULL_OBJ);
-      if (schemaObject != NULL_OBJ) return schemaObject;
-    }
 
     var value = fetchSchemaFromRefDefinition(ref, schemaNode, service, schemaNode.isRefRecursive());
     if (!JsonFileResolver.isHttpPath(ref)) {
@@ -62,13 +60,6 @@ public final class JsonSchemaObjectReadingUtils {
       if (virtualFile != null && !(virtualFile instanceof HttpVirtualFile)) {
         service.registerReference(virtualFile.getName());
       }
-    }
-
-    if (schemaNode instanceof JsonSchemaObjectImpl schemaImpl && value instanceof JsonSchemaObjectImpl valueImpl) {
-      if (value != NULL_OBJ && !Objects.equals(value.getFileUrl(), schemaNode.getFileUrl())) {
-        valueImpl.setBackReference(schemaImpl);
-      }
-      schemaImpl.getComputedRefsStorage(service.getProject()).put(ref, value);
     }
     return value;
   }
@@ -83,13 +74,7 @@ public final class JsonSchemaObjectReadingUtils {
 
     final VirtualFile schemaFile = service.resolveSchemaFile(schema);
     if (schemaFile == null) return null;
-    final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter;
-    if (Registry.is("json.schema.object.v2")) {
-      splitter = complexReferenceCache.get(ref);
-    }
-    else {
-      splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(ref);
-    }
+    final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter = complexReferenceCache.get(ref);
     String schemaId = splitter.getSchemaId();
     if (schemaId != null) {
       var refSchema = resolveSchemaByReference(service, schemaFile, schemaId);
@@ -100,21 +85,6 @@ public final class JsonSchemaObjectReadingUtils {
     if (rootSchema == null) {
       LOG.debug(String.format("Schema object not found for %s", schemaFile.getPath()));
       return null;
-    }
-    if (recursive && ref.startsWith("#")) {
-      while (rootSchema.isRecursiveAnchor()) {
-        var backRef = rootSchema.getBackReference();
-        if (backRef == null) break;
-        VirtualFile file = ObjectUtils.coalesce(backRef.getRawFile(),
-                                                backRef.getFileUrl() == null ? null : JsonFileResolver.urlToFile(backRef.getFileUrl()));
-        if (file == null) break;
-        try {
-          rootSchema = JsonSchemaReader.readFromFile(service.getProject(), file);
-        }
-        catch (Exception e) {
-          break;
-        }
-      }
     }
     return findRelativeDefinition(rootSchema, splitter, service);
   }
@@ -295,52 +265,7 @@ public final class JsonSchemaObjectReadingUtils {
     if (!ref.startsWith("#/")) {
       return null;
     }
-    if (Registry.is("json.schema.object.v2") && !(schemaObject instanceof JsonSchemaObjectImpl)) {
-      return schemaObject.findRelativeDefinition(ref);
-    }
-    ref = ref.substring(2);
-    final List<String> parts = split(ref);
-    JsonSchemaObject current = schemaObject;
-    for (int i = 0; i < parts.size(); i++) {
-      if (current == null) return null;
-      final String part = parts.get(i);
-      if (JSON_DEFINITIONS.equals(part) || DEFS.equals(part)) {
-        if (i == (parts.size() - 1)) return null;
-        //noinspection AssignmentToForLoopParameter
-        final String nextPart = parts.get(++i);
-        current = current.getDefinitionByName(unescapeJsonPointerPart(nextPart));
-        continue;
-      }
-      if (JSON_PROPERTIES.equals(part)) {
-        if (i == (parts.size() - 1)) return null;
-        //noinspection AssignmentToForLoopParameter
-        current = current.getPropertyByName(unescapeJsonPointerPart(parts.get(++i)));
-        continue;
-      }
-      if (ITEMS.equals(part)) {
-        if (i == (parts.size() - 1)) {
-          current = current.getItemsSchema();
-        }
-        else {
-          //noinspection AssignmentToForLoopParameter
-          Integer next = tryParseInt(parts.get(++i));
-          var itemsSchemaList = current.getItemsSchemaList();
-          if (itemsSchemaList != null && next != null && next < itemsSchemaList.size()) {
-            current = itemsSchemaList.get(next);
-          }
-        }
-        continue;
-      }
-      if (ADDITIONAL_ITEMS.equals(part)) {
-        if (i == (parts.size() - 1)) {
-          current = current.getAdditionalItemsSchema();
-        }
-        continue;
-      }
-
-      current = current.getDefinitionByName(part);
-    }
-    return current;
+    return schemaObject.findRelativeDefinition(ref);
   }
 
   private static @Nullable Integer tryParseInt(String s) {

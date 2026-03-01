@@ -13,7 +13,7 @@ import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.DebugSessionPausedAction
 import training.util.WeakReferenceDelegator
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.Queue
 
 class EditBreakpointSuggester : AbstractFeatureSuggester() {
   override val id: String = "Edit breakpoint"

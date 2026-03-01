@@ -5,9 +5,11 @@ package org.jetbrains.kotlin.idea.completion.handlers
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.renderer.render
 
+@K1Deprecation
 open class BaseDeclarationInsertHandler : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val name = (item.`object` as? DeclarationLookupObject)?.name

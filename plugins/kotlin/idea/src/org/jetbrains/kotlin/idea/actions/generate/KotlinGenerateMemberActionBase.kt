@@ -9,12 +9,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
+@K1Deprecation
 abstract class KotlinGenerateMemberActionBase<Info : Any> : KotlinGenerateActionBase() {
     protected abstract fun prepareMembersInfo(klass: KtClassOrObject, project: Project, editor: Editor?): Info?
 

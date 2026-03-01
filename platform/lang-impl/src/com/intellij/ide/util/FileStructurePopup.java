@@ -4,30 +4,57 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
+import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.ModelListener;
-import com.intellij.ide.structureView.SearchableTextProvider;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.ide.structureView.newStructureView.*;
+import com.intellij.ide.structureView.newStructureView.StructurePopup;
+import com.intellij.ide.structureView.newStructureView.StructurePopupTestExt;
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.structureView.newStructureView.StructureViewSelectVisitorState;
+import com.intellij.ide.structureView.newStructureView.StructureViewUtil;
+import com.intellij.ide.structureView.newStructureView.TreeActionWrapper;
+import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
+import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.Filter;
+import com.intellij.ide.util.treeView.smartTree.NodeProvider;
+import com.intellij.ide.util.treeView.smartTree.ProvidingTreeModel;
+import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.TreeAction;
+import com.intellij.ide.util.treeView.smartTree.TreeActionWithDefaultState;
+import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
+import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId1;
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
-import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,18 +69,33 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.PropertyOwner;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.PlaceProvider;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.SpeedSearchComparator;
+import com.intellij.ui.SpeedSearchObjectWithWeight;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
@@ -65,36 +107,65 @@ import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.Functions;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.TextRangeUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.SpeedSearchAdvertiser;
+import com.intellij.util.ui.TextTransferable;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
+import javax.swing.TransferHandler;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 /**
  * @author Konstantin Bulenkov
  */
-public final class FileStructurePopup implements Disposable, TreeActionsOwner {
+public final class FileStructurePopup implements Disposable, TreeActionsOwner, StructurePopup, StructurePopupTestExt {
   private static final Logger LOG = Logger.getInstance(FileStructurePopup.class);
   private static final @NonNls String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
 
@@ -116,7 +187,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   private final MyTreeSpeedSearch mySpeedSearch;
 
   private final Object myInitialElement;
-  private final Map<Class, JBCheckBox> myCheckBoxes = new HashMap<>();
+  private final Map<String, JBCheckBox> myCheckBoxes = new HashMap<>();
   private final List<JBCheckBox> myAutoClicked = new ArrayList<>();
   private String myTestSearchFilter;
   private final List<Pair<String, JBCheckBox>> myTriggeredCheckboxes = new ArrayList<>();
@@ -253,6 +324,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     TreeUtil.installActions(myTree);
   }
 
+  @Override
   public void show(){
     showWithResult();
   }
@@ -449,16 +521,13 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return "StructurePopup";
   }
 
-  public @Nullable PsiElement getCurrentElement(final @Nullable PsiFile psiFile) {
+  @ApiStatus.Internal
+  public @Nullable PsiElement getCurrentElement() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     Object elementAtCursor = myTreeModelWrapper.getCurrentEditorElement();
     if (elementAtCursor instanceof PsiElement) {
       return (PsiElement)elementAtCursor;
-    }
-
-    if (psiFile != null && myFileEditor instanceof TextEditor) {
-      return psiFile.getViewProvider().findElementAt(((TextEditor)myFileEditor).getEditor().getCaretModel().getOffset());
     }
 
     return null;
@@ -629,7 +698,8 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return actions;
   }
 
-  private static @Nullable Object findClosestPsiElement(@NotNull PsiElement element,
+  @ApiStatus.Internal
+  public static @Nullable Object findClosestPsiElement(@NotNull PsiElement element,
                                                         @NotNull TreePath adjusted,
                                                         @NotNull TreeModel treeModel) {
     TextRange range = element.getTextRange();
@@ -769,14 +839,19 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     checkBox.setText(text);
     panel.add(checkBox);
 
-    myCheckBoxes.put(action.getClass(), checkBox);
+    myCheckBoxes.put(action.getName(), checkBox);
   }
 
   private void logFileStructureCheckboxClick(TreeAction action) {
-    FileType fileType = myFileEditor.getFile().getFileType();
+    logFileStructureCheckboxClick(myFileEditor, myProject, action);
+  }
+
+  @ApiStatus.Internal
+  public static void logFileStructureCheckboxClick(FileEditor fileEditor, Project project, TreeAction action) {
+    FileType fileType = fileEditor.getFile().getFileType();
     Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
 
-    ActionsCollectorImpl.recordActionInvoked(myProject, pairs -> {
+    ActionsCollectorImpl.recordActionInvoked(project, pairs -> {
       pairs.add(EventFields.PluginInfoFromInstance.with(action));
       pairs.add(EventFields.ActionPlace.with(ActionPlaces.FILE_STRUCTURE_POPUP));
       pairs.add(EventFields.CurrentFile.with(language));
@@ -788,7 +863,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   private @NotNull Promise<Void> rebuild(boolean refilterOnly) {
     Object selection = JBIterable.of(myTree.getSelectionPaths())
-                                 .filterMap(o -> StructureViewComponent.unwrapValue(o.getLastPathComponent())).first();
+      .filterMap(o -> StructureViewComponent.unwrapValue(o.getLastPathComponent())).first();
     return rebuildAndSelect(refilterOnly, selection, null).then(o -> null);
   }
 
@@ -837,10 +912,11 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       return KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
     }
     return action instanceof FileStructureFilter ?
-                           ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider<?>)action).getShortcut();
+           ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider<?>)action).getShortcut();
   }
 
-  private static boolean getDefaultValue(TreeAction action) {
+  @ApiStatus.Internal
+  public static boolean getDefaultValue(TreeAction action) {
     String propertyName = action instanceof PropertyOwner ? ((PropertyOwner)action).getPropertyName() : action.getName();
     final var defaultValue = Sorter.ALPHA_SORTER.equals(action) || hasEnabledStateByDefault(action);
     return PropertiesComponent.getInstance().getBoolean(TreeStructureUtil.getPropertyName(propertyName), defaultValue);
@@ -850,79 +926,20 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return action instanceof TreeActionWithDefaultState && ((TreeActionWithDefaultState)action).isEnabledByDefault();
   }
 
-  private static void saveState(TreeAction action, boolean state) {
+  @ApiStatus.Internal
+  public static void saveState(TreeAction action, boolean state) {
     String propertyName = action instanceof PropertyOwner ? ((PropertyOwner)action).getPropertyName() : action.getName();
     final var defaultValue = Sorter.ALPHA_SORTER.equals(action) || hasEnabledStateByDefault(action);
     PropertiesComponent.getInstance().setValue(TreeStructureUtil.getPropertyName(propertyName), state, defaultValue);
   }
 
+  @Override
   public void setTitle(@NlsContexts.PopupTitle String title) {
     myTitle = title;
   }
 
-  public @NotNull Tree getTree() {
-    return myTree;
-  }
-
-  @TestOnly
-  public TreeSpeedSearch getSpeedSearch() {
-    return mySpeedSearch;
-  }
-
-  @TestOnly
-  public void setSearchFilterForTests(String filter) {
-    myTestSearchFilter = filter;
-  }
-
-  public void setTreeActionState(Class<? extends TreeAction> action, boolean state) {
-    JBCheckBox checkBox = myCheckBoxes.get(action);
-    if (checkBox != null) {
-      checkBox.setSelected(state);
-      for (ActionListener listener : checkBox.getActionListeners()) {
-        listener.actionPerformed(new ActionEvent(this, 1, ""));
-      }
-    }
-  }
-
   public static @Nullable String getSpeedSearchText(Object object) {
-    String text = String.valueOf(object);
-    Object value = StructureViewComponent.unwrapWrapper(object);
-    if (text != null) {
-      if (value instanceof SearchableTextProvider searchableTextProvider) {
-        String searchableText = searchableTextProvider.getSearchableText();
-        if (searchableText != null) return searchableText;
-      }
-      if (value instanceof PsiTreeElementBase && ((PsiTreeElementBase<?>)value).isSearchInLocationString()) {
-           String locationString = ((PsiTreeElementBase<?>)value).getLocationString();
-          if (!StringUtil.isEmpty(locationString)) {
-            String locationPrefix = null;
-            String locationSuffix = null;
-            if (value instanceof LocationPresentation) {
-              locationPrefix = ((LocationPresentation)value).getLocationPrefix();
-              locationSuffix = ((LocationPresentation)value).getLocationSuffix();
-            }
-
-          return text +
-                 StringUtil.notNullize(locationPrefix, LocationPresentation.DEFAULT_LOCATION_PREFIX) +
-                 locationString +
-                 StringUtil.notNullize(locationSuffix, LocationPresentation.DEFAULT_LOCATION_SUFFIX);
-        }
-      }
-      return text;
-    }
-    // NB!: this point is achievable if the following method returns null
-    // see com.intellij.ide.util.treeView.NodeDescriptor.toString
-    if (value instanceof TreeElement) {
-      return ReadAction.compute(() -> {
-        if (value instanceof SearchableTextProvider searchableTextProvider) {
-          String searchableText = searchableTextProvider.getSearchableText();
-          if (searchableText != null) return searchableText;
-        }
-        return ((TreeElement)value).getPresentation().getPresentableText();
-      });
-    }
-
-    return null;
+    return StructureViewUtil.getSpeedSearchText(object);
   }
 
   @Override
@@ -1064,6 +1081,47 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return false;
   }
 
+  @Override
+  @TestOnly
+  @ApiStatus.Internal
+  public TreeSpeedSearch getSpeedSearch() {
+    return mySpeedSearch;
+  }
+
+  @Override
+  @TestOnly
+  @ApiStatus.Internal
+  public void setSearchFilterForTests(String filter) {
+    myTestSearchFilter = filter;
+  }
+
+  @Override
+  @TestOnly
+  @ApiStatus.Internal
+  public void setTreeActionState(@NotNull String actionName, boolean state) {
+    JBCheckBox checkBox = myCheckBoxes.get(actionName);
+    if (checkBox != null) {
+      checkBox.setSelected(state);
+      for (ActionListener listener : checkBox.getActionListeners()) {
+        listener.actionPerformed(new ActionEvent(this, 1, ""));
+      }
+    }
+  }
+
+  @Override
+  @TestOnly
+  @ApiStatus.Internal
+  public void initUi() {
+    createCenterPanel();
+  }
+
+  @Override
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull Tree getTree() {
+    return myTree;
+  }
+
   static final class MyTree extends DnDAwareTree implements PlaceProvider {
 
     MyTree(TreeModel treeModel) {
@@ -1121,32 +1179,5 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
         rebuild(true);
       }
     }
-  }
-}
-
-final class FileStructurePopupTimeTracker extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 2);
-  private static final EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", EventFields.DurationMs);
-  private static final EventId1<Long> SHOW = GROUP.registerEvent("data.shown", EventFields.DurationMs);
-  private static final EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", EventFields.DurationMs);
-
-  static void logRebuildTime(long elapsedTimeNanos) {
-    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
-    REBUILD.log(elapsedTimesMs);
-  }
-
-  static void logShowTime(long elapsedTimeNanos) {
-    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
-    SHOW.log(elapsedTimesMs);
-  }
-
-  static void logPopupLifeTime(long elapsedTimeNanos) {
-    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
-    LIFE.log(elapsedTimesMs);
-  }
-
-  @Override
-  public EventLogGroup getGroup() {
-    return GROUP;
   }
 }

@@ -114,7 +114,6 @@ __all__ = [
     "RANGE",
     "vSkip",
     "RELATED",
-    "vSkip",
     "RELTYPE",
     "ROLE",
     "FeatureWillBeRemovedInFutureVersion",

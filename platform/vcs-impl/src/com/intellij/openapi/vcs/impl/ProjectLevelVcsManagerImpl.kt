@@ -7,7 +7,11 @@ import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -22,22 +26,40 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation
 import com.intellij.openapi.vcs.VcsConfiguration.StandardOption
+import com.intellij.openapi.vcs.VcsConsoleLine
+import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.VcsRootChecker
+import com.intellij.openapi.vcs.VcsRootSettings
+import com.intellij.openapi.vcs.VcsShowConfirmationOption
+import com.intellij.openapi.vcs.VcsShowSettingOption
+import com.intellij.openapi.vcs.VirtualFileFilter
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.history.VcsHistoryCache
-import com.intellij.openapi.vcs.impl.projectlevelman.*
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
+import com.intellij.openapi.vcs.impl.projectlevelman.MappingsToRoots
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
+import com.intellij.openapi.vcs.impl.projectlevelman.OptionsAndConfirmations
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption
 import com.intellij.openapi.vcs.update.ActionInfo
 import com.intellij.openapi.vcs.update.UpdateInfoTree
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.ui.content.ContentManager
@@ -56,10 +78,9 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.File
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
-import kotlin.Pair
 
 @State(name = "VcsDirectoryMappings", storages = [Storage("vcs.xml")])
 class ProjectLevelVcsManagerImpl(
@@ -622,12 +643,12 @@ class ProjectLevelVcsManagerImpl(
   }
 
   internal class ActivateVcsesStartupActivity : VcsStartupActivity {
-    override fun runActivity(project: Project) {
-      if (WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
+    override suspend fun execute(project: Project) {
+      if (ProjectFrameCapabilitiesService.getInstance().has(project, ProjectFrameCapability.SUPPRESS_VCS_UI)) {
         return
       }
 
-      getInstanceImpl(project).mappingsHolder.activateActiveVcses()
+      (project.serviceAsync<ProjectLevelVcsManager>() as ProjectLevelVcsManagerImpl).mappingsHolder.activateActiveVcses()
     }
 
     override val order: Int

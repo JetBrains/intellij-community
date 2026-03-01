@@ -18,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-private class CheckProjectActivity : ProjectActivity {
+internal class CheckProjectActivity : ProjectActivity {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isHeadlessEnvironment || app.isUnitTestMode) {

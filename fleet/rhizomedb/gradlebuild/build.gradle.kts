@@ -12,7 +12,8 @@ plugins {
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
-  alias(jps.plugins.rhizomedb)
+  alias(jps.plugins.ksp)
+  id("fleet-ksp-plugin")
   // GRADLE_PLUGINS__MARKER_END
 }
 
@@ -35,6 +36,7 @@ kotlin {
     "-Xcontext-parameters",
     "-Xwasm-kclass-fqn",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
+    "-progressive",
   )
   jvm {}
   wasmJs {

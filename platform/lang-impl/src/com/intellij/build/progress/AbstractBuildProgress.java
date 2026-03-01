@@ -3,8 +3,16 @@ package com.intellij.build.progress;
 
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.FilePosition;
-import com.intellij.build.events.*;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildEventPresentationData;
 import com.intellij.build.events.BuildEventsNls.Message;
+import com.intellij.build.events.BuildIssueEvent;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FileMessageEvent;
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.OutputBuildEvent;
+import com.intellij.build.events.PresentableBuildEvent;
+import com.intellij.build.events.ProgressBuildEvent;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;

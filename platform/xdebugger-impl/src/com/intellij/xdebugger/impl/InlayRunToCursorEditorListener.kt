@@ -9,9 +9,19 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.*
+import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -49,14 +59,28 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
-import kotlinx.coroutines.*
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Font
+import java.awt.Graphics
+import java.awt.MouseInfo
+import java.awt.Point
+import java.awt.Rectangle
 import java.lang.ref.WeakReference
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JRootPane
+import javax.swing.SwingUtilities
 import kotlin.math.min
 
 private const val ACTION_BUTTON_GAP = 2
@@ -225,17 +249,14 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
         actions.add(actionManager.getAction(IdeActions.ACTION_RUN_TO_CURSOR))
       }
 
-      // TODO: RIDER-127831, Move RiderJumpToStatementAction to frontend, for fast update here
-      if (!SplitDebuggerMode.isSplitDebugger()) {
-        val extraActions = Utils.expandActionGroupSuspend(
-                                        actionManager.getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup,
-                                        PresentationFactory(),
-                                        DataManager.getInstance().getDataContext(editor.contentComponent),
-                                        ActionPlaces.EDITOR_HINT,
-                                        ActionUiKind.NONE,
-                                        false)
-        actions.addAll(extraActions)
-      }
+      val extraActions = Utils.expandActionGroupSuspend(
+        actionManager.getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup,
+        PresentationFactory(),
+        DataManager.getInstance().getDataContext(editor.contentComponent),
+        ActionPlaces.EDITOR_HINT,
+        ActionUiKind.NONE,
+        false)
+      actions.addAll(extraActions)
       showHint(editor, lineNumber, firstNonSpacePos, actions, lineY, hasVcsLineMarker)
     }
   }
@@ -324,7 +345,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val initIsCompleted = Mutex(true)
     val targetComponent = ToolbarUtils.createTargetComponent(editor) { sink ->
-      sink[XDebuggerUtilImpl.LINE_NUMBER] = lineNumber
+      sink[DebuggerUIUtil.LINE_NUMBER] = lineNumber
     }
     val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, targetComponent, true) {
       initIsCompleted.unlock()

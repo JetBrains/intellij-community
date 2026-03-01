@@ -1,13 +1,18 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradleJava">
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.jetbrains.plugins.gradle"/>
     <module name="intellij.kotlin.gradle.tooling"/>
-    <module name="intellij.kotlin.gradle.gradle"/>
-    <module name="intellij.kotlin.gradle.codeInsight.common"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
+    <module name="intellij.gradle"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.kotlin.base.externalSystem"/>
+    <module name="intellij.kotlin.gradle.codeInsight.common"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint
@@ -61,6 +66,7 @@
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
 
     <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleAppEnvProvider"/>
+    <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.ComposeJvmGradleEnvProvider"/>
     <initScriptGenerator implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMppGradleInitScriptGenerator"/>
     <buildTasksProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMPPBuildTasksProvider"/>
   </extensions>
@@ -103,7 +109,9 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinAllInPackageGradleConfigurationProducer"
-                              order="before allInPackageGradleConfigurationProducer"/>
+                              order="last, before allInPackageGradleConfigurationProducer"/>
+
+    <externalSystem.runConfigurationEx implementation="org.jetbrains.kotlin.idea.gradleJava.run.ComposeJvmRunConfigurationExtension"/>
 
     <registryKey
             key="kotlin.gradle.testing.enabled"
@@ -119,6 +127,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator"/>
     <compilerPluginConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.SpringGradleKotlinCompilerPluginProjectConfigurator"/>
+    <compilerPluginConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.JpaGradleKotlinCompilerPluginProjectConfigurator"/>
     <gradleModelFacade implementation="org.jetbrains.kotlin.idea.gradleJava.inspections.DefaultGradleModelFacade"/>
     <kotlinCompilerVersionProvider implementation="org.jetbrains.kotlin.idea.gradleJava.GradleKotlinCompilerVersionProvider"/>
   </extensions>

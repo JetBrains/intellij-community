@@ -5,10 +5,29 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.JavaStringContextType;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateActionContext;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.actions.SaveAsTemplateAction;
-import com.intellij.codeInsight.template.impl.*;
-import com.intellij.codeInsight.template.macro.*;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.EmptyNode;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.TextExpression;
+import com.intellij.codeInsight.template.macro.BaseCompleteMacro;
+import com.intellij.codeInsight.template.macro.CompleteMacro;
+import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
+import com.intellij.codeInsight.template.macro.MethodNameMacro;
+import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro;
+import com.intellij.codeInsight.template.macro.VariableOfTypeMacro;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.pom.java.JavaFeature;
@@ -982,6 +1001,110 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
       assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
+  }
+
+  public void testModCommandSout() {
+    TemplateImpl template = TemplateSettings.getInstance().getTemplate("sout", "Java");
+    configureByJavaText("Test.java", """
+      class X {
+          void test() {
+              <caret>
+          }
+      }
+      """);
+    runModCommand(template);
+    myFixture.checkResult("""
+                            class X {
+                                void test() {
+                                    System.out.println(<caret>);
+                                }
+                            }
+                            """);
+  }
+
+  public void testModCommandSoutm() {
+    TemplateImpl template = TemplateSettings.getInstance().getTemplate("soutm", "Java");
+    configureByJavaText("Test.java", """
+      class X {
+          void test() {
+              <caret>
+          }
+      }
+      """);
+    runModCommand(template);
+    myFixture.checkResult("""
+                            class X {
+                                void test() {
+                                    System.out.println("X.test");<caret>
+                                }
+                            }
+                            """);
+  }
+
+  public void testModCommandSoutp() {
+    TemplateImpl template = TemplateSettings.getInstance().getTemplate("soutp", "Java");
+    configureByJavaText("Test.java", """
+      class X {
+          void test(String[] arr, int[][] arr2, int p) {
+              <caret>
+          }
+      }
+      """);
+    runModCommand(template);
+    myFixture.checkResult("""
+      import java.util.Arrays;
+      
+      class X {
+          void test(String[] arr, int[][] arr2, int p) {
+              System.out.println("arr = " + Arrays.toString(arr) + ", arr2 = " + Arrays.deepToString(arr2) + ", p = " + p);
+          }
+      }
+      """);
+  }
+
+  public void testModCommandMain() {
+    TemplateImpl template = TemplateSettings.getInstance().getTemplate("main", "Java");
+    configureByJavaText("Test.java", """
+      class X {
+          <caret>
+      }
+      """);
+    runModCommand(template);
+    myFixture.checkResult("""
+                            class X {
+                                public static void main(String[] args) {
+                                    <caret>
+                                }
+                            }
+                            """);
+  }
+
+  public void testModCommandFori() {
+    TemplateImpl template = TemplateSettings.getInstance().getTemplate("fori", "Java");
+    configureByJavaText("Test.java", """
+      class X {
+          void test() {
+              <caret>
+          }
+      }
+      """);
+    runModCommand(template);
+    myFixture.checkResult("""
+                            class X {
+                                void test() {
+                                    for (int <selection>i<caret></selection> = 0; i < ; i++) {
+                                       \s
+                                    }
+                                }
+                            }
+                            """);
+  }
+
+  private void runModCommand(TemplateImpl template) {
+    ActionContext context = myFixture.getActionContext();
+    ModCommandExecutor.executeInteractively(
+      context, "ModCommand", myFixture.getEditor(),
+      () -> ModCommand.psiUpdate(context, (updater) -> TemplateManagerImpl.updateTemplate(template, updater)));
   }
 
   @Override

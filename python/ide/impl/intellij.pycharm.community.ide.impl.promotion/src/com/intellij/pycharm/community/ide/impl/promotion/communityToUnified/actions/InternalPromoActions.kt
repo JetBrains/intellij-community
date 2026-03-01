@@ -16,7 +16,7 @@ class ShowPyCommunityToUnifiedTooltipAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project: Project = e.project ?: return
     e.coroutineScope.launch {
-      PyCommunityToUnifiedShowPromoActivity.showTooltip(project)
+      PyCommunityToUnifiedShowPromoActivity.Helper.showTooltip(project)
     }
   }
 
@@ -28,7 +28,7 @@ class ShowPyCommunityToUnifiedPromoDialogAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project: Project = e.project ?: return
     e.coroutineScope.launch {
-      PyCommunityToUnifiedShowPromoActivity.showModalPromo(project)
+      PyCommunityToUnifiedShowPromoActivity.Helper.showModalPromo(project)
     }
   }
 

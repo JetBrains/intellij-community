@@ -8,6 +8,9 @@ import com.intellij.openapi.project.Project
 internal const val COMPOSE_MAVEN = "org.jetbrains.compose.foundation:foundation-desktop"
 internal const val INTELLIJ_LIBS_COMPOSE_MAVEN = "bundledModule:intellij.libraries.compose.foundation.desktop"
 
+// in JPS *.iml definition
+internal const val COMPOSE_HOT_RELOAD_ENABLED_MARKER = "plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"
+
 internal fun hasCompose(m: Module?) :Boolean {
   return JavaLibraryUtil.hasLibraryJar(m, COMPOSE_MAVEN)
          || JavaLibraryUtil.hasLibraryJar(m, INTELLIJ_LIBS_COMPOSE_MAVEN)

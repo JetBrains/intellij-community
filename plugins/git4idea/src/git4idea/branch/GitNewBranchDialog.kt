@@ -5,7 +5,8 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.isSyncOptionEnabled
-import com.intellij.dvcs.repo.rpcId
+import com.intellij.dvcs.repo.repositoryId
+import com.intellij.dvcs.ui.VcsRepositoryIconsProvider
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -23,7 +24,14 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toMutableProperty
+import com.intellij.ui.dsl.builder.whenItemChangedFromUi
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
@@ -32,7 +40,6 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor
 import com.intellij.util.textCompletion.TextCompletionProviderBase
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
-import com.intellij.vcs.git.repo.GitRepositoryIconsProvider
 import git4idea.GitBranchesUsageCollector.branchDialogRepositoryManuallySelected
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
@@ -40,7 +47,11 @@ import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.validators.*
+import git4idea.validators.GitRefNameValidator
+import git4idea.validators.checkRefNameEmptyOrHead
+import git4idea.validators.conflictsWithLocalBranch
+import git4idea.validators.conflictsWithLocalBranchDirectory
+import git4idea.validators.conflictsWithRemoteBranch
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
 
@@ -213,7 +224,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
           icon(AllIcons.Empty)
         }
         else if (repo != null) {
-          icon(GitRepositoryIconsProvider.getInstance(project).getIcon(repo.rpcId()))
+          icon(VcsRepositoryIconsProvider.getInstance(project).getIcon(repo.repositoryId()))
           text(DvcsUtil.getShortRepositoryName(repo))
         }
       }

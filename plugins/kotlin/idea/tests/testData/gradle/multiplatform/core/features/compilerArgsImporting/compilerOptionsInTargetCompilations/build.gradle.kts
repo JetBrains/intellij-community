@@ -15,13 +15,13 @@ repositories {
 kotlin {
     jvm()
     {{androidTargetPlaceholder}}
-    ios()
+    {{iosTargetPlaceholder}}
     js(IR) { nodejs() }
 
     applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
         common {
             group("jvmAndroid") {
-                withAndroid()
+                withAndroidTarget()
                 withJvm()
             }
         }
@@ -31,8 +31,8 @@ kotlin {
         compilations.all {
             compilerOptions.options.apply {
                 freeCompilerArgs.add("-opt-in=OptInAnnotation")
-                languageVersion.set(KotlinVersion.KOTLIN_1_7)
-                apiVersion.set(KotlinVersion.KOTLIN_1_7)
+                languageVersion.set({{minimalSupportedKotlinVersion}})
+                apiVersion.set({{minimalSupportedKotlinVersion}})
             }
         }
     }

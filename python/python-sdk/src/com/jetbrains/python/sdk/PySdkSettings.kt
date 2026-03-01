@@ -95,7 +95,7 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   }
 
   private val defaultVirtualEnvRoot: @SystemIndependent String
-    get() = VirtualEnvReader.Instance.getVEnvRootDir().absolutePathString()
+    get() = VirtualEnvReader().getVEnvRootDir().absolutePathString()
 
   private val userHome: @SystemIndependent String
     get() = FileUtil.toSystemIndependentName(SystemProperties.getUserHome())

@@ -2,7 +2,13 @@
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.pom.Navigatable
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiJavaReference
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 

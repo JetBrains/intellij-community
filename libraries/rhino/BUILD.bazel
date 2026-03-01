@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-rhino-rhino"],
   runtime_deps = ["@lib//:libraries-rhino-rhino"]
 )
+
+jvm_library(
+  name = "rhino_test_lib",
+  module_name = "intellij.libraries.rhino",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-rhino-rhino"],
+  runtime_deps = [":rhino"]
+)
 ### auto-generated section `build intellij.libraries.rhino` end

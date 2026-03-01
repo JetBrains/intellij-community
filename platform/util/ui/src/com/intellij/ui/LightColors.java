@@ -2,7 +2,7 @@
 
 package com.intellij.ui;
 
-import java.awt.*;
+import java.awt.Color;
 
 public interface LightColors {
   Color YELLOW = new JBColor(new Color(0xffffcc), new Color(0x525229));

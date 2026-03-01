@@ -10,7 +10,7 @@ import com.sun.jdi.ClassType
 
 private val HELPER_CLASS_CACHE_KEY = Key.create<HelperClassCache>("HELPER_CLASS_CACHE_KEY")
 
-private class JdiHelperClassLoaderImpl : JdiHelperClassLoader {
+internal class JdiHelperClassLoaderImpl : JdiHelperClassLoader {
   @Throws(EvaluateException::class)
   override fun getHelperClass(
     cls: Class<*>, evaluationContext: EvaluationContextImpl,
@@ -21,7 +21,7 @@ private class JdiHelperClassLoaderImpl : JdiHelperClassLoader {
       HelperClassCache(evaluationContext.debugProcess, evaluationContext.managerThread)
     }
     val forceNewClassLoader = Registry.`is`("debugger.evaluate.load.helper.in.separate.classloader")
-    return cache.getHelperClass(evaluationContext.withAutoLoadClasses(true), forceNewClassLoader, cls.name, *additionalClassesToLoad)
+    return cache.getHelperClass(evaluationContext.withAutoLoadClasses(true), forceNewClassLoader, cls, *additionalClassesToLoad)
   }
 
   override fun isApplicable(evaluationContext: EvaluationContextImpl): Boolean {

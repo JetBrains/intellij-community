@@ -15,7 +15,13 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeModel
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.selected
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClientProperty

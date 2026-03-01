@@ -2,11 +2,23 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;

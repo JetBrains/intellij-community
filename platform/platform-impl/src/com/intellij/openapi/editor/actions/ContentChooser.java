@@ -19,7 +19,16 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.ui.speedSearch.ListWithFilter;
@@ -35,12 +44,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -175,19 +196,20 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         }
       }
     });
-    JComponent listWithToolbar = ToolbarDecorator.createDecorator(myList)
-      .disableUpDownActions()
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          deleteSelectedItems();
-        }
-      })
-      .createPanel();
-    JComponent listWithFilter = ListWithFilter.wrap(
-      myList, ScrollPaneFactory.createScrollPane(listWithToolbar), o -> o.getShortText(renderer.previewChars), true);
 
-    mySplitter.setFirstComponent(listWithFilter);
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList)
+      .disableUpDownActions()
+      .setRemoveAction(button -> deleteSelectedItems());
+    toolbarDecorator.createPanel();
+
+    JScrollPane scroll = ScrollPaneFactory.createScrollPane(myList);
+    JComponent listWithFilter = ListWithFilter.wrap(myList, scroll, o -> o.getShortText(renderer.previewChars), true);
+
+    JPanel filteringListWithToolbar = new JPanel(new BorderLayout());
+    filteringListWithToolbar.add(toolbarDecorator.getActionsPanel(), BorderLayout.NORTH);
+    filteringListWithToolbar.add(listWithFilter, BorderLayout.CENTER);
+
+    mySplitter.setFirstComponent(filteringListWithToolbar);
     mySplitter.setSecondComponent(new JPanel());
     mySplitter.getFirstComponent().addComponentListener(new ComponentAdapter() {
       @Override
@@ -221,6 +243,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   private void deleteSelectedItems() {
+    int bottomVisibleComponent = myList.getLastVisibleIndex();
     int newSelectionIndex = -1;
     for (Item o : myList.getSelectedValuesList()) {
       int i = o.index;
@@ -237,6 +260,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
     newSelectionIndex = Math.min(newSelectionIndex, myAllContents.size() - 1);
     myList.setSelectedIndex(newSelectionIndex);
+    myList.ensureIndexIsVisible(Math.min(bottomVisibleComponent, myList.getItemsCount() - 1));
   }
 
   protected abstract void removeContentAt(final Data content);

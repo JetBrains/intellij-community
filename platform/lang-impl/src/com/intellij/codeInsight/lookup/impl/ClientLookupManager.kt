@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.currentSession
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
@@ -27,7 +26,7 @@ interface ClientLookupManager {
   companion object {
     fun getInstance(session: ClientProjectSession): ClientLookupManager? = session.serviceOrNull()
 
-    fun getCurrentInstance(project: Project): ClientLookupManager = project.currentSession.service()
+    fun getCurrentInstance(project: Project): ClientLookupManager? = project.currentSession.serviceOrNull()
   }
 
   fun getActiveLookup(): LookupEx?
@@ -132,7 +131,7 @@ class GuestLookupManager(session: ClientProjectSession) : ClientLookupManagerBas
     return GuestLookupImpl(session, editor, arranger)
   }
 
-  class GuestLookupImpl(session: ClientProjectSession, editor: Editor, arranger: LookupArranger) : LookupImpl(session, editor, arranger) {
+  private class GuestLookupImpl(session: ClientProjectSession, editor: Editor, arranger: LookupArranger) : LookupImpl(session, editor, arranger) {
     override fun doShowLookup(): Boolean {
       return true
     }

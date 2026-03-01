@@ -1,6 +1,9 @@
 <idea-plugin visibility="public" package="com.intellij.platform.navbar.frontend">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.navbar"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlDynamicPlugin -->

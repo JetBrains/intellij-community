@@ -58,4 +58,35 @@ jvm_library(
   ],
   plugins = ["@lib//:compose-plugin"]
 )
+
+jvm_library(
+  name = "standalone_test_lib",
+  module_name = "intellij.platform.jewel.samples.standalone",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_standalone",
+  runtime_deps = [
+    ":standalone",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/jewel/markdown/extensions/autolink:autolink_test_lib",
+    "//platform/jewel/ui:ui_test_lib",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//platform/jewel/int-ui/int-ui-decorated-window:jewel-intUi-decoratedWindow_test_lib",
+    "//libraries/skiko:skiko_test_lib",
+    "//platform/jewel/decorated-window:decorated-window_test_lib",
+    "//platform/jewel/markdown/int-ui-standalone-styling:int-ui-standalone-styling_test_lib",
+    "//platform/jewel/markdown/core:core_test_lib",
+    "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
+    "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
+    "//platform/jewel/markdown/extensions/gfm-strikethrough:gfm-strikethrough_test_lib",
+    "//libraries/coil:coil_test_lib",
+    "//platform/jewel/markdown/extensions/images:images_test_lib",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+    "//platform/jewel/samples/showcase:showcase_test_lib",
+    "//platform/icons:icons_test_lib",
+    "//libraries/jbr:jbr_test_lib",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
 ### auto-generated section `build intellij.platform.jewel.samples.standalone` end

@@ -11,7 +11,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentsOfType
 import org.toml.TomlBundle
-import org.toml.lang.psi.*
+import org.toml.lang.psi.TomlFile
+import org.toml.lang.psi.TomlHeaderOwner
+import org.toml.lang.psi.TomlInlineTable
+import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlKeyValueOwner
+import org.toml.lang.psi.TomlPsiFactory
 
 class TomlExpandInlineTableIntention : TomlElementBaseIntentionAction<TomlExpandInlineTableIntention.Context>() {
     override fun getText(): String = TomlBundle.message("intention.toml.name.expand.into.separate.table")

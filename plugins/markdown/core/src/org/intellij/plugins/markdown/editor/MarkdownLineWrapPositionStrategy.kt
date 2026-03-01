@@ -7,7 +7,11 @@ import com.intellij.openapi.editor.GenericLineWrapPositionStrategy
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.intellij.plugins.markdown.lang.psi.impl.*
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 
 class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
   init {

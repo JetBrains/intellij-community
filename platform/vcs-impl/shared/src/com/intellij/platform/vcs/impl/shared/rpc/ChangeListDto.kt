@@ -5,7 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusFactory
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListChange
+import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 public abstract class OnesideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {

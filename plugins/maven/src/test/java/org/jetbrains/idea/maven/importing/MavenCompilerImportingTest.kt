@@ -286,7 +286,9 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testPreviewLanguageLevelProperty() = runBlocking {
-    val feature = LanguageLevel.HIGHEST.toJavaVersion().feature
+    val highest = JavaRelease.getHighest()
+    val highestPreview = highest.getPreviewLevel()
+    val feature = highest.toJavaVersion().feature
     importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
@@ -309,7 +311,7 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
       </build>
     """.trimIndent())
     assertModules("project")
-    assertEquals(LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1], getLanguageLevelForModule())
+    assertEquals(highestPreview, getLanguageLevelForModule())
   }
 
   @Test

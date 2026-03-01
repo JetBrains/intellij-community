@@ -1,6 +1,5 @@
 from _typeshed import FileDescriptorOrPath
-from collections.abc import Callable
-from os import _Environ
+from collections.abc import Callable, Mapping
 from typing import AnyStr
 
 from .spawnbase import SpawnBase, _Logfile
@@ -14,7 +13,7 @@ class spawn(SpawnBase[AnyStr]):
     STDERR_FILENO: int
     str_last_chars: int
     cwd: FileDescriptorOrPath | None
-    env: _Environ[str]
+    env: Mapping[str, str] | None
     echo: bool
     ignore_sighup: bool
     command: str
@@ -30,7 +29,7 @@ class spawn(SpawnBase[AnyStr]):
         searchwindowsize: int | None = None,
         logfile: _Logfile | None = None,
         cwd: FileDescriptorOrPath | None = None,
-        env: _Environ[str] | None = None,
+        env: Mapping[str, str] | None = None,
         ignore_sighup: bool = False,
         echo: bool = True,
         preexec_fn: Callable[[], None] | None = None,
@@ -84,7 +83,7 @@ def spawnu(
     searchwindowsize: int | None = None,
     logfile: _Logfile | None = None,
     cwd: FileDescriptorOrPath | None = None,
-    env: _Environ[str] | None = None,
+    env: Mapping[str, str] | None = None,
     ignore_sighup: bool = False,
     echo: bool = True,
     preexec_fn: Callable[[], None] | None = None,

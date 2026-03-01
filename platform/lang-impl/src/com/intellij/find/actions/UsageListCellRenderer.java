@@ -14,7 +14,7 @@ import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.rules.UsageInFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JList;
 
 public final class UsageListCellRenderer extends ColoredListCellRenderer {
   private final Project myProject;

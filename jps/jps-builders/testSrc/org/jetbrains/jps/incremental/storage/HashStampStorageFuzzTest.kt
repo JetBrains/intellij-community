@@ -3,7 +3,11 @@ package org.jetbrains.jps.incremental.storage
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
 import com.intellij.util.io.write
-import net.jqwik.api.*
+import net.jqwik.api.Arbitraries
+import net.jqwik.api.Arbitrary
+import net.jqwik.api.ForAll
+import net.jqwik.api.Property
+import net.jqwik.api.Provide
 import net.jqwik.api.lifecycle.AfterProperty
 import net.jqwik.api.lifecycle.BeforeProperty
 import org.assertj.core.api.Assertions.assertThat

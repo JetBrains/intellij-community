@@ -9,7 +9,13 @@ import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsActi
 import com.intellij.execution.testframework.export.ExportTestResultsAction;
 import com.intellij.execution.testframework.export.ExportTestResultsConfiguration;
 import com.intellij.execution.testframework.sm.Marker;
-import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TreeNodeEvent;
 import com.intellij.execution.testframework.sm.runner.history.ImportedToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;

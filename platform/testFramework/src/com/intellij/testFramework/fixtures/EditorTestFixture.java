@@ -17,7 +17,13 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.DumpLookupElementWeights;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,6 +53,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.ArrayUtilRt;
@@ -55,13 +62,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
-import static com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.instantiateAndRun;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 
 public class EditorTestFixture {
@@ -157,7 +171,7 @@ public class EditorTestFixture {
     return doHighlighting(false, false);
   }
 
-  public @NotNull @Unmodifiable List<HighlightInfo> doHighlighting(boolean myAllowDirt, boolean readEditorMarkupModel) {
+  public @NotNull @Unmodifiable List<HighlightInfo> doHighlighting(boolean myAllowDocumentModification, boolean readEditorMarkupModel) {
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
 
     PsiFile file = getFile();
@@ -167,7 +181,7 @@ public class EditorTestFixture {
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     }
     assertNotNull(file);
-    return instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDirt, readEditorMarkupModel);
+    return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDocumentModification, readEditorMarkupModel);
   }
 
   protected @NotNull Editor getCompletionEditor() {

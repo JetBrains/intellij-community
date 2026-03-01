@@ -24,9 +24,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.TextAttributesKeyProperty
+import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolNameSegment.MatchProblem
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer
@@ -49,11 +50,11 @@ import com.intellij.psi.util.startOffset
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.PropertyKey
-import java.util.*
+import java.util.LinkedList
 
 private val INSPECTION_TOOL_INFO_CACHE = Key.create<MutableMap<String, InspectionToolInfo>>("polySymbols.inspectionTools")
 
-private class PolySymbolHighlightingAnnotator : Annotator {
+internal class PolySymbolHighlightingAnnotator : Annotator {
 
   private val symbolReferencesProvider = PsiPolySymbolReferenceProviderImpl()
 
@@ -84,12 +85,17 @@ private class PolySymbolHighlightingAnnotator : Annotator {
     val segment: PolySymbolNameSegment,
     val offset: Int,
     val depth: Int,
-    val parentKind: PolySymbolQualifiedKind?,
+    val parentKind: PolySymbolKind?,
     val parentTextAttributesKey: TextAttributesKey?,
     val additionalChildSegments: List<Pair<Int, PolySymbolNameSegment>>,
   )
 
-  private fun highlightSymbols(offsetInFile: Int, topLevelSymbols: Collection<PolySymbol>, host: PsiExternalReferenceHost, holder: AnnotationHolder) {
+  private fun highlightSymbols(
+    offsetInFile: Int,
+    topLevelSymbols: Collection<PolySymbol>,
+    host: PsiExternalReferenceHost,
+    holder: AnnotationHolder,
+  ) {
     val result = MultiMap<TextRange, Pair<Int, TextAttributesKey>>()
 
     val queue = LinkedList(topLevelSymbols.map {
@@ -124,12 +130,11 @@ private class PolySymbolHighlightingAnnotator : Annotator {
             PolySymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, depth)
               ?.let { return@mapNotNull it }
 
-            symbol[PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY]
-              ?.let { TextAttributesKey.find(it) }
+            symbol[TextAttributesKeyProperty]
               ?.let { return@mapNotNull it }
 
-            if (symbol.qualifiedKind != parentKind)
-              PolySymbolHighlightingCustomizer.getTextAttributesFor(symbol.qualifiedKind)
+            if (symbol.kind != parentKind)
+              PolySymbolHighlightingCustomizer.getTextAttributesFor(symbol.kind)
                 ?.let { return@mapNotNull it }
             null
           }
@@ -158,7 +163,7 @@ private class PolySymbolHighlightingAnnotator : Annotator {
                   i++
                 }
               }
-              queue.add(SegmentHighlightingInfo(segment, nestedOffset, depth + 1, s.qualifiedKind,
+              queue.add(SegmentHighlightingInfo(segment, nestedOffset, depth + 1, s.kind,
                                                 textAttributesKey ?: parentTextAttributesKey, segmentNestedSegments))
             }
           }
@@ -239,7 +244,7 @@ private class PolySymbolHighlightingAnnotator : Annotator {
   ): List<InspectionToolInfo> =
     symbolKinds
       .mapNotNull { symbolType ->
-        PolySymbolInspectionToolMappingEP.Companion.get(symbolType.namespace, symbolType.kind, problemKind)?.toolShortName
+        PolySymbolInspectionToolMappingEP.get(symbolType.namespace, symbolType.kindName, problemKind)?.toolShortName
       }.map {
         map.computeIfAbsent(it) { createToolInfo(it, holder.currentAnnotationSession.file) }
       }

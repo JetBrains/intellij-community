@@ -9,7 +9,9 @@ import org.cef.misc.CefLog;
 import org.cef.misc.CefRange;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.InputMethodListener;
 import java.awt.font.TextHitInfo;

@@ -1,7 +1,10 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.pluginManager.shared"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <uiPluginManagerController implementation="com.intellij.platform.pluginManager.frontend.BackendUiPluginManagerController"/>

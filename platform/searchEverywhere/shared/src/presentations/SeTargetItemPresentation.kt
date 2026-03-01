@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.presentations
 
-import com.intellij.ide.rpc.util.TextRangeId
-import com.intellij.ide.rpc.util.toRpc
+import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.colors.rpcId
@@ -12,12 +11,12 @@ import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.text.matching.MatchedFragment
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -43,17 +42,20 @@ sealed interface SeTargetItemPresentation : SeItemPresentation
 class SeTargetItemPresentationBuilder {
   private var backgroundColorId: ColorId? = null
   private var iconId: IconId? = null
+  private var iconOriginalWidth: Int? = null
   private var presentableText: String = ""
-  private var presentableTextMatchedRanges: List<TextRangeId>? = null
+  private var presentableTextMatchedRanges: List<TextRangeDto>? = null
   private var presentableTextFgColorId: ColorId? = null
   private var presentableTextErrorHighlight: Boolean = false
   private var presentableTextStrikethrough: Boolean = false
   private var containerText: String? = null
-  private var containerTextMatchedRanges: List<TextRangeId>? = null
+  private var containerTextMatchedRanges: List<TextRangeDto>? = null
   private var locationText: String? = null
   private var locationIconId: IconId? = null
+  private var locationIconOriginalWidth: Int? = null
   private var extendedInfo: SeExtendedInfo? = null
   private var isMultiSelectionSupported: Boolean = false
+  private var shouldKeepLocationVisible: Boolean = false
 
   fun withBackgroundColor(color: Color?): SeTargetItemPresentationBuilder {
     this.backgroundColorId = color?.rpcId()
@@ -62,6 +64,7 @@ class SeTargetItemPresentationBuilder {
 
   fun withIcon(icon: Icon?): SeTargetItemPresentationBuilder {
     this.iconId = icon?.rpcId()
+    iconOriginalWidth = icon?.iconWidth
     return this
   }
 
@@ -70,8 +73,8 @@ class SeTargetItemPresentationBuilder {
     return this
   }
 
-  fun withPresentableTextMatchedRanges(ranges: List<TextRange>?): SeTargetItemPresentationBuilder {
-    this.presentableTextMatchedRanges = ranges?.map { it.toRpc() }
+  fun withPresentableTextMatchedRanges(ranges: List<MatchedFragment>?): SeTargetItemPresentationBuilder {
+    this.presentableTextMatchedRanges = ranges?.map { TextRangeDto(it.startOffset, it.endOffset) }
     return this
   }
 
@@ -95,8 +98,8 @@ class SeTargetItemPresentationBuilder {
     return this
   }
 
-  fun withContainerTextMatchedRanges(ranges: List<TextRange>?): SeTargetItemPresentationBuilder {
-    this.containerTextMatchedRanges = ranges?.map { it.toRpc() }
+  fun withContainerTextMatchedRanges(ranges: List<MatchedFragment>?): SeTargetItemPresentationBuilder {
+    this.containerTextMatchedRanges = ranges?.map { TextRangeDto(it.startOffset, it.endOffset) }
     return this
   }
 
@@ -107,6 +110,7 @@ class SeTargetItemPresentationBuilder {
 
   fun locationIcon(icon: Icon?): SeTargetItemPresentationBuilder {
     this.locationIconId = icon?.rpcId()
+    locationIconOriginalWidth = icon?.iconWidth
     return this
   }
 
@@ -117,6 +121,11 @@ class SeTargetItemPresentationBuilder {
 
   fun withMultiSelectionSupported(supported: Boolean): SeTargetItemPresentationBuilder {
     this.isMultiSelectionSupported = supported
+    return this
+  }
+
+  fun withShouldKeepLocationVisible(isVisible: Boolean): SeTargetItemPresentationBuilder {
+    this.shouldKeepLocationVisible = isVisible
     return this
   }
 
@@ -145,6 +154,7 @@ class SeTargetItemPresentationBuilder {
     SeTargetItemPresentationImpl(
       backgroundColorId = backgroundColorId,
       iconId = iconId,
+      iconOriginalWidth = iconOriginalWidth,
       presentableText = presentableText,
       presentableTextMatchedRanges = presentableTextMatchedRanges,
       presentableTextFgColorId = presentableTextFgColorId,
@@ -154,34 +164,39 @@ class SeTargetItemPresentationBuilder {
       containerTextMatchedRanges = containerTextMatchedRanges,
       locationText = locationText,
       locationIconId = locationIconId,
+      locationIconOriginalWidth = locationIconOriginalWidth,
       extendedInfo = extendedInfo,
-      isMultiSelectionSupported = isMultiSelectionSupported
+      isMultiSelectionSupported = isMultiSelectionSupported,
+      shouldKeepLocationVisible = shouldKeepLocationVisible,
     )
 
   companion object {
-    private fun MinusculeMatcher.calcMatchedRanges(text: String?): List<TextRange>? {
+    private fun MinusculeMatcher.calcMatchedRanges(text: String?): List<MatchedFragment>? {
       text ?: return null
-      return matchingFragments(text)
+      return match(text)
     }
   }
 }
 
 @Serializable
 @ApiStatus.Internal
-class SeTargetItemPresentationImpl internal constructor(
+data class SeTargetItemPresentationImpl(
   private val backgroundColorId: ColorId? = null,
   private val iconId: IconId? = null,
+  val iconOriginalWidth: Int? = null,
   val presentableText: @NlsSafe String,
-  val presentableTextMatchedRanges: List<TextRangeId>? = null,
+  val presentableTextMatchedRanges: List<TextRangeDto>? = null,
   private val presentableTextFgColorId: ColorId? = null,
   val presentableTextErrorHighlight: Boolean = false,
   val presentableTextStrikethrough: Boolean = false,
   val containerText: @NlsSafe String? = null,
-  val containerTextMatchedRanges: List<TextRangeId>? = null,
+  val containerTextMatchedRanges: List<TextRangeDto>? = null,
   val locationText: @NlsSafe String? = null,
   private val locationIconId: IconId? = null,
+  val locationIconOriginalWidth: Int? = null,
   override val extendedInfo: SeExtendedInfo?,
   override val isMultiSelectionSupported: Boolean,
+  val shouldKeepLocationVisible: Boolean,
 ) : SeTargetItemPresentation {
   override val text: String get() = presentableText
 

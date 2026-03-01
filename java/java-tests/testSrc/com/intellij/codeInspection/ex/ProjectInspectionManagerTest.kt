@@ -10,8 +10,15 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.project.stateStore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.InitInspectionRule
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.createOrLoadProject
+import com.intellij.testFramework.disableAllTools
+import com.intellij.testFramework.loadAndUseProjectInLoadComponentStateMode
+import com.intellij.testFramework.refreshProjectConfigDir
+import com.intellij.testFramework.writeChild
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.write

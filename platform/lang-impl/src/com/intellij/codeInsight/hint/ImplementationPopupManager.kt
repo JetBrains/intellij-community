@@ -7,6 +7,7 @@ import com.intellij.codeInsight.navigation.BackgroundUpdaterTaskBase
 import com.intellij.codeInsight.navigation.ImplementationSearcher
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -28,7 +29,7 @@ import com.intellij.usages.UsageView
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.Collections
 import java.util.function.Consumer
 
 @ApiStatus.Internal
@@ -89,7 +90,9 @@ class ImplementationPopupManager {
   ): JBPopup {
     val updateProcessor: PopupUpdateProcessor = object : PopupUpdateProcessor(session.project) {
       override fun updatePopup(lookupItemObject: Any?) {
-        updatePopup(lookupItemObject)
+        WriteIntentReadAction.run {
+          updatePopup(lookupItemObject)
+        }
       }
 
       override fun onClosed(event: LightweightWindowEvent) {

@@ -60,10 +60,10 @@ object WrapWithScopesPass : IrGenerationExtension {
                   .parameters
                   .any {
                     it is IrValueParameter &&
-                    (it.kind == IrParameterKind.DispatchReceiver || it.kind == IrParameterKind.ExtensionReceiver) &&
-                    call.arguments[it.indexInParameters]!!.type.shouldBeWrappedWithScopes
+                      (it.kind == IrParameterKind.DispatchReceiver || it.kind == IrParameterKind.ExtensionReceiver) &&
+                      call.arguments[it.indexInParameters]!!.type.shouldBeWrappedWithScopes
                   } ||
-                calledFunction.shouldBeWrappedWithScopes
+                  calledFunction.shouldBeWrappedWithScopes
               }
               else {
                 calledFunction.shouldBeWrappedWithScopes
@@ -87,7 +87,7 @@ object WrapWithScopesPass : IrGenerationExtension {
                   ).irBlock(resultType = call.type) {
                     val contextTmp = irTemporary(noriaContextArgument)
 
-                    +irCall(rtEnterScope).apply {
+                    +irCall(rtEnterScope(currentFile)).apply {
                       arguments[0] = irGet(contextTmp)
                       arguments[1] = irInt(++nextId)
                     }
@@ -97,7 +97,7 @@ object WrapWithScopesPass : IrGenerationExtension {
                         arguments[noriaContextParameter.indexInParameters] = irGet(contextTmp)
                       }) //irTemporary(call)
 
-                    +irCall(rtExitScope).apply {
+                    +irCall(rtExitScope(currentFile)).apply {
                       arguments[0] = irGet(contextTmp)
                     }
 
@@ -123,13 +123,11 @@ object WrapWithScopesPass : IrGenerationExtension {
         }
       }
 
-      private val rtEnterScope by lazy {
-        funByName("RTenterScope", NoriaRuntime.NoriaRuntimeFqn, pluginContext, moduleFragment)
-      }
+      private fun rtEnterScope(from: IrFile) =
+        funByName("RTenterScope", NoriaRuntime.NoriaRuntimeFqn, pluginContext, from)
 
-      private val rtExitScope by lazy {
-        funByName("RTexitScope", NoriaRuntime.NoriaRuntimeFqn, pluginContext, moduleFragment)
-      }
+      private fun rtExitScope(from: IrFile) =
+        funByName("RTexitScope", NoriaRuntime.NoriaRuntimeFqn, pluginContext, from)
     }, null)
   }
 }

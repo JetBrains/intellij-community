@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import javax.swing.JComponent
 
 /**
@@ -95,13 +94,6 @@ interface EndpointsProvider<G : Any, E : Any> {
   fun getEndpointData(group: G, endpoint: E, dataId: String): Any? = null
 
   companion object {
-    /**
-     * Providers may either return documentation PSI element from [EndpointsProvider.getEndpointData] or implement [EndpointsDocumentationProvider].
-     */
-    @JvmField
-    @ScheduledForRemoval
-    @Deprecated(message = "Implement [EndpointsProvider.getDocumentationElement] instead")
-    val DOCUMENTATION_ELEMENT: DataKey<PsiElement> = DataKey.create("endpoint.documentation.element")
 
     @JvmField
     val URL_TARGET_INFO: DataKey<Iterable<UrlTargetInfo>> = DataKey.create("endpoint.urlTargetInfo")

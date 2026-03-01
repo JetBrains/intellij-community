@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -35,7 +35,6 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.execution" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
-    <orderEntry type="module" module-name="intellij.java.resources" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core" />
@@ -61,19 +60,19 @@
     <orderEntry type="module" module-name="intellij.java.debugger.memory.agent" />
     <orderEntry type="module-library">
       <library name="sa-jdwp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:sa-jdwp:1.24">
+        <properties maven-id="org.jetbrains.intellij.deps:sa-jdwp:1.25">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.24/sa-jdwp-1.24.jar">
-              <sha256sum>2334e030f1ebdaddbd84aa8cd3af514a3b80d674b343532187b6d6bdff24329d</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.25/sa-jdwp-1.25.jar">
+              <sha256sum>b2c8f5883adcb8dc37dacca7359df1557cdd8f77144d68752403bf6f6e2de92b</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.24/sa-jdwp-1.24.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.25/sa-jdwp-1.25.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.24/sa-jdwp-1.24-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.25/sa-jdwp-1.25-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

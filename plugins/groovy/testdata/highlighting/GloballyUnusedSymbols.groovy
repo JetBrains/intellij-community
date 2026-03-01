@@ -1,6 +1,6 @@
 
 class <warning descr="Class UnusedClass is unused">UnusedClass</warning> {}
-class Bar<T, <warning descr="Class Unused is unused">Unused</warning>> {
+class Bar<T, <warning descr="Type parameter Unused is unused">Unused</warning>> {
   int <warning descr="Property unusedProperty is unused">unusedProperty</warning> = 2
   T usedProperty = null
   int usedProperty2 = 39

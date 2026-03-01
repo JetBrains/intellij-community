@@ -1,7 +1,17 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEmptyStatement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 

@@ -15,9 +15,14 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgBranchReferenceValidator;
 import org.zmlx.hg4idea.util.HgReferenceValidator;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;

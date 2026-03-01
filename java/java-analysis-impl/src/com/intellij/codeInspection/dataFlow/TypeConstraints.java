@@ -8,7 +8,22 @@ import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiLambdaExpressionType;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,10 +32,27 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_IO_SERIALIZABLE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_BOOLEAN;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_BYTE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARACTER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLONEABLE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_DOUBLE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_FLOAT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_LONG;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_SHORT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_VOID;
 
 public final class TypeConstraints {
   /**

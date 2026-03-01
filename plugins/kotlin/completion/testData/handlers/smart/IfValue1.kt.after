@@ -6,3 +6,5 @@ fun bar(b: Boolean, s: String){
 }
 
 // ELEMENT: s
+
+// IGNORE_K2

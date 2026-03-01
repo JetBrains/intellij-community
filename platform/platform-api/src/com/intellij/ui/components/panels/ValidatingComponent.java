@@ -5,8 +5,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.StartupUiUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import java.awt.BorderLayout;
+import java.awt.Font;
 
 /**
  * @author kir

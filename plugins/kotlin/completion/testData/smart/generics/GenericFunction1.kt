@@ -6,3 +6,5 @@ fun f(){
 
 // EXIST: { lookupString: "arrayOf", tailText: "(vararg elements: String) (kotlin)", typeText: "Array<String>" }
 // ABSENT: arrayOfNulls
+
+// IGNORE_K2

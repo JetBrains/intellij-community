@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileTest
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.FlexibleTypeImpl
 
 abstract class AbstractK1JavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterSingleFileTest() {
@@ -11,5 +13,9 @@ abstract class AbstractK1JavaToKotlinConverterSingleFileTest : AbstractJavaToKot
         FlexibleTypeImpl.RUN_SLOW_ASSERTIONS = !javaPath.endsWith("typeParameters/rawTypeCast.java")
 
         super.doTest(javaPath)
+    }
+
+    override fun dumpTextWithErrors(createKotlinFile: KtFile): String {
+        return createKotlinFile.dumpTextWithErrors()
     }
 }

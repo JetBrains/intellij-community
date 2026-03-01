@@ -3,7 +3,10 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.runners.*;
+import com.intellij.execution.runners.BackendExecutionEnvironmentProxy;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentProxy;
+import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;

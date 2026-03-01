@@ -3,7 +3,11 @@ package com.intellij.tools.devLauncher
 import java.nio.file.Path
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 /**
  * Provides a way to locate a resource file under source roots by its relative path in an IntelliJ project.

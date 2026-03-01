@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class AppIconScheme {
 

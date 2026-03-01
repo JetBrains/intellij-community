@@ -8,11 +8,13 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.indexing.DumbModeAccessType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.stubindex.KotlinProbablyContractedFunctionShortNameIndex
 import org.jetbrains.kotlin.resolve.lazy.ProbablyContractedCallableNames
 
+@K1Deprecation
 class ProbablyContractedCallableNamesImpl(private val project: Project) : ProbablyContractedCallableNames {
     private val functionNames = CachedValuesManager.getManager(project).createCachedValue(
         {

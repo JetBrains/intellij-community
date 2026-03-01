@@ -1,13 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.markup
 
 import andel.intervals.Interval
 import com.intellij.openapi.editor.RangeMarker
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 
-@Experimental
 @Serializable
 internal data class AdIntervalData(
   val id: Long,

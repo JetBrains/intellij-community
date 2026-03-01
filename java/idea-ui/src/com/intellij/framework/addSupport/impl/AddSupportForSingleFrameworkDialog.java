@@ -28,7 +28,12 @@ import com.intellij.ide.util.newProjectWizard.FrameworkSupportOptionsComponent;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableModelsProvider;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
@@ -40,7 +45,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -15,7 +15,13 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;

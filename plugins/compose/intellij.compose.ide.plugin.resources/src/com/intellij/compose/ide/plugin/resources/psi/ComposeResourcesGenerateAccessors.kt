@@ -10,12 +10,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.createDocumentBuilder
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
 import java.io.ByteArrayInputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
@@ -191,7 +191,7 @@ private suspend fun Path.getValueResourceItems(project: Project, qualifiers: Lis
   val fileContent = readAction { toPsiFile(project)?.text } ?: return emptyList()
   val text = InputSource(ByteArrayInputStream(fileContent.toByteArray()))
   // it may throw exceptions if the file is not a valid XML file while the user is typing
-  val doc = runCatching { DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(text) }.getOrNull() ?: return emptyList()
+  val doc = runCatching { createDocumentBuilder().parse(text) }.getOrNull() ?: return emptyList()
   val items = doc.getElementsByTagName("resources").item(0).childNodes
 
   val records = List(items.length) { items.item(it) }

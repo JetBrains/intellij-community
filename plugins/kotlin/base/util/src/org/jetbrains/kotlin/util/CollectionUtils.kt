@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.util
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 

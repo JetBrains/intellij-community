@@ -24,14 +24,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
 
+@PerformanceUnitTest
 public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {
     Ref<MyElement> ref = new Ref<>();

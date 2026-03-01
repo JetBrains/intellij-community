@@ -15,11 +15,12 @@
  */
 package com.intellij.spellchecker.engine;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
-import kotlin.text.Regex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -50,4 +51,8 @@ public interface SpellCheckerEngine {
   void removeDictionary(@NotNull String name);
 
   void removeDictionariesRecursively(@NotNull String directory);
+
+  static @Nullable SpellCheckerEngine getInstance(Project project) {
+    return project.getService(SpellCheckerEngine.class);
+  }
 }

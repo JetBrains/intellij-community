@@ -11,27 +11,43 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.containers.tailOrEmpty
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.codeInsight.*
 import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
 import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
+import com.jetbrains.python.codeInsight.PyDataclassParameters
+import com.jetbrains.python.codeInsight.parseDataclassParameters
+import com.jetbrains.python.codeInsight.parseStdDataclassParameters
+import com.jetbrains.python.codeInsight.parseStdOrDataclassTransformDataclassParameters
+import com.jetbrains.python.codeInsight.resolveDataclassFieldParameters
+import com.jetbrains.python.codeInsight.resolvesToOmittedDefault
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.AccessDirection
+import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDelStatement
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.ParamHelper
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
-import com.jetbrains.python.psi.impl.mapArguments
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyCallableType
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyStructuralType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import one.util.streamex.StreamEx
 
 class PyDataclassInspection : PyInspection() {
-
-  companion object {
-    private val ORDER_OPERATORS = setOf("__lt__", "__le__", "__gt__", "__ge__")
-
-    private enum class ClassOrder {
-      MANUALLY, DC_ORDERED, DC_UNORDERED, UNKNOWN
-    }
-  }
 
   override fun buildVisitor(
     holder: ProblemsHolder,
@@ -110,7 +126,17 @@ class PyDataclassInspection : PyInspection() {
 
         processAnnotationsExistence(node, dataclassParameters)
 
-        PyNamedTupleInspection.inspectFieldsOrder(
+        //TODO: remove this check once PY-80837 is fixed
+        node.processClassLevelDeclarations { field, _ ->
+          if (field !is PyTargetExpression) return@processClassLevelDeclarations true
+
+          if (!PyTypingTypeProvider.isClassVar(field, myTypeEvalContext) && !isInitVar(field)) {
+            inspectFieldDefaultFactoryType(field, node, dataclassParameters, myTypeEvalContext)
+          }
+          true
+        }
+
+        PyNamedTupleInspection.Helper.inspectFieldsOrder(
           cls = node,
           classFieldsFilter = {
             val parameters = parseDataclassParameters(it, myTypeEvalContext)
@@ -194,7 +220,7 @@ class PyDataclassInspection : PyInspection() {
         }
 
         val callableType = callees.first()
-        val mapping = node.mapArguments(callableType, myTypeEvalContext)
+        val mapping = PyCallExpressionHelper.mapArguments(node, callableType, myTypeEvalContext)
 
         val dataclassParameter = callableType.getParameters(myTypeEvalContext)?.firstOrNull()
         val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
@@ -422,7 +448,7 @@ class PyDataclassInspection : PyInspection() {
           .multiResolveCallee(resolveContext)
           .filter { it.callable?.qualifiedName == Dataclasses.DATACLASSES_FIELD }
           .any {
-            value.mapArguments(it, myTypeEvalContext).mappedParameters.values.any { p ->
+            PyCallExpressionHelper.mapArguments(value, it, myTypeEvalContext).mappedParameters.values.any { p ->
               p.name == "default_factory"
             }
           }
@@ -713,6 +739,40 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
+    private fun inspectFieldDefaultFactoryType(field : PyTargetExpression, cls: PyClass, dataclassParameters: PyDataclassParameters, context: TypeEvalContext) {
+      val fieldStub = resolveDataclassFieldParameters(cls, dataclassParameters, field, myTypeEvalContext)
+                      ?: return
+
+      if (!fieldStub.hasDefaultFactory) return
+
+      val call = field.findAssignedValue() as? PyCallExpression ?: return
+      val annotationExpr = field.annotation?.value ?: return
+      val expectedType = context.getType(annotationExpr)
+
+      val defaultFactoryExpr = call.getKeywordArgument("default_factory") ?: return
+      val defaultFactoryType = context.getType(defaultFactoryExpr) ?: return
+      val returnType = (defaultFactoryType as? PyCallableType)
+        ?.getReturnType(context)
+
+      val expectedInstanceType: PyType? = when (expectedType) {
+        is PyClassType -> expectedType.toInstance()
+        else -> expectedType
+      }
+
+      val actualInstanceType: PyType = when (val actualType = returnType ?: defaultFactoryType) {
+        is PyClassType -> actualType.toInstance()
+        else -> actualType
+      }
+
+      if (!PyTypeChecker.match(expectedInstanceType, actualInstanceType, context)) {
+        val expectedTypeName = PythonDocumentationProvider.getTypeName(expectedInstanceType, context)
+        val actualTypeName = PythonDocumentationProvider.getTypeName(actualInstanceType, context)
+
+        registerProblem(call,
+                        PyPsiBundle.message("INSP.dataclasses.default.factory.type.incompatible", expectedTypeName, actualTypeName))
+      }
+    }
+
     private fun isInitVar(field: PyTargetExpression): Boolean {
       return isInitVar(myTypeEvalContext.getType(field))
     }
@@ -751,4 +811,10 @@ class PyDataclassInspection : PyInspection() {
              )
     }
   }
+}
+
+private val ORDER_OPERATORS = setOf("__lt__", "__le__", "__gt__", "__ge__")
+
+private enum class ClassOrder {
+  MANUALLY, DC_ORDERED, DC_UNORDERED, UNKNOWN
 }

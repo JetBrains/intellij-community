@@ -8,7 +8,7 @@ import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.EnumSet
 import java.util.zip.DataFormatException
 import java.util.zip.Inflater
 import java.util.zip.ZipException

@@ -26,11 +26,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
-import java.awt.*;
+import java.awt.Font;
 
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 

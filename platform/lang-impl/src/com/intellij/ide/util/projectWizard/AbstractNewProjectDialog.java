@@ -28,7 +28,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.ListModel;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;

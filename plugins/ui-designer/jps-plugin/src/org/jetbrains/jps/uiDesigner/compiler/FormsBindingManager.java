@@ -14,7 +14,13 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BuildOperations;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import org.jetbrains.jps.incremental.java.FormsParsing;
@@ -34,7 +40,11 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev

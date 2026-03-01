@@ -36,14 +36,19 @@ jvm_library(
   deps = [
     "//platform/ide-core",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "//plugins/git4idea/shared",
+    "//plugins/git4idea/shared:shared_test_lib",
     "//plugins/terminal",
+    "//plugins/terminal:terminal_test_lib",
     "//plugins/git4idea:vcs-git",
     "//plugins/git4idea:vcs-git_test_lib",
     "//plugins/terminal/completion",
     "//plugins/terminal/completion:completion_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
     "@lib//:kotlin-stdlib",
@@ -54,9 +59,12 @@ jvm_library(
     "//platform/vcs-impl/shared",
     "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/vcs-api/shared",
+    "//platform/vcs-api/shared:shared_test_lib",
     "@lib//:assert_j",
     "//libraries/mockito",
-  ]
+    "//libraries/mockito:mockito_test_lib",
+  ],
+  runtime_deps = ["//platform/ide-core:ide-core_test_lib"]
 )
 ### auto-generated section `build intellij.vcs.git.terminal` end
 

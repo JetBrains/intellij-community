@@ -12,13 +12,26 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeSchemaValidator;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
+import com.intellij.internal.statistic.eventLog.events.ClassEventField;
+import com.intellij.internal.statistic.eventLog.events.EnumEventField;
+import com.intellij.internal.statistic.eventLog.events.EventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.IntEventField;
+import com.intellij.internal.statistic.eventLog.events.LongEventField;
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState;
@@ -32,17 +45,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
-import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_SET_ORDER;
 import static com.intellij.codeInsight.completion.CompletionData.LOOKUP_ELEMENT_PSI_REFERENCE;
-import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_SET_ORDER;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
 import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATION_CHAR;
+import static com.intellij.ide.actions.ToolwindowFusEventFields.TOOLWINDOW;
 
 @ApiStatus.Internal
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 37);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 40);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -70,6 +85,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
   private static final BooleanEventField QUICK_DOC_SHOWN = EventFields.Boolean("quick_doc_shown");
   private static final BooleanEventField QUICK_DOC_AUTO_SHOW = EventFields.Boolean("quick_doc_auto_show");
   private static final BooleanEventField QUICK_DOC_SCROLLED = EventFields.Boolean("quick_doc_scrolled");
+  private static final BooleanEventField COMPLETE_TILL_TYPED_CHAR_OCCURRENCE = EventFields.Boolean("complete_till_typed_char_occurrence");
   public static final ObjectEventField ADDITIONAL = EventFields.createAdditionalDataField(GROUP.getId(), FINISHED_EVENT_ID);
   public static final VarargEventId FINISHED = GROUP.registerVarargEvent(FINISHED_EVENT_ID,
                                                                          EventFields.Language,
@@ -77,6 +93,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
                                                                          SCHEMA,
                                                                          ALPHABETICALLY,
                                                                          EDITOR_KIND,
+                                                                         TOOLWINDOW,
                                                                          FINISH_TYPE,
                                                                          DURATION,
                                                                          SELECTED_INDEX,
@@ -101,6 +118,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
                                                                          QUICK_DOC_SHOWN,
                                                                          QUICK_DOC_AUTO_SHOW,
                                                                          QUICK_DOC_SCROLLED,
+                                                                         COMPLETE_TILL_TYPED_CHAR_OCCURRENCE,
                                                                          ADDITIONAL);
 
   private LookupUsageTracker() {
@@ -266,6 +284,11 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       }
       data.add(ALPHABETICALLY.with(UISettings.getInstance().getSortLookupElementsLexicographically()));
       data.add(EDITOR_KIND.with(myLookup.getEditor().getEditorKind()));
+      var dataContext = EditorUtil.getEditorDataContext(myLookup.getEditor());
+      var toolwindow = PlatformDataKeys.TOOL_WINDOW.getData(dataContext);
+      data.add(TOOLWINDOW.with(
+        toolwindow != null ? toolwindow.getId() : null
+      ));
 
       // Quality
       data.add(FINISH_TYPE.with(finishType));
@@ -280,7 +303,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       if (currentItem != null) {
         data.add(TOKEN_LENGTH.with(currentItem.getLookupString().length()));
         data.add(QUERY_LENGTH.with(myLookup.itemPattern(currentItem).length()));
-        CompletionContributor contributor = currentItem.getUserData(BaseCompletionService.LOOKUP_ELEMENT_CONTRIBUTOR);
+        CompletionContributor contributor = currentItem.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR);
         if (contributor != null) {
           data.add(CONTRIBUTOR.with(contributor.getClass()));
         }
@@ -314,6 +337,8 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       data.add(QUICK_DOC_SHOWN.with(myIsQuickDocShown));
       data.add(QUICK_DOC_AUTO_SHOW.with(myIsQuickDocAutoShow));
       data.add(QUICK_DOC_SCROLLED.with(myIsQuickDocScrolled));
+
+      data.add(COMPLETE_TILL_TYPED_CHAR_OCCURRENCE.with(myLookup.getUserData(LookupTypedHandler.COMPLETE_TILL_TYPED_CHAR_OCCURRENCE) != null));
 
       return data;
     }

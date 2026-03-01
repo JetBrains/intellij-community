@@ -4,7 +4,7 @@ package com.intellij.vcs.log.graph.impl.permanent
 import com.intellij.vcs.log.graph.api.GraphLayout
 import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Arrays
 import kotlin.math.max
 
 @ApiStatus.Internal

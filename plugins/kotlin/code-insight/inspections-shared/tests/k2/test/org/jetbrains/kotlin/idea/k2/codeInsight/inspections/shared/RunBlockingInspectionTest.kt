@@ -14,15 +14,20 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.RunBlockingInspection
-import org.junit.jupiter.api.*
-import org.junit.jupiter.api.DynamicTest.dynamicTest
-import java.io.File
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.RunBlockingInspection
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.DynamicTest.dynamicTest
+import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.TestInstance
+import java.io.File
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RunBlockingInspectionTest: ExpectedPluginModeProvider {

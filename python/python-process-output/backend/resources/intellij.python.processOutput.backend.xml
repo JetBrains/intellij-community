@@ -1,0 +1,12 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.python.processOutput.common"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij.platform">
+    <rpc.backend.remoteApiProvider implementation="com.intellij.python.processOutput.backend.ApiProvider"/>
+  </extensions>
+</idea-plugin>

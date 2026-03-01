@@ -46,12 +46,6 @@ interface LayoutBuilderImpl {
   @Deprecated("Use Kotlin UI DSL Version 2")
   val validateCallbacks: List<() -> ValidationInfo?>
 
-  // Validators applied immediately on input
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
-  @get:ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  val componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
-
 }
 
 // https://jetbrains.github.io/ui/controls/input_field/#spacing

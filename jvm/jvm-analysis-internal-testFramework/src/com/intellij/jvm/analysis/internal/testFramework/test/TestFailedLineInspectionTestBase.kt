@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
-import java.util.*
+import java.util.Date
 
 abstract class TestFailedLineInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: TestFailedLineInspection = TestFailedLineInspection()

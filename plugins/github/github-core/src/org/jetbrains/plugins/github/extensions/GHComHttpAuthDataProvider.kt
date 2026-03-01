@@ -19,7 +19,7 @@ import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 
-private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
+internal class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = false
 
   @RequiresBackgroundThread

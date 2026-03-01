@@ -20,6 +20,7 @@ fun test() {
 // ORDER: exactFoo
 // ORDER: a =
 // ORDER: Foo
+// ORDER: Foo
 // ORDER: genericFoo
 // ORDER: unrelatedFoo
 // IGNORE_K1

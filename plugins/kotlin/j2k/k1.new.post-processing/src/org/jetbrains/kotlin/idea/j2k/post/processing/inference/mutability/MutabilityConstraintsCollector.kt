@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculator
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintBuilder
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class MutabilityConstraintsCollector : ConstraintsCollector() {
     private val callResolver = CallResolver(MUTATOR_CALL_FQ_NAMES)
 

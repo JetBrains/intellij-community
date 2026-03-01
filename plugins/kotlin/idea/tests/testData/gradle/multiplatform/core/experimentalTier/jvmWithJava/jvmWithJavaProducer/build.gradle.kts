@@ -4,5 +4,5 @@ plugins {
 
 kotlin {
     jvm { withJava() }
-    ios()
+    {{iosTargetPlaceholder}}
 }

@@ -7,7 +7,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class ItemWrapper {
   public abstract void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected);

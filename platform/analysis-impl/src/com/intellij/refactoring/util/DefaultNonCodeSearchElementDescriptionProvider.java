@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.psi.ElementDescriptionProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;

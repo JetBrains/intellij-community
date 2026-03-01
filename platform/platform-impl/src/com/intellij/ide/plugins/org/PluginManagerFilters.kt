@@ -5,7 +5,12 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.xmlb.annotations.Tag
@@ -34,15 +39,13 @@ class PluginManagerFilters {
   fun isPluginAllowed(isLocalPlugin: Boolean, descriptor: IdeaPluginDescriptor): Boolean = allowInstallingPlugin(descriptor)
 
   fun allowInstallFromDisk(): Boolean = state.allowInstallFromDisk
-
-
 }
 
 @Service(Service.Level.APP)
 @State(name = "plugin-filter", storages = [Storage(value = "orgPluginsFilter.xml")])
 private class PluginManagerConfigurableForOrgConfig : SimplePersistentStateComponent<PluginManagerConfigurableForOrgState>(PluginManagerConfigurableForOrgState())
 
-private class PluginManagerConfigurableForOrgState : BaseState() {
+internal class PluginManagerConfigurableForOrgState : BaseState() {
   var allowInstallFromDisk by property(true)
 
   /**
@@ -63,7 +66,7 @@ private class PluginManagerConfigurableForOrgState : BaseState() {
 }
 
 @Tag("rule")
-private class PluginManagerConfigurableForOrgStateRule : BaseState() {
+internal class PluginManagerConfigurableForOrgStateRule : BaseState() {
   var pluginIdRegex by string()
   var vendorRegex by string()
   var versionRegex by string()
@@ -72,7 +75,7 @@ private class PluginManagerConfigurableForOrgStateRule : BaseState() {
   var versionToInclusive by string()
 }
 
-private abstract class PluginManagerFiltersConfigureDebugActionBase : DumbAwareAction() {
+internal abstract class PluginManagerFiltersConfigureDebugActionBase : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
   }
@@ -90,7 +93,7 @@ private abstract class PluginManagerFiltersConfigureDebugActionBase : DumbAwareA
   }
 }
 
-private class PluginManagerFiltersConfigureTrustOnlyJetBrainsDebugAction : PluginManagerFiltersConfigureDebugActionBase() {
+internal class PluginManagerFiltersConfigureTrustOnlyJetBrainsDebugAction : PluginManagerFiltersConfigureDebugActionBase() {
   override fun updateState(state: PluginManagerConfigurableForOrgState) {
     state.denyRules.clear()
     state.allowRules.clear()
@@ -100,7 +103,7 @@ private class PluginManagerFiltersConfigureTrustOnlyJetBrainsDebugAction : Plugi
   }
 }
 
-private class PluginManagerFiltersConfigureResetTrustDebugAction : PluginManagerFiltersConfigureDebugActionBase() {
+internal class PluginManagerFiltersConfigureResetTrustDebugAction : PluginManagerFiltersConfigureDebugActionBase() {
   override fun updateState(state: PluginManagerConfigurableForOrgState) {
     state.allowRules.clear()
     state.denyRules.clear()

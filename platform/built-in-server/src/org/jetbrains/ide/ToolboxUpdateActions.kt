@@ -13,13 +13,20 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.messages.Topic
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Collections
+import java.util.EventListener
+import java.util.LinkedList
 
 @OptIn(FlowPreview::class)
 @Service(Service.Level.APP)

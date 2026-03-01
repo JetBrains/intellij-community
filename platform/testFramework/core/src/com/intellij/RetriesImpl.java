@@ -4,7 +4,17 @@ package com.intellij;
 import com.intellij.tests.Retries;
 import com.intellij.util.ThrowableRunnable;
 import junit.extensions.TestDecorator;
-import junit.framework.*;
+import junit.framework.AssertionFailedError;
+import junit.framework.JUnit4TestAdapter;
+import junit.framework.JUnit4TestAdapterCache;
+import junit.framework.JUnit4TestCaseFacade;
+import junit.framework.Protectable;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestFailure;
+import junit.framework.TestListener;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
 import org.junit.runner.Request;
@@ -61,7 +71,7 @@ final class RetriesImpl {
     }
     if (TestCase.class.isAssignableFrom(testClass) &&
         "warning".equals(testDescription.getMethodName()) ||
-        TestCaseLoader.isPerformanceTest(null, testClass.getSimpleName())) {
+        TestCaseLoader.isPerformanceTest(null, testClass)) {
       return;
     }
     var runner = Request.classWithoutSuiteMethod(testClass).filterWith(testDescription).getRunner();

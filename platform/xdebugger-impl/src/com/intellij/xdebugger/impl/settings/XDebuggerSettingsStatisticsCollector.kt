@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 
-private class XDebuggerSettingsStatisticsCollector : ApplicationUsagesCollector() {
+internal class XDebuggerSettingsStatisticsCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("xdebugger.settings.ide", 1)
   private val SHOW_ALL_FRAMES = GROUP.registerVarargEvent("show.all.frames", EventFields.Enabled)
 

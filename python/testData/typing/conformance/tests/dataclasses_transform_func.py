@@ -74,7 +74,7 @@ v2 = c2_1 < c2_2
 
 @dataclass_transform(kw_only_default=True, order_default=True, frozen_default=True)
 def create_model_frozen(cls: T) -> T:
-    ...
+    raise NotImplementedError
 
 
 @create_model_frozen

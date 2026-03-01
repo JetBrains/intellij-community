@@ -1,19 +1,22 @@
 package com.intellij.execution.multilaunch.design.popups
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.multilaunch.MultiLaunchConfiguration
+import com.intellij.execution.multilaunch.design.dialogs.AddMultipleConfigurationsDialog
+import com.intellij.execution.multilaunch.execution.executables.Executable
+import com.intellij.execution.multilaunch.execution.executables.ExecutableFactory
+import com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate
+import com.intellij.execution.multilaunch.execution.executables.impl.RunConfigurationExecutableManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.util.Consumer
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.execution.multilaunch.MultiLaunchConfiguration
-import com.intellij.execution.multilaunch.execution.executables.Executable
-import com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate
-import com.intellij.execution.multilaunch.design.dialogs.AddMultipleConfigurationsDialog
-import com.intellij.execution.multilaunch.execution.executables.ExecutableFactory
-import com.intellij.execution.multilaunch.execution.executables.impl.RunConfigurationExecutableManager
 import javax.swing.Icon
 
 @Service(Service.Level.PROJECT)

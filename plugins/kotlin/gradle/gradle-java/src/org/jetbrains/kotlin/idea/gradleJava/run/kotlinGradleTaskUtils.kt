@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
@@ -22,11 +23,21 @@ import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.plugins.gradle.model.GradleExtension
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
+import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION
@@ -149,10 +160,16 @@ private fun KaSession.isStringParameterSignature(signature: KaVariableSignature<
 fun KtNamedFunction.getKMPGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =
     "${getConfigurationName()} [${runTask.targetName}]"
 
-fun KtNamedFunction.getConfigurationName(): String? = ReadAction.compute<Module, Throwable> { module }?.getSubprojectNameOfGradleRoot() ?: name
+fun KtNamedFunction.getConfigurationName(): String? {
+    val gradleSubprojectName = ReadAction.compute<Module?, Throwable> { module }?.getSubprojectNameOfGradleRoot() ?: return name
+    val fileName =
+        ReadAction.compute<String?, Throwable> { containingKtFile.virtualFile?.nameWithoutExtension } ?: return gradleSubprojectName
 
-@RequiresReadLock
-fun kmpJvmGradleTaskParameters(function: KtNamedFunction): String = "${mainClassScriptParameter(function)} $quietParameter"
+    return when (fileName.equals("main", ignoreCase = true)) {
+        true -> gradleSubprojectName
+        false -> "$gradleSubprojectName.$fileName"
+    }
+}
 
 @RequiresReadLock
 internal fun mainClassScriptParameter(function: KtFunction): String = "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
@@ -175,11 +192,46 @@ fun configureKmpJvmRunConfigurationFromMainFunction(
     configuration.isDebugAllEnabled = false
     configuration.isDebugServerProcess = false
 
+    val scriptParameterList = when (runTask.gradlePluginType) {
+        KotlinGradlePluginType.Jvm -> {
+            configuration.isComposeJvm = true
+            val mainFunctionClassFqn = ReadAction.compute<String, Throwable> { function.containingKtFile.javaFileFacadeFqName.asString() }
+            configuration.mainFunctionClassFqn = mainFunctionClassFqn
+            listOf(quietParameter)
+        }
+
+        KotlinGradlePluginType.Multiplatform ->{
+            val mainClassParameter = ReadAction.compute<String, Throwable> { mainClassScriptParameter(function) }
+            listOf(mainClassParameter, quietParameter)
+        }
+    }
+
     configuration.settings.apply {
         externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
         taskNames = listOf(runTask.taskName)
-        scriptParameters = ReadAction.compute<String, Throwable> { kmpJvmGradleTaskParameters(function) }
+        scriptParameters = scriptParameterList.joinToString(" ")
     }
 }
 
 private const val quietParameter: String = "--quiet"
+
+fun getGradleExtensions(moduleDataNode: DataNode<*>): List<GradleExtension>? =
+    ExternalSystemApiUtil.find(moduleDataNode, GradleExtensionsDataService.KEY)?.data?.extensions
+
+enum class KotlinGradlePluginType {
+    Jvm,
+    Multiplatform;
+
+    companion object {
+
+        fun getPluginType(moduleDataNode: DataNode<*>): KotlinGradlePluginType? {
+            val kotlinExtension = getGradleExtensions(moduleDataNode)?.singleOrNull { it.name == "kotlin" }
+            return when (kotlinExtension?.typeFqn) {
+                "org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension" -> Jvm
+                "org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension" -> Multiplatform
+                else -> null
+            }
+        }
+    }
+
+}

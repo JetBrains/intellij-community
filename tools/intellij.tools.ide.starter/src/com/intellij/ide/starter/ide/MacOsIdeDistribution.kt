@@ -8,7 +8,11 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.system.OS
 import org.w3c.dom.Node
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.div
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
 
 class MacOsIdeDistribution : IdeDistribution() {
 
@@ -16,7 +20,8 @@ class MacOsIdeDistribution : IdeDistribution() {
     val infoPlistFile = appDir.resolve("Contents/Info.plist")
 
     infoPlistFile.inputStream().use {
-      val document = XmlBuilder.parse(it)
+      // on macOS Info.plist very often has doctype - <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      val document = XmlBuilder.parse(it, allowDoctype = true)
 
       val keys = document.getElementsByTagName("key")
 

@@ -1,10 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
@@ -20,7 +25,19 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.ContinuationInterceptor
@@ -532,10 +549,16 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
     }
   }
   else {
-    val indicator = EmptyProgressIndicator(contextModality)
+    val indicator = JobDependentIndicator(contextModality)
     jobToIndicator(job, indicator, action)
   }
 }
+
+/**
+ * We keep this class as an inheritor of [EmptyProgressIndicator] for ease of debugging -- if one sees an instance of this class,
+ * it means that the currently used indicator depends on some job.
+ */
+private class JobDependentIndicator(modalityState: ModalityState): BridgeJobIndicatorBase(modalityState)
 
 @Throws(CancellationException::class)
 @Internal
@@ -604,7 +627,23 @@ fun getLockPermitContext(forSharing: Boolean = false): Pair<CoroutineContext, Ac
 fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pair<CoroutineContext, AccessToken> {
   val application = ApplicationManager.getApplication()
   return if (application != null) {
-    val (context, cleanup) = application.getLockStateAsCoroutineContext(baseContext, forSharing)
+    val (context, cleanup) = installThreadContext(baseContext, true) {
+      val threadingSupport = application.threadingSupport
+      when {
+        threadingSupport == null -> EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
+        forSharing -> {
+          val (context, cleanup) = threadingSupport.parallelizeLock()
+          context to object : AccessToken() {
+            override fun finish() {
+              cleanup()
+            }
+          }
+        }
+        else -> {
+          threadingSupport.getLockContextElement() to AccessToken.EMPTY_ACCESS_TOKEN
+        }
+      }
+    }
     val targetContext = if (EDT.isCurrentThreadEdt()) {
       context + SafeForRunBlockingUnderReadAction
     }

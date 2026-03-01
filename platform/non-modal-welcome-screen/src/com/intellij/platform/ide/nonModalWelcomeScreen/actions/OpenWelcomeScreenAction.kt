@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.platform.ide.nonModalWelcomeScreen.isNonModalWelcomeScreenEnabled
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTab
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -14,10 +15,8 @@ internal class OpenWelcomeScreenAction : DumbAwareAction(), ActionRemoteBehavior
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    if (WelcomeRightTabContentProvider.getSingleExtension() == null) {
-      // Don't show "Welcome" action if IDE doesn't support the non-modal welcome screen
-      e.presentation.isEnabledAndVisible = false
-    }
+    val isAvailable = WelcomeRightTabContentProvider.getSingleExtension() != null && isNonModalWelcomeScreenEnabled
+    e.presentation.isEnabledAndVisible = isAvailable
   }
 
   override fun actionPerformed(e: AnActionEvent) {

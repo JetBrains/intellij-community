@@ -1,16 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.builtInHelp
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ResourceUtil
 import com.jetbrains.builtInHelp.mapping.HelpMap
 import com.jetbrains.builtInHelp.mapping.HelpMapId
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.DefaultHttpResponse
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpVersion
+import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.io.send
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import javax.xml.bind.JAXBContext

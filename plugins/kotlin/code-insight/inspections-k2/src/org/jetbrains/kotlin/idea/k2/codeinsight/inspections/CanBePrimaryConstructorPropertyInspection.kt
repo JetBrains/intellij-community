@@ -60,7 +60,7 @@ internal class CanBePrimaryConstructorPropertyInspection :
     ): KotlinModCommandQuickFix<KtProperty> = object : KotlinModCommandQuickFix<KtProperty>() {
 
         override fun getFamilyName(): String =
-            KotlinBundle.message("inspection.can.be.primary.constructor.property.display.name")
+            KotlinBundle.message("move.to.constructor")
 
         override fun applyFix(
             project: Project,

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
+@K1Deprecation
 class AddNewLineAfterAnnotationsFix(element: KtAnnotatedExpression) : KotlinQuickFixAction<KtAnnotatedExpression>(element) {
     override fun getText(): String = KotlinBundle.message("fix.add.new.line.after.annotations")
     override fun getFamilyName(): String = text

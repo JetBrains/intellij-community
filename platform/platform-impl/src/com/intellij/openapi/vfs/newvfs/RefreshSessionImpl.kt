@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap
@@ -31,9 +31,20 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.progress.waitForMaybeCancellable
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.HashMap
+import java.util.LinkedHashSet
+import java.util.Objects
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
+import kotlin.collections.ArrayList
+import kotlin.collections.Collection
+import kotlin.collections.List
+import kotlin.collections.MutableList
+import kotlin.collections.MutableMap
+import kotlin.collections.any
+import kotlin.collections.filter
+import kotlin.collections.mutableListOf
+import kotlin.collections.set
 import kotlin.concurrent.Volatile
 import kotlin.math.min
 
@@ -206,7 +217,7 @@ internal class RefreshSessionImpl internal constructor(
         workQueue.size, types, if (myCancelled) "cancelled" else "done", count, events.size))
     }
 
-    val result = if (events.isEmpty()) mutableListOf() else LinkedHashSet<VFileEvent>(events)
+    val result = if (events.isEmpty()) mutableListOf<VFileEvent>() else LinkedHashSet<VFileEvent>(events)
     myEventCount = result.size
     return result
   }
@@ -227,7 +238,7 @@ internal class RefreshSessionImpl internal constructor(
   fun fireEvents(
     events: List<CompoundVFileEvent>,
     appliers: List<AsyncFileListener.ChangeApplier>,
-    asyncProcessing: Boolean,
+    excludeAsyncListeners: Boolean,
   ) {
     try {
       val app = ApplicationManagerEx.getApplicationEx()
@@ -239,12 +250,12 @@ internal class RefreshSessionImpl internal constructor(
             if (indicator is ProgressIndicatorWithDelayedPresentation) {
               indicator.setDelayInMillis(PROGRESS_THRESHOLD_MILLIS)
             }
-           doFireEvents(events, appliers, asyncProcessing)
+           doFireEvents(events, appliers, excludeAsyncListeners)
           })
       }
     }
     finally {
-      mySemaphore.up()
+      terminate()
     }
   }
 
@@ -255,7 +266,7 @@ internal class RefreshSessionImpl internal constructor(
   private fun fireEventsInWriteAction(
     events: List<CompoundVFileEvent>,
     appliers: List<AsyncFileListener.ChangeApplier>,
-    asyncProcessing: Boolean,
+    excludeAsyncListeners: Boolean,
   ) {
     val manager = VirtualFileManager.getInstance() as VirtualFileManagerImpl
 
@@ -263,7 +274,7 @@ internal class RefreshSessionImpl internal constructor(
       manager.fireBeforeRefreshStart(this.isAsynchronous)
     }
     try {
-      AsyncEventSupport.processEventsFromRefresh(events, appliers, asyncProcessing)
+      AsyncEventSupport.processEventsFromRefresh(events, appliers, excludeAsyncListeners)
     }
     catch (e: AssertionError) {
       if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING == e.message) {
@@ -283,6 +294,9 @@ internal class RefreshSessionImpl internal constructor(
     }
   }
 
+  val events: List<VFileEvent>
+    get() = myEvents
+
   private fun invokeOnEdt(r: Runnable) {
     if (EDT.isCurrentThreadEdt()) {
       r.run()
@@ -298,25 +312,30 @@ internal class RefreshSessionImpl internal constructor(
   fun fireEventsInBackgroundWriteAction(
     events: List<CompoundVFileEvent>,
     appliers: List<AsyncFileListener.ChangeApplier>,
+    excludeAsyncListeners: Boolean,
   ) {
     try {
       val app = ApplicationManagerEx.getApplicationEx()
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
         if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events)
         withWriteActionTitle(IdeCoreBundle.message("progress.title.file.system.synchronization"), {
-          doFireEvents(events, appliers, true)
+          doFireEvents(events, appliers, excludeAsyncListeners)
         })
       }
     }
     finally {
-      mySemaphore.up()
+      terminate()
     }
   }
 
+  fun terminate() {
+    mySemaphore.up()
+  }
+
   @RequiresWriteLock
-  private fun doFireEvents(events: List<CompoundVFileEvent>, appliers: List<AsyncFileListener.ChangeApplier>, asyncProcessing: Boolean) {
+  private fun doFireEvents(events: List<CompoundVFileEvent>, appliers: List<AsyncFileListener.ChangeApplier>, excludeAsyncListeners: Boolean) {
     var t = System.nanoTime()
-    fireEventsInWriteAction(events, appliers, asyncProcessing)
+    fireEventsInWriteAction(events, appliers, excludeAsyncListeners)
     t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t)
     if (t > PROGRESS_THRESHOLD_MILLIS) {
       LOG.warn("Long VFS change processing (" + t + "ms, " + events.size + " events): " + StringUtil.trimLog(events.subList(0, min(events.size, 100)).toString(), 10000))

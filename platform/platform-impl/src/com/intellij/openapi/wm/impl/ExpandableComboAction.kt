@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.actionSystem.impl.PopupShowingTimeTracker
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -32,7 +32,7 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
           model.isPopupShown = false
         }
       })
-      Utils.showPopupElapsedMillisIfConfigured(start, popup.content)
+      PopupShowingTimeTracker.showElapsedMillisIfConfigured(start, popup)
       popup.showUnderneathOf(combo)
     }
     return createToolbarComboButton(model)

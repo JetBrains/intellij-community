@@ -3,7 +3,10 @@ package com.intellij.designer.utils;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
 
 /**
  * @author Alexander Lobas

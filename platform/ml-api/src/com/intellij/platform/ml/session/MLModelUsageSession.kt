@@ -1,8 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.session
 
-import com.intellij.platform.ml.*
+import com.intellij.platform.ml.MLModel
+import com.intellij.platform.ml.NestableMLSession
 import com.intellij.platform.ml.ScopeEnvironment.Companion.narrowedTo
+import com.intellij.platform.ml.Session
+import com.intellij.platform.ml.SinglePrediction
+import com.intellij.platform.ml.Tier
 import com.intellij.platform.ml.environment.Environment
 
 /**

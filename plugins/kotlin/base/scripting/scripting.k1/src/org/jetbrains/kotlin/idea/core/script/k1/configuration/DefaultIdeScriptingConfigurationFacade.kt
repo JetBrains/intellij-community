@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.core.script.k1.configuration
 
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade
 
+@K1Deprecation
 class DefaultIdeScriptingConfigurationFacade : IdeScriptConfigurationControlFacade {
     override fun reloadScriptConfiguration(scriptFile: PsiFile, updateEditorWithoutNotification: Boolean) {
       (scriptFile as? KtFile) ?: error("Should be called with script KtFile, but called with $scriptFile")

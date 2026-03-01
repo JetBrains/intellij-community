@@ -9,7 +9,11 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.socketConnection.ConnectionState
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.*
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.createError
+import org.jetbrains.concurrency.isPending
+import org.jetbrains.concurrency.nullPromise
 import org.jetbrains.debugger.DebugEventListener
 import org.jetbrains.debugger.Vm
 import java.util.concurrent.atomic.AtomicBoolean

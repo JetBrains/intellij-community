@@ -23,7 +23,29 @@ import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.CHOICE_EQ;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.EQ;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.GTGT;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.IDENTIFIERS;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.IDENTIFIER_OR_KEYWORD;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.INTERLEAVE_EQ;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_ATTRIBUTE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_DATATYPES;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_DEFAULT;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_DIV;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_ElEMENT;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_INCLUDE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_INHERIT;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_LIST;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_MIXED;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_NAMESPACE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_START;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_STRING;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_TOKEN;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.LBRACKET;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.LITERAL;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.PREFIXED_NAME;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.RBRACKET;
 
 public abstract class AbstractParsing {
   protected static final TokenSet LA_INCLUDE_CONTENT = TokenSet.orSet(TokenSet.create(

@@ -10,15 +10,34 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.FastExtendedPostdominanceHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.IrreducibleCFGDeobfuscator;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DummyExitStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.GeneralStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SynchronizedStatement;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.util.DotExporter;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public final class DomHelper {
 

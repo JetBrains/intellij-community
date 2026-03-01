@@ -15,7 +15,15 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiThisExpression;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

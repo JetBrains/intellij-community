@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.VcsRootError
 import com.intellij.openapi.vcs.VcsRootErrorImpl
 import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.util.containers.ContainerUtil
-import java.util.*
 
 
 class VcsRootErrorsFinderTest : VcsRootBaseTest() {

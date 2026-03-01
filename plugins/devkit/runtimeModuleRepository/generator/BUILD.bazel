@@ -16,4 +16,19 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "generator_test_lib",
+  module_name = "intellij.devkit.runtimeModuleRepository.generator",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  runtime_deps = [
+    ":generator",
+    "//platform/util:util_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/runtime/repository:repository_test_lib",
+    "//jps/model-serialization:model-serialization_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.devkit.runtimeModuleRepository.generator` end

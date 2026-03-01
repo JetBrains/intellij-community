@@ -12,14 +12,14 @@ abstract class ProjectStoreFactoryBase : ProjectStoreFactory {
   final override fun createDefaultProjectStore(project: Project): IComponentStore = DefaultProjectStoreImpl(project)
 }
 
-private class PlatformLangProjectStoreFactory : ProjectStoreFactoryBase() {
+internal class PlatformLangProjectStoreFactory : ProjectStoreFactoryBase() {
   override fun createStore(project: Project): IProjectStore {
     LOG.assertTrue(!project.isDefault)
     return ProjectWithModuleStoreImpl(project)
   }
 }
 
-private class PlatformProjectStoreFactory : ProjectStoreFactoryBase() {
+internal class PlatformProjectStoreFactory : ProjectStoreFactoryBase() {
   override fun createStore(project: Project): IProjectStore {
     LOG.assertTrue(!project.isDefault)
     return ProjectStoreImpl(project)

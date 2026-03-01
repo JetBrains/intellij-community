@@ -3,7 +3,12 @@ package com.intellij.ide.projectWizard
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.AddJdkFromJdkListDownloader
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.AddJdkFromPath
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.DetectedJdk
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.DownloadJdk
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.ExistingJdk
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.NoJdk
 import com.intellij.ide.projectWizard.ProjectWizardJdkPredicate.Companion.getError
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -26,11 +31,22 @@ import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DefaultProjectFactory
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.projectRoots.impl.JavaHomeFinder
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.*
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JDK_DOWNLOADER_EXT
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderDialogHostExtension
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequestInfo
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
@@ -51,8 +67,15 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
+import com.intellij.ui.CellRendererPanel
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.GroupedComboBoxRenderer
+import com.intellij.ui.MutableCollectionComboBoxModel
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
@@ -63,7 +86,12 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EmptyIcon
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Component
 import java.io.IOException
@@ -72,6 +100,7 @@ import java.nio.file.Paths
 import javax.accessibility.AccessibleContext
 import javax.swing.Icon
 import javax.swing.JList
+import kotlin.reflect.KFunction1
 
 private val selectedJdkProperty = "jdk.selected.JAVA_MODULE"
 
@@ -107,7 +136,7 @@ fun Row.projectWizardJdkComboBox(
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
-  val comboBox = ProjectWizardJdkComboBox(context.projectJdk, context.disposable, sdkFilter)
+  val comboBox = ProjectWizardJdkComboBox(context.projectJdk, context.disposable, sdkFilter, jdkPredicate)
   comboBox.isUsePreferredSizeAsMinimum = false
 
   val intentValue = intentProperty.get()
@@ -209,6 +238,7 @@ class ProjectWizardJdkComboBox(
   val projectJdk: Sdk? = null,
   disposable: Disposable,
   val sdkFilter: (Sdk) -> Boolean = { true },
+  val jdkPredicate: ProjectWizardJdkPredicate? = null,
 ) : ComboBox<ProjectWizardJdkIntent>(MutableCollectionComboBoxModel()), UiDataProvider {
 
   override fun getModel(): CollectionComboBoxModel<ProjectWizardJdkIntent> {
@@ -553,6 +583,7 @@ private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkCo
     .downloadModelForJdkInstaller(null, predicate)
     .filter { it.isDefaultItem }
     .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
+    .filter { comboBox.jdkPredicate?.showJdkItem(it) ?: true }
     .maxByOrNull { it.jdkMajorVersion }
 
   if (item == null) {
@@ -618,13 +649,20 @@ private fun findDetectedJdksEel(eelDescriptor: EelDescriptor): List<DetectedJdk>
 private fun addDownloadItem(extension: SdkDownload, combo: ComboBox<ProjectWizardJdkIntent>) {
   val config = ProjectStructureConfigurable.getInstance(DefaultProjectFactory.getInstance().defaultProject)
   combo.popup?.hide()
-  val task = extension.pickSdk(JavaSdk.getInstance(), config.projectJdksModel, combo, null) ?: return
+  val sdkFilter = getSdkFilter(combo)
+  val task = extension.pickSdk(JavaSdk.getInstance(), config.projectJdksModel, combo, null, sdkFilter) ?: return
   val index = (0..combo.itemCount).firstOrNull {
     val item = combo.getItemAt(it)
     item !is NoJdk && item !is DownloadJdk
   } ?: 0
   combo.insertItemAt(DownloadJdk(task), index)
   combo.selectedIndex = index
+}
+
+private fun getSdkFilter(combo: ComboBox<ProjectWizardJdkIntent>): KFunction1<JdkItem, Boolean>? {
+  val projectWizardJdkComboBox = combo as? ProjectWizardJdkComboBox ?: return null
+  val jdkPredicate = projectWizardJdkComboBox.jdkPredicate ?: return null
+  return jdkPredicate::showJdkItem
 }
 
 internal fun ProjectWizardJdkComboBox.bindEelDescriptor(eelDescriptorProperty: ObservableProperty<EelDescriptor>) {

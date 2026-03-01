@@ -7,7 +7,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import com.jetbrains.python.refactoring.surround.surrounders.expressions.*;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyIfExpressionSurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyIsNoneSurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyIsNotNoneSurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyLenExpressionStatementSurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyWhileExpressionSurrounder;
+import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyWithParenthesesSurrounder;
 import org.jetbrains.annotations.NotNull;
 
 public final class PyExpressionSurroundDescriptor implements SurroundDescriptor {

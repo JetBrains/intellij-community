@@ -8,8 +8,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public final class JavaMainMethodSearcher extends MainMethodSearcherBase {
-  public static final MainMethodSearcherBase INSTANCE = new JavaMainMethodSearcher();
+public final class JavaMainMethodSearcher extends JvmMainMethodSearcher {
+  public static final JvmMainMethodSearcher INSTANCE = new JavaMainMethodSearcher();
 
   private JavaMainMethodSearcher() { }
 

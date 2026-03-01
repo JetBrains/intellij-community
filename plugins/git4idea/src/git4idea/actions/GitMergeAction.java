@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -26,9 +26,19 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
-import git4idea.*;
+import git4idea.GitActivity;
+import git4idea.GitBranch;
+import git4idea.GitNotificationIdsHolder;
+import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;
+import git4idea.commands.GitSimpleEventDetector;
+import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
@@ -45,6 +55,7 @@ import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -58,21 +69,21 @@ import static git4idea.update.GitUpdateSessionKt.getTitleForUpdateNotification;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
-abstract class GitMergeAction extends GitRepositoryAction {
-  protected static final class DialogState {
+abstract class GitMergeAction<T> extends GitRepositoryAction {
+  protected static final class DialogState<T> {
     final VirtualFile selectedRoot;
     final @NlsContexts.ProgressTitle String progressTitle;
     final Supplier<GitLineHandler> handlerProvider;
     final @NotNull GitBranch selectedBranch;
     final boolean commitAfterMerge;
-    final @NotNull List<String> selectedOptions;
+    final @NotNull Collection<T> selectedOptions;
 
     DialogState(@NotNull VirtualFile root,
                 @NlsContexts.ProgressTitle @NotNull String title,
                 @NotNull Supplier<GitLineHandler> provider,
                 @NotNull GitBranch selectedBranch,
                 boolean commitAfterMerge,
-                @NotNull List<String> selectedOptions) {
+                @NotNull Collection<T> selectedOptions) {
       selectedRoot = root;
       progressTitle = title;
       handlerProvider = provider;
@@ -82,21 +93,21 @@ abstract class GitMergeAction extends GitRepositoryAction {
     }
   }
 
-  protected abstract @Nullable DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
-                                                         @NotNull VirtualFile defaultRoot);
+  protected abstract @Nullable DialogState<T> displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
+                                                             @NotNull VirtualFile defaultRoot);
 
   protected abstract String getNotificationErrorDisplayId();
 
   @Override
   protected final void perform(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
-    DialogState dialogState = displayDialog(project, gitRoots, defaultRoot);
+    DialogState<T> dialogState = displayDialog(project, gitRoots, defaultRoot);
     if (dialogState == null) {
       return;
     }
     perform(dialogState, project);
   }
 
-  protected void perform(@NotNull DialogState dialogState, @NotNull Project project) {
+  protected void perform(@NotNull DialogState<T> dialogState, @NotNull Project project) {
     VirtualFile selectedRoot = dialogState.selectedRoot;
     Supplier<GitLineHandler> handlerProvider = dialogState.handlerProvider;
     Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, GitBundle.message("merge.action.before.update.label"));

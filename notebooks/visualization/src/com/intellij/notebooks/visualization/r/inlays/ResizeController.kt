@@ -113,13 +113,13 @@ class ResizeController(
     }
 
     val canResize = mouseInResizeArea(e)
-    setCursor(if (canResize) Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR) else Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR))
+    setCursor(if (canResize) Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR) else Cursor.getDefaultCursor())
     resizeState = if (canResize) ResizeState.HOVER else ResizeState.NONE
   }
 
   override fun mouseExited(e: MouseEvent) {
     if (scaleMode == ScaleMode.NONE) {
-      setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR))
+      setCursor(Cursor.getDefaultCursor())
       resizeState = ResizeState.NONE
     }
   }

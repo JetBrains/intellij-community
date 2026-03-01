@@ -4,7 +4,14 @@ package org.jetbrains.jps.dependency.impl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.ComparableTypeExternalizer;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.MapletFactory;
+import org.jetbrains.jps.dependency.MultiMaplet;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.dependency.kotlin.TypealiasesIndex;
@@ -12,10 +19,17 @@ import org.jetbrains.jps.dependency.kotlin.TypealiasesIndex;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.map;
 
 // this is a base implementation for shared functionality in both DependencyGraph and Delta
 @ApiStatus.Internal

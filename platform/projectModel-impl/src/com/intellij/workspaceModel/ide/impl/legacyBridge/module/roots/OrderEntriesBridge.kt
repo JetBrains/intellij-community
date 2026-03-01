@@ -3,16 +3,34 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ExportableOrderEntry
+import com.intellij.openapi.roots.InheritedJdkOrderEntry
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleJdkOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.OrderRootsEnumerator
+import com.intellij.openapi.roots.RootPolicy
+import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.ClonableOrderEntry
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ArrayUtil
@@ -23,7 +41,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
-import java.util.*
+import java.util.Locale
+import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
 
 internal abstract class OrderEntryBridge(
   private val rootModel: ModuleRootModelBridge,

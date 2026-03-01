@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_DIR_NAME
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.outputStream
 

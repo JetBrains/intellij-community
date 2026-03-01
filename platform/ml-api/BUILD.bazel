@@ -21,4 +21,17 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "ml_test_lib",
+  module_name = "intellij.platform.ml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ml",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.ml` end

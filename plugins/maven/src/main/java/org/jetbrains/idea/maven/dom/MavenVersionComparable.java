@@ -4,7 +4,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Properties;
 
 /**
  * Copy pasted from org.apache.maven.artifact.versioning.ComparableVersion

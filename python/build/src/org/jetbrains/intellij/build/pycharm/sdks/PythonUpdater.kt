@@ -10,7 +10,11 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.Binary
+import com.jetbrains.python.sdk.Product
+import com.jetbrains.python.sdk.Release
+import com.jetbrains.python.sdk.Resource
+import com.jetbrains.python.sdk.toLanguageLevel
 import org.jetbrains.intellij.build.pycharm.RESOURCE_CACHE
 import org.jetbrains.intellij.build.pycharm.SUPPORTED_LEVELS
 import org.jetbrains.intellij.build.pycharm.runCommand

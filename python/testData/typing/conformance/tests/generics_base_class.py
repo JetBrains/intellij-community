@@ -1,6 +1,6 @@
 # Specification: https://typing.readthedocs.io/en/latest/spec/generics.html#arbitrary-generic-types-as-base-classes
 
-from typing import Generic, TypeVar, Iterable, assert_type
+from typing import Generic, TypeVar, assert_type
 
 T = TypeVar("T")
 

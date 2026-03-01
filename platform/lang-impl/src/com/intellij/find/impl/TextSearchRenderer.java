@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
 
 final class TextSearchRenderer extends JPanel implements ListCellRenderer<SearchEverywhereItem> {
   private final TextSearchListAgnosticRenderer myRenderer = new TextSearchListAgnosticRenderer((list, index) -> {

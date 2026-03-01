@@ -4,7 +4,7 @@ package com.intellij.ui.icons;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface ReplaceableIcon extends Icon {
   default @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {

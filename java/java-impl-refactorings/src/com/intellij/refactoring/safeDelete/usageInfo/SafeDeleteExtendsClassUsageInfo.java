@@ -2,7 +2,18 @@
 package com.intellij.refactoring.safeDelete.usageInfo;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;

@@ -20,6 +20,13 @@ public class ConvertToVarargsMethodFixTest extends IGQuickFixesTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new MethodCanBeVariableArityMethodInspection());
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         @Documented
+                         @Retention(RetentionPolicy.CLASS)
+                         @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
+                         public @interface NotNull {}
+                         """);
     myRelativePath = "migration/convert_to_varargs_method";
     myDefaultHint = InspectionGadgetsBundle.message("convert.to.variable.arity.method.quickfix");
   }

@@ -14,13 +14,23 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgContentRevision;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgNameWithHashInfo;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.openapi.vcs.history.VcsDiffUtil.createChangesWithCurrentContentForFile;
 

@@ -25,25 +25,20 @@ internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
     WindowsVoiceAccess, MacOSVoiceControl
   }
 
-  private val GROUP = EventLogGroup("accessibility.tools.state", 1, "FUS",
-                                    "Statistics about the usage of third-party accessibility tools and settings")
+  private val GROUP = EventLogGroup("accessibility.tools.state", 1)
 
   private val SCREEN_READER = GROUP.registerEvent(
     "screen.reader",
-    EventFields.Enum<ScreenReader>("name", "Name of the screen reader tool"),
-    "Screen reader is running in the system")
+    EventFields.Enum<ScreenReader>("name", "Name of the screen reader tool"))
   private val SCREEN_MAGNIFIER = GROUP.registerEvent(
     "screen.magnifier",
-    EventFields.Enum<ScreenMagnifier>("name", "Name of the screen magnifier tool"),
-    "Screen magnifier is running in the system")
+    EventFields.Enum<ScreenMagnifier>("name", "Name of the screen magnifier tool"))
   private val VOICE_CONTROL = GROUP.registerEvent(
     "voice.control",
-    EventFields.Enum<VoiceControl>("name", "Name of the voice control tool"),
-    "Voice control is running in the system")
+    EventFields.Enum<VoiceControl>("name", "Name of the voice control tool"))
   private val OS_HIGH_CONTRAST = GROUP.registerEvent(
     "os.high.contrast",
-    EventFields.Enabled,
-    "High Contrast mode is enabled in the OS settings")
+    EventFields.Enabled)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -52,22 +47,27 @@ internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
 
     when {
       SystemInfoRt.isWindows -> {
-        val processList = OSProcessUtil.getProcessList()
-        for (process in processList) {
-          when (process.executableName.lowercase()) {
-            "nvda.exe" -> {
-              set.add(SCREEN_READER.metric(ScreenReader.NVDA))
-            }
-            "jfw.exe" -> {
-              set.add(SCREEN_READER.metric(ScreenReader.JAWS))
-            }
-            "magnify.exe" -> {
-              set.add(SCREEN_MAGNIFIER.metric(ScreenMagnifier.WindowsMagnifier))
-            }
-            "voiceaccess.exe" -> {
-              set.add(VOICE_CONTROL.metric(VoiceControl.WindowsVoiceAccess))
+        try {
+          val processList = OSProcessUtil.getProcessList()
+          for (process in processList) {
+            when (process.executableName.lowercase()) {
+              "nvda.exe" -> {
+                set.add(SCREEN_READER.metric(ScreenReader.NVDA))
+              }
+              "jfw.exe" -> {
+                set.add(SCREEN_READER.metric(ScreenReader.JAWS))
+              }
+              "magnify.exe" -> {
+                set.add(SCREEN_MAGNIFIER.metric(ScreenMagnifier.WindowsMagnifier))
+              }
+              "voiceaccess.exe" -> {
+                set.add(VOICE_CONTROL.metric(VoiceControl.WindowsVoiceAccess))
+              }
             }
           }
+        }
+        catch (_: Throwable) {
+          // Failure to get the process list can happen but very rarely. Treat it as if there are no AT running so we can collect other data
         }
 
         if (Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == true) {

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static com.intellij.psi.search.GlobalSearchScope.allScope;
 

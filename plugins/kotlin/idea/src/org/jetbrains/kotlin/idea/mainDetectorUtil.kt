@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
+@K1Deprecation
 fun KtElement.isMainFunction(computedDescriptor: DeclarationDescriptor? = null): Boolean {
     if (this !is KtNamedFunction) return false
     val mainFunctionDetector = MainFunctionDetector(languageVersionSettings) { it.resolveToDescriptorIfAny() }

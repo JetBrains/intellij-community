@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
 import com.intellij.lang.Language
@@ -7,7 +7,7 @@ import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
-import com.intellij.psi.tree.TemplateLanguageStubBaseVersion.dropVersion
+import com.intellij.psi.tree.TemplateLanguageStubBaseVersion
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -21,7 +21,7 @@ open class StubElementRegistryServiceImpl(coroutineScope: CoroutineScope) : Core
 
   init {
     STUB_REGISTRY_EP.addChangeListener(coroutineScope) { init() }
-    STUB_DEFINITION_EP.point?.addChangeListener(coroutineScope) { onStubDefinitionChange() }
+    STUB_DEFINITION_EP.point?.addChangeListener(coroutineScope) { TemplateLanguageStubBaseVersion.dropVersion() }
     init()
   }
 
@@ -43,11 +43,6 @@ open class StubElementRegistryServiceImpl(coroutineScope: CoroutineScope) : Core
       this.type2serializerMap = type2serializerMap
       this.serializer2typeMap = serializer2typeMap
     }
-  }
-
-  private fun onStubDefinitionChange() {
-    // todo IJPL-562 do we need to drop version when registering LanguageStubDefinition
-    dropVersion()
   }
 
   override fun getStubFactory(type: IElementType): StubElementFactory<*, *>? {

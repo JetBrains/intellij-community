@@ -34,8 +34,11 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;

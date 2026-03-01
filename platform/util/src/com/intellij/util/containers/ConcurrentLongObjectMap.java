@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiFunction;
+import java.util.function.LongFunction;
 
 /**
  * Base interface for concurrent (long key -> V value) map
@@ -92,6 +94,20 @@ public interface ConcurrentLongObjectMap<V> {
    * or {@code null} if there was no mapping for the key
    */
   V putIfAbsent(long key, @NotNull V value);
+
+  V compute(long key, LongObjectToObjectFunction<? super V, ? extends V> remappingFunction);
+
+  V computeIfAbsent(long key, LongFunction<? extends V> mappingFunction);
+
+  V computeIfPresent(long key, LongObjectToObjectFunction<? super V, ? extends V> remappingFunction);
+
+  V merge(long key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction);
+
+  @FunctionalInterface
+  interface LongObjectToObjectFunction<T, R> {
+
+    R apply(long value, T value2);
+  }
 
   @Debug.Renderer(text = "getKey() + \" -> \\\"\" + getValue() + \"\\\"\"")
   interface LongEntry<V> {

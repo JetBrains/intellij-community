@@ -85,20 +85,26 @@ f:git4idea.GitTag$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 f:git4idea.GitWorkingTree
 - sf:Companion:git4idea.GitWorkingTree$Companion
-- <init>(com.intellij.openapi.vcs.FilePath,git4idea.GitStandardLocalBranch,Z,Z):V
-- <init>(java.lang.String,java.lang.String,Z,Z):V
+- <init>(com.intellij.openapi.vcs.FilePath,git4idea.GitStandardLocalBranch,Z,Z,Z,Z):V
+- b:<init>(com.intellij.openapi.vcs.FilePath,git4idea.GitStandardLocalBranch,Z,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,Z,Z,Z,Z):V
+- b:<init>(java.lang.String,java.lang.String,Z,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():com.intellij.openapi.vcs.FilePath
 - f:component2():git4idea.GitStandardLocalBranch
 - f:component3():Z
 - f:component4():Z
-- f:copy(com.intellij.openapi.vcs.FilePath,git4idea.GitStandardLocalBranch,Z,Z):git4idea.GitWorkingTree
-- bs:copy$default(git4idea.GitWorkingTree,com.intellij.openapi.vcs.FilePath,git4idea.GitStandardLocalBranch,Z,Z,I,java.lang.Object):git4idea.GitWorkingTree
+- f:component5():Z
+- f:component6():Z
+- f:copy(com.intellij.openapi.vcs.FilePath,git4idea.GitStandardLocalBranch,Z,Z,Z,Z):git4idea.GitWorkingTree
+- bs:copy$default(git4idea.GitWorkingTree,com.intellij.openapi.vcs.FilePath,git4idea.GitStandardLocalBranch,Z,Z,Z,Z,I,java.lang.Object):git4idea.GitWorkingTree
 - equals(java.lang.Object):Z
 - f:getCurrentBranch():git4idea.GitStandardLocalBranch
 - f:getPath():com.intellij.openapi.vcs.FilePath
 - hashCode():I
 - f:isCurrent():Z
+- f:isLocked():Z
 - f:isMain():Z
+- f:isPrunable():Z
 f:git4idea.GitWorkingTree$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 e:git4idea.branch.GitBranchType
@@ -121,14 +127,14 @@ f:git4idea.branch.GitTagType
 - git4idea.branch.GitRefType
 - sf:INSTANCE:git4idea.branch.GitTagType
 - getName():java.lang.String
-e:git4idea.config.GitIncomingCheckStrategy
+e:git4idea.config.GitIncomingRemoteCheckStrategy
 - java.lang.Enum
-- sf:Always:git4idea.config.GitIncomingCheckStrategy
-- sf:Auto:git4idea.config.GitIncomingCheckStrategy
-- sf:Never:git4idea.config.GitIncomingCheckStrategy
+- sf:FETCH:git4idea.config.GitIncomingRemoteCheckStrategy
+- sf:LS_REMOTE:git4idea.config.GitIncomingRemoteCheckStrategy
+- sf:NONE:git4idea.config.GitIncomingRemoteCheckStrategy
 - s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):git4idea.config.GitIncomingCheckStrategy
-- s:values():git4idea.config.GitIncomingCheckStrategy[]
+- s:valueOf(java.lang.String):git4idea.config.GitIncomingRemoteCheckStrategy
+- s:values():git4idea.config.GitIncomingRemoteCheckStrategy[]
 e:git4idea.config.GitSaveChangesPolicy
 - java.lang.Enum
 - sf:SHELVE:git4idea.config.GitSaveChangesPolicy
@@ -149,7 +155,7 @@ f:git4idea.config.GitVcsOptions
 - f:getFilterByActionInPopup():Z
 - f:getFilterByRepositoryInPopup():Z
 - f:getGcAuto():java.lang.String
-- f:getIncomingCheckStrategy():git4idea.config.GitIncomingCheckStrategy
+- f:getIncomingCommitsCheckStrategy():git4idea.config.GitIncomingRemoteCheckStrategy
 - f:getPathToGit():java.lang.String
 - f:getPreviousCommitAuthors():java.util.List
 - f:getPushTags():git4idea.push.GitPushTagMode
@@ -172,7 +178,6 @@ f:git4idea.config.GitVcsOptions
 - f:isSetUserNameGlobally():Z
 - f:isSignOffCommit():Z
 - f:isSwapSidesInCompareBranches():Z
-- f:isUpdateBranchesInfo():Z
 - f:isWarnAboutBadFileNames():Z
 - f:isWarnAboutDetachedHead():Z
 - f:isWarnAboutLargeFiles():Z
@@ -187,7 +192,7 @@ f:git4idea.config.GitVcsOptions
 - f:setFilterByActionInPopup(Z):V
 - f:setFilterByRepositoryInPopup(Z):V
 - f:setGcAuto(java.lang.String):V
-- f:setIncomingCheckStrategy(git4idea.config.GitIncomingCheckStrategy):V
+- f:setIncomingCommitsCheckStrategy(git4idea.config.GitIncomingRemoteCheckStrategy):V
 - f:setPathToGit(java.lang.String):V
 - f:setPreviewPushOnCommitAndPush(Z):V
 - f:setPreviewPushProtectedOnly(Z):V
@@ -203,7 +208,6 @@ f:git4idea.config.GitVcsOptions
 - f:setShowTags(Z):V
 - f:setSignOffCommit(Z):V
 - f:setSwapSidesInCompareBranches(Z):V
-- f:setUpdateBranchesInfo(Z):V
 - f:setUpdateMethod(git4idea.config.UpdateMethod):V
 - f:setWarnAboutBadFileNames(Z):V
 - f:setWarnAboutCrlf(Z):V
@@ -221,7 +225,7 @@ f:git4idea.config.GitVcsSettings
 - getBranchSettings():com.intellij.dvcs.branch.DvcsBranchSettings
 - getCommitAuthors():java.lang.String[]
 - getFetchTagsMode():git4idea.fetch.GitFetchTagsMode
-- getIncomingCheckStrategy():git4idea.config.GitIncomingCheckStrategy
+- getIncomingCommitsCheckStrategy():git4idea.config.GitIncomingRemoteCheckStrategy
 - s:getInstance(com.intellij.openapi.project.Project):git4idea.config.GitVcsSettings
 - getPathToGit():java.lang.String
 - getPushTagMode():git4idea.push.GitPushTagMode
@@ -239,13 +243,15 @@ f:git4idea.config.GitVcsSettings
 - noStateLoaded():V
 - saveCommitAuthor(java.lang.String):V
 - setAddSuffixToCherryPicks(Z):V
+- setAutoFetch(Z):V
 - setAutoUpdateIfPushRejected(Z):V
 - setBranchGroupingSettings(com.intellij.dvcs.branch.GroupingKey,Z):V
+- setCheckRemote(Z):V
 - setCommitRenamesSeparately(Z):V
 - setFetchTagsMode(git4idea.fetch.GitFetchTagsMode):V
 - setFilterByActionInPopup(Z):V
 - setFilterByRepositoryInPopup(Z):V
-- setIncomingCheckStrategy(git4idea.config.GitIncomingCheckStrategy):V
+- setIncomingCommitsCheckStrategy(git4idea.config.GitIncomingRemoteCheckStrategy):V
 - setPathToGit(java.lang.String):V
 - setPreviewPushOnCommitAndPush(Z):V
 - setPreviewPushProtectedOnly(Z):V

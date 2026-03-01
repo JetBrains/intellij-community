@@ -8,6 +8,6 @@ public open class <11>OpenClassWithFunctionWithDefaultParameter public construct
 
 package testData.libraries
 
-public fun <8><10>funWithDefaultParameter(a: kotlin.Int, b: kotlin.String = COMPILED_CODE): kotlin.Unit { /* compiled code */ }
-
 @kotlin.jvm.JvmOverloads public fun <T> kotlin.String.<2><4><6>overloadedFun(vararg specs: kotlin.String, allowExisting: kotlin.Boolean = COMPILED_CODE, x: kotlin.Int, y: kotlin.Int = COMPILED_CODE, z: T): kotlin.String { /* compiled code */ }
+
+public fun <8><10>funWithDefaultParameter(a: kotlin.Int, b: kotlin.String = COMPILED_CODE): kotlin.Unit { /* compiled code */ }

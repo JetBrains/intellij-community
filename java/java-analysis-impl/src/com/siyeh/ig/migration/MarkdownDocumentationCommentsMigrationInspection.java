@@ -15,7 +15,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
-import com.intellij.psi.javadoc.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -24,12 +28,15 @@ import com.intellij.util.text.CharArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document.OutputSettings;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.NodeFilter;
-import org.jsoup.nodes.Document.OutputSettings;
 
 import java.util.ArrayDeque;
 import java.util.regex.Pattern;
@@ -118,7 +125,7 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
           }
           String name = inlineDocTag.getName();
           if ("code".equals(name)) handleCode(inlineDocTag, result);
-          else if ("link".equals(name)) handleLink(inlineDocTag, result);
+          else if ("link".equals(name) || "linkplain".equals(name)) handleLink(inlineDocTag, result);
           else handleInlineDocTag(inlineDocTag, result);
         }
         else if (child instanceof PsiDocParamRef) {
@@ -218,47 +225,67 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
     }
 
     private static void handleLink(PsiInlineDocTag inlineDocTag, StringBuilder result) {
-      result.append('[');
+      boolean isPlain = inlineDocTag.getName().equals("linkplain");
       PsiElement[] dataElements = inlineDocTag.getDataElements();
-      boolean dataFound = false;
+      StringBuilder referenceBuilder = new StringBuilder();
+      StringBuilder labelBuilder = null;
+
+      // Extract label (if available)
       for (PsiElement dataElement : dataElements) {
         if (dataElement instanceof PsiDocToken) {
-          String text = dataElement.getText();
+          String labelText = dataElement.getText();
           // Remove the mandatory space
-          if (!dataFound) text = text.stripLeading();
-          if (!text.isBlank()) {
-            result.append(text);
-            dataFound = true;
+          if (labelBuilder == null) labelText = labelText.stripLeading();
+          if (!labelText.isBlank()) {
+            if (labelBuilder == null) labelBuilder = new StringBuilder();
+
+            labelBuilder.append(labelText);
           }
         }
       }
-      if (dataFound) result.append("][");
+
+      // Extract references
       for (PsiElement dataElement : dataElements) {
         if (dataElement instanceof PsiDocMethodOrFieldRef) {
           for (@NotNull PsiElement refChild : dataElement.getChildren()) {
             if (refChild instanceof PsiDocToken) {
-              result.append(refChild.getText());
+              referenceBuilder.append(refChild.getText());
             }
             else if (refChild instanceof PsiDocTagValue) {
               for (@NotNull PsiElement valueChild : refChild.getChildren()) {
                 if (valueChild instanceof PsiWhiteSpace) {
-                  result.append(valueChild.getText().contains("\n") ? '\n' : valueChild.getText());
+                  referenceBuilder.append(valueChild.getText().contains("\n") ? '\n' : valueChild.getText());
                 }
                 else if (!isDocToken(valueChild, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
-                  result.append(valueChild.getText());
+                  referenceBuilder.append(valueChild.getText());
                 }
               }
             }
             else {
-              result.append(refChild.getText());
+              referenceBuilder.append(refChild.getText());
             }
           }
         }
         else if (!(dataElement instanceof PsiDocToken) && !(dataElement instanceof PsiWhiteSpace)) {
-          result.append(dataElement.getText());
+          referenceBuilder.append(dataElement.getText());
         }
       }
-      result.append(']');
+
+      // When a @linkplain tag is without a label, use the reference as one, otherwise the Markdown version mimics the @link tag
+      if(isPlain && labelBuilder == null && !referenceBuilder.isEmpty()) {
+        labelBuilder = referenceBuilder;
+      }
+
+      if (labelBuilder != null) {
+        result.append(!isPlain ? "[<code>" : '[').append(labelBuilder).append(!isPlain ? "</code>]" : ']');
+      }
+      if (!referenceBuilder.isEmpty()) {
+        result.append('[')
+          .append(referenceBuilder.toString()
+                    .replace("[", "\\[")
+                    .replace("]", "\\]"))
+          .append(']');
+      }
     }
   }
   
@@ -307,7 +334,13 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
       }
 
       switch (nodeName) {
-        case "a" -> result.append("[");
+        case "a" -> {
+          if (!shouldTransformHtmlLink()) {
+            appendWithoutConversion(node);
+            return FilterResult.SKIP_ENTIRELY;
+          }
+          result.append("[");
+        }
         case "i", "em" -> result.append('_');
         case "b", "strong" -> result.append("**");
         case "hr" -> appendWithNewLineIfNeeded("___\n");
@@ -414,6 +447,7 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
           // Remove consecutive newlines and space which is before the last line
           String cleanedText = MULTI_LINE_BREAK.matcher(node.nodeValue()).replaceAll("");
           cleanedText = cleanedText
+            .replace("~", "\\~")
             .replace("`", "\\`")
             .replace("_", "\\_")
             .replace("*", "\\*");
@@ -504,6 +538,11 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
         }
       }
       return singleRelevantChild;
+    }
+
+    /// @see <a href="https://docs.oracle.com/en/java/javase/25/docs/specs/javadoc/doc-comment-spec.html#see"> To see why `a` tags shouldn't be converted</a>
+    private boolean shouldTransformHtmlLink() {
+      return !StringUtil.endsWithIgnoreWhitespaces(result, "@see");
     }
 
     /// Append the text with a new line if necessary for the Markdown syntax

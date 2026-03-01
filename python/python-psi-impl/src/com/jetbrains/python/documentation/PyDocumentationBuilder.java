@@ -5,7 +5,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.*;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -16,29 +20,79 @@ import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyRaiseStatement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTryExceptStatement;
+import com.jetbrains.python.psi.PyTypeAliasStatement;
+import com.jetbrains.python.psi.PyTypeParameter;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.PyWhileStatement;
+import com.jetbrains.python.psi.PyWithStatement;
+import com.jetbrains.python.psi.PyYieldExpression;
+import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static com.intellij.lang.documentation.DocumentationMarkup.*;
+import static com.intellij.lang.documentation.DocumentationMarkup.BOTTOM_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.CONTENT_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.SECTIONS_TABLE;
+import static com.intellij.lang.documentation.DocumentationMarkup.SECTION_CONTENT_CELL;
+import static com.intellij.lang.documentation.DocumentationMarkup.SECTION_HEADER_CELL;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyDocumentationBuilder {
@@ -131,7 +185,7 @@ public final class PyDocumentationBuilder {
 
 
     if (myBody.isEmpty() && myContent.isEmpty()) {
-      return null; // got nothing substantial to say!
+      return null; // got nothing significant to say!
     }
     else {
       final HtmlBuilder result = new HtmlBuilder();
@@ -163,7 +217,7 @@ public final class PyDocumentationBuilder {
 
     if (elementType == PyTokenTypes.FROM_KEYWORD) {
       // We want to show yield doc in 'yield from ...' expressions when hover to 'from',
-      // but there is no particular PyStatement for 'yield' keyword, therefore we make such a check.
+      // but there is no particular PyStatement for 'yield' keyword; therefore, we make such a check.
       if (parentStatement.getFirstChild() instanceof PyYieldExpression) {
         return PyNames.YIELD;
       }
@@ -248,7 +302,7 @@ public final class PyDocumentationBuilder {
     }
     if (link != null && typeParamName != null) {
       myBody.appendRaw(PyPsiBundle.message("QDOC.type.parameter.name.of.link", HtmlChunk.text(typeParamName).bold(), link)).br();
-      myBody.append(PythonDocumentationProvider.describeTypeParameter(typeParameter, true, myContext));
+      myBody.append(PythonDocumentationProvider.describeTypeParameter(typeParameter, myOriginalElement, true, myContext));
     }
   }
 
@@ -422,7 +476,7 @@ public final class PyDocumentationBuilder {
       }
       if (effectiveDocstring != null) {
         addFunctionSpecificSections(effectiveDocstring, pyFunction);
-        // if function is init without doc we will take attributes from the class doc
+        // if the function is init without a doc, we will take attributes from the class doc
         if (effectiveDocstring != ownDocstring && PyUtil.isInitOrNewMethod(pyFunction)) {
           addAttributesSection(effectiveDocstring);
         }
@@ -462,7 +516,7 @@ public final class PyDocumentationBuilder {
 
     if (owner instanceof PyClass pyClass) {
       final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, myContext);
-      // if class doesn't have any doc return init doc
+      // if the class doesn't have any doc return init doc
       if (init != null) {
         return getEffectiveDocStringExpression(init);
       }
@@ -506,7 +560,7 @@ public final class PyDocumentationBuilder {
         }
         myBody.br();
       }
-      // if there is no separate doc for attribute we will try to take it from class doc
+      // if there is no separate doc for attribute, we will try to take it from class doc
       if (getEffectiveDocStringExpression(target) == null) {
         final PyStringLiteralExpression docString = getEffectiveDocStringExpression(containingClass);
         if (docString != null) {
@@ -518,7 +572,7 @@ public final class PyDocumentationBuilder {
         }
       }
     }
-    myBody.append(PythonDocumentationProvider.describeTarget(target, myContext));
+    myBody.append(PythonDocumentationProvider.describeTarget(target, myOriginalElement, myContext));
   }
 
   private void addAttributesSection(@NotNull PyStringLiteralExpression docstring) {
@@ -581,7 +635,7 @@ public final class PyDocumentationBuilder {
         }
       }
     }
-    // Reference expression can be passed as the target element in Python console
+    // Reference expression can be passed as the target element in the Python console
     if (myElement instanceof PyReferenceExpression) {
       final PsiElement resolved = resolve((PyReferenceExpression)myElement);
       if (resolved != null) {
@@ -615,7 +669,7 @@ public final class PyDocumentationBuilder {
     final boolean isConstructor = PyUtil.isInitOrNewMethod(pyFunction);
     List<PyClass> classes = pyClass.getAncestorClasses(myContext);
     if (isConstructor) {
-      // look at our own class again and maybe inherit class's doc
+      // look at our own class again and maybe inherit the class's doc
       classes = ContainerUtil.prepend(classes, pyClass);
     }
     for (PyClass ancestor : classes) {
@@ -683,7 +737,7 @@ public final class PyDocumentationBuilder {
       .takeWhile(line -> !line.startsWith(">>>")) //TODO: PyConsoleUtil.ORDINARY_PROMPT
       .toList();
     final HtmlBuilder result = new HtmlBuilder();
-    // reconstruct back, dropping first empty fragment as needed
+    // reconstruct back, dropping the first empty fragment as needed
     boolean isFirstLine = true;
     final int tabSize = PythonCodeStyleService.getInstance().getTabSize(element.getContainingFile());
     for (@NlsSafe String line : updatedLines) {
@@ -767,7 +821,7 @@ public final class PyDocumentationBuilder {
   private static @Nullable HtmlChunk getLinkToFunction(@NotNull PyFunction function, boolean preferQualifiedName) {
     final String qualifiedName = function.getQualifiedName();
     final PyClass pyClass = function.getContainingClass();
-    // Preserve name of a containing class even if the whole qualified name can't be constructed
+    // Preserve the name of a containing class even if the whole qualified name can't be constructed
     final String shortName = pyClass == null ? function.getName() : pyClass.getName() + "." + function.getName();
 
     final String linkText = preferQualifiedName && qualifiedName != null ? qualifiedName : shortName;

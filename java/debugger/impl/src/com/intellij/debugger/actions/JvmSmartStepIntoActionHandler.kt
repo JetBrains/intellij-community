@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions
 
 import com.intellij.debugger.JavaDebuggerBundle
@@ -32,7 +32,7 @@ internal class JvmSmartStepIntoActionHandler(private val session: DebuggerSessio
   }
 
   private fun findVariants(xPosition: XSourcePosition, smart: Boolean): Promise<List<JvmSmartStepIntoVariant>> {
-    val scope = (session.xDebugSession as XDebugSessionImpl).currentSuspendCoroutineScope ?: return rejectedPromise()
+    val scope = (session.xDebugSession as XDebugSessionImpl).getSuspendContextModel()?.coroutineScope ?: return rejectedPromise()
     val position = DebuggerUtilsEx.toSourcePosition(xPosition, session.project)
     val handler = JvmSmartStepIntoHandler.EP_NAME.findFirstSafe { it.isAvailable(position) }
                   ?: return rejectedPromise()

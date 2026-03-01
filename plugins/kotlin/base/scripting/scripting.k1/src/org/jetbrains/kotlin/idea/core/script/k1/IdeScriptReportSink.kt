@@ -9,11 +9,13 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDiagnostics
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
 import kotlin.script.experimental.api.ScriptDiagnostic
 
+@K1Deprecation
 class IdeScriptReportSink(
   val project: Project,
   private val coroutineScope: CoroutineScope

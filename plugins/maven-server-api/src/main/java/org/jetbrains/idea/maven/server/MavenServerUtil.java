@@ -16,13 +16,18 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Scanner;
 
 public final class MavenServerUtil {
-  private static final Properties mySystemPropertiesCache;
+  private static final Properties mySystemPropertiesCache = mavenPropsFromEnvironment(System.getenv(), SystemInfoRt.isWindows);
   private static MavenToken ourToken;
 
-  static {
+
+  public static Properties mavenPropsFromEnvironment(Map<String, String> env, boolean isWindows) {
     Properties res = new Properties();
     res.putAll((Properties)System.getProperties().clone());
 
@@ -32,20 +37,19 @@ public final class MavenServerUtil {
         itr.remove();
       }
     }
-
-    for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+    for (Map.Entry<String, String> entry : env.entrySet()) {
       String key = entry.getKey();
 
       if (isMagicalProperty(key)) continue;
 
-      if (SystemInfoRt.isWindows) {
+      if (isWindows) {
         key = key.toUpperCase(Locale.ENGLISH);
       }
 
       res.setProperty("env." + key, entry.getValue());
+      res.setProperty(key, entry.getValue());
     }
-
-    mySystemPropertiesCache = res;
+    return res;
   }
 
   public static Properties collectSystemProperties() {
@@ -74,7 +78,15 @@ public final class MavenServerUtil {
     File pom = new File(dir, "pom.xml");
     //we cannot use any maven models here, just good old XML parsing
     try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(pom))) {
-      XMLStreamReader parser = XMLInputFactory.newFactory().createXMLStreamReader(is);
+      XMLInputFactory factory = XMLInputFactory.newFactory();
+      try {
+        factory.setProperty("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setProperty("http://xml.org/sax/features/external-general-entities", false);
+        factory.setProperty("http://xml.org/sax/features/external-parameter-entities", false);
+      }
+      catch (IllegalArgumentException ignored) {
+      }
+      XMLStreamReader parser = factory.createXMLStreamReader(is);
       if (parser.nextTag() != XMLStreamConstants.START_ELEMENT || !parser.getLocalName().equals("project")) {
         return false;
       }

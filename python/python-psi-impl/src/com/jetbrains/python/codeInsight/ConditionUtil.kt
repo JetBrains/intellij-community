@@ -13,7 +13,14 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parents
 import com.intellij.util.IncorrectOperationException
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentExpression
+import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyPrefixExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 
 /**

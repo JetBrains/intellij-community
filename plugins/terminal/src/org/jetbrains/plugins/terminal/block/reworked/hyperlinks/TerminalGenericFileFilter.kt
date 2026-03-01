@@ -2,17 +2,17 @@ package org.jetbrains.plugins.terminal.block.reworked.hyperlinks
 
 import com.intellij.execution.filters.ConsoleFilterProviderEx
 import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
-import com.intellij.openapi.editor.markup.EffectType
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.ui.JBColor
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterContext
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalFilterScope
-import java.awt.Font
 
 internal enum class ParsingState {
   NORMAL, PATH, CANCELED_PATH
@@ -25,23 +25,25 @@ internal enum class ParsingState {
  *  output, sync output, run test output, built-in terminal emulator, etc. Therefore, we manually parse the string instead of using regex
  *  for maximum performance.
  */
-internal class TerminalGenericFileFilter(
+@ApiStatus.Internal
+class TerminalGenericFileFilter(
   private val project: Project,
-  private val localFileSystem: LocalFileSystem
+  private val context: TerminalHyperlinkFilterContext?,
+  private val localFileSystem: LocalFileSystem,
 ) : Filter {
   companion object {
     /**
      *  Max filename considered during parsing. Do not confuse with file path, which may contain several file names separated by '/' or '\'.
      *
      * Modern popular FS do not allow file names longer than 255.*/
-    const val FILENAME_MAX = 255
+    const val FILENAME_MAX: Int = 255
 
     /**
      * Min path length to be considered.
      *
      * E.g. lonely slashes should be ignored.
      */
-    const val PATH_MIN = 2
+    const val PATH_MIN: Int = 2
   }
 
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
@@ -94,13 +96,10 @@ internal class TerminalGenericFileFilter(
         null
       }
       return if (file != null) {
-        Filter.ResultItem(
+        createInvisibleLink(
           indexOffset + pathStartIndex,
           indexOffset + i,
-          OpenFileHyperlinkInfo(project, file, lineNumber, columnNumber),
-          EMPTY_ATTRS,
-          null,
-          HOVERED_ATTRS,
+          TerminalOpenFileHyperlinkInfo(project, file, lineNumber, columnNumber),
         )
       }
       else {
@@ -214,12 +213,16 @@ internal class TerminalGenericFileFilter(
     if (candidateItem != null) {
       items += candidateItem!!
     }
+    context?.currentWorkingDirectory?.let { workingDir ->
+      val finder = TerminalRelativePathLinkFinder(project, line, indexOffset, context.eelDescriptor, workingDir, items::add)
+      finder.find()
+    }
     if (items.isEmpty()) return null
     return Filter.Result(items)
   }
 }
 
-private fun String?.safeToIntOrDefault(default: Int): Int = StringUtil.parseInt(this, default)
+internal fun String?.safeToIntOrDefault(default: Int): Int = StringUtil.parseInt(this, default)
 
 private fun String.takeWhileFromIndex(index: Int, predicate: (Char) -> Boolean): String? {
   for (i in index until length) {
@@ -230,18 +233,33 @@ private fun String.takeWhileFromIndex(index: Int, predicate: (Char) -> Boolean):
   return null
 }
 
-private val EMPTY_ATTRS: TextAttributes = TextAttributes(null, null, null, null, Font.PLAIN)
-
-private val HOVERED_ATTRS: TextAttributes = TextAttributes(null, null, JBColor.BLACK, EffectType.LINE_UNDERSCORE, Font.PLAIN)
-
+internal fun createInvisibleLink(
+  highlightStartOffset: Int,
+  highlightEndOffset: Int,
+  hyperlinkInfo: HyperlinkInfo,
+): Filter.ResultItem = Filter.ResultItem(
+  highlightStartOffset,
+  highlightEndOffset,
+  hyperlinkInfo,
+).also { it.isInvisibleLink = true }
 
 internal class TerminalGenericFileFilterProvider : ConsoleFilterProviderEx {
   override fun getDefaultFilters(project: Project, scope: GlobalSearchScope): Array<out Filter> {
     if (scope is TerminalFilterScope && Registry.`is`("terminal.generic.hyperlinks", false)) {
-      return arrayOf(TerminalGenericFileFilter(project, LocalFileSystem.getInstance()))
+      val filterContext = scope.filterContext.takeIf {
+        Registry.`is`("terminal.generic.hyperlinks.for.relative.path", true)
+      }
+      return arrayOf(TerminalGenericFileFilter(project, filterContext, LocalFileSystem.getInstance()))
     }
     return emptyArray()
   }
 
   override fun getDefaultFilters(project: Project): Array<out Filter?> = emptyArray()
 }
+
+/**
+ * Provides access to lineNumber and columnNumber in tests.
+ */
+@ApiStatus.Internal
+class TerminalOpenFileHyperlinkInfo(project: Project, file: VirtualFile, val lineNumber: Int, val columnNumber: Int) :
+  OpenFileHyperlinkInfo(project, file, lineNumber, columnNumber)

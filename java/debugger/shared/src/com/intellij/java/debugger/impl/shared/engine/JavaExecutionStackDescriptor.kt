@@ -18,7 +18,7 @@ data class JavaExecutionStackDescriptor(
   override val kind: String = JAVA_EXECUTION_STACK_KIND
 }
 
-private class JavaExecutionStackDescriptorSerializerProvider : CustomXDescriptorSerializerProvider {
+internal class JavaExecutionStackDescriptorSerializerProvider : CustomXDescriptorSerializerProvider {
   override fun getSerializer(kind: String): KSerializer<out XDescriptor>? {
     if (kind == JAVA_EXECUTION_STACK_KIND) {
       return JavaExecutionStackDescriptor.serializer()

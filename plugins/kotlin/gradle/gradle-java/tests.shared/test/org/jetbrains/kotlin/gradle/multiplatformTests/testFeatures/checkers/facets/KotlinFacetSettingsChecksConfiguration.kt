@@ -4,4 +4,5 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.fac
 class KotlinFacetSettingsChecksConfiguration {
     var excludedFacetFields: Set<FacetField>? = null
     var includedFacetFields: Set<FacetField>? = null
+    var skipLanguageVersionSubstitutions: Boolean = false
 }

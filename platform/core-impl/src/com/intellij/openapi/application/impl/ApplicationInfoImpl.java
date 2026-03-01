@@ -19,14 +19,23 @@ import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
+import java.time.LocalDate;
+import java.time.Month;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.GregorianCalendar;
+import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Provides access to content of *ApplicationInfo.xml file.
@@ -75,26 +84,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private ZonedDateTime buildTime;
   private ZonedDateTime majorReleaseBuildDate;
-  private String myProductUrl;
-  private UpdateUrls myUpdateUrls;
-  private String myDocumentationUrl;
-  private String mySupportUrl;
-  private String myYoutrackUrl;
-  private String myFeedbackUrl;
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
   private String pluginDownloadUrl;
-  private String myBuiltinPluginsUrl;
-  private String myWhatsNewUrl;
-  private boolean myShowWhatsNewOnUpdate;
-  private String myWinKeymapUrl;
-  private String myMacKeymapUrl;
   private boolean isEap;
-  private boolean myHasHelp = true;
-  private boolean myHasContextHelp = true;
-  private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private final List<PluginId> essentialPluginIds = new ArrayList<>();
-  private String myJetBrainsTvUrl;
 
   private String mySubscriptionFormId;
   private boolean mySubscriptionTipsAvailable;
@@ -176,64 +170,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         }
         break;
 
-        case "productUrl": {
-          myProductUrl = child.getAttributeValue("url");
-        }
-        break;
-
-        case "help": {
-          String webHelpUrl = getAttributeValue(child, "webhelp-url");
-          if (webHelpUrl != null) {
-            myWebHelpUrl = webHelpUrl;
-          }
-
-          String attValue = child.getAttributeValue("has-help");
-          myHasHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
-
-          attValue = child.getAttributeValue("has-context-help");
-          myHasContextHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
-        }
-        break;
-
-        case "update-urls": {
-          myUpdateUrls = new UpdateUrlsImpl(child);
-        }
-        break;
-
-        case "documentation": {
-          myDocumentationUrl = child.getAttributeValue("url");
-        }
-        break;
-
-        case "support": {
-          mySupportUrl = child.getAttributeValue("url");
-        }
-        break;
-
-        case "youtrack": {
-          myYoutrackUrl = child.getAttributeValue("url");
-        }
-        break;
-
-        case "feedback": {
-          myFeedbackUrl = child.getAttributeValue("url");
-        }
-        break;
-
-        case "whatsnew": {
-          myWhatsNewUrl = child.getAttributeValue("url");
-          myShowWhatsNewOnUpdate = Boolean.parseBoolean(child.getAttributeValue("show-on-update"));
-        }
-        break;
-
         case "plugins": {
           readPluginInfo(child);
-        }
-        break;
-
-        case "keymap": {
-          myWinKeymapUrl = child.getAttributeValue("win");
-          myMacKeymapUrl = child.getAttributeValue("mac");
         }
         break;
 
@@ -242,11 +180,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
           if (id != null && !id.isEmpty()) {
             essentialPluginIds.add(PluginId.getId(id));
           }
-        }
-        break;
-
-        case "jetbrains-tv": {
-          myJetBrainsTvUrl = child.getAttributeValue("url");
         }
         break;
 
@@ -287,19 +220,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       readPluginInfo(null);
     }
 
-    Objects.requireNonNull(svgIconUrl, "Missing attribute: //icon@svg");
-    Objects.requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
-
-    overrideFromProperties();
+    requireNonNull(svgIconUrl, "Missing attribute: //icon@svg");
+    requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
 
     essentialPluginIds.sort(null);
-  }
-
-  private void overrideFromProperties() {
-    String youTrackUrlOverride = System.getProperty("application.info.youtrack.url");
-    if (youTrackUrlOverride != null) {
-      myYoutrackUrl = youTrackUrlOverride;
-    }
   }
 
   public static @NotNull ApplicationInfoEx getShadowInstance() {
@@ -353,9 +277,14 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return majorReleaseBuildDate == null ? getBuildDate() : GregorianCalendar.from(majorReleaseBuildDate);
   }
 
+  @TestOnly
+  public @Nullable ZonedDateTime getMajorReleaseBuildDateTime() {
+    return majorReleaseBuildDate;
+  }
+
   @Override
   public @NotNull BuildNumber getBuild() {
-    return Objects.requireNonNull(BuildNumber.fromString(myBuildNumber));
+    return requireNonNull(BuildNumber.fromString(myBuildNumber));
   }
 
   @Override
@@ -371,17 +300,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @NotNull BuildNumber getApiVersionAsNumber() {
     BuildNumber build = getBuild();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("getApiVersionAsNumber: build=" + build.asString());
-    }
     if (myApiVersion != null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("getApiVersionAsNumber: myApiVersion=" + build.asString());
-      }
       BuildNumber api = BuildNumber.fromStringWithProductCode(myApiVersion, build.getProductCode());
-      if (api != null) {
-        return api;
-      }
+      if (api != null) return api;
     }
     return build;
   }
@@ -404,6 +325,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getPatchVersion() {
     return myPatchVersion;
+  }
+
+  @TestOnly
+  public @Nullable String getVersionSuffix() {
+    return myVersionSuffix;
   }
 
   @Override
@@ -461,14 +387,33 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    String imageUrl = splashImageUrl;
     if (subscriptionModeSplashImageUrl != null) {
       Path markerFile = PathManager.getConfigDir().resolve(SUBSCRIPTION_MODE_SPLASH_MARKER_FILE_NAME);
       if (Files.exists(markerFile)) {
-        return subscriptionModeSplashImageUrl;
+        imageUrl = subscriptionModeSplashImageUrl;
       }
     }
 
-    return splashImageUrl;
+    String specialAnniversarySplash = specialAnniversarySplash(imageUrl);
+    return specialAnniversarySplash != null ? specialAnniversarySplash : imageUrl;
+  }
+
+  private @Nullable String specialAnniversarySplash(String imageUrl) {
+    if (getVersionName().equals("IntelliJ IDEA")) {
+      LocalDate startDate = LocalDate.of(2026, Month.JULY, 5);
+      LocalDate endDate = LocalDate.of(2026, Month.JULY, 13);
+      LocalDate nowDate = LocalDate.now();
+      if (imageUrl != null &&
+          (
+            Boolean.parseBoolean(System.getProperty("show.kotlin.anniversary.splash")) ||
+            nowDate.isAfter(startDate) && nowDate.isBefore(endDate)
+          )
+      ) {
+        return imageUrl.replace(".png", "_kotlin_15.png");
+      }
+    }
+    return null;
   }
 
   @Override
@@ -512,36 +457,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getProductUrl() {
-    return myProductUrl;
-  }
-
-  @Override
-  public @Nullable UpdateUrls getUpdateUrls() {
-    return myUpdateUrls;
-  }
-
-  @Override
-  public String getDocumentationUrl() {
-    return myDocumentationUrl;
-  }
-
-  @Override
-  public String getSupportUrl() {
-    return mySupportUrl;
-  }
-
-  @Override
-  public String getYoutrackUrl() {
-    return myYoutrackUrl;
-  }
-
-  @Override
-  public String getFeedbackUrl() {
-    return myFeedbackUrl;
-  }
-
-  @Override
   public @NotNull String getPluginManagerUrl() {
     return myPluginManagerUrl;
   }
@@ -562,46 +477,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getBuiltinPluginsUrl() {
-    return myBuiltinPluginsUrl;
-  }
-
-  @Override
-  public String getWebHelpUrl() {
-    return myWebHelpUrl;
-  }
-
-  @Override
-  public boolean hasHelp() {
-    return myHasHelp;
-  }
-
-  @Override
-  public boolean hasContextHelp() {
-    return myHasContextHelp;
-  }
-
-  @Override
-  public String getWhatsNewUrl() {
-    return myWhatsNewUrl;
-  }
-
-  @Override
-  public boolean isShowWhatsNewOnUpdate() {
-    return myShowWhatsNewOnUpdate;
-  }
-
-  @Override
-  public String getWinKeymapUrl() {
-    return myWinKeymapUrl;
-  }
-
-  @Override
-  public String getMacKeymapUrl() {
-    return myMacKeymapUrl;
-  }
-
-  @Override
   public String getFullApplicationName() {
     return getVersionName() + " " + getFullVersion();
   }
@@ -609,11 +484,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getCopyrightStart() {
     return myCopyrightStart;
-  }
-
-  @Override
-  public String getJetBrainsTvUrl() {
-    return myJetBrainsTvUrl;
   }
 
   @Override
@@ -640,7 +510,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       LOG.debug("getPluginsCompatibleBuildAsNumber: version=" + version.asString());
     }
     BuildNumber buildNumber = BuildNumber.fromStringWithProductCode(version.asString(), getBuild().getProductCode());
-    return Objects.requireNonNull(buildNumber);
+    return requireNonNull(buildNumber);
   }
 
   private static @Nullable String getAttributeValue(XmlElement element, String name) {
@@ -684,11 +554,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       if (downloadUrl != null) {
         pluginDownloadUrl = downloadUrl;
       }
-
-      String builtinPluginsUrl = element.getAttributeValue("builtin-url");
-      if (builtinPluginsUrl != null && !builtinPluginsUrl.isEmpty()) {
-        myBuiltinPluginsUrl = builtinPluginsUrl;
-      }
     }
 
     String pluginHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
@@ -705,7 +570,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   // copy of ApplicationInfoProperties.shortenCompanyName
-  @SuppressWarnings("SSBasedInspection")
   private static String shortenCompanyName(String name) {
     if (name.endsWith(" s.r.o.")) name = name.substring(0, name.length() - " s.r.o.".length());
     if (name.endsWith(" Inc.")) name = name.substring(0, name.length() - " Inc.".length());
@@ -782,26 +646,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public boolean isSimplifiedSplashSupported() {
     return simplifiedSplashImageUrl != null;
-  }
-
-  private static final class UpdateUrlsImpl implements UpdateUrls {
-    private final String myCheckingUrl;
-    private final String myPatchesUrl;
-
-    private UpdateUrlsImpl(XmlElement element) {
-      myCheckingUrl = element.getAttributeValue("check");
-      myPatchesUrl = element.getAttributeValue("patches");
-    }
-
-    @Override
-    public String getCheckingUrl() {
-      return myCheckingUrl;
-    }
-
-    @Override
-    public String getPatchesUrl() {
-      return myPatchesUrl;
-    }
   }
 
   /** @deprecated Use {@link ApplicationManagerEx#isInStressTest} */

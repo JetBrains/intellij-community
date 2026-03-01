@@ -39,9 +39,12 @@ import org.intellij.plugins.xpathView.util.HighlighterUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Point;
 import java.util.List;
 
 /**

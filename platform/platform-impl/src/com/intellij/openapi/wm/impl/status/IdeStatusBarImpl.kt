@@ -8,8 +8,21 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarPopupShown
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarWidgetClicked
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
@@ -17,9 +30,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.progress.ProgressIndicatorModel
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.impl.BridgeTaskSupport
 import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -29,11 +42,22 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
-import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.StatusBarWidget.*
+import com.intellij.openapi.wm.CustomStatusBarWidget
+import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget
+import com.intellij.openapi.wm.IconWidgetPresentation
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarListener
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.StatusBarWidget.IconPresentation
+import com.intellij.openapi.wm.StatusBarWidget.MultipleTextValuesPresentation
+import com.intellij.openapi.wm.StatusBarWidget.TextPresentation
+import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.openapi.wm.TextWidgetPresentation
 import com.intellij.openapi.wm.WidgetPresentation
+import com.intellij.openapi.wm.WidgetPresentationDataContext
+import com.intellij.openapi.wm.WidgetPresentationFactory
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
@@ -48,7 +72,13 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.StepState
-import com.intellij.ui.*
+import com.intellij.ui.ClickListener
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.GuiUtils
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.border.name
 import com.intellij.ui.popup.AbstractPopup
@@ -58,27 +88,64 @@ import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EdtInvocationManager
-import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import java.awt.LayoutManager
+import java.awt.Point
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
+import javax.swing.ToolTipManager
+import javax.swing.UIManager
 import javax.swing.border.CompoundBorder
 import javax.swing.event.HyperlinkListener
 import kotlin.math.max
 
 private const val UI_CLASS_ID = "IdeStatusBarUI"
 private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
+
+private val LOG = logger<IdeStatusBarImpl>()
 
 private val minIconHeight: Int
   get() = JBUIScale.scale(18 + 1 + 1)
@@ -91,12 +158,15 @@ internal interface ChildStatusBarWidget {
   fun createForChild(childStatusBar: IdeStatusBarImpl): StatusBarWidget
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 open class IdeStatusBarImpl @Internal constructor(
   parentCs: CoroutineScope,
   private val getProject: () -> Project?,
   addToolWindowWidget: Boolean,
-  internal val currentFileEditorFlow: StateFlow<FileEditor?>? = null,
+  currentFileEditorFlow: StateFlow<FileEditor?>? = null,
 ) : JComponent(), Accessible, StatusBarEx, UiDataProvider {
+  private val customCurrentFileEditorFlow: MutableStateFlow<StateFlow<FileEditor?>?> = MutableStateFlow(currentFileEditorFlow)
+
   internal val coroutineScope = parentCs.childScope("IdeStatusBarImpl", supervisor = false)
   private var infoAndProgressPanel: InfoAndProgressPanel? = null
 
@@ -122,14 +192,10 @@ open class IdeStatusBarImpl @Internal constructor(
 
   private val progressFlow = MutableSharedFlow<ProgressSetChangeEvent>(replay = 1, extraBufferCapacity = Int.MAX_VALUE)
 
-  internal var borderPainter: BorderPainter = DefaultBorderPainter()
-
   companion object {
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
 
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
-
-    private val LOG = logger<IdeStatusBarImpl>()
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -300,7 +366,7 @@ open class IdeStatusBarImpl @Internal constructor(
    * @param widget widget to add
    */
   internal suspend fun addWidgetToLeft(widget: StatusBarWidget) {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UiWithModelAccess) {
       addWidget(widget, Position.LEFT, LoadingOrder.ANY)
     }
   }
@@ -328,7 +394,7 @@ open class IdeStatusBarImpl @Internal constructor(
     // Create components in parallel (performance optimization)
     val beans: List<WidgetBean> = span("status bar widget creating") {
       widgets.map { (widget, anchor) ->
-        val component = span(widget.ID(), Dispatchers.EDT + anyModality) {
+        val component = span(widget.ID(), Dispatchers.UiWithModelAccess + anyModality) {
           val c = wrap(widget)
           if (c is StatusBarWidgetWrapper) {
             c.beforeUpdate()
@@ -339,7 +405,7 @@ open class IdeStatusBarImpl @Internal constructor(
       }
     }
 
-    withContext(Dispatchers.EDT + anyModality + CoroutineName("status bar widget adding")) {
+    withContext(Dispatchers.UiWithModelAccess + anyModality + CoroutineName("status bar widget adding")) {
       // Add all to self
       for (bean in beans) {
         addWidgetToSelf(bean, parentDisposable)
@@ -356,14 +422,14 @@ open class IdeStatusBarImpl @Internal constructor(
 
     // Fire events
     if (listeners.hasListeners()) {
-      withContext(Dispatchers.EDT + anyModality) {
+      withContext(Dispatchers.UiWithModelAccess + anyModality) {
         for (bean in beans) {
           fireWidgetAdded(bean.widget, bean.anchor)
         }
       }
     }
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UiWithModelAccess) {
       PopupHandler.installPopupMenu(this@IdeStatusBarImpl, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
     }
   }
@@ -472,13 +538,8 @@ open class IdeStatusBarImpl @Internal constructor(
 
   @Suppress("UsagesOfObsoleteApi")
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
-    if (Registry.`is`("rhizome.progress")) {
-      @Suppress("DEPRECATION")
-      com.intellij.openapi.progress.impl.BridgeTaskSupport.getInstance().withBridgeBackgroundProgress(project, indicator, info)
-    }
-    else {
-      addProgressImpl(ProgressIndicatorModel(indicator, info.title, info.isCancellable), info)
-    }
+    @Suppress("DEPRECATION")
+    BridgeTaskSupport.getInstance().withBridgeBackgroundProgress(project, indicator, info)
   }
 
   internal fun addProgressImpl(progressModel: ProgressModel, info: TaskInfo) {
@@ -558,7 +619,6 @@ open class IdeStatusBarImpl @Internal constructor(
   override fun paintChildren(g: Graphics) {
     effectRenderer.paintBackground(g)
     super.paintChildren(g)
-    borderPainter.paintAfterChildren(this, g)
   }
 
   private fun dispatchMouseEvent(e: MouseEvent): Boolean {
@@ -638,7 +698,7 @@ open class IdeStatusBarImpl @Internal constructor(
   }
 
   override fun getComponentGraphics(g: Graphics): Graphics {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
+    return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, super.getComponentGraphics(g))
   }
 
   override fun removeWidget(id: String) {
@@ -698,12 +758,19 @@ open class IdeStatusBarImpl @Internal constructor(
     get() = getProject()
 
   @get:Internal
-  override val currentEditor: StateFlow<FileEditor?>
-    get() = currentFileEditorFlow ?: defaultEditorFlow
+  override val currentEditor: StateFlow<FileEditor?> by lazy {
+    customCurrentFileEditorFlow
+      .flatMapLatest { customFlow ->
+        customFlow
+        ?: project?.serviceAsync<StatusBarWidgetsManager>()?.dataContext?.currentFileEditor
+        ?: emptyFlow()
+      }
+      .stateIn(coroutineScope, SharingStarted.Eagerly, null)
+  }
 
-  private val defaultEditorFlow: StateFlow<FileEditor?> by lazy {
-    val project = project ?: return@lazy MutableStateFlow(null)
-    project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor
+  @Internal
+  fun setCurrentFileEditorFlow(flow: StateFlow<FileEditor?>?) {
+    customCurrentFileEditorFlow.value = flow
   }
 
   override fun getAccessibleContext(): AccessibleContext {

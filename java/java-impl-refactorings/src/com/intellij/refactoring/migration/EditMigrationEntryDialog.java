@@ -9,15 +9,27 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import java.awt.FontMetrics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class EditMigrationEntryDialog extends DialogWrapper{
   private JRadioButton myRbPackage;

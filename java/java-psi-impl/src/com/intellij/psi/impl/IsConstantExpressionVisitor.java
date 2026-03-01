@@ -1,7 +1,25 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;

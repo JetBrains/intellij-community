@@ -3,6 +3,9 @@
   files:
   - name: $MAVEN_REPOSITORY$/com/jetbrains/cloudconfig/cloudconfig/2023/cloudconfig-2023.jar
   reason: <- intellij.settingsSync
+- name: lib/modules/intellij.settingsSync.performanceTesting.jar
+  contentModules:
+  - name: intellij.settingsSync.performanceTesting
 - name: lib/settingsSync.jar
   modules:
   - name: intellij.settingsSync

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.testFramework.PerformanceUnitTest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -25,6 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * But keep in mind: benchmark uses (FILE_SIZE * THREADS) of disk space.
  */
 @FixMethodOrder(MethodSorters.JVM)
+@PerformanceUnitTest
 public class PerformanceOfFileAccessViaChannelTest extends PerformanceOfFileAccessBaseTest {
 
   /** Write/read each file more than once -- to be sure :) */

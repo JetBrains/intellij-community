@@ -6,11 +6,20 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UParameter;
+import org.jetbrains.uast.UVariable;
+import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.evaluation.SimpleEvaluatorExtension;
 import org.jetbrains.uast.evaluation.UEvaluationContextKt;
 import org.jetbrains.uast.values.UBooleanConstant;
@@ -19,7 +28,14 @@ import org.jetbrains.uast.values.UStringConstant;
 import org.jetbrains.uast.values.UValue;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class TestDataReferenceCollector {
   private final String myTestDataPath;

@@ -2,6 +2,7 @@
 package com.intellij.toolWindow.xNext.island
 
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.impl.islands.isColorIslandGradient
 import com.intellij.ui.BorderPainter
 import com.intellij.ui.DefaultBorderPainter
 import org.jetbrains.annotations.ApiStatus
@@ -31,9 +32,11 @@ class XNextIslandHolder : JPanel() {
   }
 
   override fun addImpl(comp: Component?, constraints: Any?, index: Int) {
-    comp?.let {
-      if (it is JComponent) {
-        InternalUICustomization.getInstance()?.installEditorBackground(it)
+    if (!isColorIslandGradient()) {
+      comp?.let {
+        if (it is JComponent) {
+          InternalUICustomization.getInstance()?.installEditorBackground(it)
+        }
       }
     }
     super.addImpl(comp, constraints, index)

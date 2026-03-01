@@ -14,15 +14,29 @@ import com.intellij.serialization.SerializationException
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertions.Assertions
-import com.intellij.util.xmlb.*
-import com.intellij.util.xmlb.annotations.*
-import kotlinx.serialization.encodeToString
+import com.intellij.util.xmlb.Accessor
+import com.intellij.util.xmlb.BeanBinding
+import com.intellij.util.xmlb.JdomAdapter
+import com.intellij.util.xmlb.RootBinding
+import com.intellij.util.xmlb.SerializationFilter
+import com.intellij.util.xmlb.SettingsInternalApi
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
+import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.__json
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.Text
+import com.intellij.util.xmlb.annotations.Transient
+import com.intellij.util.xmlb.annotations.XCollection
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.TreeMap
 
 internal class XmlSerializerTest {
   @Test

@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -15,7 +14,10 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -129,7 +131,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
       CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
       LaterInvocator.purgeExpiredItems();
       LaterInvocator.dispatchPendingFlushes();
-      DaemonCodeAnalyzer.getInstance(getProject()).restart(this);
+      myDaemonCodeAnalyzer.restart(this);
     }
     try {
       GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile)).ensureCollected();

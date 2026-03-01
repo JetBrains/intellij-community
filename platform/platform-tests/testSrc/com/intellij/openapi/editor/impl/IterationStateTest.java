@@ -14,12 +14,18 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.view.CaretData;
 import com.intellij.openapi.editor.impl.view.IterationState;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EditorTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +40,8 @@ public class IterationStateTest extends AbstractEditorTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
+    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(true);
     EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     DEFAULT_BACKGROUND = new DebugColor("DEFAULT_BACKGROUND", colorsScheme.getDefaultBackground());
     CARET_ROW_BACKGROUND = new DebugColor(EditorColors.CARET_ROW_COLOR);

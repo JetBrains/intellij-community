@@ -5,7 +5,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 data class MoveConflictUsages(val conflicts: MultiMap<PsiElement, String>, val usages: Array<UsageInfo>) {
     companion object {
         fun preprocess(refUsages: Ref<Array<UsageInfo>>): Pair<MultiMap<PsiElement, String>, Array<UsageInfo>> {

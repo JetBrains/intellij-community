@@ -7,13 +7,15 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
 
 @GeneratedCodeApiVersion(3)
-interface ModuleOutputPackagingElementEntityBuilder : WorkspaceEntityBuilder<ModuleOutputPackagingElementEntity>, PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity> {
+interface ModuleOutputPackagingElementEntityBuilder : WorkspaceEntityBuilder<ModuleOutputPackagingElementEntity>,
+                                                      PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity> {
   override var entitySource: EntitySource
   override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
   var module: ModuleId?
 }
 
-internal object ModuleOutputPackagingElementEntityType : EntityType<ModuleOutputPackagingElementEntity, ModuleOutputPackagingElementEntityBuilder>() {
+internal object ModuleOutputPackagingElementEntityType :
+  EntityType<ModuleOutputPackagingElementEntity, ModuleOutputPackagingElementEntityBuilder>() {
   override val entityClass: Class<ModuleOutputPackagingElementEntity> get() = ModuleOutputPackagingElementEntity::class.java
   operator fun invoke(
     entitySource: EntitySource,

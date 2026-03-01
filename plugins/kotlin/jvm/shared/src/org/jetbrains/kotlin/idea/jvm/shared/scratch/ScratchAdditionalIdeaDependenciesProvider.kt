@@ -5,7 +5,11 @@ package org.jetbrains.kotlin.idea.jvm.shared.scratch
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider

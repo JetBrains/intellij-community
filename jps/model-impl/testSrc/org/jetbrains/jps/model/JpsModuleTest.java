@@ -16,10 +16,24 @@
 package org.jetbrains.jps.model;
 
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaLibraryType;
+import org.jetbrains.jps.model.java.JpsJavaModuleType;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsLibraryDependency;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsModuleReference;
+import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsSdkDependency;
+import org.jetbrains.jps.model.module.JpsTypedModule;
+import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 
 import java.util.List;
 

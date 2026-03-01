@@ -4,7 +4,9 @@ package org.jetbrains.java.decompiler
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger
-import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity.*
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity.ERROR
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity.INFO
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity.WARN
 
 class IdeaLogger : IFernflowerLogger() {
   @Suppress("SSBasedInspection")

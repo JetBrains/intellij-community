@@ -50,8 +50,8 @@ public class OpenLogAction extends DumbAwareAction {
     if (file != null) {
       VfsUtil.markDirtyAndRefresh(true, false, false, file);
       final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(file, true);
-      if (editors.length > 0 && editors[0] instanceof TextEditor) {
-        scrollToLastIDEStart((TextEditor)editors[0]);
+      if (editors.length > 0 && editors[0] instanceof TextEditor te) {
+        scrollToLastIDEStart(te);
       }
       else {
         PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);

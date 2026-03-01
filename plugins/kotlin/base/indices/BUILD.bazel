@@ -23,4 +23,26 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
   ]
 )
+
+jvm_library(
+  name = "indices_test_lib",
+  module_name = "intellij.kotlin.base.indices",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":indices",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//java/manifest:manifest_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//java/openapi:java_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.base.indices` end

@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.Query;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
@@ -123,7 +122,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   public @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     checkAvailability();
     if (myProject.isDefault()) return Collections.emptyList();
-    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true, true, false);
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true, true, true, false);
     WorkspaceFileSetWithCustomData<?> fileSet = fileInfo.findFileSet(data -> true);
     if (fileSet == null) return Collections.emptyList();
     return getRootIndex().getOrderEntries(fileSet.getRoot());

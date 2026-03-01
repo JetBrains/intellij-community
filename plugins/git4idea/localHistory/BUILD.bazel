@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":localHistory_resources"]
 )
+
+jvm_library(
+  name = "localHistory_test_lib",
+  module_name = "intellij.vcs.git.localHistory",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":localHistory"]
+)
 ### auto-generated section `build intellij.vcs.git.localHistory` end

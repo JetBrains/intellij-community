@@ -4,8 +4,14 @@ package com.intellij.ui.awt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JOptionPane;
+import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Frame;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
 
 public class RelativePoint {

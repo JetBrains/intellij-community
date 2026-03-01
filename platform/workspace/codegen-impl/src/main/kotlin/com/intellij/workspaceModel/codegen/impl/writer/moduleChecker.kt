@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
 
 internal fun checkExtensionFields(module: CompiledObjModule, reporter: ProblemReporter) {
   module.extensions.forEach { extProperty ->
-    if (!extProperty.valueType.isRefType() && !extProperty.isComputable) {
+    if (!extProperty.valueType.isRefType()) {
       reporter.reportProblem(GenerationProblem("Extension property is supposed to be a reference to another entity only.",
                                                GenerationProblem.Level.ERROR, ProblemLocation.Property(extProperty)))
     }

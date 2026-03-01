@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.logsUploader
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -21,8 +21,15 @@ interface LogProvider {
   /**
    * Class defines the folder name and the files added to it
    */
-  data class LogsEntry(
+  data class LogsEntry @JvmOverloads constructor(
     val entryName: String,
-    val files: List<Path>
+    val files: List<Path>,
+
+    /**
+     * If true and `entryName` is not empty, files will be added to the "entryName/file.name/" folder.
+     * If false and `entryName` is not empty, files will be added to the "entryName/" folder.
+     * If `entryName` is empty, files will be added to the root folder.
+     */
+    val createSubdirectories: Boolean = true,
   )
 }

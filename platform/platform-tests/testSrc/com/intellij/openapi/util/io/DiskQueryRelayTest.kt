@@ -8,7 +8,14 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.DiskQueryRelay
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.blockingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap

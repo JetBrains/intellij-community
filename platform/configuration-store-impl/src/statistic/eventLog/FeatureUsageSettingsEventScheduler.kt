@@ -21,7 +21,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.ArrayDeque
 import kotlin.time.Duration.Companion.days
 
 private val PERIOD_DELAY = 1.days

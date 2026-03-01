@@ -15,8 +15,8 @@ repositories {
 kotlin {
 
     compilerOptions {
-        apiVersion.set(KotlinVersion.KOTLIN_1_7)
-        languageVersion.set(KotlinVersion.KOTLIN_1_7)
+        apiVersion.set({{minimalSupportedKotlinVersion}})
+        languageVersion.set({{minimalSupportedKotlinVersion}})
         optIn.add("project.Foo")
     }
 
@@ -35,8 +35,8 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { target ->
         target.compilerOptions {
-            apiVersion.set(KotlinVersion.KOTLIN_1_8)
-            languageVersion.set(KotlinVersion.KOTLIN_1_8)
+            apiVersion.set({{nextMinimalSupportedKotlinVersion}})
+            languageVersion.set({{nextMinimalSupportedKotlinVersion}})
             optIn.add("project.ios")
         }
     }
@@ -44,7 +44,7 @@ kotlin {
     applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
         common {
             group("jvmAndroid") {
-                withAndroid()
+                withAndroidTarget()
                 withJvm()
             }
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.appendonlylog.dev;
 
 import com.intellij.platform.util.io.storages.StorageFactory;
@@ -23,11 +23,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
+import static com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLog.NULL_ID;
 import static com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLogOverMMappedFile.MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK;
 import static com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLogOverMMappedFile.MAX_PAYLOAD_SIZE_WITH_NEXT_CHUNK;
-import static com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLog.NULL_ID;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ChunkedAppendOnlyLogOverMMappedFileTest {
 
@@ -100,24 +104,24 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
 
     {//nextChunkId:
       assertTrue(chunk.hasNextChunkIdField(),
-                            "Chunk must have nextChunkId field, since we requested it on chunk allocation");
+                 "Chunk must have nextChunkId field, since we requested it on chunk allocation");
       assertEquals(NULL_ID,
-                              chunk.nextChunkId(),
-                              "nextChunkId is not yet set");
+                   chunk.nextChunkId(),
+                   "nextChunkId is not yet set");
 
       int nextChunkId = 47;
       assertTrue(chunk.nextChunkId(nextChunkId),
-                            "first nextChunkId call must succeed");
+                 "first nextChunkId call must succeed");
       assertEquals(nextChunkId,
-                              chunk.nextChunkId(),
-                              "nextChunkId is indeed set to the value");
+                   chunk.nextChunkId(),
+                   "nextChunkId is indeed set to the value");
 
       int anotherNextChunkId = 48;
       assertFalse(chunk.nextChunkId(anotherNextChunkId),
-                             "nextChunkId could be set only once -- following attempts must fail");
+                  "nextChunkId could be set only once -- following attempts must fail");
       assertEquals(nextChunkId,
-                              chunk.nextChunkId(),
-                              "nextChunkId must remains unchanged after failed attempt");
+                   chunk.nextChunkId(),
+                   "nextChunkId must remains unchanged after failed attempt");
     }
   }
 
@@ -169,14 +173,14 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
 
 
       ByteBuffer readBuffer = chunk.read();
-      assertEquals(readBuffer.position(), 0,
-                              "readBuffer position must be 0");
-      assertEquals(readBuffer.limit(), Long.BYTES,
-                              "readBuffer limit must be 8 as we appended 8 bytes before");
+      assertEquals(0, readBuffer.position(),
+                   "readBuffer position must be 0");
+      assertEquals(Long.BYTES, readBuffer.limit(),
+                   "readBuffer limit must be 8 as we appended 8 bytes before");
 
       long valueReadBack = readBuffer.getLong();
       assertEquals(valueWritten, valueReadBack,
-                              "Value readBack must be the same as was just written");
+                   "Value readBack must be the same as was just written");
     }
     assertEquals(ENOUGH_CHUNKS_TO_CHECK, log.chunksCount(),
                  "log.chunksCount() report exact number of chunks appended");
@@ -206,14 +210,14 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
       long valueWritten = chunk.id();
 
       ByteBuffer readBuffer = chunk.read();
-      assertEquals(readBuffer.position(), 0,
-                              "readBuffer position must be 0");
-      assertEquals(readBuffer.limit(), Long.BYTES,
-                              "readBuffer limit must be 8 as we appended 8 bytes before");
+      assertEquals(0, readBuffer.position(),
+                   "readBuffer position must be 0");
+      assertEquals(Long.BYTES, readBuffer.limit(),
+                   "readBuffer limit must be 8 as we appended 8 bytes before");
 
       long valueReadBack = readBuffer.getLong();
       assertEquals(valueWritten, valueReadBack,
-                              "Value readBack must be the same as was just written");
+                   "Value readBack must be the same as was just written");
     }
   }
 
@@ -250,14 +254,14 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
       long valueWritten = chunk.id();
 
       ByteBuffer readBuffer = chunk.read();
-      assertEquals(readBuffer.position(), 0,
-                              "readBuffer position must be 0");
-      assertEquals(readBuffer.limit(), Long.BYTES,
-                              "readBuffer limit must be 8 as we appended 8 bytes before");
+      assertEquals(0, readBuffer.position(),
+                   "readBuffer position must be 0");
+      assertEquals(Long.BYTES, readBuffer.limit(),
+                   "readBuffer limit must be 8 as we appended 8 bytes before");
 
       long valueReadBack = readBuffer.getLong();
       assertEquals(valueWritten, valueReadBack,
-                              "Value readBack must be the same as was just written");
+                   "Value readBack must be the same as was just written");
       assertEquals(nextChunkId, chunk.nextChunkId(),
                    "[" + chunk.id() + "].nextChunkId must be restored as stored");
     }
@@ -290,15 +294,15 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
       LogChunk chunk = log.read(chunkId);
 
       ByteBuffer readBuffer = chunk.read();
-      assertEquals(readBuffer.position(), 0,
-                              "readBuffer.position must be 0");
-      assertEquals(readBuffer.limit(), valueWritten.length,
-                              "readBuffer.limit must the length of value written");
+      assertEquals(0, readBuffer.position(),
+                   "readBuffer.position must be 0");
+      assertEquals(valueWritten.length, readBuffer.limit(),
+                   "readBuffer.limit must the length of value written");
 
       byte[] valueReadBack = new byte[readBuffer.remaining()];
       readBuffer.get(valueReadBack);
       assertArrayEquals(valueWritten, valueReadBack,
-                                   "Value readBack must be the same as was just written");
+                        "Value readBack must be the same as was just written");
     }
   }
 
@@ -330,14 +334,14 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
 
       ByteBuffer readBuffer = chunk.read();
       assertEquals(readBuffer.position(), 0,
-                              "readBuffer.position must be 0");
+                   "readBuffer.position must be 0");
       assertEquals(readBuffer.limit(), valueWritten.length,
-                              "readBuffer.limit must the length of value written");
+                   "readBuffer.limit must the length of value written");
 
       byte[] valueReadBack = new byte[readBuffer.remaining()];
       readBuffer.get(valueReadBack);
       assertArrayEquals(valueWritten, valueReadBack,
-                                   "Value readBack must be the same as was just written");
+                        "Value readBack must be the same as was just written");
 
       return true;
     });
@@ -453,7 +457,7 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
   }
 
   private void reopenLog() throws IOException {
-    log.close();
+    log.closeAndUnsafelyUnmap();
     log = LOG_FACTORY.open(pathToLog);
   }
 }

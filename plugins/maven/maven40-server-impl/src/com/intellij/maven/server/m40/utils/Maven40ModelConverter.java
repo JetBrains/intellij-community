@@ -7,21 +7,59 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
-import org.apache.maven.model.*;
+import org.apache.maven.model.Activation;
+import org.apache.maven.model.ActivationFile;
+import org.apache.maven.model.ActivationOS;
+import org.apache.maven.model.ActivationProperty;
+import org.apache.maven.model.Build;
+import org.apache.maven.model.BuildBase;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.ModelBase;
+import org.apache.maven.model.Parent;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginExecution;
+import org.apache.maven.model.Profile;
+import org.apache.maven.model.Repository;
+import org.apache.maven.model.RepositoryPolicy;
+import org.apache.maven.model.Resource;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
 import org.jdom.IllegalNameException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenBuild;
+import org.jetbrains.idea.maven.model.MavenBuildBase;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.model.MavenModelBase;
+import org.jetbrains.idea.maven.model.MavenParent;
+import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.model.MavenProfile;
+import org.jetbrains.idea.maven.model.MavenProfileActivation;
+import org.jetbrains.idea.maven.model.MavenProfileActivationFile;
+import org.jetbrains.idea.maven.model.MavenProfileActivationOS;
+import org.jetbrains.idea.maven.model.MavenProfileActivationProperty;
+import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.model.MavenResource;
+import org.jetbrains.idea.maven.model.MavenSource;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 public class Maven40ModelConverter {
-  public static @NotNull MavenModel convertModel(Model model) {
+  public static @NotNull MavenModel convertModel(File pomFile, Model model) {
     if (model.getBuild() == null) {
       model.setBuild(new Build());
     }
@@ -43,7 +81,7 @@ public class Maven40ModelConverter {
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
 
-    convertBuild(result.getBuild(), model.getBuild());
+    convertBuild(pomFile, result.getBuild(), model.getBuild());
     return result;
   }
 
@@ -132,15 +170,15 @@ public class Maven40ModelConverter {
     return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
   }
 
-  public static void convertBuild(MavenBuild result, Build build) {
+  public static void convertBuild(File pomFile, MavenBuild result, Build build) {
     convertBuildBase(result, build);
     result.setOutputDirectory(build.getOutputDirectory());
     result.setTestOutputDirectory(build.getTestOutputDirectory());
-    setupSourceDirectories(result, build);
+    setupSourceDirectories(pomFile, result, build);
   }
 
 
-  private static void setupSourceDirectories(MavenBuild result, Build build) {
+  private static void setupSourceDirectories(File pomFile, MavenBuild result, Build build) {
 
     /*
      *  `sourceDirectory`, `testSourceDirectory` and `scriptSourceDirectory`
@@ -161,18 +199,20 @@ public class Maven40ModelConverter {
     else {
       List<MavenSource> list = new ArrayList<>();
       for (org.apache.maven.api.model.Source it : sourceList) {
-        MavenSource source = convert(it);
+        MavenSource source = convert(pomFile, it);
         list.add(source);
       }
       result.setMavenSources(list);
     }
   }
 
-  public static @NotNull MavenSource convert(org.apache.maven.api.model.Source it) {
+  public static @NotNull MavenSource convert(File pomFile, org.apache.maven.api.model.Source it) {
     return MavenSource.fromSourceTag(
+      pomFile.toPath(),
       it.getDirectory(),
       it.getIncludes(),
       it.getExcludes(),
+      it.getModule(),
       it.getScope(),
       it.getLang(),
       it.getTargetPath(),
@@ -182,13 +222,15 @@ public class Maven40ModelConverter {
     );
   }
 
-  public static @NotNull MavenSource convert(SourceRoot it) {
+  public static @NotNull MavenSource convert(File pomFile, SourceRoot it) {
     var scope = it.scope() == null ? null : it.scope().id();
     var lang = it.language() == null ? null : it.language().id();
     return MavenSource.fromSourceTag(
+      pomFile.toPath(),
       it.directory().toString(),
       Collections.emptyList(),
       Collections.emptyList(),
+      it.module().orElse(null),
       scope,
       lang,
       it.targetPath().map(tp -> tp.toString()).orElse(null),
@@ -219,10 +261,10 @@ public class Maven40ModelConverter {
       if (null == directory) continue;
 
       result.add(new MavenResource(directory,
-                                  each.isFiltering(),
-                                  each.getTargetPath(),
-                                  ensurePatterns(each.getIncludes()),
-                                  ensurePatterns(each.getExcludes())));
+                                   each.isFiltering(),
+                                   each.getTargetPath(),
+                                   ensurePatterns(each.getIncludes()),
+                                   ensurePatterns(each.getExcludes())));
     }
     return result;
   }

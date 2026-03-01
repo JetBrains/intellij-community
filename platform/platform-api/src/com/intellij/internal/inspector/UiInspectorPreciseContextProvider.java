@@ -4,7 +4,7 @@ package com.intellij.internal.inspector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.List;
 

@@ -14,7 +14,6 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EnumSet;
 import java.util.List;
 
 /**

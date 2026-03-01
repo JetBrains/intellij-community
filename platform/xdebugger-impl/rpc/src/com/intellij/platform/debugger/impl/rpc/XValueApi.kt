@@ -31,6 +31,8 @@ interface XValueApi : RemoteApi<Unit> {
   suspend fun computeTypeSourcePosition(xValueId: XValueId): XSourcePositionDto?
   suspend fun computeInlineData(xValueId: XValueId): XInlineDebuggerDataDto?
 
+  suspend fun nodeLinkClicked(linkId: XDebuggerHyperlinkId)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XValueApi {

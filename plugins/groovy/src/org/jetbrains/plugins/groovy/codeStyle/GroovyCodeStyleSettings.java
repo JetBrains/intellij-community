@@ -5,7 +5,12 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaImportsLayoutSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 import org.jetbrains.annotations.NotNull;
 
 /**

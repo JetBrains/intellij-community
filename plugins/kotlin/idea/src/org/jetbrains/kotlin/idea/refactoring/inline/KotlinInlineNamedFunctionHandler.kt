@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.refactoring.RefactoringBundle
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
+@K1Deprecation
 class KotlinInlineNamedFunctionHandler : AbstractKotlinInlineFunctionHandler<KtNamedFunction>() {
     override fun canInlineKotlinFunction(function: KtFunction): Boolean = function is KtNamedFunction && !function.isAnonymousFunction
 

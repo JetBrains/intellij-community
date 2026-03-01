@@ -20,8 +20,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UAnnotation;
 import org.jetbrains.uast.UastContextKt;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.util.Collections;
 import java.util.List;
 

@@ -31,7 +31,7 @@ dependencies {
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0"
   implementation "org.kodein.di:kodein-di-jvm:7.20.2"
 
-  // TODO: change versions to LATEST-EAP-SNAPSHOT or remove completely in next EAP
+  // it is ok to have dependency with LATEST-TRUNK-SNAPSHOT version, as starter is not intended to be build by clients and we want the most recent changes and put them int fat jar
   implementation 'com.jetbrains.intellij.platform:core:LATEST-TRUNK-SNAPSHOT'
   implementation 'com.jetbrains.intellij.driver:driver-model:LATEST-TRUNK-SNAPSHOT'
   implementation 'com.jetbrains.intellij.tools:ide-util-common:LATEST-TRUNK-SNAPSHOT'

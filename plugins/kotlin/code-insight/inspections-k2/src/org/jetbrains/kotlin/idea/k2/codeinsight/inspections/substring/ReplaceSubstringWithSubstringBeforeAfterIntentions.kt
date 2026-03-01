@@ -11,7 +11,12 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.isPure
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 
 internal class ReplaceSubstringWithSubstringAfterInspection : ReplaceSubstringInspection() {
     override fun buildVisitor(

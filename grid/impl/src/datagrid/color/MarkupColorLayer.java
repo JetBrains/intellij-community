@@ -9,7 +9,7 @@ import com.intellij.database.run.ui.grid.GridMarkupModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class MarkupColorLayer implements ColorLayer {
   @Override

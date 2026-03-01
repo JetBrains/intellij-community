@@ -31,7 +31,7 @@ public final class MavenGroovyPomCompletionWeigher extends CompletionWeigher {
 
   @Override
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    PsiFile containingFile = location.getCompletionParameters().getPosition().getContainingFile();
+    PsiFile containingFile = location.getBaseCompletionParameters().getPosition().getContainingFile();
     if (!(containingFile instanceof GroovyFileBase)) {
       return null;
     }

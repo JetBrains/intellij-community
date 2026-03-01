@@ -3,7 +3,14 @@ package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -4,9 +4,17 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabsShortcutsUtils
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionToolbarListener
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
@@ -16,7 +24,11 @@ import com.intellij.platform.searchEverywhere.frontend.vm.SeTabVm
 import com.intellij.platform.searchEverywhere.frontend.withPrevious
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.plus
+import com.intellij.ui.dsl.builder.tabbedPaneHeader
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -25,10 +37,15 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
@@ -88,7 +105,7 @@ class SePopupHeaderPane(
     initialConfiguration.tabs.ifEmpty {
       listOf(Tab(SeAllTab.NAME, SeAllTab.ID, SeAllTab.PRIORITY, SeAllTab.ID))
     }.forEach { tab ->
-      tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
+      tabbedPane.addTab(tab.name, null, TabComponent(tab.id), tabShortcuts[tab.id])
     }
 
     setSelectedIndexSafe(initialConfiguration.selectedIndexFlow.value)
@@ -118,17 +135,17 @@ class SePopupHeaderPane(
       // or take the selected tab directly from UI
       val tabIdToSelect = new.selectedTabOrNull?.id?.takeIf { newSelectedId ->
         !old.tabs.any { newSelectedId == it.id }
-      } ?: old.getTabOrNull(tabbedPane.selectedIndex)?.id
+      } ?: (tabbedPane.selectedComponent as? TabComponent)?.tabId
 
       tabbedPane.removeAll()
 
       if (new.tabs.isEmpty()) {
-        tabbedPane.addTab(SeAllTab.NAME, null, JPanel(), null)
+        tabbedPane.addTab(SeAllTab.NAME, null, TabComponent(SeAllTab.ID), null)
         return@withContext
       }
 
       for (tab in new.tabs) {
-        tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
+        tabbedPane.addTab(tab.name, null, TabComponent(tab.id), tabShortcuts[tab.id])
       }
 
       new.selectedIndexFlow.value = new.tabs.indexOfTabWithIdOrZero(tabIdToSelect)
@@ -235,8 +252,6 @@ class SePopupHeaderPane(
   ) {
     val selectedTabOrNull: Tab? get() = tabs.getOrNull(selectedIndexFlow.value)
 
-    fun getTabOrNull(index: Int): Tab? = tabs.getOrNull(index)
-
     companion object {
       fun createInitial(
         initialTabs: List<SeDummyTabVm>,
@@ -247,6 +262,8 @@ class SePopupHeaderPane(
       }
     }
   }
+
+  private class TabComponent(val tabId: String) : JPanel()
 
   companion object {
     private const val MAX_FILTER_WIDTH = 100

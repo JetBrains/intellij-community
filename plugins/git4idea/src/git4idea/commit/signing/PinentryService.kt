@@ -20,7 +20,14 @@ import com.intellij.util.net.NetUtils
 import git4idea.gpg.CryptoUtils
 import git4idea.gpg.PinentryApp
 import git4idea.i18n.GitBundle
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.net.ServerSocket

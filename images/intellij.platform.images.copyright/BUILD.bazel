@@ -22,4 +22,20 @@ jvm_library(
     "//xml/xml-psi-impl:psi-impl",
   ]
 )
+
+jvm_library(
+  name = "copyright_test_lib",
+  module_name = "intellij.platform.images.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":copyright",
+    "//images:images_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/copyright:copyright_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//xml/xml-psi-impl:psi-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.images.copyright` end

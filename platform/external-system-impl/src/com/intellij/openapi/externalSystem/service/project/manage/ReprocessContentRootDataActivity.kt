@@ -8,7 +8,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
-private class ReprocessContentRootDataActivity : ProjectActivity {
+internal class ReprocessContentRootDataActivity : ProjectActivity {
 
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {

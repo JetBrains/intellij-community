@@ -28,4 +28,25 @@ jvm_library(
     "//platform/eel-provider",
   ]
 )
+
+jvm_library(
+  name = "projectModel_test_lib",
+  module_name = "intellij.platform.projectModel",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":projectModel",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//platform/eel:eel_test_lib",
+    "//platform/eel-provider:eel-provider_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.projectModel` end

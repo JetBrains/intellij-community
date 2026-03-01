@@ -19,8 +19,8 @@ import com.intellij.util.ui.CheckboxIcon;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
 import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.visible.filters.HashSeparatorCharFilter;
@@ -29,8 +29,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.Font;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -52,7 +55,7 @@ public class GoToHashOrRefPopup {
   private @Nullable VcsRef mySelectedRef;
 
   public GoToHashOrRefPopup(@NotNull Project project,
-                            @NotNull VcsLogRefs variants,
+                            @NotNull VcsLogAggregatedStoredRefs variants,
                             @NotNull Collection<? extends VirtualFile> roots,
                             @NotNull Function<? super String, ? extends Future> onSelectedHash,
                             @NotNull Function<? super VcsRef, ? extends Future> onSelectedRef,

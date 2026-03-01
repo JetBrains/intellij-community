@@ -14,4 +14,9 @@ class PropertiesCommandCompletionFactory implements CommandCompletionFactory, Du
     if (!(psiFile instanceof PropertiesFile)) return false;
     return true;
   }
+
+  @Override
+  public boolean isApplicableForHost(@NotNull PsiFile psiFile, int offset) {
+    return false;
+  }
 }

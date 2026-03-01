@@ -24,4 +24,21 @@ jvm_library(
     "//libraries/guava",
   ]
 )
+
+jvm_library(
+  name = "installer_test_lib",
+  module_name = "intellij.python.community.impl.installer",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":installer",
+    "//python/openapi:community_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/guava:guava_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.python.community.impl.installer` end

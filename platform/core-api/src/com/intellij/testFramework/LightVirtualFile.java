@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.lang.Language;
@@ -18,7 +18,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -149,7 +153,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
   @Override
   public byte @NotNull [] contentsToByteArray() throws IOException {
     long cachedLength = myCachedLength;
-    if (FileSizeLimit.isTooLarge(cachedLength, FileUtilRt.getExtension(getNameSequence()).toString())) {
+    if (FileSizeLimit.isTooLargeForContentLoading(cachedLength, FileUtilRt.getExtension(getNameSequence()).toString())) {
       throw new FileTooBigException("file too big, length = "+cachedLength);
     }
     return doGetContent();

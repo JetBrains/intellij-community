@@ -3,8 +3,9 @@ package com.intellij.ui;
 
 import com.intellij.util.ReflectionUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.CellRendererPane;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 

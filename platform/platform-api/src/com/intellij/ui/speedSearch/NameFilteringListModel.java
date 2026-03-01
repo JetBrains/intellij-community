@@ -24,7 +24,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.ListModel;
 import java.util.List;
 
 /**

@@ -16,11 +16,13 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.VcsLogFilterCollection.*
+import com.intellij.vcs.log.VcsLogFilterCollection.RANGE_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.ROOT_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.VcsLogRangeFilter
-import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
@@ -39,7 +41,7 @@ import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
 import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 
 private val LOG = logger<GitUpdateInfoAsLog>()
@@ -96,12 +98,12 @@ class GitUpdateInfoAsLog(private val project: Project,
     runInEdt {
       projectLog.logManager?.let { logManager ->
         val listener = object : DataPackChangeListener {
-          override fun onDataPackChange(dataPack: DataPack) {
+          override fun onDataPackChange(dataPack: VcsLogGraphData) {
             createLogTabAndCalculateIfRangesAreReachable(dataPack, logManager, dataSupplier, this)
           }
         }
         logManager.dataManager.addDataPackChangeListener(listener)
-        createLogTabAndCalculateIfRangesAreReachable(logManager.dataManager.dataPack, logManager, dataSupplier, listener)
+        createLogTabAndCalculateIfRangesAreReachable(logManager.dataManager.graphData, logManager, dataSupplier, listener)
       } ?: dataSupplier.complete(null)
     }
 
@@ -110,10 +112,12 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   @RequiresEdt
-  private fun createLogTabAndCalculateIfRangesAreReachable(dataPack: DataPack,
-                                                           logManager: VcsLogManager,
-                                                           dataSupplier: CompletableFuture<Int>,
-                                                           listener: DataPackChangeListener) {
+  private fun createLogTabAndCalculateIfRangesAreReachable(
+    dataPack: VcsLogGraphData,
+    logManager: VcsLogManager,
+    dataSupplier: CompletableFuture<Int>,
+    listener: DataPackChangeListener,
+  ) {
     if (!notificationShown && areRangesInDataPack(projectLog, dataPack)) {
       notificationShown = true
       projectLog.dataManager?.removeDataPackChangeListener(listener)
@@ -128,7 +132,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     }
   }
 
-  private fun areRangesInDataPack(log: VcsProjectLog, dataPack: DataPack): Boolean {
+  private fun areRangesInDataPack(log: VcsProjectLog, dataPack: VcsLogGraphData): Boolean {
     return dataPack.containsAll(ranges.asIterable().map { CommitId(it.value.end, it.key.root) }, log.dataManager!!.storage)
   }
 

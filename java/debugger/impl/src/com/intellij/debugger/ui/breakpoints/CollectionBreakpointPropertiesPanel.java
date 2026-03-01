@@ -14,14 +14,17 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
+import com.intellij.idea.ActionsBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaCollectionBreakpointProperties;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 @ApiStatus.Experimental
 public class CollectionBreakpointPropertiesPanel
@@ -36,7 +39,7 @@ public class CollectionBreakpointPropertiesPanel
     mySaveCollectionHistoryCheckBox =
       new JCheckBox(JavaDebuggerBundle.message("label.collection.breakpoint.properties.save.history"));
     AnActionLink button =
-      new AnActionLink(XDebuggerImplBundle.message("action.Debugger.ShowCollectionHistory.text"), new MyShowCollectionHistoryAction());
+      new AnActionLink(ActionsBundle.message("action.Debugger.ShowCollectionHistory.text"), new MyShowCollectionHistoryAction());
 
     JBBox box = JBBox.createVerticalBox();
 

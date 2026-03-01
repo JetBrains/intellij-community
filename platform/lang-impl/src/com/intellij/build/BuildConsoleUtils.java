@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -51,10 +51,20 @@ public final class BuildConsoleUtils {
     }
     if (text == null) return;
     Notification notification = failure == null ? null : failure.getNotification();
-    print(consoleView, notification, text);
+    print(consoleView, notification, text, ConsoleViewContentType.ERROR_OUTPUT);
   }
 
   public static void print(@NotNull BuildTextConsoleView consoleView, @NotNull String group, @NotNull BuildIssue buildIssue) {
+    print(consoleView, group, buildIssue, ConsoleViewContentType.ERROR_OUTPUT);
+  }
+
+  @ApiStatus.Internal
+  public static void print(
+    @NotNull BuildTextConsoleView consoleView,
+    @NotNull String group,
+    @NotNull BuildIssue buildIssue,
+    @NotNull ConsoleViewContentType outputType
+  ) {
     Project project = consoleView.getProject();
     Map<String, NotificationListener> listenerMap = new LinkedHashMap<>();
     for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
@@ -79,19 +89,21 @@ public final class BuildConsoleUtils {
 
     Notification notification = new Notification(group, buildIssue.getTitle(), buildIssue.getDescription(), NotificationType.WARNING)
       .setListener(listener);
-    print(consoleView, notification, buildIssue.getDescription());
+    print(consoleView, notification, buildIssue.getDescription(), outputType);
   }
 
-  private static void print(@NotNull ConsoleView consoleView, @Nullable Notification notification, @NotNull String text) {
+  private static void print(
+    @NotNull ConsoleView consoleView, @Nullable Notification notification, @NotNull String text, @NotNull ConsoleViewContentType outputType
+  ) {
     String content = StringUtil.convertLineSeparators(text);
     while (true) {
       Matcher tagMatcher = TAG_PATTERN.matcher(content);
       if (!tagMatcher.find()) {
-        consoleView.print(content, ConsoleViewContentType.ERROR_OUTPUT);
+        consoleView.print(content, outputType);
         break;
       }
       String tagStart = tagMatcher.group();
-      consoleView.print(content.substring(0, tagMatcher.start()), ConsoleViewContentType.ERROR_OUTPUT);
+      consoleView.print(content.substring(0, tagMatcher.start()), outputType);
       Matcher aMatcher = A_PATTERN.matcher(tagStart);
       if (aMatcher.matches()) {
         final String href = aMatcher.group(2);
@@ -115,7 +127,7 @@ public final class BuildConsoleUtils {
         consoleView.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
       }
       else {
-        consoleView.print(content.substring(tagMatcher.start(), tagMatcher.end()), ConsoleViewContentType.ERROR_OUTPUT);
+        consoleView.print(content.substring(tagMatcher.start(), tagMatcher.end()), outputType);
       }
       content = content.substring(tagMatcher.end());
     }

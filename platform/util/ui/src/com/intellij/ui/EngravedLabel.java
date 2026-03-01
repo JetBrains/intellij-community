@@ -4,8 +4,10 @@ package com.intellij.ui;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 public final class EngravedLabel extends JLabel {
   private Color myShadowColor = EngravedTextGraphics.SHADOW_COLOR;

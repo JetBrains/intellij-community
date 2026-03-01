@@ -5,19 +5,25 @@ package org.jetbrains.kotlin.idea.jvm.k1.scratch.compile
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.*
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.LOG
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExecutor
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputType
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.printDebugMessage
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 
+@K1Deprecation
 class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
     private var session: KtScratchExecutionSession? = null
 

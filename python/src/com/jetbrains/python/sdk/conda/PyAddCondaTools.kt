@@ -7,7 +7,14 @@ import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.processTools.mapFlat
-import com.intellij.execution.target.*
+import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetProgressIndicatorAdapter
+import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.execution.target.createProcessWithResult
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
@@ -17,7 +24,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.platform.util.progress.RawProgressReporter
 import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
@@ -30,7 +36,13 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.sdk.flavors.conda.*
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
+import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
+import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +51,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
 
@@ -66,11 +77,15 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
 ): Sdk {
   val condaEnv = PyCondaEnv(condaIdentity, fullCondaPathOnTarget)
   val flavorAndData = PyFlavorAndData(PyCondaFlavorData(condaEnv), CondaEnvSdkFlavor)
+  val interpreterPath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).onFailure {
+    ShowingMessageErrorSync.emit(it, project)
+  }.getOrThrow()
 
   val (additionalData, customSdkSuggestedName) = when (targetConfig) {
     null -> PythonSdkAdditionalData(flavorAndData) to condaIdentity.userReadableName
     else -> {
       val data = PyTargetAwareAdditionalData(flavorAndData, targetConfig)
+      data.interpreterPath = interpreterPath
       val name = PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(project, data, condaIdentity.userReadableName)
       data to name
     }
@@ -84,9 +99,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   sdkModificator.sdkAdditionalData = additionalData
   // homePath is not required by conda, but used by lots of tools all over the code and required by CondaPathFix
   // Because homePath is not set yet, CondaPathFix does not work
-  sdkModificator.homePath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).onFailure {
-    ShowingMessageErrorSync.emit(it, project)
-  }.getOrThrow()
+  sdkModificator.homePath = interpreterPath
   edtWriteAction {
     sdkModificator.commitChanges()
   }
@@ -137,10 +150,8 @@ private suspend fun getCondaInterpreterOutput(
  */
 suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   newCondaEnvInfo: NewCondaEnvRequest,
-  uiContext: CoroutineContext,
   existingSdks: List<Sdk>,
   project: Project,
-  reporter: RawProgressReporter? = null,
 ): PyResult<Sdk> {
   PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
   val sdk = createCondaSdkFromExistingEnv(
@@ -266,10 +277,3 @@ private fun Process.captureProcessOutput(commandLine: List<String>): ProcessOutp
   return CapturingProcessHandler(this, Charsets.UTF_8, commandLineString).runProcess()
 }
 
-internal class IntrospectableCommandExecutor(private val introspectable: LanguageRuntimeType.Introspectable) : TargetCommandExecutor {
-  override val local: Boolean = false // we never introspect local machine for now
-  override val targetPlatform: CompletableFuture<TargetPlatform>
-    get() = introspectable.targetPlatform
-
-  override fun execute(command: List<String>): CompletableFuture<ProcessOutput> = introspectable.promiseExecuteScript(command)
-}

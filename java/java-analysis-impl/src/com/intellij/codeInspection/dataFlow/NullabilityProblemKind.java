@@ -4,11 +4,67 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaDfaAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiAssertStatement;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiCaseLabelElement;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.PsiTemplateExpression;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiUnaryExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhileStatement;
+import com.intellij.psi.PsiYieldStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -19,9 +75,18 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -38,6 +103,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class NullabilityProblemKind<T extends PsiElement> {
   private static final String NPE = JAVA_LANG_NULL_POINTER_EXCEPTION;
   private static final String RE = JAVA_LANG_RUNTIME_EXCEPTION;
+  private static final String MATCH_EXCEPTION = "java.lang.MatchException";
 
   private final String myName;
   private final Supplier<@Nls String> myAlwaysNullMessage;
@@ -107,6 +173,11 @@ public final class NullabilityProblemKind<T extends PsiElement> {
                                  "dataflow.message.passing.nullable.argument.methodref.nonannotated");
   // assumeNotNull problem is not reported, just used to force the argument to be not null
   public static final NullabilityProblemKind<PsiExpression> assumeNotNull = new NullabilityProblemKind<>(RE, "assumeNotNull");
+  public static final NullabilityProblemKind<PsiPattern> deconstructionMatchException =
+    new NullabilityProblemKind<>(MATCH_EXCEPTION, "deconstructionMatchException",
+                                 "dataflow.message.deconstruction.match.exception",
+                                 "dataflow.message.may.deconstruction.match.exception");
+
   /**
    * noProblem is not reported and used to override another problem
    * @see ControlFlowAnalyzer#addCustomNullabilityProblem(PsiExpression, NullabilityProblemKind)
@@ -123,6 +194,18 @@ public final class NullabilityProblemKind<T extends PsiElement> {
   @Contract("null, _ -> null")
   public @Nullable NullabilityProblem<T> problem(@Nullable T anchor, @Nullable PsiExpression expression) {
     return anchor == null || this == noProblem ? null : new NullabilityProblem<>(this, anchor, expression, false);
+  }
+
+  /**
+   * Creates a new {@link NullabilityProblem} of this kind using the given anchor.
+   *
+   * @param dfaAnchor the place that actually violates nullability
+   * @param anchor    the anchor to bind the problem to
+   * @return a newly created problem, or null if anchor is null
+   */
+  @Contract("_, null -> null")
+  public @Nullable NullabilityProblem<T> problem(@NotNull JavaDfaAnchor dfaAnchor, @Nullable T anchor) {
+    return anchor == null || this == noProblem ? null : new NullabilityProblem<>(this, anchor, dfaAnchor, false);
   }
 
   /**
@@ -541,17 +624,25 @@ public final class NullabilityProblemKind<T extends PsiElement> {
    */
   public static final class NullabilityProblem<T extends PsiElement> extends JvmDfaProblem<T> {
     private final @NotNull NullabilityProblemKind<T> myKind;
-    private final @Nullable PsiExpression myDereferencedExpression;
+    private final @Nullable JavaDfaAnchor myDfaAnchor;
     private final boolean myFromUnknown;
+
+
+    NullabilityProblem(@NotNull NullabilityProblemKind<T> kind,
+                       @NotNull T anchor,
+                       @Nullable JavaDfaAnchor dfaAnchor,
+                       boolean unknown) {
+      super(anchor);
+      myKind = kind;
+      myFromUnknown = unknown;
+      myDfaAnchor = dfaAnchor;
+    }
 
     NullabilityProblem(@NotNull NullabilityProblemKind<T> kind,
                        @NotNull T anchor,
                        @Nullable PsiExpression dereferencedExpression,
                        boolean unknown) {
-      super(anchor);
-      myKind = kind;
-      myDereferencedExpression = dereferencedExpression;
-      myFromUnknown = unknown;
+      this(kind, anchor, dereferencedExpression == null ? null : new JavaExpressionAnchor(dereferencedExpression), unknown);
     }
 
     /**
@@ -566,7 +657,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
      * @return a minimal nullable expression which causes the problem
      */
     public @Nullable PsiExpression getDereferencedExpression() {
-      return myDereferencedExpression;
+      return myDfaAnchor instanceof JavaExpressionAnchor anchor ? anchor.getExpression() : null;
     }
 
     /**
@@ -578,6 +669,11 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     }
 
     public boolean isAlwaysNull(boolean ignoreAssertions) {
+      if (myDfaAnchor != null && !(myDfaAnchor instanceof JavaExpressionAnchor)) {
+        CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(getAnchor());
+        if (result == null) return false;
+        return (ignoreAssertions ? result.getDfTypeNoAssertions(myDfaAnchor) : result.getDfType(myDfaAnchor)) == DfTypes.NULL;
+      }
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(getDereferencedExpression());
       return expression != null &&
              (ExpressionUtils.isNullLiteral(expression) || CommonDataflow.getDfType(expression, ignoreAssertions) == DfTypes.NULL);
@@ -601,12 +697,12 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       if (this == o) return true;
       if (!(o instanceof NullabilityProblem<?> problem)) return false;
       return myKind.equals(problem.myKind) && getAnchor().equals(problem.getAnchor()) &&
-             Objects.equals(myDereferencedExpression, problem.myDereferencedExpression);
+             Objects.equals(myDfaAnchor, problem.myDfaAnchor);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myKind, getAnchor(), myDereferencedExpression);
+      return Objects.hash(myKind, getAnchor(), myDfaAnchor);
     }
 
     @Override
@@ -615,11 +711,11 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     }
 
     public NullabilityProblem<T> withExpression(PsiExpression expression) {
-      return expression == myDereferencedExpression ? this : new NullabilityProblem<>(myKind, getAnchor(), expression, false);
+      return expression == getDereferencedExpression() ? this : new NullabilityProblem<>(myKind, getAnchor(), expression, false);
     }
 
     public NullabilityProblem<T> makeUnknown() {
-      return new NullabilityProblem<>(myKind, getAnchor(), myDereferencedExpression, true);
+      return new NullabilityProblem<>(myKind, getAnchor(), myDfaAnchor, true);
     }
   }
 }

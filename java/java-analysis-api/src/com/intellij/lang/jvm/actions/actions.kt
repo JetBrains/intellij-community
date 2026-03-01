@@ -6,7 +6,12 @@ package com.intellij.lang.jvm.actions
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.JvmAnnotation
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmField
+import com.intellij.lang.jvm.JvmMethod
+import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.JvmParameter
 import com.intellij.openapi.extensions.ExtensionPointName
 
 public val EP_NAME: ExtensionPointName<JvmElementActionsFactory> = ExtensionPointName.create(

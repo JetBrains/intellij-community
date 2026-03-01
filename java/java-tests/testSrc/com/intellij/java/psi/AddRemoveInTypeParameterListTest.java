@@ -16,7 +16,12 @@
 package com.intellij.java.psi;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;

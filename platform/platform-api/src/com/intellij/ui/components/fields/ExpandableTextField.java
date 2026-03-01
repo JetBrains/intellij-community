@@ -14,9 +14,15 @@ import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JTextArea;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Insets;
 import java.util.List;
 
 import static java.util.Arrays.asList;

@@ -22,7 +22,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.RenderingHints;
 
 public final class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Border {
   private final @Nullable VirtualFile myFile;

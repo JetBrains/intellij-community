@@ -13,7 +13,14 @@ import com.intellij.testFramework.OpenProjectTaskBuilder
 import git4idea.GitUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.GitPlatformTest
+import git4idea.test.UNKNOWN_ERROR_TEXT
+import git4idea.test.build
+import git4idea.test.cd
+import git4idea.test.createRepository
+import git4idea.test.file
+import git4idea.test.git
+import git4idea.test.resolveConflicts
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Locale

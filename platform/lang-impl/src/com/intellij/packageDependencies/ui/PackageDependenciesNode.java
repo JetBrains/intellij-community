@@ -20,10 +20,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
-import java.awt.*;
+import java.awt.Color;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;

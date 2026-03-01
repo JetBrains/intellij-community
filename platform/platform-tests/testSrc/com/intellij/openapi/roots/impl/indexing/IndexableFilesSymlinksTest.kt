@@ -2,7 +2,10 @@
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunsInEdt

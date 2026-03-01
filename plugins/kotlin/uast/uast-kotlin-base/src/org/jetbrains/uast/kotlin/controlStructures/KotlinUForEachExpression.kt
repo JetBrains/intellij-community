@@ -4,7 +4,13 @@ package org.jetbrains.uast.kotlin
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtForExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UForEachExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.psi.UastPsiParameterNotResolved
 

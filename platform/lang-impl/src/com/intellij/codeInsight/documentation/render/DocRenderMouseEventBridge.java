@@ -14,7 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 final class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotionListener {

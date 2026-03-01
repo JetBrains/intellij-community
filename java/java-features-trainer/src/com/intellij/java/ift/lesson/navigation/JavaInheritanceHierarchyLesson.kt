@@ -14,8 +14,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.UIBundle
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.checkToolWindowState
+import training.dsl.closeAllFindTabs
+import training.dsl.defaultRestoreDelay
+import training.dsl.sdkConfigurationTasks
 import training.learn.course.KLesson
 
 class JavaInheritanceHierarchyLesson

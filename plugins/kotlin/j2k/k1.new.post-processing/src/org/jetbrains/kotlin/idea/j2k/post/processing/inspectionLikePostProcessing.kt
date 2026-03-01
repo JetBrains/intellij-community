@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingForElement
+import org.jetbrains.kotlin.psi.KtElement
 
 
 internal inline fun <reified E : PsiElement, I : SelfTargetingRangeIntention<E>> intentionBasedProcessing(
@@ -54,7 +55,7 @@ internal inline fun <reified E : PsiElement, I : PsiBasedModCommandAction<E>> mo
     override val writeActionNeeded = writeActionNeeded
 }
 
-internal inline fun <reified E : PsiElement, I : AbstractApplicabilityBasedInspection<E>> inspectionBasedProcessing(
+internal inline fun <reified E : KtElement, I : AbstractApplicabilityBasedInspection<E>> inspectionBasedProcessing(
     inspection: I,
     writeActionNeeded: Boolean = true,
     checkInspectionIsEnabled: Boolean = true,

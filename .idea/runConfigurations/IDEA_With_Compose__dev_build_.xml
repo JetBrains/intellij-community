@@ -8,7 +8,7 @@
     <option name="MAIN_CLASS_NAME" value="org.jetbrains.intellij.build.devServer.DevMainKt" />
     <module name="intellij.platform.bootstrap.dev" />
     <shortenClasspath name="ARGS_FILE" />
-    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=community -Dadditional.modules=&quot;intellij.devkit&quot; -Djavax.xml.parsers.SAXParserFactory=com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl" />
+    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=community -Dadditional.modules=&quot;intellij.devkit&quot; -Djavax.xml.parsers.SAXParserFactory=com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl -Dawt.toolkit.name=auto" />
     <method v="2">
       <option name="MakeProject" enabled="true" />
     </method>

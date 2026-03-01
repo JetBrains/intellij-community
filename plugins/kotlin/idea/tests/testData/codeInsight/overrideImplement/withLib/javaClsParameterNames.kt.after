@@ -1,0 +1,6 @@
+// FIR_IDENTICAL
+public class L : MyList() {
+    override fun add(index: Int, element: Any?) {
+        TODO("Not yet implemented")
+    }
+}

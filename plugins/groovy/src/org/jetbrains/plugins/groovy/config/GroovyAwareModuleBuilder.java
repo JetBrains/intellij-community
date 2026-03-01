@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 

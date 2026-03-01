@@ -5,8 +5,8 @@ package com.intellij.grazie.spellcheck.engine
 
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
-import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.nlp.utils.normalization.StripAccentsNormalizer
+import ai.grazie.rules.common.KnownPhrases
 import ai.grazie.spell.GrazieSpeller
 import ai.grazie.spell.GrazieSplittingSpeller
 import ai.grazie.spell.Speller
@@ -24,10 +24,8 @@ import com.intellij.grazie.spellcheck.ranker.DiacriticSuggestionRanker
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
@@ -35,30 +33,29 @@ import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.EditableDictionary
 import com.intellij.spellchecker.dictionary.Loader
+import com.intellij.spellchecker.engine.DictionaryModificationTracker
 import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.SpellCheckerEngineListener
 import com.intellij.spellchecker.engine.Transformation
-import com.intellij.spellchecker.grazie.SpellcheckerLifecycle
 import com.intellij.spellchecker.settings.CustomDictionarySettingsListener
+import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentMap
 
-private const val MAX_WORD_LENGTH = 32
-internal val LIFECYCLE_EP_NAME: ExtensionPointName<SpellcheckerLifecycle> = ExtensionPointName("com.intellij.spellchecker.lifecycle")
+internal const val MAX_WORD_LENGTH: Int = 32
 
-class GrazieSpellCheckerEngine(
-  project: Project,
-  private val coroutineScope: CoroutineScope,
-) : SpellCheckerEngine, Disposable {
+class GrazieSpellCheckerEngine(private val project: Project, private val coroutineScope: CoroutineScope) : SpellCheckerEngine, Disposable {
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): GrazieSpellCheckerEngine = project.service<SpellCheckerEngine>() as GrazieSpellCheckerEngine
+    fun getInstance(project: Project): GrazieSpellCheckerEngine = SpellCheckerEngine.getInstance(project) as GrazieSpellCheckerEngine
 
+    val knownPhrases: ConcurrentMap<Language, KnownPhrases> = ContainerUtil.createConcurrentSoftValueMap()
     val enDictionary: HunspellDictionary by lazy {
       val dic = Resources.text("/dictionary/en.dic")
       val aff = Resources.text("/dictionary/en.aff")
@@ -74,6 +71,8 @@ class GrazieSpellCheckerEngine(
   private val loader = WordListLoader(project, coroutineScope)
   private val adapter = WordListAdapter()
   private val replacingRules: Set<RuleDictionary> = getReplacingRules()
+  private val modificationTracker: DictionaryModificationTracker
+    get() = DictionaryModificationTracker.getInstance(project)
 
   internal class SpellerLoadActivity : ProjectActivity {
     init {
@@ -87,11 +86,8 @@ class GrazieSpellCheckerEngine(
     override suspend fun execute(project: Project) {
       getInstance(project).initializeSpeller(project)
       project.serviceAsync<SpellCheckerManager>()
-
-      // heavy classloading to avoid freezes from FJP thread starvation
-      for (lifecycle in LIFECYCLE_EP_NAME.extensionList) {
-        lifecycle.preload(project)
-      }
+      knownPhrases.computeIfAbsent(Language.ENGLISH) { KnownPhrases.forLanguage(Language.ENGLISH) }
+        .validPhrases("Bugfix")
     }
   }
 
@@ -119,12 +115,12 @@ class GrazieSpellCheckerEngine(
     val wordList = ExtendedWordListWithFrequency(enDictionary.dict, adapter)
     return GrazieSpeller.UserConfig(model = LanguageModel(
       language = Language.ENGLISH,
-      words = ExtendedWordListWithFrequency(enDictionary.dict, adapter),
+      words = wordList,
       rules = RuleDictionary.Aggregated(this.replacingRules),
       ranker = DiacriticSuggestionRanker(LanguageModel.getRanker(Language.ENGLISH, wordList)),
       filter = RadiusSuggestionFilter(0.05),
       normalizer = StripAccentsNormalizer(),
-      isAlien = { !Alphabet.ENGLISH.matchAny(it) && adapter.isAlien(it) }
+      isAlien = { adapter.isAlien(it) }
     ))
   }
 
@@ -159,10 +155,14 @@ class GrazieSpellCheckerEngine(
 
   override fun loadDictionary(loader: Loader) {
     this.loader.loadWordList(loader, adapter::addList)
+    modificationTracker.incModificationCount()
   }
 
   override fun addDictionary(dictionary: Dictionary) {
-    if (!isDictionaryLoad(dictionary.name)) adapter.addDictionary(dictionary)
+    if (!isDictionaryLoad(dictionary.name)) {
+      adapter.addDictionary(dictionary)
+      modificationTracker.incModificationCount()
+    }
   }
 
   override fun addModifiableDictionary(dictionary: EditableDictionary) {
@@ -178,7 +178,7 @@ class GrazieSpellCheckerEngine(
     if (speller.isAlien(word)) {
       return true
     }
-    return !speller.isMisspelled(word = word, caseSensitive = false)
+    return !speller.isMisspelled(word, caseSensitive = false)
   }
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
@@ -193,10 +193,12 @@ class GrazieSpellCheckerEngine(
 
   override fun reset() {
     adapter.reset()
+    modificationTracker.incModificationCount()
   }
 
   override fun removeDictionary(name: String) {
     adapter.removeSource(name)
+    modificationTracker.incModificationCount()
   }
 
   override fun getVariants(prefix: String): List<String> = emptyList()
@@ -209,11 +211,14 @@ class GrazieSpellCheckerEngine(
     for (name in toRemove) {
       adapter.removeSource(name)
     }
+
+    modificationTracker.incModificationCount()
   }
 
   @TestOnly
   fun dropSuggestionCache() {
     suggestionCache.invalidateAll()
+    modificationTracker.incModificationCount()
   }
 
   private fun getReplacingRules(): Set<RuleDictionary> {

@@ -3,7 +3,12 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiParameter
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -12,7 +17,18 @@ import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.sure
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UPrefixExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UThisExpression
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 

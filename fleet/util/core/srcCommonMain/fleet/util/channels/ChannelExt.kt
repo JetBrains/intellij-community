@@ -1,8 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.channels
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.consume
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.selects.select
 
 inline fun <T, R> SendChannel<T>.use(block: (SendChannel<T>) -> R): R {

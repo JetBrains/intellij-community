@@ -1,7 +1,10 @@
 package com.intellij.database.run.ui.table
 
 import com.intellij.database.DataGridBundle
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.GridRequestSource
+import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.run.ui.grid.MoveColumnsRequestPlace
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener

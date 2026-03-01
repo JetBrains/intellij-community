@@ -29,4 +29,26 @@ jvm_library(
     "//platform/util/coroutines",
   ]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.execution.impl.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/kernel/backend:backend_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.execution.impl.backend` end

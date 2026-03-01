@@ -19,7 +19,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
 import com.intellij.psi.createSmartPointer
-import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.util.SmartList

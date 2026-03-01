@@ -99,7 +99,6 @@ public final class VFilePropertyChangeEvent extends VFileEvent {
     }
   }
 
-  @ApiStatus.Experimental
   public boolean isRename() {
     return VirtualFile.PROP_NAME.equals(myPropertyName) && getRequestor() != FileContentUtilCore.FORCE_RELOAD_REQUESTOR;
   }

@@ -21,9 +21,11 @@ project.consumer.jvmAndAndroidMain
     consumer/src/jvmAndAndroidMain/kotlin (Java)
 
 project.consumer.jvmMain
+    consumer/src/jvmMain/java (Java)
     consumer/src/jvmMain/kotlin (Java)
 
 project.consumer.jvmTest
+    consumer/src/jvmTest/java (Java, Test)
     consumer/src/jvmTest/kotlin (Java, Test)
 
 project.consumer.main
@@ -62,9 +64,11 @@ project.producer.jvmAndAndroidMain
     producer/src/jvmAndAndroidMain/kotlin (Java)
 
 project.producer.jvmMain
+    producer/src/jvmMain/java (Java)
     producer/src/jvmMain/kotlin (Java)
 
 project.producer.jvmTest
+    producer/src/jvmTest/java (Java, Test)
     producer/src/jvmTest/kotlin (Java, Test)
 
 project.producer.main

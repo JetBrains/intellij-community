@@ -3,8 +3,10 @@ package com.intellij.openapi.progress;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -72,12 +74,17 @@ public abstract class EmptyProgressIndicatorBase implements ProgressIndicator {
   public final void checkCanceled() {
     if (isCanceled() && myNonCancelableSectionCount == 0 && !Cancellation.isInNonCancelableSection()) {
       ProcessCanceledException e = new ProcessCanceledException();
-      if (this instanceof EmptyProgressIndicator) {
-        Throwable cause = Objects.requireNonNull(((EmptyProgressIndicator)this).getCancellationCause());
-        e.addSuppressed(cause);
+      Throwable cancellationCause = getCancellationCause();
+      if (cancellationCause != null) {
+        e.addSuppressed(cancellationCause);
       }
       throw e;
     }
+  }
+
+  @ApiStatus.Internal
+  protected @Nullable Throwable getCancellationCause() {
+    return null;
   }
 
   @Override

@@ -7,8 +7,8 @@ import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.VcsLogRootFilter
-import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.history.VcsLogFileHistoryFilter
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -26,13 +26,15 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @RequiresBackgroundThread
 fun VcsLogData.filter(filters: VcsLogFilterCollection, commitCount: CommitCountStage = CommitCountStage.ALL): IntSet {
-  return VcsLogFiltererImpl(this).filter(dataPack, filters, commitCount)
+  return VcsLogFiltererImpl(this).filter(graphData, filters, commitCount)
 }
 
 @RequiresBackgroundThread
-private fun VcsLogFiltererImpl.filter(dataPack: DataPack,
-                                      filters: VcsLogFilterCollection,
-                                      commitCount: CommitCountStage = CommitCountStage.ALL): IntSet {
+private fun VcsLogFiltererImpl.filter(
+  dataPack: VcsLogGraphData,
+  filters: VcsLogFilterCollection,
+  commitCount: CommitCountStage = CommitCountStage.ALL,
+): IntSet {
   val structureFilter = filters.get(STRUCTURE_FILTER)
   require(structureFilter !is VcsLogFileHistoryFilter) {
     "File history filter is not supported"

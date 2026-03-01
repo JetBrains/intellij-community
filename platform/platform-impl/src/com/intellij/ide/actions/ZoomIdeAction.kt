@@ -28,7 +28,7 @@ abstract class ZoomIdeAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecif
   }
 }
 
-private class ZoomInIdeAction : ZoomIdeAction() {
+internal class ZoomInIdeAction : ZoomIdeAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = IdeScaleTransformer.Settings.increasedScale() != null
@@ -41,7 +41,7 @@ private class ZoomInIdeAction : ZoomIdeAction() {
   }
 }
 
-private class ZoomOutIdeAction : ZoomIdeAction() {
+internal class ZoomOutIdeAction : ZoomIdeAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = IdeScaleTransformer.Settings.decreasedScale() != null
@@ -68,7 +68,7 @@ internal class ResetIdeScaleAction : ZoomIdeAction() {
   }
 }
 
-private class SwitchIdeScaleAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+internal class SwitchIdeScaleAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

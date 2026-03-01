@@ -2,7 +2,14 @@
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
 import org.jetbrains.annotations.NotNull;

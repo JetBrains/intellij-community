@@ -29,7 +29,6 @@ echo ">>>>> Collecting schemas"
 cd ../..
 mkdir result
 mkdir result/html5
-cp temp/validator/schema/*.rnc result
 rsync -r --include=*.rnc temp/validator/schema/* result
 rm -rf result/xhtml10
 pwd
@@ -55,16 +54,19 @@ cd ..
 
 echo
 echo ">>>>> Moving items in place"
-cp result/html5-all.rnc result/html5.rnc
-cp result/xhtml5-all.rnc result/xhtml5.rnc
 mv result/html5/LICENSE result
+
+# Use our root schema files
+cp html5-schema/*.rnc result
 
 # Retain our SVG 2.0 support
 cp -R html5-schema/svg20 result
 
+# Retain our rdf support
+cp -R html5-schema/rdf result
+
 # Remove unnecessary files
 rm result/html5/.htaccess
-rm result/html5/assertions.sch
 rm result/mml3/Makefile
 rm result/mml3/patch-vnu
 

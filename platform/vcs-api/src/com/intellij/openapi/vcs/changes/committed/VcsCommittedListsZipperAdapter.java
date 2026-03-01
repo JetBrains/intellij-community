@@ -8,7 +8,11 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedListsZipper {
   private final GroupCreator myGroupCreator;

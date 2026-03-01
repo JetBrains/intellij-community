@@ -14,7 +14,11 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -29,7 +33,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @see FileBasedIndexExtension

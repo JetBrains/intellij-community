@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 
+import com.intellij.internal.statistic.eventLog.events.AnonymizedEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.AnonymizedEventField
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.gradle.statistics.GradleStatisticsEventGroups
 

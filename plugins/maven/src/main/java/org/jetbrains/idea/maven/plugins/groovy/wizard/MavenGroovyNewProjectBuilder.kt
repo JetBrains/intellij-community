@@ -16,7 +16,7 @@ import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.config.wizard.GROOVY_SDK_FALLBACK_VERSION
-import java.util.*
+import java.util.Properties
 
 /**
  * Currently used only for new project wizard, thus the functionality is rather limited

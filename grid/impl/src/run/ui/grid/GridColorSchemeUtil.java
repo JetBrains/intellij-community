@@ -6,8 +6,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTable;
+import java.awt.Color;
 
 public final class GridColorSchemeUtil {
   public static Color doGetGridColor(@NotNull GridColorsScheme scheme) {

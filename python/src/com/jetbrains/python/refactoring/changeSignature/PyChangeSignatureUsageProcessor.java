@@ -22,7 +22,22 @@ import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyStarArgument;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.types.PyCallableParameter;
@@ -31,7 +46,14 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User : ktisha

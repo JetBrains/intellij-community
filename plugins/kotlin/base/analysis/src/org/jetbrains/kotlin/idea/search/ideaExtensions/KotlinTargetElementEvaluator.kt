@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
-import com.intellij.codeInsight.*
+import com.intellij.codeInsight.JavaTargetElementEvaluator
+import com.intellij.codeInsight.TargetElementEvaluatorEx
+import com.intellij.codeInsight.TargetElementEvaluatorEx2
+import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.TargetElementUtilExtender
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -13,8 +17,22 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.getCalleeByLambdaArgument
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getLabeledParent
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.hasBody
+import org.jetbrains.kotlin.psi.psiUtil.isAbstract
 
 abstract class KotlinTargetElementEvaluator : TargetElementEvaluatorEx2(), TargetElementEvaluatorEx, TargetElementUtilExtender {
     companion object {

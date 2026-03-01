@@ -4,7 +4,7 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 
-import java.awt.*;
+import java.awt.Insets;
 
 
 public class InsetsEditor extends IntRegexEditor<Insets> {

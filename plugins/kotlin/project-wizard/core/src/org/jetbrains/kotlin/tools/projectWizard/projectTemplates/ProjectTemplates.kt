@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import icons.KotlinBaseResourcesIcons
 import org.jetbrains.annotations.NonNls
@@ -13,15 +12,37 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetti
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSettingReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingType
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidGradlePlugin
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.BrowserJsSinglePlatformModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsTargetKind
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.ModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.MppLibJsBrowserTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.MppModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.NodeJsSinglePlatformModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.RealNativeTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.defaultTarget
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesProvider
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
-import org.jetbrains.kotlin.tools.projectWizard.templates.*
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.MultiplatformModule
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.MultiplatformTargetModule
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SinglePlatformModule
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Sourceset
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
+import org.jetbrains.kotlin.tools.projectWizard.templates.ConsoleJvmApplicationTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.KtorServerTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.NativeConsoleApplicationTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.ReactJsClientTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.SimpleJsClientTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.SimpleNodeJsTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.SimpleWasmClientTemplate
+import org.jetbrains.kotlin.tools.projectWizard.templates.Template
 import org.jetbrains.kotlin.tools.projectWizard.templates.mpp.MobileMppTemplate
 import javax.swing.Icon
 

@@ -24,8 +24,10 @@ import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.ui.SimpleListCellRenderer;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

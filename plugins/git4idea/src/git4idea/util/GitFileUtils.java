@@ -29,7 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_FILTERS;

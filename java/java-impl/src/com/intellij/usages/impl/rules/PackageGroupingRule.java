@@ -15,7 +15,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.usages.UsageGroup;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class PackageGroupingRule extends DirectoryGroupingRule {
   public PackageGroupingRule(@NotNull Project project) {

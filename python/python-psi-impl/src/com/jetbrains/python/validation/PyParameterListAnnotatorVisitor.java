@@ -17,14 +17,20 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.jetbrains.python.PyNamesKt.isPrivate;
+import static com.jetbrains.python.PyNames.isPrivate;
 
 /**
  * Checks for anomalies in parameter lists of function declarations.

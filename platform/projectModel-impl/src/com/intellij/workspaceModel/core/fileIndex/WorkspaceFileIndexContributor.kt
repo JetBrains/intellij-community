@@ -161,6 +161,13 @@ enum class WorkspaceFileKind {
   EXTERNAL_SOURCE,
 
   /**
+   * Describes external files which may be referenced by [CONTENT] files, but aren't supposed to be edited in the IDE,
+   * and should NOT be indexed. This is useful for library files that should be visible in the workspace but don't
+   * need to be indexed (e.g., header search paths in C++ projects that are too large to index).
+   */
+  EXTERNAL_NON_INDEXABLE,
+
+  /**
    * Describes files which may be referenced by [CONTENT], [EXTERNAL], or [EXTERNAL_SOURCE] files,
    * and aren't supposed to be edited in the IDE.
    * The main difference between this kind and [EXTERNAL] is that these files are way more exotic, and shouldn't be included
@@ -175,7 +182,7 @@ enum class WorkspaceFileKind {
     get() = this == CONTENT || this == TEST_CONTENT || this == CONTENT_NON_INDEXABLE
 
   val isIndexable: Boolean
-    get() = (this != CONTENT_NON_INDEXABLE)
+    get() = (this != CONTENT_NON_INDEXABLE && this != EXTERNAL_NON_INDEXABLE)
 }
 
 /**

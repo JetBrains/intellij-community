@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.map;
 
 public class BuildProcessLoggerImpl implements BuildProcessLogger {
   private final StringBuilder myBuf = new StringBuilder();

@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import java.util.*
 
 class ObsoleteLibraryFilesRemover(private val project: Project) {
   private val oldRoots = LinkedHashSet<VirtualFile>()

@@ -32,9 +32,10 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrAbstractInplaceIntro
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;

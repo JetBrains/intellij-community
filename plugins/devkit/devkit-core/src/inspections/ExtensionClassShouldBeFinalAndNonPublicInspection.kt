@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.util.xml.DomManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil.getNormalizedClassName
@@ -59,7 +60,8 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInsp
 
 }
 
-private fun isServiceImplementationRegisteredInPluginXml(aClass: PsiClass): Boolean {
+@ApiStatus.Internal
+fun isServiceImplementationRegisteredInPluginXml(aClass: PsiClass): Boolean {
   val domManager = DomManager.getDomManager(aClass.project)
 
   for (candidate in locateExtensionsByPsiClass(aClass)) {

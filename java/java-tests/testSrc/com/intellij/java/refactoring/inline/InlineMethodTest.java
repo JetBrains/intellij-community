@@ -8,7 +8,12 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.inline.InlineMethodHandler;
@@ -669,6 +674,10 @@ public class InlineMethodTest extends LightJavaCodeInsightTestCase {
     TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
   }
+
+  public void testThrowCallSite() { doTest(); }
+
+  public void testThrowCallSiteReturn() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {

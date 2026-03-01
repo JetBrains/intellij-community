@@ -13,8 +13,7 @@ import org.junit.jupiter.api.TestTemplate
 class SampleTest {
   @TestTemplate
   fun `serialized test`(ide: IdeWithLambda) = runBlocking {
-    ide.apply {
-
+    ide {
       runInFrontend {
         Logger.getInstance("test").warn("Projects: " + ProjectManagerEx.getOpenProjects().joinToString { it.name })
       }
@@ -23,22 +22,19 @@ class SampleTest {
         Logger.getInstance("test").warn("backend Projects: " + ProjectManagerEx.getOpenProjects().joinToString { it.name })
       }
     }
-    Unit
   }
 
   @TestTemplate
-  fun `serialized test failure`(ide: IdeWithLambda) {
-    ide.apply {
+  fun `serialized test failure`(ide: IdeWithLambda) = runBlocking {
+    ide {
       val result = runCatching {
-        runBlocking {
-          runInFrontend {
-            Logger.getInstance("test").warn("Projects: " + ProjectManagerEx.getOpenProjects().joinToString { it.name })
-            assert(false)
-          }
+        runInFrontend {
+          Logger.getInstance("test").warn("Projects: " + ProjectManagerEx.getOpenProjects().joinToString { it.name })
+          assert(false)
+        }
 
-          runInBackend {
-            Logger.getInstance("test").warn("backend Projects: " + ProjectManagerEx.getOpenProjects().joinToString { it.name })
-          }
+        runInBackend {
+          Logger.getInstance("test").warn("backend Projects: " + ProjectManagerEx.getOpenProjects().joinToString { it.name })
         }
       }
 
@@ -46,18 +42,17 @@ class SampleTest {
       assert(result.exceptionOrNull()?.message?.contains("Assertion failed") == true)
       assert(result.exceptionOrNull()?.stackTraceToString()?.contains("SerializedLambdaHelper") == false)
     }
-    Unit
   }
 
   @TestTemplate
   fun `serialized test with parameter`(ide: IdeWithLambda) = runBlocking {
-    ide.apply {
+    ide {
       val text = "Text from backend"
       val returnResult = runInBackendGetResult("Return some text") {
         text
       }
 
-      assert(returnResult is String) { "Expected String, but got ${returnResult::class.java.name}"}
+      assert(returnResult is String) { "Expected String, but got ${returnResult::class.java.name}" }
       assert(returnResult == text) { "Expected '$text', but got '$returnResult'" }
 
       runInFrontend("Print serializable received from backend", listOf(returnResult)) { param ->
@@ -65,7 +60,27 @@ class SampleTest {
         assert(param.single() == text) { "Expected '$text', but got '${param.single()}'" }
       }
     }
-    Unit
+  }
+
+  @TestTemplate // AT-3662
+  fun `serialized test with shared context`(ide: IdeWithLambda) = runBlocking {
+    ide {
+      runInBackend("Store some non serializable value to the test context") { arguments ->
+        assert(testData == null)
+        testData = StringBuilder("/testPath")
+      }
+      runInBackend("Check stored value is accessible in different lambda") {
+        assert(testData is StringBuilder)
+        assert(testData.hashCode() != StringBuilder("/testPath").hashCode()) // actually a different instance
+        assert((testData as StringBuilder).toString() == "/testPath")
+      }
+
+      if (ide.isRemoteDev) {
+        runInFrontend("Check stored value is not accessible in different IDE") {
+          assert(testData == null)
+        }
+      }
+    }
   }
 }
 

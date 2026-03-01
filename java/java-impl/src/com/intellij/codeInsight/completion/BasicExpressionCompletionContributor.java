@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -12,7 +12,18 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
 import com.intellij.psi.filters.getters.ThisGetter;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -29,7 +40,7 @@ public final class BasicExpressionCompletionContributor {
     result.consume(createKeywordLookupItem(element, s));
   }
 
-  public static LookupElement createKeywordLookupItem(final PsiElement element, final String s) {
+  public static @NotNull LookupElement createKeywordLookupItem(@NotNull PsiElement element, @NotNull String s) {
     return new KeywordLookupItem(JavaPsiFacade.getElementFactory(element.getProject()).createKeyword(s, element), element);
   }
 

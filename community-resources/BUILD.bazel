@@ -21,4 +21,19 @@ jvm_library(
     "//platform/experiment",
   ]
 )
+
+jvm_library(
+  name = "customization_test_lib",
+  module_name = "intellij.idea.community.customization",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":customization",
+    "//java/ide-resources:ide-resources_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//idea/customization/min:min_test_lib",
+    "//idea/customization/base:base_test_lib",
+    "//platform/experiment:experiment_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.idea.community.customization` end

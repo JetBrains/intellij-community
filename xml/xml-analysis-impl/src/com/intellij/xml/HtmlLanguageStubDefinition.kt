@@ -2,12 +2,12 @@
 package com.intellij.xml
 
 import com.intellij.psi.StubBuilder
-import com.intellij.xml.HtmlLanguageStubVersionUtil.getHtmlStubVersion
 import com.intellij.psi.stubs.DefaultStubBuilder
 import com.intellij.psi.stubs.LanguageStubDefinition
 import com.intellij.psi.stubs.StubElementRegistryService
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
+import com.intellij.xml.HtmlLanguageStubVersionUtil.getHtmlStubVersion
 
 class HtmlLanguageStubDefinition : LanguageStubDefinition {
   override val stubVersion: Int

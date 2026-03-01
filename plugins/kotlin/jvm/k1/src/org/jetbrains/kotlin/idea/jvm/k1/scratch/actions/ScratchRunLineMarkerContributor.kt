@@ -11,19 +11,25 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.K1KotlinScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.getScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinScratch
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class ScratchRunLineMarkerContributor : RunLineMarkerContributor() {
     @OptIn(UnsafeCastFunction::class)
     override fun getInfo(element: PsiElement): Info? {

@@ -14,8 +14,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.*;
-import java.util.*;
+import java.net.Authenticator;
+import java.net.InetAddress;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
+import java.net.URI;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -147,12 +157,6 @@ public final class CommonProxy extends ProxySelector {
   @ApiStatus.Internal
   @Deprecated
   public void noAuthentication(final @NotNull String protocol, final @NotNull String host, final int port) { }
-
-  /**
-   * @deprecated see {@link com.intellij.util.net.JdkProxyCustomizer}
-   */
-  @Deprecated(forRemoval = true)
-  public void removeCustom(final @NotNull String key) {}
 
   /**
    * @deprecated see {@link com.intellij.util.net.JdkProxyCustomizer}

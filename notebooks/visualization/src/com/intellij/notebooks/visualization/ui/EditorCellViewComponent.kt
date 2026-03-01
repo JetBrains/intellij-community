@@ -5,7 +5,7 @@ import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.controllers.NotebookCellController
 import com.intellij.openapi.util.Disposer
 import java.awt.Rectangle
-import java.util.*
+import java.util.Collections
 
 abstract class EditorCellViewComponent : NotebookCellController {
   protected var parent: EditorCellViewComponent? = null
@@ -29,12 +29,12 @@ abstract class EditorCellViewComponent : NotebookCellController {
     child.parent = null
   }
 
-  fun onViewportChange() {
-    _children.forEach { it.onViewportChange() }
-    doViewportChange()
+  fun onUpdateIfInVisibleRect() {
+    _children.forEach { it.onUpdateIfInVisibleRect() }
+    doUpdateIfInVisibleRect()
   }
 
-  open fun doViewportChange(): Unit = Unit
+  open fun doUpdateIfInVisibleRect(): Unit = Unit
 
   abstract fun calculateBounds(): Rectangle
 

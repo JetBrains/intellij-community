@@ -6,9 +6,18 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupArranger;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.CustomLiveTemplate;
+import com.intellij.codeInsight.template.CustomLiveTemplateBase;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.TemplateActionContext;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -30,7 +39,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 public final class ListTemplatesHandler implements CodeInsightActionHandler {
@@ -41,12 +56,13 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
   public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     EditorUtil.fillVirtualSpaceUntilCaret(editor);
 
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     int offset = editor.getCaretModel().getOffset();
     List<TemplateImpl> applicableTemplates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
       TemplateActionContext.expanding(psiFile, editor));
 
-    Map<TemplateImpl, String> matchingTemplates = filterTemplatesByPrefix(applicableTemplates, editor, offset, false, true);
+    Map<TemplateImpl, String> matchingTemplates = filterTemplatesByPrefix(applicableTemplates, document, offset, false, true);
     MultiMap<String, CustomLiveTemplateLookupElement> customTemplatesLookupElements = getCustomTemplatesLookupItems(editor, psiFile, offset);
 
     if (matchingTemplates.isEmpty()) {
@@ -66,17 +82,16 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
   }
 
   public static @NotNull Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<? extends TemplateImpl> templates,
-                                                                           @NotNull Editor editor,
-                                                                           int offset,
+                                                                           @NotNull Document document, int offset,
                                                                            boolean fullMatch,
                                                                            boolean searchInDescription) {
-    if (offset > editor.getDocument().getTextLength()) {
+    if (offset > document.getTextLength()) {
       LOG.error("Cannot filter templates, index out of bounds. Offset: " + offset,
-                CoreAttachmentFactory.createAttachment(editor.getDocument()));
+                CoreAttachmentFactory.createAttachment(document));
     }
-    CharSequence documentText = editor.getDocument().getCharsSequence().subSequence(0, offset);
+    CharSequence documentText = document.getCharsSequence().subSequence(0, offset);
 
-    String prefixWithoutDots = computeDescriptionMatchingPrefix(editor.getDocument(), offset);
+    String prefixWithoutDots = computeDescriptionMatchingPrefix(document, offset);
     Pattern prefixSearchPattern = Pattern.compile(".*\\b" + prefixWithoutDots + ".*");
 
     Map<TemplateImpl, String> matchingTemplates = new TreeMap<>(TemplateListPanel.TEMPLATE_COMPARATOR);

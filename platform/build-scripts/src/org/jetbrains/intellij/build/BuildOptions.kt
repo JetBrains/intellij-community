@@ -5,7 +5,8 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.intellij.build.BuildOptions.Companion.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA
@@ -23,16 +24,20 @@ import java.util.GregorianCalendar
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
 data class BuildOptions(
-  @ApiStatus.Internal @JvmField val jarCacheDir: Path? = null,
-  @ApiStatus.Internal @JvmField var compressZipFiles: Boolean = true,
+  @Internal @JvmField val jarCacheDir: Path? = null,
+  @Internal val jarCacheMaxAccessAge: Duration =
+    System.getProperty(JAR_CACHE_MAX_ACCESS_AGE_DAYS_PROPERTY)?.toLong()?.days ?: 3.days,
+  @Internal @JvmField var compressZipFiles: Boolean = true,
   /** See [GlobalOptions.BUILD_DATE_IN_SECONDS]. */
   @JvmField val buildDateInSeconds: Long = computeBuildDateInSeconds(),
-  @ApiStatus.Internal @JvmField val printFreeSpace: Boolean = true,
-  @ApiStatus.Internal @JvmField val validateImplicitPlatformModule: Boolean = true,
+  @Internal @JvmField val printFreeSpace: Boolean = true,
+  @Internal @JvmField val validateImplicitPlatformModule: Boolean = true,
   @JvmField var skipDependencySetup: Boolean = false,
+  @JvmField var skipCheckOutputOfPluginModules: Boolean = false,
 
   /**
    * If `true`, the build is running in the 'Development mode', i.e., its artifacts aren't supposed to be used in production.
@@ -42,6 +47,13 @@ data class BuildOptions(
    */
   @JvmField var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null && System.getenv("GITHUB_ACTIONS") == null),
   @JvmField var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
+  @JvmField var isLanguageServer: Boolean = getBooleanProperty("intellij.build.lsp.mode", false),
+
+  /**
+   * In addition to production compilation sources, allow various functions to use and traverse test output.
+   * It is necessary. e.g., to run tests in a dev-build-provided environment.
+   */
+  var useTestCompilationOutput: Boolean = getBooleanProperty(USE_TEST_COMPILATION_OUTPUT_PROPERTY, defaultValue = USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE),
 
   @JvmField val cleanOutDir: Boolean = getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
 
@@ -52,7 +64,7 @@ data class BuildOptions(
    * If `true` and [ProductProperties.embeddedFrontendRootModule] is not null, the JAR files in the distribution will be adjusted
    * to allow starting JetBrains Client directly from the IDE's distribution.
    */
-  @ApiStatus.Experimental @JvmField var enableEmbeddedFrontend: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
+  @Experimental @JvmField var enableEmbeddedFrontend: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
 
   /**
    * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
@@ -78,6 +90,8 @@ data class BuildOptions(
       add(REPAIR_UTILITY_BUNDLE_STEP)
       // IJI-1070
       add(LIBRARY_URL_CHECK_STEP)
+      // IJI-725
+      add(FUS_METADATA_BUNDLE_STEP)
     },
   /**
    * If `true`, write all compilation messages into a separate file (`compilation.log`).
@@ -188,8 +202,11 @@ data class BuildOptions(
 
     const val LOCALIZE_STEP: String = "localize"
 
+    /** Copy product bin dir contents */
+    const val PRODUCT_BIN_DIR_STEP: String = "product_bin_dir"
+
     @JvmField
-    @ApiStatus.Internal
+    @Internal
     val WIN_SIGN_OPTIONS: PersistentMap<String, String> = System.getProperty("intellij.build.win.sign.options", "")
       .splitToSequence(';')
       .filter { !it.isBlank() }
@@ -241,6 +258,13 @@ data class BuildOptions(
     const val CLEAN_OUTPUT_DIRECTORY_PROPERTY: String = "intellij.build.clean.output.root"
 
     /**
+     * In addition to production compilation sources, allow various functions to use and traverse test output.
+     * It is necessary. e.g., to run tests in a dev-build-provided environment.
+     */
+    const val USE_TEST_COMPILATION_OUTPUT_PROPERTY: String = "idea.build.pack.test.source.enabled"
+    const val USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE: Boolean = false
+
+    /**
      * If `false` build scripts compile project classes to a special output directory (to not interfere with the default project output if
      * invoked on a developer machine).
      * If `true` compilation step is skipped and compiled classes from the project output are used instead.
@@ -254,6 +278,11 @@ data class BuildOptions(
      * By default, if the incremental compilation fails, a clean rebuild is attempted.
      */
     const val INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY: String = "intellij.build.incremental.compilation.fallback.rebuild"
+
+    /**
+     * Maximum age in days after which unused entries in local jar cache are eligible for cleanup.
+     */
+    const val JAR_CACHE_MAX_ACCESS_AGE_DAYS_PROPERTY: String = "intellij.build.jar.cache.max.access.age.days"
 
     /**
      * If `true` then the compiled classes will be rebuilt from scratch
@@ -381,6 +410,11 @@ data class BuildOptions(
   var useLocalNSIS: String? = null
 
   /**
+   * When `true`, builds and uses a local version of `jetbraind`.
+   */
+  var useLocalJetbrainsDaemon: Boolean = getBooleanProperty("intellij.build.local.jetbrainsd", false)
+
+  /**
    * When `true`, cross-platform distribution will be packed using zip64 in AlwaysWithCompatibility mode.
    */
   var useZip64ForCrossPlatformDistribution: Boolean = getBooleanProperty("intellij.build.cross.platform.dist.zip64", false)
@@ -450,17 +484,17 @@ data class BuildOptions(
    * If this option is set to `true` and [ProductProperties.rootModuleForModularLoader] is non-null, a file containing module descriptors
    * will be added to the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
-  @ApiStatus.Experimental
+  @Experimental
   var useModularLoader: Boolean = getBooleanProperty("intellij.build.use.modular.loader", true)
 
   /**
    * If this option is set to `false`, [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] won't be included in the installation.
    * It's supposed to be used only for development to speed up the building process a bit.
-   * Production builds must always include the module repository since tools like IntelliJ Platform Gradle Plugin and Plugin Verifier relies on it.
+   * Production builds must always include the module repository since tools like IntelliJ Platform Gradle Plugin and Plugin Verifier rely on it.
    * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used
    * (in this case, the generation is always enabled).
    */
-  @ApiStatus.Experimental
+  @Experimental
   var generateRuntimeModuleRepository: Boolean = getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
 
   /**
@@ -474,7 +508,8 @@ data class BuildOptions(
    */
   var runtimeDebug: Boolean = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
 
-  @ApiStatus.Internal
+  @Internal
+  @JvmField
   var skipCustomResourceGenerators: Boolean = false
 
   var resolveDependenciesMaxAttempts: Int = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY)?.toInt() ?: 2
@@ -502,11 +537,11 @@ data class BuildOptions(
    * won't be affected by [PluginBundlingRestrictions.includeInDistribution]
    */
   @set:TestOnly
-  @ApiStatus.Internal
+  @Internal
   var useReleaseCycleRelatedBundlingRestrictionsForContentReport: Boolean = true
 
   @set:TestOnly
-  @ApiStatus.Internal
+  @Internal
   var buildStepListener: BuildStepListener = BuildStepListener()
 
   init {

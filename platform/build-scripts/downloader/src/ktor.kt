@@ -283,7 +283,7 @@ private suspend fun downloadFileToCacheLocation(
       return target
     }
 
-    println(" * Downloading $url")
+    System.err.println(" * Downloading $url")
 
     return spanBuilder("download").setAttribute("url", url).setAttribute("target", targetPath).useWithScope {
       retryWithExponentialBackOff(isRetryAllowed = { e -> downloadFileIsRetryAllowed(e) }) {

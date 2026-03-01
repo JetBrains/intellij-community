@@ -16,7 +16,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -24,11 +29,31 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.IconManager;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -49,15 +74,39 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PyInstantiableType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiStubSuppressor;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
@@ -1321,89 +1370,6 @@ public final class PyUtil {
                                                       int caretOffset,
                                                       @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
     return PyUtilCore.findNextAtOffset(psiFile, caretOffset, toSkip);
-  }
-
-
-  public static boolean isSignatureCompatibleTo(@NotNull PyCallable callable, @NotNull PyCallable otherCallable,
-                                                @NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> parameters = callable.getParameters(context);
-    final List<PyCallableParameter> otherParameters = otherCallable.getParameters(context);
-    final int optionalCount = optionalParametersCount(parameters);
-    final int otherOptionalCount = optionalParametersCount(otherParameters);
-    final int requiredCount = requiredParametersCount(callable, parameters);
-    final int otherRequiredCount = requiredParametersCount(otherCallable, otherParameters);
-    if (hasPositionalContainer(otherParameters) || hasKeywordContainer(otherParameters)) {
-      if (otherParameters.size() == specialParametersCount(otherCallable, otherParameters)) {
-        return true;
-      }
-    }
-    if (hasPositionalContainer(parameters) || hasKeywordContainer(parameters)) {
-      return requiredCount <= otherRequiredCount;
-    }
-    return requiredCount <= otherRequiredCount &&
-           optionalCount >= otherOptionalCount &&
-           namedParametersCount(parameters) >= namedParametersCount(otherParameters);
-  }
-
-  private static int optionalParametersCount(@NotNull List<PyCallableParameter> parameters) {
-    int n = 0;
-    for (PyCallableParameter parameter : parameters) {
-      if (parameter.hasDefaultValue()) {
-        n++;
-      }
-    }
-    return n;
-  }
-
-  private static int requiredParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
-    return namedParametersCount(parameters) - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
-  }
-
-  private static int specialParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
-    int n = 0;
-    if (hasPositionalContainer(parameters)) {
-      n++;
-    }
-    if (hasKeywordContainer(parameters)) {
-      n++;
-    }
-    if (isFirstParameterSpecial(callable, parameters)) {
-      n++;
-    }
-    return n;
-  }
-
-  private static boolean hasPositionalContainer(@NotNull List<PyCallableParameter> parameters) {
-    for (PyCallableParameter parameter : parameters) {
-      if (parameter.isPositionalContainer()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean hasKeywordContainer(@NotNull List<PyCallableParameter> parameters) {
-    for (PyCallableParameter parameter : parameters) {
-      if (parameter.isKeywordContainer()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static int namedParametersCount(@NotNull List<PyCallableParameter> parameters) {
-    return ContainerUtil.count(parameters, p -> p.getParameter() instanceof PyNamedParameter);
-  }
-
-  private static boolean isFirstParameterSpecial(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
-    final PyFunction method = callable.asMethod();
-    if (method != null) {
-      return isNewMethod(method) || method.getModifier() != STATICMETHOD;
-    }
-    else {
-      final PyCallableParameter first = ContainerUtil.getFirstItem(parameters);
-      return first != null && PyNames.CANONICAL_SELF.equals(first.getName());
-    }
   }
 
   /**

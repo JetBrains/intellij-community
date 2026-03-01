@@ -3,9 +3,20 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.InvokeActionResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -21,12 +32,32 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +65,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable, FrontendFriendlyLookupElement {
+public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable, LookupElementWithEffectiveInsertHandler {
   public static final ClassConditionKey<JavaMethodCallElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaMethodCallElement.class);
   public static final Key<Boolean> COMPLETION_HINTS = Key.create("completion.hints");
   private final @Nullable PsiClass myContainingClass;
@@ -175,9 +206,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Override
-  public @Nullable FrontendFriendlyInsertHandler getFrontendFriendlyInsertHandler() {
-    JavaMethodCallInsertHandler handler = createInsertHandler();
-    return handler.asFrontendFriendly();
+  public @Nullable InsertHandler<?> getEffectiveInsertHandler() {
+    return createInsertHandler();
   }
 
   public static final Key<PsiMethod> ARGUMENT_TEMPLATE_ACTIVE = Key.create("ARGUMENT_TEMPLATE_ACTIVE");
@@ -306,7 +336,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     });
   }
 
-  private static boolean mayNeedTypeParameters(final @NotNull PsiElement leaf) {
+  @ApiStatus.Internal
+  public static boolean mayNeedTypeParameters(final @NotNull PsiElement leaf) {
     if (PsiTreeUtil.getParentOfType(leaf, PsiExpressionList.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
       if (PsiTreeUtil.getParentOfType(leaf, PsiConditionalExpression.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
         return false;

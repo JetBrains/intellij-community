@@ -8,7 +8,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.createFacet
 import org.jetbrains.kotlin.load.java.ReportLevel
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.TestMetadata

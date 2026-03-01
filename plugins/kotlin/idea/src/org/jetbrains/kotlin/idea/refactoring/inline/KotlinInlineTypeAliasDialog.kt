@@ -7,10 +7,12 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.HelpID
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import kotlin.reflect.KMutableProperty1
 
+@K1Deprecation
 class KotlinInlineTypeAliasDialog(
     typeAlias: KtTypeAlias,
     reference: PsiReference?,

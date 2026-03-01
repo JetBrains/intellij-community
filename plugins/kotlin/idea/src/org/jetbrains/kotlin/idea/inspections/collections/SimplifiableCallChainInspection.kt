@@ -4,11 +4,15 @@ package org.jetbrains.kotlin.idea.inspections.collections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceAssociateFunctionFix
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.*
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunctionUtil
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.ASSOCIATE
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.ASSOCIATE_TO
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.JOIN_TO
@@ -25,15 +29,25 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConver
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM_OF
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.TO_MAP
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions.Companion.isLiteralValue
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.sibling
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -43,6 +57,7 @@ import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
+@K1Deprecation
 class SimplifiableCallChainInspection : AbstractCallChainChecker() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid {
         return qualifiedExpressionVisitor(fun(expression) {

@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.jvm.analysis.refactoring` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "analysis-refactoring_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "analysis-refactoring",
   module_name = "intellij.jvm.analysis.refactoring",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":analysis-refactoring_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -13,6 +20,21 @@ jvm_library(
     "//uast/uast-common:uast",
     "//jvm/jvm-analysis-api:analysis",
     "//platform/core-api:core",
+  ]
+)
+
+jvm_library(
+  name = "analysis-refactoring_test_lib",
+  module_name = "intellij.jvm.analysis.refactoring",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":analysis-refactoring",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util:util_test_lib",
+    "//uast/uast-common:uast_test_lib",
+    "//jvm/jvm-analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.jvm.analysis.refactoring` end

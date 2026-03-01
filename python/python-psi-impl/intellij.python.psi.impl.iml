@@ -47,5 +47,6 @@
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.python.sdk" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

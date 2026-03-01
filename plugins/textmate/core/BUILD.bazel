@@ -41,4 +41,22 @@ jvm_library(
     ":libraries_kotlinx_libraries-kotlinx-collections-immutable_provided",
   ]
 )
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.textmate.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_core",
+  runtime_deps = [
+    ":core",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.textmate.core` end

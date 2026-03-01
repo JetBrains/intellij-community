@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
@@ -21,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.quickfix.QuickFixTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
@@ -28,11 +30,20 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.CopyActionResult
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectory
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.pathString
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.streams.asSequence
 import kotlin.time.Duration.Companion.minutes
 
-abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradleImportingCodeInsightTestCase(), ExpectedPluginModeProvider {
+abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradleImportingCodeInsightTestCase(), ExpectedPluginModeProvider, QuickFixTest {
     override fun testDataDirName(): String = "fixes"
     final override fun testDataDirectory(): File = super.testDataDirectory().resolve("before")
 
@@ -114,7 +125,10 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
             LocalFileSystem.getInstance().findFileByNioFile(mainFilePath)?.toPsiFile(myProject)
         } as KtFile
 
-        val actionHint = ActionHint.parse(ktFile, mainFileText)
+        val inspections = parseInspectionsToEnable(ktFile.virtualFile.path, mainFileText).toTypedArray()
+        codeInsightTestFixture.enableInspections(*inspections)
+
+        val actionHint = ktFile.actionHint(mainFileText)
         codeInsightTestFixture.configureFromExistingVirtualFile(ktFile.virtualFile)
 
         timeoutRunBlocking(3.minutes) {
@@ -186,4 +200,12 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
             CopyActionResult.CONTINUE
         })
     }
+
+    private fun PsiFile.actionHint(contents: String): ActionHint {
+        return ActionHint.parse(this, contents,
+            actionPrefix?.let { ".*//(?: $it)?" } ?: "//",
+            true)
+    }
+
+    protected open val actionPrefix: String? = null
 }

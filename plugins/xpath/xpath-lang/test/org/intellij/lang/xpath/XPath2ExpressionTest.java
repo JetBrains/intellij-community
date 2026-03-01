@@ -20,7 +20,14 @@ import org.intellij.lang.xpath.psi.XPathBinaryExpression;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathType;
 
-import static org.intellij.lang.xpath.psi.XPath2Type.*;
+import static org.intellij.lang.xpath.psi.XPath2Type.DATE;
+import static org.intellij.lang.xpath.psi.XPath2Type.DATETIME;
+import static org.intellij.lang.xpath.psi.XPath2Type.DAYTIMEDURATION;
+import static org.intellij.lang.xpath.psi.XPath2Type.DECIMAL;
+import static org.intellij.lang.xpath.psi.XPath2Type.DOUBLE;
+import static org.intellij.lang.xpath.psi.XPath2Type.INTEGER;
+import static org.intellij.lang.xpath.psi.XPath2Type.TIME;
+import static org.intellij.lang.xpath.psi.XPath2Type.YEARMONTHDURATION;
 
 public class XPath2ExpressionTest extends TestBase {
   @Override

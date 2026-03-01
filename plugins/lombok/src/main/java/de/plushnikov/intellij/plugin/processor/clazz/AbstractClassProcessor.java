@@ -1,7 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
@@ -19,7 +25,11 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 

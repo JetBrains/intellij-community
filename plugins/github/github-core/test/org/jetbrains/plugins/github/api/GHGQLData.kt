@@ -2,7 +2,14 @@
 package org.jetbrains.plugins.github.api
 
 import com.apollographql.apollo.annotations.ApolloExperimental
-import com.apollographql.apollo.ast.*
+import com.apollographql.apollo.ast.ApolloIssue
+import com.apollographql.apollo.ast.GQLFragmentDefinition
+import com.apollographql.apollo.ast.GQLOperationDefinition
+import com.apollographql.apollo.ast.Issue
+import com.apollographql.apollo.ast.Schema
+import com.apollographql.apollo.ast.UnusedFragment
+import com.apollographql.apollo.ast.parseAsGQLDocument
+import com.apollographql.apollo.ast.validateAsSchema
 
 
 internal object GHGQLTestSchemas {

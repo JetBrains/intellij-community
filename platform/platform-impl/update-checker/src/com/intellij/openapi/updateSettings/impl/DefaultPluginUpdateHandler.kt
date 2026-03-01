@@ -2,9 +2,7 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.api.PluginDto
-import com.intellij.ide.plugins.marketplace.PluginUpdateActivity
 import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
@@ -14,7 +12,7 @@ import javax.swing.JComponent
 
 @OptIn(IntellijInternalApi::class)
 @ApiStatus.Internal
-object DefaultPluginUpdateHandler : PluginUpdateHandler {
+class DefaultPluginUpdateHandler : PluginUpdateHandler {
   private val downloaders = ConcurrentHashMap<String, PluginDownloaders>()
 
   override suspend fun loadAndStorePluginUpdates(
@@ -23,15 +21,17 @@ object DefaultPluginUpdateHandler : PluginUpdateHandler {
     indicator: ProgressIndicator?,
   ): PluginUpdatesModel {
     val buildNumber = BuildNumber.fromString(buildNumber)
-    val internalPluginUpdates = service<UpdateCheckerFacade>().getInternalPluginUpdates(buildNumber, indicator,
-                                                                                        activity = PluginUpdateActivity.INSTALLED_VERSIONS)
+    val internalPluginUpdates = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates(indicator, buildNumber)
+
     val pluginUpdates = internalPluginUpdates.pluginUpdates
     val notIgnoredDownloaders = pluginUpdates.allEnabled.filterNot { UpdateChecker.isIgnored(it.descriptor) }
     val updateModels = notIgnoredDownloaders.mapNotNull { it.uiModel }
+    val disabledUpdateModels = pluginUpdates.allDisabled.mapNotNull { it.uiModel }
     val incompatiblePluginNames = pluginUpdates.incompatible.map { it.name }
     registerDownloaders(sessionId, notIgnoredDownloaders)
     val errors = internalPluginUpdates.errors.map { it.key to it.value.message.orEmpty() }.toMap()
     val updateModel = PluginUpdatesModel(pluginUpdates = updateModels.map { PluginDto.fromModel(it) },
+                                         disabledPluginUpdates = disabledUpdateModels.map { PluginDto.fromModel(it) },
                                          incompatiblePluginNames = incompatiblePluginNames,
                                          updatesFromCustomRepositories = internalPluginUpdates.pluginNods.map { PluginDto.fromModel(it) },
                                          internalErrors = errors,
@@ -50,7 +50,7 @@ object DefaultPluginUpdateHandler : PluginUpdateHandler {
   }
 
   override suspend fun ignorePluginUpdates(sessionId: String) {
-    service<UpdateCheckerFacade>().ignorePlugins(getDownloaders(sessionId).map { it.descriptor })
+    UpdateCheckerFacade.getInstance().ignorePlugins(getDownloaders(sessionId).map { it.descriptor })
   }
 
   private fun registerDownloader(sessionId: String, pluginId: String, downloader: PluginDownloader) {

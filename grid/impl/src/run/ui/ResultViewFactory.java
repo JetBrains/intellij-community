@@ -6,7 +6,7 @@ import com.intellij.database.datagrid.ResultView;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 import static com.intellij.database.run.ui.table.TableResultViewFactory.TABLE_FACTORY;
 import static com.intellij.database.run.ui.text.TextResultViewFactory.TEXT_FACTORY;

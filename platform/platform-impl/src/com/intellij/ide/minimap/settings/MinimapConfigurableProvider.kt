@@ -5,7 +5,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.util.registry.Registry
 
-private class MinimapConfigurableProvider : ConfigurableProvider() {
+internal class MinimapConfigurableProvider : ConfigurableProvider() {
   override fun createConfigurable(): Configurable? {
     return if (Registry.`is`("editor.minimap.enabled", false)) MinimapConfigurable() else null
   }

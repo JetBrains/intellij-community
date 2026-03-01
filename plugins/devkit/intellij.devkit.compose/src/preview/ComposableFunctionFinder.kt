@@ -83,16 +83,7 @@ internal class ComposableFunctionFinder(private val classLoader: ClassLoader) {
    */
   private fun isValidPreviewFunction(method: Method): Boolean {
     // Validate function signature
-    if (!hasValidComposableSignature(method)) {
-      return false
-    }
-
-    // Should be public or internal (accessible)
-    if (!isAccessibleFunction(method)) {
-      return false
-    }
-
-    return true
+    return hasValidComposableSignature(method)
   }
 
   /**
@@ -149,15 +140,6 @@ internal class ComposableFunctionFinder(private val classLoader: ClassLoader) {
     return parameterType.name == "androidx.compose.runtime.Composer" ||
            parameterType.simpleName == "Composer" ||
            Composer::class.java.isAssignableFrom(parameterType)
-  }
-
-  /**
-   * Check if a function is accessible (public or internal)
-   */
-  private fun isAccessibleFunction(method: Method): Boolean {
-    val modifiers = method.modifiers
-    return Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers)
-           || !Modifier.isPrivate(modifiers) && !Modifier.isProtected(modifiers)
   }
 
   /**

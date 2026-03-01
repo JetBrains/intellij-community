@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.server.BuildManager;
@@ -6,7 +6,13 @@ import com.intellij.facet.Facet;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -20,7 +26,15 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.ActionCallback;
@@ -44,8 +58,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -74,11 +92,11 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private final FacetStructureConfigurable myFacetStructureConfigurable;
   private final ArtifactsStructureConfigurable myArtifactsStructureConfigurable;
 
-  private History myHistory = new History(this);
+  private History myHistory;
   private SidePanel mySidePanel;
 
   private JPanel myComponent;
-  private final Wrapper myDetails = new Wrapper();
+  private Wrapper myDetails;
 
   private Configurable mySelectedConfigurable;
 
@@ -96,9 +114,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private final ModulesConfigurator myModuleConfigurator;
   private final JdkListConfigurable myJdkListConfig;
 
-  private final JLabel myEmptySelection = new JLabel(
-    JavaUiBundle.message("project.structure.empty.text"),
-    SwingConstants.CENTER);
+  private JLabel myEmptySelection;
 
   private final ObsoleteLibraryFilesRemover myObsoleteLibraryFilesRemover;
 
@@ -161,7 +177,9 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   @Override
   public JComponent createComponent() {
     myComponent = new MyPanel();
-
+    myDetails = new Wrapper();
+    myHistory = new History(this);
+    myEmptySelection = new JLabel(JavaUiBundle.message("project.structure.empty.text"), SwingConstants.CENTER);
     mySplitter = new OnePixelSplitter(false, .15f);
     mySplitter.setSplitterProportionKey("ProjectStructure.TopLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);

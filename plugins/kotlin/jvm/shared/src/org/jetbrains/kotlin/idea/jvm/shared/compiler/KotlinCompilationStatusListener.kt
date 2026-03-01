@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.config.CompilerRunnerConstants
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.io.PrintStream
 import java.io.PrintWriter
-import java.util.*
+import java.util.Locale
 
 internal class KotlinCompilationStatusListener : CompilationStatusListener {
     // Extending PluginException ensures that Exception Analyzer recognizes this as a Kotlin exception

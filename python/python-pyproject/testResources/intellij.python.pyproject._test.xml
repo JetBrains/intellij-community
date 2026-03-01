@@ -1,6 +1,0 @@
-<idea-plugin>
-  <dependencies>
-    <module name="intellij.libraries.junit5.params"/>
-    <module name="intellij.python.pyproject"/>
-  </dependencies>
-</idea-plugin>

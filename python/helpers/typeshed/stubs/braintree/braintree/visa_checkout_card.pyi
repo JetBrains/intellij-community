@@ -1,8 +1,11 @@
+from typing_extensions import deprecated
+
 from braintree.address import Address
 from braintree.credit_card_verification import CreditCardVerification
 from braintree.resource import Resource
 from braintree.subscription import Subscription
 
+@deprecated("Visa Checkout is no longer supported for creating new transactions.")
 class VisaCheckoutCard(Resource):
     billing_address: Address | None
     subscriptions: list[Subscription]

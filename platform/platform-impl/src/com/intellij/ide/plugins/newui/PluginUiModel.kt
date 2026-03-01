@@ -6,6 +6,9 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.getTags
+import com.intellij.ide.plugins.marketplace.ModuleDependency
+import com.intellij.ide.plugins.marketplace.PluginContentModule
+import com.intellij.ide.plugins.marketplace.PluginModule
 import com.intellij.ide.plugins.newui.UiPluginManager.Companion.getInstance
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
@@ -16,7 +19,8 @@ import com.intellij.util.PlatformUtils
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.text.DecimalFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 /**
  * A lightweight model for representing plugin information in the UI.
@@ -124,6 +128,10 @@ interface PluginUiModel {
   @get:NlsSafe
   var channel: String?
   var installSource: FUSEventSource?
+
+  var contentModules: List<PluginContentModule>
+  var modules: List<PluginModule>
+  var mainModuleDependencies: List<ModuleDependency>
 
   @get:NlsSafe
   var description: String?
@@ -291,4 +299,10 @@ fun PluginSource?.addSource(pluginSource: PluginSource?): PluginSource? {
   else {
     return PluginSource.BOTH
   }
+}
+
+@ApiStatus.Internal
+fun PluginSource?.includes(pluginSource: PluginSource?): Boolean {
+  if (this == null || pluginSource == null) return false
+  return this == pluginSource || this == PluginSource.BOTH
 }

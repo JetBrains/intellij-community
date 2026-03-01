@@ -7,8 +7,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.RepaintManager;
+import java.awt.AWTEvent;
+import java.awt.Toolkit;
 import java.awt.event.InvocationEvent;
 import java.lang.reflect.Field;
 

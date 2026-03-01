@@ -9,7 +9,9 @@ import com.intellij.execution.envFile.parseEnvFile
 import com.intellij.execution.util.ProgramParametersConfigurator.ParametersConfiguratorException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.withPushPop
-import com.intellij.util.ShellEnvironmentReader.*
+import com.intellij.util.ShellEnvironmentReader.readEnvironment
+import com.intellij.util.ShellEnvironmentReader.shellCommand
+import com.intellij.util.ShellEnvironmentReader.winShellCommand
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.io.FileNotFoundException
 import java.io.IOException

@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.HashImpl
@@ -29,23 +28,29 @@ import git4idea.rebase.log.GitNewCommitMessageActionDialog
 import git4idea.rebase.log.executeInMemoryWithFallback
 import git4idea.rebase.log.notifySuccess
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 @Service(Service.Level.PROJECT)
 internal class GitRewordService(private val project: Project, private val cs: CoroutineScope) {
-  fun launchReword(repoWithCommitHash: Map<GitRepository, Hash>) {
-    // read immediately to compare later
-    val currentRevByRepository = repoWithCommitHash.keys.associateWith { it.currentRevision }
+  fun launchRewordForHeads(forRepositories: List<GitRepository>) {
+    val currentRevByRepository = forRepositories.associateWith { it.currentRevision }
     cs.launch {
       withBackgroundProgress(project, GitBundle.message("rebase.log.reword.action.progress.indicator.title")) {
         val spec = withContext(Dispatchers.IO) {
-          repoWithCommitHash.mapNotNull { (repository, hash) ->
+          currentRevByRepository.mapNotNull { (repository, hash) ->
             checkCanceled()
             val details = coroutineToIndicator {
-              GitHistoryUtils.collectCommitsMetadata(repository.project, repository.root, hash.asString())?.singleOrNull()
+              GitHistoryUtils.collectCommitsMetadata(repository.project, repository.root, hash)?.singleOrNull()
             }
-            details?.let { RewordSpec(repository, currentRevByRepository[repository], details) }
+            details?.let { RewordSpec(repository, hash, details) }
           }
         }
 
@@ -53,24 +58,24 @@ internal class GitRewordService(private val project: Project, private val cs: Co
         val rewordResults = spec.map { (repository, _, metadata) ->
           executeRewordOperation(repository, metadata, newMessage)
         }
-
         rewordResults.filterIsInstance<GitCommitEditingOperationResult.Complete>().notifyRewordSuccess(editAgain = {
-          val newHashes =
-            spec.mapNotNull { (repository, _, _) -> repository.currentRevision?.let { repository to HashImpl.build(it) } }.toMap()
-          launchReword(newHashes)
+          launchRewordForHeads(forRepositories)
         })
       }
     }
   }
 
+  // Called for a specific commit from the git log
   fun launchReword(repository: GitRepository, commit: VcsCommitMetadata, newMessage: String) {
+    val isHead = commit.id == HashImpl.build(repository.currentRevision!!)
     cs.launch {
-      val operationResult =
-        withBackgroundProgress(project, GitBundle.message("rebase.log.reword.action.progress.indicator.title")) {
-          executeRewordOperation(repository, commit, newMessage)
-        }
+      val operationResult = withBackgroundProgress(project, GitBundle.message("rebase.log.reword.action.progress.indicator.title")) {
+        executeRewordOperation(repository, commit, newMessage)
+      }
       if (operationResult is GitCommitEditingOperationResult.Complete) {
-        operationResult.notifyRewordSuccess()
+        operationResult.notifyRewordSuccess(editAgain = {
+          repository.project.service<GitRewordService>().launchRewordForHeads(listOf(repository))
+        }.takeIf { isHead })
         ChangeListManagerImpl.getInstanceImpl(project).replaceCommitMessage(commit.fullMessage, newMessage)
       }
     }
@@ -86,8 +91,8 @@ private suspend fun executeRewordOperation(
     executeInMemoryWithFallback(
       inMemoryOperation = {
         val objectRepo = GitObjectRepository(repository)
-        val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.notify.errors")
-        GitInMemoryRewordOperation(objectRepo, commit, newMessage).execute(showFailureNotification)
+        val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.debug.notify.errors")
+        GitInMemoryRewordOperation(objectRepo, commit.id, newMessage).execute(showFailureNotification)
       },
       fallbackOperation = {
         coroutineToIndicator {
@@ -98,20 +103,24 @@ private suspend fun executeRewordOperation(
   }
 }
 
-private suspend fun showDialogForMessage(project: Project, spec: Collection<RewordSpec>): String {
+private suspend fun showDialogForMessage(project: Project, specs: Collection<RewordSpec>): String {
   val logData = VcsProjectLog.awaitLogIsReady(project)?.dataManager ?: error("Git Log is not ready")
-  return withContext(Dispatchers.EDT) {
+  return withContext(Dispatchers.UiWithModelAccess) {
     val dialog = GitNewCommitMessageActionDialog(project = project,
-                                                 originMessage = spec.first().commit.fullMessage,
+                                                 originMessage = specs.first().commit.fullMessage,
                                                  selectedChanges = null,
-                                                 validateCommitEditable = { validateRewordable(logData, spec) },
+                                                 validateCommitEditable = { validateRewordable(logData, specs) },
                                                  title = GitBundle.message("rebase.log.reword.dialog.title"),
-                                                 dialogLabel = buildRewordDialogLabel(spec))
+                                                 dialogLabel = buildRewordDialogLabel(specs))
     suspendCancellableCoroutine { cont ->
-      dialog.show {
-        cont.resume(it) { _, _, _ ->
-          runInEdt(ModalityState.any()) { dialog.close(CANCEL_EXIT_CODE) }
+      dialog.show(onOk = { if (cont.isActive) cont.resume(it) }, onClose = {
+        if (cont.isActive) {
+          cont.resumeWithException(CancellationException("Dialog closed"))
         }
+      })
+
+      cont.invokeOnCancellation {
+        runInEdt(ModalityState.any()) { dialog.close(CANCEL_EXIT_CODE) }
       }
     }
   }
@@ -130,24 +139,10 @@ private fun buildRewordDialogLabel(spec: Collection<RewordSpec>): @Nls String {
   return GitBundle.message("rebase.log.reword.dialog.description.label", commits.size, commitHashes, author)
 }
 
-private fun GitCommitEditingOperationResult.Complete.notifyRewordSuccess() {
-  val newHashes = repository.currentRevision?.let {
-    mapOf(repository to HashImpl.build(it))
-  }
-  val editAgainAction = newHashes?.let {
-    { repository.project.service<GitRewordService>().launchReword(it) }
-  }
-  listOf(this).notifySuccess(
-    GitBundle.message("rebase.log.reword.action.notification.successful.title"),
-    null,
-    GitBundle.message("rebase.log.reword.action.progress.indicator.undo.title"),
-    GitBundle.message("rebase.log.reword.action.notification.undo.not.allowed.title"),
-    GitBundle.message("rebase.log.reword.action.notification.undo.failed.title"),
-    editAgain = editAgainAction
-  )
-}
+private fun GitCommitEditingOperationResult.Complete.notifyRewordSuccess(editAgain: (() -> Unit)?) =
+  listOf(this).notifyRewordSuccess(editAgain)
 
-private fun List<GitCommitEditingOperationResult.Complete>.notifyRewordSuccess(editAgain: () -> Unit) = notifySuccess(
+private fun List<GitCommitEditingOperationResult.Complete>.notifyRewordSuccess(editAgain: (() -> Unit)?) = notifySuccess(
   GitBundle.message("rebase.log.reword.action.notification.successful.title"),
   null,
   GitBundle.message("rebase.log.reword.action.progress.indicator.undo.title"),

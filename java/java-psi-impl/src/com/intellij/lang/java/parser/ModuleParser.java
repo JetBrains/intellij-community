@@ -32,7 +32,15 @@ import java.util.Set;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.error;
 import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPORTS_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODIFIER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODULE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODULE_REFERENCE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.OPENS_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PROVIDES_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PROVIDES_WITH_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.REQUIRES_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.USES_STATEMENT;
 
 /**
  * @deprecated Use the new Java syntax library instead.

@@ -28,9 +28,22 @@ import org.jetbrains.kotlin.idea.imports.addImportFor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIsExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.callExpressionVisitor
 
-internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableInspectionBase.Simple<KtExpression, AbstractSimplifiableCallInspection.Context>() {
+internal abstract class AbstractSimplifiableCallInspection :
+    KotlinApplicableInspectionBase.Simple<KtExpression, AbstractSimplifiableCallInspection.Context>() {
     class Context(
         val conversionName: String,
         val replacementCall: String,
@@ -101,6 +114,26 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
         override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = !resolvedCall.isCalledOnMapExtensionReceiver
     }
 
+    protected class MapNotNullToFilterIsInstanceConversion(
+        targetFqName: FqName = FqName("kotlin.collections.mapNotNull"),
+        replacementFqName: FqName = StandardKotlinNames.Collections.filterIsInstance,
+    ) : Conversion(targetFqName, replacementFqName) {
+        context(_: KaSession)
+        override fun analyze(callExpression: KtCallExpression): String? {
+            val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
+            val lambdaParameterName: String? = lambdaExpression.singleLambdaParameterName()
+            val statement = lambdaExpression.singleStatementOrNull() ?: return null
+            if (statement !is KtBinaryExpressionWithTypeRHS) return null
+            val lhs = statement.left as? KtReferenceExpression ?: return null
+            if (lhs.text !in listOf("it", lambdaParameterName)) return null
+            val rightTypeReference = statement.right ?: return null
+            return "filterIsInstance<${rightTypeReference.text}>()"
+        }
+
+        context(_: KaSession)
+        override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = !resolvedCall.isCalledOnMapExtensionReceiver
+    }
+
     protected class FilterToFilterIsInstanceConversion(
         targetFqName: FqName = StandardKotlinNames.Collections.filter,
         replacementFqName: FqName = StandardKotlinNames.Collections.filterIsInstance,
@@ -156,7 +189,6 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
         element: KtExpression,
         context: Context
     ): @InspectionMessage String = KotlinBundle.message("0.call.could.be.simplified.to.1", context.conversionName, context.replacementCall)
-
 
 
     override fun createQuickFix(

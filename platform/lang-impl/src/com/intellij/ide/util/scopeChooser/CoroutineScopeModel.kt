@@ -19,8 +19,12 @@ import com.intellij.psi.search.PredefinedSearchScopeProvider
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.SearchScopeProvider
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import java.util.concurrent.CopyOnWriteArrayList

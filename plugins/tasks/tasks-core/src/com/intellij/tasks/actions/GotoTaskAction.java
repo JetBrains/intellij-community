@@ -3,8 +3,16 @@ package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.util.gotoByName.*;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
+import com.intellij.ide.util.gotoByName.ChooseByNameModel;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +35,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
 import java.awt.event.ActionEvent;
 
 /**

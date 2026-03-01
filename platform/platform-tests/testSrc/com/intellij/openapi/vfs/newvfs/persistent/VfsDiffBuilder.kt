@@ -3,8 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.nio.file.Path
-import java.util.*
-import kotlin.collections.ArrayDeque
+import java.util.BitSet
 
 internal object VfsDiffBuilder {
   class FileFlags(val flags: Int) {

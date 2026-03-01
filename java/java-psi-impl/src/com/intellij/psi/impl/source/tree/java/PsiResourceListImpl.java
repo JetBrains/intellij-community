@@ -2,7 +2,12 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiResourceList;
+import com.intellij.psi.PsiResourceListElement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.Disposable
@@ -14,13 +14,21 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbServiceImpl.Companion.IDEA_FORCE_DUMB_QUEUE_TASKS
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.testFramework.*
+import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
@@ -34,10 +42,32 @@ import com.intellij.util.indexing.contentQueue.IndexingProgressReporter2
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import org.junit.*
-import org.junit.Assert.*
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import org.junit.After
+import org.junit.AfterClass
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Before
+import org.junit.BeforeClass
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
@@ -46,6 +76,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
 
@@ -156,7 +187,8 @@ class DumbServiceImplTest {
   @Test
   fun `test no task leak on dispose`() = runBlocking {
     // pass empty publisher to make sure that shared SmartModeScheduler is not affected
-    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {}, this)
+    val dumbService =
+      DumbServiceImpl(project, object : DumbService.DumbModeListener {}, object : DumbModeListenerBackgroundable {}, this)
     val exception = AtomicReference<Throwable?>()
 
     val disposes = CountDownLatch(2)
@@ -382,7 +414,10 @@ class DumbServiceImplTest {
   fun `test dispose cancels all the tasks submitted via queueTask from other threads with no race`() = runBlocking {
     val serviceScope = childScope("DumbServiceImpl")
     // pass empty publisher to make sure that shared SmartModeScheduler is not affected
-    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {}, serviceScope)
+    val dumbService = DumbServiceImpl(project,
+                                      object : DumbService.DumbModeListener {},
+                                      object : DumbModeListenerBackgroundable {},
+                                      serviceScope)
 
     val queuedTaskInvoked = AtomicBoolean(false)
     val dumbTaskFinished = CountDownLatch(1)
@@ -834,5 +869,49 @@ class DumbServiceImplTest {
     if (!await(seconds, TimeUnit.SECONDS)) {
       fail(message)
     }
+  }
+
+  @Test
+  fun `dumb service listener invariants`(): Unit = timeoutRunBlocking {
+    Registry.get("ide.dumb.service.use.background.write.action").setValue(true, testDisposable)
+    val dumbModeListenerValidity = AtomicInteger(0)
+    val listenerEnded = Job(coroutineContext.job)
+    val listenerEnded2 = Job(coroutineContext.job)
+
+    class SampleDumbModeListener : DumbService.DumbModeListener {
+      fun runListener() {
+        if (application.isDispatchThread) {
+          dumbModeListenerValidity.incrementAndGet()
+        }
+        if (!application.isWriteAccessAllowed) {
+          dumbModeListenerValidity.incrementAndGet()
+        }
+      }
+
+      override fun enteredDumbMode() = runListener()
+      override fun exitDumbMode() = runListener().also { listenerEnded.complete() }
+    }
+
+    class SampleBackgroundableDumbModeListener : DumbModeListenerBackgroundable {
+      fun runListener() {
+        if (application.isWriteAccessAllowed) {
+          dumbModeListenerValidity.incrementAndGet()
+        }
+      }
+
+      override fun enteredDumbMode() = runListener()
+      override fun exitDumbMode() = runListener().also { listenerEnded2.complete() }
+    }
+    dumbService.project.messageBus.connect(testDisposable).run {
+      subscribe(DumbService.DUMB_MODE, SampleDumbModeListener())
+      subscribe(DumbModeListenerBackgroundable.TOPIC, SampleBackgroundableDumbModeListener())
+    }
+    dumbService.queueTask(object : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) {}
+    })
+    dumbService.runInDumbMode("test", {})
+    listenerEnded.join()
+    listenerEnded2.join()
+    assertEquals(6, dumbModeListenerValidity.get())
   }
 }

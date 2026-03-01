@@ -59,11 +59,8 @@
     <java.staticMethodNamesCache implementation="com.intellij.psi.impl.JavaStaticMethodNameCacheImpl" order="first"/>
     <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"
                     serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>
-    <moduleService serviceInterface="com.intellij.openapi.roots.ModulePackageIndex"
-                   serviceImplementation="com.intellij.openapi.roots.impl.ModulePackageIndexImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.PackageIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectPackageIndexImpl"/>
-    <implicitToStringSearch implementation="com.intellij.psi.impl.search.ImplicitToStringSearcher"/>
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
@@ -86,9 +83,6 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.JavaRecordComponentSearcher"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex"/>
-    <indexingFlavor filetype="JAVA" implementationClass="com.intellij.index.JavaFileIndexingFlavor"/>
-    <indexingFlavor filetype="CLASS" implementationClass="com.intellij.index.ClassFileIndexingFlavor"/>
-    <indexingFlavor filetype="kotlin_builtins" implementationClass="com.intellij.index.KtBuiltInFileIndexingFlavorProvider"/>
     <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
   </extensions>
 </idea-plugin>

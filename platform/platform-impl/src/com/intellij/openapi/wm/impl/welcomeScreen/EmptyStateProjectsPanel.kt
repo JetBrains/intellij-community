@@ -4,7 +4,15 @@ package com.intellij.openapi.wm.impl.welcomeScreen
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -22,11 +30,10 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.FocusUtil
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Font
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
-
 
 @RequiresEdt
 internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel {
@@ -71,9 +78,8 @@ internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel 
   background = WelcomeScreenUIManager.getMainAssociatedComponentBackground()
 }
 
-
 // Returns main actions, more actions
-@ApiStatus.Internal
+@Internal
 fun createActionToolbars(parentDisposable: Disposable): Pair<ActionToolbarImpl, ActionToolbarImpl> {
   val actionManager = ActionManager.getInstance()
   val baseGroup = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE) as ActionGroup

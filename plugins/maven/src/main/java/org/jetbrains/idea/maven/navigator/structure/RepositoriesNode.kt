@@ -6,7 +6,6 @@ import com.intellij.util.containers.mapSmart
 import icons.MavenIcons
 import org.jetbrains.idea.maven.indices.MavenIndexUtils
 import org.jetbrains.idea.maven.project.MavenProjectBundle
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState
 import java.util.concurrent.CopyOnWriteArrayList

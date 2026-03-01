@@ -19,16 +19,27 @@ import org.assertj.swing.data.TableCell
 import org.assertj.swing.fixture.JTableFixture
 import org.assertj.swing.fixture.JTextComponentFixture
 import org.intellij.lang.annotations.Language
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.findLastRowIndexOfItemWithText
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.dropMnemonic
+import training.dsl.sdkConfigurationTasks
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.isToStringContains
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.util.*
-import javax.swing.*
+import java.util.Locale
+import javax.swing.JButton
+import javax.swing.JDialog
+import javax.swing.JTable
+import javax.swing.JTextArea
+import javax.swing.KeyStroke
 
 open class FindInFilesLesson(override val sampleFilePath: String,
                              private val helpUrl: String = "finding-and-replacing-text-in-project.html")

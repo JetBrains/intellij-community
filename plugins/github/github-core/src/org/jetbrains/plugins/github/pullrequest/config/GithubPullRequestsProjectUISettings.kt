@@ -4,7 +4,11 @@ package org.jetbrains.plugins.github.pullrequest.config
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.util.CollectableSerializablePersistentStateComponent
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import kotlinx.coroutines.flow.StateFlow

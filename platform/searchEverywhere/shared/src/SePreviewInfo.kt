@@ -5,6 +5,12 @@ import com.intellij.ide.vfs.VirtualFileId
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Represents preview information for a given file in the Search Everywhere context.
+ *
+ * @property fileUrl The virtual file identifier associated with the preview.
+ * @property navigationRanges A list of pairs specifying ranges in the file
+ */
 @ApiStatus.Experimental
 @Serializable
 sealed interface SePreviewInfo {
@@ -12,6 +18,9 @@ sealed interface SePreviewInfo {
   val navigationRanges: List<Pair<Int, Int>>
 }
 
+/**
+ * Factory class for creating instances of `SePreviewInfo`.
+ */
 @ApiStatus.Experimental
 class SePreviewInfoFactory {
   fun create(fileUrl: VirtualFileId, navigationRanges: List<Pair<Int, Int>>): SePreviewInfo =

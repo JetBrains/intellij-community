@@ -1,14 +1,27 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionLocation
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProgressIndicator
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResult
 import com.intellij.codeInsight.completion.CompletionResult.SHOULD_NOT_CHECK_WHEN_WRAP
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionService
+import com.intellij.codeInsight.completion.CompletionSorter
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
+import com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 import com.intellij.codeInsight.completion.command.commands.AfterHighlightingCommandProvider
 import com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
 import com.intellij.codeInsight.completion.group.GroupedCompletionContributor
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
+import com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptor
+import com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptorConverter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
@@ -23,7 +36,13 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.FoldingModel
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.SoftWrapModel
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.impl.EmptySoftWrapModel
 import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.progress.ProgressManager
@@ -32,9 +51,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJECTED_COPY_ELEMENT_KEY
@@ -43,6 +66,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
 
@@ -163,6 +187,8 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
       if (adjustedParameters.injectedFile == null) return
       if (adjustedParameters.injectedOffset == null) return
       if (!commandCompletionFactory.isApplicable(adjustedParameters.injectedFile, adjustedParameters.injectedOffset)) return
+      val originalCompletionFactory = commandCompletionService.getFactory(adjustedParameters.copyFile.language) ?: return
+      if (!originalCompletionFactory.isApplicableForHost(adjustedParameters.copyFile, adjustedParameters.copyOffset)) return
     }
     else {
       if (!commandCompletionFactory.isApplicable(adjustedParameters.copyFile, adjustedParameters.copyOffset)) return
@@ -173,18 +199,9 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
 
     val prefix = commandCompletionType.pattern
     val sorter = createSorter(parameters)
-    val matcher = LimitedToleranceMatcher(prefix)
-    val withPrefixMatcher = resultSet.withPrefixMatcher(matcher)
-      .withRelevanceSorter(sorter)
+    val withRelevanceSorter = resultSet.withRelevanceSorter(sorter)
 
-    withPrefixMatcher.restartCompletionOnPrefixChange(
-      StandardPatterns.string().with(object : PatternCondition<String>("add filter for command completion") {
-        override fun accepts(t: String, context: ProcessingContext?): Boolean {
-          return (!isReadOnly && commandCompletionType.suffix + t ==
-                  commandCompletionFactory.suffix() + (commandCompletionFactory.filterSuffix()?.toString() ?: "")) ||
-                 (isReadOnly && (commandCompletionType.suffix + t == (commandCompletionFactory.filterSuffix()?.toString() ?: "")))
-        }
-      }))
+    registerRestartPatterns(resultSet, commandCompletionFactory, commandCompletionType, isReadOnly)
 
     // Fetch commands applicable to the position
     processCommandsForContext(commandCompletionFactory = commandCompletionFactory,
@@ -197,6 +214,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
                               isReadOnly = isReadOnly,
                               isInjected = isInjected,
                               commandCompletionType = commandCompletionType) { commands ->
+      val baseMatcher = CamelHumpMatcher(prefix, false, true)
       commands.forEach { command ->
         ProgressManager.checkCanceled()
         CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
@@ -211,13 +229,33 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
         }
         else {
           for (element in lookupElements) {
-            if (!matcher.basePrefixMatches(element)) continue
+            if (!baseMatcher.prefixMatches(element)) continue
+            val commandCompletionElement = element.`as`(CommandCompletionLookupElement::class.java)!!
+            val matcher = LimitedToleranceMatcher(prefix, commandCompletionElement.currentTags, commandCompletionElement.otherTags)
             element.putUserData(SHOULD_NOT_CHECK_WHEN_WRAP, true)
-            withPrefixMatcher.addElement(element)
+            withRelevanceSorter.withPrefixMatcher(matcher).addElement(element)
           }
         }
       }
       true
+    }
+  }
+
+  private fun registerRestartPatterns(
+    resultSet: CompletionResultSet,
+    commandCompletionFactory: CommandCompletionFactory,
+    commandCompletionType: InvocationCommandType,
+    isReadOnly: Boolean,
+  ) {
+    val filterSuffix = commandCompletionFactory.filterSuffix()?.toString() ?: ""
+    val fullSuffix = commandCompletionFactory.suffix() + filterSuffix
+
+    resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().endsWith(fullSuffix))
+
+    val patternToCheck = if (isReadOnly) filterSuffix else fullSuffix
+    if (patternToCheck.startsWith(commandCompletionType.suffix)) {
+      val patternToRestart = patternToCheck.removePrefix(commandCompletionType.suffix)
+      resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().equalTo(patternToRestart))
     }
   }
 
@@ -247,7 +285,12 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     prefix: String,
     customPrefixMatcher: PrefixMatcher?,
   ): List<LookupElement> {
-    val presentableName = command.presentableName.replace("_", "").replace("...", "").replace("…", "")
+    var presentableName = command.presentableName
+      .removeSuffix("...")
+      .removeSuffix("…")
+    if (command is ActionCompletionCommand) {
+      presentableName = presentableName.replace("_", "")
+    }
     val additionalInfo = command.additionalInfo ?: ""
     var tailText = ""
     if (additionalInfo.isNotEmpty()) {
@@ -516,7 +559,7 @@ internal open class MyEditor(psiFileCopy: PsiFile, private val settings: EditorS
     return object : FoldingModel {
       override fun addFoldRegion(startOffset: Int, endOffset: Int, placeholderText: String): FoldRegion? = null
       override fun removeFoldRegion(region: FoldRegion) = Unit
-      override fun getAllFoldRegions(): Array<out FoldRegion?> = emptyArray()
+      override fun getAllFoldRegions(): Array<out FoldRegion> = emptyArray()
       override fun isOffsetCollapsed(offset: Int): Boolean = false
       override fun getCollapsedRegionAtOffset(offset: Int): FoldRegion? = null
       override fun getFoldRegion(startOffset: Int, endOffset: Int): FoldRegion? = null
@@ -592,6 +635,7 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
     var currentIndex = 1
     while (text.getOrNull(offset - currentIndex)?.isLetter() == true ||
            text.getOrNull(offset - currentIndex) == ' ' ||
+           text.getOrNull(offset - currentIndex) == '\t' ||
            text.getOrNull(offset - currentIndex) == '\''
     ) {
       currentIndex++
@@ -611,12 +655,13 @@ internal fun findCommandCompletionType(
   offset: Int,
   editor: Editor,
 ): InvocationCommandType? {
-  val suffix = factory.suffix().toString() + (factory.filterSuffix() ?: "")
+  val suffix = factory.suffix().toString()
+  val fullSuffix = suffix + (factory.filterSuffix() ?: "")
   val text = editor.document.immutableCharSequence
   if (isNonWritten) {
     return InvocationCommandType.FullSuffix("", editor.document.immutableCharSequence.substring(0, editor.caretModel.offset))
   }
-  val indexOf = findActualIndex(suffix, text, offset)
+  val indexOf = findActualIndex(fullSuffix, text, offset)
   if (offset - indexOf < 0) return null
   if (indexOf == 1 && text[offset - indexOf] == factory.suffix()) {
     //one point
@@ -624,11 +669,18 @@ internal fun findCommandCompletionType(
                                                text.substring(offset - indexOf, offset - indexOf + 1))
   }
   //two points
-  else if (offset - indexOf + 2 <= text.length && text.substring(offset - indexOf, offset - indexOf + 2) == suffix) {
+  else if (offset - indexOf + 2 <= text.length &&
+           offset >= offset - indexOf + 2 &&
+           text.substring(offset - indexOf, offset - indexOf + 2) == fullSuffix) {
+    if ((offset - indexOf - 1 >= 0 && text[offset - indexOf - 1] == factory.suffix()) ||
+        (offset - indexOf - 2 >= 0 && text.substring(offset - indexOf - 2, offset - indexOf) == fullSuffix)) {
+      return null
+    }
     return InvocationCommandType.FullSuffix(text.substring(offset - indexOf + 2, offset),
                                             text.substring(offset - indexOf, offset - indexOf + 2))
   }
-  if (indexOf > 0 && text.substring(offset - indexOf).startsWith(factory.suffix())) {
+  if (indexOf > 0 &&
+      text.substring(offset - indexOf).startsWith(factory.suffix())) {
     //force call with one point
     return InvocationCommandType.PartialSuffix(text.substring(offset - indexOf + 1, offset),
                                                text.substring(offset - indexOf, offset - indexOf + 1))
@@ -640,23 +692,20 @@ internal fun findCommandCompletionType(
   return null
 }
 
-private class LimitedToleranceMatcher(prefix: String) : CamelHumpMatcher(prefix, false, true) {
-
-  fun basePrefixMatches(element: LookupElement): Boolean {
-    return super.prefixMatches(element)
-  }
+internal class LimitedToleranceMatcher(
+  prefix: String,
+  private val currentTags: List<String>,
+  private val otherTags: List<String>
+) : CamelHumpMatcher(prefix, false, true) {
 
   override fun prefixMatches(element: LookupElement): Boolean {
     if (!super.prefixMatches(element)) return false
-    val commandCompletionElement = element.`as`(CommandCompletionLookupElement::class.java) ?: return false
-    val currentTags = commandCompletionElement.currentTags
-    val allLookupStrings = currentTags.ifEmpty { element.allLookupStrings }
+    val allLookupStrings = this.currentTags.ifEmpty { element.allLookupStrings }
     if (!matched(allLookupStrings)) return false
-    val otherTags = commandCompletionElement.otherTags
-    if (otherTags.isEmpty()) return true
-    val indexOfFirst = otherTags.indexOfFirst { allLookupStrings.contains(it) }
+    if (this.otherTags.isEmpty()) return true
+    val indexOfFirst = this.otherTags.indexOfFirst { allLookupStrings.contains(it) }
     if (indexOfFirst <= 0) return true
-    if (matched(otherTags.subList(0, indexOfFirst))) return false
+    if (matched(this.otherTags.subList(0, indexOfFirst))) return false
     return true
   }
 
@@ -688,7 +737,22 @@ private class LimitedToleranceMatcher(prefix: String) : CamelHumpMatcher(prefix,
     if (prefix == this.prefix) {
       return this
     }
-    return LimitedToleranceMatcher(prefix)
+    return LimitedToleranceMatcher(prefix, currentTags, otherTags)
+  }
+
+  class Converter : PrefixMatcherDescriptorConverter<LimitedToleranceMatcher> {
+    override fun toDescriptor(target: LimitedToleranceMatcher): PrefixMatcherDescriptor =
+      Descriptor(target.prefix, target.currentTags, target.otherTags)
+  }
+
+  @Serializable
+  data class Descriptor(
+    private val prefix: String,
+    private val currentTags: List<String>,
+    private val otherTags: List<String>,
+  ) : PrefixMatcherDescriptor {
+    override fun recreateMatcher(): PrefixMatcher =
+      LimitedToleranceMatcher(prefix, currentTags, otherTags)
   }
 }
 

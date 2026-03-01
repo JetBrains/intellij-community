@@ -6,7 +6,8 @@ package com.intellij.java.workspace.entities
 import com.intellij.platform.workspace.storage.*
 
 @GeneratedCodeApiVersion(3)
-interface DirectoryPackagingElementEntityBuilder : WorkspaceEntityBuilder<DirectoryPackagingElementEntity>, CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity> {
+interface DirectoryPackagingElementEntityBuilder : WorkspaceEntityBuilder<DirectoryPackagingElementEntity>,
+                                                   CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity> {
   override var entitySource: EntitySource
   override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
   override var artifact: ArtifactEntityBuilder?
@@ -14,7 +15,8 @@ interface DirectoryPackagingElementEntityBuilder : WorkspaceEntityBuilder<Direct
   var directoryName: String
 }
 
-internal object DirectoryPackagingElementEntityType : EntityType<DirectoryPackagingElementEntity, DirectoryPackagingElementEntityBuilder>() {
+internal object DirectoryPackagingElementEntityType :
+  EntityType<DirectoryPackagingElementEntity, DirectoryPackagingElementEntityBuilder>() {
   override val entityClass: Class<DirectoryPackagingElementEntity> get() = DirectoryPackagingElementEntity::class.java
   operator fun invoke(
     directoryName: String,

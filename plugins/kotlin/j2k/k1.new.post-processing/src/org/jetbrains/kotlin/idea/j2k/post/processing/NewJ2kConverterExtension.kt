@@ -8,17 +8,27 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.kotlin.j2k.copyPaste.K1J2KCopyPasteConverter
-import org.jetbrains.kotlin.j2k.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
-import org.jetbrains.kotlin.j2k.copyPaste.TargetData
+import org.jetbrains.kotlin.j2k.JavaToKotlinConverter
+import org.jetbrains.kotlin.j2k.PostProcessor
+import org.jetbrains.kotlin.j2k.WithProgressProcessor
 import org.jetbrains.kotlin.j2k.copyPaste.ConversionData
 import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
+import org.jetbrains.kotlin.j2k.copyPaste.K1J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.K1PlainTextPasteImportResolver
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.j2k.copyPaste.TargetData
+import org.jetbrains.kotlin.nj2k.Conversion
+import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
+import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
+import org.jetbrains.kotlin.nj2k.getNewJ2KConversions
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class NewJ2kConverterExtension : J2kConverterExtension() {
     override val kind: Kind = K1_NEW
 

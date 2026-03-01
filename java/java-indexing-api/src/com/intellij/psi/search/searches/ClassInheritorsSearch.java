@@ -14,7 +14,11 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.*;
+import com.intellij.util.AbstractQuery;
+import com.intellij.util.FilteredQuery;
+import com.intellij.util.Query;
+import com.intellij.util.QueryExecutor;
+import com.intellij.util.QueryParameters;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

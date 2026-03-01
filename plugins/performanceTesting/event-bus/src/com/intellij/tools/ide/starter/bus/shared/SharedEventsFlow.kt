@@ -8,8 +8,14 @@ import com.intellij.tools.ide.starter.bus.events.Event
 import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
 import com.intellij.tools.ide.starter.bus.shared.client.EventBusServerClient
 import com.intellij.tools.ide.starter.bus.shared.dto.SharedEventDto
-import kotlinx.coroutines.*
-import java.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.util.UUID
 import kotlin.time.Duration
 
 private val LOG = EventBusLoggerFactory.getLogger(SharedEventsFlow::class.java)
@@ -36,9 +42,10 @@ class SharedEventsFlow(
     eventClass: Class<EventType>,
     subscriber: Any,
     timeout: Duration,
+    sequential: Boolean,
     callback: suspend (event: EventType) -> Unit,
   ): Boolean {
-    return localEventsFlow.subscribe(eventClass, subscriber, timeout, callback).also {
+    return localEventsFlow.subscribe(eventClass, subscriber, timeout, sequential, callback).also {
       if (it) client.newSubscriber(eventClass, timeout, getSubscriberObject(subscriber).toString())
     }
   }
@@ -47,9 +54,10 @@ class SharedEventsFlow(
     eventClass: Class<EventType>,
     subscriber: Any,
     timeout: Duration,
+    sequential: Boolean,
     callback: suspend (event: EventType) -> Unit,
   ): Boolean {
-    return localEventsFlow.subscribeOnce(eventClass, subscriber, timeout, callback).also {
+    return localEventsFlow.subscribeOnce(eventClass, subscriber, timeout, sequential, callback).also {
       if (it) client.newSubscriber(eventClass, timeout, getSubscriberObject(subscriber).toString())
     }
   }

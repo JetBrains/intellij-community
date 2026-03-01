@@ -27,4 +27,27 @@ jvm_library(
   exports = ["//platform/bookmarks"],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.bookmarks.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/bookmarks",
+    "//platform/bookmarks:bookmarks_test_lib",
+  ],
+  runtime_deps = [
+    ":backend",
+    "//platform/backend:backend_test_lib",
+    "//platform/bookmarks:bookmarks_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/kernel/backend:backend_test_lib",
+    "//platform/project/shared:project_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.bookmarks.backend` end

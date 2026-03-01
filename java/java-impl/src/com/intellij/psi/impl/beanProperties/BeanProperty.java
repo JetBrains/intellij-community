@@ -13,7 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Provide {@link com.intellij.refactoring.rename.BeanPropertyRenameHandler} if necessary.

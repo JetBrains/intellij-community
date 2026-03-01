@@ -11,9 +11,14 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project

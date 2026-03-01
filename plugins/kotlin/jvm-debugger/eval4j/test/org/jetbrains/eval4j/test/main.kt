@@ -4,14 +4,44 @@ package org.jetbrains.eval4j.test
 
 import junit.framework.TestCase
 import junit.framework.TestSuite
-import org.jetbrains.eval4j.*
+import org.jetbrains.eval4j.Eval
+import org.jetbrains.eval4j.ExceptionThrown
+import org.jetbrains.eval4j.FieldDescription
+import org.jetbrains.eval4j.MemberDescription
+import org.jetbrains.eval4j.MethodDescription
+import org.jetbrains.eval4j.NOT_A_VALUE
+import org.jetbrains.eval4j.NULL_VALUE
+import org.jetbrains.eval4j.NewObjectValue
+import org.jetbrains.eval4j.ObjectValue
+import org.jetbrains.eval4j.ThrownFromEvaluatedCodeException
+import org.jetbrains.eval4j.VOID_VALUE
+import org.jetbrains.eval4j.Value
+import org.jetbrains.eval4j.boolean
+import org.jetbrains.eval4j.byte
+import org.jetbrains.eval4j.char
+import org.jetbrains.eval4j.checkNull
+import org.jetbrains.eval4j.double
+import org.jetbrains.eval4j.fieldType
+import org.jetbrains.eval4j.float
+import org.jetbrains.eval4j.int
+import org.jetbrains.eval4j.interpreterLoop
+import org.jetbrains.eval4j.long
+import org.jetbrains.eval4j.makeNotInitializedValue
+import org.jetbrains.eval4j.obj
+import org.jetbrains.eval4j.parameterTypes
+import org.jetbrains.eval4j.returnType
+import org.jetbrains.eval4j.short
 import org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import java.lang.reflect.*
+import java.lang.reflect.Constructor
+import java.lang.reflect.Field
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.lang.reflect.Array as JArray
 
 fun suite(): TestSuite = buildTestSuite { methodNode, ownerClass, expected ->

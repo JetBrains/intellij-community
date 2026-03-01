@@ -3,7 +3,11 @@ package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.CompositeDataIndexer;
+import com.intellij.util.indexing.FileIndexingStateWithExplanation;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IndexInfrastructure;
+import com.intellij.util.indexing.IndexedFile;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

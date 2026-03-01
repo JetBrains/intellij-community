@@ -22,23 +22,25 @@ import com.intellij.ide.plugins.loadPluginSubDescriptors
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
-import com.intellij.platform.plugins.parser.impl.LoadPathUtil
-import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.plugins.parser.impl.XIncludeLoader
-import com.intellij.platform.plugins.parser.impl.consume
-import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
-import com.intellij.platform.plugins.testFramework.isModuleSetPath
-import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
-import com.intellij.platform.plugins.testFramework.resolveModuleSetPath
+import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
+import com.intellij.platform.pluginSystem.parser.impl.LoadedXIncludeReference
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
+import com.intellij.platform.pluginSystem.parser.impl.XIncludeLoader
+import com.intellij.platform.pluginSystem.parser.impl.consume
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.pluginSystem.testFramework.isModuleSetPath
+import com.intellij.platform.pluginSystem.testFramework.loadRawPluginDescriptorInTest
+import com.intellij.platform.pluginSystem.testFramework.resolveModuleSetPath
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.util.SystemProperties
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -106,7 +108,7 @@ class PluginDependenciesValidator private constructor(
 
   private fun reportPluginLoadingErrors(loadingErrors: List<PluginLoadingError>) {
     for (error in loadingErrors) {
-      val errorMessage = error.htmlMessage.toString()
+      val errorMessage = error.htmlMessage.toString() + if (error.reason != null) { ":\n  ${error.reason!!.logMessage}" } else ""
       if (options.pluginErrorPrefixesToIgnore.any { errorMessage.startsWith(it) }) {
         continue
       }
@@ -196,8 +198,11 @@ class PluginDependenciesValidator private constructor(
           .mapTo(HashSet()) { getModuleName(it) }
 
       val enumerator = JpsJavaExtensionService.dependencies(sourceModule).satisfying {
-        //for now only dependencies used in source code are checked; in the future, we can check dependencies with 'Runtime' scope as well
-        JpsJavaExtensionService.getInstance().getDependencyExtension(it)?.scope == JpsJavaDependencyScope.COMPILE 
+        /* for now only dependencies used for compilation of production code are checked; in the future, we can check dependencies with 'Runtime' scope as well;
+           note that dependencies with scope 'Provided' are checked by intention: in some cases, such dependencies are used for modules from other plugins, and we need to check
+           corresponding dependency at runtime in these cases */
+        val scope = JpsJavaExtensionService.getInstance().getDependencyExtension(it)?.scope
+        scope != null && scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_COMPILE)
       }
       enumerator.processModules { targetModule ->
         val targetModuleName = targetModule.name
@@ -290,7 +295,7 @@ class PluginDependenciesValidator private constructor(
       }
     }
       .withProductMode(productMode)
-      .withDisabledPlugins("com.jetbrains.kmm") // TODO: support incompatible plugins (IJI-2975)
+      .withDisabledPlugins(*options.pluginsToIgnore.map { it.idString }.toTypedArray())
       .withCustomCoreLoader(UrlClassLoader.build().files(corePluginDescription.jpsModulesInClasspath.map { getModuleOutputDir(it) }).get())
     
     return pluginSetBuilder.build()
@@ -315,7 +320,23 @@ class PluginDependenciesValidator private constructor(
     val pathResolver = LoadFromSourcePathResolver(pluginLayout, customConfigFileToModule, embeddedContentModules, xIncludeLoader)
     val dataLoader = LoadFromSourceDataLoader(mainPluginModule = mainModule) 
     loadPluginSubDescriptors(descriptor, pathResolver, loadingContext = loadingContext, dataLoader = dataLoader, pluginDir = pluginDir, pool = zipPool)
-    descriptor.jarFiles = (pluginLayout.jpsModulesInClasspath + embeddedContentModules.map { it.name }).map { getModuleOutputDir(it) }
+
+    val nonEmbeddedContentModules = (
+      descriptor.content.modules.filter { it.defaultLoadingRule != ModuleLoadingRule.EMBEDDED }.map { it.moduleId.name } +
+      options.pluginVariantsWithDynamicIncludes.filter { it.pluginId == descriptor.pluginId }.flatMap { pluginVariant ->
+        val oldValue = System.setProperty(pluginVariant.systemPropertyKey, pluginVariant.systemPropertyValue.toString())
+        try {
+          loadRawPluginDescriptorInTest(pluginDescriptorPath, xIncludeLoader).contentModules.filter { it.loadingRule != ModuleLoadingRuleValue.EMBEDDED }.map { it.name }
+        }
+        finally {
+          SystemProperties.setProperty(pluginVariant.systemPropertyKey, oldValue)
+        }
+      }
+    ).toSet()
+
+    //non-embedded content modules with `package` attribute are included in the main plugin JAR, but they are loaded by different classloaders
+    val namesOfJpsModulesIncludedInPluginDescriptorModule = pluginLayout.jpsModulesInClasspath - nonEmbeddedContentModules + embeddedContentModules.map { it.name }
+    descriptor.jarFiles = namesOfJpsModulesIncludedInPluginDescriptorModule.map { getModuleOutputDir(it) }
     return descriptor
   }
 

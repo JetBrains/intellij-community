@@ -1,13 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.compose.showcase
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -30,9 +40,19 @@ import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
 import java.awt.BorderLayout
-import java.util.*
-import javax.swing.*
-import kotlin.math.*
+import java.util.LinkedList
+import javax.swing.BoxLayout
+import javax.swing.ButtonGroup
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JRadioButton
+import javax.swing.JSeparator
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 internal class ComposePerformanceDemoAction : DumbAwareAction() {
 

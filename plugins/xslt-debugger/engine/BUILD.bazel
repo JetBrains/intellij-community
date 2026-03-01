@@ -9,7 +9,19 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/xpath/xslt-rt:rt",
-    "//plugins/xslt-debugger/engine/lib:rmi-stubs",
+    "//plugins/xslt-debugger/engine/lib:xslt-debugger-rt-_r_m_i_stubs",
+  ]
+)
+
+jvm_library(
+  name = "xslt-debugger-rt_test_lib",
+  module_name = "intellij.xslt.debugger.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":xslt-debugger-rt",
+    "//plugins/xpath/xslt-rt:rt_test_lib",
   ]
 )
 ### auto-generated section `build intellij.xslt.debugger.rt` end

@@ -86,28 +86,6 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                                     final PsiFile initialFile,
                                                     FileType fileType,
                                                     TreeFileChooser.PsiFileFilter filter) {
-    return createFileChooser(title, initialFile, fileType, filter, false);
-  }
-
-  @Override
-  public @NotNull
-  TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
-                                    @Nullable PsiFile initialFile,
-                                    @Nullable FileType fileType,
-                                    @Nullable TreeFileChooser.PsiFileFilter filter,
-                                    boolean disableStructureProviders) {
-    return createFileChooser(title, initialFile, fileType, filter, disableStructureProviders, false);
-  }
-
-
-  @Override
-  public @NotNull TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
-                                                    @Nullable PsiFile initialFile,
-                                                    @Nullable FileType fileType,
-                                                    @Nullable TreeFileChooser.PsiFileFilter filter,
-                                                    boolean disableStructureProviders,
-                                                    boolean showLibraryContents) {
-    return TreeFileChooserFactory.getInstance(myProject)
-      .createFileChooser(title, initialFile, fileType, filter, disableStructureProviders, showLibraryContents);
+    return TreeFileChooserFactory.getInstance(myProject).createFileChooser(title, initialFile, fileType, filter, false, false);
   }
 }

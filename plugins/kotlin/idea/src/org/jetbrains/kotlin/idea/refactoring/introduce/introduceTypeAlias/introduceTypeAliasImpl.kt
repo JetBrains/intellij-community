@@ -9,6 +9,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.containers.LinkedMultiMap
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -27,14 +28,39 @@ import org.jetbrains.kotlin.idea.util.psi.patternMatching.UnifierParameter
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.match
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
-import org.jetbrains.kotlin.lexer.KtTokens.*
+import org.jetbrains.kotlin.lexer.KtTokens.DEFAULT_VISIBILITY_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.INTERNAL_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.PRIVATE_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.PROTECTED_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.PUBLIC_KEYWORD
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeElement
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.TypeUtils
 
+@K1Deprecation
 sealed class IntroduceTypeAliasAnalysisResult {
     class Error(@NlsContexts.DialogMessage val message: String) : IntroduceTypeAliasAnalysisResult()
     class Success(val descriptor: IntroduceTypeAliasDescriptor) : IntroduceTypeAliasAnalysisResult()
@@ -42,6 +68,7 @@ sealed class IntroduceTypeAliasAnalysisResult {
 
 private fun IntroduceTypeAliasData.getTargetScope() = targetSibling.getResolutionScope(bindingContext, resolutionFacade)
 
+@K1Deprecation
 fun IntroduceTypeAliasData.analyze(): IntroduceTypeAliasAnalysisResult {
     val psiFactory = KtPsiFactory(originalTypeElement.project)
 
@@ -110,12 +137,14 @@ fun IntroduceTypeAliasData.analyze(): IntroduceTypeAliasAnalysisResult {
     return IntroduceTypeAliasAnalysisResult.Success(descriptor.copy(name = initialName))
 }
 
+@K1Deprecation
 fun IntroduceTypeAliasData.getApplicableVisibilities(): List<KtModifierKeywordToken> = when (targetSibling.parent) {
     is KtClassBody -> listOf(PRIVATE_KEYWORD, PUBLIC_KEYWORD, INTERNAL_KEYWORD, PROTECTED_KEYWORD)
     is KtFile -> listOf(PRIVATE_KEYWORD, PUBLIC_KEYWORD, INTERNAL_KEYWORD)
     else -> emptyList()
 }
 
+@K1Deprecation
 fun IntroduceTypeAliasDescriptor.validate(): IntroduceTypeAliasDescriptorWithConflicts {
     val conflicts = MultiMap<PsiElement, String>()
 
@@ -140,6 +169,7 @@ fun IntroduceTypeAliasDescriptor.validate(): IntroduceTypeAliasDescriptorWithCon
     return IntroduceTypeAliasDescriptorWithConflicts(this, conflicts)
 }
 
+@K1Deprecation
 fun findDuplicates(typeAlias: KtTypeAlias): Map<KotlinPsiRange, () -> Unit> {
     val aliasName = typeAlias.name?.quoteIfNeeded() ?: return emptyMap()
     val aliasRange = typeAlias.textRange
@@ -237,6 +267,7 @@ fun findDuplicates(typeAlias: KtTypeAlias): Map<KotlinPsiRange, () -> Unit> {
 
 private var KtTypeReference.typeParameterInfo: TypeParameter? by CopyablePsiUserDataProperty(Key.create("TYPE_PARAMETER_INFO"))
 
+@K1Deprecation
 fun IntroduceTypeAliasDescriptor.generateTypeAlias(previewOnly: Boolean = false): KtTypeAlias {
     val originalElement = originalData.originalTypeElement
     val psiFactory = KtPsiFactory(originalElement.project)

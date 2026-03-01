@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package andel.intervals.impl
 
-import andel.intervals.*
+import andel.intervals.Interval
+import andel.intervals.Intervals
 import andel.intervals.Intervals.Companion.CompareByStart
+import andel.intervals.IntervalsFactory
+import andel.intervals.IntervalsIterator
 import andel.intervals.IntervalsIterator.Companion.toSequence
+import andel.intervals.OldIntervalsFactory
 import andel.operation.Op
 import andel.operation.Op.Retain
 import andel.operation.Operation

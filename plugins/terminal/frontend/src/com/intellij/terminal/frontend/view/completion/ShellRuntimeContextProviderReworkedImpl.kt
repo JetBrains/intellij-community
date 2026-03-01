@@ -5,31 +5,37 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
-import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
+import org.jetbrains.plugins.terminal.block.completion.spec.EEL_DESCRIPTOR_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.IS_REWORKED_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorProcessExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellFileSystemSupportImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.util.ShellType
 
 internal class ShellRuntimeContextProviderReworkedImpl(
   private val project: Project,
   private val sessionModel: TerminalSessionModel,
-  eelDescriptor: EelDescriptor,
+  private val envVariables: Map<String, String>,
+  private val eelDescriptor: EelDescriptor,
 ) : ShellRuntimeContextProvider {
-  private val shellCommandExecutor = ShellCommandExecutorReworked(eelDescriptor)
+  private val generatorProcessExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor, envVariables)
+  private val shellCommandExecutor = ShellCommandExecutorReworked(generatorProcessExecutor)
   private val fileSystemSupport = ShellFileSystemSupportImpl(eelDescriptor)
 
-  override fun getContext(typedPrefix: String): ShellRuntimeContext {
+  override fun getContext(commandTokens: List<String>): ShellRuntimeContext {
     return ShellRuntimeContextImpl(
-      sessionModel.terminalState.value.currentDirectory,
-      typedPrefix,
-      ShellType.ZSH.toShellName(),
-      shellCommandExecutor,
-      fileSystemSupport,
+      currentDirectory = sessionModel.terminalState.value.currentDirectory ?: error("Current directory should be set at this moment"),
+      envVariables = envVariables,
+      commandTokens = commandTokens,
+      definedShellName = null,
+      generatorCommandsRunner = shellCommandExecutor,
+      generatorProcessExecutor = generatorProcessExecutor,
+      fileSystemSupport = fileSystemSupport,
     ).apply {
       putUserData(PROJECT_KEY, project)
       putUserData(IS_REWORKED_KEY, true)
+      putUserData(EEL_DESCRIPTOR_KEY, eelDescriptor)
     }
   }
 }

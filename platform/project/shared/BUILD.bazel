@@ -25,4 +25,22 @@ jvm_library(
     "//platform/platform-impl/rpc",
   ]
 )
+
+jvm_library(
+  name = "project_test_lib",
+  module_name = "intellij.platform.project",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":project",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.project` end

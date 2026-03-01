@@ -6,13 +6,22 @@ import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import com.intellij.rt.junit.DeafStream;
 import com.intellij.rt.junit.IdeaTestRunner;
-import junit.framework.*;
+import junit.framework.AssertionFailedError;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestListener;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner<Test> {
   private SMTestListener myTestsListener;

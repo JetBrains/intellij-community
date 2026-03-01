@@ -4,11 +4,20 @@ package com.intellij.platform.execution.dashboard;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
-import com.intellij.execution.dashboard.*;
+import com.intellij.execution.dashboard.RunDashboardGroup;
+import com.intellij.execution.dashboard.RunDashboardManager;
+import com.intellij.execution.dashboard.RunDashboardManagerProxy;
+import com.intellij.execution.dashboard.RunDashboardServiceId;
+import com.intellij.execution.dashboard.RunDashboardUiManager;
 import com.intellij.execution.dashboard.actions.ExecutorAction;
 import com.intellij.execution.dashboard.actions.RunDashboardGroupNode;
 import com.intellij.execution.runners.FakeRerunAction;
-import com.intellij.execution.services.*;
+import com.intellij.execution.services.ServiceViewDescriptor;
+import com.intellij.execution.services.ServiceViewDnDDescriptor;
+import com.intellij.execution.services.ServiceViewGroupingContributor;
+import com.intellij.execution.services.ServiceViewManager;
+import com.intellij.execution.services.ServiceViewToolWindowDescriptor;
+import com.intellij.execution.services.SimpleServiceViewDescriptor;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
@@ -19,7 +28,18 @@ import com.intellij.ide.ui.icons.IconId;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -27,7 +47,13 @@ import com.intellij.platform.execution.dashboard.actions.RunDashboardDoubleClick
 import com.intellij.platform.execution.dashboard.splitApi.CustomLinkDto;
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto;
 import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto;
-import com.intellij.platform.execution.dashboard.splitApi.frontend.*;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendDashboardLuxComponent;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardLuxHolder;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManager;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardComponentWrapper;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardGroupingRule;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiManagerImpl;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiUtils;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FolderDashboardGroupingRule.FolderDashboardGroup;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FrontendRunConfigurationNode;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.GroupingNode;
@@ -43,16 +69,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.execution.RunContentDescriptorIdImplKt.RUN_CONTENT_DESCRIPTOR_ID;
-import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.SELECTED_DASHBOARD_SERVICE_ID;
 import static com.intellij.ide.ui.icons.IconIdKt.icon;
-import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.*;
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER;
+import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.scheduleDropRunConfigurationNodeOnFolderNode;
+import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.scheduleNavigateToService;
+import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.scheduleNodeLinkNavigation;
+import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.scheduleRemoveFolderGroup;
+import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.scheduleRemoveService;
+import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.scheduleReorderConfigurations;
+import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.scheduleRerunConfiguration;
 import static com.intellij.platform.execution.serviceView.ServiceViewImplementationChooserKt.shouldEnableServicesViewInCurrentEnvironment;
 
 public final class RunDashboardServiceViewContributor
@@ -60,7 +97,7 @@ public final class RunDashboardServiceViewContributor
              RunDashboardGroupNode {
 
   private static final DataProvider TREE_EXPANDER_HIDE_PROVIDER =
-    id -> PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(id) ? true : null;
+    id -> TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(id) ? true : null;
 
   @Override
   public @NotNull ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
@@ -193,6 +230,11 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
+    public String getUniqueId() {
+      return String.valueOf(myNode.getService().getUuid().getUid());
+    }
+
+    @Override
     public JComponent getContentComponent() {
       Project project = myNode.getProject();
 
@@ -249,23 +291,6 @@ public final class RunDashboardServiceViewContributor
     @Override
     public @NotNull ItemPresentation getPresentation() {
       return myNode.getPresentation();
-    }
-
-    @Override
-    public DataProvider getDataProvider() {
-      Content content = myNode.getContent();
-      if (content == null) return TREE_EXPANDER_HIDE_PROVIDER;
-
-      // Try to get data provider from content's component itself.
-      // No need to search for data providers in content's component swing hierarchy,
-      // because it is inside service view component for which data is provided.
-      DataProvider componentProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
-      return id -> {
-        Object data = TREE_EXPANDER_HIDE_PROVIDER.getData(id);
-        if (data != null) return data;
-
-        return componentProvider == null ? null : componentProvider.getData(id);
-      };
     }
 
     @Override
@@ -393,12 +418,28 @@ public final class RunDashboardServiceViewContributor
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
       sink.set(CommonDataKeys.PROJECT,  myNode.getProject());
-      sink.set(SELECTED_DASHBOARD_SERVICE_ID, myNode.getValue().getRunDashboardServiceDto().getUuid());
       sink.set(RUN_CONTENT_DESCRIPTOR_ID, myNode.getValue().getRunDashboardServiceDto().getContentId());
+      sink.set(TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, true);
+
+      Content content = myNode.getContent();
+      if (content == null) {
+        return;
+      }
+      var component = content.getComponent();
+      if (component instanceof UiDataProvider provider) {
+        provider.uiDataSnapshot(sink);
+      }
+      else {
+        var provider = DataManagerImpl.getDataProviderEx(content.getComponent());
+        if (provider == null) {
+          return;
+        }
+        sink.uiDataSnapshot(provider);
+      }
     }
   }
 
-  private static class RunDashboardGroupViewDescriptor implements ServiceViewDescriptor, WeighedItem {
+  private static class RunDashboardGroupViewDescriptor implements ServiceViewDescriptor, WeighedItem, UiDataProvider {
     protected final RunDashboardGroup myGroup;
     protected final GroupingNode myNode;
     private final PresentationData myPresentationData;
@@ -483,8 +524,8 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public @Nullable DataProvider getDataProvider() {
-      return TREE_EXPANDER_HIDE_PROVIDER;
+    public void uiDataSnapshot(DataSink sink) {
+      sink.set(TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, true);
     }
   }
 
@@ -539,20 +580,15 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public @Nullable DataProvider getDataProvider() {
-      return dataId -> {
-        if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-          RunDashboardTypePanel typeContent =
-            RunDashboardUiManagerImpl.getInstance(myNode.getProject()).getTypeContent();
-          return typeContent.getTreeExpander();
-        }
-        return TREE_EXPANDER_HIDE_PROVIDER.getData(dataId);
-      };
+    public void uiDataSnapshot(DataSink sink) {
+      sink.set(PlatformDataKeys.TREE_EXPANDER,
+               RunDashboardUiManagerImpl.getInstance(myNode.getProject()).getTypeContent().getTreeExpander());
+      sink.set(TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, true);
     }
   }
 
   private static final class RunDashboardContributorViewDescriptor extends SimpleServiceViewDescriptor
-    implements ServiceViewToolWindowDescriptor {
+    implements ServiceViewToolWindowDescriptor, UiDataProvider {
     private final Project myProject;
 
     RunDashboardContributorViewDescriptor(@NotNull Project project) {
@@ -571,10 +607,9 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public DataProvider getDataProvider() {
-      return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id)
-                   ? new RunDashboardServiceViewDeleteProvider()
-                   : TREE_EXPANDER_HIDE_PROVIDER.getData(id);
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new RunDashboardServiceViewDeleteProvider());
+      sink.set(TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, true);
     }
 
     @Override

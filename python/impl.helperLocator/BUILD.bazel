@@ -22,4 +22,19 @@ jvm_library(
     "//platform/diagnostic",
   ]
 )
+
+jvm_library(
+  name = "community-helpersLocator_test_lib",
+  module_name = "intellij.python.community.helpersLocator",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":community-helpersLocator",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.python.community.helpersLocator` end

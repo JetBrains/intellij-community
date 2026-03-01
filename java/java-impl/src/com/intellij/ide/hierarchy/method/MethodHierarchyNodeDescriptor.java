@@ -10,14 +10,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Font;
 
 public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
 

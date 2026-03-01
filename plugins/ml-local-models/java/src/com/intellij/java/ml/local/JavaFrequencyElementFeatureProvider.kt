@@ -12,7 +12,7 @@ import com.intellij.ml.local.models.frequency.classes.ClassesFrequencyLocalModel
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 
-private class JavaFrequencyElementFeatureProvider : ElementFeatureProvider {
+internal class JavaFrequencyElementFeatureProvider : ElementFeatureProvider {
   override fun getName(): String = "local"
 
   override fun calculateFeatures(element: LookupElement,

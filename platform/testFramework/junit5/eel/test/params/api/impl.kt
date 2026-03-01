@@ -25,7 +25,7 @@ internal class EelHolderImpl<T : Annotation>(val eelTestProvider: EelIjentTestPr
 
 @TestOnly
 internal object LocalEelHolder : EelHolder {
-  override val type: EelType = Local
+  override val type: EelType = EelType.Local
   override val eel: EelApi get() = localEel
   override fun toString(): String = "Local"
 }

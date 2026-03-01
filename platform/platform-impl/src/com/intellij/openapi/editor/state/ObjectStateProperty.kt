@@ -7,7 +7,10 @@ open class ObjectStateProperty<T>(initialValue: T,
                                   private val defaultValueCalculator: SyncDefaultValueCalculator<T>,
                                   private val customOutValueModifier: CustomOutValueModifier<T>? = null) : StateProperty<T>() {
   private var overriddenValue: T? = null
-  private var isValueOverridden = false  // this is need for supporting possible `null` values
+
+  var isValueOverridden: Boolean = false  // this is need for supporting possible `null` values
+    private set
+  
   private var outValue: T = initialValue
 
   protected val value get() = outValue

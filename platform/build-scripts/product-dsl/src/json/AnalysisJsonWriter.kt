@@ -1,17 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.json
 
-import com.fasterxml.jackson.core.JsonGenerator
 import kotlinx.serialization.Serializable
-import org.jetbrains.intellij.build.productLayout.analysis.DependencyPathResult
-import org.jetbrains.intellij.build.productLayout.analysis.MergeImpactResult
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleDependenciesResult
-import org.jetbrains.intellij.build.productLayout.analysis.ModulePathsResult
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleReachabilityResult
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetOverlap
-import org.jetbrains.intellij.build.productLayout.analysis.ProductSimilarityPair
-import org.jetbrains.intellij.build.productLayout.analysis.ProductUsageAnalysis
-import org.jetbrains.intellij.build.productLayout.analysis.UnificationSuggestion
+import org.jetbrains.intellij.build.productLayout.tooling.MergeImpactResult
+import org.jetbrains.intellij.build.productLayout.tooling.ModulePathsResult
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetOverlap
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSimilarityPair
+import org.jetbrains.intellij.build.productLayout.tooling.ProductUsageAnalysis
+import org.jetbrains.intellij.build.productLayout.tooling.UnificationSuggestion
+import org.jetbrains.intellij.build.productLayout.traversal.DependencyPathResult
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleDependenciesResult
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleOwnersResult
+import org.jetbrains.intellij.build.productLayout.traversal.ModuleReachabilityResult
+import tools.jackson.core.JsonGenerator
 
 /**
  * Writes product similarity analysis to JSON.
@@ -116,6 +117,17 @@ internal fun writeModulePathsResult(
 internal fun writeModuleDependenciesResult(
   gen: JsonGenerator,
   result: ModuleDependenciesResult
+) {
+  gen.writeRawValue(kotlinxJson.encodeToString(result))
+}
+
+/**
+ * Writes module owners result to JSON.
+ * Includes owning plugins (production/test depending on filter).
+ */
+internal fun writeModuleOwnersResult(
+  gen: JsonGenerator,
+  result: ModuleOwnersResult
 ) {
   gen.writeRawValue(kotlinxJson.encodeToString(result))
 }

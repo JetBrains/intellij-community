@@ -14,7 +14,7 @@ import com.intellij.psi.SyntheticElement
 import com.intellij.util.PlatformIcons
 import javax.swing.Icon
 
-private class JavaFileIconPatcher : FileIconPatcher {
+internal class JavaFileIconPatcher : FileIconPatcher {
   override fun patchIcon(icon: Icon, file: VirtualFile, flags: Int, project: Project?): Icon {
     if (project == null) {
       return icon

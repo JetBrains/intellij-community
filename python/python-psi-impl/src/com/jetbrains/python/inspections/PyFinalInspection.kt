@@ -18,8 +18,34 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeA
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
 import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.psi.PyAnnotation
+import com.jetbrains.python.psi.PyAnnotationOwner
+import com.jetbrains.python.psi.PyAugAssignmentStatement
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDecoratable
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyForStatement
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyGlobalStatement
+import com.jetbrains.python.psi.PyImportStatementBase
+import com.jetbrains.python.psi.PyKnownDecoratorUtil
+import com.jetbrains.python.psi.PyLoopStatement
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyNonlocalStatement
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyReferenceOwner
+import com.jetbrains.python.psi.PyStatement
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypeCommentOwner
+import com.jetbrains.python.psi.PyTypeDeclarationStatement
+import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.PyWhileStatement
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyClassType
@@ -106,14 +132,14 @@ class PyFinalInspection : PyInspection() {
         registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.final.non.method.function.could.not.be.marked.as.final"))
       }
 
-      getFunctionTypeAnnotation(node)?.let { comment ->
+      PyTypingTypeProvider.getFunctionTypeAnnotation(node)?.let { comment ->
         if (comment.parameterTypeList.parameterTypes.any { resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it) }) {
           registerProblem(node.typeComment,
                           PyPsiBundle.message("INSP.final.final.could.not.be.used.in.annotations.for.function.parameters"))
         }
       }
 
-      getReturnTypeAnnotation(node, myTypeEvalContext)?.let {
+      PyTypingTypeProvider.getReturnTypeAnnotation(node, myTypeEvalContext)?.let {
         if (resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it)) {
           registerProblem(node.typeComment ?: node.annotation,
                           PyPsiBundle.message("INSP.final.final.could.not.be.used.in.annotation.for.function.return.value"))
@@ -125,6 +151,8 @@ class PyFinalInspection : PyInspection() {
       super.visitPyTargetExpression(node)
 
       val parent = PsiTreeUtil.getParentOfType(node, PyStatement::class.java)
+      if (parent is PyImportStatementBase) return
+
       if (parent is PyTypeDeclarationStatement || parent is PyGlobalStatement || parent is PyNonlocalStatement) {
         node.annotation?.value?.let {
           if (PyiUtil.isInsideStub(node) || ScopeUtil.getScopeOwner(node) is PyClass) {
@@ -323,7 +351,7 @@ class PyFinalInspection : PyInspection() {
         else -> PyUtil.multiResolveTopPriority(target, resolveContext)
       }.toMutableList()
 
-      val scopeOwner = ScopeUtil.getScopeOwner(target);
+      val scopeOwner = ScopeUtil.getScopeOwner(target)
       if (!target.isQualified && scopeOwner != null) {
         // multiResolve finds last assignments, but we need all earlier assignments
         val scope = ControlFlowCache.getScope(scopeOwner)
@@ -428,7 +456,7 @@ class PyFinalInspection : PyInspection() {
         return
       }
 
-      if (isInsideTypeHint(node, myTypeEvalContext) && resolvesToFinal(node)) {
+      if (PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext) && resolvesToFinal(node)) {
         registerProblem(node, PyPsiBundle.message("INSP.final.final.could.only.be.used.as.outermost.type"))
       }
     }
@@ -451,20 +479,21 @@ class PyFinalInspection : PyInspection() {
       )
     }
 
-    private fun isFinal(decoratable: PyDecoratable) = isFinal(decoratable, myTypeEvalContext)
+    private fun isFinal(decoratable: PyDecoratable) = PyTypingTypeProvider.isFinal(decoratable, myTypeEvalContext)
 
     private fun <T> isFinal(node: T): Boolean where T : PyAnnotationOwner, T : PyTypeCommentOwner {
-      return isFinal(node, myTypeEvalContext)
+      return PyTypingTypeProvider.isFinal(node, myTypeEvalContext)
     }
 
     private fun resolvesToFinal(expression: PyExpression?): Boolean {
       return expression is PyReferenceExpression &&
-             resolveToQualifiedNames(expression, myTypeEvalContext).any { it == FINAL || it == FINAL_EXT }
+             PyTypingTypeProvider.resolveToQualifiedNames(expression, myTypeEvalContext)
+               .any { it == PyTypingTypeProvider.FINAL || it == PyTypingTypeProvider.FINAL_EXT }
     }
 
     private fun resolvesToClassVar(expression: PyExpression): Boolean {
       return (expression is PyReferenceExpression) &&
-             resolveToQualifiedNames(expression, myTypeEvalContext).any { it == CLASS_VAR }
+             PyTypingTypeProvider.resolveToQualifiedNames(expression, myTypeEvalContext).any { it == PyTypingTypeProvider.CLASS_VAR }
     }
 
     private fun resolvesToClassVarFinal(expression: PyExpression?): Boolean {

@@ -11,8 +11,11 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 @ApiStatus.Internal
 public abstract class SingleRowLayoutStrategy {

@@ -10,11 +10,16 @@ import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
@@ -42,8 +47,15 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
-import com.intellij.testFramework.*
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.registerServiceInstance
+import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.unregisterService
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.ApiVersion
@@ -52,10 +64,9 @@ import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.coroutineContext
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinxCoroutines
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -234,7 +245,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     protected fun getProjectDescriptorFromFileDirective(): LightProjectDescriptor {
         val file = mainFile()
         if (!file.exists()) {
-            return KotlinLightProjectDescriptor.INSTANCE
+            return getDefaultProjectDescriptor()
         }
 
         try {
@@ -304,7 +315,10 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                     KotlinProjectDescriptorWithFacet.KOTLIN_STABLE_WITH_MULTIPLATFORM
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_COROUTINES") ->
-                    KotlinWithJdkAndRuntimeLightProjectDescriptor(listOf(kotlinxCoroutines, coroutineContext), emptyList())
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor(
+                        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance().libraryFiles +
+                                listOf(TestKotlinArtifacts.kotlinxCoroutines, TestKotlinArtifacts.coroutineContext), emptyList()
+                    )
 
                 else -> getDefaultProjectDescriptor()
             }
@@ -331,6 +345,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     }
 
     protected open fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor = KotlinLightProjectDescriptor.INSTANCE
+
     protected fun performNotWriteEditorAction(actionId: String): Boolean {
         val dataContext = (myFixture.editor as EditorEx).dataContext
 
@@ -497,10 +512,21 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
             val compilerSettings = facetSettings.compilerSettings ?: CompilerSettings().also {
                 facetSettings.compilerSettings = it
             }
-            compilerSettings.additionalArguments = options
+
+            val expandedOptions =
+                // it is allowed to use KOTLIN_BUNDLE path macros in test data in the same way as project import does
+                // TEST_* path macros work for tests only
+                if (options.contains($$"$KOTLIN_BUNDLED$") || options.contains($$"$TEST_")) {
+                    val pathMacroManager = PathMacroManager.getInstance(project)
+                    pathMacroManager.expandPath(options)
+                } else {
+                    options
+                }
+
+            compilerSettings.additionalArguments = expandedOptions
             facetSettings.updateMergedArguments()
 
-            KotlinCompilerSettings.getInstance(project).update { this.additionalArguments = options }
+            KotlinCompilerSettings.getInstance(project).update { this.additionalArguments = expandedOptions }
         }
 
         return true

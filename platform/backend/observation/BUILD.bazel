@@ -22,8 +22,11 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "@lib//:junit5",
   ]
 )

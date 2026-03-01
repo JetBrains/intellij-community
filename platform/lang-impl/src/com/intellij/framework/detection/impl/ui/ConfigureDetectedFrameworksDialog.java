@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 @ApiStatus.Internal

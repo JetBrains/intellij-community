@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class IncompleteDestructuringInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return destructuringDeclarationVisitor(fun(destructuringDeclaration) {
@@ -59,6 +61,7 @@ private fun KtDestructuringDeclaration.primaryParameters(): List<ValueParameterD
     return classDescriptor.constructors.firstOrNull { it.isPrimary }?.valueParameters
 }
 
+@K1Deprecation
 class IncompleteDestructuringQuickfix : LocalQuickFix {
     override fun getFamilyName() = KotlinBundle.message("incomplete.destructuring.fix.family.name")
 

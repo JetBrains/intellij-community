@@ -26,10 +26,21 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.EdtTestUtilKt;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.UITestUtil;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
-import com.intellij.util.*;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
@@ -53,7 +64,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.testFramework.EdtTestUtilKt.dispatchAllEventsInIdeEventQueue;
@@ -554,9 +573,7 @@ public abstract class KtUsefulTestCase extends TestCase {
     }
 
     public boolean isPerformanceTest() {
-        String testName = getName();
-        String className = getClass().getSimpleName();
-        return TestFrameworkUtil.isPerformanceTest(testName, className);
+        return TestFrameworkUtil.isPerformanceTest(getName(), getClass());
     }
 
     /**
@@ -566,13 +583,13 @@ public abstract class KtUsefulTestCase extends TestCase {
      * For example: {@code public void testStressPSIFromDifferentThreads()}
      */
     public boolean isStressTest() {
-        return isStressTest(getName(), getClass().getName());
+        return isStressTest(getName(), getClass());
     }
 
-    private static boolean isStressTest(String testName, String className) {
-        return TestFrameworkUtil.isPerformanceTest(testName, className) ||
+    private static boolean isStressTest(String testName, Class<?> aClass) {
+        return TestFrameworkUtil.isPerformanceTest(testName, aClass) ||
                containsStressWords(testName) ||
-               containsStressWords(className);
+               containsStressWords(aClass.getSimpleName());
     }
 
     private static boolean containsStressWords(@Nullable String name) {

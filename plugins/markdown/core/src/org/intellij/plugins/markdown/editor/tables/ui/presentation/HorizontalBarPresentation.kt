@@ -38,7 +38,11 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import java.awt.*
+import java.awt.Dimension
+import java.awt.FontMetrics
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import javax.swing.SwingUtilities

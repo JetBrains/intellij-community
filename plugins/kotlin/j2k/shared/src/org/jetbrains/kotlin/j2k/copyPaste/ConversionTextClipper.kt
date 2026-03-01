@@ -2,7 +2,17 @@
 package org.jetbrains.kotlin.j2k.copyPaste
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiJavaToken
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.siblings

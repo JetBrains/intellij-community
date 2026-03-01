@@ -2,7 +2,13 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;

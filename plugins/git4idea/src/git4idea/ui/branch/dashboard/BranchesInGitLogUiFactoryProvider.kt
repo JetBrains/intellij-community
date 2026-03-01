@@ -2,7 +2,11 @@
 package git4idea.ui.branch.dashboard
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
@@ -26,10 +30,15 @@ import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsLogRootFilter
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.roots
-import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings
+import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRefOrHash
+import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
+import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys

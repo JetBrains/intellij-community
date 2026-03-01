@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.compilerPlugin.noarg
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
 import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
-import org.jetbrains.kotlin.noarg.NoArgPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.ANNOTATION_OPTION_NAME
+import org.jetbrains.kotlin.noarg.NoArgPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.noarg.diagnostic.AbstractNoArgDeclarationChecker
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 

@@ -21,10 +21,16 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.browser.UrlOpeningExpander;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.Objects;
 
 import static com.intellij.openapi.util.Pair.create;

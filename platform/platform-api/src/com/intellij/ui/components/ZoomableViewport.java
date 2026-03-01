@@ -21,7 +21,7 @@ package com.intellij.ui.components;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
 
 public interface ZoomableViewport {
   @Nullable

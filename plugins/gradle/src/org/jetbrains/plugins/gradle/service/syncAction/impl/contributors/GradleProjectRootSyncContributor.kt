@@ -3,8 +3,8 @@ package org.jetbrains.plugins.gradle.service.syncAction.impl.contributors
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
-import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage

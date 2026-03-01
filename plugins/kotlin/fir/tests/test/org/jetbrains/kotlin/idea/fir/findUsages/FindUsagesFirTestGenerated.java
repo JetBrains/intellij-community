@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.findUsages;
 
@@ -288,6 +288,26 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 @TestMetadata("getInObject.0.kt")
                 public void testGetInObject() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/conventions/getInObject.0.kt");
+                }
+
+                @TestMetadata("getOperatorNonNullableImplicitType.0.kt")
+                public void testGetOperatorNonNullableImplicitType() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/conventions/getOperatorNonNullableImplicitType.0.kt");
+                }
+
+                @TestMetadata("getOperatorNullableExplicitType.0.kt")
+                public void testGetOperatorNullableExplicitType() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/conventions/getOperatorNullableExplicitType.0.kt");
+                }
+
+                @TestMetadata("getOperatorNullableFunctionCall.0.kt")
+                public void testGetOperatorNullableFunctionCall() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/conventions/getOperatorNullableFunctionCall.0.kt");
+                }
+
+                @TestMetadata("getOperatorNullableImplicitType.0.kt")
+                public void testGetOperatorNullableImplicitType() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/conventions/getOperatorNullableImplicitType.0.kt");
                 }
 
                 @TestMetadata("inc.0.kt")
@@ -1802,6 +1822,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("destructuringEntry.0.kt")
+            public void testDestructuringEntry() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/variable/destructuringEntry.0.kt");
             }
 
             @TestMetadata("plusAssignFun.0.kt")

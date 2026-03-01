@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 
 
+@K1Deprecation
 class ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<KtAnnotationEntry>(KtAnnotationEntry::class.java),
     MigrationFix,

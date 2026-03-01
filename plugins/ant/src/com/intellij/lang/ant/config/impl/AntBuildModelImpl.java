@@ -2,7 +2,12 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
+import com.intellij.lang.ant.config.AntBuildModelBase;
+import com.intellij.lang.ant.config.AntBuildTarget;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.dom.AntDomIncludingDirective;
 import com.intellij.lang.ant.dom.AntDomProject;
@@ -28,7 +33,11 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class AntBuildModelImpl implements AntBuildModelBase {
   private final AntBuildFile myFile;

@@ -3,8 +3,15 @@ package training.learn.lesson.general
 
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.firstLessonCompletedMessage
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.isToStringContains

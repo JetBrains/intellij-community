@@ -6,7 +6,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener
 
-private class IgnoredFileCacheCleaner : PersistentFsConnectionListener {
+internal class IgnoredFileCacheCleaner : PersistentFsConnectionListener {
   override fun beforeConnectionClosed() {
     (ApplicationManager.getApplication()?.serviceIfCreated<FileTypeManager>() as? FileTypeManagerImpl)?.clearIgnoredFileCache()
   }

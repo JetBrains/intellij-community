@@ -1,15 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl
 
-import com.intellij.codeInsight.completion.PrefixMatcher
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementPresentation.DecoratedTextRange
 import com.intellij.codeInsight.lookup.LookupElementPresentation.LookupItemDecoration
+import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.MATCHED_FOREGROUND_COLOR
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.bodyInsets
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.getGrayedForeground
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.IconDecorator
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -26,8 +32,15 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.ui.*
+import com.intellij.ui.DeferredIcon
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.ui.Gray
+import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.JBColor
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.ScreenUtil
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
 import com.intellij.ui.components.JBList
 import com.intellij.ui.icons.RowIcon
@@ -38,6 +51,7 @@ import com.intellij.util.IconUtil.cropIcon
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
+import com.intellij.util.text.matching.MatchedFragment
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -52,28 +66,65 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.FontMetrics
+import java.awt.Graphics
+import java.awt.Insets
+import java.awt.Rectangle
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.ListCellRenderer
 import javax.swing.border.EmptyBorder
 import kotlin.math.max
 
-class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : ListCellRenderer<LookupElement> {
+class LookupCellRenderer(
+  private val lookup: LookupImpl,
+  editorComponent: JComponent
+) : ListCellRenderer<LookupElement> {
+
   private var emptyIcon: Icon = EmptyIcon.ICON_0
-  private val normalFont: Font
-  private val boldFont: Font
-  private val normalMetrics: FontMetrics
-  private val boldMetrics: FontMetrics
+  private val normalFont: Font = lookup.topLevelEditor.colorsScheme.getFont(EditorFontType.PLAIN)
+  private val boldFont: Font = lookup.topLevelEditor.colorsScheme.getFont(EditorFontType.BOLD)
+  private val normalMetrics: FontMetrics = lookup.topLevelEditor.component.getFontMetrics(normalFont)
+  private val boldMetrics: FontMetrics = lookup.topLevelEditor.component.getFontMetrics(boldFont)
 
-  private val lookup: LookupImpl
+  private val editor: Editor = lookup.editor
 
-  private val nameComponent: SimpleColoredComponent
-  private val tailComponent: SimpleColoredComponent
-  private val typeLabel: SimpleColoredComponent
-  private val panel: LookupPanel
+  private val nameComponent: SimpleColoredComponent = MySimpleColoredComponent().apply {
+    setOpaque(false)
+    setIconTextGap(scale(4))
+    setIpad(JBUI.insetsLeft(1))
+    setMyBorder(null)
+  }
+
+  private val tailComponent: SimpleColoredComponent = MySimpleColoredComponent().apply {
+    setOpaque(false)
+    setIpad(JBInsets.emptyInsets())
+    setBorder(JBUI.Borders.emptyRight(10))
+  }
+
+  private val typeLabel: SimpleColoredComponent = MySimpleColoredComponent().apply {
+    setOpaque(false)
+    setIpad(JBInsets.emptyInsets())
+    setBorder(JBUI.Borders.emptyRight(10))
+  }
+
+  private val panel: LookupPanel = LookupPanel().apply {
+    add(nameComponent, BorderLayout.WEST)
+    add(tailComponent, BorderLayout.CENTER)
+    add(typeLabel, BorderLayout.EAST)
+  }
+
   private val indexToIsSelected = Int2BooleanOpenHashMap()
 
   private var maxWidth = -1
@@ -82,10 +133,14 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   @Volatile
   var lookupTextWidth: Int = 50
     private set
-  private val widthLock = ObjectUtils.sentinel("lookup width lock")
-  private val shrinkLookup: Boolean
 
-  private val asyncRendering: AsyncRendering
+  private val widthLock = ObjectUtils.sentinel("lookup width lock")
+  private val shrinkLookup: Boolean = Registry.`is`("ide.lookup.shrink")
+
+  private val asyncRendering: AsyncRendering = AsyncRendering(
+    coroutineScope = lookup.coroutineScope,
+    renderingCallback = { _, _ -> scheduleUpdateLookupAfterElementPresentationChange() }
+  )
 
   private val customizers: MutableList<ItemPresentationCustomizer> = ContainerUtil.createLockFreeCopyOnWriteList()
 
@@ -98,36 +153,6 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   private val itemAddedCount = AtomicInteger()
 
   init {
-    val scheme = lookup.topLevelEditor.colorsScheme
-    normalFont = scheme.getFont(EditorFontType.PLAIN)
-    boldFont = scheme.getFont(EditorFontType.BOLD)
-
-    this.lookup = lookup
-    nameComponent = MySimpleColoredComponent()
-    nameComponent.setOpaque(false)
-    nameComponent.setIconTextGap(scale(4))
-    nameComponent.setIpad(JBUI.insetsLeft(1))
-    nameComponent.setMyBorder(null)
-
-    tailComponent = MySimpleColoredComponent()
-    tailComponent.setOpaque(false)
-    tailComponent.setIpad(JBInsets.emptyInsets())
-    tailComponent.setBorder(JBUI.Borders.emptyRight(10))
-
-    typeLabel = MySimpleColoredComponent()
-    typeLabel.setOpaque(false)
-    typeLabel.setIpad(JBInsets.emptyInsets())
-    typeLabel.setBorder(JBUI.Borders.emptyRight(10))
-
-    panel = LookupPanel()
-    panel.add(nameComponent, BorderLayout.WEST)
-    panel.add(tailComponent, BorderLayout.CENTER)
-    panel.add(typeLabel, BorderLayout.EAST)
-
-    normalMetrics = lookup.topLevelEditor.component.getFontMetrics(normalFont)
-    boldMetrics = lookup.topLevelEditor.component.getFontMetrics(boldFont)
-    asyncRendering = AsyncRendering(lookup)
-
     val coroutineContext = Dispatchers.EDT + ModalityState.stateForComponent(editorComponent).asContextElement()
     lookup.coroutineScope.launch {
       lookupWidthUpdateRequests
@@ -152,8 +177,6 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
           check(lookupWidthUpdateRequests.tryEmit(Unit))
         }
     }
-
-    shrinkLookup = Registry.`is`("ide.lookup.shrink")
   }
 
   companion object {
@@ -197,7 +220,14 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     fun getGrayedForeground(@Suppress("UNUSED_PARAMETER") isSelected: Boolean): Color = UIUtil.getContextHelpForeground()
 
     @JvmStatic
+    fun getMatchingFragmentList(prefix: String, name: String): List<MatchedFragment>? {
+      return NameUtil.buildMatcher("*$prefix").build().match(name)
+    }
+
+    @Deprecated("use getMatchingFragmentList(prefix, name)", ReplaceWith("getMatchingFragmentList(prefix, name)"))
+    @JvmStatic
     fun getMatchingFragments(prefix: String, name: String): FList<TextRange>? {
+      @Suppress("DEPRECATION")
       return NameUtil.buildMatcher("*$prefix").build().matchingFragments(name)
     }
 
@@ -233,17 +263,14 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     list: JList<out LookupElement>,
     item: LookupElement,
     index: Int,
-    isSelected: Boolean,
+    isSelectedInitial: Boolean,
     cellHasFocus: Boolean,
   ): Component {
     val separator = tryToCreateSeparator(item, index)
     if (separator != null) return separator
-    @Suppress("NAME_SHADOWING")
-    var isSelected = isSelected
-    val nonFocusedSelection = isSelected && lookup.lookupFocusDegree == LookupFocusDegree.SEMI_FOCUSED
-    if (!lookup.isFocused) {
-      isSelected = false
-    }
+
+    val nonFocusedSelection = isSelectedInitial && lookup.lookupFocusDegree == LookupFocusDegree.SEMI_FOCUSED
+    val isSelected = isSelectedInitial && lookup.isFocused
 
     this.isSelected = isSelected
     panel.selectionColor = when {
@@ -254,7 +281,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
     var allowedWidth = list.width - calcSpacing(nameComponent, emptyIcon) - calcSpacing(tailComponent, null) - calcSpacing(typeLabel, null)
 
-    var presentation = asyncRendering.getLastComputed(item)
+    var presentation = asyncRendering.getCachedPresentation(item)
     for (customizer in customizers) {
       presentation = customizer.customizePresentation(item, presentation)
     }
@@ -463,18 +490,19 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     val prefix = if (item is EmptyLookupItem) "" else lookup.itemPattern(item)
     if (prefix.isNotEmpty()) {
       val itemMatcher = lookup.itemMatcher(item)
-      var ranges: List<TextRange>? = itemMatcher.getMatchingFragments(name) ?: getMatchingFragments(prefix, name)
+      var ranges: List<MatchedFragment>? = itemMatcher.getMatchingFragments(prefix, name) ?: getMatchingFragmentList(prefix, name)
       if (ranges == null) {
         val startIndex = item.lookupString.indexOf(name)
         if (startIndex != -1) {
-          ranges = getMatchingFragments(prefix, item.lookupString)
-            ?.map { TextRange((it.startOffset - startIndex).coerceIn(0, name.length), (it.endOffset - startIndex).coerceIn(0, name.length)) }
+          ranges = getMatchingFragmentList(prefix, item.lookupString)
+            ?.map { MatchedFragment((it.startOffset - startIndex).coerceIn(0, name.length), (it.endOffset - startIndex).coerceIn(0, name.length)) }
             ?.filter { it.length != 0 }
         }
       }
-      if (ranges != null && ranges.isNotEmpty()) {
+      if (!ranges.isNullOrEmpty()) {
+        val colored = ranges.map { TextRange.create(it.startOffset, it.endOffset) }
         val highlighted = SimpleTextAttributes(style, MATCHED_FOREGROUND_COLOR)
-        SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted)
+        SpeedSearchUtil.appendColoredFragments(nameComponent, name, colored, base, highlighted)
         renderItemNameDecoration(nameComponent, itemNameDecorations)
         return
       }
@@ -543,7 +571,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     var maxWidth = if (shrinkLookup) 0 else lookupTextWidth
     for (item in visibleItems) {
       if(item.isSeparator()) continue
-      val presentation = asyncRendering.getLastComputed(item)
+      val presentation = asyncRendering.getCachedPresentation(item)
       item.putUserData(CUSTOM_NAME_FONT, getFontAbleToDisplay(presentation.itemText))
       item.putUserData(CUSTOM_TAIL_FONT, getFontAbleToDisplay(presentation.tailText))
       item.putUserData(CUSTOM_TYPE_FONT, getFontAbleToDisplay(presentation.typeText))
@@ -577,10 +605,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     // Ensure that all visible items plus a range of invisible items have been
     // scheduled for async rendering.
     for (item in lookup.getItemsForAsyncRendering()) {
-      if (item.getUserData(SCHEDULED_FOR_RENDERING) != true) {
-        item.putUserData(SCHEDULED_FOR_RENDERING, true)
-        updateItemPresentation(item)
-      }
+      updateItemPresentation(item)
     }
   }
 
@@ -593,15 +618,14 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
       check(lookupWidthUpdateRequests.tryEmit(Unit))
   }
 
-  @ApiStatus.Internal
-  fun scheduleUpdateLookupAfterElementPresentationChange() {
+  private fun scheduleUpdateLookupAfterElementPresentationChange() {
     check(presentationUpdateRequests.tryEmit(Unit))
   }
 
   fun itemAdded(element: LookupElement, fastPresentation: LookupElementPresentation) {
     updateIconWidth(fastPresentation.icon)
     scheduleUpdateLookupWidthFromVisibleItems()
-    AsyncRendering.rememberPresentation(element, fastPresentation)
+    asyncRendering.cachePresentation(element, fastPresentation)
   }
 
   @ApiStatus.Internal
@@ -614,9 +638,8 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   }
 
   fun updateItemPresentation(element: LookupElement) {
-    element.expensiveRenderer?.let {
-      @Suppress("UNCHECKED_CAST")
-      asyncRendering.scheduleRendering(element = element, renderer = it as LookupElementRenderer<LookupElement>)
+    if (element.expensiveRenderer != null && element.replace(SCHEDULED_FOR_RENDERING, null, true)) {
+      asyncRendering.scheduleRendering(element)
     }
   }
 
@@ -630,7 +653,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     if (icon is DeferredIcon) {
       icon = icon.baseIcon
     }
-    icon = removeVisibilityIfNeeded(lookup.editor, icon, emptyIcon)
+    icon = removeVisibilityIfNeeded(editor, icon, emptyIcon)
     icon = EmptyIcon.create(icon)
     for (customizer in customizers) {
       icon = customizer.customizeEmptyIcon(icon)
@@ -647,6 +670,12 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     updateIconWidth(p.icon)
     return calculateWidth(p, getRealFontMetrics(item, false, CUSTOM_NAME_FONT), getRealFontMetrics(item, true, CUSTOM_NAME_FONT)) +
            calcSpacing(tailComponent, null) + calcSpacing(typeLabel, null)
+  }
+
+  @ApiStatus.Internal
+  fun cancelRendering(element: LookupElement) {
+    element.putUserData(SCHEDULED_FOR_RENDERING, null)
+    asyncRendering.cancelRendering(element)
   }
 
   val textIndent: Int

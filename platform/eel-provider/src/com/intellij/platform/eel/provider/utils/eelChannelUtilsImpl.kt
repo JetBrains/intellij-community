@@ -1,19 +1,46 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelLowLevelObjectsPool
 import com.intellij.platform.eel.ReadResult
-import com.intellij.platform.eel.channels.*
+import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelReceiveChannelException
+import com.intellij.platform.eel.channels.EelSendApi
+import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.channels.EelSendChannelException
+import com.intellij.platform.eel.channels.sendWholeBuffer
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.io.computeDetached
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import java.io.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.io.Flushable
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.Socket
 import java.nio.ByteBuffer
-import java.nio.channels.*
+import java.nio.channels.AsynchronousSocketChannel
+import java.nio.channels.DatagramChannel
+import java.nio.channels.FileChannel
+import java.nio.channels.Pipe
+import java.nio.channels.ReadableByteChannel
+import java.nio.channels.SelectableChannel
+import java.nio.channels.SelectionKey
+import java.nio.channels.Selector
+import java.nio.channels.SocketChannel
+import java.nio.channels.WritableByteChannel
 import java.nio.charset.Charset
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -33,7 +60,7 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
   @OptIn(DelicateCoroutinesApi::class)
   override suspend fun receive(dst: ByteBuffer): ReadResult {
     if (!dst.hasRemaining()) return ReadResult.NOT_EOF
-    return withContext(Dispatchers.IO) {
+    return withContext(blockingDispatcher) {
       var read = 0
       try {
         if (selector != null && readableByteChannel is SelectableChannel) {

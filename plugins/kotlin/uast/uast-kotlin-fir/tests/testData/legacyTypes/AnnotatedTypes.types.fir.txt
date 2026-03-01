@@ -6,19 +6,19 @@ UFile (package = ) [public final class AnnotatedTypesKt {...]
             UBlockExpression [{...}] : void
                 UDeclarationsExpression [var a: java.lang.String = list[2]]
                     ULocalVariable (name = a) [var a: java.lang.String = list[2]]
-                        UArrayAccessExpression [list[2]] : java.lang.String
+                        UArrayAccessExpression [list[2]] : @MyAnnotation(a = 1, b = "str", c = kotlin.annotation.AnnotationTarget.TYPE) @org.jetbrains.annotations.NotNull() java.lang.String
                             USimpleNameReferenceExpression (identifier = list) [list] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @MyAnnotation(a = 1, b = "str", c = kotlin.annotation.AnnotationTarget.TYPE) @org.jetbrains.annotations.NotNull() java.lang.String>
                             ULiteralExpression (value = 2) [2] : int
                 UDeclarationsExpression [var b: java.lang.String = "abc"]
                     ULocalVariable (name = b) [var b: java.lang.String = "abc"]
-                        UPolyadicExpression (operator = +) ["abc"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["abc"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "abc") ["abc"] : java.lang.String
                 UDeclarationsExpression [var c: java.lang.String = b]
                     ULocalVariable (name = c) [var c: java.lang.String = b]
-                        USimpleNameReferenceExpression (identifier = b) [b] : java.lang.String
+                        USimpleNameReferenceExpression (identifier = b) [b] : @MyAnnotation(a = 2, b = "boo", c = kotlin.annotation.AnnotationTarget.FILE) @org.jetbrains.annotations.NotNull() java.lang.String
                 UDeclarationsExpression [var v: java.lang.String = "abc"]
                     ULocalVariable (name = v) [var v: java.lang.String = "abc"]
-                        UPolyadicExpression (operator = +) ["abc"] : java.lang.String
+                        UPolyadicExpression (operator = +) ["abc"] : @org.jetbrains.annotations.NotNull() java.lang.String
                             ULiteralExpression (value = "abc") ["abc"] : java.lang.String
     UClass (name = MyAnnotation) [public abstract annotation MyAnnotation {...}]
         UAnnotation (fqName = kotlin.annotation.Target) [@kotlin.annotation.Target(allowedTargets = AnnotationTarget.TYPE)]

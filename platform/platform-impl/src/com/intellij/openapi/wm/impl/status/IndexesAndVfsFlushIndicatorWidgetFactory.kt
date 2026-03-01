@@ -5,7 +5,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.GentleFlusherBase
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.IconWidgetPresentation
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.openapi.wm.WidgetPresentation
+import com.intellij.openapi.wm.WidgetPresentationDataContext
+import com.intellij.openapi.wm.WidgetPresentationFactory
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.UIBundle
 import kotlinx.coroutines.CoroutineScope
@@ -14,7 +19,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.swing.Icon
 
-private class IndexesAndVfsFlushIndicatorWidgetFactory : StatusBarWidgetFactory, WidgetPresentationFactory {
+internal class IndexesAndVfsFlushIndicatorWidgetFactory : StatusBarWidgetFactory, WidgetPresentationFactory {
   override fun getId(): String = "IndexesAndVfsFlushIndicator"
 
   override fun getDisplayName(): String = UIBundle.message("status.bar.vfs.and.index.flushing.state.widget.name")

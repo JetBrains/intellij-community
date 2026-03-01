@@ -246,12 +246,6 @@ public class UsageViewPresentation {
     return myPreserveCase;
   }
 
-  /**
-   * @deprecated Use {@link #setReplaceString(String)}
-   */
-  @Deprecated(forRemoval = true)
-  public void setReplacePattern(Pattern replacePattern) { }
-
   public void setReplaceString(String replaceString) {
     myReplaceString = replaceString;
   }

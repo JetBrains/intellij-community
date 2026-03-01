@@ -16,7 +16,11 @@
 
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.navigation.*;
+import com.intellij.navigation.ChooseByNameContributorEx;
+import com.intellij.navigation.ColoredItemPresentation;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -38,7 +42,7 @@ import org.intellij.plugins.relaxNG.model.resolve.RelaxSymbolIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 
 public class GotoSymbolContributor implements ChooseByNameContributorEx {

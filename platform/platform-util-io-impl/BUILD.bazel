@@ -16,9 +16,32 @@ jvm_library(
     "//platform/util",
     "//libraries/proxy-vole",
     "@lib//:jna",
-    "//libraries/jackson/jackson",
+    "//libraries/jackson3/jackson:libraries-jackson3",
   ],
   exports = ["//platform/platform-util-io:ide-util-io"],
   runtime_deps = ["//libraries/rhino"]
+)
+
+jvm_library(
+  name = "ide-util-io-impl_test_lib",
+  module_name = "intellij.platform.ide.util.io.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+  ],
+  runtime_deps = [
+    ":ide-util-io-impl",
+    "//platform/core-api:core_test_lib",
+    "//platform/util/base:base_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//libraries/pty4j:pty4j_test_lib",
+    "//libraries/winp:winp_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/proxy-vole:proxy-vole_test_lib",
+    "//libraries/rhino:rhino_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.platform.ide.util.io.impl` end

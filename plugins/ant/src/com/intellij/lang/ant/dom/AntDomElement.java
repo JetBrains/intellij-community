@@ -22,7 +22,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
 
 import java.util.Collections;
 import java.util.Iterator;

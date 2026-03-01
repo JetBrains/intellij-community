@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.gradleTooling.serialization
 
 import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmProjectContainer
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService
-import java.util.*
+import java.util.ServiceLoader
 
 
 class IdeaKpmProjectSerializationService : SerializationService<IdeaKpmProjectContainer<*>> {

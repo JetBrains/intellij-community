@@ -10,14 +10,24 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.inspections.FormInspectionTool;
 import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.quickFixes.*;
+import com.intellij.uiDesigner.quickFixes.ChangeFieldTypeFix;
+import com.intellij.uiDesigner.quickFixes.CreateClassToBindFix;
+import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
+import com.intellij.uiDesigner.quickFixes.GenerateCreateComponentsFix;
+import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
@@ -25,8 +35,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.ButtonGroup;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public final class ErrorAnalyzer {
   private static final Logger LOG = Logger.getInstance(ErrorAnalyzer.class);
@@ -298,7 +313,10 @@ public final class ErrorAnalyzer {
     catch (IncorrectOperationException ignored) {
     }
 
-    if (component.isCustomCreate() && FormEditingUtil.findCreateComponentsMethod(psiClass) == null) {
+    if (component.isCustomCreate() &&
+        FormEditingUtil.findCreateComponentsMethod(psiClass) == null &&
+        // with generating final fields, initilization code lies in ctor, not in createComponent method
+        !GuiDesignerConfiguration.getInstance(psiClass.getProject()).GENERATE_SOURCES_FINAL_FIELDS) {
       final QuickFix[] fixes = editor != null ? new QuickFix[]{
         new GenerateCreateComponentsFix(editor, psiClass)
       } : QuickFix.EMPTY_ARRAY;
@@ -310,6 +328,7 @@ public final class ErrorAnalyzer {
           fixes));
       return true;
     }
+
     return false;
   }
 

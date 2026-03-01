@@ -1,25 +1,38 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion
+package org.jetbrains.kotlin.idea.completion.impl.k2
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionInitializationContext
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionSorter
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.CompletionUtil
+import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
 import com.intellij.util.applyIf
+import org.jetbrains.kotlin.idea.completion.KDocTagCompletionProvider
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
-import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.K2SmartCompletionTailOffsetProviderImpl
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSetupEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
-import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.MatchesExpectedType
-import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.MatchesExpectedType
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.ExpectedTypeWeigher.matchesExpectedType
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeighers
+import org.jetbrains.kotlin.idea.completion.kotlinIdentifierPartPattern
+import org.jetbrains.kotlin.idea.completion.kotlinIdentifierStartPattern
+import org.jetbrains.kotlin.idea.completion.markReplacementOffsetAsModified
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
@@ -73,6 +86,9 @@ class KotlinFirCompletionContributor : CompletionContributor() {
         context.dummyIdentifier = identifierProviderService.provideDummyIdentifier(context)
 
         identifierProviderService.correctPositionForParameter(context)
+
+        // Mark replacement offsets for (smart) completion
+        K2SmartCompletionTailOffsetProviderImpl.calculateReplacementOffsets(context)
     }
 }
 
@@ -86,8 +102,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         val completionSetupEvent = CompletionSetupEvent()
         completionSetupEvent.begin()
 
-        @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParameters.create(parameters)
-            ?: return
+        val parameters = KotlinFirCompletionParameters.create(parameters) ?: return
         val position = parameters.position
 
         // no completion inside number literals
@@ -102,7 +117,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
         completionSetupEvent.commit()
 
-        val addedResults = CompletionEvent().timeEvent {
+        // First run regular completion
+        val completionResult = CompletionEvent().timeEvent {
             Completions.complete(
                 parameters = parameters,
                 positionContext = positionContext,
@@ -110,14 +126,46 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
             )
         }
 
+        val addedElementsThroughChainCompletion = runChainCompletionIfNecessary(
+            completionResult = completionResult,
+            positionContext = positionContext,
+            resultSet = resultSet,
+            parameters = parameters
+        )
+
         // If we have not found any results and we have an invocation count 1, we want to re-run completion because
         // it will also start looking in nested objects etc.
-        if (!addedResults && parameters.invocationCount == 1) {
-            val newParameters = KotlinFirCompletionParameters.Original.create(parameters.delegate.withInvocationCount(2)) ?: return
+        if (completionResult.addedElements == 0 && !addedElementsThroughChainCompletion && parameters.invocationCount == 1) {
             CompletionEvent(isRerun = true).timeEvent {
-                Completions.complete(newParameters, positionContext, resultSet)
+                Completions.complete(parameters.copyForRerun(), positionContext, resultSet)
             }
         }
+    }
+
+    /**
+     * Runs chain completion if
+     * - Chain completion is enabled
+     * - The position is a context where chain completion can yield results (i.e. a [KotlinNameReferencePositionContext])
+     * - The [completionResult] has some contributors that registered a chain completion contributor
+     *
+     * Returns true if any elements were added by chain completion, false otherwise.
+     */
+    private fun runChainCompletionIfNecessary(
+        completionResult: K2CompletionRunnerResult,
+        positionContext: KotlinRawPositionContext,
+        resultSet: CompletionResultSet,
+        parameters: KotlinFirCompletionParameters,
+    ): Boolean {
+        if (completionResult.registeredChainContributors.isEmpty()) return false
+        if (positionContext !is KotlinNameReferencePositionContext) return false
+        if (!RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) return false
+
+        return K2CompletionRunner.runChainCompletion(
+            originalPositionContext = positionContext,
+            completionResultSet = resultSet,
+            parameters = parameters,
+            chainCompletionContributors = completionResult.registeredChainContributors,
+        )
     }
 
     private fun registerRestartCompletion(
@@ -157,10 +205,15 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext,
     ): CompletionResultSet {
-        val sorter = CompletionSorter.defaultSorter(parameters.delegate, prefixMatcher)
-            .applyWeighers(positionContext)
+        val defaultSorter = CompletionSorter.defaultSorter(parameters.delegate, prefixMatcher)
 
-        return withRelevanceSorter(sorter)
+        // We do not want to use the `liftShorter` weigher because it promotes completion items that are often unexpected.
+        // See KTIJ-35873 for more details.
+        val sorter = (defaultSorter as? CompletionSorterImpl)
+            ?.withoutClassifiers { it.id == "liftShorter" }
+            ?: defaultSorter
+
+        return withRelevanceSorter(sorter.applyWeighers(positionContext))
     }
 
     private val AFTER_NUMBER_LITERAL = PsiJavaPatterns.psiElement().afterLeafSkipping(

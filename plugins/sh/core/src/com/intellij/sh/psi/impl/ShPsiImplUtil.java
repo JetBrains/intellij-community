@@ -3,7 +3,9 @@ package com.intellij.sh.psi.impl;
 
 import com.intellij.psi.PsiReference;
 import com.intellij.sh.codeInsight.ShPsiReferenceSupport;
-import com.intellij.sh.psi.*;
+import com.intellij.sh.psi.ShLiteral;
+import com.intellij.sh.psi.ShLiteralExpression;
+import com.intellij.sh.psi.ShVariable;
 import org.jetbrains.annotations.NotNull;
 
 public final class ShPsiImplUtil {

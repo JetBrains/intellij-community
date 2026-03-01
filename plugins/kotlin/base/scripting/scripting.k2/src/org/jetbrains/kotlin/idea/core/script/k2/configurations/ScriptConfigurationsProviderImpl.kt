@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
@@ -16,11 +15,10 @@ import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityService
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
-import org.jetbrains.kotlin.idea.core.script.k2.toConfigurationResult
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
@@ -113,12 +111,14 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
         val definition = file.findScriptDefinition() ?: return null
-        return definition.getScriptEntityProvider(project).getKotlinScriptEntity(file.alwaysVirtualFile)?.toConfigurationResult()
+        return definition.getScriptEntityProvider(project).getKotlinScriptEntity(file.alwaysVirtualFile)?.let {
+            KotlinScriptEntityService.getConfigurationResult(project, it)
+        }
     }
 
     companion object {
-        private val classesTypeId = SdkRootTypeId(OrderRootType.CLASSES.customName)
-        private val sourcesTypeId = SdkRootTypeId(OrderRootType.SOURCES.customName)
+        private val classesTypeId = SdkRootTypeId.CLASSES
+        private val sourcesTypeId = SdkRootTypeId.SOURCES
 
         fun getInstance(project: Project): ScriptConfigurationsProviderImpl =
             project.service<ScriptConfigurationsProvider>() as ScriptConfigurationsProviderImpl

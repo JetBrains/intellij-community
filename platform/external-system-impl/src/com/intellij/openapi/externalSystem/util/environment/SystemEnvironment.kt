@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.util.environment
 
 import com.intellij.util.EnvironmentUtil
 
-private class SystemEnvironment : Environment {
+internal class SystemEnvironment : Environment {
   override fun property(name: String): String? {
     return System.getProperty(name)
   }

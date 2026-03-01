@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.isArrayOrNullableArray
 import org.jetbrains.kotlin.types.isNullable
 
+@K1Deprecation
 object ConvertToIsArrayOfCallFixFactory : KotlinSingleIntentionActionFactory()  {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val casted = Errors.CANNOT_CHECK_FOR_ERASED.cast(diagnostic)

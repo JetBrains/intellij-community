@@ -14,12 +14,16 @@ import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertBaseTextContentI
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertEqualRanges
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertTextContentIs
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
-import com.intellij.openapi.vcs.ex.*
+import com.intellij.openapi.vcs.ex.LineStatusTracker
+import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.PartialCommitHelper
+import com.intellij.openapi.vcs.ex.Range
+import com.intellij.openapi.vcs.ex.createRanges
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.ContainerUtil
 import junit.framework.TestCase
-import java.util.*
+import java.util.BitSet
 
 object LineStatusTrackerTestUtil {
   @JvmStatic

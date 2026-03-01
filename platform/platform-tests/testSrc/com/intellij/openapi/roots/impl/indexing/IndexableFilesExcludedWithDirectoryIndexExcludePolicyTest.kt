@@ -46,9 +46,10 @@ class IndexableFilesExcludedWithDirectoryIndexExcludePolicyTest : IndexableFiles
       }
     }
     val excludedDirFile = excludedDir.file  // load VFS synchronously outside read action
+    val excludedDirPointer = VirtualFilePointerManager.getInstance().create(excludedDirFile, disposableRule.disposable, null)
     val directoryIndexExcludePolicy = object : DirectoryIndexExcludePolicy {
       override fun getExcludeRootsForModule(rootModel: ModuleRootModel) =
-        arrayOf(VirtualFilePointerManager.getInstance().create(excludedDirFile, disposableRule.disposable, null))
+        arrayOf(excludedDirPointer)
     }
     maskDirectoryIndexExcludePolicy(directoryIndexExcludePolicy)
     assertIndexableFiles()

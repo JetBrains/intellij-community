@@ -5,7 +5,12 @@ import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -14,7 +19,7 @@ import java.lang.ProcessBuilder.Redirect
 import java.nio.charset.MalformedInputException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes

@@ -51,8 +51,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
   private val reportedErrorIds: MutableSet<String> = HashSet()
 
   override fun modifySettings(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
-    // nether called
-    return false
+    return modifySettingsInner(settings, psiFile, false)
   }
 
   private fun isAcceptable(psiFile: PsiFile): Boolean {
@@ -63,12 +62,17 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
   }
 
   override fun modifySettingsAndUiCustomization(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
+    return modifySettingsInner(settings, psiFile, true)
+  }
+
+
+  private fun modifySettingsInner(settings: TransientCodeStyleSettings, psiFile: PsiFile, isAllowedToReport: Boolean): Boolean {
     if (!isAcceptable(psiFile)) {
       return false
     }
 
     val project = psiFile.project
-    val (properties, editorConfigs) = Utils.processEditorConfig(project, psiFile.virtualFile) // caching `editorConfigs` for the psiFile  
+    val (properties, editorConfigs) = Utils.processEditorConfig(project, psiFile.virtualFile) // caching `editorConfigs` for the psiFile
 
     if (Utils.isEnabled(settings)) {
       try {
@@ -82,7 +86,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
         settings.addDependency(EditorConfigPropertiesService.getInstance(project))
 
         // Apply editorconfig settings for the current editor
-        if (applyCodeStyleSettings(settings, properties, psiFile)) {
+        if (applyCodeStyleSettings(settings, properties, psiFile, isAllowedToReport)) {
           LOG.debug { "Modified for ${psiFile.name}" }
           return true
         }
@@ -93,7 +97,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       }
       catch (e: TimeoutCancellationException) {
         LOG.warn(e)
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+        if (isAllowedToReport && !ApplicationManager.getApplication().isHeadlessEnvironment) {
           error(project, "timeout",
                 message("error.timeout"),
                 DumbAwareAction.create(message("action.disable")) {
@@ -111,6 +115,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
     }
     return false
   }
+
 
   @Synchronized
   fun error(project: Project?, id: String, message: @Nls String, fixAction: AnAction?, oneTime: Boolean) {
@@ -168,7 +173,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
 private var ourEnabledInTestOnly = false
 
 private fun processOptions(
-  properties: ResourceProperties,
+  properties: Map<String, String>,
   settings: CodeStyleSettings,
   fileType: FileType,
   mapper: AbstractCodeStylePropertyMapper,
@@ -177,8 +182,7 @@ private fun processOptions(
 ): Boolean {
   val langPrefix = if (languageSpecific) mapper.languageDomainId + "_" else null
   var isModified = false
-  for (prop in properties.properties.values) {
-    val optionKey = prop.name
+  for ((optionKey, sourceValue) in properties) {
     val intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey)
     val accessor = findAccessor(mapper, intellijName, langPrefix)
     if (accessor != null) {
@@ -187,7 +191,7 @@ private fun processOptions(
                                   settings = settings,
                                   fileType = fileType,
                                   optionKey = optionKey,
-                                  rawValue = prop.sourceValue)
+                                  rawValue = sourceValue)
       for (dependency in getDependentProperties(optionKey, langPrefix)) {
         if (!processed.contains(dependency)) {
           val dependencyAccessor = findAccessor(mapper, dependency, null)
@@ -216,7 +220,7 @@ private fun getDependentProperties(property: String, langPrefix: String?): List<
 
 private fun preprocessValue(
   accessor: CodeStylePropertyAccessor<*>,
-  properties: ResourceProperties,
+  properties: Map<String, String>,
   settings: CodeStyleSettings,
   fileType: FileType,
   optionKey: String,
@@ -266,21 +270,19 @@ private fun findAccessor(
   return null
 }
 
-private fun getExplicitTabSize(properties: ResourceProperties): String? = properties.properties.get("tab_width")?.sourceValue
+private fun getExplicitTabSize(properties: Map<String, String>): String? = properties.get("tab_width")
 
 private fun getDefaultTabSize(settings: CodeStyleSettings, fileType: FileType): String {
   return settings.getIndentOptions(fileType).TAB_SIZE.toString()
 }
 
-private fun isTabIndent(properties: ResourceProperties): Boolean {
-  return properties.properties.get("indent_style").let { prop ->
-    prop != null && prop.sourceValue == "tab"
-  }
+private fun isTabIndent(properties: Map<String, String>): Boolean {
+  return properties.get("indent_style") == "tab"
 }
 
 private fun getMappers(
   settings: TransientCodeStyleSettings,
-  properties: ResourceProperties,
+  properties: Map<String, String>,
   fileBaseLanguage: Language,
 ): Collection<AbstractCodeStylePropertyMapper> {
   return buildSet {
@@ -290,7 +292,7 @@ private fun getMappers(
 }
 
 private fun getLanguageCodeStyleProviders(
-  properties: ResourceProperties,
+  properties: Map<String, String>,
   fileBaseLanguage: Language,
 ): Collection<LanguageCodeStyleSettingsProvider> {
   val providers = LinkedHashSet<LanguageCodeStyleSettingsProvider>()
@@ -313,9 +315,9 @@ private fun getLanguageCodeStyleProviders(
   return providers
 }
 
-private fun getLanguageIds(properties: ResourceProperties): Collection<String> {
+private fun getLanguageIds(properties: Map<String, String>): Collection<String> {
   val langIds = LinkedHashSet<String>()
-  for (key in properties.properties.keys) {
+  for (key in properties.keys) {
     if (EditorConfigIntellijNameUtil.isIndentProperty(key)) {
       langIds.add("any")
     }
@@ -327,7 +329,12 @@ private fun getLanguageIds(properties: ResourceProperties): Collection<String> {
   return langIds
 }
 
-private fun applyCodeStyleSettings(settings: TransientCodeStyleSettings, properties: ResourceProperties, file: PsiFile): Boolean {
+private fun applyCodeStyleSettings(
+  settings: TransientCodeStyleSettings,
+  properties: Map<String, String>,
+  file: PsiFile,
+  isAllowedToReport: Boolean
+): Boolean {
   val processed = HashSet<String>()
   var isModified = false
   for (mapper in getMappers(settings = settings, properties = properties, fileBaseLanguage = file.language)) {
@@ -345,7 +352,7 @@ private fun applyCodeStyleSettings(settings: TransientCodeStyleSettings, propert
                                               languageSpecific = true,
                                               processed = processed)
   }
-  if (isModified) {
+  if (isAllowedToReport && isModified) {
     logEditorConfigUsed(file, properties)
   }
   return isModified

@@ -3,7 +3,11 @@ package com.intellij.lang.ant.validation;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.dom.*;
+import com.intellij.lang.ant.dom.AntDomCustomElement;
+import com.intellij.lang.ant.dom.AntDomElement;
+import com.intellij.lang.ant.dom.AntDomNamedElement;
+import com.intellij.lang.ant.dom.AntDomRecursiveVisitor;
+import com.intellij.lang.ant.dom.AntDomTypeDef;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;

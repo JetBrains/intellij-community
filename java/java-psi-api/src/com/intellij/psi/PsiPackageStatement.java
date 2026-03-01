@@ -15,12 +15,14 @@
  */
 package com.intellij.psi;
 
+import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a {@code package} Java statement.
  */
-public interface PsiPackageStatement extends PsiElement {
+public interface PsiPackageStatement extends PsiElement, PsiJavaDocumentedElement {
   /**
    * Returns the Java code reference element specifying the declared name of the package.
    *
@@ -41,4 +43,9 @@ public interface PsiPackageStatement extends PsiElement {
    * @return the modifier list containing the annotations applied to the package statement.
    */
   PsiModifierList getAnnotationList();
+
+  @Override
+  default @Nullable PsiDocComment getDocComment() {
+    return null;
+  }
 }

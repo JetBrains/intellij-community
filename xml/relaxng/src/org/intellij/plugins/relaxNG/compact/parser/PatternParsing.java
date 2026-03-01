@@ -23,7 +23,32 @@ import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.AND;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.BINARY_OPS;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.COMMA;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.EQ;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.IDENTIFIERS;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.IDENTIFIER_OR_KEYWORD;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_EMPTY;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_EXTERNAL;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_GRAMMAR;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_LIST;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_MIXED;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_NOT_ALLOWED;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_PARENT;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_TEXT;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.LBRACE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.LITERAL;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.LPAREN;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.MINUS;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.PIPE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.PLUS;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.PREFIXED_NAME;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.QUANTIFIER_OPS;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.QUEST;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.RBRACE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.RPAREN;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.STAR;
 
 public final class PatternParsing extends DeclarationParsing {
   private static final Map<IElementType, IElementType> TOKEN_MAP = new IdentityHashMap<>();

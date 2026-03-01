@@ -3,6 +3,8 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import java.awt.Component
 
@@ -11,8 +13,9 @@ private val COMPONENTS_CONTAINER = Key<EditorEmbeddedComponentContainer>("COMPON
 internal class EditorEmbeddedComponentContainer(private val editor: EditorEx) : Disposable {
 
   init {
-    editor.contentComponent.layout = EditorEmbeddedComponentLayoutManager(editor)
+    editor.contentComponent.layout = EditorEmbeddedComponentLayoutManager(editor).also { Disposer.register(this, it) }
     editor.putUserData(COMPONENTS_CONTAINER, this)
+    EditorUtil.disposeWithEditor(editor, this)
   }
 
   fun add(component: Component, constraints: Any) {

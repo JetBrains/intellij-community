@@ -22,3 +22,7 @@ inspections:
     ignore:
       - "plugins/devkit/devkit-core/resources/intellij.devkit.core.xml"
       - "plugins/git4idea/resources/intellij.vcs.git.xml"
+  - inspection: HardCodedStringLiteral
+    ignore:
+      - "plugins/devkit/intellij.devkit.compose/src/demo/ComponentShowcaseTab.kt"
+      - "platform/jewel/samples/**"

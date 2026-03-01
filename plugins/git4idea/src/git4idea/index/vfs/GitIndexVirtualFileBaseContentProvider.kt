@@ -3,12 +3,16 @@ package git4idea.index.vfs
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
-import com.intellij.openapi.vcs.impl.VcsBaseContentProvider
 import com.intellij.openapi.vcs.impl.LineStatusTrackerBaseContentUtil
+import com.intellij.openapi.vcs.impl.VcsBaseContentProvider
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
-import git4idea.index.*
+import git4idea.index.ContentVersion
+import git4idea.index.GitStageTracker
+import git4idea.index.has
+import git4idea.index.path
+import git4idea.index.status
 import git4idea.repo.GitRepositoryManager
 
 class GitIndexVirtualFileBaseContentProvider(private val project: Project) : VcsBaseContentProvider {

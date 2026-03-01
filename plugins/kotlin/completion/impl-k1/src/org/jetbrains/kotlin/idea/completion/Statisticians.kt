@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.util.ProximityLocation
 import com.intellij.psi.util.proximity.ProximityStatistician
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 
+@K1Deprecation
 class KotlinCompletionStatistician : CompletionStatistician() {
     override fun serialize(element: LookupElement, location: CompletionLocation): StatisticsInfo? {
         val o = (element.`object` as? DescriptorBasedDeclarationLookupObject) ?: return null
@@ -36,6 +38,7 @@ class KotlinCompletionStatistician : CompletionStatistician() {
     }
 }
 
+@K1Deprecation
 class KotlinProximityStatistician : ProximityStatistician() {
     override fun serialize(element: PsiElement, location: ProximityLocation): StatisticsInfo? {
         if (element !is KtDeclaration) return null
@@ -48,6 +51,7 @@ class KotlinProximityStatistician : ProximityStatistician() {
 /**
  * Implementation in K2: [org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider]
  */
+@K1Deprecation
 object KotlinStatisticsInfo {
     private val SIGNATURE_RENDERER = DescriptorRenderer.withOptions {
         withDefinedIn = false

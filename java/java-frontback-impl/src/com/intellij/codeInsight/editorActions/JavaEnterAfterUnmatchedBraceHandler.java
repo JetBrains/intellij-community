@@ -3,7 +3,13 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.AbstractBasicJavaFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionListStatement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaEnterAfterUnmatchedBraceHandler extends EnterAfterUnmatchedBraceHandler {

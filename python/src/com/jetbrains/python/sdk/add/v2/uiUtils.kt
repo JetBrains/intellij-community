@@ -27,7 +27,11 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RowsRange
+import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
@@ -45,14 +49,21 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.util.ShowingMessageErrorSync
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.nio.file.InvalidPathException
-import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JTextField
 import javax.swing.plaf.basic.BasicComboBoxEditor
@@ -299,7 +310,6 @@ internal fun <P : PathHolder> Panel.pythonInterpreterComboBox(
       cell(comboBox)
         .bindItem(selectedSdkProperty)
         .applyToComponent {
-          preferredSize = JBUI.size(preferredSize)
           isEditable = true
         }
         .validationRequestor(
@@ -331,14 +341,16 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
 
   init {
     renderer = PythonSdkComboBoxListCellRenderer { isLoading.get() }
+    preferredSize = JBUI.size(preferredSize)
     val newOnPathSelected: (String) -> Unit = { rawPath ->
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
         val pathOnFileSystem = fileSystem.parsePath(rawPath).onFailure { error ->
           errorSink.emit(error)
         }.successOrNull
 
-        val interpreter = pathOnFileSystem?.let {
-          onPathSelected(it).onFailure { error -> errorSink.emit(error) }.successOrNull
+        val interpreter = pathOnFileSystem?.let { selectedPath ->
+          val pythonBinaryPath = fileSystem.resolvePythonBinary(selectedPath) ?: selectedPath
+          onPathSelected(pythonBinaryPath).onFailure { error -> errorSink.emit(error) }.successOrNull
         }
 
         interpreter?.let { interpreter ->
@@ -410,16 +422,6 @@ internal fun <T, C : ComboBox<T>> Cell<C>.withExtendableTextFieldEditor(): Cell<
     }
   }
 
-internal fun JComponent.displayLoaderWhen(loading: SharedFlow<Boolean>, scope: CoroutineScope) {
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    loading.collectLatest { currentValue ->
-      withContext(Dispatchers.EDT) {
-        if (currentValue) displayLoader() else hideLoader()
-      }
-    }
-  }
-}
-
 private fun ComboBox<*>.displayLoader(makeTemporaryEditable: Boolean) {
   if (makeTemporaryEditable) {
     isEditable = true
@@ -436,14 +438,6 @@ private fun ComboBox<*>.hideLoader(restoreNonEditableState: Boolean) {
   (editor.editorComponent as? ExtendableTextComponent)?.removeLoadingExtension()
 }
 
-private fun JComponent.displayLoader() {
-  isEnabled = false
-}
-
-private fun JComponent.hideLoader() {
-  isEnabled = true
-}
-
 private val loaderExtension = ExtendableTextComponent.Extension.create(AnimatedIcon.Default.INSTANCE, null, null)
 
 private fun ExtendableTextComponent.installLoadingExtension() {
@@ -457,7 +451,7 @@ private fun ExtendableTextComponent.removeLoadingExtension() {
 internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterModel<P>): ActionLink? {
   if ((model.fileSystem as? FileSystem.Eel)?.eelApi != localEel) return null
 
-  return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda", "")) {
+  return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda")) {
     PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {

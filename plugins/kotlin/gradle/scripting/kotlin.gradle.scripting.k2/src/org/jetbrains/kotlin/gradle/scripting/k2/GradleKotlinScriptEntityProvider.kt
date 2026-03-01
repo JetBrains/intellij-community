@@ -9,10 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.kotlin.gradle.scripting.k2.definition.withIdeKeys
@@ -26,7 +29,13 @@ import org.jetbrains.kotlin.idea.core.script.k2.asEntity
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.sdkId
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.toVirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
-import org.jetbrains.kotlin.idea.core.script.k2.modules.*
+import org.jetbrains.kotlin.idea.core.script.k2.getOrCreateScriptConfigurationIdentity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
+import org.jetbrains.kotlin.idea.core.script.k2.modules.map
+import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.v1.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
@@ -36,9 +45,16 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 import java.io.File
 import java.util.function.Predicate
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.defaultImports
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.dependenciesSources
+import kotlin.script.experimental.api.ide
+import kotlin.script.experimental.api.valueOrNull
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
@@ -54,31 +70,26 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
     ) {
         val configuration = refineScriptCompilationConfiguration(VirtualFileScriptSource(virtualFile), definition, project)
 
-        val currentStorage = currentSnapshot.toBuilder()
         project.updateKotlinScriptEntities(KotlinGradleScriptEntitySource) { storage ->
-            currentStorage.updateStorage(virtualFile, configuration)
-            storage.applyChangesFrom(currentStorage)
+            updateStorage(storage, virtualFile.virtualFileUrl, configuration, null)
         }
     }
 
-    fun updateStorage(
+    fun getUpdatedStorage(
         scriptData: GradleScriptData,
         storageToUpdate: MutableEntityStorage
-    ) {
+    ): ImmutableEntityStorage {
         val javaHome = scriptData.definitionsParams.javaHome
         val definitions = loadGradleDefinitions(scriptData.definitionsParams).map { it.withIdeKeys(project) }
-        val updatedStorage = MutableEntityStorage.create().apply {
-            updateStorage(this, scriptData.models, definitions, javaHome)
-        }
-        storageToUpdate.replaceBySource({ it is KotlinGradleScriptEntitySource }, updatedStorage)
+        return getUpdatedStorage(storageToUpdate, scriptData.models, definitions, javaHome)
     }
 
-    fun updateStorage(
+    fun getUpdatedStorage(
         storage: MutableEntityStorage,
         models: Collection<GradleScriptModel>,
         definitions: Collection<GradleScriptDefinition>,
         javaHome: String? = null
-    ) {
+    ): ImmutableEntityStorage {
         definitions.forEach {
             storage addEntity GradleScriptDefinitionEntity(
                 it.definitionId,
@@ -91,7 +102,6 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
         }
 
         val javaHomePath = javaHome.resolveSdk()?.homePath?.let { File(it) }
-        val configurations = mutableMapOf<VirtualFile, ScriptCompilationConfigurationResult>()
 
         for (model in models) {
             val sourceCode = VirtualFileScriptSource(model.virtualFile)
@@ -106,10 +116,11 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
                 ide.dependenciesSources(JvmDependency(model.sourcePath.map { File(it) }))
             }.adjustByDefinition(definition)
 
-            configurations[model.virtualFile] = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
+            val configurationResult = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
+            updateStorage(storage, model.virtualFile.virtualFileUrl, configurationResult, model.classpathModel)
         }
 
-        configurations.forEach { (virtualFile, configurationResult) -> storage.updateStorage(virtualFile, configurationResult) }
+        return storage.toSnapshot()
     }
 
     private fun String?.resolveSdk(): Sdk? {
@@ -117,14 +128,19 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
             scriptingWarnLog("Gradle javaHome is null")
             return null
         }
-        return ExternalSystemJdkUtil.lookupJdkByPath(this).also {
+        return ExternalSystemJdkUtil.lookupJdkByPath(project, this).also {
             scriptingDebugLog { "resolved gradle sdk=$it, javaHome=$this" }
         }
     }
 
-    private fun MutableEntityStorage.updateStorage(virtualFile: VirtualFile, configurationResult: ScriptCompilationConfigurationResult) {
+    private fun updateStorage(
+        storage: MutableEntityStorage,
+        scriptUrl: VirtualFileUrl,
+        configurationResult: ScriptCompilationConfigurationResult,
+        classpathModel: GradleBuildScriptClasspathModel?
+    ) {
         val configurationWrapper = configurationResult.valueOrNull() ?: return
-        if (getVirtualFileUrlIndex().findEntitiesByUrl(virtualFile.virtualFileUrl).any()) return
+        if (storage.getVirtualFileUrlIndex().findEntitiesByUrl(scriptUrl).filterIsInstance<KotlinScriptEntity>().any()) return
 
         val classes =
             configurationWrapper.dependenciesClassPath.sorted().map { it.path.toVirtualFileUrl(urlManager) }.toMutableSet()
@@ -132,69 +148,109 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
 
         val dependencies = buildList {
             addIfNotNull(
-                extractRootsByPredicate(classes, sources) {
+                extractRootsByPredicate(storage, scriptUrl, classes, sources) {
                     it.url.contains("kotlin-stdlib")
                 })
 
             addIfNotNull(
-                extractRootsByPredicate(classes, sources) {
+                extractRootsByPredicate(storage, scriptUrl, classes, sources) {
                     it.url.contains("accessors")
                 })
 
             addIfNotNull(
-                extractRootsByPredicate(classes, sources) {
+                extractRootsByPredicate(storage, scriptUrl, classes, sources) {
                     it.url.contains("kotlin-gradle-plugin")
                 })
 
             if (indexSourceRootsEagerly() || AdvancedSettings.getBoolean("gradle.attach.scripts.dependencies.sources")) {
-                addAll(extractDependenciesWithSources(classes, sources))
+                addAll(
+                    extractDependenciesWithSources(
+                        storage = storage,
+                        scriptUrl = scriptUrl,
+                        classes = classes,
+                        sources = sources
+                    )
+                )
 
                 groupSourcesByParent(sources)
 
                 addAll(
                     classes.map {
-                        getOrCreateScriptLibrary(it, sources)
+                        getOrCreateScriptLibrary(
+                            storage = storage,
+                            classUrl = it,
+                            sources = sources,
+                            scriptUrl = scriptUrl
+                        )
                     })
             } else {
                 addAll(
                     classes.map {
-                        getOrCreateScriptLibrary(it)
+                        getOrCreateScriptLibrary(
+                            storage = storage,
+                            classUrl = it,
+                            scriptUrl = scriptUrl
+                        )
                     })
             }
         }
 
-        this addEntity KotlinScriptEntity(
-            virtualFile.virtualFileUrl, dependencies, KotlinGradleScriptEntitySource
+        storage addEntity KotlinScriptEntity(
+            scriptUrl, dependencies, KotlinGradleScriptEntitySource
         ) {
-            this.configuration = configurationWrapper.configuration?.asEntity()
-            this.reports = configurationResult.reports.map { it.toData() }.toMutableList()
+            this.configuration = configurationWrapper.configuration?.let { storage.getOrCreateScriptConfigurationIdentity(it, KotlinGradleScriptEntitySource) }
+            this.reports = configurationResult.reports.map(ScriptDiagnostic::map).toMutableList()
             this.sdkId = configurationWrapper.configuration?.sdkId
+            this.relatedModuleIds = classpathModel?.let { getRelatedModules(storage, it) }.orEmpty().toMutableList()
         }
     }
 
-    private fun MutableEntityStorage.getOrCreateScriptLibrary(
-        jar: VirtualFileUrl, sources: Collection<VirtualFileUrl>
-    ): KotlinScriptLibraryEntityId {
-        val id = KotlinScriptLibraryEntityId(listOf(jar), sources.toList())
 
-        if (!contains(id)) {
-            this addEntity KotlinScriptLibraryEntity(
-                id.classes, id.sources, KotlinGradleScriptEntitySource
-            )
+    private fun getRelatedModules(storage: MutableEntityStorage, classpathModel: GradleBuildScriptClasspathModel): MutableSet<ModuleId> {
+
+        val virtualFileUrls = classpathModel.classpath.flatMap { it.sources }.mapNotNull {
+            it.toVirtualFileUrl(urlManager)
+        }.filter { it.virtualFile != null }
+
+        val result = mutableSetOf<ModuleId>()
+        for (url in virtualFileUrls) {
+            var current: VirtualFileUrl? = url
+            while (current != null && current.url != project.basePath) {
+                val moduleIds = storage.getVirtualFileUrlIndex().findEntitiesByUrl(current)
+                    .filterIsInstance<ContentRootEntity>().map { it.module.symbolicId }.toSet()
+
+                if (result.addAll(moduleIds)) {
+                    break
+                }
+
+                current = current.parent
+            }
         }
 
-        return id
+        return result
     }
 
-    private fun MutableEntityStorage.getOrCreateScriptLibrary(
-        url: VirtualFileUrl
+    private fun getOrCreateScriptLibrary(
+        storage: MutableEntityStorage,
+        classUrl: VirtualFileUrl,
+        sources: Collection<VirtualFileUrl> = listOf(),
+        scriptUrl: VirtualFileUrl
     ): KotlinScriptLibraryEntityId {
-        val id = KotlinScriptLibraryEntityId(url)
+        val id = KotlinScriptLibraryEntityId(classUrl)
+        val existingLibrary = storage.resolve(id)
 
-        if (!contains(id)) {
-            this addEntity KotlinScriptLibraryEntity(
-                id.classes, id.sources, KotlinGradleScriptEntitySource
-            )
+        if (existingLibrary == null) {
+            storage addEntity KotlinScriptLibraryEntity(
+                classes = id.classes,
+                usedInScripts = setOf(scriptUrl),
+                entitySource = KotlinGradleScriptEntitySource
+            ) {
+                this.sources += sources
+            }
+        } else {
+            storage.modifyKotlinScriptLibraryEntity(existingLibrary) {
+                this.usedInScripts += scriptUrl
+            }
         }
 
         return id
@@ -208,8 +264,11 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
      * @param sources a mutable set of [VirtualFileUrl]s pointing to source JAR files
      * @return a list of [KotlinScriptLibraryEntityId]s that were successfully created and registered
      */
-    private fun MutableEntityStorage.extractDependenciesWithSources(
-        classes: MutableSet<VirtualFileUrl>, sources: MutableSet<VirtualFileUrl>
+    private fun extractDependenciesWithSources(
+        storage: MutableEntityStorage,
+        scriptUrl: VirtualFileUrl,
+        classes: MutableSet<VirtualFileUrl>,
+        sources: MutableSet<VirtualFileUrl>
     ): List<KotlinScriptLibraryEntityId> {
         val result: MutableList<KotlinScriptLibraryEntityId> = mutableListOf()
         val jar = ".jar!/"
@@ -227,9 +286,21 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
                 }
             }
         }.forEach { (classUrl, sourceUrl) ->
-            val id = KotlinScriptLibraryEntityId(listOf(classUrl), listOf(sourceUrl))
-            if (!this.contains(id)) {
-                this addEntity KotlinScriptLibraryEntity(id.classes, id.sources, KotlinGradleScriptEntitySource)
+            val id = KotlinScriptLibraryEntityId(classUrl)
+            val existingLibrary = storage.resolve(id)
+            if (existingLibrary == null) {
+                storage addEntity KotlinScriptLibraryEntity(
+                    classes = id.classes,
+                    usedInScripts = setOf(scriptUrl),
+                    entitySource = KotlinGradleScriptEntitySource
+                ) {
+                    this.sources += sourceUrl
+                }
+            } else {
+                storage.modifyKotlinScriptLibraryEntity(existingLibrary) {
+                    this.sources += sourceUrl
+                    this.usedInScripts += scriptUrl
+                }
             }
 
             classes.remove(classUrl)
@@ -249,17 +320,34 @@ class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinSc
         }
     }
 
-    private fun MutableEntityStorage.extractRootsByPredicate(
-        classes: MutableSet<VirtualFileUrl>, sources: MutableSet<VirtualFileUrl>, predicate: Predicate<VirtualFileUrl>
+    private fun extractRootsByPredicate(
+        storage: MutableEntityStorage,
+        scriptUrl: VirtualFileUrl,
+        classes: MutableSet<VirtualFileUrl>,
+        sources: MutableSet<VirtualFileUrl>,
+        predicate: Predicate<VirtualFileUrl>
     ): KotlinScriptLibraryEntityId? {
         val groupedClasses = classes.removeOnMatch(predicate)
         if (groupedClasses.isEmpty()) return null
 
         val groupedSources = sources.removeOnMatch(predicate)
 
-        val id = KotlinScriptLibraryEntityId(groupedClasses, groupedSources)
-        if (!this.contains(id)) {
-            this addEntity KotlinScriptLibraryEntity(groupedClasses, groupedSources, KotlinGradleScriptEntitySource)
+        val id = KotlinScriptLibraryEntityId(groupedClasses)
+        val existingLibrary = storage.resolve(id)
+
+        if (existingLibrary == null) {
+            storage addEntity KotlinScriptLibraryEntity(
+                classes = groupedClasses,
+                usedInScripts = setOf(scriptUrl),
+                entitySource = KotlinGradleScriptEntitySource,
+            ) {
+                this.sources += groupedSources
+            }
+        } else {
+            storage.modifyKotlinScriptLibraryEntity(existingLibrary) {
+                this.sources += groupedSources
+                this.usedInScripts += scriptUrl
+            }
         }
 
         return id

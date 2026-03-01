@@ -3,7 +3,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiListLikeElement;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;

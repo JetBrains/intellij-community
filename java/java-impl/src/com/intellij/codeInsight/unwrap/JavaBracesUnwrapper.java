@@ -2,7 +2,14 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiTryStatement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 

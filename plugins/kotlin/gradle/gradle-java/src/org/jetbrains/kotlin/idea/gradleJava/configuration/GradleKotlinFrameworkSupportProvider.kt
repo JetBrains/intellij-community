@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.gradle.configuration.*
+import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
@@ -35,7 +35,8 @@ import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
 import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
-import org.jetbrains.kotlin.idea.versions.*
+import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
+import org.jetbrains.kotlin.idea.versions.MAVEN_JS_TEST_ID
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider
 import javax.swing.Icon

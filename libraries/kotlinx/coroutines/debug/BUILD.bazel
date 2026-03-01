@@ -18,4 +18,17 @@ jvm_library(
     "@lib//:kotlinx-coroutines-debug",
   ]
 )
+
+jvm_library(
+  name = "debug_test_lib",
+  module_name = "intellij.libraries.kotlinx.coroutines.debug",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:kotlinx-coroutines-debug"],
+  runtime_deps = [
+    ":debug",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.debug` end

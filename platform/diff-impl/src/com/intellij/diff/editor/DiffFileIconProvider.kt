@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.Icon
 
-private class DiffFileIconProvider : FileIconProvider {
+internal class DiffFileIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
     if (file is DiffVirtualFileBase) {
       return AllIcons.Actions.Diff

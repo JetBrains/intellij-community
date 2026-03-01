@@ -6,10 +6,11 @@ import com.intellij.openapi.actionSystem.ActionToolbar.experimentalToolbarMinimu
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
-import java.util.*
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Rectangle
+import java.util.PriorityQueue
 import javax.swing.JComponent
-import kotlin.collections.plusAssign
 import kotlin.math.max
 
 /**

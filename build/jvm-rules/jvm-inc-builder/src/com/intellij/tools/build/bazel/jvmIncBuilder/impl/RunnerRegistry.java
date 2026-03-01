@@ -18,9 +18,17 @@ public final class RunnerRegistry {
   private static final List<Entry<?>> ourRunners = List.of(
     new Entry<>(KotlinCompilerRunner.class, KotlinCompilerRunner::new, p -> p.getFileName().toString().endsWith(".kt")),
     new Entry<>(JavaCompilerRunner.class, JavaCompilerRunner::new, p -> p.getFileName().toString().endsWith(".java")),
-    new Entry<>(BytecodeInstrumentationRunner.class, BytecodeInstrumentationRunner::new),
-    new Entry<>(FormsCompiler.class, FormsCompiler::new, p -> p.getFileName().toString().endsWith(FormBinding.FORM_EXTENSION))
+    new Entry<>(BytecodeInstrumentationRunner.class, BytecodeInstrumentationRunner::new)
   );
+
+  /**
+   * Computes a digest based on runner class names.
+   * Changes to the runner registry (adding/removing/reordering compilers) will produce a different digest,
+   * triggering a full rebuild of the target.
+   */
+  public static long getConfigurationDigest() {
+    return Utils.digest(map(ourRunners, entry -> entry.runnerClass().getName()));
+  }
 
   public static Iterable<RunnerFactory<? extends CompilerRunner>> getRoundCompilers() {
     return filter(map(ourRunners, entry -> CompilerRunner.class.isAssignableFrom(entry.runnerClass())? (RunnerFactory<CompilerRunner>)entry.factory : null), Objects::nonNull);

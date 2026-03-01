@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 
 public class UrlFilter implements Filter, DumbAware {
 
-  private static final String FILE_MINIMAL_PROTOCOL_PREFIX = "file:/";
+  private static final String FILE_MINIMAL_PROTOCOL_PREFIX = "file:";
 
   private final Project myProject;
 

@@ -5,7 +5,11 @@ import com.intellij.notebooks.visualization.NotebookCellLinesEvent
 import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl

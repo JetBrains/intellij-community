@@ -39,7 +39,7 @@ public class MavenImportingSettings implements Cloneable {
   private boolean useMavenOutput = true;
   private @NlsSafe String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
 
-  private boolean downloadSourcesAutomatically = false;
+  private boolean downloadSourcesAutomatically = true;
   private boolean downloadDocsAutomatically = false;
   private boolean downloadAnnotationsAutomatically = false;
   private boolean autoDetectCompiler = true;

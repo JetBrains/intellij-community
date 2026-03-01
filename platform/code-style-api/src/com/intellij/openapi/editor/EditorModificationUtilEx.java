@@ -31,7 +31,7 @@ public class EditorModificationUtilEx {
       caretModel.moveToOffset(selectionStart);
     }
     selectionModel.removeSelection();
-    editor.getDocument().deleteString(selectionStart, selectionEnd);
+    editor.getUiDocument().deleteString(selectionStart, selectionEnd);
     scrollToCaret(editor);
   }
 
@@ -70,7 +70,7 @@ public class EditorModificationUtilEx {
       s = filler + s;
     }
 
-    Document document = editor.getDocument();
+    Document document = editor.getUiDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     if (editor.isInsertMode() || !toProcessOverwriteMode) {
       if (selectionModel.hasSelection()) {
@@ -208,7 +208,7 @@ public class EditorModificationUtilEx {
    */
   @ApiStatus.Experimental
   public static int calcAfterLineEnd(@NotNull Editor editor, int caretOffset, @NotNull LogicalPosition logicalPosition, @NotNull VisualPosition visualPosition) {
-    Document document = editor.getDocument();
+    Document document = editor.getUiDocument();
     int lineNumber = logicalPosition.line;
     int columnNumber = logicalPosition.column;
     if (lineNumber >= document.getLineCount()) {

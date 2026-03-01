@@ -3,9 +3,17 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.*
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.testFramework.plugins.ContentModuleSpec
+import com.intellij.platform.testFramework.plugins.PluginPackagingConfig
+import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.content
+import com.intellij.platform.testFramework.plugins.dependencies
+import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
+import com.intellij.platform.testFramework.plugins.pluginAlias
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.write
@@ -73,11 +81,11 @@ class PluginSetLoadingTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val (_, result) = PluginSetTestBuilder.fromPath(pluginsDirPath)
+    val resultState = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withDisabledPlugins("foo")
-      .buildLoadingResult()
+      .buildState()
 
-    val incompletePlugins = result.getIncompleteIdMap().values
+    val incompletePlugins = resultState.incompletePluginsForLogging
     assertThat(incompletePlugins).hasSize(1)
     val foo = incompletePlugins.single()
     assertThat(foo.version).isEqualTo("2.0")
@@ -102,21 +110,16 @@ class PluginSetLoadingTest {
         <idea-version until-build="4"/>
       </idea-plugin>""")
 
-    val (_, result) = PluginSetTestBuilder.fromPath(pluginsDirPath)
+    val resultState = PluginSetTestBuilder.fromPath(pluginsDirPath)
       .withProductBuildNumber(BuildNumber.fromString("4.0")!!)
-      .buildLoadingResult()
+      .buildState()
 
-    assertThat(result.hasPluginErrors).isFalse()
-    val plugins = result.enabledPlugins.toList()
+    val plugins = resultState.pluginSet.enabledPlugins.toList()
     assertThat(plugins).hasSize(1)
-    assertThat(result.duplicateModuleMap).isNull()
-    assertThat(result.getIncompleteIdMap()).isEmpty()
+    assertThat(resultState.incompletePluginsForLogging).isEmpty()
     val foo = plugins[0]
     assertThat(foo.version).isEqualTo("2.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
-
-    assertThat(result.getIdMap()).containsOnlyKeys(foo.pluginId)
-    assertThat(result.getIdMap().get(foo.pluginId)).isSameAs(foo)
   }
 
   @Test
@@ -442,7 +445,7 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).hasSizeGreaterThan(0)
-    assertThat(errors[0].htmlMessage.toString()).contains("foo", "duplicate", "content module")
+    assertThat(errors[0].htmlMessage.toString()).contains("foo", "invalid plugin descriptor")
   }
 
   @Test

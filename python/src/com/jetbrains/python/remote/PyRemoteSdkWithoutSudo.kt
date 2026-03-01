@@ -3,7 +3,6 @@ package com.jetbrains.python.remote
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
-import java.lang.IllegalStateException
 
 /**
  * This is an ugly but necessary workaround.
@@ -15,15 +14,6 @@ import java.lang.IllegalStateException
  * and SFTP always tries to do changes with user privileges.
  */
 class PyRemoteSdkWithoutSudo(private val forward: Sdk) : Sdk by forward {
-  override fun getSdkAdditionalData(): SdkAdditionalData? = forward.sdkAdditionalData?.let {
-    if (it is PyRemoteSdkAdditionalDataBase) PyRemoteSdkAdditionalDataWithoutSudo(it) else it
-  }
+  override fun getSdkAdditionalData(): SdkAdditionalData? = forward.sdkAdditionalData
 }
 
-class PyRemoteSdkAdditionalDataWithoutSudo(forward: PyRemoteSdkAdditionalDataBase) : PyRemoteSdkAdditionalDataBase by forward {
-  override fun isRunAsRootViaSudo(): Boolean = false
-
-  override fun setRunAsRootViaSudo(runAsRootViaSudo: Boolean) {
-    throw IllegalStateException("Tried to set runAsRootViaSudo in ${javaClass}")
-  }
-}

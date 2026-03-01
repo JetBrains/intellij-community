@@ -16,7 +16,7 @@ import com.intellij.util.xml.impl.DomApplicationComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

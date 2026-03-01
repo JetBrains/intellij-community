@@ -13,7 +13,16 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFu
 import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector

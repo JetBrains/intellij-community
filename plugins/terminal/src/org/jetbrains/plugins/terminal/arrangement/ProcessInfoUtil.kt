@@ -15,8 +15,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.system.OS
 import com.pty4j.windows.conpty.WinConPtyProcess
 import com.pty4j.windows.winpty.WinPtyProcess
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 

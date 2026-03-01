@@ -24,7 +24,33 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHe
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.base.psi.isAssignmentLHS
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
+import org.jetbrains.kotlin.psi.KtConstructorDelegationReferenceExpression
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtOperationExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtStatementExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.isFunctionalExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -215,10 +241,6 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
     protected companion object {
         val INTRODUCE_VARIABLE: String get() = KotlinBundle.message("introduce.variable")
-
-        fun PsiElement.isAssignmentLHS(): Boolean = parents.any {
-            KtPsiUtil.isAssignment(it) && (it as KtBinaryExpression).left == this
-        }
 
         fun showErrorHint(project: Project, editor: Editor?, @NlsContexts.DialogMessage message: String) {
             CommonRefactoringUtil.showErrorHint(project, editor, message, INTRODUCE_VARIABLE, HelpID.INTRODUCE_VARIABLE)

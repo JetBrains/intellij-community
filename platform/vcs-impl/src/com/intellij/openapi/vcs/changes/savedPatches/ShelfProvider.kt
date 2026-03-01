@@ -12,7 +12,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.shelf.*
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChange
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
+import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.VcsBundleTag
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer

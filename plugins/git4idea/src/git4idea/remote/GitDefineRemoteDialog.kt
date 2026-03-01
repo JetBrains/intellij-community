@@ -25,7 +25,13 @@ import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import git4idea.validators.GitRefNameValidator
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 

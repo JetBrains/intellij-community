@@ -25,7 +25,11 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchReques
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 /**

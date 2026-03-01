@@ -1,8 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
-import com.intellij.dvcs.push.ui.*;
+import com.intellij.dvcs.push.ui.PushLogTreeUtil;
+import com.intellij.dvcs.push.ui.PushTargetEditorListener;
+import com.intellij.dvcs.push.ui.PushTargetTextField;
+import com.intellij.dvcs.push.ui.VcsEditableTextComponent;
+import com.intellij.dvcs.push.ui.VcsLinkListener;
+import com.intellij.dvcs.push.ui.VcsLinkedTextComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -19,9 +24,16 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TextIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -45,11 +57,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import static git4idea.push.GitPushTarget.findRemote;
 import static java.util.stream.Collectors.toList;
@@ -120,7 +145,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         defaultTarget.getTargetType() == GitPushTargetType.TRACKING_BRANCH && !defaultTarget.isNewBranchCreated()
     ) {
       myUpstreamCheckbox = new SetUpstreamCheckbox(defaultTarget.getBranch());
-      myTargetEditor.addDocumentListener(new DocumentListener() {
+      addDocumentListener(myTargetEditor, new DocumentListener() {
         @Override
         public void documentChanged(@NotNull DocumentEvent event) {
           myUpstreamCheckbox.setVisible(myTargetEditor.getText(), myRemoteRenderer.getText());
@@ -154,7 +179,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private void setupBranchNameInputValidation(@NotNull PushTargetTextField editor) {
-    editor.addDocumentListener(new DocumentListener() {
+    addDocumentListener(editor, new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
         String targetName = myTargetEditor.getText();
@@ -166,6 +191,11 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         }, ModalityState.stateForComponent(myTargetEditor));
       }
     });
+  }
+
+  private void addDocumentListener(@NotNull EditorTextField editorField, @NotNull DocumentListener listener) {
+    editorField.addDocumentListener(listener);
+    Disposer.register(this, () -> editorField.removeDocumentListener(listener));
   }
 
   private void updateComponents(@Nullable GitPushTarget target) {
@@ -453,7 +483,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @Override
   public void addTargetEditorListener(final @NotNull PushTargetEditorListener listener) {
-    myTargetEditor.addDocumentListener(new DocumentListener() {
+    addDocumentListener(myTargetEditor, new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         processActiveUserChanges(listener);

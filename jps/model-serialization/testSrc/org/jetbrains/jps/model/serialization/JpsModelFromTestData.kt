@@ -8,7 +8,10 @@ import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.invariantSeparatorsPathString
 
 class JpsProjectData private constructor(relativeProjectPath: String, externalConfigurationRelativePath: String?, testClass: Class<*>, 
                                          pathVariables: Map<String, String>) {

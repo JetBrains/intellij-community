@@ -9,8 +9,15 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilityUtils
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.pullUp.renderForConflicts
@@ -23,7 +30,15 @@ import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.idea.util.orEmpty
 import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
@@ -33,6 +48,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
+@K1Deprecation
 fun analyzePushDownConflicts(
     context: K1PushDownContext,
     usages: Array<out UsageInfo>

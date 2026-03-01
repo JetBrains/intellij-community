@@ -4,7 +4,12 @@ package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.actions.RunInspectionIntention
 import com.intellij.codeInspection.ex.InspectionManagerEx
 import com.intellij.codeInspection.ex.InspectionProfileImpl
@@ -14,19 +19,24 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
 import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.simpleNameExpressionVisitor
 
 internal abstract class ObsoleteCodeMigrationInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool, MigrationFix {
     protected abstract val fromVersion: LanguageVersion

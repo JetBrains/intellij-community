@@ -16,7 +16,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 public abstract class AbstractExternalSystemToolWindowFactory implements ToolWindowFactory, DumbAware {
   private final @NotNull ProjectSystemId externalSystemId;

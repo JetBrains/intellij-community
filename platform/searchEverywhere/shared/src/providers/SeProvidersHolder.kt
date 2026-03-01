@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers
 
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.EssentialContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.actions.searcheverywhere.TabsCustomizationStrategy
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -10,8 +14,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
+import com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder.Companion.initialize
+import com.intellij.platform.searchEverywhere.toProviderId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -146,7 +156,7 @@ class SeProvidersHolder(
       separateTabContributors: MutableMap<SeProviderId, SearchEverywhereContributor<Any>>,
     ) {
       withContext(Dispatchers.EDT) {
-        SearchEverywhereManagerImpl.createContributors(initEvent, project)
+        SearchEverywhereManagerImpl.createContributors(initEvent, project, false)
       }.filterIsInstance<SearchEverywhereContributor<Any>>().forEach {
         allContributors[SeProviderId(it.searchProviderId)] = it
       }

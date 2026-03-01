@@ -48,9 +48,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public final class VfsRootAccess {
-  private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
-    System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null && System.getProperty("NO_FS_ROOTS_ACCESS_CHECK") == null;
-
   // we don't want test subclasses to accidentally remove allowed files added by base classes
   private static final Set<String> ourAdditionalRoots = CollectionFactory.createFilePathSet(); // guarded by `ourAdditionalRoots`
   private static boolean insideGettingRoots;
@@ -81,7 +78,8 @@ public final class VfsRootAccess {
   @TestOnly
   static void assertAccessInTests(@NotNull VirtualFile child, @NotNull NewVirtualFileSystem delegate) {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (SHOULD_PERFORM_ACCESS_CHECK &&
+    if (System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null &&
+        System.getProperty("NO_FS_ROOTS_ACCESS_CHECK") == null &&
         app.isUnitTestMode() &&
         app.isComponentCreated() &&
         !ApplicationManagerEx.isInStressTest()) {
@@ -134,8 +132,10 @@ public final class VfsRootAccess {
     Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
-    File globalMavenSettings = JpsMavenSettings.getGlobalMavenSettingsXml();
-    if (globalMavenSettings != null) allowed.add(globalMavenSettings.getAbsolutePath());
+    File userSettingsFile = JpsMavenSettings.getUserMavenSettingsXml();
+    File settingsFile = userSettingsFile.exists() ? userSettingsFile : JpsMavenSettings.getGlobalMavenSettingsXml();
+    if (settingsFile != null && settingsFile.exists()) allowed.add(settingsFile.getAbsolutePath());
+    allowed.add(JpsMavenSettings.getMavenRepositoryPath());
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
     // The following is to avoid errors in tests like "File accessed outside allowed roots: file://C:/Program Files/idea/lib/idea.jar"

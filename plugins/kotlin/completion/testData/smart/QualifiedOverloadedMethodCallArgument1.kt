@@ -22,3 +22,5 @@ class C {
 // EXIST: expr4
 // EXIST: s
 // EXIST: i
+
+// IGNORE_K2

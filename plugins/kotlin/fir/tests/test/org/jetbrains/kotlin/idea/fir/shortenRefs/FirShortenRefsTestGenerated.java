@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.shortenRefs;
 
@@ -237,6 +237,60 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             @TestMetadata("variableNotShortened.kt")
             public void testVariableNotShortened() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/calls/variableNotShortened.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/shortenRefsFir/companionReference")
+        public static class CompanionReference extends AbstractFirShortenRefsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+            }
+
+            @TestMetadata("callableRefsOnCompanion.kt")
+            public void testCallableRefsOnCompanion() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/companionReference/callableRefsOnCompanion.kt");
+            }
+
+            @TestMetadata("classLiteralOnCompanion.kt")
+            public void testClassLiteralOnCompanion() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/companionReference/classLiteralOnCompanion.kt");
+            }
+
+            @TestMetadata("classObject.kt")
+            public void testClassObject() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/companionReference/classObject.kt");
+            }
+
+            @TestMetadata("companionReferenceInsideOfClass.kt")
+            public void testCompanionReferenceInsideOfClass() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/companionReference/companionReferenceInsideOfClass.kt");
+            }
+
+            @TestMetadata("companionReferenceInsideOfClass_conflict.kt")
+            public void testCompanionReferenceInsideOfClass_conflict() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/companionReference/companionReferenceInsideOfClass_conflict.kt");
+            }
+
+            @TestMetadata("removeCompanionRefInCalleeExpression.kt")
+            public void testRemoveCompanionRefInCalleeExpression() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/companionReference/removeCompanionRefInCalleeExpression.kt");
+            }
+
+            @TestMetadata("removeCompanionRefWithQualifiedReceiverInCalleeExpression.kt")
+            public void testRemoveCompanionRefWithQualifiedReceiverInCalleeExpression() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/companionReference/removeCompanionRefWithQualifiedReceiverInCalleeExpression.kt");
+            }
+
+            @TestMetadata("shortCompanionRefInsideShortenedCall.kt")
+            public void testShortCompanionRefInsideShortenedCall() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/companionReference/shortCompanionRefInsideShortenedCall.kt");
             }
         }
 

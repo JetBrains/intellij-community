@@ -65,6 +65,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
                 it.classPath,
                 it.sourcePath,
                 it.imports,
+                it.classpathModel
             )
         }
 
@@ -80,9 +81,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
             )
         )
 
-        GradleKotlinScriptEntityProvider.getInstance(project).updateStorage(scriptData, builder)
-
-        return builder.toSnapshot()
+        return GradleKotlinScriptEntityProvider.getInstance(project).getUpdatedStorage(scriptData, builder)
     }
 }
 
@@ -96,4 +95,5 @@ class GradleScriptModel(
     val classPath: List<String>,
     val sourcePath: List<String>,
     val imports: List<String>,
+    val classpathModel: GradleBuildScriptClasspathModel? = null,
 )

@@ -1,0 +1,231 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
+
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
+import com.intellij.psi.util.childrenOfType
+import com.intellij.psi.util.lastLeaf
+import com.intellij.psi.util.siblings
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.reformat
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.propertyVisitor
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.isAbstract
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
+
+/**
+ * This is an experimental feature and has to be explicitly turned on. Then this inspection will be enabled by default.
+ * See [feature discussion](https://github.com/Kotlin/KEEP/blob/main/proposals/KEEP-0430-explicit-backing-fields.md) for more details.
+ */
+internal class ConvertToExplicitBackingFieldsInspection :
+    KotlinApplicableInspectionBase.Simple<KtProperty, ConvertToExplicitBackingFieldsInspection.Context>() {
+
+    data class Context(val backingProperty: SmartPsiElementPointer<KtProperty>)
+
+    override fun getProblemDescription(
+        element: KtProperty,
+        context: Context
+    ): @InspectionMessage String = KotlinBundle.message("inspection.kotlin.convert.to.explicit.backing.fields.display.name")
+
+    override fun isAvailableForFile(file: PsiFile): Boolean {
+        return file is KtFile && file.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitBackingFields)
+    }
+
+    override fun createQuickFix(
+        element: KtProperty,
+        context: Context
+    ): KotlinModCommandQuickFix<KtProperty> = object : KotlinModCommandQuickFix<KtProperty>() {
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.kotlin.convert.to.explicit.backing.fields.fix.name")
+
+        override fun applyFix(project: Project, element: KtProperty, updater: ModPsiUpdater) {
+            val psiFactory = KtPsiFactory(element.project)
+
+            val backingPropertyContext = context.backingProperty.element ?: return
+            val backingProperty = updater.getWritable(backingPropertyContext)
+
+            replaceReferences(element, backingPropertyContext, psiFactory, updater)
+
+            val getter = element.getter ?: return
+            val accessorsCommentSaver = CommentSaver(getter)
+
+            getter.delete()
+            if (element.lastLeaf() is PsiWhiteSpace) element.lastLeaf().delete()
+            accessorsCommentSaver.restore(element)
+
+            val propertyWithExplicitBackingField: KtProperty = createNewPropertyWithBackingField(
+                elementText = element.text,
+                backingProperty = backingProperty,
+                backingPropertyType = backingPropertyContext.typeReference?.text,
+                psiFactory = psiFactory
+            )
+
+            val replacedProperty = element.replace(propertyWithExplicitBackingField)
+            replacedProperty.reformat(canChangeWhiteSpacesOnly = true)
+
+            backingProperty.parent.deleteChildRange(
+                backingProperty,
+                backingProperty.siblings(withSelf = false).takeWhile { it is PsiWhiteSpace }.lastOrNull() ?: backingProperty,
+            )
+            CommentSaver(backingProperty).restore(replacedProperty)
+        }
+    }
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): KtVisitor<*, *> = propertyVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
+    }
+
+    override fun isApplicableByPsi(element: KtProperty): Boolean {
+        if (element.isVar) return false
+        if (element.isMember && element.containingClass()?.isAbstract() == true && !element.hasModifier(KtTokens.FINAL_KEYWORD)) return false
+        return !element.isPrivate() && element.getter != null
+    }
+
+    override fun getApplicableRanges(element: KtProperty): List<TextRange> = ApplicabilityRange.single(element) { it.getter }
+
+    override fun KaSession.prepareContext(element: KtProperty): Context? {
+        val returnedProperty = getReturnedPropertyFromGetter(element.getter) ?: return null
+
+        val allProperties = (element.parent as? KtElement)
+            ?.childrenOfType<KtProperty>()
+            ?.filter { it != element }
+            ?: emptyList()
+
+        if (!allProperties.contains(returnedProperty)) return null
+
+        val returnedType = returnedProperty.symbol.returnType
+        val propertyType = element.symbol.returnType
+
+        if (returnedType.semanticallyEquals(propertyType)) return null
+        if (!returnedType.isSubtypeOf(propertyType)) return null
+
+        return Context(returnedProperty.createSmartPointer())
+    }
+
+    context(_: KaSession)
+    private fun getReturnedPropertyFromGetter(getter: KtPropertyAccessor?): KtProperty? {
+        val body = getter?.bodyExpression ?: return null
+        val returnedExpr = when (body) {
+            is KtNameReferenceExpression -> body
+            is KtBlockExpression -> {
+                val returnExpr = body.statements.singleOrNull() as? KtReturnExpression
+                returnExpr?.returnedExpression as? KtNameReferenceExpression
+            }
+            is KtDotQualifiedExpression if body.receiverExpression is KtThisExpression -> body.selectorExpression as? KtNameReferenceExpression
+            else -> null
+        }
+        val returnedProperty = returnedExpr?.let { resolveToProperty(it) } ?: return null
+        if (!returnedProperty.isPrivate()) return null
+        if (returnedProperty.isVar) return null
+        if (returnedProperty.hasDelegate()) return null
+        if (returnedProperty.getter != null) return null
+        return returnedProperty
+    }
+
+    context(_: KaSession)
+    private fun resolveToProperty(expression: KtNameReferenceExpression): KtProperty? {
+        val symbol = expression.mainReference.resolveToSymbol() as? KaPropertySymbol ?: return null
+        return symbol.psi as? KtProperty
+    }
+
+    private fun replaceReferences(
+        element: KtProperty,
+        backingPropertyContext: KtProperty,
+        psiFactory: KtPsiFactory,
+        updater: ModPsiUpdater
+    ) {
+        val propertyNameText = element.nameIdentifier?.text ?: return
+        val backingPropertyName = backingPropertyContext.name ?: return
+        val className = backingPropertyContext.containingClass()?.name
+
+        val fullQualifiedPropertyName = buildString {
+            append("this")
+            append(className?.let { "@$it." } ?: ".")
+            append(propertyNameText)
+        }
+
+        element.containingKtFile.collectDescendantsOfType<KtNameReferenceExpression>()
+            .filter { ref ->
+                ref.getReferencedName() == backingPropertyName && ref.mainReference.resolve() == backingPropertyContext
+            }
+            .map { updater.getWritable(it) }
+            .map { writableRef ->
+                writableRef.replace(psiFactory.createExpression(fullQualifiedPropertyName)) as KtExpression
+            }.let {
+                shortenReferences(it, shortenOptions = ShortenOptionsForIde.ALL_ENABLED)
+            }
+    }
+
+    private fun createNewPropertyWithBackingField(
+        elementText: String,
+        backingProperty: KtProperty,
+        backingPropertyType: String?,
+        psiFactory: KtPsiFactory
+    ): KtProperty {
+        val initializer = backingProperty.initializer?.let { getElementWithoutInnerComments(it, StringBuilder()) }
+
+        val newPropertyText = buildString {
+            append(elementText)
+            append("\nfield")
+            backingPropertyType?.let {
+                append(": ")
+                append(backingPropertyType)
+            }
+            initializer?.let {
+                append(" = ")
+                append(it)
+            }
+        }
+
+        return psiFactory.createProperty(newPropertyText)
+    }
+
+    private fun getElementWithoutInnerComments(property: PsiElement, builder: StringBuilder): String {
+        when (property) {
+            is PsiComment -> {}
+            is KtElement -> property.allChildren.forEach { getElementWithoutInnerComments(it, builder) }
+            else -> builder.append(property.text)
+        }
+        return builder.toString()
+    }
+
+}

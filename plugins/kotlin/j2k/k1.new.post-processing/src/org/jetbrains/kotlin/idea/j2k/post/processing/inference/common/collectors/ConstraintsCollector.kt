@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculator
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintBuilder
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceContext
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.psi.KtElement
 
+@K1Deprecation
 abstract class ConstraintsCollector {
     abstract fun ConstraintBuilder.collectConstraints(
         element: KtElement,

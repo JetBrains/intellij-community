@@ -21,6 +21,6 @@ public class PyDoubleStarPatternImpl extends PyElementImpl implements PyDoubleSt
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
-    return null;
+    return PyCaptureContext.getCaptureType(this, context);
   }
 }

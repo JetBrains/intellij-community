@@ -9,7 +9,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.quickfix.ChangeToLabeledReturnFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf

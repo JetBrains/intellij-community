@@ -5,7 +5,11 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.nodes.*;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleGroupNode;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
@@ -30,7 +34,11 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalModuleType;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectId;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectPath;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalRootProjectPath;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule;
 import static com.intellij.ui.SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.merge;
 

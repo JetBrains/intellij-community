@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
+import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
@@ -13,7 +14,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -228,10 +233,19 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
         modifiableModel.commit()
     }
 
-    fun Module.findSourceKtFile(fileName: String): KtFile {
+    fun Module.findSourceVirtualFile(fileName: String): VirtualFile {
         val file = "${sourceRoots.first().url}/$fileName"
-        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        return VirtualFileManager.getInstance().findFileByUrl(file)!!
+    }
+
+    fun Module.findSourceKtFile(fileName: String): KtFile {
+        val virtualFile = findSourceVirtualFile(fileName)
         return PsiManager.getInstance(myProject).findFile(virtualFile) as KtFile
+    }
+
+    fun Module.findSourceKtFile(fileName: String, context: CodeInsightContext): KtFile {
+        val virtualFile = findSourceVirtualFile(fileName)
+        return PsiManager.getInstance(myProject).findFile(virtualFile, context) as KtFile
     }
 
     fun Module.enableMultiPlatform(additionalCompilerArguments: String = "") {

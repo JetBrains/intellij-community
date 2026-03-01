@@ -6,7 +6,7 @@ import com.intellij.ide.bookmark.ui.tree.LineNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 class LineBookmarkImpl(override val provider: LineBookmarkProvider, file: VirtualFile, line: Int) : LineBookmark {
   val descriptor: OpenFileDescriptor = OpenFileDescriptor(provider.project, file, line, 0)

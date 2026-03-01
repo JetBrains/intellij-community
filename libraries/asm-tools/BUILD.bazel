@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-asm-tools-asm-tools"],
   runtime_deps = ["@lib//:libraries-asm-tools-asm-tools"]
 )
+
+jvm_library(
+  name = "asm-tools_test_lib",
+  module_name = "intellij.libraries.asm.tools",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-asm-tools-asm-tools"],
+  runtime_deps = [":asm-tools"]
+)
 ### auto-generated section `build intellij.libraries.asm.tools` end

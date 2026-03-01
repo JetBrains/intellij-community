@@ -12,9 +12,15 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicHTML;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
 
 public class TitlePanel extends CaptionPanel {
   private final JLabel myLabel;

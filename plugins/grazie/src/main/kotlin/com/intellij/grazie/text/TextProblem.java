@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 /** A problem found by a {@link TextChecker} in natural language text */
 public abstract class TextProblem {
@@ -65,6 +66,15 @@ public abstract class TextProblem {
   /** @return the ranges in {@link #getText()} to be highlighted, non-intersecting, sorted by the start offset ascending */
   public final @NotNull List<TextRange> getHighlightRanges() {
     return highlightRanges;
+  }
+
+  /** @return the ranges in the file to be highlighted, non-intersecting, sorted by the start offset ascending */
+  public @NotNull List<TextRange> getFileHighlightRanges() {
+    return this.highlightRanges.stream()
+      .map(range -> text.textRangeToFile(range))
+      .flatMap(range -> text.intersection(range).stream())
+      .filter(Predicate.not(TextRange::isEmpty))
+      .toList();
   }
 
   /**

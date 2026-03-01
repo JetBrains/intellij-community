@@ -1,6 +1,11 @@
 package com.intellij.database.run.ui.grid.editors;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.extractors.FormatterCreator;
 import com.intellij.database.extractors.ObjectFormatterUtil;
 import com.intellij.database.run.ReservedCellValue;
@@ -78,7 +83,10 @@ public class DefaultNumericEditorFactory extends FormatBasedGridCellEditorFactor
                   @NotNull ValueParser valueParser,
                   @NotNull ValueFormatter valueFormatter) {
       super(project, grid, format, column, row, nullValue, initiator, provider, valueParser, valueFormatter, false);
-      getTextField().addSettingsProvider(editor -> GridUtil.configureNumericEditor(grid, editor));
+      getTextField().addSettingsProvider(editor -> {
+        GridUtil.registerArrowAction(editor, grid, this::getEditor);
+        GridUtil.configureNumericEditor(grid, editor);
+      });
     }
   }
 }

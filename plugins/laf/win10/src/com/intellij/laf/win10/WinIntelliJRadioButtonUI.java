@@ -5,9 +5,13 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 /**
  * @author Konstantin Bulenkov

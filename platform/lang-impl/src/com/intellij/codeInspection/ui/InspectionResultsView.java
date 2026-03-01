@@ -6,8 +6,18 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorBase;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionRVContentProvider;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.QuickFixAction;
+import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -26,12 +36,26 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -39,7 +63,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -47,9 +75,19 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.*;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollableContentBorder;
+import com.intellij.ui.Side;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
@@ -60,15 +98,29 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
@@ -458,59 +510,89 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     final int problemCount = myTree.getSelectedProblemCount();
     JComponent previewPanel = null;
     final InspectionToolWrapper<?,?> tool = myTree.getSelectedToolWrapper(true);
+
+    final InspectionToolPresentation presentation = tool != null ? myGlobalInspectionContext.getPresentation(tool) : null;
+
     boolean isCustomActionPanelAlignedToLeft = false;
-    if (tool != null) {
-      final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
+    if (presentation != null) {
       isCustomActionPanelAlignedToLeft = presentation.shouldAlignCustomActionPanelToLeft();
       final TreePath path = myTree.getSelectionPath();
       if (path != null) {
         Object last = path.getLastPathComponent();
-        if (last instanceof ProblemDescriptionNode problemDescriptionNode) {
-          CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
-          if (descriptor != null) {
-            previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
-            JComponent customActions = presentation.getCustomActionsPanel(descriptor, this);
-            if (customActions != null) {
-              String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.WEST : BorderLayout.EAST;
-              actionsPanel.add(customActions, borderLayout);
+        switch (last) {
+          case ProblemDescriptionNode problemDescriptionNode -> {
+            CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
+            if (descriptor != null) {
+              previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
+              addCustomActionsToPanel(presentation.getCustomActionsPanel(descriptor, this), actionsPanel, isCustomActionPanelAlignedToLeft);
             }
           }
-        }
-        else {
-          if (refEntity != null && refEntity.isValid()) {
-            previewPanel = presentation.getCustomPreviewPanel(refEntity);
+          case InspectionNode inspectionNode -> {
+            previewPanel = presentation.getCustomPreviewPanel(inspectionNode);
+            addCustomActionsToPanel(presentation.getCustomActionsPanel(inspectionNode), actionsPanel, isCustomActionPanelAlignedToLeft);
+          }
+          case InspectionModuleNode moduleNode -> {
+            previewPanel = presentation.getCustomPreviewPanel(moduleNode);
+            addCustomActionsToPanel(presentation.getCustomActionsPanel(moduleNode), actionsPanel, isCustomActionPanelAlignedToLeft);
+          }
+          case InspectionPackageNode packageNode -> {
+            previewPanel = presentation.getCustomPreviewPanel(packageNode);
+            addCustomActionsToPanel(presentation.getCustomActionsPanel(packageNode), actionsPanel, isCustomActionPanelAlignedToLeft);
+          }
+          case null, default -> {
+            if (refEntity != null && refEntity.isValid()) {
+              previewPanel = presentation.getCustomPreviewPanel(refEntity);
+              addCustomActionsToPanel(presentation.getCustomActionsPanel(refEntity), actionsPanel, isCustomActionPanelAlignedToLeft);
+            }
           }
         }
       }
     }
     EditorEx previewEditor = null;
     if (previewPanel == null) {
-      final Pair<JComponent, EditorEx> panelAndEditor = createBaseRightComponentFor(problemCount, refEntity);
+      final Pair<JComponent, EditorEx> panelAndEditor = ReadAction.compute(() -> createBaseRightComponentFor(problemCount, refEntity));
       previewPanel = panelAndEditor.getFirst();
       previewEditor = panelAndEditor.getSecond();
     }
     editorPanel.add(previewPanel, BorderLayout.CENTER);
-    if (problemCount > 0) {
+
+    // Custom toolbar is called ALWAYS (exclusion-resistant), not just when problemCount > 0
+    var customToolbar = presentation != null ? presentation.getCustomToolbar(this) : null;
+    if (customToolbar != null) {
+      myFixToolbar = customToolbar;
+    }
+    else if (problemCount > 0) {
       var paths = myTree.getSelectionPaths();
       if (paths != null) {
         InspectionResultsViewUtil.INSTANCE.updateAvailableSuppressActions(getProject(), paths, this);
       }
       myFixToolbar = QuickFixPreviewPanelFactory.create(this);
-      if (myFixToolbar != null) {
-        if (myFixToolbar instanceof InspectionTreeLoadingProgressAware progressPreview) {
-          myLoadingProgressPreview = progressPreview;
-        }
-        if (previewEditor != null) {
-          previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-        }
-        String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.EAST : BorderLayout.WEST;
-        actionsPanel.add(myFixToolbar, borderLayout);
+    }
+
+    if (myFixToolbar != null) {
+      if (myFixToolbar instanceof InspectionTreeLoadingProgressAware progressPreview) {
+        myLoadingProgressPreview = progressPreview;
       }
+      if (previewEditor != null) {
+        previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+      }
+      String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.EAST : BorderLayout.WEST;
+      actionsPanel.add(myFixToolbar, borderLayout);
     }
     if (previewEditor != null) {
-      ProblemPreviewEditorPresentation.setupFoldingsAndHighlightProblems(previewEditor, this);
+      EditorEx editor = previewEditor;
+      ReadAction.run(() -> ProblemPreviewEditorPresentation.setupFoldingsAndHighlightProblems(editor, this));
     }
     mySplitter.setSecondComponent(editorPanel);
+  }
+
+  private static void addCustomActionsToPanel(@Nullable JComponent customActions,
+                                              @NotNull JPanel actionsPanel,
+                                              boolean alignToLeft) {
+    if (customActions != null) {
+      String borderLayout = alignToLeft ? BorderLayout.WEST : BorderLayout.EAST;
+      actionsPanel.add(customActions, borderLayout);
+    }
   }
 
   private Pair<JComponent, EditorEx> createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
@@ -755,7 +837,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
                : navigatable;
       });
       sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
-        RefEntity item = ((ProblemDescriptionNode)selectedNode).getElement();
+        RefEntity item = problemNode.getElement();
         return item instanceof RefElement r ? r.getPsiElement() : null;
       });
 

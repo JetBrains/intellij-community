@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.doNotAnalyze
 
+@K1Deprecation
 class SafeDeleteImportDirectiveUsageInfo(
     importDirective: KtImportDirective, declaration: PsiElement
 ) : SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective, declaration, importDirective.containingKtFile.doNotAnalyze == null)

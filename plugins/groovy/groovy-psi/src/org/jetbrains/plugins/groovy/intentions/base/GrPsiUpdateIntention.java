@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;

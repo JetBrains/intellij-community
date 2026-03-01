@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -17,7 +17,54 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -27,11 +74,16 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implements DumbAware {
   private static final Logger LOG = Logger.getInstance(JavaFoldingBuilderBase.class);
@@ -372,6 +424,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                                           @NotNull Document document,
                                           boolean quick) {
     if (!(root instanceof PsiJavaFile)) return;
+    if (PlatformUtils.isJetBrainsClient()) return;
     PsiJavaFile file = (PsiJavaFile) root;
     Set<PsiElement> processedComments = new HashSet<>();
 

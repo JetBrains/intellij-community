@@ -14,7 +14,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dialog;
+import java.awt.GraphicsEnvironment;
+import java.awt.Window;
 
 import static org.junit.Assume.assumeFalse;
 

@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.fasterxml.jackson.core.JsonFactory
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
@@ -15,6 +14,10 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsModule
+import tools.jackson.core.ObjectWriteContext
+import tools.jackson.core.PrettyPrinter
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.util.DefaultPrettyPrinter
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
@@ -131,16 +134,21 @@ class LibraryLicensesListGenerator internal constructor(internal val libraryLice
   fun generateJson(file: Path) {
     Files.createDirectories(file.parent)
     Files.newOutputStream(file).use { out ->
-      JsonFactory().createGenerator(out).useDefaultPrettyPrinter().use { writer ->
+      val jsonFactory = JsonFactory()
+      val writeContext = object : ObjectWriteContext.Base() {
+        override fun tokenStreamFactory() = jsonFactory
+        override fun getPrettyPrinter(): PrettyPrinter = DefaultPrettyPrinter()
+      }
+      jsonFactory.createGenerator(writeContext, out).use { writer ->
         writer.writeStartArray()
         for (entry in libraryLicenses) {
           writer.writeStartObject()
 
-          writer.writeStringField("name", entry.presentableName)
-          writer.writeStringField("url", entry.url)
-          writer.writeStringField("version", entry.version)
-          writer.writeStringField("license", entry.license)
-          writer.writeStringField("licenseUrl", entry.getLibraryLicenseUrl())
+          writer.writeStringProperty("name", entry.presentableName)
+          writer.writeStringProperty("url", entry.url)
+          writer.writeStringProperty("version", entry.version)
+          writer.writeStringProperty("license", entry.license)
+          writer.writeStringProperty("licenseUrl", entry.getLibraryLicenseUrl())
 
           writer.writeEndObject()
         }
@@ -224,4 +232,3 @@ private fun generateLicenses(project: JpsProject, licensesList: List<LibraryLice
   }
   return result.sortedBy { it.presentableName }
 }
-

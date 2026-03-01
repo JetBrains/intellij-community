@@ -49,7 +49,7 @@ public interface AnnotationPackageSupport {
    * The annotation returned first will be preferred by default
    * in {@link NullableNotNullManager#getDefaultAnnotation(Nullability, PsiElement)}. 
    */
-  default @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
+  default @NotNull List<@NotNull String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return Collections.emptyList();
   }
 
@@ -65,5 +65,13 @@ public interface AnnotationPackageSupport {
    */
   default boolean canAnnotateLocals() {
     return true;
+  }
+
+  /**
+   * @return true if the non-null annotation reported by this support is used for the instrumentation or code generation.
+   * In this case, it won't be reported as redundant if it appears in the scope of container non-null annotation.
+   */
+  default boolean isNonNullUsedForInstrumentation() {
+    return false;
   }
 }

@@ -5,7 +5,12 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.context.ContextType;
-import org.intellij.lang.xpath.context.functions.*;
+import org.intellij.lang.xpath.context.functions.DefaultFunctionContext;
+import org.intellij.lang.xpath.context.functions.Function;
+import org.intellij.lang.xpath.context.functions.FunctionContext;
+import org.intellij.lang.xpath.context.functions.FunctionDeclarationParsing;
+import org.intellij.lang.xpath.context.functions.FunctionImpl;
+import org.intellij.lang.xpath.context.functions.Parameter;
 import org.intellij.lang.xpath.psi.XPath2Type;
 
 import javax.xml.namespace.QName;

@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 class VcsNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
     return listOf(
-      EXTERNALLY_ADDED_FILES,
       PROJECT_CONFIGURATION_FILES_ADDED,
       MANAGE_IGNORE_FILES,
       IGNORED_TO_EXCLUDE_NOT_FOUND,
@@ -59,7 +58,6 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
   }
 
   companion object {
-    const val EXTERNALLY_ADDED_FILES = "externally.added.files.notification"
     const val PROJECT_CONFIGURATION_FILES_ADDED = "project.configuration.files.added.notification"
     const val MANAGE_IGNORE_FILES = "manage.ignore.files.notification"
     const val IGNORED_TO_EXCLUDE_NOT_FOUND = "ignored.to.exclude.not.found"

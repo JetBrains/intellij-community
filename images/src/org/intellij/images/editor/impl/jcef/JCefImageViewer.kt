@@ -19,7 +19,12 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isTooLarge
-import com.intellij.ui.jcef.*
+import com.intellij.ui.jcef.JBCefApp
+import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.jcef.JBCefBrowserBase
+import com.intellij.ui.jcef.JBCefBrowserBuilder
+import com.intellij.ui.jcef.JBCefJSQuery
+import com.intellij.ui.jcef.JBCefScrollbarsHelper
 import com.intellij.ui.jcef.utils.JBCefLocalRequestHandler
 import com.intellij.ui.jcef.utils.JBCefStreamResourceHandler
 import com.intellij.util.IncorrectOperationException

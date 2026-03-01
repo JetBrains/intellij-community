@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
+@K1Deprecation
 class ConvertLateinitPropertyToNullableIntention : SelfTargetingIntention<KtProperty>(
     KtProperty::class.java, KotlinBundle.messagePointer("convert.to.nullable.var")
 ) {

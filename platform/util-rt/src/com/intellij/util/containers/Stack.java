@@ -1,12 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.EmptyStackException;
+import java.util.List;
+import java.util.Objects;
+import java.util.RandomAccess;
+import java.util.Vector;
 
 /**
  * <h3>Obsolescence notice</h3>
@@ -69,16 +76,6 @@ public class Stack<T> extends ArrayList<T> {
     final int size = size();
     if (size == 0) throw new EmptyStackException();
     return remove(size - 1);
-  }
-
-  /**
-   * @deprecated don't search for element index in a stack, use another collection
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public int search(Object o) {
-    int idx = lastIndexOf(o);
-    return idx == -1 ? -1 : size() - idx;
   }
 
   /**

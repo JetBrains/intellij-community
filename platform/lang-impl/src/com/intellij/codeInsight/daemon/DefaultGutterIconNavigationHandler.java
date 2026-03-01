@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 
-import javax.swing.*;
+import javax.swing.ListCellRenderer;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 

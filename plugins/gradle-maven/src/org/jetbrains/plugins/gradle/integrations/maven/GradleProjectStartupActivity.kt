@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
-private class GradleProjectStartupActivity : ProjectActivity {
+internal class GradleProjectStartupActivity : ProjectActivity {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()

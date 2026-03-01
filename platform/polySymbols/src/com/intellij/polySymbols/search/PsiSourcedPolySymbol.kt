@@ -32,7 +32,6 @@ interface PsiSourcedPolySymbol : PolySymbol {
    * The [PsiElement], which is the symbol declaration.
    */
   val source: PsiElement?
-    get() = null
 
   override fun createPointer(): Pointer<out PsiSourcedPolySymbol>
 

@@ -16,8 +16,12 @@ import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.JViewport;
+import java.awt.GridBagLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.Collection;
 import java.util.List;
 

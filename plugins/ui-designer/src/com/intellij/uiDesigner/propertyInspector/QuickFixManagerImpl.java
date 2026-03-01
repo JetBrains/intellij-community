@@ -8,10 +8,10 @@ import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JViewport;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.Rectangle;
 
 final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>{
   private static final Logger LOG = Logger.getInstance(QuickFixManagerImpl.class);

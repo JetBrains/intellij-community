@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import java.awt.datatransfer.DataFlavor
 
+@K1Deprecation
 class MoveDeclarationsTransferableData(
     val sourceFileUrl: String,
     val sourceObjectFqName: String?,

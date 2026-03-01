@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.Project;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.CheckReturnValue;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public interface MessageBuilder {

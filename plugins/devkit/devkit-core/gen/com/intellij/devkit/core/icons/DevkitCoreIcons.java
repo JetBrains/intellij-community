@@ -18,7 +18,6 @@ public final class DevkitCoreIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, DevkitCoreIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Add_sdk = load("icons/expui/addSDK.svg", "icons/add_sdk.svg", 641117830, 2);
-  /** 16x16 */ public static final @NotNull Icon ComposeToolWindow = load("icons/expui/composeToolWindow.svg", 542147654, 2);
 
   public static final class Gutter {
     /** 12x12 */ public static final @NotNull Icon DescriptionFile = load("icons/expui/gutter/descriptionFile@14x14.svg", "icons/gutter/descriptionFile.svg", 1318760137, 2);

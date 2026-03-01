@@ -1,9 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.library;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil;
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,7 +15,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.net.URL;
 import java.util.List;
 import java.util.function.Supplier;
@@ -27,7 +32,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
    * @param libraryCategoryName presentable description of the library type
    * @param libraryTypeId       unique id of the library type, used for serialization
    * @param groupId             name of directory on https://frameworks.jetbrains.com site which contains information about available library versions
-   * @param localUrls           URLs of xml files containing information about the library versions (see /contrib/osmorc/src/org/osmorc/facet/osgi.core.xml for example)
+   * @param localUrls           URLs of XML files containing information about the library versions (see plugins/groovy/resources/org/jetbrains/plugins/groovy/config/groovy.sdk.xml for example)
    */
   protected DownloadableLibraryType(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> libraryCategoryName,
                                     @NotNull String libraryTypeId,

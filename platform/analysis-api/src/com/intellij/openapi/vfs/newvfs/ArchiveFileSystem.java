@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -70,12 +68,12 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
   public @Nullable VirtualFile getLocalByEntry(@NotNull VirtualFile entry) {
     if (entry.getFileSystem() != this) return null;
 
-    VirtualFile root = getRootByEntry(entry);
+    var root = getRootByEntry(entry);
     assert root != null : entry;
 
-    VirtualFile local = LOCAL_FILE.get(root);
+    var local = LOCAL_FILE.get(root);
     if (local == null) {
-      String localPath = extractLocalPath(root.getPath());
+      var localPath = extractLocalPath(root.getPath());
       local = StandardFileSystems.local().findFileByPath(localPath);
       if (local != null) LOCAL_FILE.set(root, local);
     }
@@ -96,11 +94,6 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
   protected abstract @NotNull ArchiveHandler getHandler(@NotNull VirtualFile entryFile);
 
   // standard implementations
-
-  @Override
-  public int getRank() {
-    return LocalFileSystem.getInstance().getRank() + 1;
-  }
 
   @Override
   public @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
@@ -133,7 +126,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
   }
 
   protected @NotNull String getRelativePath(@NotNull VirtualFile file) {
-    String relativePath = file.getPath().substring(VfsUtilCore.getRootFile(file).getPath().length());
+    var relativePath = file.getPath().substring(VfsUtilCore.getRootFile(file).getPath().length());
     return StringUtil.trimLeading(relativePath, '/');
   }
 
@@ -149,21 +142,17 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
   private final Function<Pair<VirtualFile, Set<String>>, Map<@NotNull String, @NotNull FileAttributes>> myListWithAttrGetter =
     ManagingFS.getInstance().accessDiskWithCheckCanceled(
       dirAndNames -> {
-        VirtualFile dir = dirAndNames.first;
-        Set<String> childNames = dirAndNames.second;
-
+        var dir = dirAndNames.first;
+        var childNames = dirAndNames.second;
         return childrenWithAttributes(dir, childNames);
       }
     );
 
-  private @NotNull Map<@NotNull String, @NotNull FileAttributes> childrenWithAttributes(@NotNull VirtualFile dir,
-                                                                                        @Nullable Set<String> childNames) {
-    String directoryRelativePath = getRelativePath(dir);
-    String normalizedDirectoryPath = directoryRelativePath.isEmpty() ?
-                                     "" :
-                                     StringUtil.trimTrailing(directoryRelativePath, '/') + '/';
+  private Map<String, FileAttributes> childrenWithAttributes(VirtualFile dir, @Nullable Set<String> childNames) {
+    var directoryRelativePath = getRelativePath(dir);
+    var normalizedDirectoryPath = directoryRelativePath.isEmpty() ? "" : StringUtil.trimTrailing(directoryRelativePath, '/') + '/';
 
-    ArchiveHandler handler = getHandler(dir);
+    var handler = getHandler(dir);
     if (childNames == null) {
       childNames = createFilePathSet(handler.list(directoryRelativePath), /*isCaseSensitive: */ true);
     }
@@ -171,9 +160,9 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
     //We must return 'normal' (case-sensitive) map from this method, see BatchingFileSystem.listWithAttributes() contract:
     Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(childNames.size(), /*isCaseSensitive: */ true);
 
-    for (String childName : childNames) {
-      String childRelativePath = normalizedDirectoryPath + childName;
-      FileAttributes childAttributes = handler.getAttributes(childRelativePath);
+    for (var childName : childNames) {
+      var childRelativePath = normalizedDirectoryPath + childName;
+      var childAttributes = handler.getAttributes(childRelativePath);
       if (childAttributes != null) {
         childrenWithAttributes.put(childName, childAttributes);
       }
@@ -183,10 +172,9 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
 
   @Override
   @ApiStatus.Internal
-  public @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir,
-                                                                                   @Nullable Set<String> childrenNames) {
+  public @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @Nullable Set<String> childrenNames) {
     if (childrenNames != null && childrenNames.isEmpty()) {
-      return Collections.emptyMap();
+      return Map.of();
     }
     return myListWithAttrGetter.apply(new Pair<>(dir, childrenNames));
   }
@@ -214,7 +202,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
   @Override
   public boolean isDirectory(@NotNull VirtualFile file) {
     if (file.getParent() == null) return true;
-    FileAttributes attributes = getAttributes(file);
+    var attributes = getAttributes(file);
     return attributes == null || attributes.isDirectory();
   }
 
@@ -226,11 +214,11 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
   @Override
   public long getTimeStamp(@NotNull VirtualFile file) {
     if (file.getParent() == null) {
-      VirtualFile host = getLocalByEntry(file);
+      var host = getLocalByEntry(file);
       if (host != null) return host.getTimeStamp();
     }
     else {
-      FileAttributes attributes = getAttributes(file);
+      var attributes = getAttributes(file);
       if (attributes != null) return attributes.lastModified;
     }
     return ArchiveHandler.DEFAULT_TIMESTAMP;
@@ -239,11 +227,11 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
   @Override
   public long getLength(@NotNull VirtualFile file) {
     if (file.getParent() == null) {
-      VirtualFile host = getLocalByEntry(file);
+      var host = getLocalByEntry(file);
       if (host != null) return host.getLength();
     }
     else {
-      FileAttributes attributes = getAttributes(file);
+      var attributes = getAttributes(file);
       if (attributes != null) return attributes.length;
     }
     return ArchiveHandler.DEFAULT_LENGTH;
@@ -261,8 +249,8 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    Pair<byte[], IOException> pair = myContentGetter.apply(file);
-    IOException exception = pair.second;
+    var pair = myContentGetter.apply(file);
+    var exception = pair.second;
     if (exception != null) {
       exception.addSuppressed(new Throwable("Caller thread's stacktrace"));
       throw exception;
@@ -298,8 +286,8 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
    * or {@code null} if the local file is of incorrect type.
    */
   public @Nullable VirtualFile findLocalByRootPath(@NotNull String rootPath) {
-    String localPath = extractLocalPath(rootPath);
-    VirtualFile local = StandardFileSystems.local().findFileByPath(localPath);
+    var localPath = extractLocalPath(rootPath);
+    var local = StandardFileSystems.local().findFileByPath(localPath);
     return local != null && isCorrectFileType(local) ? local : null;
   }
 

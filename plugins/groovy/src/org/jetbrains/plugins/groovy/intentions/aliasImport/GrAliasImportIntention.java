@@ -13,7 +13,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -40,7 +46,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Max Medvedev

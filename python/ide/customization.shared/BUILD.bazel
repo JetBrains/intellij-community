@@ -19,4 +19,18 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
   ]
 )
+
+jvm_library(
+  name = "customization.shared_test_lib",
+  module_name = "intellij.pycharm.community.customization.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":customization.shared",
+    "//python/ide/impl:impl_test_lib",
+    "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining_test_lib",
+    "//platform/whatsNew:whatsNew_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.pycharm.community.customization.shared` end

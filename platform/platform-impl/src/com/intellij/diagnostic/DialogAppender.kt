@@ -8,16 +8,22 @@ import com.intellij.ide.plugins.PluginUtil
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.util.ExceptionUtil
-import kotlinx.coroutines.*
+import com.intellij.util.io.pagecache.impl.Throttler
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.ArrayDeque
+import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Handler
 import java.util.logging.Level
@@ -80,6 +86,8 @@ class DialogAppender : Handler() {
     }
   }
 
+  private val oomReportsThrottler = Throttler(100, SECONDS)
+
   private fun processEvent(message: String?, throwable: Throwable) {
     try {
       val app = ApplicationManager.getApplication()
@@ -87,7 +95,12 @@ class DialogAppender : Handler() {
 
       val oomErrorKind = DefaultIdeaErrorLogger.getOOMErrorKind(throwable)
       if (oomErrorKind != null) {
-        LowMemoryNotifier.showNotification(oomErrorKind, true)
+        val shouldNotify = synchronized(oomReportsThrottler) {
+          oomReportsThrottler.isTimeForNextRun(System.nanoTime())
+        }
+        if (shouldNotify) {
+          LowMemoryNotifier.showNotification(oomErrorKind, /*oomError: */true)
+        }
       }
       else {
         val plugin = findPlugin(throwable)
@@ -108,7 +121,7 @@ class DialogAppender : Handler() {
   private fun findPlugin(throwable: Throwable): IdeaPluginDescriptor? {
     val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(throwable))
     if (plugin != null && !plugin.isBundled && !pluginUpdateScheduled.getAndSet(true) && UpdateSettings.getInstance().isPluginsCheckNeeded) {
-      service<UpdateCheckerFacade>().updateAndShowResult()
+      UpdateCheckerFacade.getInstance().updateAndShowResult()
     }
     return plugin
   }

@@ -36,7 +36,12 @@ import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.platform.IdePlatformKind
-import org.jetbrains.kotlin.platform.impl.*
+import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmJsIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmWasiIdePlatformKind
 import org.jetbrains.kotlin.utils.PathUtil
 
 fun getLibraryDescription(project: Project, platformKind: IdePlatformKind): CustomLibraryDescription? {

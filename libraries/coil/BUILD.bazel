@@ -26,4 +26,23 @@ jvm_library(
     "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
   ]
 )
+
+jvm_library(
+  name = "coil_test_lib",
+  module_name = "intellij.libraries.coil",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
+    "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",
+    "@lib//:libraries-coil-io-coil-kt-coil3-test-jvm",
+    "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
+  ],
+  runtime_deps = [
+    ":coil",
+    "//libraries/ktor/client:client_test_lib",
+    "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+    "@lib//:libraries-coil-io-coil-kt-coil3-test-jvm",
+  ]
+)
 ### auto-generated section `build intellij.libraries.coil` end

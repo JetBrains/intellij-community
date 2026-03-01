@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.diagnostic.VMOptions
@@ -38,7 +38,12 @@ import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.intellij.util.ui.IoErrorText
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.io.IOException
@@ -225,11 +230,13 @@ internal object SystemHealthMonitor {
       ?.let { NotificationAction.createExpiring(IdeBundle.message("vm.options.edit.action.cap")) { e, _ -> it.actionPerformed(e!!) } }
 
   private suspend fun checkEnvironment() {
-    val usedVars = sequenceOf("_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS")
-      .filter { `var` -> !System.getenv(`var`).isNullOrEmpty() }
-      .toList()
-    if (!usedVars.isEmpty()) {
-      showNotification("vm.options.env.vars", suppressable = true, action = null, usedVars.joinToString(separator = ", "))
+    if (!System.getProperty("ide.native.launcher").toBoolean()) {
+      val usedVars = sequenceOf("_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS")
+        .filter { `var` -> !System.getenv(`var`).isNullOrEmpty() }
+        .toList()
+      if (!usedVars.isEmpty()) {
+        showNotification("vm.options.env.vars", suppressable = true, action = null, usedVars.joinToString(separator = ", "))
+      }
     }
 
     try {

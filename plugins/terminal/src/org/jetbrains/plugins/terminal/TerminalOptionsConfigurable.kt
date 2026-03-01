@@ -2,15 +2,14 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.application.options.colors.ColorAndFontOptions
-import com.intellij.application.options.schemes.SchemeNameGenerator
 import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.idea.AppModeAssertions
+import com.intellij.idea.AppMode
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
-import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.client.ClientKind
@@ -19,23 +18,24 @@ import com.intellij.openapi.client.sessions
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.BoundSearchableConfigurable
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ExperimentalUI
@@ -45,7 +45,22 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
@@ -56,7 +71,6 @@ import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.ui.render.fontInfoRenderer
 import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.system.OS
 import com.intellij.util.ui.initOnShow
@@ -77,12 +91,14 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionService
+import org.jetbrains.plugins.terminal.util.updateActionShortcut
 import java.awt.Color
 import java.awt.Component
 import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -99,6 +115,18 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
   helpTopic = "reference.settings.terminal",
   _id = TERMINAL_CONFIGURABLE_ID
 ) {
+  private val additionalConfigurables: ClearableLazyValue<List<UnnamedConfigurable>> = ClearableLazyValue.create {
+    @Suppress("DEPRECATION")
+    val old = LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) }
+    val new = TerminalSettingsProvider.EP_NAME.extensionList.mapNotNull { it.createConfigurable(project) }
+    new + old
+  }
+
+  private val blockTerminalConfigurables: ClearableLazyValue<List<UnnamedConfigurable>> = ClearableLazyValue.create {
+    @Suppress("DEPRECATION")
+    LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) }
+  }
+
   override fun createPanel(): DialogPanel {
     val optionsProvider = TerminalOptionsProvider.instance
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
@@ -110,7 +138,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
       panel {
         row {
-          val values = if (TerminalUtil.isGenOneTerminalOptionVisible()
+          val values = if (ExperimentalTerminalMigration.isExpTerminalOptionVisible()
                            // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
                            // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
                            // show this option as well to avoid the errors.
@@ -173,15 +201,13 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                 .enabledIf(completionEnabledCheckBox.selected)
             }
 
+            actionShortcutComboboxWithEnabledCheckbox(
+              labelText = message("terminal.command.completion.shortcut.trigger"),
+              presets = listOf(getCtrlSpacePreset(project), TAB_SHORTCUT_PRESET),
+              actionId = "Terminal.CommandCompletion.Invoke"
+            )
             row {
-              shortcutCombobox(
-                labelText = message("terminal.command.completion.shortcut.trigger"),
-                presets = listOf(getCtrlSpacePreset(project), TAB_SHORTCUT_PRESET),
-                actionId = "Terminal.CommandCompletion.Invoke"
-              )
-            }
-            row {
-              shortcutCombobox(
+              actionShortcutCombobox(
                 labelText = message("terminal.command.completion.shortcut.insert"),
                 presets = listOf(ENTER_SHORTCUT_PRESET, TAB_SHORTCUT_PRESET),
                 actionId = "Terminal.CommandCompletion.InsertSuggestion"
@@ -195,7 +221,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }.bottomGap(BottomGap.NONE)
           .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
                        .and(shellPathField.shellWithIntegrationSelected())
-                       .and(ComponentPredicate.fromValue(AppModeAssertions.isMonolith()))
+                       .and(ComponentPredicate.fromValue(AppMode.isMonolith()))
                        .and(ComponentPredicate.fromValue(commandCompletionAvailable || inlineCompletionAvailable)))
 
         indent {
@@ -213,7 +239,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           }.bind(blockTerminalOptions::promptStyle)
 
           panel {
-            configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) })
+            @Suppress("DEPRECATION")
+            configurables(blockTerminalConfigurables.value)
           }
 
         }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.NEW_TERMINAL))
@@ -363,13 +390,11 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           checkBox(message("settings.mouse.reporting"))
             .bindSelected(optionsProvider::mouseReporting)
         }
-        row {
-          checkBox(ApplicationBundle.message("advanced.setting.terminal.escape.moves.focus.to.editor"))
-            .bindSelected(
-              getter = { AdvancedSettings.getBoolean("terminal.escape.moves.focus.to.editor") },
-              setter = { AdvancedSettings.setBoolean("terminal.escape.moves.focus.to.editor", it) },
-            )
-        }
+        actionShortcutComboboxWithEnabledCheckbox(
+          labelText = message("settings.move.focus.to.editor.with"),
+          presets = listOf(ESCAPE_SHORTCUT_PRESET),
+          actionId = "Terminal.SwitchFocusToEditor"
+        )
         row {
           checkBox(message("settings.copy.to.clipboard.on.selection"))
             .bindSelected(optionsProvider::copyOnSelection)
@@ -383,16 +408,10 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           checkBox(message("settings.override.ide.shortcuts"))
             .bindSelected(optionsProvider::overrideIdeShortcuts)
           cell(ActionLink(message("settings.configure.terminal.keybindings"), ActionListener { e ->
-            val settings = DataManager.getInstance().getDataContext(e.getSource() as ActionLink?).getData(Settings.KEY)
-            if (settings != null) {
-              val configurable = settings.find("preferences.keymap")
-              settings.select(configurable, "Terminal").doWhenDone(Runnable {
-                // Remove once https://youtrack.jetbrains.com/issue/IDEA-212247 is fixed
-                EdtExecutorService.getScheduledExecutorInstance().schedule(Runnable {
-                  settings.select(configurable, "Terminal")
-                }, 100, TimeUnit.MILLISECONDS)
-              })
-            }
+            // A hack: open the Keymap page and select the completion action (it is the first in the list of Terminal actions)
+            // Other ways of filtering the Keymap actions tree don't work reliably.
+            val dataContext = DataManager.getInstance().getDataContext(e.getSource() as? ActionLink)
+            openKeymapPageAndSelectAction(dataContext, "Terminal.CommandCompletion.Invoke")
           }).apply { toolTipText = message("settings.keymap.plugins.terminal") })
         }
         row {
@@ -415,7 +434,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                          .and(ComponentPredicate.fromValue(RunCommandUsingIdeUtil.isVisible)))
         }
         panel {
-          configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
+          configurables(additionalConfigurables.value)
         }
         row(message("settings.cursor.shape.label")) {
           comboBox(
@@ -427,22 +446,28 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     }
   }
 
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    disposeConfigurables(additionalConfigurables)
+    disposeConfigurables(blockTerminalConfigurables)
+  }
+
+  private fun disposeConfigurables(lazy: ClearableLazyValue<List<UnnamedConfigurable>>) {
+    if (lazy.isCached) {
+      for (configurable in lazy.value) {
+        configurable.disposeUIResources()
+      }
+      lazy.drop()
+    }
+  }
+
   private fun createShellPathField(): TextFieldWithHistoryWithBrowseButton {
     val shellPathField = textFieldWithHistoryWithBrowseButton(
       project,
       FileChooserDescriptorFactory.singleFile().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
       historyProvider = {
-        // Use shells detector directly because this code is executed on backend.
-        // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
-        TerminalShellsDetector.detectShells().map { shellInfo ->
-          val filteredOptions = shellInfo.options.filter {
-            // Do not show login and interactive options in the UI.
-            // They anyway will be substituted implicitly in the shell starting logic.
-            // So, there is no need to specify them in the settings.
-            it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
-          }
-          val shellCommand = (listOf(shellInfo.path) + filteredOptions)
-          ParametersListUtil.join(shellCommand)
+        runWithModalProgressBlocking(project, "") {
+          detectAvailableShellCommandLines(project)
         }
       },
     )
@@ -452,6 +477,24 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       }
     })
     return shellPathField
+  }
+
+  private suspend fun detectAvailableShellCommandLines(project: Project): List<String> {
+    // Use shells detector directly because this code is executed on the backend.
+    // But in any other cases, shells should be fetched from the backend using TerminalShellsDetectionApi.
+    return TerminalShellsDetectionService.detectShells(project)
+      .environments
+      .flatMap { it.shells }
+      .map { shellInfo ->
+        val filteredOptions = shellInfo.options.filter {
+          // Do not show login and interactive options in the UI.
+          // They anyway will be substituted implicitly in the shell starting logic.
+          // So, there is no need to specify them in the settings.
+          it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
+        }
+        val shellCommand = (listOf(shellInfo.path) + filteredOptions)
+        ParametersListUtil.join(shellCommand)
+      }
   }
 }
 
@@ -597,7 +640,16 @@ private fun getClientSystemInfo(project: Project): ClientSystemInfo? {
 
 private val LOG = logger<TerminalOptionsConfigurable>()
 
-private fun Row.shortcutCombobox(
+/**
+ * Shows action shortcut configuration UI:
+ * <label> <combobox> <change link (if custom shortcut selected)>
+ *
+ * The combobox is responsible for choosing the shortcut from the provided presets.
+ *
+ * @param actionId action ID to configure shortcut for.
+ * @param presets list of shortcut presets to choose from the combobox.
+ */
+private fun Row.actionShortcutCombobox(
   @NlsContexts.Label labelText: String,
   presets: List<ShortcutPreset>,
   actionId: String,
@@ -614,8 +666,8 @@ private fun Row.shortcutCombobox(
   ).label(labelText)
     .bindItem(
       getter = {
-        val currentShortcut = getActionShortcut(actionId)
-        presets.find { it.shortcut == currentShortcut }?.let { ShortcutItem.Preset(it) } ?: ShortcutItem.Custom
+        val currentShortcuts = getActionShortcuts(actionId)
+        presets.find { currentShortcuts.contains(it.shortcut) }?.let { ShortcutItem.Preset(it) } ?: ShortcutItem.Custom
       },
       setter = { item ->
         if (item is ShortcutItem.Preset) {
@@ -624,49 +676,116 @@ private fun Row.shortcutCombobox(
       }
     ).component
 
-  link(message("terminal.command.completion.shortcut.change")) {
-    val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as Component))
-    val keymapPanel = allSettings?.find(KeymapPanel::class.java)
-
-    if (keymapPanel != null) {
-      allSettings.select(keymapPanel).doWhenDone {
-        keymapPanel.selectAction(actionId)
-      }
-    } else {
-      val newKeymapPanel = KeymapPanel()
-      ShowSettingsUtil.getInstance().editConfigurable(it.source as Component, newKeymapPanel) {
-        newKeymapPanel.selectAction(actionId)
-      }
-    }
-  }.visibleIf(comboBox.selectedValueIs(ShortcutItem.Custom))
+  changeActionShortcutLink(actionId)
+    .visibleIf(comboBox.selectedValueIs(ShortcutItem.Custom))
 }
 
-private fun getActionShortcut(actionId: String): Shortcut? {
-  val keymapManager = KeymapManager.getInstance() ?: return null
-  return keymapManager.activeKeymap.getShortcuts(actionId).firstOrNull()
+/**
+ * Creates a row with action shortcut configuration UI:
+ * <checkbox> <label> <combobox> <change link (if custom shortcut selected)>
+ *
+ * The combobox is responsible for choosing the shortcut from the provided presets.
+ * While checkbox is responsible for enabling/disabling the combobox and removing the shortcut binding from the action.
+ *
+ * @param actionId action ID to configure shortcut for.
+ * @param presets list of shortcut presets to choose from the combobox.
+ */
+private fun Panel.actionShortcutComboboxWithEnabledCheckbox(
+  @NlsContexts.Label labelText: String,
+  presets: List<ShortcutPreset>,
+  actionId: String,
+) {
+  val curShortcuts = getActionShortcuts(actionId)
+  val initialPreset = if (curShortcuts.isNotEmpty()) {
+    presets.find { curShortcuts.contains(it.shortcut) }?.let { ShortcutItem.Preset(it) }
+  }
+  else ShortcutItem.Preset(presets.first())
+
+  val initialComboboxState = initialPreset ?: ShortcutItem.Custom
+  val comboboxProperty = AtomicProperty(initialComboboxState)
+  val initialCheckboxState = curShortcuts.isNotEmpty()
+  val checkboxProperty = AtomicBooleanProperty(initialCheckboxState)
+
+  fun updateActionShortcut(checkboxChecked: Boolean, shortcutItem: ShortcutItem) {
+    if (checkboxChecked) {
+      if (shortcutItem is ShortcutItem.Preset) {
+        setActionShortcut(actionId, shortcutItem.preset.shortcut)
+      }
+    }
+    else {
+      setActionShortcut(actionId, null)
+    }
+  }
+
+  onApply {
+    val checkboxChecked = checkboxProperty.get()
+    val shortcutItem = comboboxProperty.get()
+    if (checkboxChecked != initialCheckboxState || shortcutItem != initialComboboxState) {
+      updateActionShortcut(checkboxChecked, shortcutItem)
+    }
+  }
+  onReset {
+    checkboxProperty.set(initialCheckboxState)
+    comboboxProperty.set(initialComboboxState)
+  }
+  onIsModified {
+    checkboxProperty.get() != initialCheckboxState || comboboxProperty.get() != initialComboboxState
+  }
+
+  row {
+    val checkbox = checkBox(labelText)
+      .gap(RightGap.SMALL)
+      .bindSelected(checkboxProperty)
+      .component
+
+    val combobox = comboBox(
+      items = presets.map { ShortcutItem.Preset(it) } + ShortcutItem.Custom,
+      renderer = textListCellRenderer { item ->
+        when (item) {
+          is ShortcutItem.Preset -> item.preset.text
+          is ShortcutItem.Custom -> message("terminal.command.completion.shortcut.custom")
+          null -> ""
+        }
+      }
+    ).bindItem(comboboxProperty)
+      .enabledIf(checkbox.selected)
+      .component
+
+    changeActionShortcutLink(actionId)
+      .visibleIf(combobox.selectedValueIs(ShortcutItem.Custom))
+  }
 }
 
-private fun setActionShortcut(actionId: String, value: Shortcut?) {
-  val keymapManager = KeymapManager.getInstance() as? KeymapManagerEx ?: return
+private fun Row.changeActionShortcutLink(actionId: String): Cell<ActionLink> {
+  return link(message("terminal.command.completion.shortcut.change")) {
+    val dataContext = DataManager.getInstance().getDataContext(it.source as Component)
+    openKeymapPageAndSelectAction(dataContext, actionId)
+  }
+}
 
-  var keymapToModify = keymapManager.activeKeymap
-  if (!keymapToModify.canModify()) {
-    val allKeymaps = keymapManager.allKeymaps
-    val name = SchemeNameGenerator.getUniqueName(
-      KeyMapBundle.message("new.keymap.name", keymapToModify.presentableName)
-    ) { newName: String ->
-      allKeymaps.any { it.name == newName || it.presentableName == newName }
+private fun openKeymapPageAndSelectAction(dataContext: DataContext, actionId: String) {
+  val allSettings = Settings.KEY.getData(dataContext)
+  val keymapPanel = allSettings?.find(KeymapPanel::class.java)
+  if (keymapPanel != null) {
+    allSettings.select(keymapPanel).doWhenDone {
+      keymapPanel.selectAction(actionId)
     }
+  }
+}
 
-    val newKeymap = keymapToModify.deriveKeymap(name)
-    keymapManager.schemeManager.addScheme(newKeymap)
-    keymapManager.activeKeymap = newKeymap
-    keymapToModify = newKeymap
-  }
-  keymapToModify.removeAllActionShortcuts(actionId)
-  if (value != null) {
-    keymapToModify.addShortcut(actionId, value)
-  }
+private fun getActionShortcuts(actionId: String): List<Shortcut> {
+  val keymapManager = KeymapManager.getInstance() ?: return emptyList()
+  return keymapManager.activeKeymap.getShortcuts(actionId).toList()
+}
+
+private fun setActionShortcut(actionId: String, value: KeyboardShortcut?) {
+  updateActionShortcut(actionId, value)
+
+  // The Terminal configurable is created on the backend in RemDev mode.
+  // So, here we can change only the backend Keymap, but we actually need to change the frontend one.
+  // The problem is that backend Keymap changes are not automatically synced to the frontend.
+  // But we can use the RemoteTopic API to pass the change to the frontend.
+  TERMINAL_ACTION_SHORTCUT_CHANGED_TOPIC.broadcast(TerminalActionShortcutChangedEvent(actionId, value))
 }
 
 private val TAB_SHORTCUT_PRESET = ShortcutPreset(
@@ -677,6 +796,10 @@ private val ENTER_SHORTCUT_PRESET = ShortcutPreset(
   KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null),
   "Enter"
 )
+private val ESCAPE_SHORTCUT_PRESET = ShortcutPreset(
+  KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), null),
+  "Escape"
+)
 private fun getCtrlSpacePreset(project: Project): ShortcutPreset {
   return ShortcutPreset(
     KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK), null),
@@ -684,7 +807,7 @@ private fun getCtrlSpacePreset(project: Project): ShortcutPreset {
   )
 }
 
-private class ShortcutPreset(val shortcut: Shortcut, val text: String)
+private data class ShortcutPreset(val shortcut: KeyboardShortcut, val text: String)
 
 private sealed class ShortcutItem {
   data class Preset(val preset: ShortcutPreset) : ShortcutItem()

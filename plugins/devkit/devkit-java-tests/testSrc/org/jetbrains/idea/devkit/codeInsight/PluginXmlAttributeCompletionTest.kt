@@ -2,11 +2,8 @@
 package org.jetbrains.idea.devkit.codeInsight
 
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.Assertions.assertThat
 

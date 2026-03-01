@@ -13,4 +13,12 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":keymap-eclipse_resources"]
 )
+
+jvm_library(
+  name = "keymap-eclipse_test_lib",
+  module_name = "intellij.keymap.eclipse",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":keymap-eclipse"]
+)
 ### auto-generated section `build intellij.keymap.eclipse` end

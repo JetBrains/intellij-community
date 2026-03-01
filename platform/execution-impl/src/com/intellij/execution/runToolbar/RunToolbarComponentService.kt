@@ -114,7 +114,7 @@ private class RunToolbarComponentService(private val project: Project, private v
   }
 }
 
-private class MyActionConfigurationCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
+internal class MyActionConfigurationCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     if (ExperimentalUI.isNewUI()) {
       actionRegistrar.unregisterAction("RunToolbarWidgetAction")

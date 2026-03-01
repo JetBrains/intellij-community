@@ -6,7 +6,13 @@ import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.JVMNameUtil;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.ClassLoadingUtils;
@@ -19,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -39,12 +46,18 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     myData = data;
   }
 
+  @ApiStatus.Internal
+  public @NotNull LightMethodObjectExtractedData getLightMethodObjectExtractedData() {
+    return myData;
+  }
+
   @Override
   public Modifier getModifier() {
     return null;
   }
 
-  private TextWithImports getCallCode() {
+  @ApiStatus.Internal
+  public @NotNull TextWithImports getCallCode() {
     return new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, myData.getGeneratedCallText());
   }
 
@@ -88,18 +101,28 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
                              ClassLoaderReference classLoader) throws EvaluateException {
     boolean useMagicAccessorImpl = myData.useMagicAccessor();
 
+    defineClassesForEvaluation(classes, context, process, classLoader, GEN_CLASS_NAME, useMagicAccessorImpl);
+    process.findClass(context, getGenClassQName(), classLoader);
+  }
+
+  @ApiStatus.Internal
+  public static void defineClassesForEvaluation(@NotNull Collection<ClassObject> classes,
+                                                 EvaluationContextImpl context,
+                                                 DebugProcess process,
+                                                 ClassLoaderReference classLoader,
+                                                 @NotNull String generatedClassName,
+                                                 boolean useMagicAccessor) throws EvaluateException {
     for (ClassObject cls : classes) {
-      if (cls.getPath().contains(GEN_CLASS_NAME)) {
+      if (cls.getPath().contains(generatedClassName)) {
         byte[] bytes = cls.getContent();
         if (bytes != null) {
-          if (useMagicAccessorImpl) {
+          if (useMagicAccessor) {
             bytes = changeSuperToMagicAccessor(bytes);
           }
-          ClassLoadingUtils.defineClass(cls.getClassName(), bytes, context, process, classLoader);
+          ClassLoadingUtils.defineClass(cls.getClassName(), bytes, context, classLoader);
         }
       }
     }
-    process.findClass(context, getGenClassQName(), classLoader);
   }
 
   private static byte[] changeSuperToMagicAccessor(byte[] bytes) {
@@ -133,5 +156,5 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
   ///////////////// Compiler stuff
 
-  protected abstract @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
+  public abstract @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
 }

@@ -14,7 +14,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import javax.xml.parsers.DocumentBuilder;
 import java.io.StringReader;
 import java.util.Arrays;

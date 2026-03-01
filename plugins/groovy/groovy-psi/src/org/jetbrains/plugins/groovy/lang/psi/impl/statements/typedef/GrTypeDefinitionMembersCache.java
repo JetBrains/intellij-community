@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.stubs.StubBuildCachedValuesManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -24,7 +26,11 @@ import java.util.List;
 import java.util.Map;
 
 public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
-
+  /**
+   * In some scenarios the search for nested classes of the same type goes after the retrieval of super classes for this type which is
+   * not normally possible. This key restricts such search to avoid infinite recursion.
+   */
+  private static final Key<Boolean> IGNORE_INNER_CLASS_SEARCH = Key.create("IGNORE_INNER_CLASS_SEARCH");
   private final T myDefinition;
   private final GrCodeMembersProvider<? super T> myCodeMembersProvider;
   private static final Collection<?> myDependencies = Collections.singletonList(PsiModificationTracker.MODIFICATION_COUNT);
@@ -45,9 +51,11 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public GrMethod[] getCodeMethods() {
-    return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
-      myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies
-    )).clone();
+    return StubBuildCachedValuesManager.getCachedValueStubBuildOptimized(
+      myDefinition,
+      GET_CODE_METHODS_STUB_BUILDING_KEY,
+      () -> CachedValueProvider.Result.create(myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies)
+    ).clone();
   }
 
   public GrMethod[] getCodeConstructors() {
@@ -63,6 +71,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public PsiClass[] getInnerClasses() {
+    if (Boolean.TRUE.equals(IGNORE_INNER_CLASS_SEARCH.get(myDefinition))) return PsiClass.EMPTY_ARRAY;
     return getTransformationResult().getInnerClasses().clone();
   }
 
@@ -77,17 +86,23 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public GrField[] getFields() {
-    return getTransformationResult().getFields().clone();
+    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, Boolean.TRUE);
+    GrField[] fields = getTransformationResult().getFields().clone();
+    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, null);
+    return fields;
   }
 
   public PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic) {
-    return CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
+    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, Boolean.TRUE);
+    PsiClassType[] types = CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] extendsTypes = getTransformationResult().getExtendsTypes();
       return CachedValueProvider.Result.create(extendsTypes, myDependencies);
     } : () -> {
       PsiClassType[] extendsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getExtendsClause());
       return CachedValueProvider.Result.create(extendsTypes, myDependencies);
     }).clone();
+    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, null);
+    return types;
   }
 
   public PsiClassType @NotNull [] getImplementsListTypes(boolean includeSynthetic) {
@@ -113,4 +128,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
       TransformationUtilKt.transformDefinition(myDefinition), myDependencies
     ));
   }
+
+  private static final Key<StubBuildCachedValuesManager.StubBuildCachedValue<GrMethod[]>>
+    GET_CODE_METHODS_STUB_BUILDING_KEY = Key.create("groovy.codeMethods.stub.building");
 }

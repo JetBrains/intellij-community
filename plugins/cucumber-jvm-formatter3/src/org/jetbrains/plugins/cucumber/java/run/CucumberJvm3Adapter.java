@@ -5,7 +5,7 @@ import cucumber.api.HookTestStep;
 import cucumber.api.PickleStepTestStep;
 import cucumber.api.TestCase;
 import cucumber.api.TestStep;
-import cucumber.api.event.*;
+import cucumber.api.event.TestStepFinished;
 import gherkin.events.PickleEvent;
 
 import java.lang.reflect.Field;

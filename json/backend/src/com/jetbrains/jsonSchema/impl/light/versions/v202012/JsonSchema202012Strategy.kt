@@ -5,10 +5,29 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaValidation
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
-import com.jetbrains.jsonSchema.impl.light.*
+import com.jetbrains.jsonSchema.impl.light.DEFS
+import com.jetbrains.jsonSchema.impl.light.DEPENDENT_REQUIRED
+import com.jetbrains.jsonSchema.impl.light.DEPENDENT_SCHEMAS
+import com.jetbrains.jsonSchema.impl.light.DYNAMIC_ANCHOR
+import com.jetbrains.jsonSchema.impl.light.DYNAMIC_REF
+import com.jetbrains.jsonSchema.impl.light.ITEMS
+import com.jetbrains.jsonSchema.impl.light.JSON_DOLLAR_ID
+import com.jetbrains.jsonSchema.impl.light.JsonSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.LocalSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.PREFIX_ITEMS
+import com.jetbrains.jsonSchema.impl.light.RemoteSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.UNEVALUATED_ITEMS
+import com.jetbrains.jsonSchema.impl.light.UNEVALUATED_PROPERTIES
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
-import com.jetbrains.jsonSchema.impl.validations.*
+import com.jetbrains.jsonSchema.impl.validations.ConstantSchemaValidation
+import com.jetbrains.jsonSchema.impl.validations.EnumValidation
+import com.jetbrains.jsonSchema.impl.validations.NotValidation
+import com.jetbrains.jsonSchema.impl.validations.NumericValidation
+import com.jetbrains.jsonSchema.impl.validations.ObjectValidation
+import com.jetbrains.jsonSchema.impl.validations.StringValidation
+import com.jetbrains.jsonSchema.impl.validations.TypeValidation
+import com.jetbrains.jsonSchema.impl.validations.hasMinMaxLengthChecks
 
 internal data object JsonSchema202012Strategy : JsonSchemaInterpretationStrategy {
   override val idKeyword: String = JSON_DOLLAR_ID

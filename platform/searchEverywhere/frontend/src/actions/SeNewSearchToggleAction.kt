@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.actions
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
@@ -16,5 +17,6 @@ class SeNewSearchToggleAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpe
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     SearchEverywhereFeature.isSplit = state
+    SearchEverywhereUsageTriggerCollector.SPLIT_SWITCHED.log(state)
   }
 }

@@ -5,7 +5,11 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Methods (including constructors) annotated with {@code @RequiresWriteLock} must be called only with write lock held.

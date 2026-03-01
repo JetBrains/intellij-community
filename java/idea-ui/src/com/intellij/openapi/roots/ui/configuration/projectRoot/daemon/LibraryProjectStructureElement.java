@@ -29,7 +29,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public class LibraryProjectStructureElement extends ProjectStructureElement {
   private final Library myLibrary;

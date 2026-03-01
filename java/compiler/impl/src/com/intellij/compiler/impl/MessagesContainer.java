@@ -21,7 +21,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev

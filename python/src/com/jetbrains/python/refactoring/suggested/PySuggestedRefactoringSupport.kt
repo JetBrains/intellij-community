@@ -7,7 +7,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.hasErrorElementInRange
 import com.intellij.psi.util.startOffset
-import com.intellij.refactoring.suggested.*
+import com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
+import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
+import com.intellij.refactoring.suggested.SuggestedRefactoringState
+import com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
+import com.intellij.refactoring.suggested.SuggestedRefactoringUI
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyElement
@@ -19,7 +24,7 @@ import com.jetbrains.python.pyi.PyiUtil
 
 class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
-  companion object {
+  object Helper {
     internal fun isAvailableForChangeSignature(element: PsiElement): Boolean {
       return element is PyFunction &&
              element.name.let { it != null && PyNames.isIdentifier(it) } &&
@@ -86,7 +91,7 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
   private object ChangeSignatureSupport : SupportInternal {
 
-    override fun isApplicable(element: PsiElement): Boolean = isAvailableForChangeSignature(element)
+    override fun isApplicable(element: PsiElement): Boolean = Helper.isAvailableForChangeSignature(element)
 
     override fun signatureRange(declaration: PsiElement): TextRange? {
       declaration as PyFunction
@@ -98,7 +103,7 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
   private class RenameSupport(private val mainSupport: PySuggestedRefactoringSupport) : SupportInternal {
 
-    override fun isApplicable(element: PsiElement): Boolean = isAvailableForRename(element)
+    override fun isApplicable(element: PsiElement): Boolean = Helper.isAvailableForRename(element)
     override fun signatureRange(declaration: PsiElement): TextRange? = mainSupport.nameRange(declaration)
   }
 }

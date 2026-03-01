@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:commons-compress"],
   runtime_deps = ["@lib//:commons-compress"]
 )
+
+jvm_library(
+  name = "compress_test_lib",
+  module_name = "intellij.libraries.commons.compress",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:commons-compress"],
+  runtime_deps = [":compress"]
+)
 ### auto-generated section `build intellij.libraries.commons.compress` end

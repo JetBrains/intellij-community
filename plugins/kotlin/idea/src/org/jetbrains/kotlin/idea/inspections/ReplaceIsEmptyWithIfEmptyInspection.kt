@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -18,7 +19,18 @@ import org.jetbrains.kotlin.idea.inspections.ReplaceIsEmptyWithIfEmptyInspection
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.ifExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
@@ -41,6 +53,7 @@ private val replacements: Map<FqName, Replacement> = listOf(
 
 private val conditionFunctionShortNames: Set<String> = replacements.keys.map { it.shortName().asString() }.toSet()
 
+@K1Deprecation
 class ReplaceIsEmptyWithIfEmptyInspection : AbstractKotlinInspection() {
 
     internal data class Replacement(

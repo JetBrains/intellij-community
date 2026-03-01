@@ -12,6 +12,7 @@ class WhatsNewVisionContentProviderTest {
   @Test
   fun testLegacyResourceNaming() {
     val provider = object : WhatsNewInVisionContentProvider() {
+      override val baseResourcePathInClassLoader = "com/intellij/platform/whatsNew/idea/eap"
       fun extractResourceNames() = getVisionJsonResourceNames()
     }
     

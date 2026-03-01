@@ -6,7 +6,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Progressive
 import com.intellij.openapi.util.EmptyRunnable
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 

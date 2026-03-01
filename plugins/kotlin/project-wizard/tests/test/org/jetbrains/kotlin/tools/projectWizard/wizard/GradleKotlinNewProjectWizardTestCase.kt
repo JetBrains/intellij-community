@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
@@ -64,7 +64,7 @@ abstract class GradleKotlinNewProjectWizardTestCase : GradleNewProjectWizardTest
     }
 
     fun ModuleInfo.Builder.withKotlinBuildFile(
-        kotlinJvmPluginVersion: String? = "2.2.21",
+        kotlinJvmPluginVersion: String? = "2.3.10",
         configure: GradleBuildScriptBuilder<*>.() -> Unit = {}
     ) {
         withBuildFile {

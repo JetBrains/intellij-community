@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
@@ -22,9 +22,15 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.workspaceModel.update
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.ClassRule
 import org.junit.Rule

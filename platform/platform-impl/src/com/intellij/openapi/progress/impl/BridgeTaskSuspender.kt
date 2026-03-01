@@ -6,7 +6,11 @@ import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderState
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.update
 import java.util.concurrent.atomic.AtomicReference
 
 /**

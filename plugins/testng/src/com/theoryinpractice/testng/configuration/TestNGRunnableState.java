@@ -41,7 +41,11 @@ import org.testng.CommandLineArgs;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGConfiguration> {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");

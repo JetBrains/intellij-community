@@ -12,13 +12,6 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
-import kotlin.collections.ArrayDeque
-import kotlin.collections.filter
-import kotlin.collections.getValue
-import kotlin.collections.hashMapOf
-import kotlin.collections.listOf
-import kotlin.collections.set
-import kotlin.collections.toList
 
 @RunInEdt
 class TreeBaseConstructorSafetyTest {

@@ -3,3 +3,5 @@ fun some(list: List<String>): String {
 }
 
 // EXIST: { lookupString: "[]", itemText: "[]", tailText: "(index: Int)", typeText: "String", attributes: "bold" }
+
+// IGNORE_K2

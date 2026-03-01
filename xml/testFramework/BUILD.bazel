@@ -17,4 +17,22 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
   ]
 )
+
+jvm_library(
+  name = "testFramework_test_lib",
+  module_name = "intellij.xml.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":testFramework",
+    "//platform/core-api:core_test_lib",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//xml/xml-psi-impl:psi-impl_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/syntax/syntax-psi:psi_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.xml.testFramework` end

@@ -12,7 +12,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyExpressionSurrounder;
 import org.jetbrains.annotations.NotNull;
 

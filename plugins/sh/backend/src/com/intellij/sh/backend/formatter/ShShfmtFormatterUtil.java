@@ -37,7 +37,13 @@ import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Locale;
 
-import static com.intellij.platform.eel.EelPlatformKt.*;
+import static com.intellij.platform.eel.EelPlatformKt.isArm64;
+import static com.intellij.platform.eel.EelPlatformKt.isFreeBSD;
+import static com.intellij.platform.eel.EelPlatformKt.isLinux;
+import static com.intellij.platform.eel.EelPlatformKt.isMac;
+import static com.intellij.platform.eel.EelPlatformKt.isWindows;
+import static com.intellij.platform.eel.EelPlatformKt.isX86;
+import static com.intellij.platform.eel.EelPlatformKt.isX86_64;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
 import static com.intellij.sh.ShBundle.message;

@@ -32,7 +32,9 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.psi.util.CachedValueProvider.Result.create;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.doGetOwnerType;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.processClosureClassMembers;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.processParameters;
 
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
 

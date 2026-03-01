@@ -21,7 +21,11 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 

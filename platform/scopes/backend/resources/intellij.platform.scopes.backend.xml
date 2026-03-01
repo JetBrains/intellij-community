@@ -1,8 +1,11 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.scopes"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.scopes.backend.ScopesStateApiProvider"/>

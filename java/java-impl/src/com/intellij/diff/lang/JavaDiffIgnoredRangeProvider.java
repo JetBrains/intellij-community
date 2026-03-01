@@ -7,7 +7,12 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

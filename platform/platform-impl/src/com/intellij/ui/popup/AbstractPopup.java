@@ -1,11 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.google.common.base.Predicate;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.*;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.UiActivity;
+import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.PopupLocationTracker;
 import com.intellij.ide.ui.PopupLocator;
@@ -13,7 +18,17 @@ import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -21,7 +36,9 @@ import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -30,9 +47,32 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.ActiveIcon;
+import com.intellij.openapi.ui.popup.AlignedPopup;
+import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.MaskProvider;
+import com.intellij.openapi.ui.popup.MouseChecker;
+import com.intellij.openapi.ui.popup.PopupCornerType;
+import com.intellij.openapi.ui.popup.PopupRelativePosition;
+import com.intellij.openapi.ui.popup.PopupShowOptions;
+import com.intellij.openapi.ui.popup.PopupShowOptionsBuilder;
+import com.intellij.openapi.ui.popup.PopupShowOptionsImpl;
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +86,26 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.ModalityHelper;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
-import com.intellij.ui.*;
+import com.intellij.ui.ActiveComponent;
+import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.InplaceButton;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.ListenerUtil;
+import com.intellij.ui.PopupBorder;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.TitlePanel;
+import com.intellij.ui.UiInterceptors;
+import com.intellij.ui.WindowMoveListener;
+import com.intellij.ui.WindowResizeListener;
+import com.intellij.ui.WindowResizeListenerEx;
+import com.intellij.ui.WindowRoundedCornersManager;
 import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
@@ -58,35 +117,108 @@ import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchInputMethodRequests;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.FunctionUtil;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ChildFocusWatcher;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.ScrollUtil;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import io.opentelemetry.context.Context;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
+import javax.swing.RootPaneContainer;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FocusTraversalPolicy;
+import java.awt.Frame;
+import java.awt.GraphicsDevice;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.AWTEventListener;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.InputMethodEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.im.InputMethodRequests;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.UI;
-import static com.intellij.util.ui.WaylandUtilKt.getNearestTopLevelAncestor;
-import static java.awt.event.MouseEvent.*;
+import static com.intellij.ui.wayland.WaylandUtilKt.getNearestTopLevelAncestor;
+import static java.awt.event.MouseEvent.MOUSE_ENTERED;
+import static java.awt.event.MouseEvent.MOUSE_EVENT_MASK;
+import static java.awt.event.MouseEvent.MOUSE_MOTION_EVENT_MASK;
+import static java.awt.event.MouseEvent.MOUSE_MOVED;
+import static java.awt.event.MouseEvent.MOUSE_PRESSED;
+import static java.awt.event.MouseEvent.WINDOW_EVENT_MASK;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
-public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup {
+public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup, UserDataHolder {
   public static final @NonNls String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time.
@@ -101,6 +233,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private JComponent myPreferredFocusedComponent;
   private boolean myRequestFocus;
   private boolean myFocusable;
+  private boolean myForceCancelOnFocusLoss;
   private boolean myForcedHeavyweight;
   private boolean myLocateWithinScreen;
   private boolean myResizable;
@@ -244,6 +377,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private volatile State myState = State.NEW;
   private long myOpeningTime;
 
+  private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+
   void setNormalWindowLevel(boolean normalWindowLevel) {
     myNormalWindowLevel = normalWindowLevel;
   }
@@ -337,7 +472,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     myCancelKeyEnabled = cancelKeyEnabled;
     myLocateByContent = locateByContent;
-    myLocateWithinScreen = placeWithinScreenBounds && !StartupUiUtil.isWaylandToolkit();
+    myLocateWithinScreen = placeWithinScreenBounds && !ClientSystemInfo.isWaylandToolkit();
     myAlpha = alpha;
     myMaskProvider = maskProvider;
     myInStack = inStack;
@@ -1244,7 +1379,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       LOG.warn(sb.toString());
     }
     Rectangle original = new Rectangle(targetBounds);
-    if (StartupUiUtil.isWaylandToolkit()) {
+    if (ClientSystemInfo.isWaylandToolkit()) {
       var hadToFit = fitSizeToScreen(targetBounds, screen);
       if (hadToFit && LOG.isDebugEnabled()) {
         LOG.debug("Target bounds after resizing to fit the screen: " + targetBounds);
@@ -1294,7 +1429,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       popupOwner = root.getRootPane();
       LOG.debug("popup owner fixed for JDK cache");
     }
-    if (StartupUiUtil.isWaylandToolkit()) {
+    if (ClientSystemInfo.isWaylandToolkit()) {
       // In Wayland, popup's owner must be a toplevel, i.e., a window or another popup that is also a window:
       popupOwner = SwingUtilities.getRoot(popupOwner);
       targetBounds.setLocation(getLocationRelativeToParent(targetBounds, (Window) popupOwner));
@@ -1329,8 +1464,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       setSize(targetBounds.getSize()); // Might need to make it smaller than its preferred size.
     }
 
+    final JRootPane root = myContent.getRootPane();
+
     if (myResizable) {
-      final JRootPane root = myContent.getRootPane();
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
       root.setGlassPane(glass);
 
@@ -1355,6 +1491,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (window instanceof IdeFrame) {
       LOG.warn("Lightweight popup is shown using AbstractPopup class. But this class is not supposed to work with lightweight popups.");
     }
+
+    // In some environments, e.g. native Wayland, the default root and/or window background (white)
+    // may be displayed briefly, causing very noticeable flickering in dark themes (IJPL-222913).
+    window.setBackground(myContent.getBackground());
+    root.setBackground(myContent.getBackground());
 
     window.setFocusableWindowState(myFocusable);
     window.setFocusable(myRequestFocus);
@@ -1434,7 +1575,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     PopupLocationTracker.register(this);
 
-    if (StartupUiUtil.isWaylandToolkit()) {
+    if (ClientSystemInfo.isWaylandToolkit()) {
       var hadToFit = fitSizeToScreen(bounds, screen);
       if (hadToFit && LOG.isDebugEnabled()) {
         LOG.debug("Popup shown larger than the screen, adjusted: " + targetBounds);
@@ -1696,7 +1837,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private static void fitToVisibleArea(Rectangle targetBounds) {
-    if (StartupUiUtil.isWaylandToolkit()) return; // Wrt screen edges, only the Wayland server can reliably position popups
+    if (ClientSystemInfo.isWaylandToolkit()) return; // Wrt screen edges, only the Wayland server can reliably position popups
 
     Point topLeft = new Point(targetBounds.x, targetBounds.y);
     Point bottomRight = new Point((int)targetBounds.getMaxX(), (int)targetBounds.getMaxY());
@@ -1966,7 +2107,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     final Window wnd = popup.getWindow();
     assert wnd != null;
 
-    if (StartupUiUtil.isWaylandToolkit() && wnd.getType() == Window.Type.POPUP && myOwner != null) {
+    if (ClientSystemInfo.isWaylandToolkit() && wnd.getType() == Window.Type.POPUP && myOwner != null) {
       Rectangle newBounds = wnd.getBounds();
       newBounds.setLocation(p.getScreenPoint());
       Component parent = SwingUtilities.getRoot(myOwner);
@@ -2081,7 +2222,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       Runnable finalRunnable = myFinalRunnable;
       getFocusManager().doWhenFocusSettlesDown(() -> {
         try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-          finalRunnable.run();
+          WriteIntentReadAction.run(finalRunnable);
         }
       });
       myFinalRunnable = null;
@@ -2179,6 +2320,39 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @ApiStatus.Internal
   public void setCancelOnClickOutside(boolean cancelOnClickOutside) {
     myCancelOnClickOutside = cancelOnClickOutside;
+  }
+
+  /**
+   * Disables Wayland-specific workarounds for popup focus loss.
+   * <p>
+   *   Normally a focusable popup is closed when another window gets focus.
+   *   A non-focusable popup is also closed when that window is not an ancestor of the popup.
+   * </p>
+   * <p>
+   *   However, on Wayland due to various focus quirks, this behavior is disabled by default,
+   *   because the owner window may get focus for no reason.
+   * </p>
+   * <p>
+   *   In most cases it isn't an issue. For example, when the user clicks outside the popup,
+   *   then it's closed anyway because it's the click itself that closes the popup, not the resulting focus loss.
+   *   In some cases, however, it might be necessary to react to focus changes.
+   *   One such example is the show usages popup that opens a focused editor when a usage is selected.
+   *   In this case, we rely on the focus change to close the popup.
+   * </p>
+   * <p>
+   *   This function should be called whenever we do something and expect a focus change as a result,
+   *   and that focus change should close the popup.
+   *   This is, of course, a hack, and therefore is generally not recommended,
+   *   provided there's a reliable way to just close the popup by explicitly calling {@link #cancel()} instead.
+   *   But it's not always an option, as the activity triggered by the popup can be asynchronous in nature and hard to track,
+   *   as it's the case with usage navigation.
+   * </p>
+   *
+   * @param forceCancelOnFocusLoss pass {@code true} here to enable the normal behavior on Wayland
+   */
+  @ApiStatus.Internal
+  public void setForceCancelOnFocusLoss(boolean forceCancelOnFocusLoss) {
+    myForceCancelOnFocusLoss = forceCancelOnFocusLoss;
   }
 
   @ApiStatus.Internal
@@ -2441,7 +2615,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         size = window.getPreferredSize();
       }
 
-      if (StartupUiUtil.isWaylandToolkit() && useScreenLocation
+      if (ClientSystemInfo.isWaylandToolkit() && useScreenLocation
           && myPopup.getWindow().getType() == Window.Type.POPUP
           && myOwner != null) {
         // The location is in the screen coordinates, but popups need to be positioned relative to their parent
@@ -2896,6 +3070,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       return false;
     }
 
+    if (myForceCancelOnFocusLoss) return true;
+
     // On Wayland focus gets temporarily transferred to popup's owner while the popup is being
     // interactively moved.
     // This is not a reason for cancelling the popup.
@@ -2986,6 +3162,17 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private static boolean shouldUseTrueWaylandPopups() {
-    return StartupUiUtil.isWaylandToolkit() && Registry.is("wayland.true.popups", false);
+    return ClientSystemInfo.isWaylandToolkit() && Registry.is("wayland.true.popups", false);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserDataHolder.putUserData(key, value);
+  }
+
+  @Override
+  @Nullable
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myUserDataHolder.getUserData(key);
   }
 }

@@ -10,12 +10,24 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.xml.util.JspFileTypeUtil;
+import org.jetbrains.annotations.NotNull;
 
 public final class JavaCharFilter extends CharFilter {
 
@@ -25,7 +37,7 @@ public final class JavaCharFilter extends CharFilter {
   }
 
   @Override
-  public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
+  public Result acceptChar(char c, int prefixLength, @NotNull Lookup lookup) {
     PsiFile file = lookup.getPsiFile();
     if (file == null) return null;
     boolean isJava = file.getLanguage().isKindOf(JavaLanguage.INSTANCE);

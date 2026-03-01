@@ -1,7 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.net.ProxyConfiguration.Companion.autodetect
+import com.intellij.util.net.ProxyConfiguration.Companion.direct
+import com.intellij.util.net.ProxyConfiguration.Companion.proxy
+import com.intellij.util.net.ProxyConfiguration.Companion.proxyAutoConfiguration
 import java.net.URL
 import java.util.function.Predicate
 import java.util.regex.Pattern
@@ -9,7 +13,7 @@ import java.util.regex.Pattern
 /**
  * Represents types of proxies that can be configured by the user and which are supported by the IDE.
  *
- * If you need to know the exact type of [ProxyConfiguration], check the instance against [StaticProxyConfiguration], [ProxyAutoConfiguration], etc.
+ * If you need to know the exact type of [ProxyConfiguration], match the instance with [StaticProxyConfiguration], [ProxyAutoConfiguration], etc.
  *
  * To instantiate a [ProxyConfiguration], use one of [direct], [autodetect], [proxy], or [proxyAutoConfiguration].
  *
@@ -61,10 +65,7 @@ sealed interface ProxyConfiguration {
       if (exceptions.isBlank()) {
         return Predicate { false }
       }
-      val regexp = exceptions
-        .split(",")
-        .map { StringUtil.escapeToRegexp(it.trim()).replace("\\*", ".*") }
-        .joinToString("|")
+      val regexp = exceptions.split(",").joinToString("|") { StringUtil.escapeToRegexp(it.trim()).replace("\\*", ".*") }
       return Pattern.compile(regexp).asMatchPredicate()
     }
   }

@@ -6,7 +6,7 @@ import com.intellij.platform.ide.progress.TaskStorage
 import com.jetbrains.rhizomedb.ChangeScope
 import fleet.kernel.change
 import fleet.kernel.delete
-import fleet.kernel.shared
+import fleet.kernel.rebase.shared
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

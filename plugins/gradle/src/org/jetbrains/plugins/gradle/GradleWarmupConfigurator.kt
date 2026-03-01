@@ -19,7 +19,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager
-import org.jetbrains.plugins.gradle.service.project.GradleHeadlessLoggingProjectActivity.*
+import org.jetbrains.plugins.gradle.service.project.GradleHeadlessLoggingProjectActivity.LoggingNotificationListener
+import org.jetbrains.plugins.gradle.service.project.GradleHeadlessLoggingProjectActivity.StateExternalAnnotationNotificationListener
+import org.jetbrains.plugins.gradle.service.project.GradleHeadlessLoggingProjectActivity.StateNotificationListener
 import org.jetbrains.plugins.gradle.service.project.isGradleProjectResolveTask
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
 import org.jetbrains.plugins.gradle.settings.GradleImportHintService

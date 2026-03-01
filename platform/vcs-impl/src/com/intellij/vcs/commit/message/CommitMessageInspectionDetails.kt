@@ -20,7 +20,7 @@ import com.intellij.ui.GuiUtils
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 import javax.swing.JComponent
 
 @ApiStatus.Internal

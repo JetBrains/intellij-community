@@ -120,12 +120,12 @@ public interface RegExpTT {
     IElementType CTRL = new RegExpElementType("CTRL");
     /** "\\p" | "\\P" */
     IElementType PROPERTY = new RegExpElementType("PROPERTY");
-    /** "\\N */
+    /** "\\N{WHITE SMILING FACE}" */
     IElementType NAMED_CHARACTER = new RegExpElementType("NAMED_CHARACTER");
     /** "L" | "M" | "Z" | "S" | "N" | "P" | "C" after a property escape */
     IElementType CATEGORY_SHORT_HAND = new RegExpElementType("CATEGORY_SHORT_HAND");
 
-    /** e.g. "\\#" but also "\\q" which is not a valid escape actually */
+    /** e.g. "\\#" but also "\\q" which is not a valid escape in most dialects */
     IElementType REDUNDANT_ESCAPE = new RegExpElementType("REDUNDANT_ESCAPE");
 
     IElementType MINUS = new RegExpElementType("MINUS");
@@ -183,6 +183,7 @@ public interface RegExpTT {
     TokenSet PCRE_CONDITIONS = TokenSet.create(PCRE_DEFINE, PCRE_VERSION);
 
     TokenSet CHARACTERS = TokenSet.create(CHARACTER,
+                                          NAMED_CHARACTER,
                                           ESC_CTRL_CHARACTER,
                                           ESC_CHARACTER,
                                           CTRL_CHARACTER,

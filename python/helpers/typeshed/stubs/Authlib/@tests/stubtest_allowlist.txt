@@ -10,6 +10,9 @@ authlib.jose.rfc7518.AESAlgorithm.description
 authlib.jose.rfc7518.AESAlgorithm.name
 authlib.jose.rfc7518.ECDHESAlgorithm.description
 authlib.jose.rfc7518.ECDHESAlgorithm.name
+authlib.jose.rfc7518.CBCHS2EncAlgorithm.CEK_SIZE
+authlib.jose.rfc7518.CBCHS2EncAlgorithm.description
+authlib.jose.rfc7518.CBCHS2EncAlgorithm.name
 authlib.jose.rfc7518.jwe_algs.AESAlgorithm.description
 authlib.jose.rfc7518.jwe_algs.AESAlgorithm.name
 authlib.jose.rfc7518.jwe_algs.AESGCMAlgorithm.description
@@ -18,12 +21,20 @@ authlib.jose.rfc7518.jwe_algs.ECDHESAlgorithm.description
 authlib.jose.rfc7518.jwe_algs.ECDHESAlgorithm.name
 authlib.jose.rfc7518.jwe_algs.RSAAlgorithm.description
 authlib.jose.rfc7518.jwe_algs.RSAAlgorithm.name
-
-# Re-exports of hashlib functions whose signatures changed in Python 3.13.4.
-# (Remove once 3.13.4 is consistently available)
-(authlib.jose.rfc7518.jws_algs.HMACAlgorithm.SHA256)?
-(authlib.jose.rfc7518.jws_algs.HMACAlgorithm.SHA384)?
-(authlib.jose.rfc7518.jws_algs.HMACAlgorithm.SHA512)?
+authlib.jose.rfc7518.jwe_encs.CBCHS2EncAlgorithm.CEK_SIZE
+authlib.jose.rfc7518.jwe_encs.CBCHS2EncAlgorithm.description
+authlib.jose.rfc7518.jwe_encs.CBCHS2EncAlgorithm.name
+authlib.jose.rfc7518.jwe_encs.GCMEncAlgorithm.CEK_SIZE
+authlib.jose.rfc7518.jwe_encs.GCMEncAlgorithm.description
+authlib.jose.rfc7518.jwe_encs.GCMEncAlgorithm.name
+authlib.jose.rfc7518.jws_algs.ECAlgorithm.description
+authlib.jose.rfc7518.jws_algs.ECAlgorithm.name
+authlib.jose.rfc7518.jws_algs.HMACAlgorithm.description
+authlib.jose.rfc7518.jws_algs.HMACAlgorithm.name
+authlib.jose.rfc7518.jws_algs.RSAAlgorithm.description
+authlib.jose.rfc7518.jws_algs.RSAAlgorithm.name
+authlib.jose.rfc7518.jws_algs.RSAPSSAlgorithm.description
+authlib.jose.rfc7518.jws_algs.RSAPSSAlgorithm.name
 
 # Methods whose *args and **kwargs arguments are added dynamically due to the @hooked decorator:
 authlib.oauth2.rfc6749.AuthorizationCodeGrant.create_token_response
@@ -53,14 +64,15 @@ authlib.oidc.core.OpenIDImplicitGrant.validate_consent_request
 authlib.oidc.core.grants.OpenIDImplicitGrant.validate_consent_request
 authlib.oidc.core.grants.implicit.OpenIDImplicitGrant.validate_consent_request
 
-# Exclude integrations dirs:
-authlib.integrations.django_client
-authlib.integrations.django_oauth1
-authlib.integrations.django_oauth2
-authlib.integrations.flask_client
-authlib.integrations.flask_oauth1
-authlib.integrations.flask_oauth2
-authlib.integrations.httpx_client
-authlib.integrations.requests_client
-authlib.integrations.sqla_oauth2
-authlib.integrations.starlette_client
+# Exclude integrations dirs
+# Failed to import, getting ModuleNotFoundError for third-party libs:
+authlib.integrations.django_client.*
+authlib.integrations.django_oauth1.*
+authlib.integrations.django_oauth2.*
+authlib.integrations.flask_client.*
+authlib.integrations.flask_oauth1.*
+authlib.integrations.flask_oauth2.*
+authlib.integrations.httpx_client.*
+authlib.integrations.requests_client.*
+authlib.integrations.sqla_oauth2.*
+authlib.integrations.starlette_client.*

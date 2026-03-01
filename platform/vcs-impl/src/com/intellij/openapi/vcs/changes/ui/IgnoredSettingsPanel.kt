@@ -9,7 +9,11 @@ import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
-import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.*
+import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.AllProjectsManage
+import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.AlwaysAsk
+import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.CurrentProjectManage
+import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.DoNotManageForAllProject
+import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.DoNotManageForCurrentProject
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel

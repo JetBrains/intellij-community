@@ -6,7 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType
 import org.jetbrains.idea.maven.server.MavenDistribution
-import java.io.File
 import java.nio.file.Path
 
 @ApiStatus.Internal

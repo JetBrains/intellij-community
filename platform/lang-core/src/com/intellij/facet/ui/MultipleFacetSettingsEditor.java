@@ -5,7 +5,7 @@ package com.intellij.facet.ui;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Provides component to edit several facets simultaneously. Changes in this component must be propagated to original facet editors.

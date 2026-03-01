@@ -6,7 +6,30 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.*
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrAllPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrArgPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrCastExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrElsePostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrFilterPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrFlatMapPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrFoldLeftPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrForeachPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrIfNotNullExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrIfNullExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrIfPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrIntroduceVariablePostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrMapPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrNegateBooleanPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrNewExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrParenthesizedExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrReducePostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrReqnonnullExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrReturnExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrSerrExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrSoutExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrThrowExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrTryPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrWhilePostfixTemplate
 
 class GroovyPostfixTemplateProvider : PostfixTemplateProvider {
 

@@ -8,7 +8,7 @@ import org.xml.sax.InputSource
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.nio.file.Path
-import java.util.*
+import java.util.Optional
 import java.util.stream.IntStream
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.transform.OutputKeys
@@ -21,15 +21,17 @@ import kotlin.io.path.outputStream
 
 object XmlBuilder {
 
-  fun parse(inputStream: InputStream): Document {
-    val documentBuilder = createDocumentBuilder()
+  @JvmOverloads
+  fun parse(inputStream: InputStream, allowDoctype: Boolean = false): Document {
+    val documentBuilder = createDocumentBuilder(allowDoctype = allowDoctype)
     val xmlDoc = documentBuilder.parse(inputStream)
     xmlDoc.documentElement.normalize()
     return xmlDoc
   }
 
-  fun parse(path: Path): Document {
-    val documentBuilder = createDocumentBuilder()
+  @JvmOverloads
+  fun parse(path: Path, allowDoctype: Boolean = false): Document {
+    val documentBuilder = createDocumentBuilder(allowDoctype = allowDoctype)
     if (path.notExists()) throw FileNotFoundException(path.toString())
 
     val xmlDoc = documentBuilder.parse(path)

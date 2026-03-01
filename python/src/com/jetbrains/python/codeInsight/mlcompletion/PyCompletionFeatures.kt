@@ -17,7 +17,14 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyConditionalStatementPart
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyForPart
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.StringLiteralExpression
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 
@@ -28,7 +35,7 @@ object PyCompletionFeatures {
   }
 
   fun getElementPsiLocationFeatures(element: LookupElement, location: CompletionLocation): Map<String, MLFeatureValue> {
-    val caretPsiPosition = location.completionParameters.position
+    val caretPsiPosition = location.baseCompletionParameters.position
     val elementPsiPosition = element.psiElement ?: return emptyMap()
 
     val caretFile = caretPsiPosition.containingFile?.originalFile ?: return emptyMap()

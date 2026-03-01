@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.k1.configuration.cache
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.shared.CachedConfigurationInputs
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -19,6 +20,7 @@ import kotlin.script.experimental.api.ScriptDiagnostic
  * sense to do up-to-date check on loaded configuration (not on applied).
  * For those reasons, we are storing both for each file.
  */
+@K1Deprecation
 interface ScriptConfigurationCache {
     operator fun get(file: VirtualFile): ScriptConfigurationState?
 
@@ -30,12 +32,14 @@ interface ScriptConfigurationCache {
     fun clear()
 }
 
+@K1Deprecation
 data class ScriptConfigurationState(val applied: ScriptConfigurationSnapshot? = null, val loaded: ScriptConfigurationSnapshot? = null) {
     fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile? = null): Boolean {
         return (loaded ?: applied)?.inputs?.isUpToDate(project, file, ktFile) ?: false
     }
 }
 
+@K1Deprecation
 data class ScriptConfigurationSnapshot(
     val inputs: CachedConfigurationInputs,
     val reports: List<ScriptDiagnostic>,

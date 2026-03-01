@@ -23,7 +23,11 @@ import org.intellij.plugins.xsltDebugger.rt.engine.local.saxon9.Saxon9Support;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.xalan.XalanSupport;
 import org.intellij.plugins.xsltDebugger.rt.engine.remote.DebuggerServer;
 
-import javax.xml.transform.*;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import java.rmi.RemoteException;
 
 

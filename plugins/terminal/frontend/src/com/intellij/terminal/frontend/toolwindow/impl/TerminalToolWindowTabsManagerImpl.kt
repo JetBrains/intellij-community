@@ -7,7 +7,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -20,7 +19,11 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
-import com.intellij.terminal.frontend.toolwindow.*
+import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.toolwindow.findTabByContent
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
@@ -30,13 +33,28 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
 import fleet.rpc.client.durable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.await
-import org.jetbrains.plugins.terminal.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.TerminalTabCloseListener
+import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
+import org.jetbrains.plugins.terminal.TerminalToolWindowInitializer
+import org.jetbrains.plugins.terminal.TerminalToolWindowPanel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
@@ -48,7 +66,7 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
-import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.lang.ref.WeakReference
 import kotlin.time.Duration.Companion.seconds
 
@@ -60,8 +78,6 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   override val tabs: List<TerminalToolWindowTab>
     get() = mutableTabs.toList()
-
-  private val listeners = DisposableWrapperList<TerminalTabsManagerListener>()
 
   private var tabsRestoredDeferred: Deferred<Unit> = CompletableDeferred(Unit)
 
@@ -83,7 +99,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   override fun closeTab(tab: TerminalToolWindowTab) {
     val manager = tab.content.manager ?: return
-    manager.removeContent(tab.content, true, true, true)
+    manager.removeContent(/* content = */ tab.content, /* dispose = */ true, /* requestFocus = */ true, /* forcedFocus = */ true)
   }
 
   override fun detachTab(tab: TerminalToolWindowTab): TerminalView {
@@ -96,6 +112,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     if (toolWindow.contentManager.isEmpty) {
       toolWindow.hide()
     }
+
+    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabDetached(tab)
     return tab.view
   }
 
@@ -106,8 +124,9 @@ internal class TerminalToolWindowTabsManagerImpl(
     return tab
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener) {
-    listeners.add(listener, parentDisposable)
+    project.messageBus.connect(parentDisposable).subscribe(TerminalTabsManagerListener.TOPIC, listener)
   }
 
   private suspend fun createNewTabIfEmpty(toolWindow: ToolWindow) {
@@ -210,9 +229,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       selectTab()
     }
 
-    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling tab created event: $tab") {
-      it.tabAdded(tab)
-    }
+    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabAdded(tab)
   }
 
   private fun addToTabsList(tab: TerminalToolWindowTab) {
@@ -227,6 +244,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
     terminal.title.change { defaultTitle = tabName }
     createBackendTabAndStartSession(terminal, builder)
+
+    project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).terminalViewCreated(terminal)
     return terminal
   }
 
@@ -320,6 +339,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     val baseOptions = ShellStartupOptions.Builder()
       .shellCommand(builder.shellCommand)
       .workingDirectory(builder.workingDirectory)
+      .envVariables(builder.envVariables)
+      .processType(builder.processType)
 
     return if (calculateSizeFromComponent) {
       withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
@@ -398,6 +419,8 @@ internal class TerminalToolWindowTabsManagerImpl(
         with(builder) {
           shellCommand(tab.shellCommand)
           workingDirectory(tab.workingDirectory)
+          envVariables(tab.envVariables ?: emptyMap())
+          processType(tab.processType ?: TerminalProcessType.SHELL)
           tabName(tab.name)
           userDefinedName(tab.isUserDefinedName)
           backendTabId(tab.id)
@@ -422,6 +445,10 @@ internal class TerminalToolWindowTabsManagerImpl(
     var workingDirectory: String? = null
       private set
     var shellCommand: List<String>? = null
+      private set
+    var envVariables: Map<String, String> = emptyMap()
+      private set
+    var processType: TerminalProcessType = TerminalProcessType.SHELL
       private set
     var tabName: String? = null
       private set
@@ -452,6 +479,16 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     override fun shellCommand(command: List<String>?): TerminalToolWindowTabBuilder {
       shellCommand = command
+      return this
+    }
+
+    override fun envVariables(envs: Map<String, String>): TerminalToolWindowTabBuilder {
+      envVariables = envs
+      return this
+    }
+
+    override fun processType(processType: TerminalProcessType): TerminalToolWindowTabBuilder {
+      this.processType = processType
       return this
     }
 
@@ -512,7 +549,5 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   companion object {
     val TAB_DETACHED_KEY = Key.create<Unit>("TerminalTabsManager.TabWasDetached")
-
-    private val LOG = logger<TerminalToolWindowTabsManagerImpl>()
   }
 }

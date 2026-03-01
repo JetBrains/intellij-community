@@ -17,7 +17,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 private const val MAX_CHANGES_TO_ANALYZE = 1000
 internal val changesCountKey: Key<Int> = Key<Int>("VcsFeatureProvider.changesCount")
 
-private class VcsFeatureProvider : ElementFeatureProvider {
+internal class VcsFeatureProvider : ElementFeatureProvider {
   override fun getName(): String = "vcs"
 
   override fun calculateFeatures(element: LookupElement,

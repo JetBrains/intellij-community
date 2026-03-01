@@ -4,9 +4,7 @@ package com.jetbrains.env
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.env.python.PySDKRule
-import com.jetbrains.getPythonBinaryPath
 import com.jetbrains.python.sdk.sdkSeemsValid
-import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Test
 import kotlin.time.Duration.Companion.minutes

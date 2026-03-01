@@ -37,6 +37,9 @@ public final class Extensions {
   public static void setRootArea(@NotNull ExtensionsAreaImpl area, @NotNull Disposable parentDisposable) {
     ExtensionsAreaImpl oldRootArea = staticRootArea;
     staticRootArea = area;
+    if (oldRootArea != null) {
+      oldRootArea.notifyAreaReplaced(area);
+    }
     Disposer.register(parentDisposable, () -> {
       staticRootArea.notifyAreaReplaced(oldRootArea);
       staticRootArea = oldRootArea;
@@ -51,7 +54,8 @@ public final class Extensions {
   public static ExtensionsArea getRootArea() {
     if (rootSupplier != null) {
       return rootSupplier.get();
-    } else {
+    }
+    else {
       return staticRootArea;
     }
   }

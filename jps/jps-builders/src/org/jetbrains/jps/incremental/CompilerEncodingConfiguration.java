@@ -19,7 +19,12 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class CompilerEncodingConfiguration {
   private final JpsModel myJpsModel;

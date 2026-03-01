@@ -4,7 +4,11 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesCollector
 import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesScopeAnalyzer.ScopeType
-import com.intellij.codeInsight.inline.completion.logs.statistics.*
+import com.intellij.codeInsight.inline.completion.logs.statistics.AcceptanceRateFactorsComponent
+import com.intellij.codeInsight.inline.completion.logs.statistics.AcceptanceRateFeatures
+import com.intellij.codeInsight.inline.completion.logs.statistics.CompletionFinishTypeFeatures
+import com.intellij.codeInsight.inline.completion.logs.statistics.PrefixLengthFeatures
+import com.intellij.codeInsight.inline.completion.logs.statistics.TimeBetweenTypingFeatures
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair

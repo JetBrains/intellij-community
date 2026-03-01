@@ -17,9 +17,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.*;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ComponentWithExpandableItems;
+import com.intellij.ui.ComponentWithFileColors;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.ExpandableItemsHandlerFactory;
+import com.intellij.ui.LoadingNode;
+import com.intellij.ui.SmartExpander;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
@@ -27,23 +38,71 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.TimerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.JViewport;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.event.*;
+import javax.swing.TransferHandler;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.plaf.TreeUI;
 import javax.swing.text.Position;
-import javax.swing.tree.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.DefaultTreeSelectionModel;
+import javax.swing.tree.ExpandVetoException;
+import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.im.InputMethodRequests;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -97,6 +156,63 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private final @NotNull MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
 
   private boolean initialized = false;
+
+  @ApiStatus.Internal
+  protected boolean isHorizontalAutoAlignEnabled() {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public void onPathExpanded(@NotNull TreePath path) {
+    if (isHorizontalAutoAlignEnabled()) {
+      alignTreePathToTheLeft(path);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void onPathSelected(@NotNull TreePath path) {
+    if (isHorizontalAutoAlignEnabled()) {
+      alignTreePathToTheLeft(path);
+    }
+  }
+
+  private void alignTreePathToTheLeft(@Nullable TreePath path) {
+    SwingUtilities.invokeLater(() -> {
+      if (path == null) return;
+      JScrollPane scrollPane = ComponentUtil.getScrollPane(this);
+      if (scrollPane == null) return;
+
+      Rectangle pathBounds = getPathBounds(path);
+      if (pathBounds == null) return;
+
+      TreeModel model = getModel();
+      if (model == null) return;
+      Object node = path.getLastPathComponent();
+      if (model.getChildCount(node) > 0) {
+        int iconWidth = UIUtil.getTreeExpandedIcon().getIconWidth();
+        pathBounds.x = Math.max(pathBounds.x - iconWidth, 0);
+        pathBounds.width += iconWidth;
+      }
+
+      JViewport viewport = scrollPane.getViewport();
+      if (viewport == null) return;
+      Rectangle viewRect = viewport.getViewRect();
+      if (pathBounds.x >= viewRect.x && pathBounds.x + pathBounds.width <= viewRect.x + viewRect.width) return;
+
+      int targetX = pathBounds.x;
+      if (pathBounds.x >= viewRect.x) {
+        int scrollToAlignLeft = pathBounds.x - viewRect.x;
+        int scrollToAlignRight = (pathBounds.x + pathBounds.width) - (viewRect.x + viewRect.width);
+
+        if (scrollToAlignLeft > scrollToAlignRight) {
+          targetX = Math.max(0, pathBounds.x + pathBounds.width - viewRect.width);
+        }
+      }
+
+      Rectangle targetBounds = new Rectangle(targetX, viewRect.y, viewRect.width, viewRect.height);
+      scrollRectToVisible(targetBounds);
+    });
+  }
 
   @ApiStatus.Internal
   public static boolean isBulkExpandCollapseSupported() {

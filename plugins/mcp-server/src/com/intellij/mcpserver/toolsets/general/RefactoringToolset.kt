@@ -1,8 +1,12 @@
 package com.intellij.mcpserver.toolsets.general
 
-import com.intellij.mcpserver.*
+import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.mcpFail
+import com.intellij.mcpserver.project
+import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.EDT
@@ -12,7 +16,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenameUtil

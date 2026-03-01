@@ -34,7 +34,11 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractKotlinInlinePropertyHandler
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.uast.UClass

@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
  * Utility methods related to manifest declarations
  */
 public final class JavaManifestUtil {
+  private JavaManifestUtil() { }
+
   /**
    * @param module module to find manifest in
    * @param attribute attribute name from a manifest file

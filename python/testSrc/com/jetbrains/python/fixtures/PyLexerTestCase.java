@@ -2,24 +2,31 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.testFramework.PlatformLiteFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.TestDisposable;
 import com.jetbrains.python.PythonDialectsTokenSetContributor;
 import com.jetbrains.python.PythonTokenSetContributor;
 import one.util.streamex.StreamEx;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.List;
 import java.util.Objects;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public abstract class PyLexerTestCase extends PlatformLiteFixture {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    initApplication();
-    registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+
+@TestApplication
+public abstract class PyLexerTestCase {
+
+  @TestDisposable
+  protected Disposable testDisposable;
+
+  @BeforeEach
+  public void setUp() {
+    PythonDialectsTokenSetContributor.EP_NAME.getPoint().registerExtension(new PythonTokenSetContributor(), testDisposable);
   }
 
   public static void doLexerTest(String text, Lexer lexer, String... expectedTokens) {
@@ -38,7 +45,7 @@ public abstract class PyLexerTestCase extends PlatformLiteFixture {
       .takeWhile(Objects::nonNull)
       .toList();
     String expectedTokensInCode = StringUtil.join(actualTokens, t -> '"' + t + '"', ", ");
-    assertEquals("Token mismatch. Actual values: " + expectedTokensInCode, List.of(expectedTokens), actualTokens);
+    assertEquals(List.of(expectedTokens), actualTokens, "Token mismatch. Actual values: " + expectedTokensInCode);
   }
 
 }

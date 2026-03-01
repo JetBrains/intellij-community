@@ -10,8 +10,7 @@ import com.intellij.platform.eel.where
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
 import com.intellij.python.sdk.ui.evolution.AddNewEnvAction
 import com.intellij.python.sdk.ui.evolution.SelectEnvAction
 import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
@@ -22,13 +21,14 @@ import com.intellij.python.sdk.ui.evolution.ui.EvoSelectSdkProvider
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
-import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyError
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.name
 
-private class CondaSelectSdkProvider() : EvoSelectSdkProvider {
-  override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement("Conda", PythonIcons.Python.Anaconda) {
+internal class CondaSelectSdkProvider() : EvoSelectSdkProvider {
+  override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement("Conda", PythonCommunityImplCondaIcons.Anaconda) {
     val condaExecutablePath = findCondaExecutablePath().getOr {
       return@EvoTreeLazyNodeElement it
     }
@@ -80,7 +80,7 @@ private suspend fun findEnvironments(module: Module): Result<List<EvoSdk>, PyErr
 
   val evoSdks = environments.map { (name, path) ->
     val sdkHomePath = path.resolvePythonExecutable()
-    EvoSdk(icon = PythonIcons.Python.Anaconda, name = name, pythonBinaryPath = sdkHomePath)
+    EvoSdk(icon = PythonCommunityImplCondaIcons.Anaconda, name = name, pythonBinaryPath = sdkHomePath)
   }
   return Result.success(evoSdks)
 }

@@ -15,11 +15,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 

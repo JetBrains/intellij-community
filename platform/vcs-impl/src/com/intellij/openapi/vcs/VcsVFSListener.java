@@ -19,12 +19,23 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.AsyncFileListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -38,10 +49,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.util.ConcurrencyUtil.withLock;
 import static com.intellij.util.concurrency.AppJavaExecutorUtil.awaitCancellationAndDispose;
 import static java.util.Collections.emptyList;
@@ -439,6 +456,10 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected boolean isEventIgnored(@NotNull VFileEvent event) {
+    if (Registry.is("vcs.files.processing.do.nothing", false)) {
+      return true;
+    }
+
     FilePath filePath = getEventFilePath(event);
     return !isUnderMyVcs(filePath) || myChangeListManager.isIgnoredFile(filePath);
   }
@@ -468,11 +489,11 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private boolean allowedDeletion(@NotNull VFileEvent event) {
-    return VcsFileListenerIgnoredFilesProvider.isDeletionAllowed(myProject, getEventFilePath(event));
+    return VcsFileListenerIgnoredFilesProvider.isDeletionAllowed(myProject, getEventFilePath(event), event.getRequestor());
   }
 
   private boolean allowedAddition(@NotNull VFileEvent event) {
-    return VcsFileListenerIgnoredFilesProvider.isAdditionAllowed(myProject, getEventFilePath(event));
+    return VcsFileListenerIgnoredFilesProvider.isAdditionAllowed(myProject, getEventFilePath(event), event.getRequestor());
   }
 
   @RequiresBackgroundThread
@@ -822,7 +843,6 @@ public abstract class VcsVFSListener implements Disposable {
 
   @TestOnly
   protected final void waitForEventsProcessedInTestMode() {
-    myExternalFilesProcessor.waitForEventsProcessedInTestMode();
     myProjectConfigurationFilesProcessor.waitForEventsProcessedInTestMode();
     myIgnoreFilesProcessor.waitForEventsProcessedInTestMode();
   }

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.pullrequest.GHGitRefName
-import java.util.*
+import java.util.Date
 
 data class GHPRBaseRefForcePushedEvent(override val actor: GHActor?,
                                        override val createdAt: Date,

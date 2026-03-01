@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -16,6 +14,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -53,7 +52,7 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testInvalidEscapeSequenceFixDumbMode() {
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).mustWaitForSmartMode(false, getTestRootDisposable());
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, getTestRootDisposable());
     DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> { doQuickFixTest(); });
   }
 

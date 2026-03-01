@@ -2,7 +2,12 @@
 
 package org.jetbrains.kotlin.idea.goto
 
-import com.intellij.navigation.*
+import com.intellij.navigation.ChooseByNameContributorEx
+import com.intellij.navigation.ColoredItemPresentation
+import com.intellij.navigation.GotoClassContributor
+import com.intellij.navigation.ItemPresentation
+import com.intellij.navigation.NavigationItem
+import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsSafe
@@ -22,9 +27,25 @@ import org.jetbrains.kotlin.idea.presentation.KotlinDefaultNamedDeclarationPrese
 import org.jetbrains.kotlin.idea.presentation.KotlinFunctionPresentation
 import org.jetbrains.kotlin.idea.presentation.getPresentationInContainer
 import org.jetbrains.kotlin.idea.presentation.getPresentationText
-import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinStringStubIndexHelper
+import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import javax.swing.Icon
 

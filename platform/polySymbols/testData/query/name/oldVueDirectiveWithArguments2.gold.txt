@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/attributes/v-on_old:click.stop",
-  origin: "vue@3.0.0 (vue)",
+  origin: "vue@2.5.0a (vue)",
   attrValue: {
    kind: EXPRESSION,
    type: COMPLEX,

@@ -13,4 +13,9 @@ import kotlinx.serialization.Serializable
 data class RpcCompletionItemWeight(
   val id: RpcCompletionItemId,
   val weight: Int,
-)
+) {
+  override fun toString(): String = buildToString("RpcCompletionItemWeight") {
+    field("id", id)
+    field("weight", weight)
+  }
+}

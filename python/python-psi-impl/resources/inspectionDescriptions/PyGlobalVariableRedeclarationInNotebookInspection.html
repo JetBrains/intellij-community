@@ -1,0 +1,19 @@
+<html>
+<body>
+<h3>Global variable redeclaration in notebook</h3>
+<p>
+  This inspection detects cases where a global variable is re-declared within the same Jupyter notebook.
+  Redefining global variables can lead to unexpected results or bugs, especially when executing cells in an arbitrary order.
+</p>
+<p>
+  Redefinitions of common loop variables (e.g., <code>i</code>, <code>j</code>, <code>k</code>, etc.) are ignored to reduce noise.
+  However, redefinition of larger objects like lists, DataFrames, or dictionaries is flagged as a potential issue.
+</p>
+<p>
+  If the redefinition is intentional, you can use the provided "Suppress for this statement" quick-fix to silence the warning for that specific occurrence.
+</p>
+<p>
+  Note: This inspection applies only to Jupyter notebook files (<code>.ipynb</code>).
+</p>
+</body>
+</html>

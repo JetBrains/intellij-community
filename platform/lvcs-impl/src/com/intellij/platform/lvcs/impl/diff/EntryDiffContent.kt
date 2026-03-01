@@ -18,6 +18,10 @@ import com.intellij.platform.lvcs.impl.RevisionId
 import org.jetbrains.annotations.ApiStatus
 
 fun createDiffContent(project: Project?, gateway: IdeaGateway, e: Entry): DiffContent {
+  if (e.hasUnavailableContent()) {
+    return DiffContentFactory.getInstance().create(LocalHistoryBundle.message("content.not.available"))
+  }
+
   val content = e.content.getBytes()
   val virtualFile = gateway.findVirtualFile(e.getPath())
   if (virtualFile != null) {

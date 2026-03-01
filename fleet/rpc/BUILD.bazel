@@ -10,6 +10,7 @@ create_kotlinc_options(
     "kotlin.concurrent.atomics.ExperimentalAtomicApi",
   ],
   x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
   x_jvm_default = "all-compatibility",
   x_lambdas = "class"
 )
@@ -24,10 +25,10 @@ jvm_library(
   name = "rpc",
   module_name = "fleet.rpc",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
   resources = [":rpc_resources"],
   kotlinc_opts = ":custom_rpc",
-  exported_compiler_plugins = ["@lib//:rpc-plugin"],
+  exported_compiler_plugins = ["@community//fleet/compiler-plugins/rpc:rpc-plugin"],
   deps = [
     "//fleet/reporting/api",
     "//fleet/reporting/shared",
@@ -39,6 +40,21 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-datetime-jvm",
     "//fleet/util/core",
+  ]
+)
+
+jvm_library(
+  name = "rpc_test_lib",
+  module_name = "fleet.rpc",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_rpc",
+  runtime_deps = [
+    ":rpc",
+    "//fleet/reporting/api:api_test_lib",
+    "//fleet/reporting/shared:shared_test_lib",
+    "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
+    "//fleet/util/core:core_test_lib",
   ]
 )
 ### auto-generated section `build fleet.rpc` end

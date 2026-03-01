@@ -12,7 +12,15 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.CurrentTheme.Link
 import com.intellij.util.ui.UIUtilities
 import org.jetbrains.annotations.NonNls
-import java.awt.*
+import java.awt.Color
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.FontMetrics
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.Shape
 import java.beans.PropertyChangeEvent
 import java.io.StringReader
 import java.net.URL

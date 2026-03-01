@@ -3,7 +3,7 @@
 # https://github.com/astral-sh/uv/issues/8666
 name = "typeshed"
 version = "0"
-requires-python = ">=3.9" # Minimum version to run tests, used by uv run
+requires-python = ">=3.10" # Minimum version to run tests, used by uv run
 
 [tool.black]
 line-length = 130
@@ -12,8 +12,6 @@ skip-magic-trailing-comma = true
 
 [tool.ruff]
 line-length = 130
-# Oldest supported Python version
-target-version = "py39"
 fix = true
 exclude = [
     # virtual environment
@@ -150,6 +148,12 @@ extend-safe-fixes = [
 ]
 ignore = [
     ###
+    # TODO: Disabled temporarily, until Python 3.9 support is fully removed in
+    # May 2026.
+    ###
+    "UP035", # import from typing
+    "UP036", # Remove unnecessary `sys.version_info` blocks
+    ###
     # Rules that can conflict with the formatter (Black)
     # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
     ###
@@ -255,12 +259,10 @@ extra-standard-library = [
     "_typeshed",
     "typing_extensions",
     # Extra modules not recognized by Ruff
-    # Added in Python 3.9
-    "zoneinfo",
     # Added in Python 3.14
     "compression",
 ]
 known-first-party = ["_utils", "ts_utils"]
 
 [tool.typeshed]
-oldest_supported_python = "3.9"
+oldest_supported_python = "3.10"

@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 import java.io.File;
@@ -27,6 +28,7 @@ import static com.intellij.psi.SyntaxTraverser.astTraverser;
 /**
  * @author Maxim.Mossienko
  */
+@PerformanceUnitTest
 public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
   private static final String BASE_PATH = "psi/formatter/java";
 

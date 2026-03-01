@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 object ReplaceInfixOrOperatorCallFixFactory : KotlinSingleIntentionActionFactory() {
     private fun findArrayAccessExpression(expression: PsiElement): KtArrayAccessExpression? {
         return expression.safeAs<KtArrayAccessExpression>() ?: expression.parent?.safeAs<KtArrayAccessExpression>()

@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.messages.Topic;
 import org.cef.CefSettings;
 import org.jetbrains.annotations.ApiStatus;
@@ -80,7 +81,7 @@ public final class JBCefHealthMonitor {
         return;
       }
 
-      if (isRunUnderUnixSuperuser()) {
+      if (isRunUnderUnixSuperuser() && !Registry.is("ide.browser.jcef.run-under-superuser.allowed")) {
         myStatus.compareAndSet(Status.UNKNOWN, Status.RUN_UNDER_SUPER_USER);
         return;
       }
@@ -107,7 +108,7 @@ public final class JBCefHealthMonitor {
       }
 
       if (output.getStdout().strip().equals("0")) {
-        LOG.warn("The IDE is run under superuser. CEF is suspended.");
+        LOG.warn("The IDE is run under superuser.");
         return true;
       }
 

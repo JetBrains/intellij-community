@@ -10,8 +10,11 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ui.JBInsets;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class SimpleMakeStaticDialog extends AbstractMakeStaticDialog {
   private JCheckBox myCbReplaceUsages;

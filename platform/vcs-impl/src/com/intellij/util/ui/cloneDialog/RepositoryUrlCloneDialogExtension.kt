@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
@@ -17,6 +18,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.dialog.VcsDialogUtils
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
@@ -69,6 +71,9 @@ internal class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
               selectedItem = null
             }
             .component
+          cell(VcsDialogUtils.getMorePluginsLink(mainPanel) {
+            DialogWrapper.findInstance(mainPanel)?.close(DialogWrapper.CANCEL_EXIT_CODE)
+          })
         }
       }
       val insets = UIUtil.PANEL_REGULAR_INSETS

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix;
 
@@ -2490,6 +2490,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractK1QuickFixM
 
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("propertyWithUnresolvedTypeOnJava.before.Main.kt")
+                    public void testPropertyWithUnresolvedTypeOnJava() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/propertyWithUnresolvedTypeOnJava.before.Main.kt");
                     }
 
                     @TestMetadata("staticValOnJavaClass.before.Main.kt")

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 
+@K1Deprecation
 class AddInlineToFunctionFix(function: KtFunction) :
   KotlinQuickFixAction<KtFunction>(function) {
     override fun getFamilyName(): String = KotlinBundle.message("fix.add.modifier.inline.function.family")

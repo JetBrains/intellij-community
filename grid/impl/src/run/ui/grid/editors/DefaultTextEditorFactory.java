@@ -1,7 +1,12 @@
 package com.intellij.database.run.ui.grid.editors;
 
 import com.intellij.database.DataGridBundle;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.DocumentDataHookUp;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.extractors.ObjectFormatterUtil;
 import com.intellij.database.remote.jdbc.LobInfo;
 import com.intellij.database.run.ReservedCellValue;

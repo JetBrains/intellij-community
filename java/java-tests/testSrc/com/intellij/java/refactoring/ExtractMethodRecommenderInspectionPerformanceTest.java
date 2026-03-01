@@ -8,12 +8,14 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodRecommenderInspection;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 /**
  * @author Bas Leijdekkers
  */
+@PerformanceUnitTest
 public final class ExtractMethodRecommenderInspectionPerformanceTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

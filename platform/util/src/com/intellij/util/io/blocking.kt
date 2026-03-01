@@ -3,7 +3,12 @@ package com.intellij.util.io
 
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.ObjectUtils
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.runInterruptible
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds

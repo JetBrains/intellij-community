@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
+import com.intellij.lang.PsiParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.ParsingDiagnostics;

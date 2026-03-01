@@ -12,7 +12,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
@@ -189,13 +188,6 @@ suspend fun <T> progressStep(
   text: ProgressText? = null,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return coroutineScope(action)
-}
-
-@Experimental
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use `ProgressReporter.sizedStep`")
-suspend fun <T> durationStep(duration: Double, text: ProgressText? = null, action: suspend CoroutineScope.() -> T): T {
   return coroutineScope(action)
 }
 

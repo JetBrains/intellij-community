@@ -3,7 +3,13 @@ package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
-import com.intellij.find.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindInProjectSettings;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesCollector;
+import com.intellij.find.SearchTextArea;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.find.findInProject.FindInProjectScopeService;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
@@ -13,8 +19,30 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
@@ -42,12 +70,22 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -60,10 +98,31 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.*;
 import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.BadgeIconSupplier;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListFocusTraversalPolicy;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.PopupBorder;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.WindowMoveListener;
+import com.intellij.ui.WindowResizeListenerEx;
+import com.intellij.ui.WindowRoundedCornersManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.*;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt;
 import com.intellij.ui.hover.TableHoverListener;
@@ -72,14 +131,30 @@ import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
-import com.intellij.usages.*;
+import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.ItemWithLazyContent;
+import com.intellij.usages.TextChunk;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageInfoAdapter;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.usages.rules.UsageInFile;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PatternUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -90,19 +165,64 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.accessibility.AccessibleStateSet;
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.Box;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -829,10 +949,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       header.panel.setBackground(JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND);
       header.cbFileFilter.setOpaque(false);
       setBackground(background);
-      mySearchTextArea.setOpaque(false);
-      mySearchTextArea.setBorder(PopupUtil.createComplexPopupTextFieldBorder());
-      myReplaceTextArea.setOpaque(false);
-      myReplaceTextArea.setBorder(PopupUtil.createComplexPopupTextFieldBorder());
+      configureTextAreaComponent(mySearchTextArea, background);
+      configureTextAreaComponent(myReplaceTextArea, background);
       scopesPanel.setOpaque(false);
       myScopeSelectionToolbar.getComponent().setOpaque(false);
       myScopeDetailsPanel.setOpaque(false);
@@ -863,8 +981,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     PopupUtil.applyPreviewTitleInsets(myUsagePreviewTitle);
     add(header.panel, "growx, pushx, wrap");
 
-    add(mySearchTextArea, "pushx, growx, wrap");
-    add(myReplaceTextArea, "pushx, growx, wrap");
+    add(wrapTextAreaComponent(mySearchTextArea), "pushx, growx, wrap");
+    add(wrapTextAreaComponent(myReplaceTextArea), "pushx, growx, wrap");
     add(scopesPanel, "pushx, growx, ax left, wrap");
     add(myPreviewSplitter, "pushx, growx, growy, pushy, wrap");
     add(bottomPanel, "pushx, growx, dock south");
@@ -887,6 +1005,50 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       Touchbar.setButtonActions(bottomPanel, null, principalButtons, myOKButton, new DefaultActionGroup(myCaseSensitiveAction, myWholeWordsAction, myRegexAction));
     }
+  }
+
+  private static JComponent wrapTextAreaComponent(@NotNull JComponent component) {
+    Wrapper wrapper = new Wrapper(component);
+    wrapper.setBorder(JBUI.Borders.empty(2, 5));
+    return wrapper;
+  }
+
+  private static void configureTextAreaComponent(@NotNull SearchTextArea component, @NotNull Color background) {
+    component.setBackground(background);
+    component.setOpaque(false);
+
+    component.setBorder(new DarculaTextBorder() {
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return JBInsets.create(5, 3);
+      }
+
+      @Override
+      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        JTextArea area = ((SearchTextArea)c).getTextArea();
+        boolean enabled = area.isEnabled() && area.isEditable();
+        Rectangle r = new Rectangle(c.getSize());
+        boolean fillBackground = JBColor.isBright();
+        Color bgColor = fillBackground ? UIUtil.getTextFieldBackground() : null;
+        paintDarculaSearchArea((Graphics2D)g, r, area, bgColor, fillBackground, enabled, true);
+      }
+    });
+
+    component.getTextArea().addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        update();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        update();
+      }
+
+      private void update() {
+        component.repaint();
+      }
+    });
   }
 
   @Override

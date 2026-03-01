@@ -25,7 +25,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.MutableTreeNode;
 import java.util.HashMap;
 import java.util.Map;

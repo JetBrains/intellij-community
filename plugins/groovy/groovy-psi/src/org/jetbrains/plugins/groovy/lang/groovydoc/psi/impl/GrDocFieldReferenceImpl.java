@@ -4,7 +4,14 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;

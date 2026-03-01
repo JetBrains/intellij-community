@@ -23,11 +23,17 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.ActionEvent
 import java.nio.file.Path
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.Box
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-private class TypingLatencyReportAction : AnAction() {
+internal class TypingLatencyReportAction : AnAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

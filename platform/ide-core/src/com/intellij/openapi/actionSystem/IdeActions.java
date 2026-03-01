@@ -31,6 +31,7 @@ public interface IdeActions {
   String ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION = "EditorLineStartWithSelection";
   String ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION = "EditorLineEndWithSelection";
   String ACTION_EDITOR_SELECT_WORD_AT_CARET = "EditorSelectWord";
+  String ACTION_EDITOR_SELECT_WORD_AT_CURRENT_CARET = "EditorSelectWordAtCurrentCaret";
   String ACTION_EDITOR_UNSELECT_WORD_AT_CARET = "EditorUnSelectWord";
   String ACTION_EDITOR_BACKSPACE = "EditorBackSpace";
   String ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION = "EditorLeftWithSelection";

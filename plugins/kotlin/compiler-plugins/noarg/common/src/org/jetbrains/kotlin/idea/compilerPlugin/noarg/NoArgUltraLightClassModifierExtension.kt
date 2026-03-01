@@ -8,7 +8,13 @@ import org.jetbrains.kotlin.asJava.UltraLightClassModifierExtension
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.asJava.classes.createGeneratedMethodFromDescriptor
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.ClassConstructorDescriptorImpl
 import org.jetbrains.kotlin.extensions.AnnotationBasedExtension

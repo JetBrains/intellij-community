@@ -1,8 +1,13 @@
 package com.intellij.searchEverywhereMl.ranking.core.features
 
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.PsiItemWithPresentation
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields

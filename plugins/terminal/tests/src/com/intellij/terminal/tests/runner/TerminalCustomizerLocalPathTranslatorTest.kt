@@ -21,7 +21,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
-import com.intellij.platform.testFramework.junit5.eel.params.api.Wsl
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelType
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.disposableFixture
@@ -204,7 +204,7 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
 
   @Test
   fun `local Windows dir is translated to mounted WSL dir`(): Unit = timeoutRunBlocking(TIMEOUT) {
-    Assumptions.assumeTrue(eelHolder.type is Wsl)
+    Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
 
     val localDir = createLocalTmpDir()
     Assertions.assertThat(localDir).satisfies({ OSAgnosticPathUtil.isAbsoluteDosPath(it.toString()) })
@@ -227,7 +227,7 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
 
   @Test
   fun `translate Windows WSL UNC paths with different prefix`(): Unit = timeoutRunBlocking(TIMEOUT) {
-    Assumptions.assumeTrue(eelHolder.type is Wsl)
+    Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
 
     val dir = tempDir.asDirectory()
     val dirWithOtherPrefix = Path.of(buildWslUncPathWithOtherPrefix(dir.nioDir.toString()))
@@ -246,7 +246,7 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
 
   @Test
   fun `translate Windows WSL UNC paths with different prefix (Unix separators)`(): Unit = timeoutRunBlocking(TIMEOUT) {
-    Assumptions.assumeTrue(eelHolder.type is Wsl)
+    Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
 
     val dir = tempDir.asDirectory()
     val dirWithOtherPrefix = Path.of(buildWslUncPathWithOtherPrefix(dir.nioDir.toString()))
@@ -326,7 +326,7 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
 
   @Test
   fun `Windows WSL UNC paths with Unix separators are translated`(): Unit = timeoutRunBlocking(TIMEOUT) {
-    Assumptions.assumeTrue(eelHolder.type is Wsl)
+    Assumptions.assumeTrue(eelHolder.type == EelType.Wsl)
 
     val dir1 = tempDir.asDirectory()
     val dir2 = createTmpDir("dir2").asDirectory()

@@ -1,11 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.psi.*
 import com.intellij.psi.GenericsUtil.isTypeArgumentsApplicable
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveState
 import com.intellij.util.recursionSafeLazy
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.DelegateArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelSession
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy

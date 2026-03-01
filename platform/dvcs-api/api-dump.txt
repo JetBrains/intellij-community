@@ -6,7 +6,6 @@ a:com.intellij.dvcs.cherrypick.VcsCherryPicker
 - a:getActionTitle():java.lang.String
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
 com.intellij.dvcs.hosting.RepositoryHostingService
-- getRepositoryListLoader(com.intellij.openapi.project.Project):com.intellij.dvcs.hosting.RepositoryListLoader
 - a:getServiceDisplayName():java.lang.String
 com.intellij.dvcs.hosting.RepositoryListLoader
 - enable(java.awt.Component):Z
@@ -85,8 +84,10 @@ com.intellij.dvcs.push.PushTarget
 - a:hasSomethingToPush():Z
 a:com.intellij.dvcs.push.PushTargetPanel
 - javax.swing.JPanel
+- com.intellij.openapi.Disposable
 - <init>():V
 - a:addTargetEditorListener(com.intellij.dvcs.push.ui.PushTargetEditorListener):V
+- dispose():V
 - editingStarted():V
 - a:fireOnCancel():V
 - a:fireOnChange():V

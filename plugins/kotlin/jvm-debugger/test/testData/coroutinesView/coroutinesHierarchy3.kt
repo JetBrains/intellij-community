@@ -7,18 +7,30 @@ import kotlinx.coroutines.*
 
 fun main() {
     runBlocking(CoroutineName("root")) {
-        val a = async(CoroutineName("childAsync1")) {
-            delay(10)
-            val b = async(CoroutineName("childAsync2")) {
-                val coroutineVar = 2
-                delay(20)
-                "b"
+        coroutineScope {
+            val a = async(CoroutineName("CoroutineA")) {
+                delay(10)
+                val b = async(CoroutineName("ChildCoroutineB")) {
+                    val coroutineVar = 2
+                    delay(1000)
+                    "b"
+                }
+                delay(5)
+                "a" + b.await()
             }
-            delay(5)
-            //Breakpoint!
-            "a" + b.await()
+            delay(100)
+            val c = async(CoroutineName("CoroutineC")) {
+                delay(10)
+                val d = async(CoroutineName("ChildCoroutineD")) {
+                    delay(100)
+                    "d"
+                }
+                //Breakpoint!
+                "c" + d.await()
+            }
         }
-        delay(100)
-        println()
+        launch(CoroutineName("Was not launched yet")) {
+            delay(100)
+        }
     }
 }

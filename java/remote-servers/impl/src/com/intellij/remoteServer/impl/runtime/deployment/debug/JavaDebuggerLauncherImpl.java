@@ -30,7 +30,7 @@ import com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
   private static final Logger LOG = Logger.getInstance(JavaDebuggerLauncherImpl.class);

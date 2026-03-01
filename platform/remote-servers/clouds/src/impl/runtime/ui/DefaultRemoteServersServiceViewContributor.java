@@ -22,7 +22,7 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Objects;
 
 public class DefaultRemoteServersServiceViewContributor extends RemoteServersServiceViewContributor {

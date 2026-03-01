@@ -15,7 +15,16 @@ import com.intellij.util.asSafely
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import com.siyeh.ig.psiutils.MethodUtils
 import com.siyeh.ig.psiutils.TestUtils
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UClassInitializer
+import org.jetbrains.uast.UClassInitializerEx
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UFieldEx
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.skipParenthesizedExprDown
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class TestCaseWithConstructorInspection : AbstractBaseUastLocalInspectionTool() {

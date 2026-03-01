@@ -21,7 +21,12 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.binaryExpressionVisitor
 
 internal class ReplaceWithOperatorAssignmentInspection :
     KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ReplaceWithOperatorAssignmentInspection.Context>() {

@@ -18,7 +18,13 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.IOSSinglePlatformModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.ModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.MppLibJsBrowserTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.SimpleTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
@@ -27,7 +33,11 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
 import java.awt.BorderLayout
 import java.awt.Font
 import java.awt.LayoutManager
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.border.Border
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener

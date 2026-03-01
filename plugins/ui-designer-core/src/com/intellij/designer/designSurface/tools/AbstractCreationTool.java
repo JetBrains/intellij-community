@@ -19,7 +19,7 @@ import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Cursors;
 
-import java.awt.*;
+import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 

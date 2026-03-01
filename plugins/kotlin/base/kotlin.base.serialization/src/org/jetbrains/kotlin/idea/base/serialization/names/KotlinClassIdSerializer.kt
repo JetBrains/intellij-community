@@ -6,7 +6,11 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
-import kotlinx.serialization.encoding.*
+import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.encoding.encodeStructure
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName

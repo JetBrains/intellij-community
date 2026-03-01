@@ -4,7 +4,18 @@ package com.intellij.platform.debugger.impl.frontend.hotswap
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -86,11 +97,11 @@ internal class HotSwapModifiedFilesAction : AnAction(), DumbAware {
 
 private fun getCurrentStatus(project: Project) = FrontendHotSwapManager.getInstance(project).currentStatus
 
-private enum class HotSwapButtonStatus {
+internal enum class HotSwapButtonStatus {
   READY, IN_PROGRESS, SUCCESS
 }
 
-private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction, DumbAware {
+internal class HotSwapWithRebuildAction : AnAction(), CustomComponentAction, DumbAware {
   var status = HotSwapButtonStatus.READY
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -278,7 +289,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   }
 }
 
-private class HideAction : AnAction() {
+internal class HideAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (logger.isDebugEnabled) {

@@ -10,7 +10,17 @@ import org.jetbrains.plugins.gradle.model.DefaultExternalTask
 import org.jetbrains.plugins.gradle.model.ExternalTask
 import org.jetbrains.plugins.gradle.model.GradleTaskModel
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService
-import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.MAP_KEY_FIELD
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.MAP_VALUE_FIELD
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertFieldName
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertNotNull
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readBoolean
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readMap
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeBoolean
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeMap
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString
 import org.jetbrains.plugins.gradle.tooling.serialization.step
 import java.io.ByteArrayOutputStream
 

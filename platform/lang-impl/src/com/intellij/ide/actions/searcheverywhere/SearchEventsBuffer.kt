@@ -16,12 +16,6 @@ class SearchEventsBuffer {
 
     val toAdd = removeElementsFormList(list, removedElements)
     addedElements.addAll(toAdd)
-
-    SearchEverywhereMlService.getInstance()?.let { mlService ->
-      list.forEach { item ->
-        mlService.addBufferedTimestamp(item, System.currentTimeMillis())
-      }
-    }
   }
 
   fun removeElements(list: List<SearchEverywhereFoundElementInfo>) {

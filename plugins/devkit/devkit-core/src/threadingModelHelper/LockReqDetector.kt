@@ -1,13 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
-import com.intellij.lang.Language
-import com.intellij.lang.LanguageExtension
-import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
 
 object LockReqDetector {
 
@@ -62,8 +57,8 @@ object LockReqDetector {
 
   context(config: AnalysisConfig, patterns: LockReqRules)
   fun isAsyncDispatch(method: PsiMethod): Boolean {
-    return method.name in patterns.asyncMethods &&
-           method.containingClass?.qualifiedName in patterns.asyncClasses
+    return patterns.asyncMethods.any { (className, methodName) ->
+      method.containingClass?.qualifiedName == className && method.name == methodName }
   }
 
 

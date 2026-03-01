@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-commons-text-commons-text"],
   runtime_deps = ["@lib//:libraries-commons-text-commons-text"]
 )
+
+jvm_library(
+  name = "text_test_lib",
+  module_name = "intellij.libraries.commons.text",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-commons-text-commons-text"],
+  runtime_deps = [":text"]
+)
 ### auto-generated section `build intellij.libraries.commons.text` end

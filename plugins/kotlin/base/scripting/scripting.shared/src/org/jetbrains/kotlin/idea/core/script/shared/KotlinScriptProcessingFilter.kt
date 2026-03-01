@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.core.script.shared
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.psi.KtFile
 
 /**
  * This filters can be used to prevent script processing (definition resolution, updating workspace model, caches invalidating).

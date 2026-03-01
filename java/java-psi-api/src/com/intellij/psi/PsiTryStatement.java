@@ -15,8 +15,8 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a Java {@code try ... catch ... finally} statement.

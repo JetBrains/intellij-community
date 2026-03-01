@@ -2,6 +2,7 @@
 package com.intellij.grazie
 
 import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.rules.settings.TextStyle
 import ai.grazie.rules.tree.Parameter
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -20,10 +21,16 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
 import com.intellij.grazie.rule.RuleIdeClient
+import com.intellij.grazie.spellcheck.hunspell.HunspellDictionary
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.application
@@ -31,7 +38,8 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
+import java.util.Collections
+import java.util.TreeMap
 import java.util.concurrent.atomic.AtomicLong
 
 @State(
@@ -42,7 +50,6 @@ import java.util.concurrent.atomic.AtomicLong
     Storage(value = "grazi_global.xml", deprecated = true)
   ],
   category = SettingsCategory.CODE,
-  additionalExportDirectory = "grazie",
 )
 class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationTracker {
   enum class Version : VersionedState.Version<State> {
@@ -121,6 +128,14 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
 
     val processing: Processing
       get() = explicitlyChosenProcessing ?: if (GrazieCloudConnector.isCloudEnabledByDefault()) Cloud else Local
+
+    val dictionaries: List<HunspellDictionary>
+      get() = enabledLanguages
+        .filter { it.iso != LanguageISO.EN && it.jLanguage != null }
+        .mapNotNull {
+          ProgressManager.checkCanceled()
+          it.dictionary
+        }
 
     override fun increment(): State = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
 

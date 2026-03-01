@@ -7,5 +7,6 @@ internal class SimplifiableCallInspection : AbstractSimplifiableCallInspection()
             FlatMapToFlattenConversion(),
             FilterToFilterNotNullConversion(),
             FilterToFilterIsInstanceConversion(),
+            MapNotNullToFilterIsInstanceConversion()
         )
 }

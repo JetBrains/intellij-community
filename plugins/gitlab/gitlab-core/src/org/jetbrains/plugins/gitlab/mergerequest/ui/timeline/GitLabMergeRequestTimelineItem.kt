@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
-import java.util.*
+import java.util.Date
 
 sealed interface GitLabMergeRequestTimelineItem {
 

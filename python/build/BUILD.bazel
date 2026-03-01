@@ -1,3 +1,17 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
+load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
+
+# Can't name the target 'installers' since it triggers elevation in Windows
+java_binary(
+  name = "i_build_target",
+  runtime_deps = [":build"],
+  main_class = "PyCharmCommunityInstallersBuildTarget",
+  add_opens = INTELLIJ_ADD_OPENS,
+  data = ALL_COMMUNITY_TARGETS,
+)
+
 ### auto-generated section `build intellij.pycharm.community.build` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -34,12 +48,18 @@ jvm_library(
   associates = [":build"],
   deps = [
     "//build",
+    "//build:build_test_lib",
     "//platform/build-scripts/testFramework",
+    "//platform/build-scripts/testFramework:testFramework_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/build-scripts/downloader",
+    "//platform/build-scripts/downloader:downloader_test_lib",
     "//build/tasks",
     "//build/tasks:tasks_test_lib",
     "@lib//:opentelemetry",
@@ -47,13 +67,27 @@ jvm_library(
     "@lib//:opentelemetry-extension-kotlin",
     "@lib//:junit5",
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
     "//python/python-parser:parser",
+    "//python/python-parser:parser_test_lib",
     "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
     "//libraries/jsoup",
+    "//libraries/jsoup:jsoup_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+  ],
+  runtime_deps = [
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.pycharm.community.build` end

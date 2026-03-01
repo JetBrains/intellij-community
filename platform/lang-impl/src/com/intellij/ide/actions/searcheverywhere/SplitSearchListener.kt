@@ -2,7 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.UUID
 
 
 @ApiStatus.Experimental

@@ -6,7 +6,12 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.IconsProvider
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal
 import com.intellij.ui.dsl.builder.impl.checkDeniedHtmlTags
 import com.intellij.util.ui.ExtendableHTMLViewFactory

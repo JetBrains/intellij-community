@@ -3,7 +3,11 @@ package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope

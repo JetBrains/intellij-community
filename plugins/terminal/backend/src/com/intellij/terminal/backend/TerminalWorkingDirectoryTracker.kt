@@ -2,10 +2,15 @@ package com.intellij.terminal.backend
 
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.*
+import com.jediterm.terminal.TtyConnector
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.arrangement.ProcessInfoUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
@@ -20,14 +25,20 @@ internal fun addWorkingDirectoryListener(
   addHeuristicBasedCwdListener(ttyConnector, heuristicBasedTrackerScope, listener)
 
   shellIntegrationController.addListener(object : TerminalShellIntegrationEventsListener {
-    override fun initialized() {
+    override fun initialized(currentDirectory: String?) {
       // Stop heuristic-based working directory tracking if there is a shell integration.
       // We will receive the current directory from the shell integration.
       heuristicBasedTrackerScope.cancel()
+
+      if (currentDirectory != null) {
+        listener(currentDirectory)
+      }
     }
 
-    override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
-      listener(currentDirectory)
+    override fun commandFinished(command: String, exitCode: Int, currentDirectory: String?) {
+      if (currentDirectory != null) {
+        listener(currentDirectory)
+      }
     }
   })
 }
@@ -58,26 +69,36 @@ private fun addHeuristicBasedCwdListener(
     workingDirectoryUpdateRequests
       .debounce(500)
       .collect {
-        val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(ttyConnector) ?: run {
-          BackendTerminalSession.LOG.warn("Failed to get process TTY connector: $ttyConnector. Working directory won't be updated.")
-          return@collect
-        }
-
-        val cwd = try {
-          ProcessInfoUtil.getInstance().getCurrentWorkingDirectory(processTtyConnector.process) ?: run {
-            BackendTerminalSession.LOG.warn("Failed to get current working directory: $processTtyConnector")
-            return@collect
-          }
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Exception) {
-          BackendTerminalSession.LOG.warn("Failed to get current working directory: $processTtyConnector", e)
-          return@collect
-        }
-
+        val cwd = doCalculateCurrentDirectory(ttyConnector) ?: return@collect
         listener(cwd)
       }
+  }
+
+  // TODO: Investigate why it may cause deadlock in tests were we start the real shell session.
+  // Trigger the initial value calculation immediately without waiting
+  //coroutineScope.launch {
+  //  val cwd = doCalculateCurrentDirectory(ttyConnector) ?: return@launch
+  //  listener(cwd)
+  //}
+}
+
+private suspend fun doCalculateCurrentDirectory(ttyConnector: TtyConnector): String? {
+  val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(ttyConnector) ?: run {
+    BackendTerminalSession.LOG.warn("Failed to get process TTY connector: $ttyConnector. Working directory won't be updated.")
+    return null
+  }
+
+  return try {
+    ProcessInfoUtil.getInstance().getCurrentWorkingDirectory(processTtyConnector.process) ?: run {
+      BackendTerminalSession.LOG.warn("Failed to get current working directory: $processTtyConnector")
+      null
+    }
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Exception) {
+    BackendTerminalSession.LOG.warn("Failed to get current working directory: $processTtyConnector", e)
+    null
   }
 }

@@ -18,8 +18,11 @@ package com.intellij.designer.model;
 import com.intellij.designer.designSurface.ScalableComponent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * @author Alexander Lobas

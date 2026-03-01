@@ -3,6 +3,7 @@
 
 #end
 import com.intellij.openapi.components.*
+import com.intellij.configurationStore.Property
 
 #parse("File Header.java")
 @Service
@@ -22,5 +23,5 @@ internal class ${NAME}: SerializablePersistentStateComponent<${NAME}State>(${NAM
 }
 
 internal data class ${NAME}State(
-    @JvmField val storeValue: String? = null
+    @JvmField @Property val storeValue: String? = null // @Property required for primitives
 )

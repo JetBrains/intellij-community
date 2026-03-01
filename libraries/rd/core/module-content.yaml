@@ -3,4 +3,4 @@
   - name: intellij.libraries.rd.core
     libraries:
       rd-core:
-      - name: $MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2025/rd-core-2025.jar
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2026/rd-core-2026.jar

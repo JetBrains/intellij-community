@@ -9,7 +9,12 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.util.ui.RawSwingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // On startup 2 dialogs must be shown:
 // - gdpr agreement

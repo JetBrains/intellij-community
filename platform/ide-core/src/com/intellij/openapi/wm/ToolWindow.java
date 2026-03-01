@@ -10,13 +10,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.function.Supplier;
@@ -43,6 +45,7 @@ public interface ToolWindow extends BusyObject {
    * @param runnable A command to execute right after the window gets activated. The call is asynchronous since it may require animation.
    * @throws IllegalStateException if the tool window isn't installed.
    */
+  @RequiresEdt
   default void activate(@Nullable Runnable runnable) {
     activate(runnable, true, true);
   }

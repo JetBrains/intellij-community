@@ -2,9 +2,18 @@
 package org.jetbrains.idea.eclipse.codeStyleMapping.valueConversions
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.*
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.Convertor
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.IntConvertor
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingMapping
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.const
-import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.*
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.UnexpectedIncomingValue
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.convert
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.importIfAllowed
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.FORCE_SPLIT_MASK
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.INDENT_POLICY_MASK
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.IndentationPolicy
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.LINE_WRAP_POLICY_MASK
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.LineWrapPolicy
 
 internal class EclipseWrapValue(var lineWrapPolicy: LineWrapPolicy = LineWrapPolicy.DO_NOT_WRAP,
                                 var indentationPolicy: IndentationPolicy = IndentationPolicy.DEFAULT_INDENTATION,

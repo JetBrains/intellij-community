@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.k2.metaModel
 
+import com.intellij.devkit.workspaceModel.metaModel.MetaModelBuilderException
+import com.intellij.devkit.workspaceModel.metaModel.MetaProblem
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
@@ -8,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -20,7 +23,7 @@ internal class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
     module: Module,
     processAbstractTypes: Boolean,
     isTestSourceFolder: Boolean,
-  ): List<CompiledObjModule> {
+  ): Pair<List<CompiledObjModule>, List<MetaProblem>> {
     val packages = ktClasses.values.mapTo(LinkedHashSet()) { it.containingKtFile.packageFqName.asString() }
 
     val metaModelProvider = WorkspaceMetaModelBuilder(
@@ -34,17 +37,32 @@ internal class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
       module.toKaSourceModuleForTest()
     }
     if (kaModule == null) {
-      return emptyList()
+      return (emptyList<CompiledObjModule>() to emptyList())
     }
-    val compiledObjModule = allowAnalysisOnEdt {
+    val problems: MutableList<MetaProblem> = mutableListOf()
+    val compiledObjModules = allowAnalysisOnEdt {
       allowAnalysisFromWriteAction {
         packages
           .filter { it != "" }
-          .map { packageName ->
-            metaModelProvider.getObjModule(packageName, kaModule)
+          .mapNotNull { packageName ->
+            metaModelProvider.getObjModuleOrProblem(packageName, kaModule, problems)
           }
       }
     }
-    return compiledObjModule
+    return compiledObjModules to problems
+  }
+
+  private fun WorkspaceMetaModelBuilder.getObjModuleOrProblem(
+    packageName: String,
+    kaModule: KaSourceModule,
+    problems: MutableList<MetaProblem>
+  ): CompiledObjModule? {
+    try {
+      return getObjModule(packageName, kaModule)
+    }
+    catch (e: MetaModelBuilderException) {
+      problems.add(MetaProblem(e.message ?: "", e.psiToHighlight))
+      return null
+    }
   }
 }

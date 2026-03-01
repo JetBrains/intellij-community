@@ -19,7 +19,8 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.Properties
+import java.util.ServiceLoader
 import kotlin.io.path.Path
 import kotlin.io.path.writer
 import kotlin.time.Duration.Companion.milliseconds
@@ -55,6 +56,10 @@ internal class IJPerfBenchmarksMetricsPublisher {
       return tempPropertiesFile.toPath()
     }
 
+    private val codeOwnerResolver: BenchmarkCodeOwnerResolver? by lazy {
+      ServiceLoader.load(BenchmarkCodeOwnerResolver::class.java).firstOrNull()
+    }
+
     private val teamCityClient = TeamCityClient(
       systemPropertiesFilePath =
       // ignoring TC system properties for local test run
@@ -63,7 +68,9 @@ internal class IJPerfBenchmarksMetricsPublisher {
     )
 
     @Suppress("TestOnlyProblems")
-    private suspend fun prepareMetricsForPublishing(uniqueTestIdentifier: String, vararg metricsCollectors: MetricsCollector): PerformanceMetricsDto {
+    private suspend fun prepareMetricsForPublishing(uniqueTestIdentifier: String,
+                                                    testClass: Class<*>?,
+                                                    vararg metricsCollectors: MetricsCollector): PerformanceMetricsDto {
       delay(1.seconds) // give some time to settle metrics (usually meters) that were published at the end of the test
 
       val metrics: List<PerformanceMetrics.Metric> = withRetry("Telemetry metrics should be exported",
@@ -84,18 +91,19 @@ internal class IJPerfBenchmarksMetricsPublisher {
         projectDescription = "",
         methodName = uniqueTestIdentifier,
         buildNumber = BuildNumber.currentVersion(),
-        metrics = metrics
+        metrics = metrics,
+        owner = testClass?.let { codeOwnerResolver?.getOwnerGroupName(it) } ?: ""
       )
     }
 
-    fun publishSync(fullQualifiedTestMethodName: String, vararg metricsCollectors: MetricsCollector) {
+    fun publishSync(fullQualifiedTestMethodName: String, testClass: Class<*>?, vararg metricsCollectors: MetricsCollector) {
       runBlocking {
-        publish(fullQualifiedTestMethodName, *metricsCollectors)
+        publish(fullQualifiedTestMethodName, testClass, *metricsCollectors)
       }
     }
 
-    suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: MetricsCollector) {
-      val metricsDto = prepareMetricsForPublishing(uniqueTestIdentifier, *metricsCollectors)
+    suspend fun publish(uniqueTestIdentifier: String, testClass: Class<*>?, vararg metricsCollectors: MetricsCollector) {
+      val metricsDto = prepareMetricsForPublishing(uniqueTestIdentifier, testClass, *metricsCollectors)
 
       withContext(Dispatchers.IO) {
         val artifactName = "metrics.performance.json"

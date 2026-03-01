@@ -9,7 +9,16 @@ import com.intellij.execution.RunSessionService;
 import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.ExecutionConsoleEx;
+import com.intellij.execution.ui.ObservableConsoleView;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
@@ -17,11 +26,22 @@ import com.intellij.ide.ui.customization.CustomActionsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
-import com.intellij.idea.AppModeAssertions;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.idea.AppMode;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionGroupWrapper;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Constraints;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -40,8 +60,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -64,6 +84,7 @@ public final class RunContentBuilder extends RunTab {
   @ApiStatus.Experimental
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP = "RunTab.TopToolbar.More";
 
+  private static final Logger LOG = Logger.getInstance(RunContentBuilder.class);
   private static final String RUN_TOOL_WINDOW_ID = "Run";
 
   private static final String JAVA_RUNNER = "JavaRunner";
@@ -349,7 +370,7 @@ public final class RunContentBuilder extends RunTab {
                                                       @Nullable Icon icon,
                                                       @Nullable RunProfile runProfile) {
 
-    if (isSplitRun() && AppModeAssertions.isBackend() && myEnvironment.getExecutor().getToolWindowId().equals(RUN_TOOL_WINDOW_ID)) {
+    if (isSplitRun() && AppMode.isRemoteDevHost() && myEnvironment.getExecutor().getToolWindowId().equals(RUN_TOOL_WINDOW_ID)) {
       RunContentDescriptor descriptor = buildHiddenDescriptor(reuseContent);
       registerDescriptor(reuseContent, descriptor);
       RunSessionService runSessionService = RunSessionService.getInstance();
@@ -485,6 +506,10 @@ public final class RunContentBuilder extends RunTab {
                                                DefaultActionGroup actionGroup,
                                                @Nullable DefaultActionGroup moreGroup) {
     for (AnAction action : ContainerUtil.reverse(actions)) {
+      if (action == null) {
+        LOG.error("Null action in toolbar " + actions);
+        continue;
+      }
       if (moreGroup != null && action.getTemplatePresentation().getClientProperty(PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
         addAvoidingDuplicates(moreGroup, new AnAction[]{action}, Constraints.LAST, AnAction.EMPTY_ARRAY);
       }

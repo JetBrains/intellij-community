@@ -6,19 +6,36 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.psi.*
+import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.JavaPsiRecordUtil
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.removeOverrideModifier
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
-import java.util.*
+import java.util.ArrayDeque
 
+@K1Deprecation
 fun PsiElement.canDeleteElement(): Boolean {
     if (this is KtObjectDeclaration && isObjectLiteral()) return false
 
@@ -38,6 +55,7 @@ fun PsiElement.canDeleteElement(): Boolean {
             || this is KtTypeAlias
 }
 
+@K1Deprecation
 fun PsiMethod.cleanUpOverrides() {
     val superMethods = findSuperMethods(true)
     for (overridingMethod in OverridingMethodsSearch.search(this, true).findAll()) {
@@ -49,6 +67,7 @@ fun PsiMethod.cleanUpOverrides() {
     }
 }
 
+@K1Deprecation
 fun checkParametersInMethodHierarchy(parameter: PsiParameter): Collection<PsiElement>? {
     val method = parameter.declarationScope as PsiMethod
 

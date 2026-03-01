@@ -21,14 +21,32 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsInElementForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.psiUtil.children
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import java.util.concurrent.Callable
 
@@ -68,7 +86,7 @@ internal class KotlinStructuralReplaceHandler(private val project: Project) : St
         if (affectedElement !is KtElement) return
         if (options.isToShortenFQN) {
             ReadAction.nonBlocking(Callable{
-                analyze(affectedElement) { collectPossibleReferenceShorteningsInElement(affectedElement) }
+                analyze(affectedElement) { collectPossibleReferenceShorteningsInElementForIde(affectedElement) }
             }).finishOnUiThread(ModalityState.nonModal()) {
                 WriteCommandAction.runWriteCommandAction(project, Computable { it.invokeShortening() })
             }.submit(AppExecutorUtil.getAppExecutorService())

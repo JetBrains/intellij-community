@@ -81,7 +81,9 @@ c:com.intellij.ide.projectView.PresentationData
 - f:setChanged(Z):V
 - f:setForcedTextForeground(java.awt.Color):V
 - f:setIcon(javax.swing.Icon):V
+- f:setLocationPrefix(java.lang.String):V
 - f:setLocationString(java.lang.String):V
+- f:setLocationSuffix(java.lang.String):V
 - f:setPresentableText(java.lang.String):V
 - f:setSeparatorAbove(Z):V
 - f:setTooltip(java.lang.String):V
@@ -270,8 +272,6 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 - f:component7():F
 - f:component8():Z
 - f:component9():Z
-- f:copy(com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,Z):com.intellij.ide.ui.NotRoamableUiOptions
-- bs:copy$default(com.intellij.ide.ui.NotRoamableUiOptions,com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,Z,I,java.lang.Object):com.intellij.ide.ui.NotRoamableUiOptions
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.ide.ui.NotRoamableUiSettings
@@ -615,7 +615,6 @@ c:com.intellij.ide.util.treeView.FileNameComparator
 - s:getInstance():java.util.Comparator
 f:com.intellij.ide.util.treeView.IndexComparator
 - java.util.Comparator
-- sf:INSTANCE:com.intellij.ide.util.treeView.IndexComparator
 - compare(com.intellij.ide.util.treeView.NodeDescriptor,com.intellij.ide.util.treeView.NodeDescriptor):I
 - s:getInstance():com.intellij.ide.util.treeView.IndexComparator
 com.intellij.ide.util.treeView.InplaceCommentAppender
@@ -1490,7 +1489,6 @@ com.intellij.openapi.editor.EditorSettings
 - a:isAdditionalPageAtBottom():Z
 - a:isAllSoftWrapsShown():Z
 - a:isAllowSingleLogicalLineFolding():Z
-- a:isAnimatedCaret():Z
 - a:isAnimatedScrolling():Z
 - a:isAutoCodeFoldingEnabled():Z
 - a:isBlinkCaret():Z
@@ -2251,7 +2249,6 @@ com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 com.intellij.openapi.editor.markup.GutterDraggableObject
 - sf:flavor:java.awt.datatransfer.DataFlavor
 - a:copy(I,com.intellij.openapi.vfs.VirtualFile,I):Z
-- getCursor(I,I):java.awt.Cursor
 - getCursor(I,com.intellij.openapi.vfs.VirtualFile,I):java.awt.Cursor
 - s:getFlavors():java.awt.datatransfer.DataFlavor[]
 - remove():V

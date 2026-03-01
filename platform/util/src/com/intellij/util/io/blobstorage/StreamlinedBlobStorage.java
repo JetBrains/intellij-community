@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.blobstorage;
 
 import com.intellij.openapi.Forceable;
@@ -46,6 +46,13 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    * because of that
    */
   boolean wasClosedProperly() throws IOException;
+
+  /**
+   * @return true if the storage was always properly closed -- not just last time but every previous time as well.
+   * false if it wasn't properly closed at least once in its history and data could be inconsistent because of that.
+   * This is a 'sticky' property: once set, it is never reset.
+   */
+  boolean wasAlwaysClosedProperly();
 
   /** @return version of application data stored in storage -- managed by application */
   int getDataFormatVersion() throws IOException;

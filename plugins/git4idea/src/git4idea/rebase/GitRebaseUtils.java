@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -25,14 +24,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static git4idea.GitNotificationIdsHolder.*;
+import static git4idea.GitNotificationIdsHolder.REBASE_CANNOT_ABORT;
+import static git4idea.GitNotificationIdsHolder.REBASE_CANNOT_CONTINUE;
+import static git4idea.GitNotificationIdsHolder.REBASE_NOT_ALLOWED;
 
 public final class GitRebaseUtils {
   private static final Logger LOG = Logger.getInstance(GitRebaseUtils.class.getName());

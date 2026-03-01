@@ -14,7 +14,7 @@ import javax.swing.JTextField
 import kotlin.time.Duration.Companion.seconds
 
 fun Finder.newProjectDialog(action: NewProjectDialogUI.() -> Unit) {
-  x("//div[@title='New Project']", NewProjectDialogUI::class.java).action()
+  x("//div[@title='New Project' or @title='New Module']", NewProjectDialogUI::class.java).action()
 }
 
 fun Driver.newProjectDialog(action: NewProjectDialogUI.() -> Unit) {

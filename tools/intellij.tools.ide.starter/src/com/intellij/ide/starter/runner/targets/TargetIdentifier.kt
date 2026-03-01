@@ -1,7 +1,9 @@
 package com.intellij.ide.starter.runner.targets
 
-import com.intellij.ide.starter.runner.targets.TargetIdentifier.*
 import com.intellij.ide.starter.runner.targets.TargetIdentifier.Companion.current
+import com.intellij.ide.starter.runner.targets.TargetIdentifier.Docker
+import com.intellij.ide.starter.runner.targets.TargetIdentifier.Local
+import com.intellij.ide.starter.runner.targets.TargetIdentifier.WSL
 import com.intellij.platform.eel.EelApi
 import java.lang.annotation.Inherited
 
@@ -65,4 +67,4 @@ fun TargetIdentifier.isWsl(): Boolean = current is WSL
 @Repeatable
 annotation class TargetDockerConfig(val dockerImage: String)
 
-const val TARGET_DEFAULT_DOCKER_IMAGE = "ubuntu:22.04"
+const val TARGET_DEFAULT_DOCKER_IMAGE = "registry.jetbrains.team/p/ij/docker-hub/ubuntu:22.04"

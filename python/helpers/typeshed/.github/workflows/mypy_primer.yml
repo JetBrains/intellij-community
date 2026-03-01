@@ -25,7 +25,7 @@ jobs:
         shard-index: [0, 1, 2, 3]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           path: typeshed_to_test
           fetch-depth: 0
@@ -62,7 +62,7 @@ jobs:
         run: |
           echo ${{ github.event.pull_request.number }} | tee pr_number.txt
       - name: Upload mypy_primer diff + PR number
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: ${{ matrix.shard-index == 0 }}
         with:
           name: mypy_primer_diffs-${{ matrix.shard-index }}
@@ -70,7 +70,7 @@ jobs:
             diff_${{ matrix.shard-index }}.txt
             pr_number.txt
       - name: Upload mypy_primer diff
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: ${{ matrix.shard-index != 0 }}
         with:
           name: mypy_primer_diffs-${{ matrix.shard-index }}
@@ -84,7 +84,7 @@ jobs:
       contents: read
     steps:
       - name: Merge artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@v6
         with:
           name: mypy_primer_diffs
           pattern: mypy_primer_diffs-*

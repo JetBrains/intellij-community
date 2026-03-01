@@ -8,8 +8,10 @@ import com.intellij.ui.ClickListener;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
 /**

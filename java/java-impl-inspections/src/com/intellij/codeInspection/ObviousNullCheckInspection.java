@@ -1,14 +1,29 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.ParameterReturnValue;
+import com.intellij.codeInspection.dataFlow.ContractValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.codeInspection.dataFlow.TrackingRunner;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -60,7 +75,7 @@ public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspe
       if (!JavaMethodContractUtil.isPure(method)) return null;
       List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
       if (contracts.isEmpty()) return null;
-      MethodContract contract = contracts.get(0);
+      MethodContract contract = contracts.getFirst();
       if (contract == null) return null;
       ContractReturnValue firstReturn = contract.getReturnValue();
       ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());

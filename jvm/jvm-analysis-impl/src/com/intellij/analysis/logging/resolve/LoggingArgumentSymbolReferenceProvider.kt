@@ -1,8 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.logging.resolve
 
-import com.intellij.codeInspection.logging.*
-import com.intellij.codeInspection.logging.PlaceholderLoggerType.*
+import com.intellij.codeInspection.logging.LOGGER_RESOLVE_TYPE_SEARCHERS
+import com.intellij.codeInspection.logging.LoggingStringPartEvaluator
+import com.intellij.codeInspection.logging.PlaceholderContext
+import com.intellij.codeInspection.logging.PlaceholderEscapeSymbolStrategy
+import com.intellij.codeInspection.logging.PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS
+import com.intellij.codeInspection.logging.PlaceholderLoggerType.LOG4J_FORMATTED_STYLE
+import com.intellij.codeInspection.logging.PlaceholderLoggerType.LOG4J_OLD_STYLE
+import com.intellij.codeInspection.logging.PlaceholderLoggerType.SLF4J
+import com.intellij.codeInspection.logging.PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS
+import com.intellij.codeInspection.logging.PlaceholderRanges
+import com.intellij.codeInspection.logging.PlaceholdersStatus
+import com.intellij.codeInspection.logging.detectLoggerMethod
+import com.intellij.codeInspection.logging.getPlaceholderContext
+import com.intellij.codeInspection.logging.solvePlaceholderCount
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReference
@@ -10,8 +22,12 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UPolyadicExpression
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElementOfType
 
 class LoggingArgumentSymbolReferenceProvider : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {

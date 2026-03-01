@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
@@ -12,8 +13,9 @@ import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.toUElement
 import org.junit.Test
-import java.util.*
+import java.util.Objects
 
+@PerformanceUnitTest
 class JavaUastPerformanceTest : AbstractJavaUastTest() {
   override fun check(testName: String, file: UFile) {
   }

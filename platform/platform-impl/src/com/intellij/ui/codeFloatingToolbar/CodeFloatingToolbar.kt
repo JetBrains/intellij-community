@@ -37,7 +37,12 @@ import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.IllegalComponentStateException

@@ -14,7 +14,11 @@ import org.junit.Assert;
 
 import java.util.List;
 
-import static com.intellij.psi.PsiModifier.*;
+import static com.intellij.psi.PsiModifier.ModifierConstant;
+import static com.intellij.psi.PsiModifier.PACKAGE_LOCAL;
+import static com.intellij.psi.PsiModifier.PRIVATE;
+import static com.intellij.psi.PsiModifier.PROTECTED;
+import static com.intellij.psi.PsiModifier.PUBLIC;
 
 public abstract class GrVisibilityTestBase extends LightGroovyTestCase {
   protected PsiClass addClass(String packageName, String text) {

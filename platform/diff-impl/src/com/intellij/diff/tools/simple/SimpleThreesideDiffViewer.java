@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -12,10 +12,22 @@ import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
 import com.intellij.diff.tools.util.text.FineMergeLineFragment;
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.tools.util.text.SimpleThreesideTextDiffProvider;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineRange;
+import com.intellij.diff.util.MergeConflictType;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,14 +43,25 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static com.intellij.diff.tools.simple.SimpleDiffViewerHighlighters.getApplyActionText;
 
 public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   protected final @NotNull SimpleThreesideTextDiffProvider myTextDiffProvider;
 
   private final @NotNull List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<>();
-  private final @NotNull List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<>();
+
+  private final @NotNull Map<SimpleThreesideDiffChange, SimpleDiffViewerHighlighters> myHighlighters = new HashMap<>();
+  private final @NotNull Map<SimpleThreesideDiffChange, SimpleDiffViewerHighlighters> myInvalidHighlighters = new HashMap<>();
 
   public SimpleThreesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -148,8 +171,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
         MergeConflictType conflictType = fragment.getConflictType();
         MergeInnerDifferences innerFragments = fragment.getInnerFragments();
 
-        SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, conflictType, innerFragments, this);
+        SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, conflictType);
+        SimpleDiffViewerHighlighters highlighters = new SimpleDiffViewerHighlighters(change, innerFragments,this);
         myDiffChanges.add(change);
+        myHighlighters.put(change, highlighters);
         onChangeAdded(change);
       }
 
@@ -166,15 +191,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   @RequiresEdt
   protected void destroyChangedBlocks() {
     super.destroyChangedBlocks();
-    for (SimpleThreesideDiffChange change : myDiffChanges) {
-      change.destroy();
-    }
-    myDiffChanges.clear();
+    myHighlighters.values().forEach(SimpleDiffViewerHighlighters::destroy);
+    myHighlighters.clear();
 
-    for (SimpleThreesideDiffChange change : myInvalidDiffChanges) {
-      change.destroy();
-    }
-    myInvalidDiffChanges.clear();
+    myInvalidHighlighters.values().forEach(SimpleDiffViewerHighlighters::destroy);
+    myInvalidHighlighters.clear();
+
+    myDiffChanges.clear();
   }
 
   //
@@ -206,10 +229,15 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     if (!invalid.isEmpty()) {
       myDiffChanges.removeAll(invalid);
-      myInvalidDiffChanges.addAll(invalid);
 
       for (SimpleThreesideDiffChange change : invalid) {
+        SimpleDiffViewerHighlighters removed = myHighlighters.remove(change);
         change.markInvalid();
+
+        if (removed != null) {
+          myInvalidHighlighters.put(change, removed);
+          removed.destroyOperations();
+        }
       }
     }
   }
@@ -253,11 +281,22 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
                                getEditor(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
 
     myDiffChanges.remove(change);
-    myInvalidDiffChanges.add(change);
     change.markInvalid();
+    SimpleDiffViewerHighlighters removed = myHighlighters.remove(change);
+    if (removed != null) {
+      myInvalidHighlighters.put(change, removed);
+      removed.destroyOperations();
+    }
 
     // Do not rely on DocumentListener in case of identical change
     scheduleRediff();
+  }
+
+  @RequiresEdt
+  public void reinstallHighlighters() {
+    for (SimpleDiffViewerHighlighters highlighters : myHighlighters.values()) {
+      highlighters.reinstallAll();
+    }
   }
 
   //
@@ -312,7 +351,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     protected @NotNull String getText(@NotNull ThreeSide side) {
-      return SimpleThreesideDiffChange.getApplyActionText(SimpleThreesideDiffViewer.this, mySourceSide, myModifiedSide);
+      return getApplyActionText(SimpleThreesideDiffViewer.this, mySourceSide, myModifiedSide);
     }
 
     @Override

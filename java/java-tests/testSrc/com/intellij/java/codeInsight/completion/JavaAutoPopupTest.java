@@ -3,14 +3,31 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionContributorEP;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.*;
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
+import com.intellij.codeInsight.template.impl.LiveTemplateDocumentationProvider;
+import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -38,7 +55,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.psi.util.InheritanceUtil;
@@ -53,7 +76,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -152,7 +175,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     assertEquals("iterable2", getLookup().getCurrentItem().getLookupString());
 
     type("r");
-    assertEquals("iter", getLookup().getItems().get(0).getLookupString());
+    assertEquals("iter", getLookup().getItems().getFirst().getLookupString());
     assertEquals("iterable2", getLookup().getCurrentItem().getLookupString());
   }
 
@@ -258,7 +281,6 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   }
 
   public void test_autopopup_in_javadoc_tag_name() {
-    //noinspection JavadocDeclaration
     myFixture.configureByText("a.java", """
       /**
        * @a<caret>
@@ -286,7 +308,6 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   }
 
   public void test_autopopup_in_javadoc_parameter_name() {
-    //noinspection JavadocDeclaration
     myFixture.configureByText("a.java", """
       class Foo {
         /**
@@ -329,12 +350,16 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     edt(() -> {
       myFixture.type("r");
       getLookup().markReused();
-      getLookup().setCurrentItem(getLookup().getItems().get(0));
+      getLookup().setCurrentItem(getLookup().getItems().getFirst());
       CommandProcessor.getInstance().executeCommand(getProject(), () -> getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR), null, null);
     });
     myFixture.checkResult("""
                            class A { Iterable<?> iterable;
-                             { iterable<caret> }
+                             {
+                                 for (Object o : iterable) {
+                                    \s
+                                 }
+                             }
                            }""");
   }
 
@@ -348,13 +373,17 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
       myFixture.type("r");
       getLookup().markReused();
       myFixture.type("\b\b");
-      getLookup().setCurrentItem(getLookup().getItems().get(0));
+      getLookup().setCurrentItem(getLookup().getItems().getFirst());
       CommandProcessor.getInstance()
         .executeCommand(getProject(), () -> getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR), null, null);
     });
     myFixture.checkResult("""
                              class A { Iterable<?> iterable;
-                               { iterable<caret> }
+                               {
+                                   for (Object o : iterable) {
+                                      \s
+                                   }
+                               }
                              }""");
   }
 
@@ -823,14 +852,14 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     assertNull(getLookup());
   }
 
-  public void testNoSingleTemplateLookup() {
+  public void testLookupWithTemplates() {
     myFixture.configureByText("a.java", "class Foo { psv<caret> }");
     type("m");
-    assertNull(String.valueOf(myFixture.getLookupElementStrings()), getLookup());
+    assertEquals(List.of("psvm", "psvma"), myFixture.getLookupElementStrings());
   }
 
   public void testTemplatesWithNonImportedClasses() {
-    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.NONE);
     myFixture.addClass("package foo.bar; public class ToArray {}");
     try {
       myFixture.configureByText("a.java", "class Foo {{ foo(<caret>) }}");
@@ -840,7 +869,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
       assertTrue(myFixture.getLookupElementStrings().contains("ToArray"));
     }
     finally {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
+      CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.FIRST_LETTER);
     }
   }
 
@@ -855,18 +884,18 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
           }
       }""");
     type("er ");
-    assertFalse(myFixture.getEditor().getDocument().getText().contains("for "));
+    assertTrue(myFixture.getEditor().getDocument().getText().contains("for "));
   }
 
   public void testNewClassParenthesis() {
-    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.NONE);
     try{
       myFixture.configureByText("a.java", " class Foo { static { new <caret> } } ");
       type("aioo(");
       assertTrue(myFixture.getEditor().getDocument().getText().contains("new ArrayIndexOutOfBoundsException()"));
     }
     finally {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
+      CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.FIRST_LETTER);
     }
   }
 
@@ -905,7 +934,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 
     myFixture.configureByText("a.java", " class Foo { { int iteraaa; <caret> } } ");
     type("ite");
-    assertFalse(myFixture.getLookupElementStrings().contains("iter"));
+    assertTrue(myFixture.getLookupElementStrings().contains("iter"));
     myFixture.type("r");
     joinCommit();
     myFixture.type("a");
@@ -921,7 +950,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 
     myFixture.configureByText("a.java", " class Foo { { int iteraaa; <caret> } } ");
     type("ite");
-    assertFalse(myFixture.getLookupElementStrings().contains("iter"));
+    assertTrue(myFixture.getLookupElementStrings().contains("iter"));
     assertTrue(myFixture.getLookupElementStrings().contains("iteraaa"));
     myFixture.type("r");
     joinCommit();
@@ -1415,7 +1444,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.addClass("package bar; public final class Util { public static void bar() {} }");
     myFixture.configureByText("a.java", "class Foo { static { Util<caret> }}");
     type(".");
-    assertEquals(Set.copyOf(myFixture.getLookupElementStrings()), Set.of("Util.bar", "Util.CONSTANT", "Util.foo"));
+    assertEquals(Set.of(".new", ".lambda", "Util.bar", "Util.CONSTANT", "Util.foo"), Set.copyOf(myFixture.getLookupElementStrings()));
 
     LookupElement constant = ContainerUtil.find(myFixture.getLookupElements(), it -> it.getLookupString().equals("Util.CONSTANT"));
     LookupElementPresentation p = NormalCompletionTestCase.renderElement(constant);
@@ -1478,13 +1507,14 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(true);
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
       CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
+      CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.FIRST_LETTER);
       UISettings.getInstance().setSortLookupElementsLexicographically(false);
     }
     catch (Throwable e) {
@@ -1496,7 +1526,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   }
 
   public void testBackspaceShouldShowPreviousVariants() {
-    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.NONE);
     myFixture.configureByText("a.java", "class Foo{ void foo(int itera, int itex) { it<caret> }}");
     type("e");
     myFixture.assertPreferredCompletionItems(0, "itera", "itex");
@@ -1527,7 +1557,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   }
 
   public void test_new_primitive_array_in_Object_variable() {
-    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.NONE);
     myFixture.configureByText("a.java", "\nclass Foo {\n  void foo() {\n    Object o = new <caret>\n  }\n}\n");
     type("int");
     myFixture.assertPreferredCompletionItems(0, "int", "Integer");
@@ -1716,7 +1746,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     joinAutopopup();
     joinCompletion();
     assertNotNull(getLookup());
-    assertEquals(myFixture.getLookupElementStrings(), List.of("goo"));
+    assertEquals(myFixture.getLookupElementStrings(), List.of("goo", ".lambda"));
   }
 
   public void test_in_column_selection_mode() {
@@ -1812,7 +1842,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     type("s");
     myFixture.assertPreferredCompletionItems(0, ArrayUtil.toStringArray(Collections.nCopies(count, "MyClass")));
     edt(() -> {
-      assertEquals(" p" + toSelect, NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().get(0)).getTailText());
+      assertEquals(" p" + toSelect, NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().getFirst()).getTailText());
     });
   }
 

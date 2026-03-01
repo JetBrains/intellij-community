@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.collaboration.ui.*
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.ComponentListPanelFactory
+import com.intellij.collaboration.ui.EditableComponentFactory
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.LoadingTextLabel
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
@@ -9,6 +15,8 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.createEditActionsConfig
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
+import com.intellij.collaboration.ui.onHyperlinkActivated
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
@@ -27,9 +35,14 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.APPROVED
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.CHANGES_REQUESTED
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.COMMENTED
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.DISMISSED
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.PENDING
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
@@ -140,7 +153,9 @@ internal class GHPRTimelineItemComponentFactory(private val project: Project,
     val textPane = createHtmlPane(comment.bodyHtml)
     val content = EditableComponentFactory.create(cs, textPane, comment.editVm) {
       val actions = createEditActionsConfig(it)
-      val editor = CodeReviewCommentTextFieldFactory.createIn(this, it, actions)
+      val editor = CodeReviewCommentTextFieldFactory.createIn(this, it, actions) { editor ->
+        editor.putUserData(GHViewModelWithTextCompletion.MENTIONS_COMPLETION_KEY, comment)
+      }
       it.requestFocus()
       editor
     }

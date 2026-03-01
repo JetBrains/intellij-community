@@ -16,7 +16,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
 class VariableAssignedFromVisitor extends JavaRecursiveElementWalkingVisitor {

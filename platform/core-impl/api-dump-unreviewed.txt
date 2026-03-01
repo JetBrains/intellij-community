@@ -3485,14 +3485,6 @@ c:com.intellij.util.CachedValueImpl
 - isFromMyProject(com.intellij.openapi.project.Project):Z
 - p:isTrackValue():Z
 - p:setData(com.intellij.util.CachedValueBase$Data):V
-f:com.intellij.util.CachedValuesManagerImpl
-- com.intellij.psi.util.CachedValuesManager
-- <init>(com.intellij.openapi.project.Project):V
-- <init>(com.intellij.openapi.project.Project,com.intellij.util.CachedValuesFactory):V
-- createCachedValue(com.intellij.openapi.util.UserDataHolder,com.intellij.psi.util.CachedValueProvider,Z):com.intellij.psi.util.CachedValue
-- createCachedValue(com.intellij.psi.util.CachedValueProvider,Z):com.intellij.psi.util.CachedValue
-- createParameterizedCachedValue(com.intellij.psi.util.ParameterizedCachedValueProvider,Z):com.intellij.psi.util.ParameterizedCachedValue
-- getCachedValue(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,com.intellij.psi.util.CachedValueProvider,Z):java.lang.Object
 f:com.intellij.util.DocumentEventUtil
 - s:getMoveOffsetAfterDeletion(com.intellij.openapi.editor.event.DocumentEvent):I
 - s:getMoveOffsetBeforeInsertion(com.intellij.openapi.editor.event.DocumentEvent):I

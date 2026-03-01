@@ -47,8 +47,6 @@ internal class MavenTopLevelDependencyInsertionHandler : InsertHandler<LookupEle
       context.editor.getCaretModel().moveToOffset(dependency.getXmlTag()!!.getTextOffset())
     }
     context.commitDocument()
-
-    logMavenDependencyInsertion(context, item, obj)
   }
 
   companion object {

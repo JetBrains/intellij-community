@@ -4,7 +4,13 @@ package com.intellij.platform.settings.local
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.settings.*
+import com.intellij.platform.settings.CacheTag
+import com.intellij.platform.settings.RawSettingSerializerDescriptor
+import com.intellij.platform.settings.SettingsController
+import com.intellij.platform.settings.mapSerializer
+import com.intellij.platform.settings.objectSerializer
+import com.intellij.platform.settings.settingDescriptor
+import com.intellij.platform.settings.settingDescriptorFactory
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking

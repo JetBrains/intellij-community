@@ -51,7 +51,13 @@ import org.kohsuke.rngom.digested.DPattern;
 import org.kohsuke.rngom.nc.NameClass;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   private final Map<QName, CachedValue<XmlElementDescriptor>> myDescriptorsMap =

@@ -14,10 +14,6 @@ interface ParentEntity : GrandParentEntity {
   val data2: String
 }
 
-//region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentEntity, modification: ParentEntity.Builder.() -> Unit) = oldCode
-//endregion
-
 interface ChildEntity: ParentEntity {
   val data3: String
 }

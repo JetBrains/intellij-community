@@ -6,7 +6,12 @@ import com.intellij.ide.structureView.FileEditorPositionListener;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.Filter;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.NodeProvider;
+import com.intellij.ide.util.treeView.smartTree.ProvidingTreeModel;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.TreeAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,11 +23,16 @@ import java.util.List;
 
 public final class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel, StructureViewModel.ExpandInfoProvider {
   private final StructureViewModel myModel;
-  private final TreeActionsOwner myStructureView;
+  private final TreeActionsOwnerEx myTreeActionsOwner;
 
-  public TreeModelWrapper(@NotNull StructureViewModel model, @NotNull TreeActionsOwner structureView) {
+  public TreeModelWrapper(@NotNull StructureViewModel model, @NotNull TreeActionsOwner treeActionsOwner) {
     myModel = model;
-    myStructureView = structureView;
+    if (treeActionsOwner instanceof TreeActionsOwnerEx) {
+      myTreeActionsOwner = (TreeActionsOwnerEx)treeActionsOwner;
+    }
+    else {
+      myTreeActionsOwner = new TreeActionOwnerWrapper(treeActionsOwner);
+    }
   }
 
   @Override
@@ -55,7 +65,7 @@ public final class TreeModelWrapper implements StructureViewModel, ProvidingTree
   }
 
   private boolean isFiltered(@NotNull TreeAction action) {
-    return action instanceof Sorter && !((Sorter)action).isVisible() || myStructureView.isActionActive(action.getName());
+    return action instanceof Sorter && !((Sorter)action).isVisible() || myTreeActionsOwner.isActionActive(action);
   }
 
   @Override
@@ -151,6 +161,6 @@ public final class TreeModelWrapper implements StructureViewModel, ProvidingTree
 
   @Override
   public boolean isEnabled(@NotNull NodeProvider<?> provider) {
-    return myStructureView.isActionActive(provider.getName());
+    return myTreeActionsOwner.isActionActive(provider);
   }
 }

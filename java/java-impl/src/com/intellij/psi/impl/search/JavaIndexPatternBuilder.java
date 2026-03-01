@@ -3,7 +3,11 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.jsp.JspFile;

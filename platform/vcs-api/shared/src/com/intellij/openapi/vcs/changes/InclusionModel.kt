@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.util.ui.ThreeStateCheckBox
-import java.util.*
+import java.util.EventListener
 
 interface InclusionModel {
   fun getInclusion(): Set<Any>

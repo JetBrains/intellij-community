@@ -39,4 +39,29 @@ jvm_library(
   ],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.kernel.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_backend",
+  exports = [
+    "//platform/kernel/shared:kernel",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/kernel/rpc.backend",
+    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+  ],
+  runtime_deps = [
+    ":backend",
+    "//platform/backend:backend_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/util:util_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+    "//platform/core-api:core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.kernel.backend` end

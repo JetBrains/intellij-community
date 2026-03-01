@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Eugene Zhuravlev

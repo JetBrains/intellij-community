@@ -15,8 +15,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Set;
 
-import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationChecker.*;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationChecker.checkArgumentCount;
+import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationChecker.checkArgumentType;
+import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationChecker.checkCallReceiver;
+import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationChecker.checkReturnType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC_VAR_HANDLE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_VAR_HANDLE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.findDefinition;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isCallToMethod;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isClassWithName;
 
 final class JavaLangReflectVarHandleInvocationChecker {
   private static final Logger LOG = Logger.getInstance(JavaLangReflectVarHandleInvocationChecker.class);

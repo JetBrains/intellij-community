@@ -3,7 +3,12 @@ package com.intellij.execution.impl
 
 import com.intellij.concurrency.JobScheduler
 import com.intellij.execution.ConsoleFolding
-import com.intellij.execution.filters.*
+import com.intellij.execution.filters.ConsoleDependentInputFilterProvider
+import com.intellij.execution.filters.ConsoleFilterProvider
+import com.intellij.execution.filters.ConsoleInputFilterProvider
+import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.InputFilter
 import com.intellij.execution.process.AnsiEscapeDecoderTest
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.process.ProcessHandler
@@ -16,7 +21,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.CaretState
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.ex.EditorEx
@@ -28,8 +37,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.*
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.registerExtension
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.Alarm
 import com.intellij.util.Consumer
@@ -38,7 +52,7 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import java.io.ByteArrayOutputStream
-import java.util.*
+import java.util.Arrays
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -242,6 +256,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     }
   }
 
+  @PerformanceUnitTest
   fun testPerformance() {
     withCycleConsoleNoFolding(100) { console: ConsoleViewImpl ->
       Benchmark.newBenchmark("console print") {
@@ -257,6 +272,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     }
   }
 
+  @PerformanceUnitTest
   fun testLargeConsolePerformance() {
     withCycleConsoleNoFolding(UISettings.getInstance().consoleCycleBufferSizeKb) { console: ConsoleViewImpl ->
       Benchmark.newBenchmark("console print") {
@@ -270,6 +286,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     }
   }
 
+  @PerformanceUnitTest
   fun testPerformanceOfMergeableTokens() {
     withCycleConsoleNoFolding(1000) { console: ConsoleViewImpl ->
       Benchmark.newBenchmark("console print with mergeable tokens") {
@@ -659,6 +676,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     assertEquals(expectedText, console.text)
   }
 
+  @PerformanceUnitTest
   fun testBackspacePerformance() {
     val nCopies = 10000
     val `in` = StringUtil.repeat("\na\nb\bc", nCopies)

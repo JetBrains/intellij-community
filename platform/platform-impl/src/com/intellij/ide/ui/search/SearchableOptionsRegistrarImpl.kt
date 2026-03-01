@@ -32,8 +32,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
-import java.util.HashSet
-import java.util.LinkedHashSet
 import java.util.regex.Pattern
 import java.util.stream.Stream
 import javax.swing.event.DocumentEvent

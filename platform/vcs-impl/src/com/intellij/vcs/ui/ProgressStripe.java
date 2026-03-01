@@ -10,8 +10,11 @@ import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class ProgressStripe extends JBPanel {
   private final JComponent myTargetComponent;

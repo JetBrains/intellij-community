@@ -11,7 +11,11 @@ import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.incremental.CompileContext;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
 public final class TargetOutputIndexImpl implements TargetOutputIndex {

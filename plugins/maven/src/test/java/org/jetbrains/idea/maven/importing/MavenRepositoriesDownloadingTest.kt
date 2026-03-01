@@ -12,6 +12,10 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
+import org.jetbrains.idea.maven.project.MavenImportListener
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSyncListener
+import org.jetbrains.idea.maven.project.source.MavenDownloadLibrarySourcesSyncListener
 import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
@@ -19,10 +23,12 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
+import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.writeText
-
 
 class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   override fun skipPluginResolution() = false
@@ -89,14 +95,14 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    importProjectAsync(pom())
+    executeWithCustomDownloadSourcesPolicy(false) {
+      importProjectAsync(pom())
+    }
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isRegularFile())
-
   }
 
-  @Test
-  fun testDownloadSourcesFromRepository() = runBlocking {
+  fun syncForSourceResolutionTest(afterSyncCompleted: MavenCustomRepositoryHelper.() -> Unit) = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
@@ -113,9 +119,33 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     mavenImporterSettings.isDownloadSourcesAutomatically = true
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    importProjectAsync(pom())
+    executeWithCustomDownloadSourcesPolicy(true) {
+      importProjectAsync(pom())
+    }
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isRegularFile())
+    afterSyncCompleted(helper)
+  }
+
+  @Test
+  fun testNoSourcesDownloadedByDefaultWithoutListener() = syncForSourceResolutionTest {
+    assertFalse(getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").exists())
+  }
+
+  @Test
+  fun testDownloadSourcesFromRepository() {
+    val downloadLibrarySourcesLatch = CountDownLatch(1)
+    project.messageBus.apply {
+      connect(testRootDisposable).subscribe(MavenSyncListener.TOPIC, MavenDownloadLibrarySourcesSyncListener())
+      connect(testRootDisposable).subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+        override fun artifactDownloadingFinished() {
+          downloadLibrarySourcesLatch.countDown()
+        }
+      })
+    }
+    syncForSourceResolutionTest {
+      downloadLibrarySourcesLatch.await(60, TimeUnit.SECONDS)
+      assertTrue(getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isRegularFile())
+    }
   }
 
   @Test
@@ -402,6 +432,17 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
                          </pluginRepository>
                        </pluginRepositories>
                        """.trimIndent()
+
+  private suspend fun executeWithCustomDownloadSourcesPolicy(downloadSourcesByDefault: Boolean, fn: suspend () -> Unit) {
+    val settings = MavenProjectsManager.getInstance(project).importingSettings
+    val defaultValue = settings.isDownloadSourcesAutomatically
+    try {
+      settings.isDownloadSourcesAutomatically = downloadSourcesByDefault
+      fn()
+    } finally {
+      settings.isDownloadSourcesAutomatically = defaultValue
+    }
+  }
 
   companion object {
     private const val USERNAME = "myUsername"

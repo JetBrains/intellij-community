@@ -41,6 +41,7 @@
     <action id="Git.Show.WorkingTrees" class="git4idea.actions.workingTree.ShowWorkingTreesAction">
       <add-to-group group-id="Vcs.Log.ToolWindow.TabActions.DropDown" relative-to-action="Vcs.ShowConsoleTab" anchor="after"/>
     </action>
+    <action id="Git.CreateNewWorkingTree" class="git4idea.actions.workingTree.GitCreateWorkingTreeAction"/>
 
     <action id="Git.Drop.Selected.Changes" class="git4idea.rebase.log.changes.GitDropSelectedChangesAction">
       <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
@@ -161,6 +162,7 @@
       <action id="Git.Tag" class="git4idea.actions.GitTag"/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead"/>
       <separator/>
+      <reference ref="Git.CreateNewWorkingTree"/>
       <reference ref="Git.Show.WorkingTrees"/>
       <separator/>
       <reference ref="Vcs.Show.Log"/>
@@ -235,6 +237,7 @@
 
     <group id="Git.Branch.Backend.Checkout">
       <action class="git4idea.actions.ref.GitCheckoutAction"/>
+      <action class="git4idea.actions.workingTree.GitOpenExistingWorkingTreeForLocalBranchAction"/>
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
       <add-to-group group-id="Git.Branch.Checkout" anchor="first"/>
@@ -250,13 +253,15 @@
       <action class="git4idea.actions.branch.GitRebaseBranchAction"/>
       <action class="git4idea.actions.ref.GitMergeRefAction"/>
       <separator/>
+      <reference ref="Git.CreateNewWorkingTree"/>
+      <separator/>
       <action class="git4idea.actions.branch.GitUpdateSelectedBranchAction"/>
       <action class="git4idea.actions.branch.GitPushBranchAction"/>
       <group id="Git.Branch.Tracked" class="git4idea.actions.branch.GitTrackedBranchActionGroup" popup="true"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithRebase"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
       <separator/>
-      <group class="git4idea.actions.tag.GitPushTagsActionGroup"/>
+      <group id="Git.Push.Tags" class="git4idea.actions.tag.GitPushTagsActionGroup"/>
       <separator/>
       <action class="git4idea.actions.branch.GitRenameBranchAction" id="Git.Rename.Local.Branch"/>
       <action class="git4idea.actions.ref.GitDeleteRefAction"/>
@@ -304,6 +309,8 @@
 
     <group id="Git.FileHistory.ContextMenu">
       <reference ref="Git.Revert.In.Log"/>
+      <reference ref="Git.Fixup.To.Commit"/>
+      <reference ref="Git.Squash.Into.Commit"/>
       <separator/>
       <reference ref="Git.CreateNewTag"/>
       <separator/>
@@ -329,14 +336,15 @@
       <reference ref="Git.Squash.Commits"/>
       <reference ref="Git.Interactive.Rebase"/>
       <reference ref="Git.PushUpToCommit"/>
+      <action id="Git.AddCommitToRemoteBranch"
+              class="git4idea.actions.addCommit.GitAddCommitToRemoteBranchAction"
+              internal="true"/>
       <separator/>
       <reference ref="Git.BranchOperationGroup"/>
       <action id="Git.CreateNewBranch.FromCommit"
               class="git4idea.log.action.GitCreateNewBranchFromCommitAction"
               use-shortcut-of="Git.CreateNewBranch"/>
       <reference ref="Git.CreateNewTag"/>
-      <separator/>
-      <reference ref="Git.Show.WorkingTrees"/>
       <separator/>
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.GoToChild" anchor="before"/>
     </group>
@@ -500,10 +508,10 @@
 
     <group id="Vcs.ToolbarWidget.CreateRepository" searchable="false">
       <group id="Vcs.ToolbarWidget.ShareProject" popup="true" searchable="false">
-        <reference ref="Start.Use.Vcs"/>
       </group>
       <reference ref="Git.Init"/>
       <separator/>
+      <reference ref="Start.Use.Vcs"/>
     </group>
 
     <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget">
@@ -546,18 +554,27 @@
     <action id="Git.WorkingTrees.Open" class="git4idea.workingTrees.ui.OpenWorkingTreeAction">
       <mouse-shortcut keymap="$default" keystroke="button1 doubleClick"/>
     </action>
+    <action id="Git.WorkingTrees.Refresh" class="git4idea.workingTrees.ui.RefreshWorkingTreesAction"
+            icon="AllIcons.General.Refresh" use-shortcut-of="Synchronize"/>
 
     <group id="Git.WorkingTrees.ToolwindowGroup.Toolbar">
+      <reference ref="Git.CreateNewWorkingTree"/>
       <reference ref="Git.WorkingTrees.Remove"/>
+      <reference ref="Git.WorkingTrees.Refresh"/>
+      <separator/>
+      <reference ref="ContextHelp"/>
     </group>
 
     <group id="Git.WorkingTrees.ToolwindowGroup.Popup" popup="true">
       <reference ref="Git.WorkingTrees.Open"/>
+      <separator/>
       <reference ref="Git.WorkingTrees.Remove"/>
     </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <dependencySupport kind="vcs" coordinate="vcs:git" displayName="Git"/>
+
     <advancedSetting id="git.clone.recurse.submodules" default="true" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.read.content.with" enumClass="git4idea.util.GitTextConvMode" default="FILTERS"
                      groupKey="advanced.settings.git"/>
@@ -674,15 +691,16 @@
                  description="Show actions for a tracked branch as a sub-popup in the local branch actions popup in Git branches popup."/>
     <registryKey key="git.drop.selected.changes.enabled" defaultValue="true"
                  description="Enables the 'Drop Selected Changes' action in Git log changes tree context menu."/>
-    <registryKey key="git.in.memory.commit.editing.operations.enabled" defaultValue="false"
+    <registryKey key="git.in.memory.commit.editing.operations.enabled" defaultValue="true"
                  description="Starts in-memory variants of interactive rebase operations in suitable scenarios, leading to better performance"/>
-    <registryKey key="git.in.memory.interactive.rebase.notify.errors" defaultValue="false"
+    <registryKey key="git.in.memory.interactive.rebase.debug.notify.errors" defaultValue="false"
                  description="Show notification when in-memory interactive rebase fails and fallbacks to the regular one"/>
-    <registryKey key="git.cherry.pick.use.git.sequencer" defaultValue="false"
+    <registryKey key="git.cherry.pick.use.git.sequencer" defaultValue="true"
                  description="If enabled, Git will use a sequencer to cherry-pick multiple commits as a range (e.g., 'git cherry-pick A^..C') instead of applying each commit individually."/>
-    <registryKey key="git.commit.staged.saver.use.index.info" defaultValue="false"
+    <registryKey key="git.commit.staged.saver.use.index.info" defaultValue="true"
                  description="Uses an optimized approach to save and restore the index during changelist commits, improving performance"/>
-
+    <registryKey key="git.amend.specific.commit" defaultValue="false"
+                 description="Adds a dropdown link with a commit selector in the commit tool window to amend a specific commit"/>
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider" order="first"/>
@@ -740,7 +758,7 @@
                     serviceImplementation="git4idea.branch.GitBranchesUIHandlerImpl"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
+    <applicationService serviceInterface="git4idea.commands.GitHttpAuthService" open="true"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl"/>
     <httpRequestHandler implementation="git4idea.commands.GitAskPassExternalProcessRest"/>
     <httpRequestHandler implementation="git4idea.rebase.GitRebaseEditorExternalProcessRest"/>
@@ -750,7 +768,7 @@
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
     <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
-    <applicationService serviceImplementation="git4idea.DialogManager"/>
+    <applicationService serviceImplementation="git4idea.DialogManager" open="true"/>
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
     <applicationService serviceImplementation="git4idea.index.ui.GitStageUiApplicationSettings"/>
@@ -820,6 +838,10 @@
                  description="Show notification about modal commit deprecation if the version is specified"
                  restartRequired="false"/>
 
+    <registryKey key="git.log.provider.experimental.refs.collection" defaultValue="true"
+                 description="Reuse refs from GitRepository instead of relying on log command"
+                 restartRequired="false"/>
+
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
@@ -883,12 +905,12 @@
                         predicateClassName="git4idea.workingTrees.ui.GitWorkingTreesContentVisibilityPredicate"
                         preloaderClassName="git4idea.workingTrees.ui.GitWorkingTreesContentPreloader"
                         isInCommitToolWindow="false"/>
-    <registryKey key="git.enable.working.trees.feature" defaultValue="false" restartRequired="true"
-                 description="Enables the 'Working Trees' feature, see https://youtrack.jetbrains.com/issue/IJPL-204771"/>
+    <statistics.actionCustomPlaceAllowlist places="GitWorkingTreeToolWindowTabToolbar;GitWorkingTreeToolWindowTabEmptyList"/>
+    <backgroundPostStartupActivity implementation="git4idea.workingTrees.GitWorkingTreeStartupActivity"/>
 
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
-    <projectService serviceInterface="git4idea.ui.branch.dashboard.BranchesDashboardFilteringLogic"
+    <projectService serviceInterface="git4idea.ui.branch.dashboard.BranchesDashboardFilteringLogic" open="true"
                     serviceImplementation="git4idea.ui.branch.dashboard.DefaultBranchDashboardFilteringLogic"/>
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFoldingImpl"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
@@ -940,8 +962,7 @@
 
   <extensions defaultExtensionNs="Git4Idea">
     <gitRawAnnotationProvider implementation="git4idea.annotate.GitAnnotationProvider$DefaultGitAnnotationProvider"/>
-
-    <gitRepoIconProvider implementation="git4idea.ui.ColorManagerRepoIconProvider"/>
+    <gitFetchHandler implementation="git4idea.branch.GitBranchIncomingOutgoingManager$IncomingOutgoingRefreshFetchHandler"/>
   </extensions>
 
   <extensionPoints>
@@ -992,7 +1013,6 @@
               topic="git4idea.config.GitVcsSettings$GitVcsSettingsListener"/>
     <listener os="windows" class="git4idea.config.GitNewVersionCheckerStarter"
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
-    <listener class="git4idea.workingTrees.ui.GitWorkingTreeToolwindowUpdateListener"
-              topic="com.intellij.vcs.git.repo.GitRepositoriesHolder$UpdatesListener"/>
+
   </projectListeners>
 </idea-plugin>

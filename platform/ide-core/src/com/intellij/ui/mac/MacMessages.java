@@ -7,8 +7,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Window;
 
 /** @deprecated use {@link com.intellij.openapi.ui.Messages} or {@link com.intellij.openapi.ui.MessageDialogBuilder} */
 @Deprecated(forRemoval = true)

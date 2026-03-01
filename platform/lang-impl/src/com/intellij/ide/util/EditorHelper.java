@@ -27,7 +27,7 @@ public final class EditorHelper {
 
   public static Editor openInEditor(@NotNull PsiElement element) {
     FileEditor editor = openInEditor(element, true);
-    return editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null;
+    return editor instanceof TextEditor te ? te.getEditor() : null;
   }
 
   public static @Nullable Editor openInMaybeInjectedEditor(@NotNull PsiElement element) {

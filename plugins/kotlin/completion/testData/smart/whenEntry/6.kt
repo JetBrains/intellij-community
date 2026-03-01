@@ -16,3 +16,5 @@ fun foo(e: E?) {
 // EXIST: C
 // EXIST: null
 // EXIST: {"lookupString":"else","tailText":" ->","itemText":"else"}
+
+// IGNORE_K2

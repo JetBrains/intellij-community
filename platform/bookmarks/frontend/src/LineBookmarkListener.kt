@@ -45,7 +45,7 @@ private class LineBookmarkListener(private val project: Project, val coroutineSc
   }
 }
 
-private class LineBookmarkActivity : ProjectActivity {
+internal class LineBookmarkActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     project.serviceAsync<LineBookmarkListener>()
   }

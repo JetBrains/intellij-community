@@ -33,10 +33,10 @@ public class ConfigurationState {
   // Also consider advancing the version when
   //  - ABI generation logic changed (e.g. changes in ordering, filtering, etc)
   //  - Any changes in builder's logic implemented, that might affect sources processing
-  private static final int VERSION = 4;
+  private static final int VERSION = 7;
 
   private static final ConfigurationState EMPTY = new ConfigurationState(
-    new PathSourceMapper(), NodeSourceSnapshot.EMPTY, List.of(), NodeSourceSnapshot.EMPTY, Map.of()
+    new PathSourceMapper(), NodeSourceSnapshot.EMPTY, List.of(), NodeSourceSnapshot.EMPTY, Map.of(), -1L
   );
 
   private static final Set<CLFlags> ourIgnoredFlags = EnumSet.of(
@@ -63,15 +63,19 @@ public class ConfigurationState {
   private final Iterable<ResourceGroup> myResources;
   private final NodeSourceSnapshot myLibsSnapshot;
   private final long myFlagsDigest;
+  private final long myRunnersDigest;
+  private final long myUntrackedInputsDigest;
 
   public ConfigurationState(
-    NodeSourcePathMapper pathMapper, NodeSourceSnapshot sourcesSnapshot, Iterable<ResourceGroup> resourceGroups, NodeSourceSnapshot libsSnapshot, Map<CLFlags, List<String>> flags
+    NodeSourcePathMapper pathMapper, NodeSourceSnapshot sourcesSnapshot, Iterable<ResourceGroup> resourceGroups, NodeSourceSnapshot libsSnapshot, Map<CLFlags, List<String>> flags, long untrackedInputsDigest
   ) {
     myPathMapper = pathMapper;
     mySourcesSnapshot = sourcesSnapshot;
     myResources = resourceGroups;
     myLibsSnapshot = libsSnapshot;
     myFlagsDigest = buildFlagsDigest(flags);
+    myRunnersDigest = RunnerRegistry.getConfigurationDigest();
+    myUntrackedInputsDigest = untrackedInputsDigest;
   }
 
   public ConfigurationState(NodeSourcePathMapper pathMapper, Path savedState) throws IOException {
@@ -84,12 +88,16 @@ public class ConfigurationState {
         myResources = RW.readCollection(in, () -> new ResourceGroupImpl(in, PathSource::new));
         myLibsSnapshot = new SourceSnapshotImpl(in, PathSource::new);
         myFlagsDigest = in.readLong();
+        myRunnersDigest = in.readLong();
+        myUntrackedInputsDigest = in.readLong();
       }
       else { // version differs
-        mySourcesSnapshot = NodeSourceSnapshot.EMPTY;
-        myResources = List.of();
-        myLibsSnapshot = NodeSourceSnapshot.EMPTY;
-        myFlagsDigest = buildFlagsDigest(Map.of());
+        mySourcesSnapshot = EMPTY.mySourcesSnapshot;
+        myResources = EMPTY.myResources;
+        myLibsSnapshot = EMPTY.myLibsSnapshot;
+        myFlagsDigest = EMPTY.myFlagsDigest;
+        myRunnersDigest = 0; // will differ from current RUNNERS_DIGEST, triggering rebuild
+        myUntrackedInputsDigest = EMPTY.myUntrackedInputsDigest;
       }
     }
   }
@@ -103,6 +111,8 @@ public class ConfigurationState {
       RW.writeCollection(out, myResources, gr -> gr.write(out));
       getLibraries().write(out);
       out.writeLong(myFlagsDigest);
+      out.writeLong(myRunnersDigest);
+      out.writeLong(myUntrackedInputsDigest);
     }
     catch (Throwable e) {
       LOG.log(Level.SEVERE, "Error saving build configuration state " + context.getTargetName(), e);
@@ -123,6 +133,13 @@ public class ConfigurationState {
     }
   }
 
+  public boolean digestsDiffer(ConfigurationState other) {
+    return getFlagsDigest() != other.getFlagsDigest()
+           || getClasspathStructureDigest() != other.getClasspathStructureDigest()
+           || getRunnersDigest() != other.getRunnersDigest()
+           || getUntrackedInputsDigest() != other.getUntrackedInputsDigest();
+  }
+
   public NodeSourceSnapshot getSources() {
     return mySourcesSnapshot;
   }
@@ -139,8 +156,22 @@ public class ConfigurationState {
     return myFlagsDigest;
   }
 
+  public long getRunnersDigest() {
+    return myRunnersDigest;
+  }
+
+  public long getUntrackedInputsDigest() {
+    return myUntrackedInputsDigest;
+  }
+
   // tracks names and order of classpath entries as well as content digests of all third-party dependencies
+  private Long myClassPathStructureDigest;
+
   public long getClasspathStructureDigest() {
+    Long cached = myClassPathStructureDigest;
+    if (cached != null) {
+      return cached;
+    }
     NodeSourceSnapshot deps = getLibraries();
 
     // digest name, count and order of classpath entries as well as content digests of all non-abi deps
@@ -150,7 +181,9 @@ public class ConfigurationState {
         return DataPaths.isLibraryTracked(path)? List.of(DataPaths.getLibraryName(path)) : List.of(DataPaths.getLibraryName(path), deps.getDigest(src));
       };
 
-    return Utils.digest(flat(map(deps.getElements(), digestMapper)));
+    long dig = Utils.digest(flat(map(deps.getElements(), digestMapper)));
+    myClassPathStructureDigest = dig;
+    return dig;
   }
 
   private static long buildFlagsDigest(Map<CLFlags, List<String>> flags) {

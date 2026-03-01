@@ -14,10 +14,13 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import java.util.*
+import java.util.Enumeration
 
 fun ProblemFix.Part.Change.ijRange(): TextRange = TextRange(range.start, range.endExclusive)
 fun ai.grazie.text.TextRange.ijRange(): TextRange = TextRange(start, endExclusive)
+fun ai.grazie.rules.tree.TextRange.ijRange(): TextRange = TextRange(start, end)
+fun TextRange.aiRange(): ai.grazie.text.TextRange = ai.grazie.text.TextRange(startOffset, endOffset)
+fun TextRange.treeRange(): ai.grazie.rules.tree.TextRange = ai.grazie.rules.tree.TextRange(startOffset, endOffset)
 
 fun String.trimToNull(): String? = trim().takeIf(String::isNotBlank)
 

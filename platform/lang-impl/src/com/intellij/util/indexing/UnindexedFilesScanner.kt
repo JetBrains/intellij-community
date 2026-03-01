@@ -1,12 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.project.InitialVfsRefreshService
@@ -32,12 +36,18 @@ import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScanningHandler
 import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilterScanningHandler
 import com.intellij.util.indexing.IndexingProgressReporter.CheckPauseOnlyProgressIndicator
+import com.intellij.util.indexing.UnindexedFilesScanner.Companion.SCANNING_DISPATCHER
+import com.intellij.util.indexing.UnindexedFilesScanner.Companion.SCANNING_PARALLELISM
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.ScanningRequestToken
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
-import com.intellij.util.indexing.diagnostic.*
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistoryImpl
+import com.intellij.util.indexing.diagnostic.ScanningStatistics
+import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.IndexableFileScanner.ScanSession
@@ -47,7 +57,15 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -81,11 +99,21 @@ class ScanningIterators(
 
 /**
  * A task in [UnindexedFilesScannerExecutor]: (re-)scan files to index.
- * Typical usage is `UnindexedFilesScanner(...).queue()`.
+ * Typical usage is `UnindexedFilesScanner(...).queue()` -- submits the `UnindexedFilesScanner` as a task into a shared
+ * [UnindexedFilesScannerExecutor], don't wait, return a [Future] to control async execution.
+ *
+ * By default, files to scan are defined in [FileBasedIndexImpl.getIndexableFilesProviders] (=project's indexable files), but
+ * could be overriden with [ScanningParameters], see [ScanningIterators.predefinedIndexableFilesIterators].
+ *
+ * [com.intellij.openapi.roots.impl.FilePropertyPusher]s are applied to the scanned files, before enqueueing them into
+ * [PerProjectIndexingQueue]
+ *
+ * Scanning is done in [SCANNING_PARALLELISM] parallel workers, on [SCANNING_DISPATCHER].
  *
  * BEWARE: Scanner implements [Closeable], but usually it doesn't need try-with-resources, because [close] actually called async,
  * while processed by [UnindexedFilesScannerExecutor]. The only case there [close] should be called explicitly is when the scanner
  * object is created, but does NOT [queue]-ed.
+ * MAYBE RC: drop Closeable, just leave [close] method? -- avoids 'Closeable without try-w-resources' inspection warnings
  */
 @ApiStatus.Internal
 class UnindexedFilesScanner (
@@ -162,10 +190,7 @@ class UnindexedFilesScanner (
    * We may not have information about whether it's a full update or not, in which case we return null
    */
   override fun isFullIndexUpdate(): Boolean? {
-    val parameters = scanningParameters.getCompletedSafe()
-    if (parameters == null) {
-      return null
-    }
+    val parameters = scanningParameters.getCompletedSafe() ?: return null
     return parameters is ScanningIterators && parameters.isFullIndexUpdate()
   }
 
@@ -210,15 +235,14 @@ class UnindexedFilesScanner (
     }
 
     LOG.assertTrue(!(startCondition != null && oldTask.startCondition != null), "Merge of two start conditions is not implemented")
-    val mergedHideProgress: Boolean?
-    if (shouldHideProgressInSmartMode == null) {
-      mergedHideProgress = oldTask.shouldHideProgressInSmartMode
+    val mergedHideProgress = if (shouldHideProgressInSmartMode == null) {
+      oldTask.shouldHideProgressInSmartMode
     }
     else if (oldTask.shouldHideProgressInSmartMode != null) {
-      mergedHideProgress = (shouldHideProgressInSmartMode && oldTask.shouldHideProgressInSmartMode)
+      (shouldHideProgressInSmartMode && oldTask.shouldHideProgressInSmartMode)
     }
     else {
-      mergedHideProgress = shouldHideProgressInSmartMode
+      shouldHideProgressInSmartMode
     }
 
     val triggerA = forceReindexingTrigger
@@ -234,13 +258,13 @@ class UnindexedFilesScanner (
     }
     return UnindexedFilesScanner(
       project,
-      false,
-      false,
-      startCondition ?: oldTask.startCondition,
-      mergedHideProgress,
-      mergedPredicate,
-      forceCheckingForOutdatedIndexesUsingFileModCount || oldTask.forceCheckingForOutdatedIndexesUsingFileModCount,
-      mergedParameters,
+      onProjectOpen = false,
+      isIndexingFilesFilterUpToDate = false,
+      startCondition = startCondition ?: oldTask.startCondition,
+      shouldHideProgressInSmartMode = mergedHideProgress,
+      forceReindexingTrigger = mergedPredicate,
+      forceCheckingForOutdatedIndexesUsingFileModCount = forceCheckingForOutdatedIndexesUsingFileModCount || oldTask.forceCheckingForOutdatedIndexesUsingFileModCount,
+      scanningParameters = mergedParameters,
     )
   }
 
@@ -366,6 +390,7 @@ class UnindexedFilesScanner (
   ) {
     try {
       if (!IndexInfrastructure.hasIndices()) {
+        scanningHistory.setWasCancelled("'idea.skip.indices.initialization' flag is set")
         return
       }
       scanUnindexedFiles(indicator, progressReporter, markRef, scanningIterators)
@@ -381,7 +406,7 @@ class UnindexedFilesScanner (
     markRef: Ref<StatusMark>,
     scanningIterators: ScanningIterators,
   ) {
-    logInfo("Started scanning for indexing of " + project.name + ". Reason: " + scanningIterators.indexingReason)
+    logInfo("Started scanning for indexing of [" + project.name + "]. Reason: " + scanningIterators.indexingReason)
 
     progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
 
@@ -421,7 +446,7 @@ class UnindexedFilesScanner (
 
       val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
-      LOG.info("Scanning of " + project.name + " uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads")
+      LOG.info("Scanning of [" + project.name + "] uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads")
       progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
       progressReporter.setSubTasksCount(providers.size)
 
@@ -732,10 +757,10 @@ class UnindexedFilesScanner (
 
   private fun getLogScanningCompletedStageMessage(): String {
     val statistics = scanningHistory.scanningStatistics
-    val numberOfScannedFiles = statistics.map(JsonScanningStatistics::numberOfScannedFiles).sum()
-    val numberOfFilesForIndexing = statistics.map(JsonScanningStatistics::numberOfFilesForIndexing).sum()
-    return "Scanning completed for " + scanningHistory.project.name + '.' +
-           " Number of scanned files: " + numberOfScannedFiles + "; number of files for indexing: " + numberOfFilesForIndexing
+    val numberOfScannedFiles = statistics.sumOf(JsonScanningStatistics::numberOfScannedFiles)
+    val numberOfFilesForIndexing = statistics.sumOf(JsonScanningStatistics::numberOfFilesForIndexing)
+    return "Scanning completed for [${scanningHistory.project.name}]. " +
+           "Number of scanned files: $numberOfScannedFiles; number of files for indexing: $numberOfFilesForIndexing"
   }
 
   companion object {

@@ -7,7 +7,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.overrideImplement.*
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMemberInfo
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler
+import org.jetbrains.kotlin.idea.core.overrideImplement.createKtClassMember
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.psi.KtClassOrObject
 

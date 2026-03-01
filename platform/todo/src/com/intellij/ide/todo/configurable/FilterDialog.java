@@ -13,8 +13,14 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -2,7 +2,13 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.java.stubs.JavaClassReferenceListElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;

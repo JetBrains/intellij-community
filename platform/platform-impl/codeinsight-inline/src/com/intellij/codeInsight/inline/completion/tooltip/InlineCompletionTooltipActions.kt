@@ -9,7 +9,13 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapManager

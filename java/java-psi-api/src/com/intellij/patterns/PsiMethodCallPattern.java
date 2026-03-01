@@ -15,8 +15,8 @@
  */
 package com.intellij.patterns;
 
-import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 

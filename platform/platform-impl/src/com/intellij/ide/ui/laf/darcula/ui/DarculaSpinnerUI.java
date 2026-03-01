@@ -2,21 +2,42 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicSpinnerUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.COMPONENT_ARC;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.LW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.getOutlineColor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.maximize;
 
 /**
  * @author Konstantin Bulenkov

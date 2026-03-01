@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable.rename
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CommonFeatures
+import com.intellij.cce.core.Features
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.Lookup
+import com.intellij.cce.core.Session
+import com.intellij.cce.core.Suggestion
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluable.common.asSuggestion
 import com.intellij.cce.evaluable.common.getEditor
 import com.intellij.cce.evaluable.common.positionToString
@@ -97,9 +103,9 @@ class RenameInvoker(private val project: Project,
                    ?: throw IllegalStateException("Can't find suggestions provider \"${strategy.suggestionsProvider}\"")
 
     return if (provider is ContextAwareSuggestionsProvider) {
-      provider.getSuggestions(expectedLine, editor, lang, this::comparator, strategy.collectContextOnly)
+      provider.getSuggestions(project, expectedLine, editor, lang, this::comparator, strategy.collectContextOnly)
     } else {
-      provider.getSuggestions(expectedLine, editor, lang, this::comparator)
+      provider.getSuggestions(project, expectedLine, editor, lang, this::comparator)
     }
   }
 

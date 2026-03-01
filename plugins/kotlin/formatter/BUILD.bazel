@@ -36,4 +36,35 @@ jvm_library(
   ],
   exports = ["//plugins/kotlin/formatter/minimal"]
 )
+
+jvm_library(
+  name = "formatter_test_lib",
+  module_name = "intellij.kotlin.formatter",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//plugins/kotlin/formatter/minimal",
+    "//plugins/kotlin/formatter/minimal:minimal_test_lib",
+  ],
+  runtime_deps = [
+    ":formatter",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/code-style-impl:codeStyle-impl_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//plugins/kotlin/formatter/minimal:minimal_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.formatter` end

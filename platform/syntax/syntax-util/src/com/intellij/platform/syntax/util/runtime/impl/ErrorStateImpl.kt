@@ -3,7 +3,11 @@ package com.intellij.platform.syntax.util.runtime.impl
 
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
-import com.intellij.platform.syntax.util.runtime.*
+import com.intellij.platform.syntax.util.runtime.BracePair
+import com.intellij.platform.syntax.util.runtime.ErrorState
+import com.intellij.platform.syntax.util.runtime.Frame
+import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+import com.intellij.platform.syntax.util.runtime.SyntaxRuntimeBundle
 import com.intellij.util.containers.LimitedPool
 
 internal class ErrorStateImpl : ErrorState {

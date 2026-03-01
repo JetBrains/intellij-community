@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastResolveApiTestBase
 import org.junit.runner.RunWith
 import java.nio.file.Path

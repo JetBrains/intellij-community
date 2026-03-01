@@ -8,11 +8,11 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File

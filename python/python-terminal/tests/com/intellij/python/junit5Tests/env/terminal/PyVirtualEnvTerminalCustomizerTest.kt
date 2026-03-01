@@ -6,7 +6,6 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.ExecuteProcessException
@@ -15,24 +14,27 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.eel.spawnProcess
-import com.intellij.python.community.impl.venv.tests.pyVenvFixture
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.community.junit5Tests.framework.conda.createCondaEnv
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
+import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.persist
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
-import org.hamcrest.CoreMatchers.*
+import org.hamcrest.CoreMatchers.anyOf
+import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.MatcherAssert.assertThat
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
@@ -45,7 +47,11 @@ import org.junit.jupiter.api.io.TempDir
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isExecutable
+import kotlin.io.path.name
+import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
 
@@ -119,11 +125,11 @@ class PyVirtualEnvTerminalCustomizerTest {
         val sdk = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(null, emptyList())
         sdkToDelete = sdk
         sdk.persist()
-        ModuleRootModificationUtil.setModuleSdk(moduleFixture.get(), sdk)
+        moduleFixture.get().pythonSdk = sdk
         Pair(Path(sdk.homePath!!), envDir.toRealPath().pathString)
       }
       else {
-        val venv = VirtualEnvReader.Instance.findPythonInPythonRoot(tempDirFixture.get())!!
+        val venv = VirtualEnvReader().findPythonInPythonRoot(tempDirFixture.get())!!
         Pair(venv, tempDirFixture.get().name)
       }
 

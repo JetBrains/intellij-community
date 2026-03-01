@@ -9,7 +9,12 @@ import com.intellij.diff.util.LineRange
 import com.intellij.icons.AllIcons
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CompositeShortcutSet
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diff.DefaultFlagsProvider
@@ -34,7 +39,10 @@ import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.ui.EditorTextField
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics

@@ -2,7 +2,9 @@
 
 package com.intellij.stats.completion.tracker
 
-import com.intellij.codeInsight.completion.BaseCompletionService
+import com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS
+import com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_SET_ORDER
+import com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.storage.LookupStorage
@@ -85,13 +87,13 @@ class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
 
   private fun computeAnalyticsItemFeatures(lookupElement: LookupElement): Map<String, String> {
     val features = mutableMapOf<String, String>()
-    lookupElement.getUserData(LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS)?.let {
+    lookupElement.getUserData(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS)?.let {
       features["ml_analytics_timestamp_show"] = it.toString()
     }
-    lookupElement.getUserData(BaseCompletionService.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS)?.let {
+    lookupElement.getUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS)?.let {
       features["ml_analytics_timestamp_add"] = it.toString()
     }
-    lookupElement.getUserData(BaseCompletionService.LOOKUP_ELEMENT_RESULT_SET_ORDER)?.let {
+    lookupElement.getUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER)?.let {
       features["ml_analytics_to_result_set_add_order"] = it.toString()
     }
     return features

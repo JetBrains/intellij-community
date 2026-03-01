@@ -5,7 +5,11 @@ import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.util.ProgressBarUtil
 import com.intellij.ui.JBColor
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.selected
 import javax.swing.JComponent
 import javax.swing.JProgressBar

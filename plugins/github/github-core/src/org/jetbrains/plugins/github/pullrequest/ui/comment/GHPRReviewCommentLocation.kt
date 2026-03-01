@@ -9,7 +9,7 @@ sealed interface GHPRReviewCommentLocation {
   val lineIdx: Int
 
   data class SingleLine(override val side: Side, override val lineIdx: Int) : GHPRReviewCommentLocation
-  data class MultiLine(override val side: Side, val startLineIdx: Int, override val lineIdx: Int) : GHPRReviewCommentLocation
+  data class MultiLine(val startSide: Side, val startLineIdx: Int, override val side: Side, override val lineIdx: Int) : GHPRReviewCommentLocation
 }
 
 val GHPRReviewCommentLocation.lineLocation: DiffLineLocation

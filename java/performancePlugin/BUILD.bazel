@@ -37,4 +37,33 @@ jvm_library(
     "//java/openapi:java",
   ]
 )
+
+jvm_library(
+  name = "performancePlugin_test_lib",
+  module_name = "intellij.java.performancePlugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":performancePlugin",
+    "//plugins/performanceTesting/core:performanceTesting_test_lib",
+    "//java/java-analysis-impl:analysis-impl_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//java/compiler/openapi:java-compiler_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//java/idea-ui:ui_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/performanceTesting/vcs:vcs_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//java/openapi:java_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.performancePlugin` end

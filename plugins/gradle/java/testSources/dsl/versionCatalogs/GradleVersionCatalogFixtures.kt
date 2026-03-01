@@ -50,4 +50,17 @@ internal object GradleVersionCatalogFixtures {
       )
       withBuildFile(gradleVersion, "subprojectsDir/subproject1")
     }
+
+  internal val VERSION_CATALOG_COMPOSITE_BUILD_FIXTURE =
+    GradleTestFixtureBuilder.create("GradleVersionCatalogs-composite-build") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
+        includeBuild("includedBuild1")
+      }
+      withSettingsFile(gradleVersion, "includedBuild1",) {
+        include("subproject1")
+      }
+      withBuildFile(gradleVersion, "includedBuild1")
+      withBuildFile(gradleVersion, "includedBuild1/subproject1")
+      withFile("includedBuild1/gradle/libs.versions.toml", "")
+    }
 }

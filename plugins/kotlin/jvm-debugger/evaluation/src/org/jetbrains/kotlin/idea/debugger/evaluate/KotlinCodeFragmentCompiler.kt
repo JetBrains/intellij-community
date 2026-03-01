@@ -3,19 +3,31 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
+import com.intellij.debugger.engine.evaluation.IncorrectCodeFragmentException
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.Range
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
-import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.compile.KaCodeFragmentCapturedValue
+import org.jetbrains.kotlin.analysis.api.components.CODE_FRAGMENT_CLASS_NAME
+import org.jetbrains.kotlin.analysis.api.components.CODE_FRAGMENT_METHOD_NAME
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
+import org.jetbrains.kotlin.analysis.api.components.KaDebuggerExtension
+import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KaRestrictedAnalysisException
+import org.jetbrains.kotlin.cli.create
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
@@ -28,8 +40,20 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator.Companion.log
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
-import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.*
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompilationResult
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledCodeFragmentData
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.K2CodeFragmentParameterInfo
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.getMethodSignature
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.internalClassName
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.reportErrorWithAttachments
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinMethodSmartStepTarget
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.SmartStepIntoContext
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.filterAlreadyExecuted
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.findSmartStepTargets
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.getContainingExpression
+import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.getCurrentDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -45,6 +69,9 @@ interface KotlinCodeFragmentCompiler {
         fun getInstance(): KotlinCodeFragmentCompiler = service<KotlinCodeFragmentCompiler>()
     }
 }
+
+@ApiStatus.Internal
+val KOTLIN_CODE_FRAGMENT_CLASS_AND_FUNCTION_NAMES: Key<Pair<String, String>> = Key<Pair<String, String>>("kotlin.code.fragment.class.and.function.names")
 
 class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     override val compilerType: CompilerType = CompilerType.K2
@@ -80,6 +107,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         }
     }
 
+    @OptIn(KaPlatformInterface::class)
     private fun unwrapEvaluationException(e: Throwable): Throwable {
         var current = e
         while (true) {
@@ -146,17 +174,19 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class, ExperimentalCompilerApi::class)
     private fun compiledCodeFragmentDataK2Impl(context: ExecutionContext, codeFragment: KtCodeFragment): CompiledCodeFragmentData {
         val module = codeFragment.module
 
-        val compilerConfiguration = CompilerConfiguration().apply {
+        val (generatedClassName, generatedEntryFunctionName) =
+            KOTLIN_CODE_FRAGMENT_CLASS_AND_FUNCTION_NAMES.get(codeFragment) ?: (GENERATED_CLASS_NAME to GENERATED_FUNCTION_NAME)
+        val compilerConfiguration = CompilerConfiguration.create().apply {
             if (module != null) {
                 put(CommonConfigurationKeys.MODULE_NAME, module.name)
             }
             put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, codeFragment.languageVersionSettings)
-            put(CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
-            put(CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
+            put(CODE_FRAGMENT_CLASS_NAME, generatedClassName)
+            put(CODE_FRAGMENT_METHOD_NAME, generatedEntryFunctionName)
         }
 
         return analyze(codeFragment) {
@@ -164,7 +194,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                 val compilerTarget = KaCompilerTarget.Jvm(
                     isTestMode = false,
                     compiledClassHandler = null,
-                    debuggerExtension = DebuggerExtension(ExecutionStack(context)))
+                    debuggerExtension = KaDebuggerExtension(ExecutionStack(context)))
                 val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
 
                 when (val result =
@@ -173,11 +203,12 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                         reportMutedExceptions(result, context, codeFragment)
                         logCompilation(codeFragment)
 
-                        val classes: List<ClassToLoad> = result.output
-                            .filter { it.isClassFile && it.isCodeFragmentClassFile }
+                        val compiledFiles = result.output.filter { it.isClassFile && isCodeFragmentClassPath(it.path, generatedClassName) }
+
+                        val classes: List<ClassToLoad> = compiledFiles
                             .map { ClassToLoad(it.internalClassName, it.path, it.content) }
 
-                        val fragmentClass = classes.single { it.className == GENERATED_CLASS_NAME }
+                        val fragmentClass = classes.single { it.className == generatedClassName }
                         val methodSignature = getMethodSignature(fragmentClass)
 
                         val parameterInfo = computeCodeFragmentParameterInfo(result)
@@ -221,31 +252,35 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun CodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? {
-        return when (this) {
-            is CodeFragmentCapturedValue.Local ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name, depthRelativeToCurrentFrame)
-            is CodeFragmentCapturedValue.LocalDelegate ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, displayText, depthRelativeToCurrentFrame)
-            is CodeFragmentCapturedValue.ContainingClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame, displayText)
-            is CodeFragmentCapturedValue.SuperClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame,displayText)
-            is CodeFragmentCapturedValue.ExtensionReceiver ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.EXTENSION_RECEIVER, name, depthRelativeToCurrentFrame,displayText)
-            is CodeFragmentCapturedValue.ContextReceiver -> {
-                val name = NameUtils.contextReceiverName(index).asString()
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, depthRelativeToCurrentFrame,displayText)
-            }
-            is CodeFragmentCapturedValue.ForeignValue -> {
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FOREIGN_VALUE, name, depthRelativeToCurrentFrame)
-            }
-            is CodeFragmentCapturedValue.BackingField ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, depthRelativeToCurrentFrame,displayText)
-            is CodeFragmentCapturedValue.CoroutineContext ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.COROUTINE_CONTEXT, "", depthRelativeToCurrentFrame)
-            else -> null
+    private fun KaCodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? = when (this) {
+        is KaCodeFragmentCapturedValue.Local ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name, depthRelativeToCurrentFrame)
+
+        is KaCodeFragmentCapturedValue.LocalDelegate ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, displayText, depthRelativeToCurrentFrame)
+
+        is KaCodeFragmentCapturedValue.ContainingClass ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame, displayText)
+
+        is KaCodeFragmentCapturedValue.SuperClass ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame, displayText)
+
+        is KaCodeFragmentCapturedValue.ExtensionReceiver ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.EXTENSION_RECEIVER, name, depthRelativeToCurrentFrame, displayText)
+
+        is KaCodeFragmentCapturedValue.ContextReceiver -> {
+            val name = NameUtils.contextReceiverName(index).asString()
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, depthRelativeToCurrentFrame, displayText)
         }
+
+        is KaCodeFragmentCapturedValue.ForeignValue ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FOREIGN_VALUE, name, depthRelativeToCurrentFrame)
+
+        is KaCodeFragmentCapturedValue.BackingField ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, depthRelativeToCurrentFrame, displayText)
+
+        is KaCodeFragmentCapturedValue.CoroutineContext ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.COROUTINE_CONTEXT, "", depthRelativeToCurrentFrame)
     }
 }
 
@@ -265,14 +300,10 @@ private fun reportMutedExceptions(
     }
 }
 
-fun isCodeFragmentClassPath(path: String): Boolean {
-    return path == "$GENERATED_CLASS_NAME.class"
-            || (path.startsWith("$GENERATED_CLASS_NAME\$") && path.endsWith(".class"))
+private fun isCodeFragmentClassPath(path: String, generatedClassName: String): Boolean {
+    return path == "$generatedClassName.class"
+            || (path.startsWith("$generatedClassName$") && path.endsWith(".class"))
 }
-
-@KaExperimentalApi
-val KaCompiledFile.isCodeFragmentClassFile: Boolean
-    get() = isCodeFragmentClassPath(path)
 
 fun hasCastOperator(codeFragment: KtCodeFragment): Boolean {
     var result = false

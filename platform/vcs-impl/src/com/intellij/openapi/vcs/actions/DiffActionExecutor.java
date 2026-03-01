@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.diff.*;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContentFactoryEx;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.chains.SimpleDiffRequestChain;

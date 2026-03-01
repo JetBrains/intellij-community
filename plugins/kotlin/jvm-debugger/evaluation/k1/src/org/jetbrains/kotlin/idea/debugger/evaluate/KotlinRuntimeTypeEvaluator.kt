@@ -10,10 +10,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.sun.jdi.ClassType
 import com.sun.jdi.Value
 import org.jetbrains.eval4j.jdi.asValue
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
+@K1Deprecation
 abstract class KotlinRuntimeTypeEvaluator(
     editor: Editor?,
     expression: KtExpression,

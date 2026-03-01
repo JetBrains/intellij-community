@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/refactoring/extractFunctionInplace")
-public class InplaceIntroduceFunctionTestGenerated extends AbstractInplaceIntroduceFunctionTest {
+public class InplaceIntroduceFunctionTestGenerated extends AbstractK1InplaceIntroduceFunctionTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

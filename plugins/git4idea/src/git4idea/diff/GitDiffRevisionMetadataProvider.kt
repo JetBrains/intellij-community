@@ -19,7 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import java.time.Duration
-import java.util.*
+import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
 internal class GitDiffRevisionMetadataProvider : DiffRevisionMetadataProvider {
@@ -45,7 +45,7 @@ internal data class GitDiffRevisionMetadataInProject(val project: Project, val s
     LOG.trace("Loading metadata for ${commitInRepo.hash} in ${commitInRepo.repoRoot.path}")
 
     val root = commitInRepo.repoRoot.virtualFile ?: return Optional.empty()
-    val commitMetadata = GitLogUtil.collectMetadata(project, root, listOf(commitInRepo.hash)).singleOrNull()
+    val commitMetadata = GitLogUtil.collectMetadataForCommit(project, root, commitInRepo.hash)
     return Optional.ofNullable(commitMetadata)
   }
 

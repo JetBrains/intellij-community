@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * @author Konstantin Bulenkov

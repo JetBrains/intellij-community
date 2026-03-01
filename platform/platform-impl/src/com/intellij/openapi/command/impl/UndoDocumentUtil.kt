@@ -4,7 +4,11 @@ package com.intellij.openapi.command.impl
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.undo.*
+import com.intellij.openapi.command.undo.DocumentReference
+import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.DocumentReferenceProvider
+import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.command.undo.UndoableAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory

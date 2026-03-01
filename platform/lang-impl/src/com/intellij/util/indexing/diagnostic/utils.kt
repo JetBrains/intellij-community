@@ -1,13 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Key
 import com.intellij.testFramework.TestModeFlags
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDateTime
@@ -19,7 +18,7 @@ object IndexDiagnosticDumperUtils {
   val testDiagnosticPathFlag: Key<Path> = Key("IndexDiagnosticDumperUtils.testDiagnosticPathFlag")
 
   val jacksonMapper: ObjectMapper by lazy {
-    jacksonObjectMapper().registerKotlinModule()
+    jacksonObjectMapper()
   }
 
   val diagnosticTimestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")

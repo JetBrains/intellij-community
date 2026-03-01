@@ -22,4 +22,20 @@ jvm_library(
     "//libraries/stream",
   ]
 )
+
+jvm_library(
+  name = "langInjection_test_lib",
+  module_name = "intellij.python.langInjection",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":langInjection",
+    "//platform/core-api:core_test_lib",
+    "//plugins/IntelliLang:langInjection_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//python:python-community-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//libraries/stream:stream_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.python.langInjection` end

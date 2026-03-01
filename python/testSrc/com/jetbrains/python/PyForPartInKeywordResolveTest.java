@@ -2,12 +2,12 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.fixtures.PyResolveTestCase;
-import com.jetbrains.python.psi.PyFunction;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor;
+import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.intellij.psi.PsiReference;
+import com.jetbrains.python.psi.PyFunction;
 
 public class PyForPartInKeywordResolveTest extends PyResolveTestCase {
 

@@ -6,6 +6,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.remote.GrazieRemote.downloadAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
@@ -21,12 +22,14 @@ object GrazieRemote {
 
   fun isJLangAvailableLocally(lang: Lang): Boolean {
     if (lang.isEnglish()) return true
-    return GrazieDynamic.getLangDynamicFolder(lang).resolve(lang.ltRemote!!.file).exists()
+    return GrazieDynamic.dynamicFolder.resolve(lang.ltRemote!!.file).exists()
   }
 
   fun isAvailableLocally(lang: Lang): Boolean {
     if (lang.isEnglish()) return true
-    return GrazieDynamic.getLangDynamicFolder(lang).exists()
+    return lang.remoteDescriptors.all {
+      GrazieDynamic.dynamicFolder.resolve(it.storageName).exists()
+    }
   }
 
   fun allAvailableLocally(languages: Collection<Lang>): Boolean = languages.all { isAvailableLocally(it) }
@@ -42,7 +45,7 @@ object GrazieRemote {
    * @param lang Language to download
    * @return true if download was successful, false otherwise
    */
-  fun downloadWithoutLicenseCheck(lang: Lang): Boolean = LanguageDownloader.download(lang)
+  fun downloadWithoutLicenseCheck(lang: Lang): Boolean = LanguageDownloader.download(listOf(lang))
 
   /** Downloads [languages] asynchronously to local storage */
   fun downloadAsync(languages: Collection<Lang>, project: Project): Unit = LanguageDownloader.downloadAsync(languages, project)
@@ -74,10 +77,17 @@ object GrazieRemote {
     return languages.filter { it.hunspellRemote?.isGplLicensed != true }
   }
 
+  @Deprecated("Use isValidBundleForLanguage(descriptor, file) instead")
   fun isValidBundleForLanguage(language: Lang, file: Path): Boolean {
     val remote = language.ltRemote ?: return false
     val actualChecksum = checksum(file)
     return remote.checksum == actualChecksum
+  }
+
+  fun isValidBundleForLanguage(descriptor: RemoteLangDescriptor?, file: Path): Boolean {
+    if (descriptor == null) return false
+    val actualChecksum = checksum(file)
+    return descriptor.checksum == actualChecksum
   }
 
   @ApiStatus.Internal

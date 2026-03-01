@@ -15,7 +15,16 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.FileContextProvider;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -25,10 +34,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.providers.FileTargetContext.toTargetContexts;
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 
 /**
  * @author Maxim.Mossienko

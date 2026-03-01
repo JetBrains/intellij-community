@@ -4,7 +4,13 @@ package com.intellij.vcs.log.data
 import com.intellij.CommonBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsShortCommitDetails
+import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.util.VcsUserUtil
 import org.jetbrains.annotations.ApiStatus
 

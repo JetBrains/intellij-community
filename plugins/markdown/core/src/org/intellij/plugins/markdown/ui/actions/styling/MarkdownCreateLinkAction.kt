@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.actions.styling
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Caret
@@ -20,8 +24,8 @@ import com.intellij.util.LocalFileUrl
 import com.intellij.util.Urls
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
-import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.jetbrains.annotations.Nls
@@ -46,7 +50,8 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   override fun isSelected(event: AnActionEvent): Boolean {
     val editor = MarkdownActionUtil.findMarkdownEditor(event)
     val file = event.getData(CommonDataKeys.PSI_FILE)
-    if (editor == null || file == null || !file.language.isMarkdownLanguage()) {
+    val isMarkdownSupported = file?.language?.supportsMarkdown(event.dataContext) == true
+    if (editor == null || file == null || !isMarkdownSupported) {
       event.presentation.isEnabledAndVisible = false
       return false
     }

@@ -8,3 +8,5 @@ fun bar() {
 
 // EXIST: { lookupString: "class", itemText: "class", attributes: "bold" }
 // NOTHING_ELSE
+
+// IGNORE_K2

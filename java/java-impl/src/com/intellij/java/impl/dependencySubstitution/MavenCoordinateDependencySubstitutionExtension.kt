@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.entities
 
-private class MavenCoordinateDependencySubstitutionExtension : DependencySubstitutionExtension {
+internal class MavenCoordinateDependencySubstitutionExtension : DependencySubstitutionExtension {
 
   override fun buildLibraryToModuleMap(storage: EntityStorage): Map<LibraryId, ModuleId> {
     val modules = storage.entities<ModuleMavenCoordinateEntity>()

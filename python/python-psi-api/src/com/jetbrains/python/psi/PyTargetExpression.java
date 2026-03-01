@@ -2,7 +2,11 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.model.psi.PsiExternalReferenceHost;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.ast.PyAstTargetExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;

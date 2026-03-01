@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.resolve.OverrideResolver
 
+@K1Deprecation
 open class ImplementMembersHandler : GenerateMembersHandler(true), IntentionAction {
     override fun collectMembersToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject> {
         return OverrideResolver.getMissingImplementations(descriptor)
@@ -32,6 +34,7 @@ open class ImplementMembersHandler : GenerateMembersHandler(true), IntentionActi
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = isValidFor(editor, file)
 }
 
+@K1Deprecation
 class ImplementAsConstructorParameter : ImplementMembersHandler() {
     override fun getText(): String = KotlinIdeaCoreBundle.message("action.text.implement.as.constructor.parameters")
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -56,25 +56,16 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testOverrideForImplicitClass() { doTest(false); }
   public void testOverrideForClassNestedInImplicitClass() { doTest(false); }
-
   public void testImplementExtensionMethods() { doTest(true); }
-
   public void testOverrideExtensionMethods() { doTest(false); }
-
   public void testMultipleSuperMethodsThroughGenerics() { doTest(true); }
-
   public void testDoNotImplementExtensionMethods() { doTest(true); }
-
   public void testExtensionMethods1() { doTest(true); }
-
   public void testExtensionMethods2() { doTest(true); }
-
   public void testSkipUnknownAnnotations() { doTest(true); }
-
   public void testMultipleInheritedThrows() { doTest(false); }
-
   public void testOverrideInInterface() { doTest(false); }
-
+  public void testOverrideInEmptyEnum() { doTest(false); }
   public void testMultipleInheritanceWithThrowables() { doTest(true); }
 
   public void testBrokenMethodDeclaration() {

@@ -7,6 +7,8 @@ import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.community.impl.uv.common.UV_UI_INFO
+import com.intellij.python.pyproject.model.internal.pyProjectToml.TomlDependencySpecification
+import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
@@ -24,7 +26,6 @@ import java.nio.file.PathMatcher
 import kotlin.io.path.relativeTo
 
 
-
 internal class UvTool : Tool {
 
   override val id: ToolId = UV_TOOL_ID
@@ -35,7 +36,10 @@ internal class UvTool : Tool {
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 
-  override suspend fun getProjectStructure(entries: Map<ProjectName, PyProjectTomlProject>, rootIndex: Map<Directory, ProjectName>): ProjectStructureInfo = withContext(Dispatchers.Default) {
+  override suspend fun getProjectStructure(
+    entries: Map<ProjectName, PyProjectTomlProject>,
+    rootIndex: Map<Directory, ProjectName>,
+  ): ProjectStructureInfo = withContext(Dispatchers.Default) {
     val workspaces = entries.mapNotNull { (name, entry) ->
       val matchers = getWorkspaceMembers(entry.pyProjectToml.toml) ?: return@mapNotNull null
       Pair(entry.root, Pair(matchers, name))
@@ -46,11 +50,15 @@ internal class UvTool : Tool {
     val memberToWorkspace = HashMap<ProjectName, MutableSet<ProjectName>>()
     for ((workspaceRoot, matchersAndName) in workspaces) {
       val (matchers, workspaceName) = matchersAndName
+      // From the uv doc: every workspace needs a root, which is also a workspace member.
+      val workspaceMembers = mutableSetOf(workspaceName)
+      workspaceToMembers[workspaceName] = workspaceMembers
+      memberToWorkspace[workspaceName] = mutableSetOf(workspaceName)
       for ((memberRoot, memberName) in dirToProjectName) {
         if (!memberRoot.startsWith(workspaceRoot)) continue
 
         if (matchers.match(memberRoot.relativeTo(workspaceRoot).normalize())) {
-          workspaceToMembers.getOrPut(workspaceName) { HashSet() }.add(memberName)
+          workspaceMembers.add(memberName)
           memberToWorkspace.getOrPut(memberName) { HashSet() }.add(workspaceName)
         }
 
@@ -77,7 +85,7 @@ internal class UvTool : Tool {
 
     }
     return@withContext ProjectStructureInfo(
-      dependencies = dependencies,
+      dependencies = ProjectDependencies(dependencies),
       membersToWorkspace = memberToWorkspace.map { (member, workspaces) ->
         val workspaceCount = workspaces.size
         assert(workspaceCount != 0) { "Workspace can't be empty for $member" }
@@ -89,6 +97,11 @@ internal class UvTool : Tool {
     )
 
   }
+
+  override fun getTomlDependencySpecifications(): List<TomlDependencySpecification> = listOf(
+    TomlDependencySpecification.PathDependency("tool.uv.sources"),
+    TomlDependencySpecification.Pep621Dependency("tool.uv.dev-dependencies"),
+  )
 
   @RequiresBackgroundThread
   private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {

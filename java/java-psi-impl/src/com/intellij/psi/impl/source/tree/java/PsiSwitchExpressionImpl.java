@@ -2,7 +2,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;

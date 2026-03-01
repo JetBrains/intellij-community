@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.confidence
 
 import com.intellij.codeInsight.completion.CompletionConfidence
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class EnableAutopopupInStringTemplate : CompletionConfidence() {
-    override fun shouldSkipAutopopup(contextElement: PsiElement, psiFile: PsiFile, offset: Int): ThreeState {
+    override fun shouldSkipAutopopup(editor: Editor, contextElement: PsiElement, psiFile: PsiFile, offset: Int): ThreeState {
         val stringTemplate =
             contextElement.prevLeaf()?.getParentOfType<KtSimpleNameStringTemplateEntry>(strict = false) ?: return ThreeState.UNSURE
 

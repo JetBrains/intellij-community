@@ -32,7 +32,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.createRanges
-import java.util.*
+import java.util.BitSet
 
 class ComparisonUtilAutoTest : HeavyDiffTestCase() {
   val RUNS = 30

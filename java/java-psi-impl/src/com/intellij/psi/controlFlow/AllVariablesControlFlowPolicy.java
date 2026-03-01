@@ -15,7 +15,11 @@
  */
 package com.intellij.psi.controlFlow;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
 public final class AllVariablesControlFlowPolicy implements ControlFlowPolicy {

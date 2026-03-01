@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:commons-cli"],
   runtime_deps = ["@lib//:commons-cli"]
 )
+
+jvm_library(
+  name = "cli_test_lib",
+  module_name = "intellij.libraries.commons.cli",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:commons-cli"],
+  runtime_deps = [":cli"]
+)
 ### auto-generated section `build intellij.libraries.commons.cli` end

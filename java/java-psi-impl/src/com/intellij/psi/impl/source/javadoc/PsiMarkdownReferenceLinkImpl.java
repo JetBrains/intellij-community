@@ -5,6 +5,7 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiMarkdownReferenceLink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,21 +33,28 @@ public class PsiMarkdownReferenceLinkImpl extends CompositePsiElement implements
 
   @Override
   public @Nullable PsiElement getLabel() {
-    if (getChildren().length >= 1) {
-      return getChildren()[1];
-    }
-    // malformed/incomplete link
-    return null;
+    // returns `null` malformed/incomplete link
+    return getChildAt(1);
   }
 
   @Override
   public boolean isShortLink() {
-    return getChildren().length < 4;
+    return countChildren(null) < 5;
   }
 
   @Override
   public @Nullable PsiElement getLinkElement() {
-    if (isShortLink()) return getLabel();
-    return getChildren()[4];
+    int childrenCount = countChildren(null);
+    return getChildAt(childrenCount - 2);
+  }
+  
+  /// Utility function, get PsiElement at specific index (if it exists)
+  private @Nullable PsiElement getChildAt(int index) {
+    TreeElement child = getFirstChildNode();
+    for (int i = 0; i < index; i++) {
+      child = child.getTreeNext();
+      if (child == null) return null;
+    }
+    return child == null ? null : child.getPsi();
   }
 }

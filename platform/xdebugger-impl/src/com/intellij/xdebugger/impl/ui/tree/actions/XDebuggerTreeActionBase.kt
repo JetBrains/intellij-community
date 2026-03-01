@@ -66,8 +66,9 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
      */
     @JvmStatic
     fun getSelectedNodes(dataContext: DataContext): List<XValueNodeImpl> {
-      val selectedNodes = XDebuggerTree.SELECTED_NODES.getData(dataContext) ?: emptyList()
-      if (!SplitDebuggerMode.isSplitDebugger()) return selectedNodes
+      if (!SplitDebuggerMode.isSplitDebugger()) {
+        return XDebuggerTree.SELECTED_NODES.getData(dataContext) ?: emptyList()
+      }
 
       if (showSplitWarnings() && AppMode.isRemoteDevHost()) {
         LOG.error("""
@@ -77,12 +78,12 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
         """)
         return emptyList()
       }
-      val selectedValues = getSelectedSplitValues(dataContext)
-      if (selectedNodes.size != selectedValues.size) {
-        LOG.error("The number of selected nodes and corresponding backend values should be equal")
-        return emptyList()
-      }
-      return selectedNodes.zip(selectedValues) { node, backendValue ->
+
+      return fetchSelectedValues(dataContext).mapNotNull { (backendValue, _, node) ->
+        if (node == null) return@mapNotNull null
+        // no need to wrap if the node already exposes the backend value
+        if (node.valueContainer === backendValue) return@mapNotNull node
+        // replace the node with a delegate that exposes the backend value
         object : XValueNodeImplDelegate(node, backendValue) {
           override fun getValueContainer(): XValue {
             return backendValue
@@ -90,6 +91,7 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
         }
       }
     }
+
 
     /**
      * Returns the first of the selected nodes returned by [getSelectedNodes] or null if no nodes were selected.
@@ -110,10 +112,27 @@ abstract class XDebuggerTreeActionBase : AnAction(), ActionRemoteBehaviorSpecifi
      */
     @JvmStatic
     fun getSelectedValue(dataContext: DataContext): XValue? =
-      getSelectedSplitValues(dataContext).firstOrNull()
+      fetchSelectedValues(dataContext).firstOrNull()?.xValue
 
-    private fun getSelectedSplitValues(dataContext: DataContext): List<XValue> {
-      return SplitDebuggerUIUtil.getXDebuggerTreeSelectedBackendValues(dataContext).map { it.xValue }
+    private fun fetchSelectedValues(dataContext: DataContext): List<XDebuggerTreeSelectedValue> {
+      val splitValues = SplitDebuggerUIUtil.getXDebuggerTreeSelectedBackendValues(dataContext)
+      return splitValues + fetchSelectedNodeValues(splitValues, dataContext)
+    }
+
+    /**
+     * Nodes could be added into context manually (e.g. from tests)
+     */
+    private fun fetchSelectedNodeValues(
+      selectedSplitValues: List<XDebuggerTreeSelectedValue>,
+      dataContext: DataContext,
+    ): List<XDebuggerTreeSelectedValue> {
+      if (!SplitDebuggerMode.isSplitDebugger()) return emptyList()
+      val selectedNodes = XDebuggerTree.SELECTED_NODES.getData(dataContext) ?: return emptyList()
+
+      val splitValueNodes = selectedSplitValues.map { it.node }
+      return selectedNodes
+        .filter { it !in splitValueNodes }
+        .map { XDebuggerTreeSelectedValue(it.valueContainer, it.name, it) }
     }
 
     private val LOG = Logger.getInstance(XDebuggerTreeActionBase::class.java)

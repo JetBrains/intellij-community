@@ -19,7 +19,11 @@ import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -76,7 +80,7 @@ class CustomKindFileSetTest {
       assertFalse(module.moduleContentScope.contains(file))
       assertFalse(module.moduleScope.contains(file))
       assertIteratedContent(projectModel.project, mustNotContain = listOf(root, file))
-      val fileSet = fileIndex.findFileSet(file, true, true, true, true, true, true)
+      val fileSet = fileIndex.findFileSet(file, true, true, true, true, true, true, true)
       assertNotNull(fileSet)
       assertEquals(WorkspaceFileKind.CUSTOM, fileSet!!.kind)
     }

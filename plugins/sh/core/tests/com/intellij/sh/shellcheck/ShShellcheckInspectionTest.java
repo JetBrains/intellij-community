@@ -9,9 +9,9 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.sh.backend.shellcheck.ShQuickFixIntention;
 import com.intellij.sh.backend.shellcheck.ShShellcheckInspection;
-import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.backend.shellcheck.intention.ShDisableInspectionIntention;
 import com.intellij.sh.backend.shellcheck.intention.ShSuppressInspectionIntention;
+import com.intellij.sh.settings.ShSettings;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 

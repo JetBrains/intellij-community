@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 @file:OptIn(FlowPreview::class)
 
@@ -16,8 +16,8 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.Prog
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ProgressResumed
 import com.intellij.notification.impl.ApplicationNotificationsModel
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileEditor.impl.MergingUpdateChannel
 import com.intellij.openapi.observable.util.addMouseHoverListener
@@ -41,8 +41,12 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.reference.SoftReference
-import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.GuiUtils
+import com.intellij.ui.InplaceButton
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -52,23 +56,44 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.UnmodifiableHashMap
-import com.intellij.util.ui.*
+import com.intellij.util.ui.AbstractLayoutManager
+import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.getCenterPoint
+import com.intellij.util.ui.UIUtil
 import it.unimi.dsi.fastutil.ints.IntArrays
 import it.unimi.dsi.fastutil.ints.IntComparator
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Point
 import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JRootPane
+import javax.swing.SwingUtilities
 import javax.swing.event.HyperlinkListener
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
@@ -128,7 +153,7 @@ class InfoAndProgressPanel internal constructor(
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val removeProgressRequests = MergingUpdateChannel<MyProgressComponent>(delay = 50.milliseconds) { toUpdate ->
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.UI) {
       for (indicator in toUpdate) {
         removeProgress(indicator)
       }
@@ -170,7 +195,7 @@ class InfoAndProgressPanel internal constructor(
             indicators = ArrayList(dirtyIndicators)
             dirtyIndicators.clear()
           }
-          withContext(Dispatchers.EDT) {
+          withContext(Dispatchers.UI) {
             for (indicator in indicators) {
               indicator.updateAndRepaint()
             }
@@ -583,7 +608,7 @@ class InfoAndProgressPanel internal constructor(
       if (showNavBar) {
         val centralComponent = centralComponent
         if (centralComponent != null) {
-          host.coroutineScope.launch(Dispatchers.EDT) {
+          host.coroutineScope.launch(Dispatchers.UI) {
             refreshAndInfoPanel.add(centralComponent, BorderLayout.CENTER)
             centralComponent.updateUI()
           }

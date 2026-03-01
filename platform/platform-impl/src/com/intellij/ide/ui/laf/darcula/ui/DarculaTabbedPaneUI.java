@@ -12,25 +12,67 @@ import com.intellij.ui.RelativeFont;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JMenuItem;
+import javax.swing.JTabbedPane;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import javax.swing.text.View;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseMotionListener;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 
-import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.*;
+import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_SELECTED_COLOR;
+import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.DISABLED_TEXT_COLOR;
+import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.ENABLED_SELECTED_COLOR;
+import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.FOCUS_COLOR;
+import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.HOVER_COLOR;
+import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.SELECTION_ARC;
+import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.SELECTION_HEIGHT;
+import static com.intellij.util.ui.JBUI.CurrentTheme.TabbedPane.TAB_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
@@ -433,7 +475,15 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   @Override
   protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
-    return super.calculateTabWidth(tabPlacement, tabIndex, metrics) - 3; //remove magic constant '3' added by parent
+    int tabWidth = super.calculateTabWidth(tabPlacement, tabIndex, metrics) - 3; //remove magic constant '3' added by parent
+
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      Insets insets = getTabInsets(tabPlacement, tabIndex);
+      return customization.calculateTabWidth(tabWidth, insets.left + insets.right);
+    }
+
+    return tabWidth;
   }
 
   @Override

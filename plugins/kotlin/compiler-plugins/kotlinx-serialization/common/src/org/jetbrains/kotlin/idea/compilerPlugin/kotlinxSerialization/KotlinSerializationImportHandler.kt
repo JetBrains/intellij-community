@@ -6,12 +6,12 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import java.io.File
+import java.nio.file.Path
 
 object KotlinSerializationImportHandler {
-    val PLUGIN_JPS_JAR: String by lazy {
-        KotlinArtifacts.kotlinxSerializationCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    val PLUGIN_JPS_JAR: Path by lazy {
+        KotlinArtifacts.kotlinxSerializationCompilerPluginPath
     }
 
     fun isPluginJarPath(path: String): Boolean {
@@ -26,20 +26,28 @@ object KotlinSerializationImportHandler {
         val commonArguments = facetSettings.compilerArguments ?: CommonCompilerArguments.DummyImpl()
 
         var pluginWasEnabled = false
-        val oldPluginClasspaths = (commonArguments.pluginClasspaths ?: emptyArray()).filterTo(mutableListOf()) { jarPath ->
-            val lastIndexOfFile = jarPath.lastIndexOfAny(charArrayOf('/', File.separatorChar))
+        val oldPluginClasspaths = (commonArguments.pluginClasspaths?.map { Path.of(it) }?.toTypedArray() ?: emptyArray()).filterTo(mutableListOf()) { jarPath ->
+            val str = jarPath.toString()
+            val lastIndexOfFile = str.lastIndexOfAny(charArrayOf('/', File.separatorChar))
             if (lastIndexOfFile < 0) {
                 return@filterTo true
             }
 
-            val jarFileName = jarPath.drop(lastIndexOfFile + 1)
+            val jarFileName = str.drop(lastIndexOfFile + 1)
             val match = pluginJarsRegex.any { jarFileName.matches(it) }
             if (match) pluginWasEnabled = true
             !match
         }
 
-        val newPluginClasspaths = if (pluginWasEnabled) oldPluginClasspaths + PLUGIN_JPS_JAR else oldPluginClasspaths
-        commonArguments.pluginClasspaths = newPluginClasspaths.toTypedArray()
+        val newPluginClasspaths = if (pluginWasEnabled) {
+            buildList {
+                addAll(oldPluginClasspaths)
+                add(PLUGIN_JPS_JAR)
+            }
+        } else {
+            oldPluginClasspaths
+        }
+        commonArguments.pluginClasspaths = newPluginClasspaths.map { it.toString() }.toTypedArray()
         facetSettings.compilerArguments = commonArguments
     }
 }

@@ -1,7 +1,16 @@
 package com.intellij.database.run.actions;
 
 import com.intellij.database.DataGridBundle;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.CsvDocumentDataHookUp;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridDataHookUp;
+import com.intellij.database.datagrid.GridMutator;
+import com.intellij.database.datagrid.GridRequestSource;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
@@ -11,7 +20,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTextField;
 
 public class RenameColumnAction extends SingleColumnHeaderAction {
   public RenameColumnAction() {

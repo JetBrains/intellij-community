@@ -57,7 +57,7 @@ import javax.swing.table.DefaultTableCellRenderer
 private const val ID = "reference.settings.ide.settings.file-colors"
 @PropertyKey(resourceBundle = "messages.IdeBundle") private const val DISPLAY_NAME_KEY = "configurable.file.colors"
 
-private class FileColorsConfigurable(private val project: Project) : BoundSearchableConfigurable(message(DISPLAY_NAME_KEY), ID), NoScroll {
+internal class FileColorsConfigurable(private val project: Project) : BoundSearchableConfigurable(message(DISPLAY_NAME_KEY), ID), NoScroll {
   private val colorsTableModel = FileColorsTableModel(FileColorManager.getInstance(project) as FileColorManagerImpl)
 
   override fun createPanel(): DialogPanel {

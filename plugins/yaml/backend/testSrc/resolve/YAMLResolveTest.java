@@ -5,12 +5,19 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class YAMLResolveTest extends BasePlatformTestCase {
   @Override

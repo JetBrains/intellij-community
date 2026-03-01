@@ -2,14 +2,19 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.provider.EelMachineProvider
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.XValueAdvancedPresentationPart
 import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValuePlace
@@ -15,7 +16,11 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -24,6 +29,7 @@ internal fun XValue.computePresentation(
   place: XValuePlace,
   presentationHandler: (XValueSerializedPresentation) -> Unit,
   fullValueEvaluatorHandler: (XFullValueEvaluator?) -> Unit,
+  hyperlinkHandler: (XDebuggerTreeNodeHyperlink?) -> Unit,
 ) {
   val xValue = this
   cs.launch {
@@ -72,6 +78,14 @@ internal fun XValue.computePresentation(
 
       override fun clearFullValueEvaluator() {
         fullValueEvaluatorHandler(null)
+      }
+
+      override fun addAdditionalHyperlink(link: XDebuggerTreeNodeHyperlink) {
+        hyperlinkHandler(link)
+      }
+
+      override fun clearAdditionalHyperlinks() {
+        hyperlinkHandler(null)
       }
     }
     withContext(Dispatchers.EDT) {

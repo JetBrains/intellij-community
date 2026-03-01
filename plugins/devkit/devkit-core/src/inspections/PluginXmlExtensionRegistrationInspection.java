@@ -12,12 +12,16 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiReferenceProviderBean;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP;
 import com.intellij.psi.stubs.StubElementTypeHolderEP;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
@@ -41,6 +45,9 @@ import org.jetbrains.idea.devkit.dom.impl.LanguageResolvingUtil;
 import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 
 import java.util.Objects;
+
+import static com.intellij.openapi.project.IntelliJProjectUtil.isIntelliJPlatformProject;
+import static com.intellij.serviceContainer.ComponentManagerImplKt.servicePreloadingAllowListForNonCorePlugin;
 
 @ApiStatus.Internal
 public final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
@@ -94,16 +101,8 @@ public final class PluginXmlExtensionRegistrationInspection extends DevKitPlugin
     }
 
     if (ServiceDescriptor.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
-      GenericAttributeValue<?> serviceInterface = DevKitDomUtil.getAttribute(extension, "serviceInterface");
-      GenericAttributeValue<?> serviceImplementation = DevKitDomUtil.getAttribute(extension, "serviceImplementation");
-      if (serviceInterface != null && serviceImplementation != null &&
-          StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
-        if (hasMissingAttribute(extension, "testServiceImplementation")) {
-          highlightRedundant(serviceInterface,
-                             DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
-                             ProblemHighlightType.WARNING, holder);
-        }
-      }
+      checkRedundantServiceInterface(holder, extension);
+      checkPreloadUseProhibited(holder, extension);
       return;
     }
 
@@ -174,6 +173,56 @@ public final class PluginXmlExtensionRegistrationInspection extends DevKitPlugin
         }
       }
     }
+  }
+
+  private static void checkRedundantServiceInterface(@NotNull DomElementAnnotationHolder holder, Extension extension) {
+    GenericAttributeValue<?> serviceInterface = DevKitDomUtil.getAttribute(extension, "serviceInterface");
+    GenericAttributeValue<?> serviceImplementation = DevKitDomUtil.getAttribute(extension, "serviceImplementation");
+    if (serviceInterface != null && serviceImplementation != null &&
+        StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
+      if (hasMissingAttribute(extension, "testServiceImplementation")) {
+        highlightRedundant(serviceInterface,
+                           DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
+                           ProblemHighlightType.WARNING, holder);
+      }
+    }
+  }
+
+  private static void checkPreloadUseProhibited(@NotNull DomElementAnnotationHolder holder, Extension extension) {
+    GenericAttributeValue<?> preloadAttr = DevKitDomUtil.getAttribute(extension, "preload");
+    GenericAttributeValue<?> serviceImplementation = DevKitDomUtil.getAttribute(extension, "serviceImplementation");
+    if (preloadAttr != null
+        && preloadAttr.getStringValue() != null
+        && serviceImplementation != null
+        && serviceImplementation.getStringValue() != null
+        && !isServiceDeclaredInPlatform(holder.getFileElement().getOriginalFile())) {
+
+      var highlightType = servicePreloadingAllowListForNonCorePlugin.contains(serviceImplementation.getStringValue())
+                          ? ProblemHighlightType.WARNING  // existing known problems
+                          : ProblemHighlightType.GENERIC_ERROR; // new usages
+
+      highlightRedundant(preloadAttr, DevKitBundle.message("inspections.plugin.xml.service.preload.prohibited"), highlightType, holder);
+    }
+  }
+
+  private static boolean isServiceDeclaredInPlatform(@NotNull XmlFile file) {
+    var virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return false;
+
+    var project = file.getProject();
+    if (!isIntelliJPlatformProject(project)) return false;
+
+    var roots = ProjectRootManager.getInstance(project).getContentRoots();
+    for (VirtualFile root : roots) {
+      VirtualFile communityPlatformDir = root.findFileByRelativePath("community/platform");
+      VirtualFile platformDir = communityPlatformDir != null ? communityPlatformDir : root.findFileByRelativePath("platform");
+
+      if (platformDir != null) {
+        return VfsUtilCore.isAncestor(platformDir, virtualFile, true);
+      }
+    }
+
+    return false;
   }
 
   private static void checkDefaultBundle(DomElement element, DomElementAnnotationHolder holder) {

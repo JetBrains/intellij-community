@@ -8,7 +8,13 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtAnnotatedExpression
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFileAnnotationList
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 /**
  * Add a new annotation to the declaration or expression, or modify an existing annotation. Uses [analyze].

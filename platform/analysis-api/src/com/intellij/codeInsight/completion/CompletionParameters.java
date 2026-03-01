@@ -72,6 +72,7 @@ public final class CompletionParameters implements BaseCompletionParameters {
     return myPosition;
   }
 
+  @Override
   public @Nullable PsiElement getOriginalPosition() {
     return myOriginalFile.findElementAt(myPosition.getTextRange().getStartOffset());
   }
@@ -96,6 +97,7 @@ public final class CompletionParameters implements BaseCompletionParameters {
    * 1 for explicitly invoked completion<br>
    * >1 for next completion invocations when one lookup is already active
    */
+  @Override
   public int getInvocationCount() {
     return myInvocationCount;
   }

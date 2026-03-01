@@ -1,0 +1,14 @@
+================ Step #1 =================
+Cleaning output files:
+  Foo.class
+  FooImpl.class
+  META-INF/kotlin_scopeExpansion_changeTypeAliasAndUsage-a.kotlin_module
+  TypeAliasKt.class
+End of files
+Compiling files:
+  kotlin/scopeExpansion/changeTypeAliasAndUsage/a/Foo.kt
+  kotlin/scopeExpansion/changeTypeAliasAndUsage/a/FooImpl.kt
+  kotlin/scopeExpansion/changeTypeAliasAndUsage/a/TypeAlias.kt
+End of files
+------------------------------------------
+Exit code: OK

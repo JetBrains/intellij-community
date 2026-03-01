@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Sourceset
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 
 enum class SourcesetSourceType {
     RESOURCES, KOTLIN, JAVA

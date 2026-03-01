@@ -1,5 +1,0 @@
-mutation($noteId: NoteID!, $body: String!) {
-  updateNote(input: {id: $noteId, body: $body}){
-    errors
-  }
-}

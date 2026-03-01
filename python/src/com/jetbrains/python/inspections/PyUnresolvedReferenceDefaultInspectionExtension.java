@@ -20,11 +20,9 @@ public final class PyUnresolvedReferenceDefaultInspectionExtension extends PyIns
     if (PySkeletonRefresher.isGeneratingSkeletons()) {
       result = false;
     }
-    else if (PlatformUtils.isPyCharm()) {
-      result = PythonSdkUtil.findPythonSdk(file) != null || PythonRuntimeService.getInstance().isInScratchFile(file);
-    }
     else {
-      result = true;
+      var pythonRuntimeService = PythonRuntimeService.getInstance();
+      result = PythonSdkUtil.findPythonSdk(file) != null || pythonRuntimeService.isInScratchFile(file) || pythonRuntimeService.isExternallyIndexedFile(file);
     }
     return result;
   }

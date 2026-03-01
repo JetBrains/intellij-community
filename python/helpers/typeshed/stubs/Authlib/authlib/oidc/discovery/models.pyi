@@ -1,9 +1,7 @@
-from _typeshed import Incomplete
-
 from authlib.oauth2.rfc8414 import AuthorizationServerMetadata
 
 class OpenIDProviderMetadata(AuthorizationServerMetadata):
-    REGISTRY_KEYS: Incomplete
+    REGISTRY_KEYS: list[str]
     def validate_jwks_uri(self): ...
     def validate_acr_values_supported(self) -> None: ...
     def validate_subject_types_supported(self) -> None: ...

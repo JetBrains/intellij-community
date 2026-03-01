@@ -18,4 +18,19 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
   ]
 )
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "kotlin.compiler-plugins.noarg.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":common",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+  ]
+)
 ### auto-generated section `build kotlin.compiler-plugins.noarg.common` end

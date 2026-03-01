@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/elements/bar-bar",
-  origin: "vue@3.0.0 (vue)",
+  origin: "null (vue)",
   complete: true,
   priority: NORMAL,
   segments: [
@@ -45,7 +45,7 @@
     display-name: "Vue component",
     symbol: {
      matchedName: "html/attributes/bar",
-     origin: "null@null (vue)",
+     origin: "null (<none>)",
      complete: true,
      priority: NORMAL,
      segments: [

@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
 
 public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
   public TypeHierarchyNodeDescriptor(@NotNull Project project, HierarchyNodeDescriptor parentDescriptor, @NotNull PsiElement classOrFunctionalExpression, boolean isBase) {

@@ -13,7 +13,14 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeModel
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesTreeModel
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.EdtExecutorService

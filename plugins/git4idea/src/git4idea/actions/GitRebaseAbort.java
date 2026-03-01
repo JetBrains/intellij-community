@@ -10,7 +10,7 @@ import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class GitRebaseAbort extends GitAbstractRebaseAction {
   @Override

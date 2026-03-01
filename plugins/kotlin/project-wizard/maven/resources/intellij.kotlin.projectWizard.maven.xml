@@ -2,6 +2,7 @@
 
   <dependencies>
     <plugin id="org.jetbrains.idea.maven"/>
+    <module name="intellij.kotlin.maven"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
   </dependencies>
 

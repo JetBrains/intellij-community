@@ -17,7 +17,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.NlsContexts.*;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
+import static com.intellij.openapi.util.NlsContexts.StatusBarText;
 
 @ApiStatus.Experimental
 public class RefactoringUiService {

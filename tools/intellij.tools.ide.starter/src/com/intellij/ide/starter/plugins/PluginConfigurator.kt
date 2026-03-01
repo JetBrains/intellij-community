@@ -6,10 +6,20 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.tools.ide.util.common.logOutput
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.JarFile
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.name
+import kotlin.io.path.readLines
+import kotlin.io.path.walk
+import kotlin.io.path.writeLines
 
 class PluginNotFoundException(message: String? = null, cause: Throwable? = null) : RuntimeException(message, cause)
 
@@ -37,6 +47,7 @@ open class PluginConfigurator(val testContext: IDETestContext) {
     pathToPluginDir.copyToRecursively(targetPluginDir, followLinks = false, overwrite = false)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use [installPluginFromDir] instead", level = DeprecationLevel.ERROR)
   @Suppress("unused")
   fun installPluginFromFolder(pathToPluginFolder: java.io.File): PluginConfigurator = installPluginFromDir(pathToPluginFolder.toPath())

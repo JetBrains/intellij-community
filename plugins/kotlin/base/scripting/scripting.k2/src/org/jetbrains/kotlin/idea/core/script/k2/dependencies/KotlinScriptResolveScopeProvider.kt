@@ -12,7 +12,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.core.script.v1.*
+import org.jetbrains.kotlin.idea.core.script.v1.KotlinScriptSearchScope
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
+import org.jetbrains.kotlin.idea.core.script.v1.compilerAllowsAnyScriptsInSourceRoots
+import org.jetbrains.kotlin.idea.core.script.v1.hasNoExceptionsToBeUnderSourceRoot
+import org.jetbrains.kotlin.idea.core.script.v1.isEnabled
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider

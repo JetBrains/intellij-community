@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.generator.methods
 
-import org.jetbrains.kotlin.testGenerator.generator.*
+import org.jetbrains.kotlin.testGenerator.generator.Code
+import org.jetbrains.kotlin.testGenerator.generator.TestMethod
+import org.jetbrains.kotlin.testGenerator.generator.appendAnnotation
+import org.jetbrains.kotlin.testGenerator.generator.appendBlock
+import org.jetbrains.kotlin.testGenerator.generator.appendLine
 import org.jetbrains.kotlin.testGenerator.model.TAnnotation
 
 class SetUpMethod(private val codeLines: List<String>) : TestMethod {

@@ -8,3 +8,5 @@ fun f(){
 
 // ELEMENT: HashMap
 // TAIL_TEXT: (...) (kotlin.collections)
+
+// IGNORE_K2

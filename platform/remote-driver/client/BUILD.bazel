@@ -19,4 +19,15 @@ jvm_library(
     "@lib//:jetbrains-annotations",
   ]
 )
+
+jvm_library(
+  name = "client_test_lib",
+  module_name = "intellij.driver.client",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":client",
+    "//platform/remote-driver/model:model_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.driver.client` end

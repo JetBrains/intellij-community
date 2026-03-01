@@ -3,7 +3,11 @@ package org.jetbrains.plugins.terminal.block.output
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.SelectionModel
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.editor.event.SelectionEvent
+import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.MathUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt

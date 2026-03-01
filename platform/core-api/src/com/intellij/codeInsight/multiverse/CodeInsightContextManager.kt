@@ -12,7 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.EventListener
 
 /**
  * Handles contexts for virtual files and allows running a code insight session with a given [CodeInsightContext].

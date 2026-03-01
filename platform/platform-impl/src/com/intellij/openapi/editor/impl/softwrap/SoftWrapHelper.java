@@ -1,12 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.CaretImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Holds utility methods for soft wraps-related processing.
@@ -15,6 +20,17 @@ import org.jetbrains.annotations.ApiStatus;
 public final class SoftWrapHelper {
 
   private SoftWrapHelper() {
+  }
+
+  public static int getEndOffsetUpperEstimate(@NotNull Editor editor,
+                                              @NotNull Document document,
+                                              @NotNull IncrementalCacheUpdateEvent event) {
+    int endOffsetUpperEstimate = EditorUtil.getNotFoldedLineEndOffset(editor, event.getMandatoryEndOffset());
+    int line = document.getLineNumber(endOffsetUpperEstimate);
+    if (line < document.getLineCount() - 1) {
+      endOffsetUpperEstimate = document.getLineStartOffset(line + 1);
+    }
+    return endOffsetUpperEstimate;
   }
 
   /**

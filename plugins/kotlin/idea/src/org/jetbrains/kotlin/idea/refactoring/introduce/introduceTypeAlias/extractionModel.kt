@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
@@ -17,10 +18,12 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class TypeReferenceInfo(val reference: KtTypeReference, val type: KotlinType)
 
 internal var KtTypeReference.resolveInfo: TypeReferenceInfo? by CopyablePsiUserDataProperty(Key.create("RESOLVE_INFO"))
 
+@K1Deprecation
 class IntroduceTypeAliasData(
     val originalTypeElement: KtElement,
     val targetSibling: PsiElement,
@@ -55,8 +58,10 @@ class IntroduceTypeAliasData(
     }
 }
 
+@K1Deprecation
 data class TypeParameter(val name: String, val typeReferenceInfos: Collection<TypeReferenceInfo>)
 
+@K1Deprecation
 data class IntroduceTypeAliasDescriptor(
     val originalData: IntroduceTypeAliasData,
     val name: String,
@@ -64,6 +69,7 @@ data class IntroduceTypeAliasDescriptor(
     val typeParameters: List<TypeParameter>
 )
 
+@K1Deprecation
 data class IntroduceTypeAliasDescriptorWithConflicts(
     val descriptor: IntroduceTypeAliasDescriptor,
     val conflicts: MultiMap<PsiElement, String>

@@ -14,3 +14,5 @@ fun foo(): Runnable {
 // ABSENT: genericFoo1
 // ABSENT: genericFoo2
 // EXIST: { itemText: "genericFoo3", tailText: "(t: Runnable) (<root>)", typeText: "Runnable" }
+
+// IGNORE_K2

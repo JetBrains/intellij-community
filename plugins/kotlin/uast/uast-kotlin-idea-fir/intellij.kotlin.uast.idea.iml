@@ -4,13 +4,13 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=org.jetbrains.kotlin.analysis.api.KaIdeApi -opt-in=org.jetbrains.kotlin.analysis.api.KaNonPublicApi -opt-in=org.jetbrains.kotlin.analysis.api.KaContextParameterApi -opt-in=org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=org.jetbrains.kotlin.analysis.api.KaIdeApi -opt-in=org.jetbrains.kotlin.analysis.api.KaNonPublicApi -opt-in=org.jetbrains.kotlin.analysis.api.KaContextParameterApi -opt-in=org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="21" />
-            <stringArg name="apiVersion" arg="2.2" />
-            <stringArg name="languageVersion" arg="2.2" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -28,10 +28,10 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast.base" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-base" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast.idea.base" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />

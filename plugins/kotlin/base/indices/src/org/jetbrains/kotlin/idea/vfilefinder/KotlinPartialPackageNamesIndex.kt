@@ -6,7 +6,11 @@ package org.jetbrains.kotlin.idea.vfilefinder
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.DataIndexer
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
+import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileType

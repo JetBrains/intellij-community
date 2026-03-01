@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  module-info.class
+End of files
+Compiling files:
+  java/java9-features/changeQualifiedTransitiveModuleExportsRebuildDirectDeps/a/module-info.java
+End of files
+Cleaning output files:
+  module-info.class
+  qqq/Client.class
+End of files
+Compiling files:
+  java/java9-features/changeQualifiedTransitiveModuleExportsRebuildDirectDeps/b/module-info.java
+  java/java9-features/changeQualifiedTransitiveModuleExportsRebuildDirectDeps/b/qqq/Client.java
+End of files
+------------------------------------------
+Exit code: OK

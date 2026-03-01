@@ -5,10 +5,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.UIManager;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import java.text.AttributedCharacterIterator.Attribute;
 import java.util.Map;
 import java.util.Set;

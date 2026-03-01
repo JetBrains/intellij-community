@@ -26,4 +26,24 @@ jvm_library(
     "//platform/core-impl",
   ]
 )
+
+jvm_library(
+  name = "duplicates-analysis_test_lib",
+  module_name = "intellij.platform.duplicates.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":duplicates-analysis",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.duplicates.analysis` end

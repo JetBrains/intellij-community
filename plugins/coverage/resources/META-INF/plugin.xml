@@ -6,7 +6,7 @@
   <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
 
   <dependencies>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java.backend"/>
     <module name="intellij.platform.coverage"/>
   </dependencies>
 
@@ -36,6 +36,10 @@ To configure, open <b>Settings/Preferences | Build, Execution, Deployment | Cove
 
     <coverageRunner implementation="com.intellij.coverage.xml.XMLReportRunner"/>
     <coverageEngine implementation="com.intellij.coverage.xml.XMLReportEngine"/>
+    <fileType name="JaCoCoCoverageReport"
+              extensions="exec"
+              implementationClass="com.intellij.coverage.JaCoCoCoverageFileType"
+              fieldName="INSTANCE"/>
   </extensions>
 
   <extensionPoints>

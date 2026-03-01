@@ -2,7 +2,7 @@
 package training.featuresSuggester
 
 import com.intellij.util.messages.Topic
-import java.util.*
+import java.util.EventListener
 
 interface FeatureSuggestersManagerListener : EventListener {
 

@@ -14,7 +14,13 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer

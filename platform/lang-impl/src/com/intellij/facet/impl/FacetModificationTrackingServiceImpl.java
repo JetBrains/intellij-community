@@ -6,7 +6,10 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetManagerListener;
 import com.intellij.facet.FacetModificationTrackingService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.ModificationTrackerListener;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 

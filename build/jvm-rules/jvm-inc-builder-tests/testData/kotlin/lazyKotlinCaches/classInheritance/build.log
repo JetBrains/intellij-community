@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  B.class
+  C.class
+  META-INF/kotlin_lazyKotlinCaches_classInheritance-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/lazyKotlinCaches/classInheritance/a/main.kt
+End of files
+------------------------------------------
+Exit code: OK

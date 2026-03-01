@@ -5,7 +5,12 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.processTools.getBareExecutionResult
 import com.intellij.execution.processTools.getResultStdoutStr
-import com.intellij.execution.wsl.*
+import com.intellij.execution.wsl.AbstractWslDistribution
+import com.intellij.execution.wsl.WSLCommandLineOptions
+import com.intellij.execution.wsl.createProcess
+import com.intellij.execution.wsl.getTool
+import com.intellij.execution.wsl.getWslPathSafe
+import com.intellij.execution.wsl.runCommand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Ref
 import com.intellij.util.TimeoutUtil

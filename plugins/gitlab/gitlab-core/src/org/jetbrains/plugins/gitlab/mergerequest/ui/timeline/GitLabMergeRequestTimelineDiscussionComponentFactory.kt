@@ -3,8 +3,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSize
+import com.intellij.collaboration.ui.ComponentListPanelFactory
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.LoadingLabel
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
@@ -14,6 +19,7 @@ import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFa
 import com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindContentIn
@@ -26,10 +32,20 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SingleComponentCenteringLayout
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader

@@ -17,7 +17,14 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.jsp.JspLanguage;
 import com.intellij.psi.jsp.JspxLanguage;
 import com.intellij.psi.stubs.PsiFileStubImpl;
@@ -26,10 +33,19 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastLiteralUtils;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov

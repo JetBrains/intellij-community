@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.hints.compilerPlugins
 
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.InlayHintsProviderExtension
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaratio
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration.KtCompilerPluginGeneratedDeclarationsInlayHintsProviderSettings
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -24,6 +26,9 @@ abstract class AbstractKtCompilerDeclarationsHintProviderTest : InlayHintsProvid
             .filterIsInstance<KtCompilerPluginGeneratedDeclarationsInlayHintsProvider>()
             .single()
 
+    override fun getProjectDescriptor(): LightProjectDescriptor? {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
 
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }

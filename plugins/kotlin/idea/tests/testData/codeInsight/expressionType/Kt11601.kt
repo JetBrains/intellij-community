@@ -8,5 +8,5 @@ fun x(){
 // K1_TYPE: c -> <html>() -&gt; Unit</html>
 // K1_TYPE: c() -> <html>Unit</html>
 
-// K2_TYPE: c -> () -&gt; Unit
-// K2_TYPE: c() -> Unit
+// K2_TYPE: c -> <b>() -&gt; Unit</b>
+// K2_TYPE: c() -> <b>Unit</b>

@@ -9,9 +9,14 @@ import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandler;
 import org.cef.network.CefRequest;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;

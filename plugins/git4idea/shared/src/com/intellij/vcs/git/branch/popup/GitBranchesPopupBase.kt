@@ -3,17 +3,36 @@ package com.intellij.vcs.git.branch.popup
 
 import com.intellij.dvcs.branch.BranchType
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupStep
-import com.intellij.openapi.util.*
-import com.intellij.ui.*
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.WindowStateService
+import com.intellij.ui.ActiveComponent
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.SmartExpander
+import com.intellij.ui.TreeActions
+import com.intellij.ui.WindowMoveListener
+import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -33,8 +52,14 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.git.branch.tree.*
-import com.intellij.vcs.git.branch.tree.GitBranchesTreeModel.*
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeModel.RefTypeUnderRepository
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeModel.RefUnderRepository
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeModel.RepositoryNode
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeRenderer
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeSingleRepoModel
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeUpdate
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeUpdatesService
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeUtil
 import com.intellij.vcs.git.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
 import com.intellij.vcs.git.branch.tree.GitBranchesTreeUtil.selectFirst
 import com.intellij.vcs.git.branch.tree.GitBranchesTreeUtil.selectLast
@@ -46,11 +71,16 @@ import git4idea.GitReference
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -59,10 +89,19 @@ import org.jetbrains.concurrency.Promise
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Point
-import java.awt.event.*
+import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import java.util.function.Function
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.ActionMap
+import javax.swing.InputMap
+import javax.swing.JComponent
+import javax.swing.JTree
+import javax.swing.SwingUtilities
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreeModel
@@ -173,8 +212,12 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
       border = JBUI.Borders.emptyLeft(6)
     }
 
-    val searchBorder = mySpeedSearchPatternField.border
     mySpeedSearchPatternField.border = null
+
+    val textField = mySpeedSearchPatternField.textEditor
+    textField.putClientProperty("TextFieldWithoutMargins", null)
+    textField.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, null)
+    textField.putClientProperty("TextField.NoMinHeightBounds", null)
 
     val topPanel = BorderLayoutPanel().apply {
       val dragArea = simplePanel().apply {
@@ -190,12 +233,12 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
     }
 
     val panel = BorderLayoutPanel()
-      .addToCenter(mySpeedSearchPatternField)
+      .addToCenter(SearchFieldWithExtension(mySpeedSearchPatternField, JBUI.CurrentTheme.Popup.BACKGROUND))
       .apply {
         if (toolbar != null) {
           addToRight(toolbar)
         }
-        border = searchBorder
+        border = JBUI.Borders.empty(0, 10, 0, 8)
         background = JBUI.CurrentTheme.Popup.BACKGROUND
       }
 
@@ -407,7 +450,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
 
     isRootVisible = false
     showsRootHandles = true
-    visibleRowCount = min(calculateTopLevelVisibleRows(), 20)
+    visibleRowCount = min(calculateTopLevelVisibleRows() + 1, 20)
 
     cellRenderer = renderer
 

@@ -6,26 +6,24 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+import com.jetbrains.python.psi.resolve.isPackageAvailable
 
 /**
  * User : catherine
  */
 object RestPythonUtil {
+  private val SPHINX_MARKER = PackageAvailabilitySpec("Sphinx", "sphinx.application.Sphinx")
+
   @JvmStatic
   fun updateSphinxQuickStartRequiredAction(e: AnActionEvent): Presentation {
     val presentation = e.presentation
 
-    val project = e.getData(CommonDataKeys.PROJECT) ?: return presentation
     val module = e.getData(PlatformCoreDataKeys.MODULE)
-                 ?: getInstance(project).modules.firstOrNull()
+                 ?: e.getData(CommonDataKeys.PROJECT)?.let { getInstance(it).modules.firstOrNull() }
                  ?: return presentation
 
-    val sdk = PythonSdkUtil.findPythonSdk(module) ?: return presentation
-    val packageManager = PythonPackageManager.forSdk(project, sdk)
-    presentation.isEnabled = packageManager.hasInstalledPackageSnapshot("Sphinx")
+    presentation.isEnabled = isPackageAvailable(module, SPHINX_MARKER)
     return presentation
   }
 }

@@ -9,7 +9,7 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class JLinkArtifactType extends ArtifactType {
   public JLinkArtifactType() {

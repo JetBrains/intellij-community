@@ -6,8 +6,8 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.util.ui.UIUtil;
 
 public class EmmetExpandAbbreviationActionTest extends BasePlatformTestCase {
   private int myExpandShortcut;
@@ -37,7 +37,7 @@ public class EmmetExpandAbbreviationActionTest extends BasePlatformTestCase {
     myFixture.performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM);
 
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     myFixture.checkResult("<div class=\"class\"></div>\n" +
                           "<div class=\"class\"></div>");

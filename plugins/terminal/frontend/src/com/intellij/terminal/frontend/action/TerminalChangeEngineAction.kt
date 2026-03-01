@@ -1,14 +1,17 @@
 package com.intellij.terminal.frontend.action
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.application
+import org.jetbrains.plugins.terminal.ExperimentalTerminalMigration
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
@@ -44,7 +47,7 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
     e.presentation.isEnabledAndVisible = e.project != null &&
                                          ExperimentalUI.isNewUI() &&
                                          (engine != TerminalEngine.NEW_TERMINAL ||
-                                          TerminalUtil.isGenOneTerminalOptionVisible() == true ||
+                                          ExperimentalTerminalMigration.isExpTerminalOptionVisible() == true ||
                                           // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
                                           // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
                                           // show this option as well to avoid strange behavior when nothing is selected in the popup.

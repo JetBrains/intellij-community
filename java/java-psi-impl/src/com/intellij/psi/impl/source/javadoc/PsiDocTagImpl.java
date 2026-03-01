@@ -2,7 +2,11 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;

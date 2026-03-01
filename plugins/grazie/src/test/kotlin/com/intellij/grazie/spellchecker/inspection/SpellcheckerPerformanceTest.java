@@ -22,7 +22,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.spellchecker.inspections.*;
+import com.intellij.spellchecker.inspections.CommentSplitter;
+import com.intellij.spellchecker.inspections.IdentifierSplitter;
+import com.intellij.spellchecker.inspections.PlainTextSplitter;
+import com.intellij.spellchecker.inspections.PropertiesSplitter;
+import com.intellij.spellchecker.inspections.Splitter;
+import com.intellij.spellchecker.inspections.TextSplitter;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
@@ -31,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.IntStream;
 
+@PerformanceUnitTest
 public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase {
   @Override
   protected void setUp() throws Exception {

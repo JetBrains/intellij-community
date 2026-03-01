@@ -20,6 +20,7 @@
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinUnusedDeclarationHighlightingVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinUnresolvedKDocHighlightVisitor"/>
+    <highlightErrorFilter implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinHighlightInjectionErrorFilter"/>
 
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinHighlightExitPointsHandlerFactory"/>
 
@@ -27,8 +28,10 @@
 
     <registryKey key="kotlin.highlighting.warmup"
                  description="Enables Kotlin highlighting warmup – triggers resolution in parallel to prefill caches"
-                 defaultValue="true"
-    />
+                 defaultValue="true"/>
+    <registryKey key="kotlin.highlighting.internal.show.diagnostic.names"
+                 description="Shows diagnostic names in internal mode for debugging purposes."
+                 defaultValue="true"/>
   </extensions>
 
 </idea-plugin>

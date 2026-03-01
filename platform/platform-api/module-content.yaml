@@ -9,4 +9,3 @@
   - name: intellij.platform.instanceContainer
   - name: intellij.platform.project
   - name: intellij.platform.serviceContainer
-  - name: intellij.platform.util.text.matching

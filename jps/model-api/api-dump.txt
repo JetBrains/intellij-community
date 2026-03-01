@@ -221,7 +221,6 @@ a:org.jetbrains.jps.model.ex.JpsElementBase
 - org.jetbrains.jps.model.JpsElement$BulkModificationSupport
 - p:myParent:org.jetbrains.jps.model.ex.JpsElementBase
 - p:<init>():V
-- p:fireElementChanged():V
 - getBulkModificationSupport():org.jetbrains.jps.model.JpsElement$BulkModificationSupport
 - p:getModel():org.jetbrains.jps.model.JpsModel
 - getParent():org.jetbrains.jps.model.ex.JpsElementBase
@@ -506,6 +505,8 @@ e:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_24_PREVIEW:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_25:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_25_PREVIEW:org.jetbrains.jps.model.java.LanguageLevel
+- sf:JDK_26:org.jetbrains.jps.model.java.LanguageLevel
+- sf:JDK_26_PREVIEW:org.jetbrains.jps.model.java.LanguageLevel
 - sf:JDK_X:org.jetbrains.jps.model.java.LanguageLevel
 - feature():I
 - isPreview():Z

@@ -4,11 +4,11 @@ fun foo(flag: Boolean): (Int) -> Boolean {
     return if (flag) {
         val x = print(42)
         ret<caret>urn bar@{ _: Int ->
-            return@predicate true
+            return@bar true
         }
     } else {
         bar@{ _: Int ->
-            return@predicate true
+            return@bar true
         }
     }
 }

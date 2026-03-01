@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -61,6 +62,5 @@ abstract class XDebuggerTreeBackendOnlyActionBase : AnAction(), ActionRemoteBeha
   }
 }
 
-@ApiStatus.Experimental
 @ApiStatus.Internal
-data class XDebuggerTreeSelectedValue(val xValue: XValue, val name: String?)
+data class XDebuggerTreeSelectedValue(val xValue: XValue, val name: String?, val node: XValueNodeImpl?)

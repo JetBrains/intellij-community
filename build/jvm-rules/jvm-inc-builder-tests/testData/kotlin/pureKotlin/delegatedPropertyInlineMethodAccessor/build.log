@@ -1,0 +1,36 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_delegatedPropertyInlineMethodAccessor-a.kotlin_module
+  inline/Inline.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/delegatedPropertyInlineMethodAccessor/a/inline.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_delegatedPropertyInlineMethodAccessor-a.kotlin_module
+  usage/UsageVal.class
+  usage/UsageVar.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/delegatedPropertyInlineMethodAccessor/a/UsageVal.kt
+  kotlin/pureKotlin/delegatedPropertyInlineMethodAccessor/a/UsageVar.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_delegatedPropertyInlineMethodAccessor-a.kotlin_module
+  inline/Inline.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/delegatedPropertyInlineMethodAccessor/a/inline.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_delegatedPropertyInlineMethodAccessor-a.kotlin_module
+  usage/UsageVar.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/delegatedPropertyInlineMethodAccessor/a/UsageVar.kt
+End of files
+------------------------------------------
+Exit code: OK

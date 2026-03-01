@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.restructuredtext.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.CustomFormattingModelBuilder;
+import com.intellij.formatting.FormattingContext;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.FormattingModelProvider;
+import com.intellij.formatting.Indent;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;

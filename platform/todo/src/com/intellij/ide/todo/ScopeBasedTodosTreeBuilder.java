@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 @ApiStatus.Internal
 public final class ScopeBasedTodosTreeBuilder extends TodoTreeBuilder {

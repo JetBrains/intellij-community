@@ -16,7 +16,7 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.*
+import java.util.EnumSet
 
 @RunWith(JUnit4::class)
 class JsonPathEvaluateTest : LightPlatformCodeInsightFixture4TestCase() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
 import com.intellij.execution.CommandLineUtil.posixQuote
@@ -11,7 +11,21 @@ import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
 import com.intellij.util.io.copyToAsync
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.io.InputStream
@@ -31,7 +45,7 @@ interface IjentDeploymentListener {
   fun shellInitialized(initializationTime: Duration)
 }
 
-abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope, currentDispatcher: CoroutineDispatcher) : IjentControlledEnvironmentDeployingStrategy(), IjentDeployingStrategy.Posix {
+abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope, currentDispatcher: CoroutineDispatcher) : IjentControlledEnvironmentDeployingStrategy() {
   protected abstract val ijentLabel: String
 
   /**
@@ -52,7 +66,12 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope, cur
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.async(currentDispatcher, start = CoroutineStart.LAZY) {
-      val shellProcess = ShellProcessWrapper(IjentSessionProcessMediator.create(scope, createShellProcess(), ijentLabel, ::isExpectedProcessExit))
+      val shellProcess = ShellProcessWrapper(IjentSessionProcessMediator.create(
+        parentScope = scope,
+        process = createShellProcess(),
+        ijentLabel = ijentLabel,
+        isExpectedProcessExit = ::isExpectedProcessExit,
+      ))
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
         val initializationTime = measureTime {
@@ -72,17 +91,23 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope, cur
   }
 
   private val myTargetPlatform = scope.async(currentDispatcher, start = CoroutineStart.LAZY) {
-    myContext.await().execCommand {
+    getMyContext().execCommand {
       getTargetPlatform()
     }
   }
 
   override suspend fun getTargetPlatform(): EelPlatform.Posix {
-    return myTargetPlatform.await()
+    return try {
+      myTargetPlatform.await()
+    }
+    catch (e: CancellationException) {
+      currentCoroutineContext().ensureActive()
+      throw RuntimeException("Cancellation during target platform retrieval", e)
+    }
   }
 
   final override suspend fun createProcess(binaryPath: String): IjentSessionProcessMediator {
-    return myContext.await().execCommand {
+    return getMyContext().execCommand {
       when (val strategy = executionStrategy) {
         is ExecutionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.deployInfo)
         else -> execIjent(binaryPath)
@@ -91,10 +116,19 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope, cur
   }
 
   final override suspend fun copyFile(file: Path): String {
-    return myContext.await().execCommand {
+    return getMyContext().execCommand {
       uploadIjentBinary(file, ::mapPath)
     }
   }
+
+  private suspend fun getMyContext(): DeployingContextAndShell =
+    try {
+      myContext.await()
+    }
+    catch (e: CancellationException) {
+      currentCoroutineContext().ensureActive()
+      throw RuntimeException("Cancellation during context retrieval", e)
+    }
 
   final override fun close() {
     if (myContext.isActive) {
@@ -394,7 +428,7 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
 
 
 private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): IjentSessionProcessMediator {
-  val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true, usrBinEnv = context.env).joinToString(" ")
+  val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true).joinToString(" ")
     return createMediator(remotePathToBinary, joinedCmd)
   }
 
@@ -418,7 +452,6 @@ private suspend fun DeployingContextAndShell.createMediator(
 private suspend fun DeployingContextAndShell.execIjentWithTcp(remotePathToBinary: String, deployInfo: TcpDeployInfo): IjentSessionProcessMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary,
                                    selfDeleteOnExit = true,
-                                   usrBinEnv = context.env,
                                    deployInfo = deployInfo).joinToString(" ")
   return createMediator(remotePathToBinary, joinedCmd)
 }

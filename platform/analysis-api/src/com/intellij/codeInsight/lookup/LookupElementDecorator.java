@@ -3,7 +3,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.TransparentForInsertHandling;
+import com.intellij.codeInsight.completion.LookupElementWithEffectiveInsertHandler;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
@@ -111,6 +111,17 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     };
   }
 
+  /**
+   * utility function to be used for decorators that don't change insert-handling of the delegate element.
+   */
+  @ApiStatus.Internal
+  protected @Nullable InsertHandler<?> getDelegateEffectiveInsertHandler() {
+    T delegate = getDelegate();
+    return delegate instanceof LookupElementWithEffectiveInsertHandler
+           ? ((LookupElementWithEffectiveInsertHandler)delegate).getEffectiveInsertHandler()
+           : null;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -176,7 +187,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     return myDelegate.getPsiElement();
   }
 
-  private static final class InsertingDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
+  private static final class InsertingDecorator<T extends LookupElement> extends LookupElementDecorator<T> implements LookupElementWithEffectiveInsertHandler {
     private final InsertHandler<? super LookupElementDecorator<T>> myInsertHandler;
 
     InsertingDecorator(@NotNull T element, @NotNull InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
@@ -186,6 +197,12 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
 
     @Override
     public @NotNull InsertHandler<? super LookupElementDecorator<@NotNull T>> getDecoratorInsertHandler() {
+      return myInsertHandler;
+    }
+
+    @ApiStatus.Internal
+    @Override
+    public @Nullable InsertHandler<?> getEffectiveInsertHandler() {
       return myInsertHandler;
     }
 
@@ -245,7 +262,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   private static final class VisagisteDecorator<T extends LookupElement> extends LookupElementDecorator<T> implements
-                                                                                                           TransparentForInsertHandling {
+                                                                                                           LookupElementWithEffectiveInsertHandler {
     private final LookupElementRenderer<? super LookupElementDecorator<T>> myVisagiste;
 
     VisagisteDecorator(T element, LookupElementRenderer<? super LookupElementDecorator<T>> visagiste) {
@@ -256,6 +273,12 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     @Override
     public void renderElement(final @NotNull LookupElementPresentation presentation) {
       myVisagiste.renderElement(this, presentation);
+    }
+
+    @ApiStatus.Internal
+    @Override
+    public @Nullable InsertHandler<?> getEffectiveInsertHandler() {
+      return getDelegateEffectiveInsertHandler();
     }
 
     @Override
@@ -277,11 +300,5 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
       result = 31 * result + myVisagiste.getClass().hashCode();
       return result;
     }
-  }
-
-  /** a way to check if `element` is exactly InsertingDecorator */
-  @ApiStatus.Internal
-  public static boolean isDecoratedWithInsertHandler(@NotNull LookupElement element) {
-    return element instanceof InsertingDecorator;
   }
 }

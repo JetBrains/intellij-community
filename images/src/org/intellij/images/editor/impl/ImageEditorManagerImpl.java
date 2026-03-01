@@ -15,7 +15,11 @@
  */
 package org.intellij.images.editor.impl;
 
-import org.intellij.images.options.*;
+import org.intellij.images.options.EditorOptions;
+import org.intellij.images.options.GridOptions;
+import org.intellij.images.options.Options;
+import org.intellij.images.options.OptionsManager;
+import org.intellij.images.options.TransparencyChessboardOptions;
 import org.intellij.images.ui.ImageComponent;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;

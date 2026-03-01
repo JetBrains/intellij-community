@@ -17,17 +17,37 @@ import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomAnchor;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomFileIndex;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.ModelMerger;
+import com.intellij.util.xml.ModelMergerImpl;
+import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.util.xml.XmlFileHeader;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
 import com.intellij.util.xml.stubs.FileStub;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Gregory.Shrago

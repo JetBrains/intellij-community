@@ -9,10 +9,11 @@ import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.testFramework.PsiTestUtil
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorModuleProvider
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.K2IdeKotlinAnchorModuleProvider
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.K2IdeKotlinAnchorModuleProvider
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -29,6 +30,7 @@ abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest()
         //do not create top level module
     }
 
+    @OptIn(KaPlatformInterface::class)
     override fun setUp() {
         super.setUp()
 

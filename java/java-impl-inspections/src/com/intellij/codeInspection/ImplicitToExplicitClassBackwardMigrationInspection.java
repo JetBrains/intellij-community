@@ -1,28 +1,57 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.wrongPackageStatement.AdjustPackageNameFix;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.ImplicitlyImportedElement;
+import com.intellij.psi.ImplicitlyImportedModule;
+import com.intellij.psi.ImplicitlyImportedStaticMember;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportModuleStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.util.JvmMainMethodSearcher;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -56,20 +85,54 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
         if (identifier == null) {
           return;
         }
+        ReplaceWithExplicitClassFix fix = new ReplaceWithExplicitClassFix(aClass, false);
         if (InspectionProjectProfileManager.isInformationLevel(getShortName(), identifier)) {
           TextRange textRange =
             TextRange.create(0, method.getParameterList().getTextRange().getEndOffset() - method.getTextRange().getStartOffset());
-          holder.registerProblem(method, textRange, message, new ReplaceWithExplicitClassFix());
+          holder.problem(method, message)
+            .range(textRange)
+            .fix(fix)
+            .register();
         }
         else {
-          holder.registerProblem(identifier, message, new ReplaceWithExplicitClassFix());
+          holder.problem(identifier, message)
+            .fix(fix)
+            .register();
         }
       }
     };
   }
 
+  public static @Nullable PsiUpdateModCommandAction<PsiImplicitClass> createFix(@NotNull PsiElement psiElement) {
+    PsiMember member = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiMember.class);
+    if (!(member instanceof PsiMethod)) return null;
+    if (!(member.getContainingClass() instanceof PsiImplicitClass implicitClass)) return null;
+    boolean hasMainMethod = new JvmMainMethodSearcher() {
+      @Override
+      public boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
+        return true;
+      }
 
-  private static class ReplaceWithExplicitClassFix extends PsiUpdateModCommandQuickFix {
+      @Override
+      protected boolean inheritedStaticMainEnabled(@NotNull PsiElement psiElement) {
+        return true;
+      }
+    }.hasMainMethod(implicitClass);
+    if (!hasMainMethod) return null;
+    if (PsiTreeUtil.hasErrorElements(implicitClass)) {
+      return null;
+    }
+    return new ImplicitToExplicitClassBackwardMigrationInspection.ReplaceWithExplicitClassFix(implicitClass, true);
+  }
+
+  public static class ReplaceWithExplicitClassFix extends PsiUpdateModCommandAction<PsiImplicitClass> {
+
+    private final boolean myFixIO;
+
+    private ReplaceWithExplicitClassFix(@NotNull PsiImplicitClass element, boolean fixIO) {
+      super(element);
+      myFixIO = fixIO;
+    }
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
@@ -77,24 +140,15 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiImplicitClass implicitClass;
-      PsiFile originalFile = updater.getOriginalFile(element.getContainingFile());
-      if (element instanceof PsiImplicitClass elementAsClass) {
-        implicitClass = elementAsClass;
-      }
-      else {
-        implicitClass = PsiTreeUtil.getParentOfType(element, PsiImplicitClass.class);
-      }
-      if (implicitClass == null) {
-        return;
-      }
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiImplicitClass implicitClass, @NotNull ModPsiUpdater updater) {
+      PsiFile originalFile = updater.getOriginalFile(implicitClass.getContainingFile());
       String text = implicitClass.getText();
       String qualifiedName = implicitClass.getQualifiedName();
       if (qualifiedName == null) {
         return;
       }
-      PsiClass newClass = PsiElementFactory.getInstance(element.getProject()).createClassFromText(text, implicitClass);
+      Project project = implicitClass.getProject();
+      PsiClass newClass = PsiElementFactory.getInstance(project).createClassFromText(text, implicitClass);
       newClass.setName(qualifiedName);
       //user probably mostly wants to use it somewhere
       PsiModifierList modifierList = newClass.getModifierList();
@@ -121,6 +175,24 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       addImplicitJavaModuleImports(project, moduleImports, importList);
       addPackageStatement(newPsiJavaFile, originalFile);
       optimizeImport(newPsiJavaFile);
+      List<PsiReferenceExpression> referenceExpressions = new ArrayList<>();
+      if (myFixIO) {
+        newPsiJavaFile.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+            ModCommandAction fix = MigrateFromJavaLangIoInspection.createCanBeIOFix(expression);
+            if (fix != null) {
+              referenceExpressions.add(expression);
+            }
+            super.visitReferenceExpression(expression);
+          }
+        });
+      }
+      for (PsiReferenceExpression ref : referenceExpressions) {
+        if (!(ref.getParent() instanceof PsiReferenceExpression parentReference)) continue;
+        if (!(parentReference.getParent() instanceof PsiMethodCallExpression methodCallExpression)) continue;
+        MigrateFromJavaLangIoInspection.replaceToSystemOut(methodCallExpression);
+      }
     }
 
     private static void optimizeImport(@NotNull PsiJavaFile newPsiJavaFile) {
@@ -132,7 +204,7 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
         final PsiImportList newImportList = newPsiJavaFile.getImportList();
         if (newImportList != null) {
           newImportList.getParent().addRangeAfter(newList.getParent().getFirstChild(), newList.getParent().getLastChild(), newImportList);
-          new CommentTracker().deleteAndRestoreComments(newImportList);
+          newImportList.delete();
         }
       }
     }

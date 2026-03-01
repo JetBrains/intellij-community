@@ -5,7 +5,11 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 

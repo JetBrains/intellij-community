@@ -15,13 +15,12 @@ import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SupportedDistribution
+import org.jetbrains.intellij.build.impl.buildPlatformSpecificPluginResources
 import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
-import org.jetbrains.intellij.build.impl.handleCustomPlatformSpecificAssets
 import org.jetbrains.intellij.build.impl.plugins.buildPlugins
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
@@ -41,8 +40,7 @@ internal suspend fun buildPluginsForDevMode(
   runDir: Path,
   platformLayout: Deferred<PlatformLayout>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  buildPlatformJob: Deferred<List<DistributionFileEntry>>,
-  moduleOutputPatcher: ModuleOutputPatcher,
+  platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
 ): PluginsLayoutResult {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
 
@@ -59,21 +57,20 @@ internal suspend fun buildPluginsForDevMode(
   val pluginEntries = spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), plugins.size.toLong()).use {
     val targetPlatform = SupportedDistribution(os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, libcImpl = LibcImpl.current(OsFamily.currentOs))
     buildPlugins(
-      moduleOutputPatcher = moduleOutputPatcher,
       plugins = plugins,
       os = null,
+      arch = null,
       targetDir = pluginRootDir,
       state = DistributionBuilderState(platformLayout = platform, pluginsToPublish = emptySet(), context = context),
-      buildPlatformJob = buildPlatformJob,
+      platformEntriesProvider = platformEntriesProvider,
       searchableOptionSet = searchableOptionSet,
       descriptorCacheContainer = platform.descriptorCacheContainer,
       context = context,
     ) { layout, pluginDirOrFile ->
-      handleCustomPlatformSpecificAssets(
-        layout = layout,
-        targetPlatform = targetPlatform,
+      buildPlatformSpecificPluginResources(
+        plugin = layout,
+        pluginDirs = listOf(targetPlatform to pluginDirOrFile),
         context = context,
-        pluginDir = pluginDirOrFile,
         isDevMode = true,
       )
     }

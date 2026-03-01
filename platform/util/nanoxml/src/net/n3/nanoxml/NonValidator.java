@@ -29,7 +29,11 @@ package net.n3.nanoxml;
 
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * NonValidator is a concrete implementation of IXMLValidator which processes

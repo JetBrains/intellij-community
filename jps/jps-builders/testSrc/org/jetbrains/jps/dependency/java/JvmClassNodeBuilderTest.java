@@ -1,16 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import junit.framework.TestCase;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev

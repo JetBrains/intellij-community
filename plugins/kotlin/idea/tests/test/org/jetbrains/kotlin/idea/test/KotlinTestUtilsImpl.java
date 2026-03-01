@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.cli.CompilerConfigurationCreationKt;
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys;
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity;
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation;
@@ -17,11 +18,11 @@ import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.test.TestJdkKind;
-import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.jetbrains.kotlin.idea.test.KotlinTestUtils.getCurrentProcessJdkHome;
 
@@ -46,7 +47,7 @@ public final class KotlinTestUtilsImpl {
 
     @NotNull
     public static CompilerConfiguration newConfiguration() {
-        CompilerConfiguration configuration = new CompilerConfiguration();
+        CompilerConfiguration configuration = CompilerConfigurationCreationKt.create(CompilerConfiguration.Companion);
         configuration.put(CommonConfigurationKeys.MODULE_NAME, TEST_MODULE_NAME);
 
         configuration.put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {

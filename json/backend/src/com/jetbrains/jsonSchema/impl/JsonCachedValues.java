@@ -4,13 +4,17 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.json.navigation.JsonQualifiedNameKind;
 import com.intellij.json.navigation.JsonQualifiedNameProvider;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -40,7 +44,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public final class JsonCachedValues {
@@ -48,15 +56,7 @@ public final class JsonCachedValues {
 
   public static @Nullable JsonSchemaObject getSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Project project) {
     JsonFileResolver.startFetchingHttpFileIfNeeded(schemaFile, project);
-    if (Registry.is("json.schema.object.v2")) {
-      return JsonSchemaObjectStorage.getInstance(project)
-        .getOrComputeSchemaRootObject(schemaFile);
-    }
-    else {
-      return computeForFile(schemaFile, project, (psiFile) -> {
-        return JsonSchemaCacheManager.getInstance(psiFile.getProject()).computeSchemaObject(schemaFile, psiFile);
-      }, JSON_OBJECT_CACHE_KEY);
-    }
+    return JsonSchemaObjectStorage.getInstance(project).getOrComputeSchemaRootObject(schemaFile);
   }
 
   public static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
@@ -64,12 +64,12 @@ public final class JsonCachedValues {
 
   public static @Nullable String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
                                                                 @NotNull Project project) {
-    if (Registry.is("json.schema.object.v2")) {
-      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(project).getComputedSchemaRootOrNull(file);
-      if (schemaRootOrNull != null) {
-        return schemaRootOrNull.getSchema();
-      }
+    JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(project).getComputedSchemaRootOrNull(file);
+    if (schemaRootOrNull != null) {
+      return schemaRootOrNull.getSchema();
     }
+
+    // likely unneeded execution branch
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, file, URL_CACHE_KEY);
     if (value != null) {
       return JsonSchemaFileValuesIndex.NULL.equals(value) ? null : value;
@@ -129,12 +129,12 @@ public final class JsonCachedValues {
     //skip content loading for generated schema files (IntellijConfigurationJsonSchemaProviderFactory)
     if (schemaFile instanceof LightVirtualFile) return null;
 
-    if (Registry.is("json.schema.object.v2")) {
-      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(project).getOrComputeSchemaRootObject(schemaFile);
-      if (schemaRootOrNull != null) {
-        return schemaRootOrNull.getId();
-      }
+    JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(project).getOrComputeSchemaRootObject(schemaFile);
+    if (schemaRootOrNull != null) {
+      return schemaRootOrNull.getId();
     }
+
+    // likely unneeded execution branch
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, ID_CACHE_KEY);
     if (value != null && !JsonSchemaFileValuesIndex.NULL.equals(value)) return JsonPointerUtil.normalizeId(value);
     String obsoleteValue = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, OBSOLETE_ID_CACHE_KEY);

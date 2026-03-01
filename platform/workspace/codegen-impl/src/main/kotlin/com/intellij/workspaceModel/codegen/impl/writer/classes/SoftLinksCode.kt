@@ -134,7 +134,7 @@ private fun processAbstractClass(thisClass: ValueType.AbstractClass<*>,
   if (generateNewName) context.line("val $newVarName = $varName")
   context.section("when ($newVarName)") {
     listBuilder(thisClass.subclasses) { item ->
-      val linesBuilder = LinesBuilder(StringBuilder(), context.indentLevel+1, context.indentSize).wrapper()
+      val linesBuilder = LinesBuilder(StringBuilder()).wrapper()
       if (item is ValueType.AbstractClass) {
         processAbstractClass(item, newVarName, linesBuilder, operation, generateNewName)
       }
@@ -212,7 +212,7 @@ private fun ValueType<*>.processType(
     }
     is ValueType.Collection<*, *> -> {
       var name: String? = "${varName.clean()}_data"
-      val builder = lines(context.indentLevel) {
+      val builder = lines {
         section("val $name = $varName.map") label@{
           val returnVar = elementType.processType(
             this@label,
@@ -235,7 +235,7 @@ private fun ValueType<*>.processType(
     }
     is ValueType.Optional<*> -> {
       var name: String? = "${varName.clean()}_data_optional"
-      val builder = lines(context.indentLevel) {
+      val builder = lines {
         lineNoNl("var $name = ")
         ifElse("$varName != null", labelIf@{
           val returnVar = type.processType(
@@ -255,7 +255,7 @@ private fun ValueType<*>.processType(
       }
       name
     }
-    else -> return null
+    else -> null
   }
 }
 

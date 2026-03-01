@@ -4,7 +4,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 public final class EditKeymapsDialog extends SingleConfigurableEditor {
   private final String myActionToSelect;

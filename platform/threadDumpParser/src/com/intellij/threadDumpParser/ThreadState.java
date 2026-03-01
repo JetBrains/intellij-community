@@ -9,7 +9,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @ApiStatus.Internal
 public class ThreadState {
@@ -22,6 +25,8 @@ public class ThreadState {
   private String myExtraState;
   private boolean isDaemon;
   private boolean isVirtual;
+  private long uniqueId;
+  private Long threadContainerUniqueId;
   private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<>();
   private final Set<ThreadState> myDeadlockedThreads = new HashSet<>();
   private String ownableSynchronizers;
@@ -199,4 +204,12 @@ public class ThreadState {
   public void setVirtual(boolean virtual) {
     isVirtual = virtual;
   }
+
+  public long getUniqueId() { return uniqueId; }
+
+  public void setUniqueId(long id) { uniqueId = id; }
+
+  public Long getThreadContainerUniqueId() { return threadContainerUniqueId; }
+
+  public void setThreadContainerUniqueId(Long id) { threadContainerUniqueId = id; }
 }

@@ -35,11 +35,7 @@ public final class SearchContext {
   @Deprecated
   public static final SearchContext IN_STRINGS = new SearchContext("IN_STRINGS", UsageSearchContext.IN_STRINGS);
 
-  /**
-   * @deprecated use {@link #inPlainText}
-   */
-  @Deprecated(forRemoval = true)
-  public static final SearchContext IN_PLAIN_TEXT = new SearchContext("IN_PLAIN_TEXT", UsageSearchContext.IN_PLAIN_TEXT);
+  private static final SearchContext IN_PLAIN_TEXT = new SearchContext("IN_PLAIN_TEXT", UsageSearchContext.IN_PLAIN_TEXT);
 
   private final @NonNls @NotNull String debugName;
   private final short mask;

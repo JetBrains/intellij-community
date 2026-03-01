@@ -11,4 +11,15 @@ jvm_library(
     "//platform/external-process-auth-helper/rt",
   ]
 )
+
+jvm_library(
+  name = "rt_test_lib",
+  module_name = "intellij.vcs.git.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":rt",
+    "//platform/external-process-auth-helper/rt:rt_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.vcs.git.rt` end

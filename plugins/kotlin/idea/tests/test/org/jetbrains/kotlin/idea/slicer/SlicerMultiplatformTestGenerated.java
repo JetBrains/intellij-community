@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/slicer/mpp")
-public class SlicerMultiplatformTestGenerated extends AbstractSlicerMultiplatformTest {
+public class SlicerMultiplatformTestGenerated extends AbstractK1SlicerMultiplatformTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

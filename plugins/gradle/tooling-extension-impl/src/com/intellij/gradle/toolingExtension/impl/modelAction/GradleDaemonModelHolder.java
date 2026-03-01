@@ -10,12 +10,20 @@ import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.DefaultGradleLightBuild;
 import org.jetbrains.plugins.gradle.model.DefaultBuildController;
+import org.jetbrains.plugins.gradle.model.DefaultGradleLightBuild;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.jetbrains.plugins.gradle.model.DefaultGradleLightBuild.convertGradleBuilds;
 

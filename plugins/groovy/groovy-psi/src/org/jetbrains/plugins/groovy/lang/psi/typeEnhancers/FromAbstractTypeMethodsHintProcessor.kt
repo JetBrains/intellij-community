@@ -15,7 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 
 class FromAbstractTypeMethodsHintProcessor : SignatureHintProcessor() {
 

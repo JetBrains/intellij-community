@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +20,8 @@ public final class PatternUtil {
   public static final Pattern NOTHING = Pattern.compile("(a\\A)");
 
   private static final Map<String, String> ourEscapeRules = new LinkedHashMap<>();
+
+  private static final String REGEX_META_CHARS = ".$|()[{^?*+\\";
 
   static {
     // '.' should be escaped first
@@ -88,5 +90,11 @@ public final class PatternUtil {
       }
     }
     return null;
+  }
+
+  /// @return whether [text] contains a REGEX meta-character like * or |.
+  @Contract(pure = true)
+  public static boolean containsMetaChar(@NotNull String text) {
+    return StringUtil.containsAnyChar(text, REGEX_META_CHARS);
   }
 }

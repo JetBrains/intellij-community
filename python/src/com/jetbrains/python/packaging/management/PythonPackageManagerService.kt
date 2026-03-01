@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.management
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -16,7 +17,7 @@ interface PythonPackageManagerProvider {
    * package management files etc.
    * Sdk is expected to be a Python Sdk and have PythonSdkAdditionalData.
    */
-  suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager?
+  fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager?
 
   companion object {
     val EP_NAME = ExtensionPointName.create<PythonPackageManagerProvider>("Pythonid.pythonPackageManagerProvider")
@@ -26,7 +27,8 @@ interface PythonPackageManagerProvider {
 @ApiStatus.Internal
 @ApiStatus.Experimental
 interface PythonPackageManagerService {
-  suspend fun forSdk(project: Project, sdk: Sdk): PythonPackageManager
+  @Throws(AlreadyDisposedException::class)
+  fun forSdk(project: Project, sdk: Sdk): PythonPackageManager
 
   /**
    * Provides an implementation bridge for Python package management operations

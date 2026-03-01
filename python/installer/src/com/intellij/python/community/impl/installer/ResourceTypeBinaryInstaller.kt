@@ -5,11 +5,16 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.progress.ProgressIndicator
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.Binary
 import com.jetbrains.python.sdk.Resource
 import com.jetbrains.python.sdk.ResourceType
-import com.jetbrains.python.sdk.installer.*
+import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.installer.CancelledProcessException
+import com.jetbrains.python.sdk.installer.ExecutionProcessException
+import com.jetbrains.python.sdk.installer.LOGGER
+import com.jetbrains.python.sdk.installer.NonZeroExitCodeProcessException
+import com.jetbrains.python.sdk.installer.ProcessException
+import com.jetbrains.python.sdk.installer.TimeoutProcessException
 import java.nio.file.Path
 
 /**

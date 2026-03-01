@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityToNullableParent
+import com.intellij.platform.workspace.storage.testEntities.entities.AttachedEntityToParent
+import com.intellij.platform.workspace.storage.testEntities.entities.MainEntityToParent
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyAttachedEntityToNullableParent
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyMainEntityToParent
+import com.intellij.platform.workspace.storage.testEntities.entities.nullableRef
+import com.intellij.platform.workspace.storage.testEntities.entities.ref
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

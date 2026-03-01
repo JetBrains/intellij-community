@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("ModuleExtensions")
-
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
@@ -10,9 +8,9 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -30,16 +28,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCustomImlDataEntityData) : ModuleCustomImlDataEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCustomImlDataEntityData) : ModuleCustomImlDataEntity,
+                                                                                                      WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleCustomImlDataEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
-
-    private val connections = listOf<ConnectionId>(
-      MODULE_CONNECTION_ID,
-    )
+    internal val MODULE_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleEntity::class.java, ModuleCustomImlDataEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
 
   }
 
@@ -54,6 +49,7 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
       readField("customModuleOptions")
       return dataSource.customModuleOptions
     }
+
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
@@ -68,8 +64,8 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
   }
 
 
-  internal class Builder(result: ModuleCustomImlDataEntityData?) : ModifiableWorkspaceEntityBase<ModuleCustomImlDataEntity, ModuleCustomImlDataEntityData>(
-    result), ModuleCustomImlDataEntity.Builder {
+  internal class Builder(result: ModuleCustomImlDataEntityData?) :
+    ModifiableWorkspaceEntityBase<ModuleCustomImlDataEntity, ModuleCustomImlDataEntityData>(result), ModuleCustomImlDataEntity.Builder {
     internal constructor() : this(ModuleCustomImlDataEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -82,15 +78,13 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
           error("Entity ModuleCustomImlDataEntity is already created in a different builder")
         }
       }
-
       this.diff = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
-      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-      // Builder may switch to snapshot at any moment and lock entity data to modification
+// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+// Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
-
-      // Process linked entities that are connected without a builder
+// Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
     }
@@ -123,8 +117,10 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleCustomImlDataEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.rootManagerTagCustomData != dataSource?.rootManagerTagCustomData) this.rootManagerTagCustomData = dataSource.rootManagerTagCustomData
-      if (this.customModuleOptions != dataSource.customModuleOptions) this.customModuleOptions = dataSource.customModuleOptions.toMutableMap()
+      if (this.rootManagerTagCustomData != dataSource?.rootManagerTagCustomData) this.rootManagerTagCustomData =
+        dataSource.rootManagerTagCustomData
+      if (this.customModuleOptions != dataSource.customModuleOptions) this.customModuleOptions =
+        dataSource.customModuleOptions.toMutableMap()
       updateChildToParentReferences(parents)
     }
 
@@ -137,7 +133,6 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
         changedProperty.add("entitySource")
 
       }
-
     override var rootManagerTagCustomData: String?
       get() = getEntityData().rootManagerTagCustomData
       set(value) {
@@ -145,7 +140,6 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
         getEntityData(true).rootManagerTagCustomData = value
         changedProperty.add("rootManagerTagCustomData")
       }
-
     override var customModuleOptions: Map<String, String>
       get() = getEntityData().customModuleOptions
       set(value) {
@@ -153,7 +147,6 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
         getEntityData(true).customModuleOptions = value
         changedProperty.add("customModuleOptions")
       }
-
     override var module: ModuleEntityBuilder
       get() {
         val _diff = diff
@@ -173,7 +166,7 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
+// else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -183,8 +176,7 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
+// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
@@ -192,6 +184,7 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
 
     override fun getEntityClass(): Class<ModuleCustomImlDataEntity> = ModuleCustomImlDataEntity::class.java
   }
+
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -220,8 +213,7 @@ internal class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomI
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -244,9 +236,7 @@ internal class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomI
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ModuleCustomImlDataEntityData
-
     if (this.entitySource != other.entitySource) return false
     if (this.rootManagerTagCustomData != other.rootManagerTagCustomData) return false
     if (this.customModuleOptions != other.customModuleOptions) return false
@@ -256,9 +246,7 @@ internal class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomI
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
-
     other as ModuleCustomImlDataEntityData
-
     if (this.rootManagerTagCustomData != other.rootManagerTagCustomData) return false
     if (this.customModuleOptions != other.customModuleOptions) return false
     return true

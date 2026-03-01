@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile

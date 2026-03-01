@@ -19,7 +19,6 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.time.Duration.Companion.seconds
 

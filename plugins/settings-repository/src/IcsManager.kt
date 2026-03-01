@@ -253,7 +253,7 @@ private class IcsManagerService(private val coroutineScope: CoroutineScope) {
   }
 }
 
-private class IcsApplicationLoadListener : ApplicationLoadListener {
+internal class IcsApplicationLoadListener : ApplicationLoadListener {
   override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
     if (application.isUnitTestMode) {
       return

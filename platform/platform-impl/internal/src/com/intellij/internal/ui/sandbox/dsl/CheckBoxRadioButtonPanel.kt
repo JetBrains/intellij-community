@@ -12,7 +12,11 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import java.awt.Color
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JToggleButton
 import javax.swing.border.Border
 
 @Suppress("UseJBColor")

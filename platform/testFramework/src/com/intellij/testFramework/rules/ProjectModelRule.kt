@@ -16,7 +16,11 @@ import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkModificator
+import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -33,7 +37,11 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.junit.jupiter.api.extension.*
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -104,7 +112,7 @@ open class ProjectModelRule : TestRule {
   }
 
   fun createSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
-    val sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType)
+    val sdk = ProjectJdkTable.getInstance(project).createSdk(name, sdkType)
     modifySdk(sdk, setup)
     IndexingTestUtil.waitUntilIndexesAreReady(project)
     return sdk
@@ -135,7 +143,7 @@ open class ProjectModelRule : TestRule {
   
   fun addSdk(sdk: Sdk) {
     runWriteActionAndWait {
-      ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable)
+      ProjectJdkTable.getInstance(project).addJdk(sdk, disposableRule.disposable)
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project)
   }

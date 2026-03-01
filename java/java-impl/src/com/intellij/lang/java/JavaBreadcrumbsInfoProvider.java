@@ -5,7 +5,18 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterListOwner;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
@@ -14,7 +25,9 @@ import com.intellij.usageView.UsageViewShortNameLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.htmlEmphasize;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.psi.PsiNameHelper.getShortClassName;
 
 /**

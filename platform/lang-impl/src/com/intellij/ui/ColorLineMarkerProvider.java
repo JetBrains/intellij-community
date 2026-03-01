@@ -25,8 +25,8 @@ import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.ColorsIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 import java.util.Collection;
 import java.util.List;
 

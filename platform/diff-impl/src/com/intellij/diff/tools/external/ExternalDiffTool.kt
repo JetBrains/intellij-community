@@ -4,7 +4,12 @@ package com.intellij.diff.tools.external
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffNotificationIdsHolder
-import com.intellij.diff.chains.*
+import com.intellij.diff.chains.AsyncDiffRequestChain
+import com.intellij.diff.chains.DiffRequestChain
+import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.diff.chains.DiffRequestProducerException
+import com.intellij.diff.chains.DiffRequestSelectionChain
+import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool

@@ -11,6 +11,7 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.plugins.PluginInstalledState
 import com.intellij.ide.starter.project.NoProject
+import com.intellij.ide.starter.runner.events.TestContextInitializationStartedEvent
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.PortUtil
 import com.intellij.tools.ide.starter.bus.EventsBus
@@ -19,24 +20,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.div
-import kotlin.reflect.jvm.isAccessible
 
 typealias IDEDataPathsProvider = (testName: String, testDirectory: Path, useInMemoryFileSystem: Boolean) -> IDEDataPaths
 
-interface TestContainer<T> {
-  // TODO: Port setup hooks on using events
-  // https://youtrack.jetbrains.com/issue/AT-18/Simplify-refactor-code-for-starting-IDE-in-IdeRunContext#focus=Comments-27-8300203.0-0
-  val setupHooks: MutableList<IDETestContext.() -> IDETestContext>
-
+interface TestContainer {
   companion object {
     init {
-      EventsBus.subscribe(TestContainer<*>::javaClass) { _: TestContextInitializedEvent ->
+      EventsBus.subscribe(TestContainer::javaClass) { _: TestContextInitializedEvent ->
         logOutput("Starter configuration storage: ${ConfigurationStorage.instance().getAll()}")
       }
-    }
-
-    inline fun <reified T : TestContainer<T>> newInstance(): T {
-      return T::class.constructors.single().apply { isAccessible = true }.call()
     }
 
     suspend fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIde> {
@@ -56,6 +48,11 @@ interface TestContainer<T> {
     fun applyDefaultVMOptions(context: IDETestContext): IDETestContext {
       return when (context.testCase.ideInfo == IdeProductProvider.AI) {
         true -> context
+          .addProjectToTrustedLocations()
+          .disableFusSendingOnIdeClose()
+          .disableReportingStatisticsToProduction()
+          .disableReportingStatisticToJetStat()
+          .disableMigrationNotification()
           .applyVMOptionsPatch {
             overrideDirectories(context.paths)
             withEnv("STUDIO_VM_OPTIONS", context.ide.patchedVMOptionsFile.toString())
@@ -93,13 +90,6 @@ interface TestContainer<T> {
   }
 
   /**
-   * Allows to apply the common configuration to all created IDETestContext instances
-   */
-  fun withSetupHook(hook: IDETestContext.() -> IDETestContext): T = apply {
-    setupHooks += hook
-  } as T
-
-  /**
    * @return <Build Number, InstalledIde>
    */
   suspend fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIde> {
@@ -110,8 +100,14 @@ interface TestContainer<T> {
     TestContainer.installPerformanceTestingPluginIfMissing(context)
   }
 
-  fun newContext(testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean = false): IDETestContext =
-    newContext(testName, testCase, preserveSystemDir, computeWithSpan("download and unpack project") { testCase.projectInfo.downloadAndUnpackProject() })
+  fun newContext(testName: String, testCase: TestCase<*>, preserveSystemDir: Boolean = false): IDETestContext {
+    return newContext(
+      testName = testName,
+      testCase = testCase,
+      preserveSystemDir = preserveSystemDir,
+      projectHome = computeWithSpan("download and unpack project") { testCase.projectInfo.downloadAndUnpackProject() },
+    )
+  }
 
   /**
    * Creates a context from the `existingContext` one. The difference from the [newContext] method is that the project is not set up, but
@@ -132,6 +128,7 @@ interface TestContainer<T> {
       IDEDataPaths.createPaths<IDEDataPaths>(testName, testDirectory, useInMemoryFileSystem)
     },
   ): IDETestContext {
+    EventsBus.postAndWaitProcessing(TestContextInitializationStartedEvent())
     logOutput("Resolving IDE build for $testName...")
     val (buildNumber, ide) = @Suppress("SSBasedInspection")
     (runBlocking(Dispatchers.Default) {
@@ -161,14 +158,14 @@ interface TestContainer<T> {
 
     testContext = applyDefaultVMOptions(testContext)
 
-    val contextWithAppliedHooks = setupHooks
-      .fold(testContext.updateGeneralSettings()) { acc, hook -> acc.hook() }
+    val preparedContext = testContext
+      .updateGeneralSettings()
       .apply { installPerformanceTestingPluginIfMissing(this) }
 
-    testCase.projectInfo.configureProjectBeforeUse.invoke(contextWithAppliedHooks)
+    testCase.projectInfo.configureProjectBeforeUse.invoke(preparedContext)
 
-    EventsBus.postAndWaitProcessing(TestContextInitializedEvent(contextWithAppliedHooks))
+    EventsBus.postAndWaitProcessing(TestContextInitializedEvent(this, preparedContext))
 
-    return contextWithAppliedHooks
+    return preparedContext
   }
 }

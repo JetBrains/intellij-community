@@ -41,4 +41,41 @@ jvm_library(
   ],
   exports = ["//platform/external-system-rt:externalSystem-rt"]
 )
+
+jvm_library(
+  name = "externalSystem_test_lib",
+  module_name = "intellij.platform.externalSystem",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "//platform/external-system-rt:externalSystem-rt",
+    "//platform/external-system-rt:externalSystem-rt_test_lib",
+  ],
+  runtime_deps = [
+    ":externalSystem",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/external-system-rt:externalSystem-rt_test_lib",
+    "//platform/observable:observable_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/object-serializer:object-serializer_test_lib",
+    "//platform/object-serializer:objectSerializer-annotations_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/external-system-api/dependency-updater:dependency-updater_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/execution:execution_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.externalSystem` end

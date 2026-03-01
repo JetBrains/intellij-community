@@ -1,0 +1,30 @@
+<!--
+  This file contains extensions, actions, services, etc. without v2 dependencies,
+  so it can be included in Analyzer dependencies where V2 is not yet supported.
+
+  All new extensions, actions, services, extension points, etc. should be added to this file.
+-->
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.debugger.codeFragmentFactory"
+                    interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.debugger.javaDebugAware"
+                    interface="com.intellij.debugger.engine.JavaDebugAware" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.debugger.positionManagerFactory"
+                    interface="com.intellij.debugger.PositionManagerFactory" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.debugger.simplePropertyGetterProvider"
+                    interface="com.intellij.debugger.engine.SimplePropertyGetterProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.debugger.syntheticProvider"
+                    interface="com.intellij.debugger.engine.SyntheticTypeComponentProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.debugger.sourcePositionHighlighter"
+                    interface="com.intellij.debugger.engine.SourcePositionHighlighter" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.debugger.nodeNameAdjuster"
+                    interface="com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

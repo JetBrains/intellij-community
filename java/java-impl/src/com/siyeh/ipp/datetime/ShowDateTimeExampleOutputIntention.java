@@ -6,7 +6,15 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiBasedModCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -20,7 +28,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
-import static com.siyeh.ig.callMatcher.CallMatcher.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 /**
  * @author Bas Leijdekkers

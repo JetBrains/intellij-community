@@ -27,6 +27,15 @@ fcntl.I_[A-Z0-9_]+  # Platform differences that cannot be captured by the type s
 multiprocessing.popen_spawn_win32  # exists on Linux but fails to import
 select.poll  # Actually a function; we have a class so it can be used as a type
 
+# Bluetooth constants which aren't on the GitHub Actions runners, see #15207
+(_?socket\.AF_BLUETOOTH)?
+(_?socket\.BDADDR_ANY)?
+(_?socket\.BDADDR_LOCAL)?
+(_?socket\.BTPROTO_HCI)?
+(_?socket\.BTPROTO_L2CAP)?
+(_?socket\.BTPROTO_RFCOMM)?
+(_?socket\.BTPROTO_SCO)?
+
 # These seem like they should be available on Linux, but they're not
 # on GitHub Actions runners for some reason.
 _?socket.IPX_TYPE

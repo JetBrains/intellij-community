@@ -1,7 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiUsesStatement;
 
 public abstract class StubPsiFactory {
   public abstract PsiClass createClass(PsiClassStub stub);

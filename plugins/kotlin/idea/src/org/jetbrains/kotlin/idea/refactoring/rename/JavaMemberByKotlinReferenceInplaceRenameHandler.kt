@@ -10,6 +10,7 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
+@K1Deprecation
 class JavaMemberByKotlinReferenceInplaceRenameHandler : MemberInplaceRenameHandler() {
     class Renamer(
         elementToRename: PsiNameIdentifierOwner,

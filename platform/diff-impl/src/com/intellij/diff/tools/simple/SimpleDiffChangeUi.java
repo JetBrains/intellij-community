@@ -2,7 +2,14 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffGutterOperation;
+import com.intellij.diff.util.DiffGutterRenderer;
+import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
@@ -20,7 +27,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 

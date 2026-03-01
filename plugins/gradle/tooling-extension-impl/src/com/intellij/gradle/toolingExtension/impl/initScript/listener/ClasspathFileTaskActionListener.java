@@ -5,7 +5,11 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.process.CommandLineArgumentProvider;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;

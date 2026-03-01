@@ -25,4 +25,7 @@ interface PolySymbolTypeSupport {
         PolySymbolTypeSupportTypeReferenceData(module, name)
     }
   }
+
+  object TypeSupportProperty : PolySymbolProperty<PolySymbolTypeSupport>("type-support", PolySymbolTypeSupport::class.java)
+
 }

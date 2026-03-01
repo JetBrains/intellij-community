@@ -2,7 +2,10 @@
 package com.intellij.openapi.application.migrations
 
 import com.intellij.diagnostic.LoadingState
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.ProductPluginInitContext
+import com.intellij.ide.plugins.loadDescriptorsFromCustomPluginDir
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
@@ -23,13 +26,9 @@ internal object Localization242 {
     @Suppress("RAW_RUN_BLOCKING")
     val loadedDescriptors = runBlocking {
       val pluginList = loadDescriptorsFromCustomPluginDir(oldPluginsDir, true)
-      val loadingResult = PluginLoadingResult()
-      loadingResult.initAndAddAll(
-        descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
-        initContext = ProductPluginInitContext()
-      )
-      loadingResult
-    }.enabledPluginsById.values
+      val initContext = ProductPluginInitContext()
+      pluginList.plugins.filter { !initContext.isPluginDisabled(it.pluginId) }
+    }
 
     val localizationPlugins = loadedDescriptors.filter { descriptor -> isLocalizationPlugin(descriptor) }
     if (localizationPlugins.isEmpty()) {

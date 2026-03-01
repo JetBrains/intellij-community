@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
 import org.jetbrains.kotlin.idea.framework.ui.ChooseModulePanel;
-import javax.swing.*;
+
+import javax.swing.JComponent;
 import java.util.Collection;
 import java.util.List;
 

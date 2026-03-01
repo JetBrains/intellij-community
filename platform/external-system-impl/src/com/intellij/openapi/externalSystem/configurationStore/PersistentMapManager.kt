@@ -8,7 +8,12 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.LineSeparator
-import com.intellij.util.io.*
+import com.intellij.util.io.basicAttributesIfExists
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.inputStreamIfExists
+import com.intellij.util.io.move
+import com.intellij.util.io.outputStream
+import com.intellij.util.io.sanitizeFileName
 import org.jdom.Element
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi

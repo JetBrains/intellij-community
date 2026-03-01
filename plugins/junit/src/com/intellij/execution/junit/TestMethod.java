@@ -3,11 +3,24 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.JUnitBundle;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;

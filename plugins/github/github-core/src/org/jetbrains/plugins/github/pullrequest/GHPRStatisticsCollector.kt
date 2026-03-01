@@ -22,11 +22,11 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListSearchValue
 import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
-import java.util.*
+import java.util.Locale
 
 // TODO: Fix or replace a whole bunch of these statistics as they're no longer being collected since generalizing to Collab Tools
 internal object GHPRStatisticsCollector : CounterUsagesCollector() {
-  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 11)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 13)
 
   private val LOG = logger<GHPRStatisticsCollector>()
 
@@ -45,15 +45,21 @@ internal object GHPRStatisticsCollector : CounterUsagesCollector() {
   }
   //endregion
 
-  //region: Multiline comments
-  private val COMMENTS_RESIZED_EVENT = COUNTERS_GROUP.registerEvent("comments.resized", "The user resized range of a new comment by dragging its outline across the text")
-  private val MULTILINE_COMMENTS_CREATED = COUNTERS_GROUP.registerEvent("multiline.comments.created", "The user created a new comment that spans multiple lines")
+  //region: Comments
+  private val COMMENTS_RESIZED_EVENT = COUNTERS_GROUP.registerEvent("comments.resized")
+  private val MULTILINE_COMMENTS_CREATED = COUNTERS_GROUP.registerEvent("multiline.comments.created")
+  private val TOGGLED_COMMENTS_EVENT = COUNTERS_GROUP.registerEvent("comments.toggled")
+
   fun logResizedComments(project: Project) {
     COMMENTS_RESIZED_EVENT.log(project)
   }
 
   fun logMultilineCommentsCreated(project: Project) {
     MULTILINE_COMMENTS_CREATED.log(project)
+  }
+
+  fun logToggledComments(project: Project) {
+    TOGGLED_COMMENTS_EVENT.log(project)
   }
   //endregion
 
@@ -245,8 +251,7 @@ internal object GHPRStatisticsCollector : CounterUsagesCollector() {
     "api.rates",
     API_REQUEST_OPERATION_FIELD,
     API_REQUEST_RATELIMIT_USED_FIELD,
-    API_REQUEST_RATELIMIT_GUESSED_FIELD,
-    description = "Event that happens internally after we have tried to determine the rates used for a request."
+    API_REQUEST_RATELIMIT_GUESSED_FIELD
   )
 
   fun logApiRequestStart(operation: GithubApiRequestOperation): StructuredIdeActivity =

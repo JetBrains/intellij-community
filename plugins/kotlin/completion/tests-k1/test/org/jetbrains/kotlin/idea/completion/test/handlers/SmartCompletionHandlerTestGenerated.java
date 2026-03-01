@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test.handlers;
 
@@ -600,6 +600,11 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
             runTest("../testData/handlers/smart/MultipleArgsIntoBrackets.kt");
         }
 
+        @TestMetadata("MultipleArgsIntoBracketsWithComma.kt")
+        public void testMultipleArgsIntoBracketsWithComma() throws Exception {
+            runTest("../testData/handlers/smart/MultipleArgsIntoBracketsWithComma.kt");
+        }
+
         @TestMetadata("MultipleArgsItem.kt")
         public void testMultipleArgsItem() throws Exception {
             runTest("../testData/handlers/smart/MultipleArgsItem.kt");
@@ -608,6 +613,26 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
         @TestMetadata("MultipleArgsItemByTab.kt")
         public void testMultipleArgsItemByTab() throws Exception {
             runTest("../testData/handlers/smart/MultipleArgsItemByTab.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithComma.kt")
+        public void testMultipleArgsWithComma() throws Exception {
+            runTest("../testData/handlers/smart/MultipleArgsWithComma.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithExistingBracket.kt")
+        public void testMultipleArgsWithExistingBracket() throws Exception {
+            runTest("../testData/handlers/smart/MultipleArgsWithExistingBracket.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithExistingParen.kt")
+        public void testMultipleArgsWithExistingParen() throws Exception {
+            runTest("../testData/handlers/smart/MultipleArgsWithExistingParen.kt");
+        }
+
+        @TestMetadata("MultipleArgsWithTwoMatching.kt")
+        public void testMultipleArgsWithTwoMatching() throws Exception {
+            runTest("../testData/handlers/smart/MultipleArgsWithTwoMatching.kt");
         }
 
         @TestMetadata("NamedArgument1.kt")

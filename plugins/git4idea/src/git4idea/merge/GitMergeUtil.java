@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -22,7 +23,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerListener;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.index.GitIndexUtil;
@@ -274,14 +279,16 @@ public final class GitMergeUtil {
       return loadRevisionContent(project, root, path, stageNum);
     }
     catch (VcsException e) {
-      String m = e.getMessage().trim();
+      String originalMessage = e.getMessage().trim();
+      String m = StringUtil.toLowerCase(originalMessage);
+
       if (m.startsWith("fatal: ambiguous argument ")
-          || (m.startsWith("fatal: Path '") && m.contains("' exists on disk, but not in '"))
+          || (m.startsWith("fatal: path '") && m.contains("' exists on disk, but not in '"))
           || m.contains("is in the index, but not at stage ")
           || m.contains("bad revision")
-          || m.startsWith("fatal: Not a valid object name")
+          || m.startsWith("fatal: not a valid object name")
           || m.startsWith("error: cannot read object")) {
-        LOG.warn("Failed to load revision content for %s (stage %d): '%s'\nAssuming missing side".formatted(path, stageNum, m));
+        LOG.warn("Failed to load revision content for %s (stage %d): '%s'\nAssuming missing side".formatted(path, stageNum, originalMessage));
         return null; // assume missing side of 'Deleted-Modified', 'Deleted-Deleted', 'Added-Added' conflicts
       }
       else {

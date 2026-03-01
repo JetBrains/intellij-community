@@ -2,7 +2,18 @@ package com.intellij.devkit.compose.demo
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.ScrollableState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -16,8 +27,12 @@ import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.modifier.trackComponentActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
-import org.jetbrains.jewel.ui.component.*
-import java.util.*
+import org.jetbrains.jewel.ui.component.Divider
+import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.TextArea
+import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
+import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
+import java.util.Locale
 
 @Composable
 internal fun ScrollbarsShowcaseTab() {

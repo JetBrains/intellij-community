@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
@@ -84,7 +84,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   /**
    * @return PsiFile for given language, or {@code null} if the language is not present
    */
-  PsiFile getPsi(@NotNull Language target);
+  @Nullable PsiFile getPsi(@NotNull Language target);
 
   /**
    * @return all PSI files for this view provider. In most cases, just one main file. For multi-root languages, several files. The files' languages

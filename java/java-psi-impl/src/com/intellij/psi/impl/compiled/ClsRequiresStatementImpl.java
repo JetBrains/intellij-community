@@ -3,7 +3,12 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRequiresStatementStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;

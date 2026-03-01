@@ -12,9 +12,16 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -24,13 +31,14 @@ import java.util.function.Consumer;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-public class WordCompletionContributor extends CompletionContributor implements DumbAware {
+public final class WordCompletionContributor extends CompletionContributor implements DumbAware {
   private static boolean isWordCompletionDefinitelyEnabled(@NotNull PsiFile file) {
     return (DumbService.isDumb(file.getProject()) &&
             LanguageWordCompletion.INSTANCE.isWordCompletionInDumbModeEnabled(file.getLanguage())) ||
            file instanceof PsiPlainTextFile && file.getViewProvider().getLanguages().size() == 1;
   }
 
+  @ApiStatus.Internal
   @Override
   public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC && shouldPerformWordCompletion(parameters)) {
@@ -38,13 +46,15 @@ public class WordCompletionContributor extends CompletionContributor implements 
     }
   }
 
-  public static void addWordCompletionVariants(CompletionResultSet result, final CompletionParameters parameters, Set<String> excludes) {
+  public static void addWordCompletionVariants(@NotNull CompletionResultSet result,
+                                               @NotNull CompletionParameters parameters,
+                                               @NotNull Set<String> excludes) {
     addWordCompletionVariants(result, parameters, excludes, false);
   }
 
-  public static void addWordCompletionVariants(CompletionResultSet result,
-                                               CompletionParameters parameters,
-                                               Set<String> excludes,
+  public static void addWordCompletionVariants(@NotNull CompletionResultSet result,
+                                               @NotNull CompletionParameters parameters,
+                                               @NotNull Set<String> excludes,
                                                boolean allowEmptyPrefix) {
     if (Boolean.TRUE.equals(((CompletionProcessEx)parameters.getProcess()).getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
       return;
@@ -73,9 +83,10 @@ public class WordCompletionContributor extends CompletionContributor implements 
     addValuesFromOtherStringLiterals(result, parameters, realExcludes, position);
   }
 
-  private static void addValuesFromOtherStringLiterals(CompletionResultSet result,
-                                                       CompletionParameters parameters,
-                                                       final Set<String> realExcludes, PsiElement position) {
+  private static void addValuesFromOtherStringLiterals(@NotNull CompletionResultSet result,
+                                                       @NotNull CompletionParameters parameters,
+                                                       @NotNull Set<String> realExcludes,
+                                                       @NotNull PsiElement position) {
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(position.getLanguage());
     if (definition == null) {
       return;
@@ -120,12 +131,12 @@ public class WordCompletionContributor extends CompletionContributor implements 
     });
   }
 
-  private static LookupElement createWordSuggestion(String word) {
+  private static LookupElement createWordSuggestion(@NotNull String word) {
     return LookupElementBuilder.create(word)
       .withIcon(AllIcons.Nodes.Word);
   }
 
-  private static boolean shouldPerformWordCompletion(CompletionParameters parameters) {
+  private static boolean shouldPerformWordCompletion(@NotNull CompletionParameters parameters) {
     if (parameters.getInvocationCount() == 0) {
       return false;
     }

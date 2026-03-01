@@ -6,7 +6,7 @@ import com.intellij.util.text.matching.KeyboardLayoutConverter
 import com.intellij.util.text.matching.MatchingMode
 import kotlin.jvm.JvmStatic
 
-internal object FixingLayoutTypoTolerantMatcher {
+object FixingLayoutTypoTolerantMatcher {
   @JvmStatic
   fun create(pattern: String, matchingMode: MatchingMode, hardSeparators: String, keyboardLayoutConverter: KeyboardLayoutConverter): MinusculeMatcher {
     val mainMatcher = TypoTolerantMatcher(pattern, matchingMode, hardSeparators)

@@ -10,7 +10,7 @@ import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class MarkdownList extends MarkdownCompositePsiElementBase {
   private static final String ORDERED_LIST_TEXT = "Ordered list";

@@ -3,13 +3,20 @@
 
 package com.intellij.platform.syntax.tree
 
-import com.intellij.platform.syntax.*
+import com.intellij.platform.syntax.CancellationProvider
+import com.intellij.platform.syntax.LazyLexingContext
+import com.intellij.platform.syntax.LazyParsingContext
+import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxLanguage
+import com.intellij.platform.syntax.canLazyNodeBeReparsedIncrementally
+import com.intellij.platform.syntax.createLexer
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.extensions.ExtensionSupport
 import com.intellij.platform.syntax.extensions.performWithExtensionSupport
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.lexer.tokenIndexAtOffset
+import com.intellij.platform.syntax.parseLazyNode
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.util.cancellation.cancellationProvider
 import com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider

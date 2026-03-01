@@ -9,7 +9,13 @@ import com.intellij.platform.eel.path.platform
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.InvalidPathException
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.ProviderMismatchException
+import java.nio.file.WatchEvent
+import java.nio.file.WatchKey
+import java.nio.file.WatchService
 import java.nio.file.attribute.BasicFileAttributes
 
 /**
@@ -59,8 +65,9 @@ sealed class IjentNioPath protected constructor(
     TODO("Not yet implemented")
   }
 
-  override fun compareTo(other: Path): Int =
-    toString().compareTo(other.toString())
+  override fun compareTo(other: Path): Int {
+    return toString().compareTo(other.toString(), ignoreCase = nioFs.ijentFs.descriptor.osFamily == EelOsFamily.Windows)
+  }
 }
 
 @ApiStatus.Internal
@@ -238,7 +245,14 @@ internal class RelativeIjentNioPath(val segments: List<String>, nioFs: IjentNioF
     }
     when (other) {
       is AbsoluteIjentNioPath -> return false
-      is RelativeIjentNioPath -> return segments.size >= other.segments.size && segments.take(other.segments.size) == other.segments
+      is RelativeIjentNioPath -> {
+        if (segments.size < other.segments.size) return false
+        val ignoreCase = nioFs.ijentFs.descriptor.osFamily == EelOsFamily.Windows
+        return if (ignoreCase)
+          segments.take(other.segments.size).zip(other.segments).all { (a, b) -> a.equals(b, ignoreCase = true) }
+        else
+          segments.take(other.segments.size) == other.segments
+      }
     }
   }
 
@@ -248,7 +262,14 @@ internal class RelativeIjentNioPath(val segments: List<String>, nioFs: IjentNioF
     }
     when (other) {
       is AbsoluteIjentNioPath -> return false
-      is RelativeIjentNioPath -> return segments.size >= other.segments.size && segments.takeLast(other.segments.size) == other.segments
+      is RelativeIjentNioPath -> {
+        if (segments.size < other.segments.size) return false
+        val ignoreCase = nioFs.ijentFs.descriptor.osFamily == EelOsFamily.Windows
+        return if (ignoreCase)
+          segments.takeLast(other.segments.size).zip(other.segments).all { (a, b) -> a.equals(b, ignoreCase = true) }
+        else
+          segments.takeLast(other.segments.size) == other.segments
+      }
     }
   }
 
@@ -307,19 +328,25 @@ internal class RelativeIjentNioPath(val segments: List<String>, nioFs: IjentNioF
     throw InvalidPathException(toString(), "Can't find a real path for a relative path")
   }
 
-  override fun toString(): String = segments.joinToString("/")
+  override fun toString(): String = segments.joinToString(nioFs.separator)
 
   /**
    * Commonly, instances of Path are not considered as equal if they actually represent the same path but come from different file systems.
    *
    * See [sun.nio.fs.UnixPath.equals] and [sun.nio.fs.WindowsPath.equals].
    */
-  override fun equals(other: Any?): Boolean =
-    other is RelativeIjentNioPath &&
-    segments == other.segments &&
-    nioFs == other.nioFs
+  override fun equals(other: Any?): Boolean {
+    if (other !is RelativeIjentNioPath || nioFs != other.nioFs) return false
+    if (segments.size != other.segments.size) return false
+    val ignoreCase = nioFs.ijentFs.descriptor.osFamily == EelOsFamily.Windows
+    return if (ignoreCase) segments.zip(other.segments).all { (a, b) -> a.equals(b, ignoreCase = true) }
+           else segments == other.segments
+  }
 
-
-  override fun hashCode(): Int =
-    segments.hashCode() * 31 + nioFs.hashCode()
+  override fun hashCode(): Int {
+    val effectiveSegments =
+      if (nioFs.ijentFs.descriptor.osFamily == EelOsFamily.Windows) segments.map { it.lowercase() }
+      else segments
+    return effectiveSegments.hashCode() * 31 + nioFs.hashCode()
+  }
 }

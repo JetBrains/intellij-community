@@ -13,8 +13,12 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase {

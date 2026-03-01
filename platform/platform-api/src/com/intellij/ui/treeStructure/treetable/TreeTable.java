@@ -8,20 +8,29 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.JTree;
+import javax.swing.ListSelectionModel;
+import javax.swing.LookAndFeel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.UIResource;
 import javax.swing.tree.DefaultTreeSelectionModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.EventObject;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 /**
  * This example shows how to create a simple JTreeTable component,

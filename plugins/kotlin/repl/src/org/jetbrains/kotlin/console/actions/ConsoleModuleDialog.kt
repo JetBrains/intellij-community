@@ -2,7 +2,12 @@
 
 package org.jetbrains.kotlin.console.actions
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -11,9 +16,11 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.console.KotlinConsoleKeeper
 
+@K1Deprecation
 class ConsoleModuleDialog(private val project: Project) {
     fun showIfNeeded(dataContext: DataContext) {
         val module = getModule(dataContext)

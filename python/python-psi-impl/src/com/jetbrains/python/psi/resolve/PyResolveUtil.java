@@ -19,7 +19,13 @@ import com.google.common.collect.Iterables;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -30,19 +36,57 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.FutureFeature;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionCodeFragment;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyPossibleClassMember;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTypeAliasStatement;
+import com.jetbrains.python.psi.PyTypeParameter;
+import com.jetbrains.python.psi.PyTypeParameterListOwner;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -284,19 +328,21 @@ public final class PyResolveUtil {
     final List<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(StreamEx.of(unqualifiedResults), (prev, name) ->
         prev
           .map(RatedResolveResult::getElement)
-          .select(PyTypedElement.class)
-          .map(context::getType)
-          .nonNull()
-          .flatMap(type -> {
-            assert type != null; // see filter nonNull()
-            // An instance type has access to instance attributes defined in __init__, a class type does not.
-            final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
-            final List<? extends RatedResolveResult> results = instanceType instanceof PyModuleType moduleType
-                                                               ? moduleType.resolveModuleMember(name, scopeOwner, AccessDirection.READ,
-                                                                                                resolveContext)
-                                                               : instanceType.resolveMember(name, null, AccessDirection.READ,
-                                                                                            resolveContext);
-
+          .flatMap(element -> {
+            List<? extends RatedResolveResult> results = null;
+            if (element instanceof PyTypedElement typedElement) {
+              PyType type = context.getType(typedElement);
+              if (type != null) {
+                // An instance type has access to instance attributes defined in __init__, a class type does not.
+                final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
+                results = instanceType instanceof PyModuleType moduleType
+                          ? moduleType.resolveModuleMember(name, scopeOwner, AccessDirection.READ, resolveContext)
+                          : instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
+              }
+            }
+            else if (element instanceof PsiDirectory dir) {
+              results = PyModuleType.resolveMemberInPackageOrModule(null, dir, name, scopeOwner, resolveContext);
+            }
             return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
           }))
       .toList();
@@ -421,8 +467,11 @@ public final class PyResolveUtil {
     if (PyiUtil.isInsideStub(element)) {
       return true;
     }
-    // Forward references are allowed in annotations according to PEP 563
     PsiFile file = element.getContainingFile();
+    if (file instanceof PyExpressionCodeFragment) {
+      return true;
+    }
+    // Forward references are allowed in annotations according to PEP 563
     if (file instanceof PyFile pyFile) {
       boolean nonEagerEvaluationEnabled = pyFile.hasImportFromFuture(FutureFeature.ANNOTATIONS) ||
                                           pyFile.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON314);
@@ -562,5 +611,76 @@ public final class PyResolveUtil {
     else {
       return Collections.emptyList();
     }
+  }
+
+  /**
+   * Resolves a fully qualified name like "module.Class.method" by walking through the hierarchy.
+   * This handles nested members (e.g., methods in classes, nested classes) by resolving each component
+   * in sequence starting from the module.
+   *
+   * @param qualifiedName The qualified name to resolve (e.g., "test.A.f")
+   * @param anchor The PSI element to use as context for resolution
+   * @param context The type evaluation context
+   * @return The resolved element, or null if not found
+   */
+  public static @Nullable PsiElement resolveFullyQualifiedName(@NotNull QualifiedName qualifiedName,
+                                                                @NotNull PsiElement anchor,
+                                                                @NotNull TypeEvalContext context) {
+    if (qualifiedName.getComponentCount() == 0) {
+      return null;
+    }
+
+    // Resolve the first component as a module
+    QualifiedName moduleName = QualifiedName.fromComponents(qualifiedName.getFirstComponent());
+    List<PsiElement> moduleResults = PyResolveImportUtil.resolveQualifiedName(
+      moduleName,
+      PyResolveImportUtil.fromFoothold(anchor)
+    );
+
+    PsiElement current = ContainerUtil.getFirstItem(moduleResults);
+    if (current == null) {
+      return null;
+    }
+
+    current = PyUtil.turnDirIntoInit(current);
+
+    // Walk through remaining components to resolve nested members
+    for (String componentName :  qualifiedName.removeHead(1).getComponents()) {
+      if (componentName == null) {
+        return null;
+      }
+
+      if (current instanceof PyFile) {
+        List<RatedResolveResult> members = ((PyFile)current).multiResolveName(componentName);
+        RatedResolveResult firstMember = ContainerUtil.getFirstItem(members);
+        current = firstMember != null ? firstMember.getElement() : null;
+      }
+      else if (current instanceof PyClass) {
+        PyClass pyClass = (PyClass)current;
+        // Try nested class first, then methods
+        PsiElement nestedClass = pyClass.findNestedClass(componentName, false);
+        if (nestedClass != null) {
+          current = nestedClass;
+        }
+        else {
+          PyFunction method = pyClass.findMethodByName(componentName, false, context);
+          if (method != null) {
+            current = method;
+          }
+          else {
+            return null;
+          }
+        }
+      }
+      else {
+        return null;
+      }
+
+      if (current == null) {
+        return null;
+      }
+    }
+
+    return current;
   }
 }

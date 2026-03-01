@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.project.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenSettingsCache;
 import org.jetbrains.idea.maven.utils.MavenFileTemplateGroupFactory;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;

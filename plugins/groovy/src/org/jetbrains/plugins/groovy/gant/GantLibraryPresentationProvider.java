@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 
 public final class GantLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {

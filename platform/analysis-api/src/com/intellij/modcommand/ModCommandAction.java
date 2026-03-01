@@ -16,7 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.UnaryOperator;
 
 /**
- * Intention action replacement that operates on {@link ModCommand}.
+ * An {@link IntentionAction intention action} replacement that, once {@link #perform performed},
+ * produces a declarative {@link ModCommand} instead of performing the action right away.
  * <p>
  * If you need your action to work in the dumb mode, extend it with {@link com.intellij.openapi.project.DumbAware}
  * or override {@link PossiblyDumbAware#isDumbAware()}
@@ -37,11 +38,14 @@ public interface ModCommandAction extends CommonIntentionAction, PossiblyDumbAwa
    */
   @Contract(pure = true)
   @Nullable Presentation getPresentation(@NotNull ActionContext context);
-  
+
   /**
-   * Computes a command to be executed to actually perform the action. 
-   * Called in a background read-action. Called after {@link #getPresentation(ActionContext)} returns non-null presentation.
-   * 
+   * Computes a command to be executed to actually perform the action.
+   * <p>
+   * Called in a background read-action.
+   * <p>
+   * Can be called only after {@link #getPresentation(ActionContext)} returns a non-null presentation.
+   *
    * @param context context in which the action is executed
    * @return a {@link ModCommand} to be executed to actually apply the action
    */
@@ -50,11 +54,12 @@ public interface ModCommandAction extends CommonIntentionAction, PossiblyDumbAwa
 
   /**
    * Computes a preview for this action in the particular context.
-   * Default implementation derives the preview from resulting {@link ModCommand}.
+   * Default implementation derives the preview from the resulting {@link ModCommand}.
    * In many cases, it might be enough.
-   * 
-   * @param context context in which the action is executed. Unlike {@link IntentionAction#generatePreview(Project, Editor, PsiFile)},
-   *                the context points to the physical file, no copy is done in advance.
+   *
+   * @param context context in which the action is executed.
+   *                Unlike {@link IntentionAction#generatePreview(Project, Editor, PsiFile)},
+   *                the context points to the physical file; no copy is done in advance.
    * @return preview for the action
    */
   @Contract(pure = true)

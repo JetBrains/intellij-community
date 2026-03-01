@@ -27,4 +27,23 @@ jvm_library(
     "@lib//:kotlin-tooling-core",
   ]
 )
+
+jvm_library(
+  name = "kotlin-base-externalSystem_test_lib",
+  module_name = "intellij.kotlin.base.externalSystem",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kotlin-base-externalSystem",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.base.externalSystem` end

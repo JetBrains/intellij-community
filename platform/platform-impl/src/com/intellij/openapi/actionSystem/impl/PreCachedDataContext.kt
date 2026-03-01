@@ -12,13 +12,28 @@ import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.ide.impl.DataManagerImpl.KeyedDataProvider
 import com.intellij.ide.impl.DataManagerImpl.ParametrizedDataProvider
 import com.intellij.ide.impl.DataValidators
-import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.AnActionEvent.InjectedDataContextSupplier
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CompositeDataProvider
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataMap
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.DataSnapshotProvider
+import com.intellij.openapi.actionSystem.InjectedDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.openapi.actionSystem.impl.Utils.isModalContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.progress.ProgressManager
@@ -43,6 +58,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.coroutines.CancellationException
 import java.awt.Component
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
@@ -202,7 +218,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     if (answer == null && rulesSuppressed) {
       val throwable = Throwable()
       AppExecutorUtil.getAppExecutorService().execute {
-        if (ReadAction.compute(ThrowableComputable { getData(dataId) }) != null) {
+        if (ReadAction.computeBlocking(ThrowableComputable { getData(dataId) }) != null) {
           LOG.warn("$dataId is not available on EDT. Code that depends on data rules and slow data providers " +
                    "must be run in background. For example, an action must use `ActionUpdateThread.BGT`.", throwable)
         }
@@ -426,6 +442,9 @@ private fun runSnapshotRules(sink: MySink, component: Component?, data: CachedDa
     try {
       rule.uiDataSnapshot(sink, snapshot)
     }
+    catch (e: Throwable) {
+      handleDataProviderException(e)
+    }
     finally {
       sink.uiComputed = null
       sink.source = prev
@@ -522,6 +541,9 @@ private class MySink : DataSink {
     try {
       provider.uiDataSnapshot(this)
     }
+    catch (e: Throwable) {
+      handleDataProviderException(e)
+    }
     finally {
       source = prev
     }
@@ -532,6 +554,9 @@ private class MySink : DataSink {
     source = provider
     try {
       provider.dataSnapshot(this)
+    }
+    catch (e: Throwable) {
+      handleDataProviderException(e)
     }
     finally {
       source = prev
@@ -550,6 +575,9 @@ private class MySink : DataSink {
           set(key as DataKey<Any>, data)
         }
       }
+    }
+    catch (e: Throwable) {
+      handleDataProviderException(e)
     }
     finally {
       source = prev
@@ -668,5 +696,22 @@ private class ComponentRef(component: Component?) {
     val supply = (component as? JComponent)?.let { SpeedSearchSupply.getSupply(it) }
     speedSearchText = supply?.enteredPrefix
     speedSearchRef = (supply as? SpeedSearchBase<*>)?.getSearchField()?.let { WeakReference(it) }
+  }
+}
+
+private fun handleDataProviderException(e: Throwable) {
+  when (e) {
+    is CancellationException -> {
+      // Do not rethrow a rogue 'throw new ProcessCanceledException()' in non-cancelled contexts
+      ProgressManager.checkCanceled()
+      LOG.error(Throwable("Unexpected cancellation exception", e))
+    }
+    is ControlFlowException -> {
+      // We do rethrow other types of ControlFlowException.
+      throw e
+    }
+    else -> {
+      LOG.error(e)
+    }
   }
 }

@@ -31,6 +31,8 @@ public interface ContentHashEnumerator extends DurableDataEnumerator<byte[]>,
     return ContentHashEnumeratorOverBTree.getVersion();
   }
 
+  //MAYBE RC: use ContentHashEnumeratorOverDurableEnumerator instead of BTree-based?
+  //          the only use currently remains is in shared-indexes generator, though...
   static ContentHashEnumerator open(@NotNull Path storagePath) throws IOException {
     return new ContentHashEnumeratorOverBTree(storagePath);
   }

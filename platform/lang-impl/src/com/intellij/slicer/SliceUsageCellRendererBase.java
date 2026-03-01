@@ -6,7 +6,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 public abstract class SliceUsageCellRendererBase extends ColoredTreeCellRenderer {

@@ -15,4 +15,20 @@ jvm_library(
     "@lib//:junit4-provided",
   ]
 )
+
+jvm_library(
+  name = "cucumber-jvmFormatter_test_lib",
+  module_name = "intellij.cucumber.jvmFormatter",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":cucumber-jvmFormatter",
+    "@lib//:cucumber-core-1-provided",
+    "@lib//:cucumber-core-2-provided",
+    "//plugins/junit_rt:junit-rt_test_lib",
+    "//java/java-runtime:rt_test_lib",
+    "@lib//:junit4-provided",
+  ]
+)
 ### auto-generated section `build intellij.cucumber.jvmFormatter` end

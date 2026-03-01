@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -26,7 +27,16 @@ import org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorUtils.moveT
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -34,6 +44,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class MovePropertyToConstructorIntention :
   SelfTargetingIntention<KtProperty>(KtProperty::class.java, KotlinBundle.messagePointer("move.to.constructor")),
   LocalQuickFix {

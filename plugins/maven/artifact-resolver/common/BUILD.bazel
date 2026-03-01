@@ -9,4 +9,16 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = ["@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided"]
 )
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "intellij.maven.artifactResolver.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":common",
+    "@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided",
+  ]
+)
 ### auto-generated section `build intellij.maven.artifactResolver.common` end

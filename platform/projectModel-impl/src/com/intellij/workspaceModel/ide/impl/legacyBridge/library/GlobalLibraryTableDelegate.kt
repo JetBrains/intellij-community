@@ -13,7 +13,11 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap

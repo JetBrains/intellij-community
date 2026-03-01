@@ -1,7 +1,7 @@
 [
  {
   matchedName: "html/attributes/disabled",
-  origin: "basic@null (<none>)",
+  origin: "basic (<none>)",
   complete: true,
   priority: NORMAL,
   segments: [

@@ -3,9 +3,18 @@ package com.intellij.java.refactoring.suggested
 
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.command.executeCommand
-import com.intellij.psi.*
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.refactoring.changeSignature.*
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
+import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl
+import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
 import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport

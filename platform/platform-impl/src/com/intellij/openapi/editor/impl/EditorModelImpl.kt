@@ -1,16 +1,19 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.ScrollingModel
 import com.intellij.openapi.editor.SelectionModel
-import com.intellij.openapi.editor.ex.*
+import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.EditorModel
+import com.intellij.openapi.editor.ex.InlayModelEx
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.SoftWrapModelEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+
 internal class EditorModelImpl(private val editor: EditorImpl) : EditorModel {
-  override fun getDocument(): DocumentEx = editor.document
+  override fun getDocument(): DocumentEx = editor.uiDocument
   override fun getEditorMarkupModel(): MarkupModelEx = editor.markupModel
   override fun getDocumentMarkupModel(): MarkupModelEx = editor.filteredDocumentMarkupModel
   override fun getHighlighter(): EditorHighlighter = editor.highlighter

@@ -6,7 +6,9 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
-import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.EXCLUDED
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.SOURCE
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.TEST
 import com.intellij.openapi.externalSystem.model.project.LibraryLevel
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
@@ -18,7 +20,16 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ExportableOrderEntry
+import com.intellij.openapi.roots.JavadocOrderRootType
+import com.intellij.openapi.roots.LanguageLevelProjectExtension
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModel
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -476,14 +487,15 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
     VfsRootAccess.allowRootAccess(testRootDisposable, *allowedRoots.toTypedArray())
 
     runWriteAction {
-      val oldJdk = ProjectJdkTable.getInstance().findJdk(myJdkName)
+      val jdkTable = ProjectJdkTable.getInstance(project)
+      val oldJdk = jdkTable.findJdk(myJdkName)
       if (oldJdk != null) {
-        ProjectJdkTable.getInstance().removeJdk(oldJdk)
+        jdkTable.removeJdk(oldJdk)
       }
       val jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myJdkHome))!!
       val jdk = SdkConfigurationUtil.setupSdk(emptyArray(), jdkHomeDir, JavaSdk.getInstance(), true, null, myJdkName)
       assertNotNull("Cannot create JDK for $myJdkHome", jdk)
-      ProjectJdkTable.getInstance().addJdk(jdk!!, project)
+      jdkTable.addJdk(jdk!!, project)
     }
 
     applyProjectModel(

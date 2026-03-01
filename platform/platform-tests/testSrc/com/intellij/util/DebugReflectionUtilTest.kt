@@ -12,24 +12,24 @@ import org.junit.jupiter.api.assertThrows
 class DebugReflectionUtilTest {
 
   @Test
-  fun `isInitialized returns false for not initialized class`() {
+  fun `isLoaded returns false for not loaded class`() {
     assertFalse {
-      DebugReflectionUtil.isInitialized(Thread.currentThread().contextClassLoader, "com.intellij.util.ThisClassWillFailOnInitialization")
+      DebugReflectionUtil.isLoaded(Thread.currentThread().contextClassLoader, "com.intellij.util.ThisClassWillFailOnLoad")
     }
     assertThrows<ExceptionInInitializerError> {
-      ThisClassWillFailOnInitialization()
+      ThisClassWillFailOnLoad()
     }
   }
 
 
   @Test
-  fun `isInitialized returns false for not initialized class 2`() {
+  fun `isLoaded returns false for not loaded class 2`() {
     assertFalse {
-      DebugReflectionUtil.isInitialized(Thread.currentThread().contextClassLoader, "com.intellij.util.ThisClassWillNotFailOnInitialization")
+      DebugReflectionUtil.isLoaded(Thread.currentThread().contextClassLoader, "com.intellij.util.ThisClassWillNotFailOnLoad")
     }
-    ThisClassWillNotFailOnInitialization()
+    ThisClassWillNotFailOnLoad()
     assertTrue {
-      DebugReflectionUtil.isInitialized(Thread.currentThread().contextClassLoader, "com.intellij.util.ThisClassWillNotFailOnInitialization")
+      DebugReflectionUtil.isLoaded(Thread.currentThread().contextClassLoader, "com.intellij.util.ThisClassWillNotFailOnLoad")
     }
   }
 }

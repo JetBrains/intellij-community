@@ -6,10 +6,11 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Internal
 public final class PaintParameters {
 
-  private static final int WIDTH_NODE = 20;
+  private static final int WIDTH_NODE = 16;
   public static final int CIRCLE_RADIUS = 4;
   private static final double THICK_LINE = 1.5;
   private static final double SELECT_THICK_LINE = 2.5;
+  private static final int GRAPH_TEXT_GAP = 2;
 
   public static final int ROW_HEIGHT = 22;
 
@@ -35,5 +36,9 @@ public final class PaintParameters {
 
   public static double scaleWithRowHeight(int value, int actualHeight) {
     return scaleWithRowHeight((double)value, actualHeight);
+  }
+
+  public static double getGraphTextGap(int rowHeight) {
+    return scaleWithRowHeight(GRAPH_TEXT_GAP, rowHeight);
   }
 }

@@ -6,7 +6,13 @@ import com.intellij.history.core.revisions.Difference
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
-import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.ActivityScope
+import com.intellij.platform.lvcs.impl.ChangeSetSelection
+import com.intellij.platform.lvcs.impl.DirectoryDiffMode
+import com.intellij.platform.lvcs.impl.RevisionId
+import com.intellij.platform.lvcs.impl.getRootEntry
+import com.intellij.platform.lvcs.impl.leftRevision
+import com.intellij.platform.lvcs.impl.rightRevision
 
 internal fun LocalHistoryFacade.findEntry(rootEntry: RootEntry, revisionId: RevisionId, entryPath: String, before: Boolean): Entry? {
   return when (revisionId) {

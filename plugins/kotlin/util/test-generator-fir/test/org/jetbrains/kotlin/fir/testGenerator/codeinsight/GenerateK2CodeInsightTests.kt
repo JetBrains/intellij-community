@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinBinariesCheckerTest
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinSourceCheckerTest
 import org.jetbrains.kotlin.idea.codeInsight.codevision.AbstractKotlinCodeVisionProviderTest
-import org.jetbrains.kotlin.idea.k2.*
+import org.jetbrains.kotlin.idea.k2.AbstractK2ExpressionTypeTest
+import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
+import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirJoinLinesTest
+import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirPairMatcherTest
+import org.jetbrains.kotlin.idea.k2.AbstractScriptGotoDeclarationMultifileTest
 import org.jetbrains.kotlin.idea.k2.copyPaste.AbstractK2InsertImportOnPasteTest
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateSecondaryConstructorActionTest
@@ -12,7 +16,13 @@ import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateTestSupportMetho
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyWithLibTest
-import org.jetbrains.kotlin.idea.k2.hints.*
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtDefaultParameterInlayHintsProviderTest
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtParameterHintsProviderTest
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtReferenceTypeHintsProviderTest
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtValuesHintsProviderTest
+import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractCompilerPluginDeclarationHighlighterTest
 import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerDeclarationsHintProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerPluginModalityHintProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerSupertypesHintProviderTest
@@ -31,14 +41,18 @@ import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationMult
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationTest
 import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
 import org.jetbrains.kotlin.idea.refactoring.AbstractNameSuggestionProviderTest
-import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.CODE_INSIGHT
+import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
+import org.jetbrains.kotlin.testGenerator.model.model
+import org.jetbrains.kotlin.testGenerator.model.or
+import org.jetbrains.kotlin.testGenerator.model.testClass
+import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 internal fun MutableTWorkspace.generateK2CodeInsightTests() {
     generateK2InspectionTests()
@@ -51,7 +65,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
     testGroup("code-insight/kotlin.code-insight.k2", category = CODE_INSIGHT) {
         testClass<AbstractKotlinGoToSuperDeclarationsHandlerTest> {
-            model("gotoSuperDeclarationsHandler", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+            model("gotoSuperDeclarationsHandler", pattern = KT_WITHOUT_DOTS, passTestDataPath = false)
         }
         testClass<AbstractKotlinGotoImplementationTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.navigation.KotlinGotoImplementationTestGenerated") {
             model("../../../idea/tests/testData/navigation/implementations", isRecursive = false)
@@ -87,6 +101,9 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/codeInsight/surroundWith/functionLiteral", testMethodName = "doTestWithFunctionLiteralSurrounder")
             model("../../../idea/tests/testData/codeInsight/surroundWith/withIfExpression", testMethodName = "doTestWithSurroundWithIfExpression")
             model("../../../idea/tests/testData/codeInsight/surroundWith/withIfElseExpression", testMethodName = "doTestWithSurroundWithIfElseExpression")
+            model("../../../idea/tests/testData/codeInsight/surroundWith/while", testMethodName = "doTestWithWhileSurrounder")
+            model("../../../idea/tests/testData/codeInsight/surroundWith/doWhile", testMethodName = "doTestWithDoWhileSurrounder")
+            model("../../../idea/tests/testData/codeInsight/surroundWith/for", testMethodName = "doTestWithForSurrounder")
         }
         testClass<AbstractKotlinFirBreadcrumbsTest> {
             model("../../../idea/tests/testData/codeInsight/breadcrumbs", pattern = KT_OR_KTS)
@@ -168,6 +185,10 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractKtCompilerDeclarationsHintProviderTest> {
             model("hints/compilerPlugins/declarations", pattern = inlayHintsFileRegexp)
+        }
+
+        testClass<AbstractCompilerPluginDeclarationHighlighterTest> {
+            model("hints/compilerPlugins/highlighger", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractKtCompilerSupertypesHintProviderTest> {

@@ -12,7 +12,11 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class KotlinNewUserTrackerTest {
     private val now = Instant.now()

@@ -5,7 +5,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class PyRemoteDebugFileType implements FileType {
   public static final PyRemoteDebugFileType INSTANCE = new PyRemoteDebugFileType();

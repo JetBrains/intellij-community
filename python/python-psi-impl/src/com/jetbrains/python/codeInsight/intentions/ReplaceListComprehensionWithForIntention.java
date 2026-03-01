@@ -8,7 +8,17 @@ import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyComprehensionComponent;
+import com.jetbrains.python.psi.PyComprehensionForComponent;
+import com.jetbrains.python.psi.PyComprehensionIfComponent;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.PyPrintStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

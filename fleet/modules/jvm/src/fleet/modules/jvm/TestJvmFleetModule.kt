@@ -6,7 +6,12 @@ import fleet.util.logging.KLoggers
 import fleet.util.modules.ModuleInfo
 import java.io.InputStream
 import java.util.jar.JarFile
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readBytes
 import kotlin.reflect.KClass
 
 private val logger by lazy { KLoggers.logger(TestJvmFleetModule::class) }
@@ -31,12 +36,6 @@ data class TestJvmFleetModule(
 
   override val layer: FleetModuleLayer
     get() = moduleLayer
-
-  @Deprecated("Get rid of it as soon as we drop entities auto-registration")
-  override fun getEntityTypeProvider(providerName: String): Any? {
-    val providerClass = classpathUniqueModule.classLoader.loadClass(providerName)
-    return providerClass.getField("INSTANCE").get(null)
-  }
 
   override fun getResource(path: String): ByteArray? =
     when (val codeLocation = moduleInfo?.codeLocation()) {

@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.SlowOperations
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Cursor
 import java.awt.event.MouseEvent
 import kotlin.math.abs
 
@@ -159,6 +158,15 @@ sealed interface HyperlinkBuilder {
    */
   var hoveredAttributes: TextAttributes?
   /**
+   * Whether the link should be presented as a regular text.
+   * Its presentation should be changed on hover only.
+   */
+  var isInvisibleLink: Boolean
+    @ApiStatus.Internal
+    get
+    @ApiStatus.Internal
+    set
+  /**
    * The highlighting layer.
    *
    * Normally just [HighlighterLayer.HYPERLINK], but a different value can be provided by an external source.
@@ -238,6 +246,7 @@ private class HyperlinkBuilderImpl(
   override var attributes: TextAttributes? = null
   override var followedAttributes: TextAttributes? = null
   override var hoveredAttributes: TextAttributes? = null
+  override var isInvisibleLink: Boolean = false
   override var layer: Int = HighlighterLayer.HYPERLINK
 
   fun build(): HyperlinkDecoration = HyperlinkOrHighlightingImpl(
@@ -247,6 +256,7 @@ private class HyperlinkBuilderImpl(
     attributes = attributes,
     followedAttributes = followedAttributes,
     hoveredAttributes = hoveredAttributes,
+    isInvisibleLink = isInvisibleLink,
     layer = layer,
     action = action,
   )
@@ -265,6 +275,7 @@ private class HighlightingBuilderImpl(
     start = startOffset,
     end = endOffset,
     attributes = attributes,
+    isInvisibleLink = false,
     layer = layer,
   )
 }
@@ -293,6 +304,7 @@ private data class HyperlinkOrHighlightingImpl(
   val attributes: TextAttributes?,
   val followedAttributes: TextAttributes? = null,
   val hoveredAttributes: TextAttributes? = null,
+  val isInvisibleLink: Boolean,
   val layer: Int,
   val action: ((EditorMouseEvent) -> Unit)? = null,
 ) : HyperlinkDecoration, HighlightingDecoration
@@ -306,7 +318,7 @@ private data class InlayDecorationImpl(
 private class EditorTextDecorationApplierImpl(private val editor: EditorEx, parentDisposable: Disposable) : EditorTextDecorationApplier {
   private val highlightersById = hashMapOf<EditorTextDecorationId, RangeHighlighterEx>()
   private val inlaysById = hashMapOf<EditorTextDecorationId, com.intellij.openapi.editor.Inlay<*>>()
-  private val effectSupport = EditorHyperlinkEffectSupport(editor, MyEffectSupplier())
+  private val hyperlinkInteraction = EditorHyperlinkInteraction(editor, MyEffectSupplier())
   private var hoveredHyperlink: HyperlinkDecoration? = null
 
   init {
@@ -343,7 +355,7 @@ private class EditorTextDecorationApplierImpl(private val editor: EditorEx, pare
 
   private fun addHyperlinkOrHighlighting(decoration: HyperlinkOrHighlightingImpl) {
     editor.markupModel.addRangeHighlighterAndChangeAttributes(
-      if (decoration.action != null) CodeInsightColors.HYPERLINK_ATTRIBUTES else null,
+      if (decoration.action != null && !decoration.isInvisibleLink) CodeInsightColors.HYPERLINK_ATTRIBUTES else null,
       decoration.start,
       decoration.end,
       decoration.layer,
@@ -435,21 +447,22 @@ private class EditorTextDecorationApplierImpl(private val editor: EditorEx, pare
         val hyperlink = findDecoration(event)
         val action = hyperlink?.link?.action
         if (action != null) {
-          runCatching {
-            SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
-              action(event)
+          hyperlinkInteraction.followLink(hyperlink.highlighter, event) { 
+            runCatching {
+              SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+                action(event)
+              }
+            }.getOrHandleException { e ->
+              LOG.error("The hyperlink handler threw an exception, hyperlink = $hyperlink", e)
             }
-          }.getOrHandleException { e ->
-            LOG.error("The hyperlink handler threw an exception, hyperlink = $hyperlink", e)
           }
-          effectSupport.linkFollowed(hyperlink.highlighter)
           event.consume()
         }
       }
     }
 
     override fun mouseExited(event: EditorMouseEvent) {
-      effectSupport.linkHovered(null)
+      hyperlinkInteraction.linkHovered(null, event)
       hoveredHyperlink = null
     }
   }
@@ -459,12 +472,11 @@ private class EditorTextDecorationApplierImpl(private val editor: EditorEx, pare
       val highlightedLink = findDecoration(e)
       if (highlightedLink?.link?.action == null) {
         editor.setCustomCursor(EditorTextDecorationApplierImpl::class.java, null)
-        effectSupport.linkHovered(null)
+        hyperlinkInteraction.linkHovered(null, e)
         hoveredHyperlink = null
       }
       else {
-        editor.setCustomCursor(EditorTextDecorationApplierImpl::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
-        effectSupport.linkHovered(highlightedLink.highlighter)
+        hyperlinkInteraction.linkHovered(highlightedLink.highlighter, e)
         hoveredHyperlink = highlightedLink.link
       }
     }
@@ -477,6 +489,10 @@ private class EditorTextDecorationApplierImpl(private val editor: EditorEx, pare
 
     override fun getHoveredHyperlinkAttributes(highlighter: RangeHighlighterEx): TextAttributes? {
       return highlighter.getHyperlink().hoveredAttributes
+    }
+
+    override fun isInvisibleLink(highlighter: RangeHighlighterEx): Boolean {
+      return highlighter.getHyperlink().isInvisibleLink
     }
   }
 }

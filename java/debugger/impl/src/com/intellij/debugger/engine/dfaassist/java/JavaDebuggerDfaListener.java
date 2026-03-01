@@ -13,16 +13,25 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener;
-import com.intellij.xdebugger.impl.dfaassist.DfaHint;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ThreeState;
+import com.intellij.xdebugger.impl.dfaassist.DfaHint;
 import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
   private static final TokenSet BOOLEAN_TOKENS = TokenSet.create(

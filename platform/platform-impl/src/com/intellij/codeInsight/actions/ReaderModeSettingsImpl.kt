@@ -3,7 +3,12 @@ package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
 import com.intellij.openapi.application.Experiments
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.ReportValue
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import kotlinx.coroutines.CoroutineScope

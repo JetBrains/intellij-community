@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -72,7 +73,7 @@ object KotlinBytecodeDecompiler {
 
     @OptIn(KaExperimentalApi::class)
     private fun bytecodeMapForSourceFile(file: KtFile): Map<File, () -> ByteArray> {
-        val configuration = CompilerConfiguration().apply {
+        val configuration = CompilerConfiguration.create().apply {
             languageVersionSettings = file.languageVersionSettings
         }
 

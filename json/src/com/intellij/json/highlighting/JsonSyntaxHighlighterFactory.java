@@ -24,7 +24,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.BLOCK_COMMENT;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.BRACES;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.BRACKETS;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.COMMA;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.IDENTIFIER;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INSTANCE_FIELD;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.LINE_COMMENT;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.NUMBER;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.SEMICOLON;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.STRING;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE;
 
 public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   public static final TextAttributesKey JSON_BRACKETS = TextAttributesKey.createTextAttributesKey("JSON.BRACKETS", BRACKETS);

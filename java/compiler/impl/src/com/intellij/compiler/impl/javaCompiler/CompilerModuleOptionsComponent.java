@@ -15,9 +15,13 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.Map;
 
 /**

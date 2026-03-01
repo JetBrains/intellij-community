@@ -51,7 +51,9 @@ public final class FindUsagesDumper {
     if (usage instanceof UsageInfo2UsageAdapter adapter) {
       VirtualFile file = ReadAction.compute(() -> adapter.getFile());
       if (file != null) {
-        portableFilePath = PortableFilePaths.INSTANCE.getPortableFilePath(file, project);
+        portableFilePath = ReadAction.compute(() ->
+            PortableFilePaths.INSTANCE.getPortableFilePath(file, project)
+        );
       }
       line = adapter.getLine() + 1;
     }

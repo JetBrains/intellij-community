@@ -40,7 +40,11 @@ import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     private final XPathExpression myExpression;

@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
+import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
-abstract class KotlinJUnitMalformedDeclarationInspectionTestV6 : KotlinJUnitMalformedDeclarationInspectionTestBase(JUNIT6_LATEST) {
+abstract class KotlinJUnitMalformedDeclarationInspectionTestV6 : KotlinJUnitMalformedDeclarationInspectionTestBase(JUnitLibrary.JUNIT6) {
   /* Unlike in JUnit 5, in JUnit 6 suspend functions are allowed for tests */
   fun `test suspending test method`() {
     myFixture.testHighlighting(

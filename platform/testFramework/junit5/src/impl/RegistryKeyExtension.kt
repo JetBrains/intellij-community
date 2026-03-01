@@ -4,13 +4,38 @@ package com.intellij.testFramework.junit5.impl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.RegistryKeyAppLevel
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.get
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.set
 import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.platform.commons.support.AnnotationSupport
+import kotlin.jvm.optionals.getOrNull
 
 @TestOnly
-internal class RegistryKeyExtension : AbstractInvocationInterceptor() {
+internal class RegistryKeyExtension : AbstractInvocationInterceptor(), BeforeAllCallback, AfterAllCallback {
+  private data class RegistryValueHolder(val value: RegistryValue, val oldValue: String)
+  companion object {
+    private val typedKey = TypedStoreKey(RegistryValueHolder::class.java)
+  }
+
+  override fun beforeAll(context: ExtensionContext) {
+    val annotation = AnnotationSupport.findAnnotation(context.testClass, RegistryKeyAppLevel::class.java).getOrNull()
+    if (annotation != null) {
+      val registryValue = Registry.get(annotation.key)
+      val oldValue = registryValue.asString()
+      context[typedKey] = RegistryValueHolder(registryValue, oldValue)
+      registryValue.setValue(annotation.value)
+    }
+  }
+
+  override fun afterAll(context: ExtensionContext) {
+    val regValue = context[typedKey] ?: return
+    regValue.value.setValue(regValue.oldValue)
+  }
 
   override fun <T> intercept(invocation: InvocationInterceptor.Invocation<T>, context: ExtensionContext): T {
     val annotations = AnnotationSupport.findRepeatableAnnotations(context.testClass, RegistryKey::class.java) +

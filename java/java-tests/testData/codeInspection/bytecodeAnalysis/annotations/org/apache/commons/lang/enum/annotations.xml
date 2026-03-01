@@ -15,9 +15,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.lang.enum.Enum java.lang.Object readResolve()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.lang.enum.Enum java.lang.String getName()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -44,9 +41,6 @@
     </item>
     <item name='org.apache.commons.lang.enum.Enum java.util.Map getEnumMap(java.lang.Class) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.lang.enum.Enum org.apache.commons.lang.enum.Enum getEnum(java.lang.Class, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.enum.Enum org.apache.commons.lang.enum.Enum getEnum(java.lang.Class, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

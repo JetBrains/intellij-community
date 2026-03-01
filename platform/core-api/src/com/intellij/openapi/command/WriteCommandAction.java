@@ -3,7 +3,11 @@ package com.intellij.openapi.command;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.core.CoreBundle;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.BaseActionRunnable;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -16,7 +20,11 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import kotlin.coroutines.Continuation;
 import kotlin.jvm.functions.Function0;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.Collection;

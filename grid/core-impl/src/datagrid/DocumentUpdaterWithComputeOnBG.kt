@@ -9,7 +9,10 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class DocumentUpdaterWithComputeOnBG {

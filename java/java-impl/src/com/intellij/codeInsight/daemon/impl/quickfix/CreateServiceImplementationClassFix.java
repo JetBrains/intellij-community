@@ -19,7 +19,14 @@ import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiProvidesStatement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBRadioButton;
@@ -30,7 +37,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
+import javax.swing.JRadioButton;
 import java.util.Collections;
 import java.util.Optional;
 

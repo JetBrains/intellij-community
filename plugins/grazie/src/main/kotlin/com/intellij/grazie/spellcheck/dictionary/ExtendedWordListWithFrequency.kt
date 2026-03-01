@@ -2,8 +2,7 @@
 package com.intellij.grazie.spellcheck.dictionary
 
 import ai.grazie.spell.lists.WordListWithFrequency
-
-private const val WORD_LENGTH_THRESHOLD = 150
+import com.intellij.grazie.spellcheck.engine.MAX_WORD_LENGTH
 
 internal class ExtendedWordListWithFrequency(private val base: WordListWithFrequency,
                                              private val extension: WordListAdapter) : WordListWithFrequency {
@@ -16,8 +15,7 @@ internal class ExtendedWordListWithFrequency(private val base: WordListWithFrequ
   override fun getFrequency(word: String) = base.getFrequency(word)
 
   override fun contains(word: String, caseSensitive: Boolean): Boolean {
-    // regardless of case, a word with a length more than WORD_LENGTH_THRESHOLD is very unlikely to be in a dictionary
-    if (word.length > WORD_LENGTH_THRESHOLD) return false
+    if (word.length > MAX_WORD_LENGTH) return false
     return base.contains(word, caseSensitive) || extension.contains(word, caseSensitive)
   }
 

@@ -14,6 +14,11 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Should be registered via {@link #EP_FILE_EDITOR_PROVIDER}.
+ * <p>
+ * Synchronous providers are queried and constructed on the UI thread, so {@link #accept(Project, VirtualFile)} and
+ * {@link #createEditor(Project, VirtualFile)} must remain lightweight. If editor creation needs indexing, PSI, or other
+ * expensive work, implement {@link AsyncFileEditorProvider} to offload preparation to a background thread and only build
+ * UI on the EDT.
  *
  * @see DumbAware
  */
@@ -24,7 +29,9 @@ public interface FileEditorProvider extends PossiblyDumbAware {
   FileEditorProvider[] EMPTY_ARRAY = {};
 
   /**
-   * The method is expected to run fast.
+   * The method is expected to run fast (typically on the UI thread).
+   * Avoid PSI/index access and any potentially blocking work here; keep checks limited to quick file metadata.
+   * If you need heavier validation, consider {@link AsyncFileEditorProvider}.
    *
    * @param file file to be tested for acceptance.
    * @return {@code true} if provider can create valid editor for the specified {@code file}.
@@ -39,7 +46,8 @@ public interface FileEditorProvider extends PossiblyDumbAware {
    * Creates editor for the specified file.
    * <p>
    * This method is called only if the provider has accepted this file (i.e., method {@link #accept(Project, VirtualFile)} returned
-   * {@code true}).
+   * {@code true}). For synchronous providers it is invoked on the UI thread, so it must not block. Use
+   * {@link AsyncFileEditorProvider} if editor preparation is expensive.
    * The provider should return only valid editor.
    *
    * @return created editor for specified file.

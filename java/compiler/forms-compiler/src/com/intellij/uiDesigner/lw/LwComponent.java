@@ -19,7 +19,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.core.GridConstraints;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;

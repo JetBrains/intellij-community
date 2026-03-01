@@ -4,7 +4,7 @@ package com.intellij.polySymbols.query.impl
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
-import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
+import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
@@ -12,7 +12,7 @@ import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory.PolySymbolQ
 import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 import com.intellij.polySymbols.query.PolySymbolScope
 
-class PolySymbolQueryExecutorBuilderImpl() : PolySymbolQueryExecutorBuilder {
+class PolySymbolQueryExecutorBuilderImpl : PolySymbolQueryExecutorBuilder {
   private val rootScopes = mutableListOf<PolySymbolScope>()
   private val customizers = mutableListOf<PolySymbolQueryResultsCustomizer>()
   private val nameConversionRules = mutableListOf<PolySymbolNameConversionRules>()
@@ -42,10 +42,6 @@ class PolySymbolQueryExecutorBuilderImpl() : PolySymbolQueryExecutorBuilder {
       context[kind] = name
   }
 
-  override fun setFramework(framework: String): PolySymbolQueryExecutorBuilder = apply {
-    context[KIND_FRAMEWORK] = framework
-  }
-
   override fun allowResolve(allowResolve: Boolean): PolySymbolQueryExecutorBuilder = apply {
     this.allowResolve = allowResolve
   }
@@ -54,7 +50,7 @@ class PolySymbolQueryExecutorBuilderImpl() : PolySymbolQueryExecutorBuilder {
     PolySymbolQueryExecutorImpl(
       null,
       rootScopes,
-      PolySymbolNamesProviderImpl(context[KIND_FRAMEWORK], nameConversionRules, ModificationTracker.NEVER_CHANGED),
+      PolySymbolNamesProviderImpl(PolyContext.create(context), nameConversionRules, ModificationTracker.NEVER_CHANGED),
       PolySymbolCompoundQueryResultsCustomizer(customizers),
       PolyContextImpl(context),
       allowResolve

@@ -3,9 +3,13 @@
 
 package com.intellij.mcpserver.toolsets.general
 
-import com.intellij.mcpserver.*
+import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.mcpFail
+import com.intellij.mcpserver.project
+import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
@@ -20,12 +24,20 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.isFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.io.IOException
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi

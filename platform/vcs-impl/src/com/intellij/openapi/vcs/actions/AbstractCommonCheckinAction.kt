@@ -10,7 +10,9 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.commit.CheckinActionUtil
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.cleanActionText
 import org.jetbrains.annotations.ApiStatus
@@ -29,7 +31,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
 
     if (project == null ||
         !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() ||
-        CommitModeManager.getInstance(project).getCurrentCommitMode().disableDefaultCommitAction()) {
+        CommitModeManager.getInstance(project).getCurrentCommitMode().isDefaultCommitActionDisabled) {
       presentation.isEnabledAndVisible = false
     }
     else if (!approximatelyHasRoots(vcsContext)) {

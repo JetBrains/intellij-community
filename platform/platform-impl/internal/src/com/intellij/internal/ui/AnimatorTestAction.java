@@ -11,8 +11,13 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

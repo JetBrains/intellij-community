@@ -12,10 +12,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.JComponent;
+import java.awt.Graphics2D;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SimpleDiffModel {
   @ApiStatus.Internal protected final @NotNull SimpleDiffViewer myViewer;

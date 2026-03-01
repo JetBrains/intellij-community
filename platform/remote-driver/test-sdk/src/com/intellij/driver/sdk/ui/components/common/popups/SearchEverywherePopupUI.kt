@@ -3,11 +3,28 @@ package com.intellij.driver.sdk.ui.components.common.popups
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.OnDispatcher
-import com.intellij.driver.sdk.*
-import com.intellij.driver.sdk.ui.*
+import com.intellij.driver.sdk.ActionManager
+import com.intellij.driver.sdk.ActionUtils
+import com.intellij.driver.sdk.AnAction
+import com.intellij.driver.sdk.step
+import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
+import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.components.elements.*
+import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
+import com.intellij.driver.sdk.ui.components.elements.JCheckBoxUi
+import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
+import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
+import com.intellij.driver.sdk.ui.components.elements.actionButtonByXpath
+import com.intellij.driver.sdk.ui.components.elements.button
+import com.intellij.driver.sdk.ui.components.elements.checkBox
+import com.intellij.driver.sdk.ui.components.elements.table
+import com.intellij.driver.sdk.ui.components.elements.textField
+import com.intellij.driver.sdk.ui.should
+import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 import javax.swing.JList
 import kotlin.time.Duration.Companion.seconds
@@ -29,7 +46,8 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
   val openInFindToolWindowButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Open in Find Tool Window") })
   val previewButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Preview") })
   val typeFilterButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Filter") })
-  val searchEverywhereUi: SearchEveryWhereUi = x(SearchEveryWhereUi::class.java) { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
+  val searchEverywhereUi: SearchEveryWhereUi =
+    x(SearchEveryWhereUi::class.java) { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
   val openInRightSplitActionLink: UiComponent = x { byAccessibleName("Open In Right Split") }
 
   fun invokeSelectAction() {
@@ -118,8 +136,12 @@ class SearchEverywhereSplitPopupUI(data: ComponentData) : SearchEverywherePopupU
 }
 
 
-fun Finder.searchEverywhereTypeFilterPopup(@Language("xpath") xpath: String? = null, block: SearchEverywhereTypeFilterUI.() -> Unit = {}): SearchEverywhereTypeFilterUI =
-  x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("ElementsChooser")) }, SearchEverywhereTypeFilterUI::class.java).apply(block)
+fun Finder.searchEverywhereTypeFilterPopup(
+  @Language("xpath") xpath: String? = null,
+  block: SearchEverywhereTypeFilterUI.() -> Unit = {},
+): SearchEverywhereTypeFilterUI =
+  x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("ElementsChooser")) },
+    SearchEverywhereTypeFilterUI::class.java).apply(block)
 
 class SearchEverywhereTypeFilterUI(data: ComponentData) : UiComponent(data) {
   fun clickType(type: String) {
@@ -130,7 +152,7 @@ class SearchEverywhereTypeFilterUI(data: ComponentData) : UiComponent(data) {
 
 private class SEJListUiComponent(data: ComponentData) : JListUiComponent(data) {
   override val items: List<String>
-    get() = super.items.map { it.substringBeforeLast(",")}
+    get() = super.items.map { it.substringBeforeLast(",") }
 
   override val selectedItems: List<String>
     get() = super.selectedItems.map { it.substringBeforeLast(",") }

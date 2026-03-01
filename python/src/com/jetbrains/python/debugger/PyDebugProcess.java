@@ -16,7 +16,7 @@ import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
@@ -40,12 +39,27 @@ import com.intellij.remote.RemoteSdkException;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.jetbrains.python.PyBundle;
@@ -54,7 +68,13 @@ import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
-import com.jetbrains.python.debugger.pydev.*;
+import com.jetbrains.python.debugger.pydev.ClientModeMultiProcessDebugger;
+import com.jetbrains.python.debugger.pydev.MultiProcessDebugger;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
+import com.jetbrains.python.debugger.pydev.PyDebugCallback;
+import com.jetbrains.python.debugger.pydev.RemoteDebugger;
+import com.jetbrains.python.debugger.pydev.RemoteDebuggerCloseListener;
+import com.jetbrains.python.debugger.pydev.ResumeOrStepCommand;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
@@ -64,18 +84,26 @@ import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.remote.RemoteProcessControl;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -83,8 +111,7 @@ import static com.jetbrains.python.debugger.variablesview.usertyperenderers.Conf
 import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
 import static com.jetbrains.python.statistics.PythonDebuggerIdsHolder.CONNECTION_FAILED;
 
-
-public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener, PyDebugProcessWithConsole {
+public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener, PyDebugProcessWithConsole, PyStepIntoSupport {
   private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
   private static final int CONNECTION_TIMEOUT = 60000;
 
@@ -392,8 +419,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     getSession().rebuildViews();
     registerBreakpoints();
     setUserTypeRenderersSettings();
-    setShowReturnValues(PyDebuggerSettings.getInstance().isWatchReturnValues());
     setUnitTestDebuggingMode();
+    myDebugger.setShowReturnValues(PyDebuggerSettings.getInstance().isWatchReturnValues());
   }
 
   @Override
@@ -537,56 +564,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                                         @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
     super.registerAdditionalActions(leftToolbar, topToolbar, settings);
-    settings.add(new WatchReturnValuesAction(this));
+    settings.add(new WatchReturnValuesAction(this, myDebugger::setShowReturnValues));
     settings.add(new PyVariableViewSettings.SimplifiedView(this));
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
     settings.add(new PyVariableViewSettings.QuotingPolicyGroup());
-  }
-
-  private static final class WatchReturnValuesAction extends ToggleAction {
-    private volatile boolean myWatchesReturnValues;
-    private final PyDebugProcess myProcess;
-    private final @NlsActions.ActionText String myText;
-
-    WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
-      super("", PyBundle.message("debugger.watch.return.values.description"), null);
-      myWatchesReturnValues = PyDebuggerSettings.getInstance().isWatchReturnValues();
-      myProcess = debugProcess;
-      myText = PyBundle.message("debugger.watch.show.return.values");
-    }
-
-    @Override
-    public void update(final @NotNull AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(true);
-      presentation.setText(myText);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myWatchesReturnValues;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean watch) {
-      myWatchesReturnValues = watch;
-      PyDebuggerSettings.getInstance().setWatchReturnValues(watch);
-      final Project project = e.getProject();
-      if (project != null) {
-        myProcess.setShowReturnValues(myWatchesReturnValues);
-        myProcess.getSession().rebuildViews();
-      }
-    }
-  }
-
-  public void setShowReturnValues(boolean showReturnValues) {
-    myDebugger.setShowReturnValues(showReturnValues);
   }
 
   public void setUnitTestDebuggingMode() {
@@ -613,6 +594,24 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (!checkCanPerformCommands()) return;
     getSession().sessionResumed();
     passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_INTO_MY_CODE);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public boolean isStepIntoMyCodeAvailable() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable String getStepIntoMyCodeUnavailableReason() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void performStepIntoMyCode() {
+    startStepIntoMyCode(getSession().getSuspendContext());
   }
 
   public void startSetNextStatement(@Nullable XSuspendContext context,
@@ -956,7 +955,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
               if (e.getMessage().startsWith("Timeout")) {
                 value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
                 ConfigureTypeRenderersHyperLink configureLink = new ConfigureTypeRenderersHyperLink(null, getProject(), value);
-                if (node instanceof XValueNodeImpl valueNode) {
+                if (node instanceof XValueNodeEx valueNode) {
                   valueNode.clearAdditionalHyperlinks();
                   valueNode.addAdditionalHyperlink(configureLink);
                 }

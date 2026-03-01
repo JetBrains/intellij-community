@@ -10,7 +10,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.launch
 
-private class CreateRendererAction : AnAction(), SplitDebuggerAction {
+internal class CreateRendererAction : AnAction(), SplitDebuggerAction {
   override fun update(e: AnActionEvent) {
     val values = getSelectedJavaValuesWithDescriptors(e)
     val value = values.singleOrNull()?.second

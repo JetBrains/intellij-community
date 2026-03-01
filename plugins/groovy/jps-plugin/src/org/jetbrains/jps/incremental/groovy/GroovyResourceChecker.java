@@ -8,7 +8,11 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.Builder;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -17,7 +21,12 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescriptor, CheckResourcesTarget> {
   public static final Key<Boolean> CHECKING_RESOURCES_REBUILD = Key.create("CHECKING_RESOURCES");

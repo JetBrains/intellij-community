@@ -1,15 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.ParameterHintsPass.HintData
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.impl.zombie.*
+import com.intellij.openapi.editor.impl.zombie.CleaverNecromancer
+import com.intellij.openapi.editor.impl.zombie.Necromancer
+import com.intellij.openapi.editor.impl.zombie.NecromancerAwaker
+import com.intellij.openapi.editor.impl.zombie.Recipe
+import com.intellij.openapi.editor.impl.zombie.SpawnRecipe
+import com.intellij.openapi.editor.impl.zombie.TurningRecipe
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,10 +23,9 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
-private class ParameterHintsNecromancerAwaker : NecromancerAwaker<ParameterHintsZombie> {
+
+internal class ParameterHintsNecromancerAwaker : NecromancerAwaker<ParameterHintsZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<ParameterHintsZombie> {
     return ParameterHintsNecromancer(project, coroutineScope)
   }
@@ -31,57 +34,52 @@ private class ParameterHintsNecromancerAwaker : NecromancerAwaker<ParameterHints
 private class ParameterHintsNecromancer(
   project: Project,
   coroutineScope: CoroutineScope,
-) : GravingNecromancer<ParameterHintsZombie>(
+) : CleaverNecromancer<ParameterHintsZombie, Pair<Int, HintData>>(
   project,
   coroutineScope,
   "graved-parameter-hints",
-  ParameterHintsNecromancy
+  ParameterHintsZombie.Necromancy,
 ) {
 
-  override fun turnIntoZombie(recipe: TurningRecipe): ParameterHintsZombie? {
-    if (isEnabled()) {
-      val editor = recipe.editor
-      val hints = ParameterHintsPresentationManager.getInstance()
-        .getParameterHintsInRange(editor, 0, editor.document.textLength)
-        .mapNotNull { inlay -> inlay.toHintData() }
-        .toList()
-      return ParameterHintsZombie(hints)
-    } else {
-      return null
-    }
+  override fun enoughMana(recipe: Recipe): Boolean {
+    return Registry.`is`("cache.inlay.hints.on.disk", true)
+  }
+
+  override fun cutIntoLimbs(recipe: TurningRecipe): List<Pair<Int, HintData>> {
+    val editor = recipe.editor
+    return ParameterHintsPresentationManager.getInstance()
+      .getParameterHintsInRange(editor, 0, editor.document.textLength)
+      .mapNotNull { inlay -> inlay.toHintData() }
+      .toList()
   }
 
   override suspend fun shouldSpawnZombie(recipe: SpawnRecipe): Boolean {
-    return isEnabled() && isEnabledForLang(recipe.project, recipe.file)
+    return isEnabledForLang(recipe.project, recipe.file)
   }
 
-  override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: ParameterHintsZombie?) {
-    if (zombie != null && zombie.limbs().isNotEmpty()) {
-      val zombieHints = Int2ObjectOpenHashMap<MutableList<HintData>>()
-      for ((offset, hint) in zombie.limbs()) {
-        val list: MutableList<HintData> = zombieHints.getOrPut(offset) { SmartList() }
-        val hint1 = if (isDebug()) {
-          debugHintData(hint)
-        } else {
-          hint
-        }
-        list.add(hint1)
+  override suspend fun spawnZombie(
+    recipe: SpawnRecipe,
+    limbs: List<Pair<Int, HintData>>,
+  ): (Editor) -> Unit {
+    val zombieHints = Int2ObjectOpenHashMap<MutableList<HintData>>()
+    for ((offset, hint) in limbs) {
+      val list: MutableList<HintData> = zombieHints.getOrPut(offset) { SmartList() }
+      val hint1 = if (isDebug()) {
+        debugHintData(hint)
+      } else {
+        hint
       }
-      val editor = recipe.editorSupplier()
-      withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          if (recipe.isValid(editor)) {
-            ParameterHintsUpdater(
-              editor,
-              listOf(),
-              zombieHints,
-              Int2ObjectOpenHashMap(0),
-              true
-            ).update()
-            FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.PARAMETER_HINTS)
-          }
-        }
-      }
+      list.add(hint1)
+    }
+    return { editor ->
+      ParameterHintsUpdater(
+        editor,
+        listOf(),
+        zombieHints,
+        Int2ObjectOpenHashMap(0),
+        true,
+      ).update()
+      FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.PARAMETER_HINTS)
     }
   }
 
@@ -114,6 +112,7 @@ private class ParameterHintsNecromancer(
            isParameterHintsEnabledForLanguage(language)
   }
 
-  private fun isEnabled(): Boolean = Registry.`is`("cache.inlay.hints.on.disk", true)
-  private fun isDebug(): Boolean = Registry.`is`("cache.markup.debug", false)
+  private fun isDebug(): Boolean {
+    return Registry.`is`("cache.markup.debug", false)
+  }
 }

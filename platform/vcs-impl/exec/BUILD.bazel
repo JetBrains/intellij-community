@@ -21,4 +21,18 @@ jvm_library(
     "//platform/execution",
   ]
 )
+
+jvm_library(
+  name = "exec_test_lib",
+  module_name = "intellij.platform.vcs.impl.exec",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":exec",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/execution:execution_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.vcs.impl.exec` end

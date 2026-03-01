@@ -8,7 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 public final class AnnotationProcessorProfileSerializer {
   private static final Comparator<String> ALPHA_COMPARATOR = (o1, o2) -> o1.compareToIgnoreCase(o2);

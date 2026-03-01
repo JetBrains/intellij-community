@@ -6,7 +6,13 @@ import it.unimi.dsi.fastutil.HashCommon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /** Specialization of {@link com.intellij.util.containers.LinkedCustomHashMap} for int keys */
 @SuppressWarnings("DuplicatedCode")

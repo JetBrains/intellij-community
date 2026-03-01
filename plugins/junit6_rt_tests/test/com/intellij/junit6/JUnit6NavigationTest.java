@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit6;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -15,10 +15,10 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.junit.jupiter.api.DisplayName;
 
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import static com.intellij.junit6.ServiceMessageUtil.replaceAttributes;
+import static com.intellij.junit6.ServiceMessageUtil.normalizedTestOutput;
 
 @DisplayName("junit 6 navigation features: location strings, etc")
 public class JUnit6NavigationTest extends AbstractTestFrameworkCompilingIntegrationTest {
@@ -33,26 +33,25 @@ public class JUnit6NavigationTest extends AbstractTestFrameworkCompilingIntegrat
     ModuleRootModificationUtil.updateModel(myModule, model -> model.addContentEntry(getTestContentRoot())
       .addSourceFolder(getTestContentRoot() + "/test", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", JUnit6Constants.VERSION), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", JUnit6Constants.VERSION),
+                 repoManager);
   }
 
   public void testNavigation() throws Exception {
     ProcessOutput output = doStartTestsProcess(createRunClassConfiguration("org.example.impl.NavTest"));
     assertEmpty(output.err);
 
-    List<String> messages = output.messages.stream().filter(m -> m.getAttributes().containsKey("locationHint"))
-      .map(m -> m.getAttributes().get("locationHint").startsWith("file://")
-                ? replaceAttributes(m, Map.of("locationHint", "file://##path##"))
-                : m.asString())
-      .toList();
+    String messages = output.messages.stream().filter(m -> m.getAttributes().containsKey("locationHint"))
+      .map(m -> normalizedTestOutput(m, Map.of("locationHint", (value) -> value.startsWith("file://") ? "file://##path##" : value)))
+      .collect(Collectors.joining("\n"));
 
-    assertEquals(List.of(
-      "##teamcity[suiteTreeStarted id='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]' name='fileSourceDynamicTests()' nodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]' parentNodeId='0' locationHint='java:test://org.example.impl.NavTest/fileSourceDynamicTests' metainfo='']",
-      "##teamcity[suiteTreeNode id='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[method:methodNavigation()|]' name='methodNavigation()' nodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[method:methodNavigation()|]' parentNodeId='0' locationHint='java:test://org.example.impl.NavTest/methodNavigation' metainfo='']",
-      "##teamcity[testSuiteStarted id='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]' name='fileSourceDynamicTests()' nodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]' parentNodeId='0' locationHint='java:test://org.example.impl.NavTest/fileSourceDynamicTests' metainfo='']",
-      "##teamcity[testStarted id='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]/|[dynamic-test:#1|]' name='fileSource' nodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]/|[dynamic-test:#1|]' parentNodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]' locationHint='file://##path##']",
-      "##teamcity[testStarted id='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[method:methodNavigation()|]' name='methodNavigation()' nodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[method:methodNavigation()|]' parentNodeId='0' locationHint='java:test://org.example.impl.NavTest/methodNavigation' metainfo='']"
-    ), messages);
+    assertEquals("""
+                   ##TC[suiteTreeStarted id='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]' name='fileSourceDynamicTests()' nodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]' parentNodeId='0' locationHint='java:test://org.example.impl.NavTest/fileSourceDynamicTests' metainfo='']
+                   ##TC[suiteTreeNode id='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[method:methodNavigation()|]' name='methodNavigation()' nodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[method:methodNavigation()|]' parentNodeId='0' locationHint='java:test://org.example.impl.NavTest/methodNavigation' metainfo='']
+                   ##TC[testSuiteStarted id='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]' name='fileSourceDynamicTests()' nodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]' parentNodeId='0' locationHint='java:test://org.example.impl.NavTest/fileSourceDynamicTests' metainfo='']
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]/|[dynamic-test:#1|]' name='fileSource' nodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]/|[dynamic-test:#1|]' parentNodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[test-factory:fileSourceDynamicTests()|]' locationHint='file://##path##']
+                   ##TC[testStarted id='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[method:methodNavigation()|]' name='methodNavigation()' nodeId='|[engine:junit-jupiter|]/|[class:org.example.impl.NavTest|]/|[method:methodNavigation()|]' parentNodeId='0' locationHint='java:test://org.example.impl.NavTest/methodNavigation' metainfo='']""",
+                 messages);
   }
 
   @NotNull

@@ -16,4 +16,22 @@ jvm_library(
   ],
   exports = ["//platform/diagnostic/telemetry/rt"]
 )
+
+jvm_library(
+  name = "server-telemetry_test_lib",
+  module_name = "intellij.maven.server.telemetry",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "//platform/diagnostic/telemetry/rt",
+    "//platform/diagnostic/telemetry/rt:rt_test_lib",
+  ],
+  runtime_deps = [
+    ":server-telemetry",
+    "//platform/util-rt:util-rt_test_lib",
+    "//plugins/maven-server-api:maven-server_test_lib",
+    "//platform/diagnostic/telemetry/rt:rt_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.maven.server.telemetry` end

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.hint.HintManager;
@@ -9,7 +10,12 @@ import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionGroup;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.CaretAutoMoveController;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
@@ -21,9 +27,37 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModChooseAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModCompositeCommand;
+import com.intellij.modcommand.ModCopyToClipboard;
+import com.intellij.modcommand.ModCreateFile;
+import com.intellij.modcommand.ModDeleteFile;
+import com.intellij.modcommand.ModDisplayMessage;
+import com.intellij.modcommand.ModEditOptions;
+import com.intellij.modcommand.ModHighlight;
+import com.intellij.modcommand.ModLaunchEditorAction;
+import com.intellij.modcommand.ModMoveFile;
+import com.intellij.modcommand.ModNavigate;
+import com.intellij.modcommand.ModNothing;
+import com.intellij.modcommand.ModOpenUrl;
+import com.intellij.modcommand.ModRegisterTabOut;
+import com.intellij.modcommand.ModShowConflicts;
+import com.intellij.modcommand.ModStartRename;
+import com.intellij.modcommand.ModStartTemplate;
+import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
+import com.intellij.modcommand.ModUpdateReferences;
+import com.intellij.modcommand.ModUpdateSystemOptions;
+import com.intellij.modcommand.Presentation;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -39,8 +73,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.DumbProgressIndicator;
@@ -50,7 +89,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -60,18 +106,31 @@ import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.Renamer;
 import com.intellij.refactoring.rename.RenamerFactory;
-import com.intellij.refactoring.suggested.*;
+import com.intellij.refactoring.suggested.PerformSuggestedRefactoringKt;
+import com.intellij.refactoring.suggested.SuggestedRefactoringAvailability;
+import com.intellij.refactoring.suggested.SuggestedRefactoringState;
+import com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges;
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.awt.datatransfer.StringSelection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNull;
@@ -154,7 +213,28 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     if (command instanceof ModUpdateSystemOptions updateOptions) {
       return executeUpdateInspectionOptions(context, updateOptions);
     }
+    if (command instanceof ModLaunchEditorAction action) {
+      return executeLaunchEditorAction(project, action, editor);
+    }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private static boolean executeLaunchEditorAction(@NotNull Project project, @NotNull ModLaunchEditorAction action, @Nullable Editor editor) {
+    AnAction anAction = ActionManager.getInstance().getAction(action.actionId());
+    if (anAction == null) {
+      return handleError(project, editor, AnalysisBundle.message("modcommand.executor.action.not.found", action.actionId()));
+    }
+    if (!(editor instanceof EditorEx ex)) return action.optional();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (ex.isDisposed()) return;
+      DataContext ctx = ex.getDataContext();
+      AnActionEvent event = AnActionEvent.createEvent(anAction, ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null);
+      if (!ActionUtil.updateAction(anAction, event).isPerformed()) return;
+      if (event.getPresentation().isEnabledAndVisible()) {
+        ActionUtil.performAction(anAction, event);
+      }
+    });
+    return true;
   }
 
   private static boolean handleError(@NotNull Project project, @Nullable Editor editor, @Nls String message) {
@@ -257,19 +337,27 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     if (psiFile == null) return false;
     String name = requireNonNullElse(CommandProcessor.getInstance().getCurrentCommandName(),
                                      LangBundle.message("command.title.finishing.template"));
+    TextRange templateRange = template.fields().stream().map(ModStartTemplate.TemplateField::range)
+      .reduce(TextRange::union).orElse(null);
+    if (templateRange == null) return true;
+    PsiElement startElement = psiFile.findElementAt(templateRange.getStartOffset());
+    PsiElement endElement = psiFile.findElementAt(templateRange.getEndOffset() - 1);
+    PsiElement templateElement = endElement != null && startElement != null ?
+                                 requireNonNullElse(PsiTreeUtil.findCommonParent(startElement, endElement), psiFile) : psiFile;
+    int templateStart = templateElement.getTextRange().getStartOffset();
     WriteAction.run(() -> {
-      TemplateBuilderImpl builder = new TemplateBuilderImpl(psiFile);
+      TemplateBuilderImpl builder = new TemplateBuilderImpl(templateElement);
       for (ModStartTemplate.TemplateField field : template.fields()) {
         switch (field) {
           case ModStartTemplate.ExpressionField(TextRange range, String varName, Expression expression) -> {
             if (varName != null) {
-              builder.replaceElement(psiFile, range, varName, expression, true);
+              builder.replaceElement(templateElement, range.shiftLeft(templateStart), varName, expression, true);
             } else {
-              builder.replaceElement(psiFile, range, expression);
+              builder.replaceElement(templateElement, range.shiftLeft(templateStart), expression);
             }
           }
           case ModStartTemplate.DependantVariableField(TextRange range, String varName, String variableName, boolean alwaysStopAt) ->
-            builder.replaceElement(psiFile, range, varName, variableName, alwaysStopAt);
+            builder.replaceElement(templateElement, range.shiftLeft(templateStart), varName, variableName, alwaysStopAt);
           case ModStartTemplate.EndField(TextRange range) -> {
             PsiElement leaf = psiFile.findElementAt(range.getStartOffset());
             if (leaf != null) {
@@ -281,7 +369,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
       final Template tmpl = builder.buildInlineTemplate();
       CaretAutoMoveController.forbidCaretMovementInsideIfNeeded(finalEditor, () -> {
-        finalEditor.getCaretModel().moveToOffset(0);
+        finalEditor.getCaretModel().moveToOffset(templateStart);
         TemplateManager.getInstance(context.project()).startTemplate(finalEditor, tmpl, new TemplateEditingAdapter() {
           @Override
           public void templateFinished(@NotNull Template tmpl, boolean brokenOff) {

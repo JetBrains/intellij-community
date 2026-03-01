@@ -5,11 +5,41 @@ import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore.flattenParens
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentExpression
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyCallSiteExpression
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyDoubleStarExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeyValueExpression
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyLambdaExpression
+import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyParameterList
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyReturnStatement
+import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PySetLiteralExpression
+import com.jetbrains.python.psi.PySliceItem
+import com.jetbrains.python.psi.PyStarArgument
+import com.jetbrains.python.psi.PyStarExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.PyYieldExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import com.jetbrains.python.psi.impl.mapArguments
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.types.PyTypeChecker.*
+import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
+import com.jetbrains.python.psi.types.PyTypeChecker.substitute
+import com.jetbrains.python.psi.types.PyTypeChecker.unifyGenericCall
 
 
 object PyExpectedTypeJudgement {
@@ -39,10 +69,14 @@ object PyExpectedTypeJudgement {
    * implied supertype `List`, to then retrieve the type of `List`s type parameter.
    */
   @JvmStatic
-  fun getExpectedType(expr: PyExpression, ctx: TypeEvalContext): PyType? {
+  fun getExpectedType(expr: PyExpression, ctxOriginal: TypeEvalContext): PyType? {
     // Traverse the AST upwards to find the root expression (either assignment, function call, return statement)
     // Do this recursively to easily map the result type to the original sub-element.
     // Example: x2: str; x1, (x2, x3) = (42, (expr, "spam")) # expr is the requested sub-element, the whole tuple is the root expression
+
+    // use a context copy to (a) avoid types being cached in the original context, (b) avoid control flow analysis to happen.
+    val ctx = TypeEvalContext.codeInsightFallback(expr.project)
+
     val parent = expr.parent
     when (parent) {
       is PyStarArgument,
@@ -52,7 +86,7 @@ object PyExpectedTypeJudgement {
       }
 
       is PyAssignmentExpression -> {
-        val expectedType = fromWalrus(expr)
+        val expectedType = fromWalrus(expr, ctx)
         if (expectedType != null) return expectedType
         return getExpectedType(parent, ctx)
       }
@@ -138,7 +172,12 @@ object PyExpectedTypeJudgement {
       is PyParameterList -> {
         if (expr.parent.parent is PyLambdaExpression && expr is PyParameter) {
           val indexOfExpr = parent.parameters.indexOf(expr)
-          val typeOfParentLambda = getExpectedType(parent.parent as PyExpression, ctx)
+          var typeOfParentLambda = getExpectedType(parent.parent as PyExpression, ctx)
+
+          if (typeOfParentLambda is PyUnionType) {
+            // match first callable
+            typeOfParentLambda = typeOfParentLambda.members.firstOrNull { it is PyCallableType && it.isCallable }
+          }
           if (typeOfParentLambda is PyCallableType) {
             val parameters = typeOfParentLambda.getParameters(ctx)
             if (parameters != null && indexOfExpr >= 0 && indexOfExpr < parameters.size) {
@@ -160,7 +199,7 @@ object PyExpectedTypeJudgement {
 
     // Compute the expected type from a given root statement/expression
     return fromArgument(expr, ctx)
-           ?: fromAssignment(expr)
+           ?: fromAssignment(expr, ctx)
            ?: fromYield(expr, ctx)
            ?: fromReturn(expr, ctx)
   }
@@ -170,7 +209,7 @@ object PyExpectedTypeJudgement {
                    ?: callArgument.parent as? PySubscriptionExpression
                    ?: return null
 
-    val argMappings = callSite.mapArguments(PyResolveContext.defaultContext(ctx))
+    val argMappings = PyCallExpressionHelper.mapArguments(callSite, PyResolveContext.defaultContext(ctx))
     val argTypes = LinkedHashSet<PyType?>()
 
     for (mapping in argMappings) {
@@ -231,11 +270,22 @@ object PyExpectedTypeJudgement {
           name = "Parameters",
           fields = fields,
           dictClass = dictClass,
-          definitionLevel = PyTypedDictType.DefinitionLevel.INSTANCE,
-          ancestors = emptyList(),
-          declaration = mapping.callableType?.declarationElement
+          isDefinition = false,
+          // TODO: This is incorrect:
+          // `PyTypedDict` declaration is either a `PyClass` node:
+          // ```
+          // class TD(typing.TypedDict):
+          //   ...
+          // ```
+          //
+          // or a `PyTargetExpression` node:
+          // ```
+          // TD = typing.TypedDict("TD", {})
+          // ```
+          declaration = mapping.callableType?.callable ?: return null
         )
       }
+      // TODO merge the type of `**kwargs` with the types of other mapped parameters here
       else {
         return param.getType(ctx)
       }
@@ -261,7 +311,7 @@ object PyExpectedTypeJudgement {
     mappedParameters: Map<PyExpression, PyCallableParameter>,
     ctx: TypeEvalContext,
   ): PyType? {
-    if (!hasGenerics(paramType, ctx)) return paramType
+    if (!paramType.hasGenerics(ctx)) return paramType
 
     val receiver = callSite.getReceiver(null)
     val substitutions = unifyGenericCall(receiver, mappedParameters, ctx) // might cause recursion
@@ -270,22 +320,20 @@ object PyExpectedTypeJudgement {
     return substitute(paramType, substitutions, ctx)
   }
 
-  private fun fromWalrus(expr: PyExpression): PyType? {
+  private fun fromWalrus(expr: PyExpression, ctx: TypeEvalContext): PyType? {
     val parent = expr.parent as? PyAssignmentExpression ?: return null
     if (parent.assignedValue != expr) return null
     val lhs = parent.target ?: return null
     val rhs = parent.assignedValue ?: return null
-    val avoidControlFlowCtx = TypeEvalContext.codeInsightFallback(null)
-    return fromLhs(lhs, rhs, avoidControlFlowCtx)
+    return fromLhs(lhs, rhs, ctx)
   }
 
-  private fun fromAssignment(expr: PyExpression): PyType? {
+  private fun fromAssignment(expr: PyExpression, ctx: TypeEvalContext): PyType? {
     val parent = expr.parent as? PyAssignmentStatement ?: return null
     if (parent.assignedValue != expr) return null
     val lhs = parent.leftHandSideExpression ?: return null
     val rhs = parent.assignedValue ?: return null
-    val avoidControlFlowCtx = TypeEvalContext.codeInsightFallback(null)
-    return fromLhs(lhs, rhs, avoidControlFlowCtx)
+    return fromLhs(lhs, rhs, ctx)
   }
 
   private fun fromLhs(lhs: PyExpression, rhs: PyExpression?, ctx: TypeEvalContext): PyType? {
@@ -398,7 +446,7 @@ object PyExpectedTypeJudgement {
 
     val returnType = ctx.getReturnType(funScope)
     val generatorDescriptor = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGenerator(returnType)
-    val yieldType = generatorDescriptor?.yieldType()
+    val yieldType = generatorDescriptor?.yieldType
     if (parent.isDelegating) {
       return createIterableType(expr, yieldType)
     }
@@ -414,7 +462,7 @@ object PyExpectedTypeJudgement {
     if (funScope.isAsync) {
       return PyTypingTypeProvider.unwrapCoroutineReturnType(returnType)?.get()
     }
-    val generatorReturnType = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGenerator(returnType)?.returnType()
+    val generatorReturnType = PyTypingTypeProvider.GeneratorTypeDescriptor.fromGenerator(returnType)?.returnType
     return generatorReturnType ?: returnType
   }
 
@@ -431,21 +479,22 @@ object PyExpectedTypeJudgement {
     val elementTypes = tupleType.elementTypes
     val variadicRepeatCount = tupleExpr.elements.size - elementTypes.size + 1
     var arrayIdx = 0
-    for (idx in 0 until tupleType.elementTypes.size) {
-      val elemType = tupleType.elementTypes[idx]
-      if (elemType is PyUnpackedTupleType && elemType.isUnbound) {
-        repeat(variadicRepeatCount) {
-          tupleTypeArray[arrayIdx++] = elemType.elementTypes.firstOrNull()
+    for (elemType in elementTypes.take(tupleTypeArray.size)) {
+      when (elemType) {
+        is PyUnpackedTupleType if (elemType.isUnbound) -> {
+          repeat(variadicRepeatCount) {
+            tupleTypeArray[arrayIdx++] = elemType.elementTypes.firstOrNull()
+          }
         }
-        continue
-      }
-      if (elemType is PyTupleType && elemType.isHomogeneous) {
-        repeat(variadicRepeatCount) {
-          tupleTypeArray[arrayIdx++] = elemType.elementTypes.firstOrNull()
+        is PyTupleType if (elemType.isHomogeneous) -> {
+          repeat(variadicRepeatCount) {
+            tupleTypeArray[arrayIdx++] = elemType.elementTypes.firstOrNull()
+          }
         }
-        continue
+        else -> {
+          tupleTypeArray[arrayIdx++] = elemType
+        }
       }
-      tupleTypeArray[arrayIdx++] = elemType
     }
     if (indexOfExpr < tupleTypeArray.size) {
       return tupleTypeArray[indexOfExpr]

@@ -1,7 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
-import org.jetbrains.kotlin.analysis.api.projectStructure.*
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryFallbackDependenciesModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
@@ -52,6 +61,7 @@ object KaModuleStructureTxtRenderer {
                 appendLine("sourceModuleKind: ${module.sourceModuleKind}")
                 appendLine("stableModuleName: ${module.stableModuleName}")
             }
+            is KaLibraryFallbackDependenciesModule -> {}
 
             else -> error("Unknown module type: ${module::class.java}")
         }
@@ -65,7 +75,7 @@ object KaModuleStructureTxtRenderer {
                 if (dependencies.isEmpty()) {
                     appendLine("<empty>")
                 } else {
-                    dependencies.map { "${it.getKaModuleClass()}(${it.getOneLineModuleDescriptionForRendering()})" }
+                    dependencies.map { "${it.getKaModuleClass()}(${getOneLineModuleDescriptionForRendering(it)})" }
                         .sorted() // todo the order is unstable for moduleinfo-based impl, should be fixed as a part of KTIJ-31422
                         .forEach { appendLine(it) }
                 }

@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class GroovyFileIconProvider implements FileIconProvider {
   @Override

@@ -9,6 +9,7 @@ import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import org.jdom.Element
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
@@ -98,10 +99,10 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
 
 /**
  * Provides a set of paths that should be included in the core classpath.
- * This generation is based on the plugins distribution,
+ * This generation is based on the plugins' distribution,
  * so we would like to include all distribution entities of **embedded** modules (and their libraries) from plugins marked with `use-idea-classloader`.
  */
-internal fun generateCoreClasspathFromPlugins(
+internal suspend fun generateCoreClasspathFromPlugins(
   platformLayout: PlatformLayout,
   context: BuildContext,
   pluginEntities: List<PluginBuildDescriptor>,
@@ -124,7 +125,7 @@ internal fun generateCoreClasspathFromPlugins(
  * Provides a set of content modules ("embedded" ones) and the module of the plugin itself, if it uses `use-idea-classloader`.
  * These modules should be included in the core classpath, also their libraries should be treated as platform libraries.
  */
-internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
+internal suspend fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   pluginMainModule: String,
   cacheContainer: ScopedCachedDescriptorContainer?,
   context: BuildContext,
@@ -136,6 +137,7 @@ internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   if (rootElement.getAttribute("use-idea-classloader")?.value?.toBoolean() != true) {
     return emptySet()
   }
+
   val embeddedModules = LinkedHashSet<String>()
   embeddedModules.add(pluginMainModule)
   filterAndProcessContentModules(rootElement, pluginMainModule, context) { _, moduleName, loadingRule ->
@@ -149,11 +151,13 @@ internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
 internal data class PluginBuildDescriptor(
   @JvmField val dir: Path,
   @JvmField val os: OsFamily?,
+  @JvmField val arch: JvmArchitecture?,
   @JvmField val layout: PluginLayout,
   @JvmField val distribution: Collection<DistributionFileEntry>,
 )
 
-internal fun writePluginClassPathHeader(
+@Suppress("BlockingMethodInNonBlockingContext")
+internal suspend fun writePluginClassPathHeader(
   out: DataOutputStream,
   isJarOnly: Boolean,
   pluginCount: Int,
@@ -179,7 +183,11 @@ internal fun writePluginClassPathHeader(
 }
 
 @VisibleForTesting
-fun createCachedProductDescriptor(platformLayout: PlatformLayout, platformDescriptorCache: ScopedCachedDescriptorContainer, context: BuildContext): Element {
+suspend fun createCachedProductDescriptor(
+  platformLayout: PlatformLayout,
+  platformDescriptorCache: ScopedCachedDescriptorContainer,
+  context: BuildContext,
+): Element {
   val mainPluginDescriptor = requireNotNull(platformDescriptorCache.getCachedFileData(PRODUCT_DESCRIPTOR_META_PATH)) {
     "Cannot find core plugin descriptor (module=${context.productProperties.applicationInfoModule})"
   }.let { JDOMUtil.load(it) }
@@ -205,7 +213,8 @@ fun createCachedProductDescriptor(platformLayout: PlatformLayout, platformDescri
   return mainPluginDescriptor
 }
 
-internal fun generatePluginClassPath(
+@Suppress("BlockingMethodInNonBlockingContext")
+internal suspend fun generatePluginClassPath(
   pluginEntries: List<PluginBuildDescriptor>,
   descriptorFileProvider: DescriptorCacheContainer,
   platformLayout: PlatformLayout,

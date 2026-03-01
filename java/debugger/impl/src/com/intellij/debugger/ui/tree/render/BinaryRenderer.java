@@ -4,7 +4,17 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.*;
+import com.sun.jdi.ByteType;
+import com.sun.jdi.ByteValue;
+import com.sun.jdi.IntegerType;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.LongType;
+import com.sun.jdi.LongValue;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ShortType;
+import com.sun.jdi.ShortValue;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;

@@ -24,7 +24,7 @@ import com.intellij.util.ui.update.ComparableObject
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Internal

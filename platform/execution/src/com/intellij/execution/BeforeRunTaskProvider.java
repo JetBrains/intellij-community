@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Iterator;
 
 /**

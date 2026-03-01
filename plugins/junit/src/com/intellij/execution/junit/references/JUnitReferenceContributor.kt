@@ -4,9 +4,18 @@ package com.intellij.execution.junit.references
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.patterns.uast.capture
 import com.intellij.patterns.uast.injectionHostUExpression
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
-import com.siyeh.ig.junit.JUnitCommonClassNames.*
+import com.intellij.psi.registerUastReferenceProvider
+import com.intellij.psi.uastInjectionHostReferenceProvider
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_CONDITION_PROVIDER_DISABLED_IF
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_CONDITION_PROVIDER_ENABLED_IF
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UReferenceExpression
 

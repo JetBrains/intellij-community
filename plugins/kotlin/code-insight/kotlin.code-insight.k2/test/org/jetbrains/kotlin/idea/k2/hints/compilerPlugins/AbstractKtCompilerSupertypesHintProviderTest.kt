@@ -2,15 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.hints.compilerPlugins
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.openapi.roots.OrderRootType
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinInlayHintsProviderTest
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.KtCompilerSupertypesHintProvider
-import org.jetbrains.kotlin.idea.resolve.KOTLINX_SERIALIZATION_CORE_JVM_MAVEN_COORDINATES
-import org.jetbrains.kotlin.idea.resolve.loadSingleJarFromMaven
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.addRoot
-import java.io.File
 
 abstract class AbstractKtCompilerSupertypesHintProviderTest : AbstractKotlinInlayHintsProviderTest() {
     override fun inlayHintsProvider(): InlayHintsProvider =

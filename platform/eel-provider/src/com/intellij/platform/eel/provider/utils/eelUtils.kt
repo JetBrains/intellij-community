@@ -16,7 +16,13 @@ import com.intellij.util.system.OS
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.nio.file.*
+import java.nio.file.AccessDeniedException
+import java.nio.file.DirectoryNotEmptyException
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.FileSystemException
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
+import java.nio.file.ReadOnlyFileSystemException
 
 @ApiStatus.Internal
 fun EelExecApi.fetchLoginShellEnvVariablesBlocking(): Map<String, String> {

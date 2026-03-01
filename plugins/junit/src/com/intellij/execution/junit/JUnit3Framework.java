@@ -3,7 +3,12 @@ package com.intellij.execution.junit;
 
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;

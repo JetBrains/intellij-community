@@ -11,7 +11,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector

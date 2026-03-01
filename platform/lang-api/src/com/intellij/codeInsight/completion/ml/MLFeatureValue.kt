@@ -61,9 +61,14 @@ sealed class MLFeatureValue : MLFeatureValueBase {
     fun version(value: String): MLFeatureValue = VersionValue(value)
   }
 
+  @ConsistentCopyVisibility
   data class BinaryValue internal constructor(override val value: Boolean) : MLFeatureValue()
+  @ConsistentCopyVisibility
   data class FloatValue internal constructor(override val value: Double) : MLFeatureValue()
+  @ConsistentCopyVisibility
   data class CategoricalValue internal constructor(override val value: String) : MLFeatureValue()
+  @ConsistentCopyVisibility
   data class ClassNameValue internal constructor(override val value: Class<*>, val useSimpleName: Boolean) : MLFeatureValue()
+  @ConsistentCopyVisibility
   data class VersionValue internal constructor(override val value: String) : MLFeatureValue()
 }

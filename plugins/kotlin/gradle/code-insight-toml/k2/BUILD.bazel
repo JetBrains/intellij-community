@@ -24,6 +24,25 @@ jvm_library(
     "//platform/core-impl",
     "//platform/util",
     "//java/java-psi-impl:psi-impl",
+    "//plugins/gradle/java/toml",
+  ]
+)
+
+jvm_library(
+  name = "k2_test_lib",
+  module_name = "intellij.kotlin.gradle.codeInsight.toml.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":k2",
+    "//plugins/kotlin/gradle/code-insight-toml:kotlin-gradle-codeInsight-toml_test_lib",
+    "//plugins/gradle/java:java_test_lib",
+    "//plugins/toml/core:core_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//plugins/gradle/java/toml:toml_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.toml.k2` end

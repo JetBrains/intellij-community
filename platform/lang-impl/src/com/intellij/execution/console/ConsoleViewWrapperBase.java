@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class ConsoleViewWrapperBase implements ConsoleView, ExecutionConsoleEx {
   public static final String CONSOLE_VIEW_WRAPPER_VIEW_ID_PREFIX = "ConsoleViewWrapper";

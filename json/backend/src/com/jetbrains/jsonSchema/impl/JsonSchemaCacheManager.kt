@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.CollectionFactory
@@ -23,11 +22,10 @@ class JsonSchemaCacheManager : Disposable {
   /**
    *  Computes [JsonSchemaObject] preventing multiple concurrent computations of the same schema.
    */
+  @Deprecated("Must not be used with the new json object implementation turned on")
   fun computeSchemaObject(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile): JsonSchemaObject? {
-    if (Registry.`is`("json.schema.object.v2")) {
-      assert(false) {
-        "Should not use cache with the new json object impl"
-      }
+    assert(false) {
+      "Should not use cache with the new json object impl"
     }
     val newFuture: JsonSchemaObjectFuture = CompletableFuture()
     val cachedValue: CachedValue<JsonSchemaObjectFuture> = getUpToDateFuture(schemaVirtualFile, schemaPsiFile, newFuture)
@@ -72,7 +70,7 @@ class JsonSchemaCacheManager : Disposable {
 
   private fun completeSync(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile, future: JsonSchemaObjectFuture) {
     try {
-      future.complete(JsonSchemaReader(schemaVirtualFile).read(schemaPsiFile))
+      future.complete(JsonSchemaReader().read(schemaPsiFile))
     }
     catch (e: Exception) {
       future.completeExceptionally(e)

@@ -3,7 +3,12 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.impl.java.stubs.JavaPackageAccessibilityStatementElementType;
 import com.intellij.psi.impl.java.stubs.PsiPackageAccessibilityStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;

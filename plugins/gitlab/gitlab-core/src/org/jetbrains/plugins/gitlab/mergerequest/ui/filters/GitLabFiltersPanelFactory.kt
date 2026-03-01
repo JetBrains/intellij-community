@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
-import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
@@ -13,11 +12,15 @@ import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.*
-import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.LabelFilterValue
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.MergeRequestsAssigneeFilterValue
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.MergeRequestsAuthorFilterValue
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.MergeRequestsReviewerFilterValue
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestChoosersUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 
@@ -90,11 +93,13 @@ internal class GitLabFiltersPanelFactory(
     filterName = GitLabBundle.message("merge.request.list.filter.category.label"),
     valuePresenter = { labelFilterValue -> labelFilterValue.title },
     chooseValue = { point ->
-      ChooserPopupUtil.showAsyncChooserPopup<LabelFilterValue>(
+      ChooserPopupUtil.showAsyncChooserPopup(
         point,
-        itemsLoader = vm.labels.mapResultList { label -> LabelFilterValue(label.title) },
-        presenter = { labelFilterValue -> PopupItemPresentation.Simple(shortText = labelFilterValue.title) }
-      )
+        itemsLoader = vm.labels,
+        presenter = GitLabMergeRequestChoosersUtil.getLabelPresenter()
+      )?.let {
+        LabelFilterValue(it.title)
+      }
     }
   )
 
@@ -117,9 +122,7 @@ internal class GitLabFiltersPanelFactory(
     participantsLoader: Flow<Result<List<GitLabUserDTO>>>
   ): GitLabUserDTO? = ChooserPopupUtil.showAsyncChooserPopup(
     point, itemsLoader = participantsLoader,
-    presenter = { user ->
-      PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE))
-    },
+    presenter = GitLabMergeRequestChoosersUtil.getUserPresenter(vm.avatarIconsProvider),
     popupConfig = PopupConfig(errorPresenter = ErrorStatusPresenter.simple(
       GitLabBundle.message("merge.request.list.filter.error"),
       descriptionProvider = { null },
@@ -136,17 +139,6 @@ internal class GitLabFiltersPanelFactory(
       MergeRequestStateFilterValue.OPENED -> GitLabBundle.message("merge.request.list.filter.state.open")
       MergeRequestStateFilterValue.MERGED -> GitLabBundle.message("merge.request.list.filter.state.merged")
       MergeRequestStateFilterValue.CLOSED -> GitLabBundle.message("merge.request.list.filter.state.closed")
-    }
-  }
-}
-
-private fun <T, R> Flow<Result<List<T>>>.mapResultList(mapper: (T) -> R): Flow<Result<List<R>>> {
-  val flow = this
-  return flow.map { result: Result<List<T>> ->
-    result.map { list: List<T> ->
-      list.map { item: T ->
-        mapper(item)
-      }
     }
   }
 }

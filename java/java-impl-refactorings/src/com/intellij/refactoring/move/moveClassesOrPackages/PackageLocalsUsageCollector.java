@@ -3,7 +3,16 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.ConflictsUtil;

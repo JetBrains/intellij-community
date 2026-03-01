@@ -4,7 +4,10 @@ package org.jetbrains.plugins.gitlab.ui.comment
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.*
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil

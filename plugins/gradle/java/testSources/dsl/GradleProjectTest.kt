@@ -5,7 +5,11 @@ import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
 import groovy.lang.Closure.DELEGATE_FIRST
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_FILE_CONFIGURABLE_FILE_COLLECTION
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_FILE_CONFIGURABLE_FILE_TREE
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_FILE_COPY_SPEC
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_PROCESS_EXEC_SPEC
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan

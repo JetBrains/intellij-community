@@ -27,15 +27,15 @@ Process(target=func1, args=("", 0))  # E
 
 
 def func2(f: Callable[[int, *Ts, T], tuple[T, *Ts]]) -> tuple[*Ts, T]:
-    ...
+    raise NotImplementedError
 
 
 def callback1(a: int, b: str, c: int, d: complex) -> tuple[complex, str, int]:
-    ...
+    raise NotImplementedError
 
 
 def callback2(a: int, d: str) -> tuple[str]:
-    ...
+    raise NotImplementedError
 
 
 assert_type(func2(callback1), tuple[str, int, complex])
@@ -43,7 +43,7 @@ assert_type(func2(callback2), tuple[str])
 
 
 def func3(*args: * tuple[int, *Ts, T]) -> tuple[T, *Ts]:
-    ...
+    raise NotImplementedError
 
 
 assert_type(func3(1, "", 3j, 3.4), tuple[float, str, complex])

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Describes why the data entered in a DialogWrapper is invalid.

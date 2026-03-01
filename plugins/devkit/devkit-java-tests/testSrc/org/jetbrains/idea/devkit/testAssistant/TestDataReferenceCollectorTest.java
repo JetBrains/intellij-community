@@ -10,7 +10,11 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @TestDataPath("$CONTENT_ROOT/testData/")
 public class TestDataReferenceCollectorTest extends LightJavaCodeInsightFixtureTestCase {

@@ -9,7 +9,11 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBFont
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls

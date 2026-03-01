@@ -34,7 +34,7 @@ private class MergeDialogCustomizer(
   @Nls private val operationName: String,
 ) : GitDefaultMergeDialogCustomizer(project) {
 
-  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>) = wrapInHtml(
+  override fun getMultipleFileMergeDescription(files: Collection<VirtualFile>) = wrapInHtml(
     GitBundle.message(
       "apply.conflict.dialog.description.label.text",
       operationName,

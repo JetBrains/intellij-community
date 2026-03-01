@@ -2,7 +2,16 @@
 package com.intellij.codeInspection.streamMigration;
 
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;

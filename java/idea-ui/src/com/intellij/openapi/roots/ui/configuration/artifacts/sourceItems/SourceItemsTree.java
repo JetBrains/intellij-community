@@ -17,7 +17,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SimpleDnDAwareTree;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SourceItemsDraggingObject;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.*;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.ExtractIntoDefaultLocationAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.PackAndPutIntoDefaultLocationAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.PutSourceItemIntoDefaultLocationAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.PutSourceItemIntoParentAndLinkViaManifestAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.SourceItemFindUsagesAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.SourceItemNavigateAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
@@ -31,7 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.awt.Image;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 

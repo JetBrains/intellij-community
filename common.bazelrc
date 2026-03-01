@@ -39,7 +39,6 @@ common:windows --disk_cache=~/AppData/Local/Temp/JetBrains/monorepo-bazel-cache
 ### The option was removed due to https://github.com/bazelbuild/bazel/issues/26361
 ### One experimental option less and also it looks like it won't enabled by default in the future
 
-common --@rules_jvm//:jvm-builder=@community//:monorepo-jvm-builder_deploy.jar
 common --@rules_jvm//:default-javac-opts=@community//:default-javac-opts
 common --@rules_jvm//:default-kotlinc-opts=@community//:k21
 common --@rules_jvm//:koltin_inc_threshold=0 --@rules_jvm//:java_inc_threshold=0
@@ -114,7 +113,17 @@ common --incompatible_strict_action_env=true
 common --experimental_platform_in_output_dir
 
 # Do not depend on external environment
-build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common --action_env BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
+startup --noautodetect_server_javabase
+
+# Clear PATH environment variable to enable remote cache hits on Windows
+#
+# rules_java uses use_default_shell_env=True leading to different PATH values in actions:
+# C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32;C:\\Windows\\System32\\WindowsPowerShell\\v1.0
+# C:\\Users\\Ilia.Kirianovskii\\AppData\\Local\\Microsoft\\WindowsApps;C:\\WINDOWS;C:\\WINDOWS\\System32;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0
+# https://github.com/bazelbuild/bazel/blob/93cde47ab3236b3b7124b41824f843f3659064de/src/main/java/com/google/devtools/build/lib/bazel/rules/BazelRuleClassProvider.java#L162
+common:windows --action_env=PATH=C:\\do-not-use-PATH
 
 # Enable compact *.repo_mapping manifest
 build --incompatible_compact_repo_mapping_manifest
@@ -129,8 +138,13 @@ common:ci --remote_cache_async=false
 build --remote_build_event_upload=minimal
 build --nolegacy_important_outputs
 
-# protobuf
-common --incompatible_enable_proto_toolchain_resolution
+# Avoid
+# Exception in thread "main" java.io.IOException: Error getting terminal size: GetConsoleScreenBufferInfo error 6
+# 	at coursier.jniutils.WindowsAnsiTerminal.terminalSize(WindowsAnsiTerminal.java:10)
+common:windows --repo_env=COURSIER_NO_TERM=true
+common:windows --repo_env=COURSIER_PROGRESS=false
+# Enable on Bazel 9
+# common --experimental_strict_repo_env
 
 # More debug on CI
 common:ci --announce_rc
@@ -153,3 +167,16 @@ test --test_timeout=60,300,900,14400
 
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
 common --repo_env=ANDROID_HOME=
+
+# Use prebuilt protoc instead of building from source, https://protobuf.dev/news/2026-01-16/
+common --incompatible_enable_proto_toolchain_resolution
+common --@protobuf//bazel/toolchains:prefer_prebuilt_protoc=true
+
+# need to use Python from rules_python in rules_pkg in pkg_zip target
+common --@rules_python//python/config_settings:bootstrap_impl=script
+
+# Retry downloads up to 5 times
+common --experimental_repository_downloader_retries=5
+
+# Scale HTTP timeouts by 2x
+common --http_timeout_scaling=2.0

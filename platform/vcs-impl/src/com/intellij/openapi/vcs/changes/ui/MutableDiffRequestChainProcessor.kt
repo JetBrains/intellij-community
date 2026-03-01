@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.Internal
 class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {

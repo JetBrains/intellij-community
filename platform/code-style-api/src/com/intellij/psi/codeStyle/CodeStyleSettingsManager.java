@@ -19,7 +19,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Field;
 import java.util.Collection;

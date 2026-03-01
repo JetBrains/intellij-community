@@ -14,7 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 import sun.font.CompositeGlyphMapper;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.font.FontRenderContext;
 import java.util.Set;
 

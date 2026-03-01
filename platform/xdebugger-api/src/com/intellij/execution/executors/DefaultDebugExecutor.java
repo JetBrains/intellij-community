@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class DefaultDebugExecutor extends Executor {
   public static final @NonNls String EXECUTOR_ID = ToolWindowId.DEBUG;

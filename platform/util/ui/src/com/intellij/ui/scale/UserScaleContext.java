@@ -8,7 +8,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.List;
 
-import static com.intellij.ui.scale.ScaleType.*;
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 /**
  * Represents a snapshot of the user space scale factors: {@link ScaleType#USR_SCALE} and {@link ScaleType#OBJ_SCALE}).

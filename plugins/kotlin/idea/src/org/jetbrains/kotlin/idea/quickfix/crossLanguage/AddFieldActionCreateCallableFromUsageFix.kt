@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateFieldRequest
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.appendModifier
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.PropertyInfo
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
+@K1Deprecation
 class AddFieldActionCreateCallableFromUsageFix(
     targetContainer: KtElement,
     classOrFileName: String?,

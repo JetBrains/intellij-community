@@ -12,8 +12,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import java.awt.BorderLayout;
 
 class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> {
   private JRadioButton myRbSocket;

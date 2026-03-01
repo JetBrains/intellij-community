@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.StringEscapesTokenTypes
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.text.CharArrayUtil
+import org.toml.lang.lexer.TomlEscapeLexer.Companion.of
 import org.toml.lang.psi.TOML_BASIC_STRINGS
 import org.toml.lang.psi.TomlElementTypes.BASIC_STRING
 import org.toml.lang.psi.TomlElementTypes.MULTILINE_BASIC_STRING

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 import java.util.function.Predicate;

@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDirectory;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Dmitry Avdeev

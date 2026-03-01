@@ -4,8 +4,10 @@ package com.intellij.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Rectangle;
 
 /**
  * Used for deferred re-painting (i.e. for deferred icons). As a paint() method

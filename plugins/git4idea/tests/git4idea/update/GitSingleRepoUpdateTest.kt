@@ -11,7 +11,16 @@ import git4idea.config.UpdateMethod.REBASE
 import git4idea.config.UpdateMethod.RESET
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.addCommit
+import git4idea.test.assertStatus
+import git4idea.test.cd
+import git4idea.test.checkout
+import git4idea.test.createRepository
+import git4idea.test.file
+import git4idea.test.git
+import git4idea.test.last
+import git4idea.test.resolveConflicts
+import git4idea.test.tac
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 

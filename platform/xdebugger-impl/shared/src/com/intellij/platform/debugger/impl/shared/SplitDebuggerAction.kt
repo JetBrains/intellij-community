@@ -10,10 +10,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface SplitDebuggerAction : ActionRemoteBehaviorSpecification {
-  override fun getBehavior(): ActionRemoteBehavior {
-    // Keep CWM with the old scheme
-    val frontendType = FrontendApplicationInfo.getFrontendType()
-    if (frontendType is FrontendType.Remote && frontendType.isGuest()) return ActionRemoteBehavior.FrontendOtherwiseBackend
-    return if (SplitDebuggerMode.isSplitDebugger()) ActionRemoteBehavior.FrontendOnly else ActionRemoteBehavior.BackendOnly
+  override fun getBehavior(): ActionRemoteBehavior = getSplitBehavior()
+
+  companion object {
+    fun getSplitBehavior(): ActionRemoteBehavior {
+      // Keep CWM with the old scheme
+      val frontendType = FrontendApplicationInfo.getFrontendType()
+      if (frontendType is FrontendType.Remote && frontendType.isGuest()) return ActionRemoteBehavior.FrontendOtherwiseBackend
+      return if (SplitDebuggerMode.isSplitDebugger()) ActionRemoteBehavior.FrontendOnly else ActionRemoteBehavior.BackendOnly
+    }
   }
 }

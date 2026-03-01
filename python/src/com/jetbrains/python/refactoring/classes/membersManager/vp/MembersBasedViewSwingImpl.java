@@ -17,8 +17,9 @@ import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.ui.PyMemberSelectionPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.Collection;
 
 /**

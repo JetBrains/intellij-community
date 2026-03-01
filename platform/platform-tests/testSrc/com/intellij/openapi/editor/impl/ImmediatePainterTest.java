@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.ui.JBColor;
 
-import java.awt.*;
+import java.awt.Font;
 
 /**
  * @author Pavel Fatin

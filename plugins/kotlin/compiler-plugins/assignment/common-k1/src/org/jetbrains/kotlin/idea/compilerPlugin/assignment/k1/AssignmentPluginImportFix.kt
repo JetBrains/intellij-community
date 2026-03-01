@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.quickfix.AbstractImportFix
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
  * assumption that the call type is actually `CallTypeAndReceiver.DOT` (as it is under the cover) but not `CallTypeAndReceiver.OPERATOR`
  * (as it is in the source code).
  */
+@K1Deprecation
 class AssignmentPluginImportFix(expression: KtOperationReferenceExpression): AbstractImportFix(expression, MyFactory) {
 
     companion object MyFactory : FactoryWithUnresolvedReferenceQuickFix() {

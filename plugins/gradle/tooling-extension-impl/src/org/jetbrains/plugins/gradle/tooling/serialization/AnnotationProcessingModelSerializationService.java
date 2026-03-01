@@ -18,7 +18,18 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.OBJECT_ID_FIELD;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readBoolean;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readFileList;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readInt;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readMap;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readStringList;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeBoolean;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeMap;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeStrings;
 
 public final class AnnotationProcessingModelSerializationService implements SerializationService<AnnotationProcessingModel> {
   private final WriteContext myWriteContext = new WriteContext();

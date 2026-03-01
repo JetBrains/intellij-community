@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.plugins.parser.impl.XIncludeLoader
+import com.intellij.platform.pluginSystem.parser.impl.LoadedXIncludeReference
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorReaderContext
+import com.intellij.platform.pluginSystem.parser.impl.XIncludeLoader
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 

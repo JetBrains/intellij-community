@@ -26,7 +26,8 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;

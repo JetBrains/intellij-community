@@ -17,8 +17,12 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
+import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.TestFiles
+import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path

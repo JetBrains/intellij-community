@@ -11,7 +11,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 
 import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATIONS;
 import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATIONS;

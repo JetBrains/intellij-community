@@ -4,7 +4,15 @@ package com.intellij.ide.plugins.newui
 import com.intellij.diagnostic.LoadingState
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
-import com.intellij.ide.plugins.marketplace.*
+import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
+import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
+import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -20,7 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.UUID
 import javax.swing.JComponent
 
 /*
@@ -137,6 +145,15 @@ class UiPluginManager {
 
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult {
     return getController().enablePlugins(sessionId, descriptorIds, enable, project)
+  }
+
+  /**
+   * Marks the plugins with provided IDs as disabled.
+   * If the IDE is running in remove development mode, this will affect both backend and the frontend processes.
+   * Note that this function doesn't actually unload the plugins. The changes will take effect after the IDE restarts.
+   */
+  fun markPluginsAsDisabled(pluginIds: List<PluginId>) {
+    getController().markPluginsAsDisabled(pluginIds)
   }
 
   suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {

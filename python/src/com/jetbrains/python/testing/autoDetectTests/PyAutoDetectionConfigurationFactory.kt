@@ -13,19 +13,19 @@ import com.jetbrains.python.testing.PythonTestConfigurationType
 
 class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurationType) : PyAbstractTestFactory<PyAutoDetectTestConfiguration>(
   type) {
+
+  override val isExplicitChoice: Boolean get() = false
   internal companion object {
     val factoriesExcludingThis: Collection<PyAbstractTestFactory<*>>
       get() =
         PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().filterNot { it is PyAutoDetectionConfigurationFactory }
   }
 
-
   @Deprecated("Use getFactory(sdk, project)", ReplaceWith("getFactory(sdk, project)"), DeprecationLevel.ERROR)
   fun getFactory(sdk: Sdk): PyAbstractTestFactory<*> {
     val project = ProjectManager.getInstance().openProjects.firstOrNull { sdk == it.pythonSdk }!!
     return factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(project, sdk) } ?: PyUnitTestFactory(type)
   }
-
 
   fun getFactory(sdk: Sdk, project: Project): PyAbstractTestFactory<*> =
     factoriesExcludingThis.firstOrNull { it.isFrameworkInstalled(project, sdk) } ?: PyUnitTestFactory(type)

@@ -10,7 +10,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-fir",
     "@lib//:kotlinc-kotlin-compiler-ir",
     "@lib//:kotlinc-kotlin-compiler-cli",
@@ -40,6 +39,17 @@ jvm_library(
     "@lib//:kotlinc-parcelize-compiler-plugin",
     "@lib//:kotlinc-lombok-compiler-plugin",
     "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
+  ]
+)
+
+jvm_library(
+  name = "compiler-dependencies_test_lib",
+  module_name = "kotlin.util.compiler-dependencies",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":compiler-dependencies",
+    "//libraries/kotlin/reflect:reflect_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.util.compiler-dependencies` end

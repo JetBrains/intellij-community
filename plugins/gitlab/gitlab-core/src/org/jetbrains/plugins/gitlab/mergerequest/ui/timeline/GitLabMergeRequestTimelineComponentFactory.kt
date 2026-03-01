@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.*
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.ComponentListPanelFactory
+import com.intellij.collaboration.ui.LoadingLabel
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
@@ -13,6 +17,7 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentF
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ide.DataManager
@@ -38,11 +43,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gitlab.api.dto.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelRestDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMilestoneDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceLabelEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
-import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabCodeReviewCommentTextFieldFactory
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteType
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.primarySubmitActionIn
+import org.jetbrains.plugins.gitlab.ui.comment.secondarySubmitActionIn
+import org.jetbrains.plugins.gitlab.ui.comment.submitActionHintIn
+import org.jetbrains.plugins.gitlab.ui.comment.submitActionIn
+import org.jetbrains.plugins.gitlab.ui.comment.submitAsDraftActionIn
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.JComponent

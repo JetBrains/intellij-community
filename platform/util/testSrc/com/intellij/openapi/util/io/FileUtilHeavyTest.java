@@ -19,10 +19,24 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.openapi.util.io.IoTestUtil.*;
-import static java.nio.file.attribute.PosixFilePermission.*;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
+import static com.intellij.openapi.util.io.IoTestUtil.createJunction;
+import static com.intellij.openapi.util.io.IoTestUtil.createTestFile;
+import static com.intellij.openapi.util.io.IoTestUtil.toLocalUncPath;
+import static java.nio.file.attribute.PosixFilePermission.GROUP_EXECUTE;
+import static java.nio.file.attribute.PosixFilePermission.GROUP_READ;
+import static java.nio.file.attribute.PosixFilePermission.OTHERS_EXECUTE;
+import static java.nio.file.attribute.PosixFilePermission.OTHERS_READ;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
+import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class FileUtilHeavyTest {
   @Rule public TempDirectory tempDir = new TempDirectory();

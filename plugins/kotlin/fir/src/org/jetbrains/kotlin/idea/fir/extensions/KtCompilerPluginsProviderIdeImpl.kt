@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompile
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
-import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
+import org.jetbrains.kotlin.extensions.ExtensionPointDescriptor
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerPluginsScriptConfigurationListener
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
@@ -80,7 +80,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
     }
 
     @OptIn(KaExperimentalApi::class)
-    override fun <T : Any> getRegisteredExtensions(module: KaModule, extensionType: ProjectExtensionDescriptor<T>): List<T> {
+    override fun <T : Any> getRegisteredExtensions(module: KaModule, extensionType: ExtensionPointDescriptor<T>): List<T> {
         val pluginsCache = pluginsCacheCachedValue.value ?: return emptyList()
         return pluginsCache.getRegisteredExtensions(
             module = module,
@@ -103,9 +103,16 @@ internal class KtCompilerPluginsProviderIdeImpl(
     /**
      * Throws away the cache for all the registered plugins, and executes all the disposables
      * registered in the corresponding [CompilerPluginRegistrar.ExtensionStorage]s.
+     *
+     * Note: we drop the [pluginsCacheCachedValue] synchronously, so that
+     * the [KtCompilerPluginsCache.new] call and all the calls to [KotlinBundledFirCompilerPluginProvider.provideBundledPluginJar] in it
+     * either have not yet started, or have already completed.
+     *
+     * Otherwise, race conditions similar to KTIJ-37664 may occur.
      */
     private fun resetPluginsCache() {
-        pluginsCacheCachedValue.drop()?.dispose()
+        val cache = pluginsCacheCachedValue.dropSynchronously()
+        cache?.dispose()
     }
 
     companion object {

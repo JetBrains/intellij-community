@@ -1,8 +1,8 @@
 package fleet.bundles
 
-import fleet.util.Base64WithOptionalPadding
 import fleet.bifurcan.toSortedMap
 import fleet.bifurcan.toSortedSet
+import fleet.util.Base64WithOptionalPadding
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

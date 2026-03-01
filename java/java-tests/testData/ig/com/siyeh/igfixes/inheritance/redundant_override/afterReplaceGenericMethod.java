@@ -5,7 +5,7 @@ class ParentClass<T1> {
 }
 
 class ChildForClass<R1> extends ParentClass<R1> {
-  <R2> void foo(R1 t1, R2 t3) {
-      super.foo(t1, t3);
+  <R2> void foo(R1 r1, R2 r2) {
+      super.foo(r1, r2);
   }
 }

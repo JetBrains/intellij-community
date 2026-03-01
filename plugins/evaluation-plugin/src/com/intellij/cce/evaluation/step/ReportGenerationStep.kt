@@ -7,7 +7,13 @@ import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluation.FilteredSessionsStorage
 import com.intellij.cce.metric.MetricsEvaluator
-import com.intellij.cce.report.*
+import com.intellij.cce.report.ArtifactsToReport
+import com.intellij.cce.report.FullReportGenerator
+import com.intellij.cce.report.GeneratorDirectories
+import com.intellij.cce.report.HtmlReportGenerator
+import com.intellij.cce.report.IntellijPerfJsonReportGenerator
+import com.intellij.cce.report.JsonReportGenerator
+import com.intellij.cce.report.PlainTextReportGenerator
 import com.intellij.cce.util.Progress
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
@@ -81,6 +87,11 @@ class ReportGenerationStep<T : EvaluationStrategy>(
             comparisonStorage.reportName,
             configs.firstOrNull()?.reports?.openTelemetrySpanFilter
           ),
+          ArtifactsToReport(
+            workspace.reportsDirectory(),
+            filter.name,
+            comparisonStorage.reportName,
+          )
         )
         if (ApplicationManager.getApplication().isUnitTestMode) reportGenerators.add(
           PlainTextReportGenerator(workspace.reportsDirectory(), filter.name))

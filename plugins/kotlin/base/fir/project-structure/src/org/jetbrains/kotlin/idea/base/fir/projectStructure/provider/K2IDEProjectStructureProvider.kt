@@ -11,7 +11,13 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -22,14 +28,21 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.analysis.api.projectStructure.*
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.resolveExtensionFileModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.danglingFileResolutionMode
 import org.jetbrains.kotlin.config.KOTLIN_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.kotlin.config.KOTLIN_TEST_ROOT_TYPE_ID
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
@@ -42,8 +55,15 @@ import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLib
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSourceModuleBase
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSourceModuleForOutsiderImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.symbolicId
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.IDEProjectStructureProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
+import org.jetbrains.kotlin.idea.base.projectStructure.ideProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
+import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
+import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModule
 import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
@@ -71,7 +91,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         val fileSystemItem = psiFile ?: element.parentOfType<PsiFileSystemItem>(withSelf = true)
         val virtualFile = fileSystemItem?.virtualFile
 
-        virtualFile?.analysisContextModule?.let { return it }
+        virtualFile?.resolveExtensionFileModule?.let { return it }
 
         if (useSiteModule is KaSourceModuleForOutsider || useSiteModule is KaScriptDependencyModule) {
             if (virtualFile != null && virtualFile in useSiteModule.contentScope) {

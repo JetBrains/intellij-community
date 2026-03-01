@@ -10,7 +10,7 @@ import com.intellij.ui.LoadingNode;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 /**
  * @author Dmitry Batkovich

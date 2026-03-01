@@ -13,13 +13,16 @@ import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchPopupActions.*
+import git4idea.ui.branch.GitBranchPopupActions.addTooltipText
+import git4idea.ui.branch.GitBranchPopupActions.getCurrentBranchFullPresentation
+import git4idea.ui.branch.GitBranchPopupActions.getCurrentBranchTruncatedPresentation
+import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchFullPresentation
 import git4idea.ui.branch.GitCheckoutAndRebaseRemoteBranchWorkflow
 import git4idea.ui.branch.hasTrackingConflicts
 
 class GitCheckoutWithRebaseAction : GitSingleBranchAction(GitBundle.messagePointer("branches.checkout.and.rebase.onto.current")) {
-
-  override fun isEnabledForRef(ref: GitBranch, repositories: List<GitRepository>) = !isCurrentRefInAnyRepo(ref, repositories)
+  override fun isEnabledForRef(ref: GitBranch, repositories: List<GitRepository>): Boolean =
+    !(isCurrentRefInAnyRepo(ref, repositories) || isCurrentRefInAnyOtherWorkingTree(ref, repositories))
 
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     val description = GitBundle.message("branches.checkout.and.rebase.onto.in.one.step",

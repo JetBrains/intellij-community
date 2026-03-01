@@ -525,9 +525,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.list.NodeCachingLinkedList org.apache.commons.collections.list.AbstractLinkedList.Node getNodeFromCache()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.list.NodeCachingLinkedList void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -793,32 +790,15 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.list.TreeList.AVLNode org.apache.commons.collections.list.TreeList.AVLNode get(int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.list.TreeList.AVLNode org.apache.commons.collections.list.TreeList.AVLNode getLeftSubTree()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.list.TreeList.AVLNode org.apache.commons.collections.list.TreeList.AVLNode getRightSubTree()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.list.TreeList.AVLNode org.apache.commons.collections.list.TreeList.AVLNode remove(int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.list.TreeList.AVLNode org.apache.commons.collections.list.TreeList.AVLNode removeMax()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.list.TreeList.AVLNode org.apache.commons.collections.list.TreeList.AVLNode removeMin()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.list.TreeList.AVLNode org.apache.commons.collections.list.TreeList.AVLNode removeSelf()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.list.TreeList.AVLNode void recalcHeight()'>
         <annotation name='org.jetbrains.annotations.Contract'>

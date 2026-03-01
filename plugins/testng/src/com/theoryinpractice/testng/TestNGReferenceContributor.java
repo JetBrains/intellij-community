@@ -13,7 +13,21 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,7 +45,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.theoryinpractice.testng.TestNGCommonClassNames.*;
+import static com.theoryinpractice.testng.TestNGCommonClassNames.LIFE_CYCLE_CLASSES;
+import static com.theoryinpractice.testng.TestNGCommonClassNames.ORG_TESTNG_ANNOTATIONS_FACTORY;
+import static com.theoryinpractice.testng.TestNGCommonClassNames.ORG_TESTNG_ANNOTATIONS_TEST;
 
 public class TestNGReferenceContributor extends PsiReferenceContributor {
   private static PsiElementPattern.Capture<PsiLiteral> getElementPattern(

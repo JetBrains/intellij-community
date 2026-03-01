@@ -15,9 +15,18 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal

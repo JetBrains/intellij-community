@@ -10,7 +10,11 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextAware
 import com.intellij.util.IconUtil.cropIcon
 import com.intellij.util.ui.ImageUtil
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Transparency
 import java.awt.geom.Area
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage

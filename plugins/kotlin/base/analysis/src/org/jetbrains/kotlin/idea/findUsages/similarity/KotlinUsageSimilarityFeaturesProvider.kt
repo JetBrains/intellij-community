@@ -12,7 +12,12 @@ import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtStatementExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
 
 class KotlinUsageSimilarityFeaturesProvider : UsageSimilarityFeaturesProvider {
     @RequiresReadLock

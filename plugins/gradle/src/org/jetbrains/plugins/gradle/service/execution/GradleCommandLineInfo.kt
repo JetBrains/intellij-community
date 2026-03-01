@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirect
 import com.intellij.openapi.observable.util.createTextModificationTracker
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.util.NlsSafe
 import org.apache.commons.cli.Option
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices

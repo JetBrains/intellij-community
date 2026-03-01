@@ -4,8 +4,10 @@ package com.intellij.platform.eel.provider.utils
 import com.intellij.openapi.progress.Cancellation.ensureActive
 import com.intellij.platform.eel.EelLowLevelObjectsPool
 import com.intellij.platform.eel.ReadResult.EOF
+import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelReceiveChannelException
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import kotlinx.coroutines.CoroutineDispatcher
@@ -16,6 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -127,15 +130,24 @@ interface EelPipe {
 @ApiStatus.Internal
 fun EelPipe(debugLabel: String = "", prefersDirectBuffers: Boolean): EelPipe = EelPipeImpl(debugLabel, prefersDirectBuffers)
 
-
 /**
- * Reads all data till the end from a channel.
- * Semantics is the same as [InputStream.readAllBytes]
+ * Reads bytes from the channel to the end.
  */
+@ThrowsChecked(EelReceiveChannelException::class)
 @ApiStatus.Experimental
-suspend fun EelReceiveChannel.readAllBytes(): ByteArray = withContext(Dispatchers.IO) {
-  // The current implementation is suboptimal and might be rewritten, but the API should be the same
-  consumeAsInputStream().readAllBytes()
+@JvmOverloads //To preserve ABI
+suspend fun EelReceiveChannel.readAllBytes(bufferSize: Int = DEFAULT_BUFFER_SIZE): ByteArray = withContext(Dispatchers.IO) {
+  val buffer = ByteBuffer.allocate(bufferSize)
+  val result = ByteArrayOutputStream()
+  while (receive(buffer) != EOF) {
+    buffer.flip()
+    // Redundant copy isn't optimal but ok for now
+    val tmpBuffer = ByteArray(buffer.limit())
+    buffer.get(tmpBuffer)
+    result.writeBytes(tmpBuffer)
+    buffer.clear()
+  }
+  return@withContext result.toByteArray()
 }
 
 /**
@@ -236,4 +248,5 @@ suspend fun copy(
 }
 
 // Slowly increase timeout
-private fun backoff(): Iterator<Duration> = ((200..1000 step 200).asSequence() + generateSequence(1000) { 1000 }).map { it.milliseconds }.iterator()
+private fun backoff(): Iterator<Duration> =
+  ((200..1000 step 200).asSequence() + generateSequence(1000) { 1000 }).map { it.milliseconds }.iterator()

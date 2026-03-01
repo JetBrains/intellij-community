@@ -12,20 +12,22 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyClassPattern;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordPattern;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyInstantiableType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKeywordPattern> {
   public PyKeywordPatternReference(@NotNull PyKeywordPattern keywordPattern) {
@@ -34,32 +36,31 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
 
   @Override
   public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    PyClassPattern classPattern = getContainingClassPattern();
+    PyClassPattern classPattern = getElement().getContainingClassPattern();
     if (classPattern == null) {
       return ResolveResult.EMPTY_ARRAY;
     }
     PyKeywordPattern keywordPattern = getElement();
     TypeEvalContext typeContext = TypeEvalContext.codeInsightFallback(keywordPattern.getProject());
     PyResolveContext resolveContext = PyResolveContext.defaultContext(typeContext);
+    return resolveKeyword(classPattern, keywordPattern.getKeyword(), resolveContext);
+  }
+
+  public static ResolveResult[] resolveKeyword(PyClassPattern classPattern, String keyword, PyResolveContext resolveContext) {
     return StreamEx.of(resolveToClassTypes(classPattern, resolveContext))
-      .flatMap(t -> StreamEx.of(ContainerUtil.notNullize(t.resolveMember(keywordPattern.getKeyword(),
-                                                                         null, AccessDirection.READ, resolveContext))))
+      .flatMap(t -> StreamEx.of(ContainerUtil.notNullize(t.resolveMember(keyword, null, AccessDirection.READ, resolveContext))))
       .toArray(ResolveResult.EMPTY_ARRAY);
   }
 
   @Override
   public Object @NotNull [] getVariants() {
-    PyClassPattern classPattern = getContainingClassPattern();
+    PyClassPattern classPattern = getElement().getContainingClassPattern();
     if (classPattern == null) {
       return LookupElement.EMPTY_ARRAY;
     }
     PyKeywordPattern keywordPattern = getElement();
     TypeEvalContext typeContext = TypeEvalContext.codeCompletion(keywordPattern.getProject(), keywordPattern.getContainingFile());
     return collectClassAttributeVariants(getElement(), classPattern, typeContext);
-  }
-
-  private @Nullable PyClassPattern getContainingClassPattern() {
-    return as(getElement().getParent().getParent(), PyClassPattern.class);
   }
 
   static LookupElement @NotNull [] collectClassAttributeVariants(@NotNull PsiElement location,

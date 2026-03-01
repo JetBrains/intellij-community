@@ -21,7 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class ArtifactConfigurableBase extends ProjectStructureElementConfigurable<Artifact> {
   protected final Artifact myOriginalArtifact;

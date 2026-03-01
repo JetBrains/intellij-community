@@ -4,7 +4,12 @@ package com.intellij.jarRepository.settings;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckboxTreeBase;
+import com.intellij.ui.CheckboxTreeListener;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -13,8 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactDependencyNode;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 class DependencyExclusionEditor {
   private static final SimpleTextAttributes STRIKEOUT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);

@@ -126,11 +126,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isInProjectScope(@NotNull VirtualFile file) {
     // optimization: equivalent to the super method but has fewer getInfoForFile() calls
-    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, false, false);
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, false, true, false);
     if (fileInfo instanceof WorkspaceFileInternalInfo.NonWorkspace) {
       return false;
     }
-    if (fileInfo.findFileSet(it -> it.getKind() == WorkspaceFileKind.EXTERNAL) != null && !myFileIndex.isInSourceContent(file)) {
+    if (fileInfo.findFileSet(it -> it.getKind() == WorkspaceFileKind.EXTERNAL || it.getKind() == WorkspaceFileKind.EXTERNAL_NON_INDEXABLE) != null && !myFileIndex.isInSourceContent(file)) {
       return false;
     }
     return true;

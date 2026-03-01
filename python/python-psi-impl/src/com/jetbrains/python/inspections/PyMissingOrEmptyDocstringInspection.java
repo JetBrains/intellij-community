@@ -9,7 +9,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 

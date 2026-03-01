@@ -1,8 +1,8 @@
 package com.intellij.lambda.testFramework.testApi
 
-import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import javax.swing.KeyStroke
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

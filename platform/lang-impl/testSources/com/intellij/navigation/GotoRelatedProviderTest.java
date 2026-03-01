@@ -16,7 +16,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 

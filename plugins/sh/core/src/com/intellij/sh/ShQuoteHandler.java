@@ -5,7 +5,12 @@ import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
 
-import static com.intellij.sh.lexer.ShTokenTypes.*;
+import static com.intellij.sh.lexer.ShTokenTypes.BAD_CHARACTER;
+import static com.intellij.sh.lexer.ShTokenTypes.CLOSE_BACKQUOTE;
+import static com.intellij.sh.lexer.ShTokenTypes.CLOSE_QUOTE;
+import static com.intellij.sh.lexer.ShTokenTypes.OPEN_BACKQUOTE;
+import static com.intellij.sh.lexer.ShTokenTypes.OPEN_QUOTE;
+import static com.intellij.sh.lexer.ShTokenTypes.RAW_STRING;
 
 final class ShQuoteHandler extends SimpleTokenSetQuoteHandler {
   public ShQuoteHandler() {

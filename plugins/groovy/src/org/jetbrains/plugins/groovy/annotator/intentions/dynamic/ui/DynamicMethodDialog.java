@@ -14,11 +14,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.FontMetrics;
 import java.util.List;
 
 public class DynamicMethodDialog extends DynamicDialog {

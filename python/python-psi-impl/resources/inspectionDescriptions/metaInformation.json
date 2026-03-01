@@ -273,10 +273,6 @@
       "codeQualityCategory": "Sanity"
     },
     {
-      "id": "PyInterpreterInspection",
-      "codeQualityCategory": "Sanity"
-    },
-    {
       "id": "PyListCreationInspection",
       "codeQualityCategory": "Performance"
     },

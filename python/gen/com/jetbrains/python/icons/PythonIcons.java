@@ -25,7 +25,6 @@ public final class PythonIcons {
   }
 
   public static final class Python {
-    /** 16x16 */ public static final @NotNull Icon Anaconda = load("icons/com/jetbrains/pythonCore/python/expui/anaconda.svg", "icons/com/jetbrains/pythonCore/python/anaconda.svg", -520915032, 0);
     /** 16x16 */ public static final @NotNull Icon CommandQueue = load("icons/com/jetbrains/pythonCore/python/expui/commandQueue.svg", "icons/com/jetbrains/pythonCore/python/commandQueue.svg", -183748339, 2);
     /** 16x16 */ public static final @NotNull Icon Condaenv = load("icons/com/jetbrains/pythonCore/python/expui/condaEnv.svg", "icons/com/jetbrains/pythonCore/python/condaenv.svg", -1473092825, 0);
     /** 13x13 */ public static final @NotNull Icon DataView = load("icons/com/jetbrains/pythonCore/python/expui/sciView.svg", "icons/com/jetbrains/pythonCore/python/DataView.svg", 1534347386, 2);
@@ -58,7 +57,6 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon PythonTests = load("icons/com/jetbrains/pythonCore/python/expui/pythonTests.svg", "icons/com/jetbrains/pythonCore/python/pythonTests.svg", 1252990498, 0);
     /** 16x16 */ public static final @NotNull Icon ReferencedFile = load("icons/com/jetbrains/pythonCore/python/referencedFile.svg", 701028925, 2);
     /** 16x16 */ public static final @NotNull Icon RemoteInterpreter = load("icons/com/jetbrains/pythonCore/python/expui/remoteInterpreter.svg", "icons/com/jetbrains/pythonCore/python/RemoteInterpreter.svg", 60369309, 0);
-    /** 16x16 */ public static final @NotNull Icon Virtualenv = load("icons/com/jetbrains/pythonCore/python/expui/virtualEnv.svg", "icons/com/jetbrains/pythonCore/python/virtualenv.svg", 758230626, 0);
 
     /** @deprecated to be removed (use AllIcons.Debugger.AttacthToProcess) */
     @SuppressWarnings("unused")

@@ -22,6 +22,7 @@ import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.run.PythonRunParams;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,6 +145,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myAddSourceRoots = true;
     private @NotNull PathMappingSettings myMappings = new PathMappingSettings();
     private boolean myUseSoftWraps = false;
+    private boolean myDebugJustMyCode = false;
 
     public PyConsoleSettings() {
     }
@@ -348,6 +350,18 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     @Override
     public void setAddSourceRoots(boolean addSourceRoots) {
       myAddSourceRoots = addSourceRoots;
+    }
+
+    @Override
+    @ApiStatus.Internal
+    public boolean shouldDebugJustMyCode() {
+      return myDebugJustMyCode;
+    }
+
+    @Override
+    @ApiStatus.Internal
+    public void setDebugJustMyCode(boolean debugJustMyCode) {
+      myDebugJustMyCode = debugJustMyCode;
     }
 
     public void setMappings(@Nullable PathMappingSettings mappings) {

@@ -13,7 +13,11 @@ import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurat
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleReference;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsTestModuleProperties;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;

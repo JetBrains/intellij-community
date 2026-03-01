@@ -3,6 +3,14 @@
     <module name="intellij.kotlin.refactorings"/>
     <module name="intellij.kotlin.searching"/>
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.equalsHashCodeGeneratorExtension"
+            interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinEqualsHashCodeGeneratorExtension"
+            dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <smartEnterProcessorFixer
             language="kotlin"
@@ -104,7 +112,8 @@
     <codeInsight.gotoSuper
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler"/>
-
+    <gotoDeclarationHandler
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.navigation.GoToBreakContinueReturnHandler"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2OptimizeImportsFacility"/>
@@ -231,6 +240,11 @@
             nameKey="hints.settings.parameters"
             descriptionKey="inlay.kotlin.parameters.hints">
       <option bundle="messages.KotlinBundle"
+              optionId="hints.parameters.context"
+              enabledByDefault="false"
+              nameKey="hints.settings.context.parameters"
+              descriptionKey="inlay.kotlin.parameters.hints.context"/>
+      <option bundle="messages.KotlinBundle"
               optionId="hints.parameters.compiled"
               enabledByDefault="true"
               nameKey="hints.settings.compiled.parameters"
@@ -295,6 +309,7 @@
 
     <codeInsight.inlayProvider
             language="kotlin"
+            isEnabledByDefault="false"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration.KtCompilerPluginGeneratedDeclarationsInlayHintsProvider"
             id="kotlin.compiler.plugins.declarations"/>
 
@@ -354,7 +369,6 @@
   </actions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>
-
     <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.WasmMultiplatformSupportAvailability"/>
   </extensions>
   <resource-bundle>messages.KotlinBundle</resource-bundle>

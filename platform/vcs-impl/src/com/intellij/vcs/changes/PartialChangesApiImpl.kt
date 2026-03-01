@@ -11,16 +11,19 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.platform.vcs.impl.shared.rpc.PartialChangesApi
 import com.intellij.platform.vcs.impl.shared.rpc.PartialChangesEvent
+import com.intellij.platform.vcs.impl.shared.rpc.PartialChangesEvent.RangesUpdated
 import com.intellij.util.asDisposable
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.channels.ProducerScope
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.mapNotNull
+
+private typealias EventProducer = suspend () -> PartialChangesEvent?
 
 internal class PartialChangesApiImpl : PartialChangesApi {
-  override suspend fun partialChanges(projectId: ProjectId): Flow<PartialChangesEvent> = projectScopedCallbackFlow(projectId) { project, _ ->
+  override suspend fun partialChanges(projectId: ProjectId): Flow<PartialChangesEvent> = projectScopedCallbackFlow<EventProducer>(projectId) { project, _ ->
     val manager = LineStatusTrackerManager.getInstanceImpl(project)
     val connectionDisposable = asDisposable()
 
@@ -28,13 +31,13 @@ internal class PartialChangesApiImpl : PartialChangesApi {
       override fun onTrackerAdded(tracker: LineStatusTracker<*>) {
         if (tracker is PartialLocalLineStatusTracker) {
           installListener(tracker, connectionDisposable)
-          launch { sendState(tracker, channel) }
+          reportTrackerStateChanged(tracker)
         }
       }
 
       override fun onTrackerRemoved(tracker: LineStatusTracker<*>) {
         if (tracker is PartialLocalLineStatusTracker) {
-          launch { channel.send(PartialChangesEvent.TrackerRemoved(getPathDto(tracker))) }
+          trySend { PartialChangesEvent.TrackerRemoved(getPathDto(tracker)) }
         }
       }
     }, connectionDisposable)
@@ -42,33 +45,29 @@ internal class PartialChangesApiImpl : PartialChangesApi {
     manager.getTrackers().forEach { tracker ->
       if (tracker is PartialLocalLineStatusTracker) {
         installListener(tracker, connectionDisposable)
-        sendState(tracker, channel)
+        reportTrackerStateChanged(tracker)
       }
     }
-  }
+  }.buffer().mapNotNull { it.invoke() }
 
-  private fun ProducerScope<PartialChangesEvent>.installListener(tracker: PartialLocalLineStatusTracker, connectionDisposable: Disposable) {
+  private fun ProducerScope<EventProducer>.installListener(tracker: PartialLocalLineStatusTracker, connectionDisposable: Disposable) {
     tracker.addListener(object : PartialLocalLineStatusTracker.ListenerAdapter() {
       override fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) {
-        launch {
-          sendState(tracker, channel)
-        }
+        reportTrackerStateChanged(tracker)
       }
     }, connectionDisposable)
 
     tracker.addListener(object : LineStatusTrackerListener {
       override fun onRangesChanged() {
-        launch {
-          sendState(tracker, channel)
-        }
+        reportTrackerStateChanged(tracker)
       }
     }, connectionDisposable)
   }
 
-  private suspend fun sendState(tracker: PartialLocalLineStatusTracker, channel: SendChannel<PartialChangesEvent>) {
-    val ranges = readAction { tracker.getRanges() }
-    if (ranges != null) {
-      channel.send(PartialChangesEvent.RangesUpdated(getPathDto(tracker), ranges))
+  private fun ProducerScope<EventProducer>.reportTrackerStateChanged(tracker: PartialLocalLineStatusTracker) {
+    trySend {
+      val ranges = readAction { tracker.getRanges() }
+      if (ranges != null) RangesUpdated(getPathDto(tracker), ranges) else null
     }
   }
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlElement

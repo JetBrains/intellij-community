@@ -1,7 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.hierarchy
 
-import com.intellij.ide.hierarchy.*
+import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx
+import com.intellij.ide.hierarchy.HierarchyProvider
+import com.intellij.ide.hierarchy.HierarchyTreeStructure
+import com.intellij.ide.hierarchy.LanguageCallHierarchy
+import com.intellij.ide.hierarchy.LanguageMethodHierarchy
+import com.intellij.ide.hierarchy.LanguageTypeHierarchy
 import com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure
 import com.intellij.ide.hierarchy.type.SubtypesHierarchyTreeStructure
@@ -10,7 +15,10 @@ import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ArrayUtil

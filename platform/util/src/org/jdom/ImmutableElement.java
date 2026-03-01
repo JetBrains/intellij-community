@@ -8,7 +8,13 @@ import org.jdom.filter2.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 
 final class ImmutableElement extends Element {
   private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtilRt.EMPTY_STRING_ARRAY, null,

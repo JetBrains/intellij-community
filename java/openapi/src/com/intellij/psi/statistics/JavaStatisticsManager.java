@@ -2,7 +2,13 @@
 package com.intellij.psi.statistics;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;

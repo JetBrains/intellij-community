@@ -1,7 +1,9 @@
 package com.intellij.grazie.text;
 
+import ai.grazie.gec.model.problem.ActionSuggestion;
 import ai.grazie.gec.model.problem.Problem;
 import ai.grazie.gec.model.problem.ProblemFix;
+import ai.grazie.gec.model.problem.SuppressableKind;
 import ai.grazie.nlp.langs.Language;
 import ai.grazie.rules.Example;
 import ai.grazie.rules.MatchingResult;
@@ -14,8 +16,6 @@ import ai.grazie.rules.settings.RuleSetting;
 import ai.grazie.rules.settings.Setting;
 import ai.grazie.rules.settings.TextStyle;
 import ai.grazie.rules.toolkit.LanguageToolkit;
-import ai.grazie.rules.tree.ActionSuggestion;
-import ai.grazie.rules.tree.NodeMatch.SuppressableKind;
 import ai.grazie.rules.tree.Parameter;
 import ai.grazie.rules.tree.Tree;
 import ai.grazie.rules.tree.Tree.ParameterValues;
@@ -57,7 +57,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -528,7 +537,7 @@ public final class TreeRuleChecker {
   }
 
   private static boolean touchesUnknownFragments(TextContent text, ai.grazie.rules.tree.TextRange range, ai.grazie.rules.Rule rule) {
-    var ruleRangeInText = toIdeaRange(range);
+    var ruleRangeInText = ijRange(range);
     if (ruleRangeInText.getEndOffset() > text.length()) {
       LOG.error(
         "Invalid match range " + ruleRangeInText + " for rule " + rule + " in a text of length " + text.length(),
@@ -539,10 +548,6 @@ public final class TreeRuleChecker {
       return true;
     }
     return false;
-  }
-
-  public static TextRange toIdeaRange(ai.grazie.rules.tree.TextRange reported) {
-    return new TextRange(reported.start(), reported.end());
   }
 
   public static class TreeProblem extends GrazieProblem {
@@ -572,14 +577,19 @@ public final class TreeRuleChecker {
 
     @Override
     public @NotNull List<LocalQuickFix> getCustomFixes() {
-      return ContainerUtil.concat(customFixes, ContainerUtil.mapNotNull(match.actions(), sug -> {
-        if (sug instanceof ActionSuggestion.ChangeParameter(Parameter parameter, String suggestedValue, String quickFixText)) {
-          if (parameter.id().equals(Parameter.LANGUAGE_VARIANT)) {
-            return ChangeLanguageVariant.create(match.rule().language(), Objects.requireNonNull(suggestedValue), quickFixText);
+      if (getSource().getActionSuggestions() == null) return customFixes;
+      return ContainerUtil.concat(customFixes, ContainerUtil.mapNotNull(getSource().getActionSuggestions(), sug -> {
+        if (sug instanceof ActionSuggestion.ChangeParameter parameter) {
+          if (parameter.getParameterId().endsWith(Parameter.LANGUAGE_VARIANT)) {
+            return ChangeLanguageVariant.create(
+              match.rule().language(),
+              Objects.requireNonNull(parameter.getSuggestedValue()).getId(),
+              parameter.getQuickFixText()
+            );
           }
-          return new ConfigureSuggestedParameter(parameter, domain, match.rule().language(), quickFixText);
+          return new ConfigureSuggestedParameter(parameter, domain, match.rule().language(), parameter.getQuickFixText());
         }
-        if (sug == ActionSuggestion.REPHRASE) {
+        if (sug == ActionSuggestion.RephraseAround.INSTANCE) {
           return new RephraseAction();
         }
         return null;
@@ -593,7 +603,7 @@ public final class TreeRuleChecker {
     @Override
     public boolean fitsGroup(@NotNull RuleGroup group) {
       Set<String> rules = group.getRules();
-      SuppressableKind kind = match.suppressableKind();
+      SuppressableKind kind = getSource().getSuppressableKind();
       if (rules.contains(RuleGroup.INCOMPLETE_SENTENCE) && kind == SuppressableKind.INCOMPLETE_SENTENCE) {
         return true;
       }
@@ -621,6 +631,22 @@ public final class TreeRuleChecker {
     @Override
     public boolean shouldSuppressInCodeLikeFragments() {
       return match.rule().shouldSuppressInCodeLikeFragments();
+    }
+
+    @Override
+    public @NotNull TreeProblem copyWithProblemFixes(@NotNull List<ProblemFix> fixes) {
+      return new TreeProblem(copyWithFixes(getSource(), fixes), getRule(), getText(), match, customFixes);
+    }
+
+    @Override
+    public @NotNull GrazieProblem copyWithHighlighting(ai.grazie.text.@NotNull TextRange @NotNull [] always,
+                                                       ai.grazie.text.@NotNull TextRange @NotNull [] onHover) {
+      return new TreeProblem(copyWithHighlighting(getSource(), always, onHover), getRule(), getText(), match, customFixes);
+    }
+
+    @Override
+    public @NotNull GrazieProblem copyWithInfoAndMessage(Problem.@NotNull KindInfo info, @NotNull String message) {
+      return new TreeProblem(copyWithInfoAndMessage(getSource(), info, message), getRule(), getText(), match, customFixes);
     }
   }
 }

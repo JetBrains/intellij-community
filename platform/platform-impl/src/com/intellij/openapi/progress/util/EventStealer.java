@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.SunToolkit;
 
-import java.awt.*;
+import java.awt.AWTEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
 import java.awt.event.KeyEvent;
@@ -128,6 +128,27 @@ public class EventStealer {
     catch (InterruptedException e) {
       // simply resume
     }
+  }
+
+  String dumpDebugInfo() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Input events: ");
+    sb.append(myInputEvents.size());
+    sb.append(" (");
+    for (InputEvent event: myInputEvents) {
+      sb.append(event.toString());
+      sb.append(", ");
+    }
+    sb.append("); ");
+    sb.append("Invocation events:");
+    sb.append(myInvocationEvents.size());
+    sb.append("(");
+    for (InvocationEvent event: myInvocationEvents) {
+      sb.append(event.toString());
+      sb.append(", ");
+    }
+    sb.append(")");
+    return sb.toString();
   }
 
   void dispatchAllExistingEvents() {

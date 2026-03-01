@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization.impl;
 
-import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.product.serialization.RawIncludedFromData;
-import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
+import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import com.intellij.platform.runtime.product.serialization.RawProductModules;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,10 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class ProductModulesXmlSerializer {
   public static @NotNull RawProductModules parseModuleXml(@NotNull InputStream inputStream) throws XMLStreamException {
@@ -70,10 +73,10 @@ public final class ProductModulesXmlSerializer {
           if (moduleName == null || moduleName.isEmpty()) {
             throw new XMLStreamException("Module name is not specified");
           }
-          RuntimeModuleId moduleId = RuntimeModuleId.raw(moduleName);
+          RuntimeModuleId moduleId = RuntimeModuleId.module(moduleName);
           if ("main-root-modules".equals(secondLevelTag)) {
             assert loadingRule != null;
-            rootMainGroupModules.add(new RawIncludedRuntimeModule(moduleId, loadingRule));
+            rootMainGroupModules.add(new RawIncludedRuntimeModule(moduleId, loadingRule, null));
           }
           else if ("bundled-plugins".equals(secondLevelTag)) {
             bundledPluginMainModules.add(moduleId);

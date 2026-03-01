@@ -4,7 +4,19 @@ package com.intellij.java.codeserver.core;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.PsiImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +27,8 @@ import java.lang.annotation.RetentionPolicy;
  * Utility methods related to {@link PsiAnnotation}.
  */
 public final class JavaPsiAnnotationUtil {
+  private JavaPsiAnnotationUtil() { }
+
   /**
    * @param annotation annotation class
    * @return annotation retention policy; null if cannot be determined

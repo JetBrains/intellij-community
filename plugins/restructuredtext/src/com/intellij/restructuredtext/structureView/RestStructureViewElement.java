@@ -13,7 +13,7 @@ import com.intellij.restructuredtext.psi.RestTitle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;

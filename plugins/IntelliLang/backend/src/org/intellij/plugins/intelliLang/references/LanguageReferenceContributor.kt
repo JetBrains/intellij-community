@@ -1,12 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.references
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
-import com.intellij.model.psi.*
+import com.intellij.model.psi.PsiCompletableReference
+import com.intellij.model.psi.PsiExternalReferenceHost
+import com.intellij.model.psi.PsiSymbolReference
+import com.intellij.model.psi.PsiSymbolReferenceHints
+import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange

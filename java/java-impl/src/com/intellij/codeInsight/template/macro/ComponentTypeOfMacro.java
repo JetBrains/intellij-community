@@ -3,7 +3,14 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.PsiElementResult;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiExpression;

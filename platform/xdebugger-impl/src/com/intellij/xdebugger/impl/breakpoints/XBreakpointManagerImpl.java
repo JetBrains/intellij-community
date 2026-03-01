@@ -1,12 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -20,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -31,9 +35,16 @@ import com.intellij.xdebugger.SplitDebuggerMode;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointListener;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.BreakpointManagerState;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.proxy.MonolithBreakpointManagerKt;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
@@ -42,8 +53,16 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantLock;
@@ -70,7 +89,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   private final XDebuggerManagerImpl myDebuggerManager;
   private final XDependentBreakpointManager myDependentBreakpointManager;
   @NotNull private final CoroutineScope myCoroutineScope;
-  private final BackendBreakpointRequestCounter myRequestCounter = new BackendBreakpointRequestCounter();
+  private final BreakpointRequestCounter myRequestCounter = new BreakpointRequestCounter();
   private long myTime;
   private volatile @Nullable String myDefaultGroup;
   private RemovedBreakpointData myLastRemovedBreakpoint = null;
@@ -95,7 +114,15 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         if (project.isDisposed()) return;
         var breakpoint = createDefaultBreakpoint(type);
         if (breakpoint != null) {
-          addBreakpoint(breakpoint, true, false);
+          boolean hasSimilarBreakpoint = withLockMaybeCancellable(myLock, () -> {
+            var defaultBreakpoints = myDefaultBreakpoints.get(type);
+            if (defaultBreakpoints == null) return false;
+            var defaultStates = ContainerUtil.map(defaultBreakpoints, XBreakpointBase::getState);
+            return hasSimilarBreakpointState(breakpoint.getState(), defaultStates);
+          });
+          if (!hasSimilarBreakpoint) {
+            addBreakpoint(breakpoint, true, false);
+          }
         }
       }
 
@@ -181,7 +208,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @ApiStatus.Internal
-  public BackendBreakpointRequestCounter getRequestCounter() {
+  public BreakpointRequestCounter getRequestCounter() {
     return myRequestCounter;
   }
 
@@ -469,8 +496,14 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     presentation.setErrorMessage(errorMessage);
     presentation.setIcon(icon);
     lineBreakpoint.setCustomizedPresentation(presentation);
-    myLineBreakpointManager.queueBreakpointUpdate(breakpoint,
-                                                  () -> ((XBreakpointBase<?, ?, ?>)breakpoint).fireBreakpointPresentationUpdated(null));
+    if (SplitDebuggerMode.isSplitDebugger()) {
+      // for split, we call update directly since visual presentation is disabled on the backend
+      lineBreakpoint.fireBreakpointPresentationUpdated(null);
+    }
+    else {
+      myLineBreakpointManager.queueBreakpointUpdate(breakpoint,
+                                                    () -> lineBreakpoint.fireBreakpointPresentationUpdated(null));
+    }
   }
 
   @ApiStatus.Internal
@@ -545,6 +578,21 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     return res;
   }
 
+  private static @NotNull List<BreakpointState> distinctDefaultBreakpoints(@NotNull List<BreakpointState> defaultBreakpoints) {
+    List<BreakpointState> uniqueStates = new SmartList<>();
+    for (BreakpointState breakpointState : defaultBreakpoints) {
+      if (hasSimilarBreakpointState(breakpointState, uniqueStates)) {
+        continue;
+      }
+      uniqueStates.add(breakpointState);
+    }
+    return uniqueStates;
+  }
+
+  private static boolean hasSimilarBreakpointState(BreakpointState breakpointState, Collection<? extends BreakpointState> states) {
+    return ContainerUtil.exists(states, existingState -> !statesAreDifferent(existingState, breakpointState, true));
+  }
+
   @ApiStatus.Internal
   public void loadState(@NotNull BreakpointManagerState state) {
     // create default breakpoint without locking
@@ -559,7 +607,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         myDefaultBreakpoints.clear();
         myBreakpointsDefaults.clear();
 
-        state.getDefaultBreakpoints().forEach(breakpointState -> loadBreakpoint(breakpointState, true));
+        distinctDefaultBreakpoints(state.getDefaultBreakpoints())
+          .forEach(breakpointState -> loadBreakpoint(breakpointState, true));
 
         //noinspection unchecked
         StreamEx.of(defaultBreakpoints)
@@ -642,7 +691,29 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       LOG.warn("Unknown breakpoint type " + breakpointState.getTypeId());
       return null;
     }
-    return XBreakpointUtil.createBreakpoint(type, breakpointState, this);
+    return createBreakpoint(type, breakpointState);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <B extends XBreakpoint<P>, P extends XBreakpointProperties<?>> XBreakpointBase<B, P, ?> createBreakpoint(
+    XBreakpointType<B, P> type,
+    BreakpointState state) {
+    if (type instanceof XLineBreakpointType<?> && state instanceof LineBreakpointState lineBreakpointState) {
+      XLineBreakpointType<P> lineType = (XLineBreakpointType<P>)type;
+      return (XBreakpointBase<B, P, ?>)new XLineBreakpointImpl<>(lineType, this, createProperties(lineType, state),
+                                                                 lineBreakpointState);
+    }
+    else {
+      return new XBreakpointBase<>(type, this, createProperties(type, state), state);
+    }
+  }
+
+  private static <P extends XBreakpointProperties<?>> @Nullable P createProperties(XBreakpointType<?, P> type, BreakpointState state) {
+    P properties = type.createProperties();
+    if (properties != null) {
+      ComponentSerializationUtil.loadComponentState((PersistentStateComponent<?>)properties, state.getPropertiesElement());
+    }
+    return properties;
   }
 
   public @NotNull BreakpointState getBreakpointDefaults(@NotNull XBreakpointType type) {
@@ -686,6 +757,11 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     state.setTypeId(type.getId());
     state.setSuspendPolicy(type.getDefaultSuspendPolicy());
     return state;
+  }
+
+  public void removeBreakpointsInDocument(Document document) {
+    var breakpoints = XDebuggerUtilImpl.getDocumentBreakpoints(document, myLineBreakpointManager);
+    removeBreakpoints(breakpoints);
   }
 
   public void rememberRemovedBreakpoint(@NotNull XBreakpointBase breakpoint) {

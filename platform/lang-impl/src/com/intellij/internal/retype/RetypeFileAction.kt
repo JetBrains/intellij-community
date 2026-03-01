@@ -23,7 +23,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import java.util.*
+import java.util.Random
 
 
 internal class RetypeFileAction : AnAction() {

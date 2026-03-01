@@ -21,19 +21,13 @@ sealed interface EelHolder {
    * For those rare cases when you need to test something WSL or Docker-specific. Do not use unless absolutely necessary.
    * More-or-less legal usage is
    * ```kotlin
-   * when (val t = type) {
-   *   is Docker -> throw TestAbortedException("skip test for docker")
-   *   is Wsl, Local -> Unit
+   * when (type) {
+   *   EelType.Docker -> throw TestAbortedException("skip test for docker")
+   *   EelType.Wsl, EelType.Local -> Unit
    * }
    * ```
    */
   val type: EelType
 }
 
-/**
- * Target is a legacy API which doesn't support local development.
- * If you do not know what it is, you do not need it.
- * Consider using [EelHolder.eel] in a new code.
- */
-val EelHolder.target: TargetEnvironmentConfiguration?
-  get() = if (eel is LocalEelApi) null else EelTargetEnvironmentRequest.Configuration(eel)
+val EelHolder.target: TargetEnvironmentConfiguration get() = EelTargetEnvironmentRequest.Configuration(eel)

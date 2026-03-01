@@ -20,7 +20,12 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacement
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInline
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess

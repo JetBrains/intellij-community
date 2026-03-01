@@ -5,7 +5,11 @@ import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev

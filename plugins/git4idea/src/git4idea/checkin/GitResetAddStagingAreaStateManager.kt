@@ -23,7 +23,6 @@ import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
-import kotlin.collections.contains
 
 internal class GitResetAddStagingAreaStateManager(val repository: GitRepository) : GitStagingAreaStateManager {
   private val excludedStagedChanges = mutableListOf<ChangedPath>()

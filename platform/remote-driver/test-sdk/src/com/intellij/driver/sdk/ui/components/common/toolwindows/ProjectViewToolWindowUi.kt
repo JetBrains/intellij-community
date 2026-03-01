@@ -7,7 +7,10 @@ import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.xQuery
 
 fun IdeaFrameUI.projectView(
-  locator: QueryBuilder.() -> String = { componentWithChild(byType("com.intellij.toolWindow.InternalDecoratorImpl"), byType("com.intellij.ide.projectView.impl.ProjectViewTree")) },
+  locator: QueryBuilder.() -> String = {
+    componentWithChild(byType("com.intellij.toolWindow.InternalDecoratorImpl"),
+                       byType("com.intellij.ide.projectView.impl.ProjectViewTree"))
+  },
   action: ProjectViewToolWindowUi.() -> Unit = {},
 ): ProjectViewToolWindowUi = x(ProjectViewToolWindowUi::class.java, locator).apply(action)
 

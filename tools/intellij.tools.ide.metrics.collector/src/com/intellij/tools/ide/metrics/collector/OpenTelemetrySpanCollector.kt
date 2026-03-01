@@ -2,7 +2,13 @@ package com.intellij.tools.ide.metrics.collector
 
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
-import com.intellij.tools.ide.metrics.collector.telemetry.*
+import com.intellij.tools.ide.metrics.collector.telemetry.CombinedMetricsPostProcessor
+import com.intellij.tools.ide.metrics.collector.telemetry.MetricSpanProcessor
+import com.intellij.tools.ide.metrics.collector.telemetry.MetricWithAttributes
+import com.intellij.tools.ide.metrics.collector.telemetry.MetricsPostProcessor
+import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetrySpanJsonParser
+import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
+import com.intellij.tools.ide.metrics.collector.telemetry.SpanProcessor
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 

@@ -12,6 +12,7 @@
     <registryKey key="kotlin.not.configured.show.notification"
                  defaultValue="true"
                  description="Show notification about Kotlin missing configuration"/>
+
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

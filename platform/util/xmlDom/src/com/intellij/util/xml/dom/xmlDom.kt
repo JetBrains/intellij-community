@@ -13,7 +13,9 @@ import java.io.InputStream
 import java.io.Reader
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Arrays
+import java.util.Collections
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 

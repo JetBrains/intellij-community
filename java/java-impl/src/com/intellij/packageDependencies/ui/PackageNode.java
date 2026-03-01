@@ -9,7 +9,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;

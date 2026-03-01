@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
+import com.intellij.dvcs.repo.isHead
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -63,7 +64,7 @@ class GitPostCommitChangeConverter(private val project: Project) : PostCommitCha
 
   override fun isFailureUpToDate(commitContexts: List<CommitContext>): Boolean {
     val lastCommit = commitContexts.lastOrNull()?.postCommitHashes ?: return true // non-git commits, not our problem
-    return lastCommit.entries.any { (repo, hash) -> repo.currentRevision == hash.asString() }
+    return lastCommit.entries.any { (repo, hash) -> repo.isHead(hash) }
   }
 
   companion object {

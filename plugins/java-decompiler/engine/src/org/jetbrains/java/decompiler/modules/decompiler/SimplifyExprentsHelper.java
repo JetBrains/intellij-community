@@ -7,7 +7,17 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ArrayExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -19,8 +29,14 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class SimplifyExprentsHelper {
   @SuppressWarnings("SpellCheckingInspection") private static final MatchEngine class14Builder = new MatchEngine(

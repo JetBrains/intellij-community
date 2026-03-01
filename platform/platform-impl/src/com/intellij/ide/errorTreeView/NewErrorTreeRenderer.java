@@ -17,10 +17,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.LayoutManager;
 
 public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   private final MyWrapperRenderer myWrapperRenderer;

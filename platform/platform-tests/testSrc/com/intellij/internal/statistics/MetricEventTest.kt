@@ -3,7 +3,7 @@
 
 package com.intellij.internal.statistics
 
-import com.intellij.internal.statistic.beans.*
+import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.junit.Assert

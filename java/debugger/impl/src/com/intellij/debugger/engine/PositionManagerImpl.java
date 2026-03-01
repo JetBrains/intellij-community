@@ -23,7 +23,18 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,12 +49,17 @@ import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class PositionManagerImpl implements PositionManager, MultiRequestPositionManager {
@@ -183,7 +199,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
-    SourcePosition condRetPos = adjustPositionForConditionalReturn(myDebugProcess, location, psiFile, lineNumber);
+    SourcePosition condRetPos = adjustPositionForConditionalReturn(location, psiFile, lineNumber);
     if (condRetPos != null) {
       sourcePosition = condRetPos;
     }
@@ -191,7 +207,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
   }
 
-  public static @Nullable SourcePosition adjustPositionForConditionalReturn(DebugProcess debugProcess, Location location, PsiFile file, int lineNumber) {
+  @ApiStatus.Internal
+  public static @Nullable SourcePosition adjustPositionForConditionalReturn(Location location, PsiFile file, int lineNumber) {
     if (location.virtualMachine().canGetBytecodes()) {
       PsiElement ret = JavaLineBreakpointType.findSingleConditionalReturn(file, lineNumber);
       if (ret != null) {
@@ -463,13 +480,13 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       return Collections.emptyList();
     }
 
-    List<ReferenceType> matchingClasses = myDebugProcess.getVirtualMachineProxy().classesByName(classInfo.className);
+    List<ReferenceType> matchingClasses = VirtualMachineProxyImpl.getCurrent().classesByName(classInfo.className);
     if (!classInfo.isLocalOrAnonymous) {
       return matchingClasses;
     }
 
     if (matchingClasses.isEmpty()) { // sometimes inner classes may be loaded before outer
-      return StreamEx.of(myDebugProcess.getVirtualMachineProxy().allClasses())
+      return StreamEx.of(VirtualMachineProxyImpl.getCurrent().allClasses())
         .filter(t -> t.name().startsWith(classInfo.className))
         .map(outer -> findNested(outer, 0, psiClass, 0, position))
         .nonNull()
@@ -500,7 +517,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   private @Nullable ReferenceType findNested(final ReferenceType fromClass, final int currentDepth, final PsiClass classToFind, final int requiredDepth, final SourcePosition position) {
-    final VirtualMachineProxyImpl vmProxy = myDebugProcess.getVirtualMachineProxy();
+    final VirtualMachineProxyImpl vmProxy = VirtualMachineProxyImpl.getCurrent();
     if (fromClass.isPrepared()) {
       // if the depth is still less than required - search nested classes recursively
       if (currentDepth < requiredDepth) {

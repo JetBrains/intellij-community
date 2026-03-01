@@ -6,10 +6,12 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import kotlin.math.min
 
+@K1Deprecation
 class ToFromOriginalFileMapper private constructor(
   val originalFile: KtFile,
   private val syntheticFile: KtFile,

@@ -1,7 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.execution.*;
+import com.intellij.execution.DefaultExecutionTarget;
+import com.intellij.execution.ExecutionListener;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionTarget;
+import com.intellij.execution.ExecutionTargetManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -120,7 +126,6 @@ public final class RunConfigurationCommand extends AbstractCommand {
 
     ApplicationManager.getApplication().invokeLater(() -> {
       Executor executor = options.debug ? new DefaultDebugExecutor() : new DefaultRunExecutor();
-      ExecutionTarget target = DefaultExecutionTarget.INSTANCE;
       RunConfiguration configurationToRun = getConfigurationByName(runManager, options.configurationName);
 
       if (configurationToRun == null) {
@@ -128,6 +133,10 @@ public final class RunConfigurationCommand extends AbstractCommand {
         printAllConfigurationsNames(runManager);
       }
       else {
+        ExecutionTargetManager targetManager = ExecutionTargetManager.getInstance(project);
+        ExecutionTarget target = targetManager.findTarget(configurationToRun);
+        if (target == null) target = DefaultExecutionTarget.INSTANCE;
+
         RunnerAndConfigurationSettingsImpl runnerAndConfigurationSettings =
           new RunnerAndConfigurationSettingsImpl(runManager, configurationToRun);
 

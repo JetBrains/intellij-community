@@ -14,14 +14,26 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//build",
+    "//build:build_test_lib",
     "//platform/build-scripts/testFramework",
+    "//platform/build-scripts/testFramework:testFramework_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:junit5",
     "@lib//:assert_j",
     "//platform/util",
+    "//platform/util:util_test_lib",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/build-scripts/downloader",
-  ]
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+  ],
+  runtime_deps = [":tests"]
 )
 ### auto-generated section `build intellij.idea.community.build.tests` end
 

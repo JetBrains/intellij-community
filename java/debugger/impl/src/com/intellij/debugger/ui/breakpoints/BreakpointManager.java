@@ -13,7 +13,13 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.LightOrRealThreadInfo;
 import com.intellij.debugger.engine.RealThreadInfo;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -32,7 +38,11 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.psi.PsiField;
+import com.intellij.util.CoroutineScopeKt;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,14 +50,18 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointListener;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
-import com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt;
 import com.jetbrains.jdi.EventRequestManagerImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
@@ -55,6 +69,7 @@ import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.InvalidRequestStateException;
+import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -85,6 +100,8 @@ public class BreakpointManager {
 
   private final Project myProject;
   private final Map<String, String> myUIProperties = new LinkedHashMap<>();
+
+  private final EventDispatcher<BreakpointLogMessageListener> myLogMessageDispatcher = EventDispatcher.create(BreakpointLogMessageListener.class);
 
   public BreakpointManager(@NotNull Project project, @NotNull DebuggerManagerImpl debuggerManager) {
     myProject = project;
@@ -149,12 +166,13 @@ public class BreakpointManager {
   public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
     DebuggerInvocationUtil.invokeLaterAnyModality(myProject, () -> {
       XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
-      if (xBreakpoint instanceof XLineBreakpointImpl<?> xLineBreakpoint) {
-        RangeHighlighter highlighter = xLineBreakpoint.getHighlighter();
+      var breakpointProxy = XDebuggerEntityConverter.asProxy(xBreakpoint);
+      if (breakpointProxy instanceof XLineBreakpointProxy lineBreakpointProxy) {
+        RangeHighlighter highlighter = lineBreakpointProxy.getHighlighter();
         if (highlighter != null) {
           GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
           if (renderer != null) {
-            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, MonolithBreakpointProxyKt.asProxy(xLineBreakpoint), renderer);
+            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, lineBreakpointProxy, renderer);
           }
         }
       }
@@ -664,5 +682,17 @@ public class BreakpointManager {
 
   public String setProperty(String name, String value) {
     return myUIProperties.put(name, value);
+  }
+
+  public void addLogMessageListener(CoroutineScope scope, BreakpointLogMessageListener listener) {
+    addLogMessageListener(listener, CoroutineScopeKt.asDisposable(scope));
+  }
+
+  private void addLogMessageListener(BreakpointLogMessageListener listener, Disposable parentDisposable) {
+    myLogMessageDispatcher.addListener(listener, parentDisposable);
+  }
+
+  void multicastLogMessage(Breakpoint<?> breakpoint, String message, DebugProcessImpl debugProcess) {
+    myLogMessageDispatcher.getMulticaster().onLogMessage(breakpoint, message, debugProcess);
   }
 }

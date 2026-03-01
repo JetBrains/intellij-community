@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
 import com.intellij.serialization.PropertyMapping;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.*;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppComponent;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppExecutable;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppSharedLibrary;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppStaticLibrary;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

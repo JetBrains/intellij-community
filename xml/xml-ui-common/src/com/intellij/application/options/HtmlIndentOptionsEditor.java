@@ -7,7 +7,7 @@ import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.xml.XmlUiBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
 
 public class HtmlIndentOptionsEditor extends SmartIndentOptionsEditor {
 

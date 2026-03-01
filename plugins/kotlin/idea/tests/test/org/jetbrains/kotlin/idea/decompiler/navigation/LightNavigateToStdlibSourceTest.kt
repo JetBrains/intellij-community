@@ -5,7 +5,13 @@ package org.jetbrains.kotlin.idea.decompiler.navigation
 import com.intellij.psi.PsiElement
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES
+import org.jetbrains.kotlin.idea.test.KOTLIN_JAVASCRIPT
+import org.jetbrains.kotlin.idea.test.KOTLIN_JAVASCRIPT_WITH_ADDITIONAL_JVM_WITH_STDLIB
+import org.jetbrains.kotlin.idea.test.KOTLIN_JVM_WITH_STDLIB_SOURCES
+import org.jetbrains.kotlin.idea.test.KOTLIN_JVM_WITH_STDLIB_SOURCES_WITH_ADDITIONAL_JS
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.ProjectDescriptorKind
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtTypeAlias

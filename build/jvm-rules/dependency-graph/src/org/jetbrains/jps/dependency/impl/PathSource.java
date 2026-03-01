@@ -45,7 +45,7 @@ public final class PathSource implements NodeSource {
     if (myPath.isEmpty()) {
       return 0;
     }
-    return SystemInfo.isFileSystemCaseSensitive? myPath.hashCode() : stringHashCodeInsensitive(myPath);
+    return SystemInfo.isFileSystemCaseSensitive? myPath.hashCode() : hashCodeCaseInsensitive();
   }
 
   @Override
@@ -53,11 +53,18 @@ public final class PathSource implements NodeSource {
     return myPath;
   }
 
-  private static int stringHashCodeInsensitive(@NotNull CharSequence chars) {
-    int h = 0;
-    for (int off = 0; off < chars.length(); off++) {
-      h = 31 * h + toLowerCase(chars.charAt(off));
+  private Integer myCIHashCode;
+
+  private int hashCodeCaseInsensitive() {
+    Integer cached = myCIHashCode;
+    if (cached != null) {
+      return cached;
     }
+    int h = 0;
+    for (int off = 0; off < myPath.length(); off++) {
+      h = 31 * h + toLowerCase(myPath.charAt(off));
+    }
+    myCIHashCode = h;
     return h;
   }
 

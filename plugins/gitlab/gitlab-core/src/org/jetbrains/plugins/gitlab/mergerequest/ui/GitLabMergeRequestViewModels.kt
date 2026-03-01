@@ -49,10 +49,14 @@ internal class GitLabMergeRequestViewModels(
   private val openMergeRequestTimeline: (String, Boolean) -> Unit,
   private val openMergeRequestDiff: (String, Boolean) -> Unit,
 ) {
-  private val htmlConverter: GitLabMarkdownToHtmlConverter = GitLabMarkdownToHtmlConverter(project,
-                                                                                   projectData.projectMapping.gitRepository,
-                                                                                   projectData.projectMapping.repository,
-                                                                                   projectData.gitLabProjectId)
+  private val htmlConverter: GitLabMarkdownToHtmlConverter =
+    GitLabMarkdownToHtmlConverter(
+      project,
+      projectData.gitRemote.repository,
+      projectData.projectCoordinates.serverPath,
+      projectData.projectId,
+      projectData.projectCoordinates.projectPath
+    )
 
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -82,7 +86,9 @@ internal class GitLabMergeRequestViewModels(
   val diffVm: GitLabMergeRequestDiffViewModel get() = _diffVm
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
-    GitLabMergeRequestEditorReviewViewModel(cs, project, projectData.projectMapping, currentUser, mergeRequest,
+    GitLabMergeRequestEditorReviewViewModel(cs, project,
+                                            projectData.gitRemote, projectData.projectCoordinates,
+                                            currentUser, mergeRequest,
                                             discussionsVms, avatarIconProvider, imageLoader,
                                             openMergeRequestDetails, openMergeRequestDiff).apply {
       setup()

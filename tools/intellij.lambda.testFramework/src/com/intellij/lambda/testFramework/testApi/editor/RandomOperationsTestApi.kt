@@ -1,7 +1,12 @@
 package com.intellij.lambda.testFramework.testApi.editor
 
 import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.impl.EditorImpl

@@ -7,7 +7,14 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.logging.Handler
 import java.util.logging.LogRecord
-import kotlin.io.path.*
+import kotlin.io.path.appendText
+import kotlin.io.path.createFile
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.name
 
 @ApiStatus.Internal
 class InMemoryHandler(val outputPath: Path) : Handler() {

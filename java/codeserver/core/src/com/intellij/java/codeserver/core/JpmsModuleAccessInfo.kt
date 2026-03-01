@@ -9,7 +9,12 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.JavaFeature
-import com.intellij.psi.*
+import com.intellij.psi.JavaCompilerConfigurationProxy
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiJavaModule
+import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.JavaMultiReleaseUtil

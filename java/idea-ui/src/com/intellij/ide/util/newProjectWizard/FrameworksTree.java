@@ -10,11 +10,11 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.List;
 

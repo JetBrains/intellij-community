@@ -5,7 +5,13 @@ import com.intellij.application.options.colors.highlighting.CustomFoldRegionRend
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.documentation.render.DocRenderItemImpl;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -22,8 +28,8 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Point;
 import java.util.HashMap;
 import java.util.Map;
 

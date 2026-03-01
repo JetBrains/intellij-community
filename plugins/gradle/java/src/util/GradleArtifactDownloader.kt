@@ -23,7 +23,7 @@ import org.jetbrains.plugins.gradle.GradleJavaCoroutineScope.gradleCoroutineScop
 import org.jetbrains.plugins.gradle.service.execution.loadDownloadArtifactInitScript
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readText

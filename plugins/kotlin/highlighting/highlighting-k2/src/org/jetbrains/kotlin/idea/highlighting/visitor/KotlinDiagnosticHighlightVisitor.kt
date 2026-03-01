@@ -13,6 +13,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -39,16 +40,21 @@ import org.jetbrains.kotlin.idea.base.analysis.injectionRequiresOnlyEssentialHig
 import org.jetbrains.kotlin.idea.base.analysis.isInjectedFileShouldBeAnalyzed
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.highlighter.clearSavedKaDiagnosticsForUnresolvedReference
 import org.jetbrains.kotlin.idea.highlighter.operationReferenceForBinaryExpressionOrThis
-import org.jetbrains.kotlin.idea.highlighter.saveKaDiagnosticForUnresolvedReference
 import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.analyzers.ignoreIncompleteModeDiagnostics
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtScript
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtension {
@@ -101,7 +107,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
         val analysis = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         val filteredAnalysisResult = analysis
             .filterOutCodeFragmentVisibilityErrors(file)
-            .onEach { diagnostic -> diagnostic.psi.clearSavedKaDiagnosticsForUnresolvedReference() }
+
         val builders = filteredAnalysisResult
             .map { diagnostic ->
                 Pair(
@@ -113,7 +119,10 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
                      } catch (e: CancellationException) {
                          throw e
                      } catch (e: Throwable) {
-                         Logger.getInstance(KotlinDiagnosticHighlightVisitor::class.java).error(e)
+                         Logger.getInstance(KotlinDiagnosticHighlightVisitor::class.java)
+                             .error("Broken diagnostic", e,
+                                 Attachment("diagnostics", diagnostic::class.java.simpleName),
+                                 Attachment("diagnosticText", diagnostic.psi.text))
                          emptyList()
                      })
             }
@@ -230,8 +239,6 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
             diagnostic is KaFirDiagnostic.UnresolvedReferenceWrongReceiver ||
             diagnostic is KaFirDiagnostic.InvisibleReference
         ) {
-            psiElement.saveKaDiagnosticForUnresolvedReference(diagnostic)
-            
             /*
             Two points here:
             1. It's enough to register only the main reference here, because later on we rely on the underlying PSI element anyway.
@@ -275,7 +282,7 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
         }
     }
 
-    private fun KaSession.createHighlightInfo(
+    private fun createHighlightInfo(
         diagnostic: KaDiagnosticWithPsi<*>,
         range: TextRange
     ): HighlightInfo.Builder {
@@ -306,7 +313,8 @@ internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRan
 
     private fun isInternalOrUnitTestMode(): Boolean {
         val application = ApplicationManager.getApplication()
-        return application.isInternal || application.isUnitTestMode
+        return (application.isInternal || application.isUnitTestMode) &&
+                Registry.`is`("kotlin.highlighting.internal.show.diagnostic.names", true)
     }
 
     private fun getHighlightInfoType(psi: KaDiagnosticWithPsi<*>): HighlightInfoType = when {

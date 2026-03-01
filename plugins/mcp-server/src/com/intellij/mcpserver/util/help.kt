@@ -1,7 +1,7 @@
 package com.intellij.mcpserver.util
 
 import com.intellij.openapi.application.ApplicationNamesInfo
-import java.util.*
+import java.util.Locale
 
 fun getHelpLink(topic: String): String {
   val helpIdeName: String = when (val name = ApplicationNamesInfo.getInstance().productName) {

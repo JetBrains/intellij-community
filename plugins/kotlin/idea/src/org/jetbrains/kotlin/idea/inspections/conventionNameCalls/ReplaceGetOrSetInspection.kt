@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.conventionNameCalls
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.isValidOperator
 
+@K1Deprecation
 class ReplaceGetOrSetInspection : AbstractApplicabilityBasedInspection<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java
 ) {

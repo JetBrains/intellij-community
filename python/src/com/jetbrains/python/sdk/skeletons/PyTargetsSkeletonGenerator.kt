@@ -6,13 +6,13 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.VolumeCopyingRequest
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.getTargetDownloadPath
 import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
@@ -74,13 +74,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
         targetRootPath = TargetEnvironment.TargetPath.Temporary()
       )
       targetEnvRequest.downloadVolumes += skeletonsDownloadRoot
-      (targetEnvRequest as? VolumeCopyingRequest)?.shouldCopyVolumes = true
       generatorScriptExecution.addParameter(skeletonsDownloadRoot.getTargetDownloadPath())
-      if (myAssemblyRefs.isNotEmpty()) {
-        generatorScriptExecution.addParameter("-c")
-        // TODO [targets-api] these refs are paths or some strings?
-        generatorScriptExecution.addParameter(myAssemblyRefs.joinToString(separator = ";"))
-      }
       if (myExtraSysPath.isNotEmpty()) {
         generatorScriptExecution.addParameter("-s")
         // TODO [targets-api] are these paths come from target or from the local machine?
@@ -133,7 +127,13 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
         val commandPresentation = targetedCommandLine.getCommandPresentation(targetEnvironment)
         val capturingProcessHandler = CapturingProcessHandler(process, targetedCommandLine.charset, commandPresentation)
         listener?.let { capturingProcessHandler.addProcessListener(LineWiseProcessOutputListener.Adapter(it)) }
-        val result = capturingProcessHandler.runProcess()
+        val indicator = ProgressManager.getInstance().progressIndicator
+        val result = if (indicator != null) {
+          capturingProcessHandler.runProcessWithProgressIndicator(indicator)
+        }
+        else {
+          capturingProcessHandler.runProcess()
+        }
 
         // XXX Make it automatic
         targetEnvironment.downloadVolumes.values.forEach { it.download(".", EmptyProgressIndicator()) }

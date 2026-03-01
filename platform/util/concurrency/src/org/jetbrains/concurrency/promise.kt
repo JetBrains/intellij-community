@@ -14,7 +14,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit

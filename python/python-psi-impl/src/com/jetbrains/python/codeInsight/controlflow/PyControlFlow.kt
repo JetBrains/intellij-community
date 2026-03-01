@@ -9,12 +9,13 @@ import com.jetbrains.python.psi.PyImplicitImportNameDefiner
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 
-class PyControlFlow(private val controlFlow: ControlFlow) : ControlFlow by controlFlow {
-  private val elementToInstructionMap: Map<PsiElement?, Int> = buildElementToInstructionMap(controlFlow.instructions)
-  private val predecessors: Array<Collection<Instruction>> = buildPredecessors(controlFlow.instructions)
+class PyControlFlow(private val instructions: Array<Instruction>) : ControlFlow {
+  private val elementToInstructionMap: Map<PsiElement?, Int> = buildElementToInstructionMap(instructions)
+  private val predecessors: Array<Collection<Instruction>> = buildPredecessors(instructions)
 
   fun getInstruction(element: PsiElement): Int = elementToInstructionMap[element] ?: -1
   fun getPrev(instruction: Instruction): Collection<Instruction> = predecessors[instruction.num()]
+  override fun getInstructions(): Array<Instruction> = instructions
 }
 
 private fun buildElementToInstructionMap(instructions: Array<Instruction>): Map<PsiElement?, Int> {

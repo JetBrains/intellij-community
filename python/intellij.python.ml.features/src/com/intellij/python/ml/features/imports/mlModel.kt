@@ -52,7 +52,7 @@ internal class ImportsRankingModelService {
   }
 }
 
-private class QuickfixRankingModelLoading : ProjectActivity {
+internal class QuickfixRankingModelLoading : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!service<FinalImportRankingStatusService>().shouldLoadModel) return
     ImportsRankingModelService.getInstance()

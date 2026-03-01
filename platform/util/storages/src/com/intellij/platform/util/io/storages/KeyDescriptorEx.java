@@ -3,7 +3,11 @@ package com.intellij.platform.util.io.storages;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.containers.hash.EqualityPolicy;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataEnumerator;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
+import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

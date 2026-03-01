@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
 import kotlin.script.experimental.api.KotlinType

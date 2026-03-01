@@ -14,7 +14,20 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.*
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.IDEA_CUSTOM
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.IDEA_OBSOLETE_KOTLIN
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.IDEA_OFFICIAL_KOTLIN
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.IDEA_WITH_BROKEN_OBSOLETE_KOTLIN
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.IDEA_WITH_BROKEN_OFFICIAL_KOTLIN
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.PROJECT_CUSTOM
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.PROJECT_OBSOLETE_KOTLIN
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.PROJECT_OBSOLETE_KOTLIN_WITH_CUSTOM
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.PROJECT_OFFICIAL_KOTLIN
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.PROJECT_OFFICIAL_KOTLIN_WITH_CUSTOM
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.PROJECT_WITH_BROKEN_OBSOLETE_KOTLIN
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.PROJECT_WITH_BROKEN_OFFICIAL_KOTLIN
 
 class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
     override fun requiresReadAccess() = true

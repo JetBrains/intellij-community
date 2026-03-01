@@ -21,7 +21,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyMoveExceptQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTryExceptStatement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 

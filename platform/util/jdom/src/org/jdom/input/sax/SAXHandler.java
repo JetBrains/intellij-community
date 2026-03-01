@@ -54,7 +54,18 @@
 
 package org.jdom.input.sax;
 
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.AttributeType;
+import org.jdom.CDATA;
+import org.jdom.DefaultJDOMFactory;
+import org.jdom.DocType;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.EntityRef;
+import org.jdom.JDOMFactory;
+import org.jdom.Namespace;
+import org.jdom.Parent;
+import org.jdom.Text;
 import org.jdom.input.SAXBuilder;
 import org.xml.sax.Attributes;
 import org.xml.sax.DTDHandler;

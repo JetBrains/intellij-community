@@ -13,17 +13,25 @@ import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ItemRemovable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.List;
 
 /**

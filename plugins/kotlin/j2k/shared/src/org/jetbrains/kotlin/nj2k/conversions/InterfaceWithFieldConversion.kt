@@ -6,7 +6,11 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.getOrCreateCompanionObject
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKField
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.Modality
+import org.jetbrains.kotlin.nj2k.tree.modality
 
 class InterfaceWithFieldConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

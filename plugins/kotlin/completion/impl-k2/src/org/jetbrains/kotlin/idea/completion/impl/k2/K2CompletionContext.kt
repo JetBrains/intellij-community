@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.Name
 
@@ -27,11 +26,11 @@ internal class K2CompletionContext<out P: KotlinRawPositionContext>(
      * Returns the name filter that should be used for index lookups.
      * If the prefix is less than four characters, we do not use the regular [scopeNameFilter] as it will
      * match occurrences anywhere in the name, which might yield too many results.
-     * For other cases (unless the user invokes completion multiple times), this function will return
+     * For other cases (unless the user invokes completion multiple times outside a rerun), this function will return
      * the [startOnlyNameFilter] that requires a match at the start of the lookup item's lookup strings.
      */
     internal fun getIndexNameFilter(): (Name) -> Boolean {
-        return if (parameters.invocationCount >= 2 || prefixMatcher.prefix.length > 3) {
+        return if (!parameters.isRerun && (parameters.invocationCount >= 2 || prefixMatcher.prefix.length > 3)) {
             scopeNameFilter
         } else {
             startOnlyNameFilter

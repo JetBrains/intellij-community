@@ -1,11 +1,27 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.conversion.ConversionService
-import com.intellij.ide.*
-import com.intellij.openapi.application.*
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdleTracker
+import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.SaveAndSyncHandlerListener
+import com.intellij.idea.AppMode
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationActivationListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.CoroutineSupport
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ui
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -17,7 +33,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.newvfs.*
+import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
+import com.intellij.openapi.vfs.newvfs.RefreshSession
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -25,10 +45,31 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.project.stateStore
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
-import java.util.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.ArrayDeque
 import java.util.concurrent.TimeUnit.NANOSECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -40,7 +81,7 @@ private val EP_NAME = ExtensionPointName<SaveAndSyncHandlerListener>("com.intell
 private val LISTEN_DELAY = 15.seconds
 
 @OptIn(FlowPreview::class)
-private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
+internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
   private val refreshKnownLocalRootsRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val refreshOpenedFilesRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val saveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -228,7 +269,7 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
 
           if (settings.isSaveOnFrameDeactivation && canSyncOrSave()) {
             // for many tasks (compilation, web development, etc.), it is important to save documents on frame deactivation ASAP
-            if (Registry.`is`("document.save.in.background.allowed")) {
+            if (!AppMode.isRemoteDevHost() && Registry.`is`("document.save.in.background.allowed")) {
               saveDocumentsInBackgroundWriteAction()
             }
             else {
@@ -272,11 +313,11 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
       }
   }
 
+  private val savingDispatcher = Dispatchers.IO.limitedParallelism(1)
+
   private fun saveDocumentsInBackgroundWriteAction() {
-    coroutineScope.launch(CoroutineName("Saving documents on frame deactivation") + NonCancellable) {
-      backgroundWriteAction {
-        (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
-      }
+    coroutineScope.launch(CoroutineName("Saving documents on frame deactivation") + savingDispatcher + NonCancellable) {
+      (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
     }
   }
 
@@ -462,17 +503,15 @@ private suspend fun doRefreshOpenedFiles(refreshQueue: RefreshQueue) {
     return
   }
 
-  withContext(Dispatchers.EDT) {
-    writeIntentReadAction {
-      val session = refreshQueue.createSession(
-        /* async = */ false,
-        /* recursive = */ false,
-        /* finishRunnable = */ null,
-        /* state = */ ModalityState.nonModal(),
-      )
-      session.addAllFiles(files)
-      session.launch()
-    }
+  backgroundWriteAction {
+    val session = refreshQueue.createSession(
+      /* async = */ false,
+      /* recursive = */ false,
+      /* finishRunnable = */ null,
+      /* state = */ ModalityState.nonModal(),
+    )
+    session.addAllFiles(files)
+    session.launch()
   }
 }
 

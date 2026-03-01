@@ -2,13 +2,57 @@
 package com.intellij.compiler.notNullVerification;
 
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.Handle;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.TypePath;
+import org.jetbrains.org.objectweb.asm.TypeReference;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
-import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_BRIDGE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_ENUM;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ALOAD;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ANEWARRAY;
+import static org.jetbrains.org.objectweb.asm.Opcodes.API_VERSION;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ARETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP2;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP2_X1;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP2_X2;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP_X1;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DUP_X2;
+import static org.jetbrains.org.objectweb.asm.Opcodes.GOTO;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IFNONNULL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IINC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKEDYNAMIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.JSR;
+import static org.jetbrains.org.objectweb.asm.Opcodes.LDC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.LOOKUPSWITCH;
+import static org.jetbrains.org.objectweb.asm.Opcodes.MULTIANEWARRAY;
+import static org.jetbrains.org.objectweb.asm.Opcodes.NEW;
+import static org.jetbrains.org.objectweb.asm.Opcodes.NEWARRAY;
+import static org.jetbrains.org.objectweb.asm.Opcodes.NOP;
+import static org.jetbrains.org.objectweb.asm.Opcodes.RET;
+import static org.jetbrains.org.objectweb.asm.Opcodes.TABLESWITCH;
 
 public final class NotNullVerifyingInstrumenter extends ClassVisitor {
   private static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";

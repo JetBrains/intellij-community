@@ -256,7 +256,7 @@ fun findApplicationInfoInSources(project: JpsProject, productProperties: Product
   }
   val appInfoRelativePath = "idea/${productProperties.platformPrefix ?: ""}ApplicationInfo.xml"
   return checkNotNull(module.sourceRoots.asSequence().map { it.path.resolve(appInfoRelativePath) }.firstOrNull { Files.exists(it) }) {
-    "Cannot find $appInfoRelativePath in '$module.name' module"
+    "Cannot find $appInfoRelativePath in '${module.name}' module"
   }
 }
 

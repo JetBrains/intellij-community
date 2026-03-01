@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.impl.ConstantNode
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.source.getPsi
 
+@K1Deprecation
 object CreateDataClassPropertyFromDestructuringActionFactory : CreateParameterFromUsageFactory<KtDestructuringDeclaration>() {
     override fun getElementOfInterest(diagnostic: Diagnostic) = CreateComponentFunctionActionFactory.getElementOfInterest(diagnostic)
 

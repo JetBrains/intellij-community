@@ -6,7 +6,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.KtBlockExpression;
+import org.jetbrains.kotlin.psi.KtCallExpression;
+import org.jetbrains.kotlin.psi.KtElement;
+import org.jetbrains.kotlin.psi.KtLambdaExpression;
+import org.jetbrains.kotlin.psi.KtProperty;
+import org.jetbrains.kotlin.psi.KtQualifiedExpression;
+import org.jetbrains.kotlin.psi.KtValueArgument;
 
 import java.util.List;
 

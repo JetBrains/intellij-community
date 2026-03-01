@@ -13,7 +13,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogCommitSelection;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

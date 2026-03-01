@@ -12,7 +12,7 @@ import debugpy
 from debugpy import adapter, common, launcher
 from debugpy.common import json, log, messaging, sockets
 from debugpy.adapter import clients, components, launchers, servers, sessions
-
+from debugpy.common.messaging import NoMoreMessages, NO_RESPONSE
 
 class Client(components.Component):
     """Handles the client side of a debug session."""
@@ -689,7 +689,11 @@ class Client(components.Component):
         if terminate_debuggee == ():
             terminate_debuggee = None
         self.session.finalize('client requested "disconnect"', terminate_debuggee)
-        request.respond({})
+
+        try:
+            request.respond({})
+        except NoMoreMessages:
+            return NO_RESPONSE
 
         if self.using_stdio:
             # There's no way for the client to reconnect to this adapter once it disconnects

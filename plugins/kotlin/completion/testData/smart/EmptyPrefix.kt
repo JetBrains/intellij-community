@@ -27,3 +27,5 @@ fun f3() : String{}
 // EXIST: f2
 // ABSENT: f3
 // EXIST: { lookupString:"Foo", itemText:"Foo", tailText: "() (<root>)" }
+
+// IGNORE_K2

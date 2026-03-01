@@ -1,7 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import junit.framework.TestCase;

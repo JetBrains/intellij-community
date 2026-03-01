@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
 
 //todo
 @ApiStatus.Internal

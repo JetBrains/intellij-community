@@ -3,7 +3,11 @@ package com.intellij.microservices.url.references
 import com.intellij.microservices.HttpReferenceService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementResolveResult
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.ResolveResult
 
 class AuthorityReference @JvmOverloads constructor(
   val givenValue: String?,

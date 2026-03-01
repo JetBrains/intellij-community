@@ -44,4 +44,42 @@ jvm_library(
     "//platform/lang-api:lang",
   ]
 )
+
+jvm_library(
+  name = "lang_test_lib",
+  module_name = "intellij.platform.vcs.impl.lang",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":lang",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/structure-view-impl:structureView-impl_test_lib",
+    "//platform/util/diff:diff_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/diff-impl:diff-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/util/progress:progress_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/todo:todo_test_lib",
+    "//platform/vcs-impl/shared:shared_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.vcs.impl.lang` end

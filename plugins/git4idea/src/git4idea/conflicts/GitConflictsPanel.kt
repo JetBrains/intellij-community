@@ -10,8 +10,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeImpl
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
@@ -34,7 +39,7 @@ import git4idea.repo.GitRepositoryChangeListener
 import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import java.util.*
+import java.util.EventListener
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.tree.DefaultTreeModel

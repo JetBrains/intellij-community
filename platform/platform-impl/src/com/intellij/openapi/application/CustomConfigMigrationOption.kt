@@ -7,8 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import kotlin.io.path.exists
 
 /**
  * [A marker file](com.intellij.openapi.application.ConfigImportHelper.CUSTOM_MARKER_FILE_NAME) is created in the config directory
@@ -60,12 +60,7 @@ sealed class CustomConfigMigrationOption {
   }
 
   class SetProperties(val properties: List<Pair<String, String>>) : CustomConfigMigrationOption() {
-    override fun getStringPresentation(): String = SET_PROPERTIES_PREFIX + properties.joinToString(separator = ";") { it.first + " " + it.second }
-
-    companion object {
-      @JvmStatic
-      fun setToTrue(properties: List<String>): SetProperties = SetProperties(properties.map { it to true.toString() })
-    }
+    override fun getStringPresentation(): String = SET_PROPERTIES_PREFIX + properties.joinToString(separator = ";") { (k, v) -> "$k $v" }
   }
 
   object MergeConfigs : CustomConfigMigrationOption() {
@@ -78,17 +73,14 @@ sealed class CustomConfigMigrationOption {
     private const val IMPORT_PREFIX = "import "
     private const val MIGRATE_PLUGINS_PREFIX = "migrate-plugins "
     private const val SET_PROPERTIES_PREFIX = "set-properties "
-    @Deprecated("Legacy version for compatibility with Toolbox", replaceWith = ReplaceWith("SET_PROPERTIES_PREFIX"))
-    private const val PROPERTIES_PREFIX = "properties "
     private const val MERGE_CONFIGS_COMMAND = "merge-configs"
 
     @JvmStatic
     fun readCustomConfigMigrationOptionAndRemoveMarkerFile(configDir: Path): CustomConfigMigrationOption? {
       val markerFile = getCustomConfigMarkerFilePath(configDir)
-      if (!Files.exists(markerFile)) return null
 
       try {
-        val lines = Files.readAllLines(markerFile)
+        val lines = Files.readAllLines(markerFile, Charsets.UTF_8)
         val line = lines.firstOrNull()
         return when {
           line.isNullOrEmpty() -> StartWithCleanConfig
@@ -103,25 +95,21 @@ sealed class CustomConfigMigrationOption {
               null
             }
           }
-          
+
           line.startsWith(MIGRATE_PLUGINS_PREFIX) -> {
             MigratePluginsFromCustomPlace(markerFile.fileSystem.getPath(line.removePrefix(MIGRATE_PLUGINS_PREFIX)))
           }
 
           // legacy SetProperties parsing
-          line.startsWith(PROPERTIES_PREFIX) -> {
-            val properties = line.removePrefix(PROPERTIES_PREFIX).split(' ')
-            SetProperties.setToTrue(properties)
+          line.startsWith("properties ") -> {
+            SetProperties(line.removePrefix("properties ").split(' ').map { it to "true" })
           }
 
           line.startsWith(SET_PROPERTIES_PREFIX) -> {
-            val properties = line.removePrefix(SET_PROPERTIES_PREFIX).split(';')
-              .mapNotNull {
-                val list = it.split(' ', limit = 2)
-                if (list.size < 2) null else list[0] to list[1]
-              }
-
-            SetProperties(properties)
+            SetProperties(line.removePrefix(SET_PROPERTIES_PREFIX).split(';').mapNotNull {
+              val list = it.split(' ', limit = 2)
+              if (list.size < 2) null else list[0] to list[1]
+            })
           }
 
           line == MERGE_CONFIGS_COMMAND -> MergeConfigs
@@ -132,27 +120,26 @@ sealed class CustomConfigMigrationOption {
           }
         }
       }
+      catch (_: NoSuchFileException) {
+        return null
+      }
       catch (_: Exception) {
         log.warn("Couldn't load content of $markerFile")
         return null
       }
       finally {
-        removeMarkerFile(markerFile)
-      }
-    }
-
-    private fun removeMarkerFile(markerFile: Path) {
-      try {
-        Files.delete(markerFile)
-      }
-      catch (e: Exception) {
-        log.warn("Couldn't delete the custom config migration file $markerFile", e)
+        try {
+          Files.deleteIfExists(markerFile)
+        }
+        catch (e: Exception) {
+          log.warn("Couldn't delete the custom config migration file $markerFile", e)
+        }
       }
     }
 
     @VisibleForTesting
     fun getCustomConfigMarkerFilePath(configDir: Path): Path = configDir.resolve(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME)
     
-    fun doesCustomConfigMarkerExist(configDir: Path): Boolean = getCustomConfigMarkerFilePath(configDir).exists()
+    fun doesCustomConfigMarkerExist(configDir: Path): Boolean = Files.exists(getCustomConfigMarkerFilePath(configDir))
   }
 }

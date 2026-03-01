@@ -15,22 +15,19 @@ import java.util.List;
 public class PropertyReference extends PropertyReferenceBase implements LocalQuickFixProvider {
   private final @Nullable String myBundleName;
 
-  public PropertyReference(final @NotNull String key, final @NotNull PsiElement element, final @Nullable String bundleName, final boolean soft, final TextRange range) {
-    super(key, soft, element, range);
+  public PropertyReference(@NotNull String key, @NotNull PsiElement element, @Nullable String bundleName, boolean soft) {
+    super(key, soft, element);
     myBundleName = bundleName;
   }
 
-  public PropertyReference(@NotNull String key, @NotNull PsiElement element, final @Nullable String bundleName, final boolean soft) {
-    super(key, soft, element);
+  public PropertyReference(@NotNull String key, @NotNull PsiElement element, @Nullable String bundleName, boolean soft, TextRange range) {
+    super(key, soft, element, range);
     myBundleName = bundleName;
   }
 
   @Override
   protected @Nullable List<PropertiesFile> getPropertiesFiles() {
-    if (myBundleName == null) {
-      return null;
-    }
-    return retrievePropertyFilesByBundleName(myBundleName, myElement);
+    return myBundleName == null ? null : retrievePropertyFilesByBundleName(myBundleName, myElement);
   }
 
   protected List<PropertiesFile> retrievePropertyFilesByBundleName(String bundleName, PsiElement element) {
@@ -39,8 +36,8 @@ public class PropertyReference extends PropertyReferenceBase implements LocalQui
 
   @Override
   public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
-    List<PropertiesFile> propertiesFiles = retrievePropertyFilesByBundleName(myBundleName, getElement());
-    LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createCreatePropertyFix(myElement, myKey, propertiesFiles);
+    var propertiesFiles = retrievePropertyFilesByBundleName(myBundleName, getElement());
+    var fix = PropertiesQuickFixFactory.getInstance().createCreatePropertyFix(myElement, myKey, propertiesFiles);
     return new LocalQuickFix[] {fix};
   }
 }

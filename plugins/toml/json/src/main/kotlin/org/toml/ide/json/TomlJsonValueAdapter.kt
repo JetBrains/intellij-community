@@ -10,7 +10,11 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
-import org.toml.lang.psi.*
+import org.toml.lang.psi.TomlArray
+import org.toml.lang.psi.TomlElement
+import org.toml.lang.psi.TomlKey
+import org.toml.lang.psi.TomlKeyValueOwner
+import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
 

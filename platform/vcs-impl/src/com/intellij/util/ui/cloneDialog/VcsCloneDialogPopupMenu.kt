@@ -12,7 +12,11 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -20,7 +24,12 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.GridBagLayout
 import java.awt.Point
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 
 sealed class AccountMenuItem(val showSeparatorAbove: Boolean) {
   class Account(

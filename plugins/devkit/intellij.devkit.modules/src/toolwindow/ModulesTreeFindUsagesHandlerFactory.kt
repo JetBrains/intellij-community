@@ -3,10 +3,7 @@ package com.intellij.devkit.modules.toolwindow
 
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.FindUsagesHandlerFactory
-import com.intellij.find.findUsages.FindUsagesHandlerBase
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.jps.model.module.JpsModule

@@ -14,7 +14,7 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.HashSet;
 import java.util.Set;
 

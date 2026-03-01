@@ -87,7 +87,7 @@ Packets sent: 49, methods called: 2
 veryLongCoroutineStack.kt:12
 Packets sent: 48, methods called: 2
 veryLongCoroutineStack.kt:12
-Packets sent: 54, methods called: 3
+Packets sent: 57, methods called: 3
 veryLongCoroutineStack.kt:16
 Packets sent: 36, methods called: 2
 veryLongCoroutineStack.kt:17
@@ -173,7 +173,7 @@ Packets sent: 16, methods called: 2
 veryLongCoroutineStack.kt:17
 Packets sent: 16, methods called: 2
 veryLongCoroutineStack.kt:22
-Packets sent: 23, methods called: 4
+Packets sent: 29, methods called: 4
 veryLongCoroutineStack.kt:19
 Packets sent: 3, methods called: 1
 veryLongCoroutineStack.kt:22

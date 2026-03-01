@@ -27,4 +27,26 @@ jvm_library(
     "@lib//:io-github-oshai-kotlin-logging-jvm",
   ]
 )
+
+jvm_library(
+  name = "mcpserver.stdio_test_lib",
+  module_name = "intellij.mcpserver.stdio",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "@lib//:ktor-server-sse-jvm",
+    "@lib//:io-modelcontextprotocol-kotlin-sdk",
+    "@lib//:io-github-oshai-kotlin-logging-jvm",
+  ],
+  runtime_deps = [
+    ":mcpserver.stdio",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/io:io_test_lib",
+    "//libraries/ktor/client:client_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.mcpserver.stdio` end

@@ -1,7 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDiamondType;
+import com.intellij.psi.PsiDiamondTypeImpl;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.PsiDiamondTypeElementImpl;
 import org.jetbrains.annotations.NotNull;
 

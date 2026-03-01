@@ -25,4 +25,22 @@ jvm_library(
   ],
   runtime_deps = ["//platform/backend"]
 )
+
+jvm_library(
+  name = "backend_test_lib",
+  module_name = "intellij.platform.lang.impl.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":backend",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/kernel/backend:backend_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.platform.lang.impl.backend` end

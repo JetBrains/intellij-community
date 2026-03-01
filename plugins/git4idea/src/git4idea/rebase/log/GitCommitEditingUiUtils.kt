@@ -3,7 +3,6 @@ package git4idea.rebase.log
 
 import com.intellij.openapi.application.UI
 import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToCommit
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.showCommit
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.impl.awaitContainsCommit

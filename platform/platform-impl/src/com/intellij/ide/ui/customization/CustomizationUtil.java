@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -6,7 +6,18 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.ActionWithDelegate;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -20,7 +31,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ClientProperty;
@@ -35,18 +51,22 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPopupMenu;
+import javax.swing.JTree;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
@@ -149,7 +169,7 @@ public final class CustomizationUtil {
     return reorderedChildren.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
+  public static void optimizeSchema(@NotNull JTree tree, @NotNull CustomActionsSchema schema) {
     //noinspection HardCodedStringLiteral
     @SuppressWarnings("DialogTitleCapitalization")
     Group rootGroup = new Group("root");
@@ -228,8 +248,8 @@ public final class CustomizationUtil {
     return getTreePath(0, path, tree.getModel().getRoot());
   }
 
-  @ApiStatus.Internal
-  public static ActionUrl getActionUrl(final TreePath treePath,
+  @Internal
+  public static @NotNull ActionUrl getActionUrl(@NotNull TreePath treePath,
                                        @MagicConstant(intValues = {ActionUrl.ADDED, ActionUrl.DELETED, ActionUrl.MOVE}) int actionType) {
     ActionUrl url = new ActionUrl();
     for (int i = 0; i < treePath.getPath().length - 1; i++) {
@@ -239,16 +259,16 @@ public final class CustomizationUtil {
       }
     }
 
-    final DefaultMutableTreeNode component = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
+    DefaultMutableTreeNode component = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
     Object userObj = component.getUserObject();
     url.setComponent(userObj instanceof Pair<?, ?> pair ? pair.first : userObj);
-    final TreeNode parent = component.getParent();
+    TreeNode parent = component.getParent();
     url.setAbsolutePosition(parent != null ? parent.getIndex(component) : 0);
     url.setActionType(actionType);
     return url;
   }
 
-  @ApiStatus.Internal
+  @Internal
   public static TreePath getTreePath(JTree tree, ActionUrl url) {
     return getTreePath(0, url.getGroupPath(), tree.getModel().getRoot());
   }

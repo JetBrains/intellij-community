@@ -12,11 +12,15 @@
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.pluginUpdateVerifier"
-            interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier" 
+            interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.projectConfigurator"
             interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.projectPostConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectPostConfigurator"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.compilerPluginConfigurator"
@@ -64,10 +68,6 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.ktModuleFactory"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.KaModuleFactory"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.analysis.additionalKDocResolutionProvider"
-            interface="org.jetbrains.kotlin.analysis.api.symbols.AdditionalKDocResolutionProvider"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.projectStructureInsightsProvider"
@@ -120,6 +120,10 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.kaDanglingFileResolutionModeProvider"
                     interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KaDanglingFileResolutionModeProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.kotlinRunLineMarkerHider"
+                    interface="org.jetbrains.kotlin.idea.codeInsight.KotlinRunLineMarkerHider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -127,7 +131,7 @@
 
     <applicationService serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.builtins.IdeBuiltInsVirtualFileProviderImpl"/>
-    
+
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindAboutPopupDescriptionProvider"/>
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
@@ -167,7 +171,7 @@
 
     <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinGotoValVarTypeHandler"/>
-    <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.KotlinFocusModeProvider" />
+    <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinFocusModeProvider" />
 
     <lang.floatingToolbar language="kotlin"/>
 
@@ -184,6 +188,7 @@
     <breadcrumbsInfoProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider"/>
 
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinImportAliasGotoDeclarationHandler"/>
+    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDestructuringGotoDeclarationHandler"/>
 
 
     <createFromTemplateHandler implementation="org.jetbrains.kotlin.idea.actions.KotlinCreateFromTemplateHandler"/>
@@ -272,6 +277,7 @@
             order="after propertyKeys"/>
 
     <pluginSuggestionProvider order="first" implementation="org.jetbrains.kotlin.idea.suggestions.JupyterNotebookSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="org.jetbrains.kotlin.idea.suggestions.AmperPluginSuggestionProvider"/>
   </extensions>
 
   <!-- Templates -->
@@ -452,15 +458,6 @@
     <tipAndTrick file="Kotlin_Java_convert.html"/>
   </extensions>
 
-  <!-- Advanced Settings -->
-  <extensions defaultExtensionNs="com.intellij">
-    <advancedSetting
-            id="kotlin.mpp.experimental"
-            default="false"
-            groupKey="group.advanced.settings.kotlin"
-            bundle="messages.KotlinBundle"/>
-  </extensions>
-
   <!-- Notifications -->
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup
@@ -538,7 +535,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
-    <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.jvm.KotlinDeclarationSearcher"/>
+    <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinDeclarationSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -549,6 +546,10 @@
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
+
+    <!-- test frameworks integration -->
+    <testDiffProvider language="kotlin" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
+    <testFinder implementation="org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.KotlinTestFinder"/>
   </extensions>
 
   <!-- Copy-paste -->
@@ -575,12 +576,24 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <action id="CopyKotlinProjectInformation" class="org.jetbrains.kotlin.idea.actions.internal.CopyKotlinProjectOverviewAction">
+    <!-- Standalone action (shown when only 1 action) -->
+    <action id="ConvertJavaToKotlin"
+            class="org.jetbrains.kotlin.idea.actions.JavaToKotlinAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.J2K">
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt shift K"/>
+      <add-to-group group-id="CodeMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
     </action>
 
-    <group id="ConvertJavaToKotlinGroup">
-      <separator/>
-      <action id="ConvertJavaToKotlin" class="org.jetbrains.kotlin.idea.actions.JavaToKotlinAction">
+    <!-- Group shown when more than 1 action -->
+    <group id="ConvertJavaToKotlinGroup"
+           class="org.jetbrains.kotlin.idea.actions.JavaToKotlinActionGroup"
+           icon="org.jetbrains.kotlin.idea.KotlinIcons.J2K"
+           searchable="false"
+           popup="true">
+      <action id="ConvertJavaToKotlinInGroup"
+              class="org.jetbrains.kotlin.idea.actions.JavaToKotlinActionForGroup">
         <keyboard-shortcut keymap="$default" first-keystroke="control alt shift K"/>
       </action>
       <add-to-group group-id="CodeMenu" anchor="last"/>
@@ -597,46 +610,18 @@
 
     <group id="InternalKotlin" internal="true">
       <separator/>
-      <action id="HighlightingBenchmarkAction"
-              class="org.jetbrains.kotlin.idea.actions.internal.benchmark.HighlightingBenchmarkAction"/>
 
       <group id="KotlinInternalGroup" popup="true">
-        <action
-                id="CacheResetOnProcessCanceledToggleAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.CacheResetOnProcessCanceledToggleAction"/>
+
         <action
                 id="CheckComponentsUsageSearchAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.CheckComponentsUsageSearchAction"/>
-        <action
-                id="PrintOutNotPropertyMatches"
-                class="org.jetbrains.kotlin.idea.actions.internal.SearchNotPropertyCandidatesAction"/>
-        <action
-                id="StoredExceptionsThrowToggleAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.StoredExceptionsThrowToggleAction"/>
 
         <action
                 id="LibraryToSourceDependencySupportToggleAction"
                 class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>
-        <action
-                id="KotlinFormattingSettingsStatusAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.KotlinFormattingSettingsStatusAction"/>
-        <action
-                id="KotlinThrowException"
-                class="org.jetbrains.kotlin.idea.actions.internal.KotlinThrowExceptionAction"/>
 
-        <action
-                id="EnableExperimentalKDocResolutionStrategy"
-                class="org.jetbrains.kotlin.idea.actions.internal.EnableExperimentalKDocResolutionStrategyToggleAction"/>
 
-        <group id="KotlinCompletionBenchmarkGroup" popup="true">
-          <action
-                  id="TopLevelCompletionBenchmarkAction"
-                  class="org.jetbrains.kotlin.idea.actions.internal.benchmark.TopLevelCompletionBenchmarkAction"/>
-
-          <action
-                  id="LocalCompletionBenchmarkAction"
-                  class="org.jetbrains.kotlin.idea.actions.internal.benchmark.LocalCompletionBenchmarkAction"/>
-        </group>
       </group>
 
       <separator/>

@@ -1,7 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.keyGestures;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionEventVisitor;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.KeyboardGestureAction;
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
@@ -9,7 +17,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;

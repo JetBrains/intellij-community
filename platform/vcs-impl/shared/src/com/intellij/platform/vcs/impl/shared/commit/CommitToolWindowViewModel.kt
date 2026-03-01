@@ -8,7 +8,11 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)

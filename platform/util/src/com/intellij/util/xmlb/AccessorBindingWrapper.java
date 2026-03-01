@@ -11,7 +11,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.List;
 
 final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {

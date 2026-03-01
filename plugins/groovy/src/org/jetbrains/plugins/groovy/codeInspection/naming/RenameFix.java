@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.naming;
 /**
  * @deprecated use {@link GrRenameFix}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class RenameFix extends GrRenameFix  {
 
   public RenameFix() {

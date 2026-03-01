@@ -37,6 +37,19 @@
       ]]>
   </description>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="Git4Idea"/>
+    <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.vcs.git.shared"/>
+  </dependencies>
+  <!-- endregion -->
   <content namespace="jetbrains">
     <module name="intellij.vcs.gitlab" loading="embedded"/>
     <module name="intellij.vcs.gitlab.git"/>

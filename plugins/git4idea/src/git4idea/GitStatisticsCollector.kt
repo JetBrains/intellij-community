@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.google.common.collect.HashMultiset
@@ -29,8 +29,18 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitOperationsCollector.REMOTE_CHECK_STRATEGY
 import git4idea.branch.GitBranchUtil
-import git4idea.config.*
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
+import git4idea.config.GitConfigUtil
+import git4idea.config.GitExecutableManager
+import git4idea.config.GitSaveChangesPolicy
+import git4idea.config.GitVcsApplicationSettings
+import git4idea.config.GitVcsSettings
+import git4idea.config.GitVersion
+import git4idea.config.UpdateMethod
 import git4idea.index.getStatus
 import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRemote
@@ -40,7 +50,6 @@ import git4idea.statistics.GitCommitterCounter
 import git4idea.statistics.RepositoryAvailability
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
-import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Period
@@ -49,7 +58,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class GitStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("git.configuration", 22)
+  private val GROUP = EventLogGroup("git.configuration", 24)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -68,6 +77,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     addIfDiffers(set, settings, defaultSettings, { it.syncSetting }, REPO_SYNC, REPO_SYNC_VALUE)
     addIfDiffers(set, settings, defaultSettings, { it.updateMethod }, UPDATE_TYPE, UPDATE_TYPE_VALUE)
     addIfDiffers(set, settings, defaultSettings, { it.saveChangesPolicy }, SAVE_POLICY, SAVE_POLICY_VALUE)
+    addIfDiffers(set, settings, defaultSettings, { it.incomingCommitsCheckStrategy }, INCOMING_COMMITS_CHECK_STRATEGY, GitOperationsCollector.REMOTE_CHECK_STRATEGY)
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, PUSH_AUTO_UPDATE)
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutCrlf() }, WARN_CRLF)
@@ -99,6 +109,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
         REMOTES with repository.remotes.size,
         IS_WORKTREE_USED with repository.isWorkTreeUsed(),
         FS_MONITOR with repository.detectFsMonitor(),
+        REF_FORMAT with repository.detectRefFormat(),
 
         REMOTES_AVAILABILITY with repoStatus,
       )
@@ -222,6 +233,8 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private val SAVE_POLICY_VALUE = EventFields.Enum("value", GitSaveChangesPolicy::class.java) { it.name.lowercase() }
   private val SAVE_POLICY = GROUP.registerVarargEvent("save.policy", SAVE_POLICY_VALUE)
 
+  private val INCOMING_COMMITS_CHECK_STRATEGY = GROUP.registerVarargEvent("incoming_commits_check_strategy", REMOTE_CHECK_STRATEGY)
+
   private val PUSH_AUTO_UPDATE = GROUP.registerVarargEvent("push.autoupdate", EventFields.Enabled)
 
   private val WARN_CRLF = GROUP.registerVarargEvent("warn.about.crlf", EventFields.Enabled)
@@ -255,6 +268,8 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
 
   private val FS_MONITOR = EventFields.Enum<FsMonitor>("fs_monitor")
+  private val REF_FORMAT = EventFields.Enum<RefFormat>("ref_format", "--ref-format")
+
   private val remoteTypes = setOf("github", "gitlab", "bitbucket", "gitee",
                                   "github_custom", "gitlab_custom", "bitbucket_custom", "gitee_custom",
                                   "other")
@@ -272,6 +287,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
                                                      REMOTES,
                                                      IS_WORKTREE_USED,
                                                      FS_MONITOR,
+                                                     REF_FORMAT,
                                                      COMMITERS_LAST_MONTH,
                                                      COMMITERS_HALF_YEAR,
                                                      COMMITERS_LAST_YEAR,
@@ -393,11 +409,31 @@ private fun GitRepository.detectFsMonitor(): FsMonitor {
   return FsMonitor.NONE
 }
 
-private data class RoundedUserCountEventField(
-  override val name: String,
-  @NonNls override val description: String? = null,
-) : PrimitiveEventField<Int>() {
+internal enum class RefFormat { UNKNOWN, FILES, REFTABLE }
 
+private fun GitRepository.detectRefFormat(): RefFormat {
+  try {
+    val handler = GitLineHandler(project, root, GitCommand.REV_PARSE)
+    handler.addParameters("--show-ref-format")
+    handler.setSilent(true)
+
+    val result = Git.getInstance().runCommand(handler)
+
+    if (result.success()) {
+      return when (result.outputAsJoinedString.trim().lowercase()) {
+        "files" -> RefFormat.FILES
+        "reftable" -> RefFormat.REFTABLE
+        else -> RefFormat.UNKNOWN
+      }
+    }
+  }
+  catch (_: Exception) {
+  }
+
+  return RefFormat.UNKNOWN
+}
+
+private data class RoundedUserCountEventField(override val name: String) : PrimitiveEventField<Int>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 

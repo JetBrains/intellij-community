@@ -5,29 +5,35 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.ParameterUpdate
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.FlexibleType
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.kotlin.utils.IDEAPlatforms
 import org.jetbrains.kotlin.utils.IDEAPluginsCompatibilityAPI
 
+@K1Deprecation
 interface Parameter: IParameter<KotlinType> {
     val originalDescriptor: DeclarationDescriptor
 }
 
+@K1Deprecation
 val ControlFlow<KotlinType>.possibleReturnTypes: List<KotlinType>
     get() {
         val returnType = outputValueBoxer.returnType
@@ -42,6 +48,7 @@ val ControlFlow<KotlinType>.possibleReturnTypes: List<KotlinType>
     }
 
 
+@K1Deprecation
 fun ControlFlow<KotlinType>.copy(oldToNewParameters: Map<Parameter, Parameter>): ControlFlow<KotlinType> {
     val newOutputValues = outputValues.map {
         if (it is ParameterUpdate) ParameterUpdate(oldToNewParameters[it.parameter]!!, it.originalExpressions) else it
@@ -50,11 +57,13 @@ fun ControlFlow<KotlinType>.copy(oldToNewParameters: Map<Parameter, Parameter>):
 }
 
 
+@K1Deprecation
 class WrapObjectInWithReplacement(val descriptor: ClassDescriptor) : WrapInWithReplacement<KotlinType>() {
     override val argumentText: String
         get() = IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(descriptor)
 }
 
+@K1Deprecation
 data class ExtractableCodeDescriptor(
     override val extractionData: ExtractionData,
     val originalContext: BindingContext,
@@ -88,6 +97,7 @@ data class ExtractableCodeDescriptor(
  *
  * Only used in KTOR IDE plugin.
  */
+@K1Deprecation
 @ApiStatus.Internal
 fun ExtractableCodeDescriptor.withSuggestedNames(
   suggestedNames: List<String>
@@ -98,11 +108,13 @@ fun ExtractableCodeDescriptor.withSuggestedNames(
  *
  * Only used in KTOR IDE plugin.
  */
+@K1Deprecation
 @ApiStatus.Internal
 fun ExtractableCodeDescriptor.withVisibility(
   visibility: KtModifierKeywordToken?
 ): ExtractableCodeDescriptor = copy(visibility = visibility)
 
+@K1Deprecation
 @IDEAPluginsCompatibilityAPI(
     usedIn = [IDEAPlatforms._213],
     message = "Provided for binary backward compatibility",
@@ -137,6 +149,7 @@ fun ExtractableCodeDescriptor.copy(
     emptyList()
 )
 
+@K1Deprecation
 fun ExtractableCodeDescriptor.copy(
     newName: String,
     newVisibility: KtModifierKeywordToken?,
@@ -173,11 +186,13 @@ fun ExtractableCodeDescriptor.copy(
     )
 }
 
+@K1Deprecation
 data class ExtractionGeneratorConfiguration(
     override val descriptor: ExtractableCodeDescriptor,
     override val generatorOptions: ExtractionGeneratorOptions
 ): IExtractionGeneratorConfiguration<KotlinType>
 
+@K1Deprecation
 data class ExtractionResult(
     override val config: ExtractionGeneratorConfiguration,
     override var declaration: KtNamedDeclaration,
@@ -186,6 +201,7 @@ data class ExtractionResult(
     override fun dispose() = unmarkReferencesInside(declaration)
 }
 
+@K1Deprecation
 data class ExtractableCodeDescriptorWithConflicts(
     override val descriptor: ExtractableCodeDescriptor,
     override val conflicts: MultiMap<PsiElement, String>

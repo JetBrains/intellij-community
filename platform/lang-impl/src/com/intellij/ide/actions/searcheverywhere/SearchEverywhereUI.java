@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
@@ -25,12 +25,29 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.local.ContributorsLocalSummary;
 import com.intellij.internal.statistic.utils.StartMoment;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -44,7 +61,12 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IncompleteDependenciesService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
@@ -63,17 +85,30 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.SearchFieldWithExtension;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageLimitUtil;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
@@ -86,21 +121,65 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.text.matching.MatchingMode;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.AbstractListModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.text.Document;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -130,6 +209,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   @ApiStatus.Internal public static final DataKey<SearchEverywhereFoundElementInfo> SELECTED_ITEM_INFO = DataKey.create("selectedItemInfo");
 
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
+  private static final int SINGLE_ACTIONS_CONTRIBUTOR_ELEMENTS_LIMIT = 60;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
 
   private final SEResultsListFactory myListFactory;
@@ -189,10 +269,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     myListFactory = new MixedListFactory();
 
-    if (myMlService != null) {
-      myMlService.onSessionStarted(myProject, myHeader.getSelectedTab().getID(), new SearchEverywhereMixedListInfo(myListFactory));
-    }
-
     init();
     myHintHelper = new HintHelper(mySearchField);
 
@@ -206,14 +282,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     SearchListener wrapperListener = createListenerWrapper();
 
     mySelectionTracker = new SEListSelectionTracker(myResultsList, myListModel);
-
-    if (myMlService != null) {
-      SearchListener mlListener = myMlService.buildListener(myListModel, myResultsList, mySelectionTracker);
-
-      if (mlListener != null) {
-        addSearchListener(mlListener);
-      }
-    }
 
     myExternalSearchListeners.add(topicPublisher);
     mySearcher = new MixedResultsSearcher(
@@ -294,12 +362,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       return (list, value, index, isSelected, cellHasFocus) -> new JPanel();
     }
 
-    ListCellRenderer<Object> renderer = myListFactory.createListRenderer(myListModel, myHeader);
-
-    if (myMlService != null) {
-      return myMlService.wrapRenderer(renderer, myListModel);
-    }
-    return renderer;
+    return myListFactory.createListRenderer(myListModel, myHeader);
   }
 
   @Override
@@ -308,6 +371,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     addListDataListener(myListModel);
     addPreviewDataListener(myListModel);
     return myListFactory.createList(myListModel);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull SearchEverywhereMixedListInfo getMixedListInfo() {
+    return new SearchEverywhereMixedListInfo(myListFactory);
   }
 
   private void addPreviewDataListener(@NotNull AbstractListModel<Object> model) {
@@ -660,6 +728,26 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     return res;
   }
 
+  @ApiStatus.Internal
+  @Override
+  protected @NotNull JComponent wrapSearchField() {
+    if (!Registry.is("search.everywhere.round.text.field", false)) {
+      return mySearchField;
+    }
+
+    Wrapper wrapper = new Wrapper(new SearchFieldWithExtension(mySearchField, JBUI.CurrentTheme.Popup.BACKGROUND));
+    wrapper.setOpaque(true);
+    wrapper.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+    wrapper.setBorder(JBUI.Borders.empty(3, 5));
+    return wrapper;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  protected int getTextFieldExtraHeight() {
+    return Registry.is("search.everywhere.round.text.field", false) ? JBUI.scale(-1) : super.getTextFieldExtraHeight();
+  }
+
   private void showPopup(@NotNull RelativePoint relativePoint) {
     List<String> items = ((SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject)).getHistoryItems();
     if (items.isEmpty()) return;
@@ -835,8 +923,17 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
 
     List<SearchEverywhereContributor<?>> contributors = myHeader.getSelectedTab().getContributors();
-    int limit = contributors.size() > 1 ? MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT : SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT;
-    contributors.forEach(c -> contributorsMap.put(c, limit));
+    boolean manyContributors = contributors.size() > 1;
+    int limit = manyContributors ? MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT : SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT;
+
+    contributors.forEach(c -> {
+                           int newLimit = !manyContributors && c.getSearchProviderId().equals(ActionSearchEverywhereContributor.ID)
+                                          ? SINGLE_ACTIONS_CONTRIBUTOR_ELEMENTS_LIMIT
+                                          : limit;
+
+                           contributorsMap.put(c, newLimit);
+                         }
+    );
 
     if (myProject != null) {
       contributors = DumbService.getInstance(myProject).filterByDumbAwareness(contributorsMap.keySet());
@@ -855,10 +952,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     String tabId = myHeader.getSelectedTab().getID();
     if (myMlService != null) {
-      myMlService.onSearchRestart(
+      var searchResults = myListModel.listElements
+        .stream()
+        .filter(e -> e.element != SearchListModel.MORE_ELEMENT)
+        .toList();
+      myMlService.onStateFinished(searchResults);
+      myMlService.onStateStarted(
         tabId, reason,
-        mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, namePattern,
-        myListModel.getFoundElementsInfo(),
+        namePattern,
         getSelectedSearchScope(myHeader.getSelectedTab()), myHeader.isEverywhere()
       );
     }
@@ -908,7 +1009,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
       @Override
       public void mouseClicked(MouseEvent e) {
-        onMouseClicked(e);
+        WriteIntentReadAction.run(() -> {
+          onMouseClicked(e);
+        });
       }
 
       @Override
@@ -1391,14 +1494,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
   @Override
   public void closePopup() {
+    ActionMenu.showDescriptionInStatusBar(true, myResultsList, null);
+    stopSearching();
+
     if (isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
       if (myMlService != null) {
-        myMlService.onSearchFinished(ContainerUtil.copyList(myListModel.getFoundElementsInfo()));
+        myMlService.onSessionFinished();
       }
     }
 
-    ActionMenu.showDescriptionInStatusBar(true, myResultsList, null);
-    stopSearching();
     searchFinishedHandler.run();
   }
 
@@ -1534,11 +1638,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
               foundElements.add(o);
               tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
-              if (foundElements.size() + alreadyFoundCount >= UsageLimitUtil.USAGES_LIMIT &&
-                  tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-                UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, progressIndicator, null,
-                                                                   () -> UsageViewBundle.message("find.excessive.usage.count.prompt"),
-                                                                   null);
+              if (foundElements.size() + alreadyFoundCount >= UsageLimitUtil.getSearchResultLimit() 
+                  && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+                UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, progressIndicator, null, null, null);
                 return !progressIndicator.isCanceled();
               }
               return true;
@@ -1677,11 +1779,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     @Override
     public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-      if (mySearchProgressIndicator == null || mySearchProgressIndicator.isCanceled()) return;
-
       if (myMlService != null) {
         myMlService.notifySearchResultsUpdated();
       }
+
+      if (mySearchProgressIndicator == null || mySearchProgressIndicator.isCanceled()) return;
 
       mySelectionTracker.lock();
       myListModel.addElements(list);

@@ -14,7 +14,13 @@ import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleVio
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.*;
+import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.DOLLAR_SLASHY_QUOTED;
+import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.DOUBLE_QUOTED;
+import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.SINGLE_QUOTED;
+import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.SLASHY;
+import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.TRIPLE_DOUBLE_QUOTED;
+import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.TRIPLE_QUOTED;
+import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.UNDEFINED;
 
 
 public class GrStringStyleViolationInspectionTest extends LightGroovyTestCase {

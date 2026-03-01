@@ -5,7 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.JavaDirectoryService
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper

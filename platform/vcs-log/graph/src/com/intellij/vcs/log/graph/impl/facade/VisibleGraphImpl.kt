@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade
 
-import com.intellij.vcs.log.graph.*
+import com.intellij.vcs.log.graph.EdgePrintElement
+import com.intellij.vcs.log.graph.PrintElement
+import com.intellij.vcs.log.graph.RowInfo
+import com.intellij.vcs.log.graph.RowType
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
+import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.actions.ActionController
 import com.intellij.vcs.log.graph.actions.GraphAction
 import com.intellij.vcs.log.graph.actions.GraphAnswer

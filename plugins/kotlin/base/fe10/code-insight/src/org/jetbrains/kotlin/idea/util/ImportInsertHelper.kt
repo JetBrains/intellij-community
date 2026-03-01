@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
 
+@K1Deprecation
 abstract class ImportInsertHelper {
     /*TODO: implementation is not quite correct*/
     abstract fun isImportedWithDefault(importPath: ImportPath, contextFile: KtFile): Boolean
@@ -43,6 +45,7 @@ abstract class ImportInsertHelper {
     }
 }
 
+@K1Deprecation
 enum class ImportDescriptorResult {
     FAIL,
     IMPORT_ADDED,

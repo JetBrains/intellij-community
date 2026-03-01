@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.SpecialNames
@@ -15,8 +16,10 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 fun KotlinMoveTarget.getTargetModule(project: Project) = targetFileOrDir?.let { ModuleUtilCore.findModuleForFile(it, project) }
 
+@K1Deprecation
 sealed interface KotlinMoveTarget {
     val targetContainerFqName: FqName?
 

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
@@ -15,14 +16,29 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacement
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunctionType
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.TypeProjectionImpl
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.Variance
 
+@K1Deprecation
 class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageReplacementStrategy {
     override fun createReplacer(usage: KtReferenceExpression): (() -> KtElement?)? {
         val refElement = usage.getParentOfTypeAndBranch<KtUserType> { referenceExpression }

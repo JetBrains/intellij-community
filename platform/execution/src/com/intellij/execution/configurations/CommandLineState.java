@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.*;
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.ExecutionTarget;
+import com.intellij.execution.Executor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;

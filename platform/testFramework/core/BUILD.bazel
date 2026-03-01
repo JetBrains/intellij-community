@@ -28,13 +28,38 @@ jvm_library(
     "//java/java-runtime:rt",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
-    "//libraries/jackson/jackson",
-    "//libraries/jackson/databind",
-    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
     "//libraries/http-client",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/testFramework/teamCity",
     ":libraries_junit4_provided",
+  ]
+)
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.platform.testFramework.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":core",
+    "//platform/util:util_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/boot:boot_test_lib",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
+    "//libraries/junit4",
+    "//libraries/junit4:junit4_test_lib",
+    "@lib//:junit5-provided",
+    "//java/java-runtime:rt_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
+    "//libraries/http-client:http-client_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/testFramework/teamCity:teamCity_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.core` end

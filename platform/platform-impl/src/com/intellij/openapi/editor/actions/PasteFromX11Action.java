@@ -12,8 +12,9 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollBar;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;

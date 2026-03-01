@@ -5,26 +5,42 @@ import com.intellij.driver.client.impl.DriverCallException
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RemoteMouseButton
-import com.intellij.driver.sdk.*
+import com.intellij.driver.sdk.DeclarativeInlayRenderer
+import com.intellij.driver.sdk.Document
+import com.intellij.driver.sdk.Editor
+import com.intellij.driver.sdk.HighlightInfo
+import com.intellij.driver.sdk.HintRenderer
+import com.intellij.driver.sdk.Inlay
+import com.intellij.driver.sdk.InlineCompletionLineRenderer
+import com.intellij.driver.sdk.ScrollType
+import com.intellij.driver.sdk.getHighlights
+import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.logicalPosition
 import com.intellij.driver.sdk.remoteDev.BeControlClass
 import com.intellij.driver.sdk.remoteDev.EditorComponentImplBeControlBuilder
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
+import com.intellij.driver.sdk.ui.components.elements.JCheckBoxUi
+import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.actionButton
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.rdTarget
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.shouldContainText
+import com.intellij.driver.sdk.wait
+import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.waitNotNull
 import org.intellij.lang.annotations.Language
 import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.time.Duration
-import com.intellij.openapi.editor.markup.EffectType
 import kotlin.time.Duration.Companion.milliseconds
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
@@ -173,6 +189,12 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun moveCaretToText(targetText: String) {
+    interact {
+      getCaretModel().moveToOffset(text.indexOf(targetText))
+    }
+  }
+
   private fun calculatePositionPoint(line: Int, column: Int): Point {
     return interact {
       val lowerPoint = editor.logicalPositionToXY(driver.logicalPosition(line - 1, column - 1))
@@ -226,19 +248,28 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun getInlineCompletion(line: Int? = null): List<InlayHint> {
-    val startOffset = line?.let { editor.getDocument().getLineStartOffset(it - 1) } ?: 0
-    val endOffset = line?.let { editor.getDocument().getLineEndOffset(it - 1) } ?: Int.MAX_VALUE
-    val offsetToInlay: List<Pair<Int, String>> = this.editor.getInlayModel().getInlineElementsInRange(startOffset, endOffset).mapNotNull { element ->
+  /**
+  * Retrieves inline completion text at the specified offset or current caret position.
+  * @param offset The offset at which to retrieve inline completion. Defaults to the current caret position.
+  * @return The inline completion text at the specified offset.
+  */
+  fun getInlineCompletion(offset: Int = interact { editor.getCaretModel().getOffset() }): String {
+    val endOffset: Int = with(editor.getDocument()) {
+      val lastLine = getLineCount() - 1
+      getLineEndOffset(lastLine)
+    }
+    val inlineElements = editor.getInlayModel().getInlineElementsInRange(offset, endOffset).filter { it.getOffset() == offset }
+    val blockElements = editor.getInlayModel().getBlockElementsInRange(offset, endOffset).filter { it.getOffset() == offset }
+
+    val completions = (inlineElements + blockElements).mapNotNull { element ->
       try {
-        val text = driver.cast(element.getRenderer(), InlineCompletionLineRenderer::class).getBlocks().joinToString { it.text }
-        element.getOffset() to text
+        driver.cast(element.getRenderer(), InlineCompletionLineRenderer::class).getBlocks().joinToString("") { it.text }
       }
       catch (_: DriverCallException) {
         return@mapNotNull null
       }
     }
-    return offsetToInlay.map { InlayHint(it.first, it.second) }
+    return completions.joinToString("\n")
   }
 
   fun getAfterLineHints(line: Int): List<String> = editor.getInlayModel().getAfterLineEndElementsForLogicalLine(line - 1)
@@ -260,7 +291,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     TextAttributes(
       it.getStartOffset(),
       it.getEndOffset(),
-      EffectType.valueOf(attrs.getEffectType().toString()),
+      EffectTypeValues.valueOf(attrs.getEffectType().toString()),
       attrs.getEffectColor()?.run { Color(getRGB()) }
     )
   }
@@ -280,7 +311,21 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   private fun scrollType(name: String = "CENTER") = driver.utility(ScrollType::class).valueOf(name)
 
-  data class TextAttributes(val startOffset: Int, val endOffset: Int, val effectType: EffectType, val effectColor: Color?)
+  data class TextAttributes(val startOffset: Int, val endOffset: Int, val effectType: EffectTypeValues, val effectColor: Color?)
+
+  // copy of com.intellij.openapi.editor.markup.EffectType
+  // test-sdk may not depend on platform JARs
+  enum class EffectTypeValues {
+    LINE_UNDERSCORE,
+    WAVE_UNDERSCORE,
+    BOXED,
+    STRIKEOUT,
+    BOLD_LINE_UNDERSCORE,
+    BOLD_DOTTED_LINE,
+    SEARCH_MATCH,
+    ROUNDED_BOX,
+    SLIGHTLY_WIDER_BOX;
+  }
 }
 
 @Remote("com.jetbrains.performancePlugin.utils.IntentionActionUtils", plugin = "com.jetbrains.performancePlugin")
@@ -322,7 +367,7 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
         .map { GutterIcon(it) }
     }
 
-  val iconAreaOffset
+  val iconAreaOffset: Int
     get() = gutter.getIconAreaOffset()
 
   fun icon(timeout: Duration = DEFAULT_FIND_TIMEOUT, errorMessage: String = "icon not found", predicate: (GutterIcon) -> Boolean): GutterIcon =
@@ -333,7 +378,7 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     return this.icons
   }
 
-  fun getIconName(line: Int) =
+  fun getIconName(line: Int): String =
     icons.firstOrNull { it.line == line - 1 }?.mark?.getIcon().toString().substringAfterLast("/")
 
   fun hoverOverIcon(line: Int) {
@@ -428,31 +473,31 @@ fun Finder.editorSearchReplace(@Language("xpath") xpath: String? = null, action:
 }
 
 class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
-  val searchField = textField { and(byClass("JBTextArea"), byAccessibleName("Search")) }
-  val replaceField = textField { and(byClass("JBTextArea"), byAccessibleName("Replace")) }
-  val clearSearchButton = actionButton { byAttribute("myicon", "closeSmall.svg") }
-  val newLineButton = actionButton { byAccessibleName("New Line") }
-  val matchCaseButton = actionButton { byAccessibleName("Match Case") }
-  val regexButton = actionButton { byAccessibleName("Regex") }
-  val preserveCaseButton = actionButton { byAccessibleName("Preserve case") }
-  val matchesLabel = x("//div[@class='ActionToolbarImpl']//div[@class='JLabel']")
-  val nextOccurrenceButton = actionButton { byAccessibleName("Next Occurrence") }
-  val previousOccurrenceButton = actionButton { byAccessibleName("Previous Occurrence") }
-  val filterSearchResultsButton = actionButton { byAccessibleName("Filter Search Results") }
-  val optionsButton = actionButton { byAccessibleName("Open in Window, Multiple Cursors") }
-  val replaceButton = actionButton { byVisibleText("Replace") }
-  val replaceAllButton = actionButton { byAccessibleName("Replace All") }
-  val excludeButton = actionButton { byAccessibleName("Exclude") }
-  val closeSearchReplaceButton = actionButton { byAccessibleName("Close") }
-  val searchHistoryButton = actionButton { byAccessibleName("Search History") }
+  val searchField: JTextFieldUI = textField { and(byClass("JBTextArea"), byAccessibleName("Search")) }
+  val replaceField: JTextFieldUI = textField { and(byClass("JBTextArea"), byAccessibleName("Replace")) }
+  val clearSearchButton: ActionButtonUi = actionButton { byAttribute("myicon", "closeSmall.svg") }
+  val newLineButton: ActionButtonUi = actionButton { byAccessibleName("New Line") }
+  val matchCaseButton: ActionButtonUi = actionButton { byAccessibleName("Match Case") }
+  val regexButton: ActionButtonUi = actionButton { byAccessibleName("Regex") }
+  val preserveCaseButton: ActionButtonUi = actionButton { byAccessibleName("Preserve case") }
+  val matchesLabel: UiComponent = x("//div[@class='ActionToolbarImpl']//div[@class='JLabel']")
+  val nextOccurrenceButton: ActionButtonUi = actionButton { byAccessibleName("Next Occurrence") }
+  val previousOccurrenceButton: ActionButtonUi = actionButton { byAccessibleName("Previous Occurrence") }
+  val filterSearchResultsButton: ActionButtonUi = actionButton { byAccessibleName("Filter Search Results") }
+  val optionsButton: ActionButtonUi = actionButton { byAccessibleName("Open in Window, Multiple Cursors") }
+  val replaceButton: ActionButtonUi = actionButton { byVisibleText("Replace") }
+  val replaceAllButton: ActionButtonUi = actionButton { byAccessibleName("Replace All") }
+  val excludeButton: ActionButtonUi = actionButton { byAccessibleName("Exclude") }
+  val closeSearchReplaceButton: ActionButtonUi = actionButton { byAccessibleName("Close") }
+  val searchHistoryButton: ActionButtonUi = actionButton { byAccessibleName("Search History") }
 
   // The components below are available in "find in large file" only
-  val matchCaseCheckBox = checkBox { byAccessibleName("Match сase") }
-  val wordsCheckBox = checkBox { byAccessibleName("Words") }
-  val regexCheckBox = checkBox { byAccessibleName("Regex") }
-  val searchAllButton = actionButton { byAccessibleName("Search All") }
-  val searchBackwardButton = actionButton { byAccessibleName("Search Backward") }
-  val searchForwardButton = actionButton { byAccessibleName("Search Forward") }
+  val matchCaseCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Match case") }
+  val wordsCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Words") }
+  val regexCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Regex") }
+  val searchAllButton: ActionButtonUi = actionButton { byAccessibleName("Search All") }
+  val searchBackwardButton: ActionButtonUi = actionButton { byAccessibleName("Search Backward") }
+  val searchForwardButton: ActionButtonUi = actionButton { byAccessibleName("Search Forward") }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")

@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 /**
  * Forces JCEF early startup in order to support co-existence with JavaFX (see IDEA-236310).
  */
-private class JBCefStartup(coroutineScope: CoroutineScope) {
+internal class JBCefStartup(coroutineScope: CoroutineScope) {
   @Suppress("unused")
   private var STARTUP_CLIENT: JBCefClient? = null // auto-disposed along with JBCefApp on IDE shutdown
 

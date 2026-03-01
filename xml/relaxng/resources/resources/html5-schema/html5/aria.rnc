@@ -11,6 +11,8 @@
 
 aria.global =
 	(	aria.prop.atomic?
+	&	aria.prop.braillelabel?
+	&	aria.prop.brailleroledescription?
 	&	aria.state.busy?
 	&	aria.prop.controls?
 	&	aria.state.current?
@@ -32,8 +34,6 @@ aria.global =
 	&	aria.prop.description?
 	)
 
-common.attrs.other &= aria.global?
-
 ## States and Properties for Native Roles
 
 common.attrs.aria.implicit.button |=
@@ -44,16 +44,22 @@ common.attrs.aria.implicit.button |=
 common.attrs.aria.implicit.cell |=
 	(	aria.prop.colspan?
 	&	aria.prop.rowspan?
+	&	aria.prop.colindex?	# ARIA 1.1 and 1.2
 	&	aria.prop.rowindex?
 	)
 
 common.attrs.aria.implicit.checkbox |=
-	(	aria.state.checked? )
+	(	aria.state.checked?
+	&	aria.state.expanded?
+	&	aria.prop.readonly?
+	&	aria.prop.required?
+	)
 
 common.attrs.aria.implicit.combobox |=
 	(	aria.state.expanded?
 	&	aria.prop.autocomplete?
 	&	aria.prop.required?
+	&	aria.prop.placeholder?
 	&	aria.prop.activedescendant?
 	&	aria.prop.readonly?
 	)
@@ -62,7 +68,9 @@ common.attrs.aria.implicit.definition |=
 	(	aria.state.expanded? )
 
 common.attrs.aria.implicit.dialog |=
-	(	aria.state.expanded? )
+	(	aria.state.expanded?
+	&	aria.prop.modal?
+	)
 
 common.attrs.aria.implicit.document |=
 	(	aria.state.expanded? )
@@ -72,6 +80,18 @@ common.attrs.aria.implicit.figure |=
 
 common.attrs.aria.implicit.form |=
 	(	aria.state.expanded? )
+
+common.attrs.aria.implicit.gridcell |=
+	(	aria.prop.level? # net inherited
+	&	aria.prop.readonly? # not inherited
+	&	aria.state.selected? # not inherited
+	&	aria.state.expanded?
+	&	aria.prop.required?
+	&	aria.prop.colspan?
+	&	aria.prop.colindex?
+	&	aria.prop.rowspan?
+	&	aria.prop.rowindex?
+	)
 
 common.attrs.aria.implicit.group |=
 	(	aria.state.expanded?
@@ -93,7 +113,6 @@ common.attrs.aria.implicit.listbox |=
 	(	aria.prop.multiselectable?
 	&	aria.prop.required?
 	&	aria.prop.activedescendant?
-	&	aria.state.expanded?
 	)
 
 common.attrs.aria.implicit.listitem |=
@@ -122,6 +141,7 @@ common.attrs.aria.implicit.progressbar |=
 
 common.attrs.aria.implicit.radio |=
 	(	aria.prop.posinset?
+	&	aria.prop.required?
 	&	aria.prop.setsize?
 	&	aria.state.checked?
 	&	aria.state.selected?
@@ -143,6 +163,7 @@ common.attrs.aria.implicit.searchbox |=
 	(	aria.prop.activedescendant?
 	&	aria.prop.autocomplete?
 	&	aria.prop.multiline?
+	&	aria.prop.placeholder?
 	&	aria.prop.readonly?
 	&	aria.prop.required?
 	)
@@ -168,6 +189,7 @@ common.attrs.aria.implicit.spinbutton |=
 	&	aria.prop.valuemin?
 	&	aria.prop.valuenow?
 	&	aria.prop.valuetext?
+	&	aria.prop.placeholder?
 	&	aria.prop.required?
 	)
 
@@ -183,6 +205,7 @@ common.attrs.aria.implicit.textbox |=
 	(	aria.prop.activedescendant?
 	&	aria.prop.autocomplete?
 	&	aria.prop.multiline?
+	&	aria.prop.placeholder?
 	&	aria.prop.readonly?
 	&	aria.prop.required?
 	)
@@ -354,6 +377,18 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 			|	string "both"
 			|	string "none" #default
 			}
+
+## braillelabel
+	aria.prop.braillelabel =
+		attribute aria-braillelabel {
+			string
+		}
+
+## brailleroledescription
+	aria.prop.brailleroledescription =
+		attribute aria-brailleroledescription {
+			string
+		}
 
 ## colcount
 	aria.prop.colcount =
@@ -650,6 +685,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 	aria.application =
 		(	aria.role.application
 		&	aria.state.expanded?
+		&	aria.prop.activedescendant?		# ARIA 1.1 and 1.2
 		)
 		aria.role.application =
 			attribute role { string "application" }
@@ -661,6 +697,8 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 	aria.article =
 		(	aria.role.article
 		&	aria.state.expanded?
+		&	aria.prop.posinset?		# ARIA 1.1 and 1.2
+		&	aria.prop.setsize?		# ARIA 1.1 and 1.2
 		)
 		aria.role.article =
 			attribute role { string "article" }
@@ -679,6 +717,16 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.banner
 	common.attrs.aria.landmark.banner |= aria.banner
 
+## blockquote - added in ARIA 1.2
+	aria.blockquote =
+		(	aria.role.blockquote
+		)
+		aria.role.blockquote =
+			attribute role { string "blockquote" }
+
+	common.attrs.aria |= aria.blockquote
+	common.attrs.aria.role.blockquote |= aria.blockquote
+
 ## button
 	aria.button =
 		(	aria.role.button
@@ -690,6 +738,16 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 
 	common.attrs.aria |= aria.button
 	common.attrs.aria.role.button |= aria.button
+
+## caption - added in ARIA 1.2
+	aria.caption =
+		(	aria.role.caption
+		)
+		aria.role.caption =
+			attribute role { string "caption" }
+
+	common.attrs.aria |= aria.caption
+	common.attrs.aria.role.caption |= aria.caption
 
 ## cell
 	aria.cell =
@@ -708,12 +766,25 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 	aria.checkbox =
 		(	aria.role.checkbox
 		&	aria.state.checked #required!
+		&	aria.state.expanded?	# ARIA 1.2 added
+		&	aria.prop.readonly? 	# ARIA 1.1 and 1.2
+		&	aria.prop.required? 	# ARIA 1.2 added
 		)
 		aria.role.checkbox =
 			attribute role { string "checkbox" }
 
 	common.attrs.aria |= aria.checkbox
 	common.attrs.aria.role.checkbox |= aria.checkbox
+
+## code - added in ARIA 1.2
+	aria.code =
+		(	aria.role.code
+		)
+		aria.role.code =
+			attribute role { string "code" }
+
+	common.attrs.aria |= aria.code
+	common.attrs.aria.role.code |= aria.code
 
 # columnheader
 	aria.columnheader =
@@ -725,12 +796,14 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 		&	aria.prop.required?
 		&	aria.prop.colspan?
 		&	aria.prop.rowspan?
+		&	aria.prop.colindex?	# ARIA 1.1 and 1.2
 		&	aria.prop.rowindex?
 		)
 		aria.role.columnheader =
 			attribute role { string "columnheader" }
 
 	common.attrs.aria |= aria.columnheader
+	common.attrs.aria.role.columnheader |= aria.columnheader
 
 ## combobox
 	aria.combobox =
@@ -782,6 +855,16 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.definition
 	common.attrs.aria.role.definition |= aria.definition
 
+## deletion - added in ARIA 1.2
+	aria.deletion =
+		(	aria.role.deletion
+		)
+		aria.role.deletion =
+			attribute role { string "deletion" }
+
+	common.attrs.aria |= aria.deletion
+	common.attrs.aria.role.deletion |= aria.deletion
+
 ## dialog
 	aria.dialog =
 		(	aria.role.dialog
@@ -794,17 +877,6 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.dialog
 	common.attrs.aria.role.dialog |= aria.dialog
 
-## directory
-	aria.directory =
-		(	aria.role.directory
-		&	aria.state.expanded?
-		)
-		aria.role.directory =
-			attribute role { string "directory" }
-
-	common.attrs.aria |= aria.directory
-	common.attrs.aria.role.directory |= aria.directory
-
 ## document
 	aria.document =
 		(	aria.role.document
@@ -815,6 +887,16 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 
 	common.attrs.aria |= aria.document
 	common.attrs.aria.landmark.document |= aria.document
+
+## emphasis - added in ARIA 1.2
+	aria.emphasis =
+		(	aria.role.emphasis
+		)
+		aria.role.emphasis =
+			attribute role { string "emphasis" }
+
+	common.attrs.aria |= aria.emphasis
+	common.attrs.aria.role.emphasis |= aria.emphasis
 
 ## feed
 	aria.feed =
@@ -864,6 +946,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 			attribute role { string "grid" }
 
 	common.attrs.aria |= aria.grid
+	common.attrs.aria.role.grid |= aria.grid
 
 ## gridcell
 	aria.gridcell =
@@ -882,6 +965,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 			attribute role { string "gridcell" }
 
 	common.attrs.aria |= aria.gridcell
+	common.attrs.aria.role.gridcell |= aria.gridcell
 
 ## group
 	aria.group =
@@ -922,7 +1006,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 ## heading
 	aria.heading =
 		(	aria.role.heading
-		&	aria.prop.level ? # not inherited
+		&	aria.prop.level 	# ARIA 1.1 and 1.2 required
 		&	aria.state.expanded?
 		)
 		aria.role.heading =
@@ -941,6 +1025,27 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 
 	common.attrs.aria |= aria.img
 	common.attrs.aria.role.img |= aria.img
+
+## image
+	aria.image =
+		(	aria.role.image
+		&	aria.state.expanded?
+		)
+		aria.role.image =
+			attribute role { string "image" }
+
+	common.attrs.aria |= aria.image
+	common.attrs.aria.role.image |= aria.image
+
+## insertion - added in ARIA 1.2
+	aria.insertion =
+		(	aria.role.insertion
+		)
+		aria.role.insertion =
+			attribute role { string "insertion" }
+
+	common.attrs.aria |= aria.insertion
+	common.attrs.aria.role.insertion |= aria.insertion
 
 ## link
 	aria.link =
@@ -970,7 +1075,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 		&	aria.prop.multiselectable? # not inherited
 		&	aria.prop.required?
 		&	aria.prop.activedescendant?
-		&	aria.state.expanded?
+		&	aria.prop.readonly? # ARIA 1.1 and 1.2
 		&	aria.prop.orientation?
 		)
 		aria.role.listbox =
@@ -1081,6 +1186,9 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 	aria.menuitemcheckbox =
 		(	aria.role.menuitemcheckbox
 		&	aria.state.checked #required
+		&	aria.state.expanded?	# ARIA 1.2 added
+		&	aria.prop.posinset?		# ARIA 1.1 and 1.2
+		&	aria.prop.setsize?		# ARIA 1.1 and 1.2
 		)
 		aria.role.menuitemcheckbox =
 			attribute role { string "menuitemcheckbox" }
@@ -1099,6 +1207,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 	aria.menuitemradio =
 		(	aria.role.menuitemradio
 		&	aria.state.checked #required
+		&	aria.state.expanded?	# ARIA 1.2 added
 		&	aria.state.selected?
 		&	aria.prop.posinset?
 		&	aria.prop.setsize?
@@ -1119,6 +1228,20 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 		aria.role.menuitemradio-checked-not-required =
 			attribute role { string "menuitemradio" }
 	common.attrs.aria.role.menuitemradio-checked-not-required |= aria.menuitemradio-checked-not-required
+
+## meter - added in ARIA 1.2
+	aria.meter =
+		(	aria.role.meter
+		&	aria.prop.valuemax? # optional
+		&	aria.prop.valuemin? # optional
+		&	aria.prop.valuetext? # inherited
+		&	aria.prop.valuenow # required
+		)
+		aria.role.meter =
+			attribute role { string "meter" }
+
+	common.attrs.aria |= aria.meter
+	common.attrs.aria.role.meter |= aria.meter
 
 ## navigation
 	aria.navigation =
@@ -1164,6 +1287,16 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.option
 	common.attrs.aria.role.option |= aria.option
 
+## paragraph - added in ARIA 1.2
+	aria.paragraph =
+		(	aria.role.paragraph
+		)
+		aria.role.paragraph =
+			attribute role { string "paragraph" }
+
+	common.attrs.aria |= aria.paragraph
+	common.attrs.aria.role.paragraph |= aria.paragraph
+
 ## presentation
 	aria.presentation =
 		(	aria.role.presentation )
@@ -1207,6 +1340,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 		(	aria.role.radiogroup
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
+		&	aria.prop.readonly? # ARIA 1.1 and 1.2
 		&	aria.prop.required?
 		&	aria.prop.orientation?
 		)
@@ -1236,11 +1370,14 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 		&	aria.state.expanded?
 		&	aria.prop.colindex?
 		&	aria.prop.rowindex?
+		&	aria.prop.posinset?		# ARIA 1.2 added
+		&	aria.prop.setsize?		# ARIA 1.2 added
 		)
 		aria.role.row =
 			attribute role { string "row" }
 
 	common.attrs.aria |= aria.row
+	common.attrs.aria.role.row |= aria.row
 
 ## rowgroup
 	aria.rowgroup =
@@ -1264,12 +1401,14 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 		&	aria.prop.required?
 		&	aria.prop.colspan?
 		&	aria.prop.rowspan?
+		&	aria.prop.colindex?	# ARIA 1.1 and 1.2
 		&	aria.prop.rowindex?
 		)
 		aria.role.rowheader =
 			attribute role { string "rowheader" }
 
 	common.attrs.aria |= aria.rowheader
+	common.attrs.aria.role.rowheader |= aria.rowheader
 
 ## searchbox
 	aria.searchbox =
@@ -1277,6 +1416,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 		&	aria.prop.activedescendant?
 		&	aria.prop.autocomplete?
 		&	aria.prop.multiline?
+		&	aria.prop.placeholder?	# ARIA 1.1 and 1.2
 		&	aria.prop.readonly?
 		&	aria.prop.required?
 		)
@@ -1288,9 +1428,9 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 ## scrollbar
 	aria.scrollbar =
 		(	aria.role.scrollbar
-		&	aria.prop.orientation
-		&	aria.prop.valuemax
-		&	aria.prop.valuemin
+		&	aria.prop.orientation?	# ARIA 1.2 optional
+		&	aria.prop.valuemax? 	# ARIA 1.2 optional
+		&	aria.prop.valuemin?		# ARIA 1.2 optional
 		&	aria.prop.valuenow
 		&	aria.prop.valuetext?
 		)
@@ -1317,6 +1457,10 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 		(	aria.role.separator
 		&	aria.state.expanded?
 		&	aria.prop.orientation?
+		&	aria.prop.valuenow?		# ARIA 1.2 (required if focusable, absent otherwise)
+		&	aria.prop.valuemin?		# ARIA 1.2 (optional if focusable, absent otherwise)
+		&	aria.prop.valuemax?		# ARIA 1.2 (optional if focusable, absent otherwise)
+		&	aria.prop.valuetext?	# ARIA 1.2 (optional if focusable, absent otherwise)
 		)
 		aria.role.separator =
 			attribute role { string "separator" }
@@ -1327,10 +1471,11 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 ## slider
 	aria.slider =
 		(	aria.role.slider
-		&	aria.prop.valuemax
-		&	aria.prop.valuemin
+		&	aria.prop.valuemax? 		# optional in ARIA 1.2
+		&	aria.prop.valuemin? 		# optional in ARIA 1.2
 		&	aria.prop.valuenow
 		&	aria.prop.valuetext?
+		&	aria.prop.readonly? 		# ARIA 1.1 and 1.2
 		&	aria.prop.orientation?
 		)
 		aria.role.slider =
@@ -1342,10 +1487,12 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 ## spinbutton
 	aria.spinbutton =
 		(	aria.role.spinbutton
-		&	aria.prop.valuemax
-		&	aria.prop.valuemin
-		&	aria.prop.valuenow
+		&	aria.prop.valuemax? 			# optional in ARIA 1.2
+		&	aria.prop.valuemin? 			# optional in ARIA 1.2
+		&	aria.prop.valuenow? 			# optional in ARIA 1.2
 		&	aria.prop.valuetext?
+		&	aria.prop.activedescendant?		# ARIA 1.1 and 1.2
+		&	aria.prop.readonly? 			# ARIA 1.1 and 1.2
 		&	aria.prop.required?
 		)
 		aria.role.spinbutton =
@@ -1365,10 +1512,43 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.status
 	common.attrs.aria.role.status |= aria.status
 
+## strong - added in ARIA 1.2
+	aria.strong =
+		(	aria.role.strong
+		)
+		aria.role.strong =
+			attribute role { string "strong" }
+
+	common.attrs.aria |= aria.strong
+	common.attrs.aria.role.strong |= aria.strong
+
+## subscript - added in ARIA 1.2
+	aria.subscript =
+		(	aria.role.subscript
+		)
+		aria.role.subscript =
+			attribute role { string "subscript" }
+
+	common.attrs.aria |= aria.subscript
+	common.attrs.aria.role.subscript |= aria.subscript
+
+## superscript - added in ARIA 1.2
+	aria.superscript =
+		(	aria.role.superscript
+		)
+		aria.role.superscript =
+			attribute role { string "superscript" }
+
+	common.attrs.aria |= aria.superscript
+	common.attrs.aria.role.superscript |= aria.superscript
+
 ## switch
 	aria.switch =
 		(	aria.role.switch
 		&	aria.state.checked #required!
+		&	aria.state.expanded?	# ARIA 1.2 added
+		&	aria.prop.readonly? 	# ARIA 1.1 and 1.2
+		&	aria.prop.required? 	# ARIA 1.2 added
 		)
 		aria.role.switch =
 			attribute role { string "switch" }
@@ -1449,6 +1629,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 		&	aria.prop.activedescendant?
 		&	aria.prop.autocomplete? # not inherited
 		&	aria.prop.multiline? # not inherited
+		&	aria.prop.placeholder?	# ARIA 1.1 and 1.2
 		&	aria.prop.readonly? # not inherited
 		&	aria.prop.required?
 		)
@@ -1457,6 +1638,16 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 
 	common.attrs.aria |= aria.textbox
 	common.attrs.aria.role.textbox |= aria.textbox
+
+## time - added in ARIA 1.2
+	aria.time =
+		(	aria.role.time
+		)
+		aria.role.time =
+			attribute role { string "time" }
+
+	common.attrs.aria |= aria.time
+	common.attrs.aria.role.time |= aria.time
 
 ## timer
 	aria.timer =
@@ -1467,6 +1658,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 			attribute role { string "timer" }
 
 	common.attrs.aria |= aria.timer
+	common.attrs.aria.role.timer |= aria.timer
 
 ## toolbar
 	aria.toolbar =
@@ -1490,6 +1682,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 			attribute role { string "tooltip" }
 
 	common.attrs.aria |= aria.tooltip
+	common.attrs.aria.role.tooltip |= aria.tooltip
 
 ## tree
 	aria.tree =
@@ -1523,6 +1716,7 @@ common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 			attribute role { string "treegrid" }
 
 	common.attrs.aria |= aria.treegrid
+	common.attrs.aria.role.treegrid |= aria.treegrid
 
 ## treeitem
 	aria.treeitem =

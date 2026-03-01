@@ -22,17 +22,29 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -43,6 +55,7 @@ import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
@@ -56,23 +69,21 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import com.jetbrains.rd.util.error
-import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.reactive.whenTrue
-import com.jetbrains.rd.util.trace
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.milliseconds
 
 open class CodeVisionHost(val project: Project) {
   companion object {
-    private val logger = getLogger<CodeVisionHost>()
+    private val logger = logger<CodeVisionHost>()
     const val defaultVisibleLenses: Int = 5
     const val settingsLensProviderId: String = "!Settings"
 
@@ -105,11 +116,19 @@ open class CodeVisionHost(val project: Project) {
   val invalidateProviderSignal: Signal<LensInvalidateSignal> = Signal()
 
   var providers: List<CodeVisionProvider<*>> = CodeVisionProviderFactory.createAllProviders(project)
+    private set
 
   private val defaultSortedProvidersList = mutableListOf<String>()
 
   @RequiresEdt
-  open fun initialize() {
+  internal fun initializeIfNeeded() {
+    if (_isInitialised) return
+    initialize()
+    _isInitialised = true
+  }
+
+  @RequiresEdt
+  protected open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
       runReadAction {
         if (project.isDisposed) {
@@ -128,15 +147,6 @@ open class CodeVisionHost(val project: Project) {
   val isInitialised: Boolean get() = _isInitialised
   private var _isInitialised = false
 
-  @RequiresEdt
-  fun finishInitialisation() {
-    _isInitialised = true
-  }
-
-  open fun collectAllProviders(): List<Pair<String, CodeVisionProvider<*>>> {
-    return providers.map { it.id to it }
-  }
-
   open fun handleLensClick(editor: Editor, range: TextRange, entry: CodeVisionEntry) {
     //todo intellij statistic
     logger.trace { "Handling click for entry with id: ${entry.providerId}" }
@@ -153,15 +163,15 @@ open class CodeVisionHost(val project: Project) {
       openCodeVisionSettings(provider)
       return
     }
-    firstProviderWithId(entry.providerId)?.handleExtraAction(editor, range, actionId)
+    firstProviderWithId(entry.providerId)?.handleExtraAction(editor, range, entry, actionId)
   }
 
-  open fun getAnchorForEntry(entry: CodeVisionEntry): CodeVisionAnchorKind {
+  fun getAnchorForEntry(entry: CodeVisionEntry): CodeVisionAnchorKind {
     val provider = getProviderById(entry.providerId) ?: return lifeSettingModel.defaultPosition.value
     return getAnchorForProvider(provider)
   }
 
-  open fun getProviderById(id: String): CodeVisionProvider<*>? {
+   fun getProviderById(id: String): CodeVisionProvider<*>? {
     return providers.firstOrNull { it.id == id }
   }
 
@@ -175,11 +185,6 @@ open class CodeVisionHost(val project: Project) {
 
   fun invalidateProvider(signal: LensInvalidateSignal) {
     invalidateProviderSignal.fire(signal)
-  }
-
-  fun getNumber(providerId: String): Int {
-    if (lifeSettingModel.disabledCodeVisionProviderIds.contains(providerId)) return -1
-    return defaultSortedProvidersList.indexOf(providerId)
   }
 
   fun CodeVisionAnchorKind?.nullIfDefault(): CodeVisionAnchorKind? = if (this === CodeVisionAnchorKind.Default) null else this
@@ -212,6 +217,8 @@ open class CodeVisionHost(val project: Project) {
   }
 
   protected open fun subscribeForDocumentChanges(editor: Editor, editorLifetime: Lifetime, onDocumentChanged: () -> Unit) {
+    if (IdeProductMode.isFrontend) return
+
     editor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         onDocumentChanged()
@@ -228,8 +235,14 @@ open class CodeVisionHost(val project: Project) {
     }
   }
 
+  @ApiStatus.Internal
+  fun recollectAndRearrangeProviders() {
+    providers = CodeVisionProviderFactory.createAllProviders(project)
+    rearrangeProviders()
+  }
+
   protected fun rearrangeProviders() {
-    val allProviders = collectAllProviders()
+    val allProviders = providers.map { it.id to it }
     defaultSortedProvidersList.clear()
     defaultSortedProvidersList.addAll(allProviders.getTopSortedIdList())
   }
@@ -280,22 +293,15 @@ open class CodeVisionHost(val project: Project) {
   }
 
   private fun subscribeDynamicPluginLoaded(enableCodeVisionLifetime: Lifetime) {
-    rearrangeProviders()
+    recollectAndRearrangeProviders()
     project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
       .subscribe(DynamicPluginListener.TOPIC,
                  object : DynamicPluginListener {
-                   private fun recollectAndRearrangeProviders() {
-                     providers = CodeVisionProviderFactory.createAllProviders(
-                       project)
-                     rearrangeProviders()
-                   }
-
-                   override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+                   override fun pluginsLoaded() {
                      recollectAndRearrangeProviders()
                    }
 
-                   override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
-                                               isUpdate: Boolean) {
+                   override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
                      recollectAndRearrangeProviders()
                    }
                  })
@@ -358,7 +364,7 @@ open class CodeVisionHost(val project: Project) {
 
   private fun getAnchorForProvider(provider: CodeVisionProvider<*>): CodeVisionAnchorKind {
     return lifeSettingModel.codeVisionGroupToPosition[provider.groupId].nullIfDefault()
-           ?: provider.defaultAnchor.nullIfDefault()
+           ?: CodeVisionProviderAnchorProvider.getDefaultAnchor(project, provider).nullIfDefault()
            ?: lifeSettingModel.defaultPosition.value
   }
 
@@ -464,11 +470,14 @@ open class CodeVisionHost(val project: Project) {
   // we are only interested in text editors, and BRFE behaves exceptionally bad so ignore them
   private fun isAllowedFileEditor(fileEditor: FileEditor?) = fileEditor is TextEditor && fileEditor !is BaseRemoteFileEditor
 
-  private fun calculateFrontendLenses(calcLifetime: Lifetime,
-                                      editor: Editor,
-                                      groupsToRecalculate: Collection<String> = emptyList(),
-                                      inTestSyncMode: Boolean = false,
-                                      consumer: (List<Pair<TextRange, CodeVisionEntry>>, List<String>) -> Unit) {
+  private fun calculateFrontendLenses(
+    calcLifetime: Lifetime,
+    editor: Editor,
+    groupsToRecalculate: Collection<String> = emptyList(),
+    inTestSyncMode: Boolean = false,
+    consumer: (newLenses: List<Pair<TextRange, CodeVisionEntry>>, providersToUpdate: List<String>) -> Unit,
+  ) {
+    val providers = providers
     val precalculatedUiThings = providers.associate {
       if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@associate it.id to null
       it.id to it.precomputeOnUiThread(editor)
@@ -489,7 +498,9 @@ open class CodeVisionHost(val project: Project) {
       val modCount = modificationCount(editor)
 
       var results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
+
       val providerWhoWantToUpdate = mutableListOf<String>()
+
       var everyProviderReadyToUpdate = true
       for (p in providers) {
         val provider = p as CodeVisionProvider<Any?>
@@ -527,9 +538,9 @@ open class CodeVisionHost(val project: Project) {
             results.addAll(state.result)
           }
           else if (editorOpenTimeNs == null || shouldConsiderProvider(editorOpenTimeNs)) {
-            everyProviderReadyToUpdate = false
-          }
-        }
+                everyProviderReadyToUpdate = false
+              }
+            }
 
         if (modCount != modificationCount(editor)) {
           // psi or document changed, aborting current run as outdated

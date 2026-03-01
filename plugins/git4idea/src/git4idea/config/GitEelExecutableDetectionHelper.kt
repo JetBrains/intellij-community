@@ -85,7 +85,7 @@ internal class GitEelExecutableDetectionHelper private constructor(private val s
       val canUseEelForLocal = useEelForLocalProjects()
       val canUseEelForWsl = canUseEelForWsl()
       val canUseEelForOther = canUseEel()
-      return if (!canUseEelForLocal && !canUseEelForOther) {
+      return if (!canUseEelForLocal && !canUseEelForOther && !canUseEelForWsl) {
         null
       } else {
         val descriptor: EelDescriptor? = project?.getEelDescriptor() ?: gitDirectory?.getEelDescriptor()

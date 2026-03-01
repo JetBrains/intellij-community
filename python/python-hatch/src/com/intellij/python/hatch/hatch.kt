@@ -13,7 +13,7 @@ import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import java.nio.file.Path
 
 const val HATCH_TOML: String = "hatch.toml"
@@ -93,7 +93,10 @@ interface HatchService {
    * param[basePythonBinaryPath] base python for environment, the one on the PATH should be used if null.
    * param[envName] environment name to create, 'default' should be used if null.
    */
-  suspend fun createVirtualEnvironment(basePythonBinaryPath: PythonBinary? = null, envName: String? = null): PyResult<PythonVirtualEnvironment.Existing>
+  suspend fun createVirtualEnvironment(
+    basePythonBinaryPath: PythonBinary? = null,
+    envName: String? = null,
+  ): PyResult<PythonVirtualEnvironment.Existing>
 
   suspend fun findVirtualEnvironments(): PyResult<List<HatchVirtualEnvironment>>
 
@@ -108,7 +111,9 @@ interface HatchService {
  * Hatch Service for working directory (where hatch.toml / pyproject.toml is usually placed)
  */
 suspend fun Path?.getHatchService(hatchExecutablePath: Path? = null, hatchEnvironmentName: String? = null): PyResult<HatchService> {
-  return CliBasedHatchService(hatchExecutablePath = hatchExecutablePath, workingDirectoryPath = this, hatchEnvironmentName = hatchEnvironmentName)
+  return CliBasedHatchService(hatchExecutablePath = hatchExecutablePath,
+                              workingDirectoryPath = this,
+                              hatchEnvironmentName = hatchEnvironmentName)
 }
 
 /**
@@ -126,7 +131,7 @@ suspend fun Module.getHatchService(hatchExecutablePath: Path? = null): PyResult<
 fun PythonHomePath.getHatchEnvVirtualProjectPath(): Path = this.parent.parent
 
 fun resolveHatchWorkingDirectory(project: Project, module: Module?): PyResult<Path> {
-  val pathString = module?.basePath ?: project.basePath
+  val pathString = module?.baseDir?.path ?: project.basePath
 
   return when (val path = pathString?.let { Path.of(it) }) {
     null -> Result.failure(WorkingDirectoryNotFoundHatchError(pathString))

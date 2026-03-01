@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class JavaIndexPerformanceTest extends JavaCodeInsightFixtureTestCase {
   public void test_Vfs_Event_Processing_Performance() {
     final String filename = "A.java";

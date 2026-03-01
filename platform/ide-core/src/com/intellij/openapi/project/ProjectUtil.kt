@@ -33,7 +33,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 import javax.swing.JComponent
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString

@@ -23,7 +23,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.system.OS
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Desktop
 import java.io.IOException

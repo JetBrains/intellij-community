@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 
 class ReplaceToStringWithStringTemplateInspection : KotlinApplicableInspectionBase.Simple<KtDotQualifiedExpression, Unit>() {

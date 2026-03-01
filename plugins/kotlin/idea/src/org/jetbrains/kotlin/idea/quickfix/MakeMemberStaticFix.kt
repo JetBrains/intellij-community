@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddJvmStaticIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
+@K1Deprecation
 class MakeMemberStaticFix(declaration: KtNamedDeclaration) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         var declaration = element ?: return

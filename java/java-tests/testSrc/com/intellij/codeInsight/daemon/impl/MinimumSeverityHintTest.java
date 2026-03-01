@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -24,7 +23,7 @@ public class MinimumSeverityHintTest extends DaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
     UndoManager.getInstance(myProject);
-    DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(true);
+    myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
   }
 
   @Override

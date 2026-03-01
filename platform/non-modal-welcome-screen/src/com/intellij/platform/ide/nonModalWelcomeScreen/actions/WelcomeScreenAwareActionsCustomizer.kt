@@ -54,13 +54,13 @@ private fun hideActionOnWelcomeScreen(action: AnAction): AnAction {
   }
 }
 
-private class WelcomeScreenHiddenActionWithRemoteSpec<T>(val actionWithSpec: T) : WelcomeScreenHiddenAction(actionWithSpec),
-                                                                                  ActionRemoteBehaviorSpecification
+internal class WelcomeScreenHiddenActionWithRemoteSpec<T>(val actionWithSpec: T) : WelcomeScreenHiddenAction(actionWithSpec),
+                                                                                   ActionRemoteBehaviorSpecification
   where T : AnAction, T : ActionRemoteBehaviorSpecification {
   override fun getBehavior(): ActionRemoteBehavior? = actionWithSpec.getBehavior()
 }
 
-private open class WelcomeScreenHiddenAction(action: AnAction) : AnActionWrapper(action) {
+internal open class WelcomeScreenHiddenAction(action: AnAction) : AnActionWrapper(action) {
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project != null && ProjectViewImpl.getInstance(project).currentViewId == WelcomeScreenLeftPanel.ID) {
@@ -71,7 +71,7 @@ private open class WelcomeScreenHiddenAction(action: AnAction) : AnActionWrapper
   }
 }
 
-private class WelcomeScreenProxyAction(
+internal class WelcomeScreenProxyAction(
   val action: AnAction,
   val welcomeScreenBehaviour: AnAction,
   private val isVisible: Boolean = true

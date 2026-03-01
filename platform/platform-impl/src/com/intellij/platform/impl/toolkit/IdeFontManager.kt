@@ -8,7 +8,7 @@ import sun.font.SunFontManager
 import java.awt.Font
 import java.io.File
 import java.nio.charset.Charset
-import java.util.*
+import java.util.Locale
 
 class IdeFontManager : SunFontManager() {
   companion object {

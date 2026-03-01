@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ui.ItemRemovable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.table.AbstractTableModel;
 import java.util.List;
 

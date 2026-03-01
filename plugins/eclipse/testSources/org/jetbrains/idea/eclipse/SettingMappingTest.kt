@@ -1,11 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse
 
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.*
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.BooleanConvertor
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.IntConvertor
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.compute
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.const
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.field
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.compute
-import org.junit.jupiter.api.Assertions.*
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.UnexpectedIncomingValue
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.convert
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.doNotImport
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.invert
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

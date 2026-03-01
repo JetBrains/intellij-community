@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace.statistics.features
 
-import com.intellij.ide.plugins.enums.SortBy
+import com.intellij.ide.plugins.MarketplaceTabSearchSortByOptions
 import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker
 import com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceTagValidator
 import com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceVendorsListValidator
@@ -21,7 +21,7 @@ object PluginManagerMarketplaceSearchFeatureProvider {
   private val IS_STAFF_PICKS_DATA_KEY = EventFields.Boolean("isStaffPicks")
   private val CUSTOM_REPOSITORY_COUNT_DATA_KEY = EventFields.Int("customRepositoryCount")
   private val MARKETPLACE_CUSTOM_REPOSITORY_COUNT_DATA_KEY = EventFields.Int("marketplaceCustomRepositoryCount")
-  private val SORT_BY_DATA_KEY = EventFields.Enum<SortBy>("sortBy")
+  private val SORT_BY_DATA_KEY = EventFields.Enum<MarketplaceTabSearchSortByOptions>("sortBy")
   private val VENDORS_LIST_FILTER_DATA_KEY = EventFields.StringListValidatedByCustomRule(
     "vendorsListFilter", MarketplaceVendorsListValidator::class.java
   )

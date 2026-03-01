@@ -8,7 +8,15 @@ import com.intellij.psi.tree.IElementType
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.*
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceContent
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCommentValue
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeaderContent
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListNumber
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparator
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

@@ -2,6 +2,7 @@ f:com.intellij.diagnostic.CoroutineDumperKt
 - sf:dumpCoroutines(kotlinx.coroutines.CoroutineScope,Z,Z):java.lang.String
 - bs:dumpCoroutines$default(kotlinx.coroutines.CoroutineScope,Z,Z,I,java.lang.Object):java.lang.String
 f:com.intellij.diagnostic.ThreadDumper
+- s:dumpEdtToString():java.lang.String
 - s:dumpThreadsToString():java.lang.String
 f:com.intellij.filename.UniqueNameBuilder
 - <init>(java.lang.String,java.lang.String):V
@@ -572,8 +573,6 @@ a:com.intellij.util.text.ImmutableCharSequence
 - replace(I,I,java.lang.CharSequence):com.intellij.util.text.ImmutableCharSequence
 - a:subtext(I,I):com.intellij.util.text.ImmutableCharSequence
 - a:toString():java.lang.String
-com.intellij.util.text.Matcher
-- a:matches(java.lang.String):Z
 f:com.intellij.util.text.NameUtilCore
 - sf:INSTANCE:com.intellij.util.text.NameUtilCore
 - sf:isWordStart(java.lang.String,I):Z

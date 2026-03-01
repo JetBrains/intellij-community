@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 class VariableLookup extends AbstractLookup implements ElementProvider {
   private final String myType;

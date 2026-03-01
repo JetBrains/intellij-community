@@ -12,8 +12,11 @@
   </extensions>
 
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.jewel.foundation"/>
-    <module name="intellij.platform.jewel.ui"/>
     <module name="intellij.platform.jewel.ideLafBridge"/>
+    <module name="intellij.platform.jewel.ui"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

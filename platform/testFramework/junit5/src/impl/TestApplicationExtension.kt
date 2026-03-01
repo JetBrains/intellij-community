@@ -6,9 +6,20 @@ package com.intellij.testFramework.junit5.impl
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.testFramework.common.*
+import com.intellij.testFramework.common.BazelTestUtil
+import com.intellij.testFramework.common.assertDisposerEmpty
+import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
+import com.intellij.testFramework.common.cleanApplicationState
+import com.intellij.testFramework.common.disposeTestApplication
+import com.intellij.testFramework.common.initTestApplication
+import com.intellij.testFramework.common.waitForAppLeakingThreads
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -42,6 +53,14 @@ private class TestApplicationResource(val initializationResult: Result<Unit>) : 
   override fun close() {
     check(!EDT.isCurrentThreadEdt())
     if (!initializationResult.isSuccess) {
+      return
+    }
+
+    // In Bazel test environment, don't dispose the application.
+    // The JVM will terminate after all tests complete anyway, and
+    // disposing here would break JUnit 4 tests that run after JUnit 5 tests.
+    // See BAZEL-2843 for details.
+    if (BazelTestUtil.isUnderBazelTest) {
       return
     }
 

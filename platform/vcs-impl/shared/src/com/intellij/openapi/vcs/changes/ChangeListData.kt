@@ -12,7 +12,7 @@ import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Date
 
 private const val CHANGELIST_DATA: String = "changelist_data" // NON-NLS
 

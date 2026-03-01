@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration
 
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayHintsCollector
+import com.intellij.codeInsight.hints.InlayHintsProvider
+import com.intellij.codeInsight.hints.InlayHintsSink
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.fileCanBeAffectedByCompilerPlugins

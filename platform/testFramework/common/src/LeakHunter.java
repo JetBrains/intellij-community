@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.find.ngrams.TrigramIndex;
@@ -36,14 +36,18 @@ import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.IgnoredTraverseEntry;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -77,6 +81,8 @@ public final class LeakHunter {
 
   /**
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
+   * <p/>
+   * <b>Note</b>: This check may load neighbor test classes and find problematic leaks there, (e.g., problematic static fields initialization).
    */
   @TestOnly
   public static <T> void checkLeak(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
@@ -182,13 +188,11 @@ public final class LeakHunter {
       if (EDT.isCurrentThreadEdt()) {
         TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
           UIUtil.dispatchAllInvocationEvents();
-          return Unit.INSTANCE;
         });
         while (DumbService.getInstance(project).isDumb()) {
           DumbService.getInstance(project).waitForSmartMode(100L);
           TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
             UIUtil.dispatchAllInvocationEvents();
-            return Unit.INSTANCE;
           });
         }
       }

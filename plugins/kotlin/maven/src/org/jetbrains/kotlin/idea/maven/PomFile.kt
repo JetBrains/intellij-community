@@ -11,7 +11,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiRecursiveVisitor
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
@@ -19,7 +23,13 @@ import com.intellij.util.xml.GenericDomValue
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.MavenDomElement
 import org.jetbrains.idea.maven.dom.MavenDomUtil
-import org.jetbrains.idea.maven.dom.model.*
+import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
+import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
+import org.jetbrains.idea.maven.dom.model.MavenDomRepository
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProject
@@ -27,11 +37,13 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
+import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.KOTLIN_VERSION_PROPERTY
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.kotlinPluginId
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
@@ -138,7 +150,13 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         return dependency
     }
 
-    fun addKotlinPlugin(version: String?): MavenDomPlugin = addPlugin(kotlinPluginId(version))
+    fun addKotlinPlugin(version: String?, usePlaceholderVersion: Boolean = false): MavenDomPlugin {
+        val kotlinVersion = if (usePlaceholderVersion) $$"${$$KOTLIN_VERSION_PROPERTY}" else version
+        val plugin = addPlugin(kotlinPluginId(kotlinVersion))
+        val addExtensions = isKotlinVersionAtLeast(version, LanguageVersion.KOTLIN_2_4)
+        if (addExtensions) plugin.extensions.setStringValue("true")
+        return plugin
+    }
 
     fun addPlugin(artifact: MavenId): MavenDomPlugin {
         ensureBuild()
@@ -162,7 +180,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
 
         dependencies.dependencies.firstOrNull {
             it.groupId.stringValue == artifact.groupId &&
-            it.artifactId.stringValue == artifact.artifactId
+                    it.artifactId.stringValue == artifact.artifactId
         }?.let { return it }
 
         with(dependencies.addDependency()) {
@@ -207,7 +225,9 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
     }
 
     fun findKotlinPlugins(): List<MavenDomPlugin> = domModel.build.plugins.plugins.filter { it.isKotlinMavenPlugin() }
-    fun findKotlinExecutions(vararg goals: String): List<MavenDomPluginExecution> = findKotlinExecutions().filter { it.goals.goals.any { it.rawText in goals } }
+    fun findKotlinExecutions(vararg goals: String): List<MavenDomPluginExecution> =
+        findKotlinExecutions().filter { it.goals.goals.any { it.rawText in goals } }
+
     fun findKotlinExecutions(): List<MavenDomPluginExecution> = findKotlinPlugins().flatMap { it.executions.executions }
 
     private fun findExecutions(plugin: MavenDomPlugin) = plugin.executions.executions
@@ -273,7 +293,11 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
     }
 
     fun addJavacExecutions(module: Module, kotlinPlugin: MavenDomPlugin) {
-        val javacPlugin = ensurePluginAfter(addPlugin(MavenId("org.apache.maven.plugins", "maven-compiler-plugin", null)), kotlinPlugin)
+        val javacPlugin =
+            ensurePluginAfter(
+                addPlugin(MavenId("org.apache.maven.plugins", "maven-compiler-plugin", null)),
+                kotlinPlugin
+            )
 
         //We are doing this here rather than below, because unit tests cannot resolve the maven project
         val defaultCompileExecution = findExecution(javacPlugin, "default-compile")
@@ -599,6 +623,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
                 isTest -> DefaultPhases.ProcessTestSources
                 else -> DefaultPhases.ProcessSources
             }
+
             else -> when {
                 isTest -> DefaultPhases.TestCompile
                 else -> DefaultPhases.Compile
@@ -749,8 +774,10 @@ fun PomFile.changeFeatureConfiguration(
 
 private fun MavenDomElement.createChildTag(name: String, value: String? = null): XmlTag? =
     xmlTag?.createChildTag(name, value)
+
 private fun XmlTag.createChildTag(name: String, value: String? = null): XmlTag =
     createChildTag(name, namespace, value, false)!!
+
 private fun XmlTag.findSubTagOrCreate(name: String): XmlTag =
     findSubTags(name).firstOrNull() ?: run {
         val childTag = createChildTag(name)

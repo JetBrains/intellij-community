@@ -18,7 +18,14 @@ import java.util.List;
 import static com.jetbrains.python.packaging.PyRequirementParser.fromLine;
 import static com.jetbrains.python.packaging.PyRequirementsKt.pyRequirement;
 import static com.jetbrains.python.packaging.PyRequirementsKt.pyRequirementVersionSpec;
-import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.*;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.COMPATIBLE;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.EQ;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.GT;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.GTE;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.LT;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.LTE;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.NE;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.STR_EQ;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 

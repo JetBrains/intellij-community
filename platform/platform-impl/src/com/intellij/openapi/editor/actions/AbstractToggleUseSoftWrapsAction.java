@@ -17,7 +17,7 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * Provides common functionality for {@code 'toggle soft wraps usage'} actions.

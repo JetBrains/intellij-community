@@ -57,7 +57,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.ENABLED_HMPP,
             KotlinBuildToolFusMetricName.JS_COMPILER_MODE,
             KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_DISABLED,
-            KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED
+            KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED,
+            KotlinBuildToolFusMetricName.KOTLIN_NATIVE_CACHE_DISABLED
         )
     ),
 

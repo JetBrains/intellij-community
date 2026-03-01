@@ -1,4 +1,4 @@
-<fold text='/** Some header kdoc ...*/' expand='~false~'>/**
+<fold text='/** Some header kdoc ...*/' expand='false'>/**
  * Some header kdoc
  */</fold>
 package some
@@ -7,5 +7,4 @@ package some
  * Other 1 * 2
  */</fold>
 
-// SET_TRUE: setCollapseFileHeader
-
+<caret>// SET_TRUE: setCollapseFileHeader

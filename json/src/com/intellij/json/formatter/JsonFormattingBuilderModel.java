@@ -1,13 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.FormattingContext;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.FormattingModelProvider;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.SpacingBuilder;
 import com.intellij.json.JsonLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.json.JsonElementTypes.*;
+import static com.intellij.json.JsonElementTypes.COLON;
+import static com.intellij.json.JsonElementTypes.COMMA;
+import static com.intellij.json.JsonElementTypes.L_BRACKET;
+import static com.intellij.json.JsonElementTypes.L_CURLY;
+import static com.intellij.json.JsonElementTypes.R_BRACKET;
+import static com.intellij.json.JsonElementTypes.R_CURLY;
 
 public final class JsonFormattingBuilderModel implements FormattingModelBuilder {
   @Override

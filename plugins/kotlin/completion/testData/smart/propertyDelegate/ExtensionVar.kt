@@ -47,3 +47,5 @@ var C.property by <caret>
 // ABSENT: X3
 // EXIST: X4
 // ABSENT: X5
+
+// IGNORE_K2

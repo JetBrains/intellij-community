@@ -25,7 +25,7 @@ import java.util.concurrent.Callable
 
 private val LOG = logger<HighlightingPassesCache>()
 
-private class HighlightingPassesCacheImpl(val project: Project) : HighlightingPassesCache {
+internal class HighlightingPassesCacheImpl(val project: Project) : HighlightingPassesCache {
   private val experiment = HighlightingPreloadExperiment()
 
   override fun schedule(files: List<VirtualFile>, sourceOnly: Boolean) {

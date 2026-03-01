@@ -8,7 +8,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomJavaUtil;
+import com.intellij.util.xml.ExtendClass;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.PsiClassConverter;
 import org.jetbrains.annotations.NotNull;
 
 public class PluginPsiClassConverter extends PsiClassConverter {

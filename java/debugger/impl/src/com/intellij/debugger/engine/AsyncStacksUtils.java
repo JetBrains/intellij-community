@@ -1,25 +1,29 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
-import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.testFramework.TestDebuggerAgentArtifactsProvider;
+import com.intellij.debugger.ui.breakpoints.JavaCollectionBreakpointType;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerCoreKt;
 import com.intellij.idea.AppMode;
+import com.intellij.java.debugger.impl.shared.JavaDebuggerSharedBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
@@ -37,21 +41,46 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.BazelEnvironmentUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.sun.jdi.*;
+import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.Value;
+import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.build.BuildDependenciesJps;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.ServiceLoader;
 
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 
@@ -159,18 +188,40 @@ public final class AsyncStacksUtils {
     return null;
   }
 
+  /**
+   * Parses stack trace captured by the debugger-agent. Result list can contain null elements corresponding to separator frames.
+   */
   @ApiStatus.Internal
-  public static List<StackFrameItem> parseAgentAsyncStackTrace(String value, VirtualMachineProxyImpl vm) {
-    List<StackFrameItem> res = new ArrayList<>();
+  public static @Nullable List<@Nullable StackFrameItem> parseAgentAsyncStackTrace(String value, VirtualMachineProxyImpl vm) {
     try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(value.getBytes(StandardCharsets.ISO_8859_1)))) {
+      return parseAgentAsyncStackTrace(dis, vm);
+    }
+    catch (IOException e) {
+      DebuggerUtilsImpl.logError(e);
+      return null;
+    }
+  }
+
+  /**
+   * Parses stack trace captured by the debugger-agent. Result list can contain null elements corresponding to separator frames.
+   */
+  @ApiStatus.Internal
+  public static @Nullable List<@Nullable StackFrameItem> parseAgentAsyncStackTrace(DataInputStream dis, VirtualMachineProxyImpl vm) {
+    try {
+      List<StackFrameItem> res = new ArrayList<>();
       while (dis.available() > 0) {
         StackFrameItem item = null;
         if (dis.readBoolean()) {
           String className = dis.readUTF();
           String methodName = dis.readUTF();
           int line = dis.readInt();
-          Location location = DebuggerUtilsEx.findOrCreateLocation(vm.getVirtualMachine(), className, methodName, line);
-          item = new StackFrameItem(location, null);
+          if ("< Unknown".equals(className) && "Stack > ".equals(methodName)) {
+            item = new ThrottledStackFrameItem(vm.getVirtualMachine());
+          }
+          else {
+            Location location = DebuggerUtilsEx.findOrCreateLocation(vm.getVirtualMachine(), className, methodName, line);
+            item = new StackFrameItem(location, null);
+          }
         }
         res.add(item);
       }
@@ -178,8 +229,8 @@ public final class AsyncStacksUtils {
     }
     catch (Exception e) {
       DebuggerUtilsImpl.logError(e);
+      return null;
     }
-    return null;
   }
 
   public static void setupAgent(DebugProcessImpl process) {
@@ -191,6 +242,8 @@ public final class AsyncStacksUtils {
     if (Registry.is("debugger.capture.points.agent.debug")) {
       enableAgentDebug(process);
     }
+
+    initializeOverheadDetector(process);
 
     // add points
     if (DebuggerUtilsImpl.isRemote(process)) {
@@ -217,35 +270,19 @@ public final class AsyncStacksUtils {
               }
             }
           }
+
+          @Override
+          public void processDetached(DebugProcessImpl process, boolean closedByUser) {
+            process.removeDebugProcessListener(this);
+          }
         });
       }
     }
   }
 
   private static void enableAgentDebug(DebugProcessImpl process) {
-    final RequestManagerImpl requestsManager = process.getRequestsManager();
-    ClassPrepareRequestor requestor = new ClassPrepareRequestor() {
-      @Override
-      public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-        try {
-          requestsManager.deleteRequest(this);
-          ((ClassType)referenceType).setValue(DebuggerUtils.findField(referenceType, "DEBUG"), referenceType.virtualMachine().mirrorOf(true));
-        }
-        catch (Exception e) {
-          LOG.warn("Error setting agent debug mode", e);
-        }
-      }
-    };
-    requestsManager.callbackOnPrepareClasses(requestor, CAPTURE_STORAGE_CLASS_NAME);
-    try {
-      ClassType captureClass = (ClassType)process.findClass(null, CAPTURE_STORAGE_CLASS_NAME, null);
-      if (captureClass != null) {
-        requestor.processClassPrepare(process, captureClass);
-      }
-    }
-    catch (Exception e) {
-      LOG.warn("Error setting agent debug mode", e);
-    }
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    DebuggerUtilsEx.setStaticBooleanField(process, CAPTURE_STORAGE_CLASS_NAME, "DEBUG", true);
   }
 
   public static void addAgentCapturePoints(EvaluationContextImpl evalContext, Properties properties) {
@@ -362,13 +399,10 @@ public final class AsyncStacksUtils {
     if (Registry.is("debugger.async.stack.trace.for.all.threads")) {
       parametersList.addProperty("debugger.async.stack.trace.for.all.threads", "true");
     }
-  }
 
-  /**
-   * returns true if Bazel-test specific env variables are set
-   */
-  private static Boolean isBazelTestRun() {
-    return System.getenv("TEST_SRCDIR") != null && System.getenv("TEST_UNDECLARED_OUTPUTS_DIR") != null;
+    for (var modifier : DebuggerAgentParametersModifier.getAgentModifiers()) {
+      modifier.modifyParameters(parametersList, project);
+    }
   }
 
   private static @Nullable Path getAgentArtifactPath(@Nullable Project project, @Nullable Disposable disposable) {
@@ -395,7 +429,7 @@ public final class AsyncStacksUtils {
       // the agent artifact provided by Bazel via runfiles, so we use ServiceLoader to find that provider
       // on the tests classpath and resolve the agent from there. Outside Bazel (regular production/dev runs), we
       // keep using the standard resolution path that downloads the dependency if needed.
-      if (PluginManagerCore.isUnitTestMode && isBazelTestRun()) {
+      if (PluginManagerCore.isUnitTestMode && BazelEnvironmentUtil.isBazelTestRun()) {
         ServiceLoader<TestDebuggerAgentArtifactsProvider> providerClasses = ServiceLoader.load(TestDebuggerAgentArtifactsProvider.class);
         var iterator = providerClasses.iterator();
         if (!iterator.hasNext()) {
@@ -432,7 +466,8 @@ public final class AsyncStacksUtils {
     @Nullable Project project,
     @Nullable Disposable disposable
   ) {
-    Path pluginDistDir = PluginManagerCoreKt.getPluginDistDirByClass(AsyncStacksUtils.class);
+    //take class from embedded module - JavaDebuggerSharedBundle, to resolve plugin dir
+    Path pluginDistDir = PluginManagerCoreKt.getPluginDistDirByClass(JavaDebuggerSharedBundle.class);
     if (pluginDistDir == null || !Files.isDirectory(pluginDistDir)) {
       LOG.error("Unable to find the (java) plugin distribution directory by class AsyncStacksUtils");
       return null;
@@ -488,8 +523,18 @@ public final class AsyncStacksUtils {
 
   private static String generateAgentSettings(@Nullable Project project) {
     Properties properties = CaptureSettingsProvider.getPointsProperties(project);
+    for (var modifier : DebuggerAgentParametersModifier.getAgentModifiers()) {
+      modifier.modifyProperties(properties, project);
+    }
     if (isSuspendHelperEnabled()) {
       properties.setProperty("suspendHelper", "true");
+    }
+    boolean throttling = DebuggerSettings.getInstance().AGENT_THROTTLING;
+    properties.setProperty("throttling", Boolean.toString(throttling));
+    double overhead = Registry.doubleValue("debugger.async.stack.trace.overhead.percent");
+    properties.setProperty("overheadPercent", Double.toString(overhead));
+    if (JavaCollectionBreakpointType.isEnabled()) {
+      properties.setProperty("collectionBreakpoints", "true");
     }
     if (!properties.isEmpty()) {
       try {
@@ -504,5 +549,68 @@ public final class AsyncStacksUtils {
       }
     }
     return "";
+  }
+
+  private static void initializeOverheadDetector(DebugProcessImpl process) {
+    AsyncStackTracesOverheadUtilsKt.initializeOverheadListener(process);
+
+    String className = "com.intellij.rt.debugger.agent.OverheadDetector";
+    String methodName = "overheadDetected";
+    var breakpoint = new SyntheticMethodBreakpoint(className, methodName, null, process.getProject()) {
+      @Override
+      public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
+        AsyncStackTracesOverheadUtilsKt.onOverheadDetected(process);
+        return false;
+      }
+    };
+    breakpoint.setSuspendPolicy(DebuggerSettings.SUSPEND_THREAD);
+    breakpoint.createRequest(process);
+  }
+
+  private static class ThrottledStackFrameItem extends StackFrameItem {
+    ThrottledStackFrameItem(VirtualMachine vm) {
+      super(createSyntheticLocation(vm), Collections.emptyList());
+    }
+
+    private static Location createSyntheticLocation(VirtualMachine vm) {
+      return DebuggerUtilsEx.findOrCreateLocation(vm, "", "", -1);
+    }
+
+    @Override
+    public XStackFrame createFrame(@NotNull DebugProcessImpl debugProcess, @Nullable SourcePosition sourcePosition) {
+      return new ThrottledFrame();
+    }
+  }
+
+  private static class ThrottledFrame extends XStackFrame implements XStackFrameWithSeparatorAbove {
+    private boolean myWithSeparator;
+
+    @Override
+    public void customizePresentation(@NotNull ColoredTextContainer component) {
+      component.setIcon(AllIcons.Empty);
+      component.append(JavaDebuggerBundle.message("async.stack.throttled.frame.label"), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    }
+
+    @Override
+    public void computeChildren(@NotNull XCompositeNode node) {
+      node.setMessage(JavaDebuggerBundle.message("async.stack.throttled.frame.info"), null,
+                      SimpleTextAttributes.REGULAR_ATTRIBUTES, StackFrameItem.CAPTURE_SETTINGS_OPENER);
+      node.addChildren(XValueChildrenList.EMPTY, true);
+    }
+
+    @Override
+    public String getCaptionAboveOf() {
+      return StackFrameItem.getAsyncStacktraceMessage();
+    }
+
+    @Override
+    public boolean hasSeparatorAbove() {
+      return myWithSeparator;
+    }
+
+    @Override
+    public void setWithSeparator(boolean withSeparator) {
+      myWithSeparator = withSeparator;
+    }
   }
 }

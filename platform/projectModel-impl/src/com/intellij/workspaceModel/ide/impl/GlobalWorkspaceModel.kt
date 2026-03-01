@@ -17,13 +17,27 @@ import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.provider.EelMachineProvider
+import com.intellij.platform.eel.provider.EelMachineResolver
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
-import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntityBuilder
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkRoot
+import com.intellij.platform.workspace.jps.entities.libraryProperties
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
@@ -31,7 +45,6 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -385,7 +398,6 @@ class GlobalWorkspaceModel internal constructor(
   companion object {
     private val LOG = logger<GlobalWorkspaceModel>()
 
-    @RequiresBlockingContext
     @JvmStatic
     fun getInstance(eelMachine: EelMachine): GlobalWorkspaceModel {
       return ApplicationManager.getApplication().service<GlobalWorkspaceModelRegistry>().getGlobalModel(eelMachine)
@@ -471,7 +483,7 @@ class GlobalWorkspaceModelRegistry {
       LocalEelMachine
     }
     else {
-      EelMachineProvider.getEelMachineByInternalName(protectedName.name)
+      EelMachineResolver.getEelMachineByInternalName(protectedName.name)
     }
     val model = getGlobalModel(machine)
     return model

@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:bouncy-castle-provider"],
   runtime_deps = ["@lib//:bouncy-castle-provider"]
 )
+
+jvm_library(
+  name = "bouncy-castle-provider_test_lib",
+  module_name = "intellij.libraries.bouncy.castle.provider",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:bouncy-castle-provider"],
+  runtime_deps = [":bouncy-castle-provider"]
+)
 ### auto-generated section `build intellij.libraries.bouncy.castle.provider` end

@@ -98,7 +98,7 @@ class IdeReplExecutionTest : LightPlatformTestCase() {
 
     @Test
     fun testLongCommandLine() {
-        ModuleRootModificationUtil.addDependency(module, createLibraryWithLongPaths(project))
+        ModuleRootModificationUtil.addDependency(module, createLibraryWithLongPaths(project, testRootDisposable))
 
         consoleRunner.dispose()
         consoleRunner = KotlinConsoleKeeper.getInstance(project).run(module)

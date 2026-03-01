@@ -7,7 +7,9 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.CompositeDocumentationProvider
-import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.DocumentationMarkup.SECTION_END
+import com.intellij.lang.documentation.DocumentationMarkup.SECTION_HEADER_START
+import com.intellij.lang.documentation.DocumentationMarkup.SECTION_SEPARATOR
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.documentation.ExternalDocumentationProvider
 import com.intellij.lang.java.JavaDocumentationProvider
@@ -21,15 +23,29 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocCommentBase
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -38,14 +54,19 @@ import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
-import org.jetbrains.kotlin.idea.kdoc.*
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.appendCodeSnippetHighlightedByLexer
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.appendHighlighted
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.createHighlightingManager
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.generateJavadoc
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.highlight
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
+import org.jetbrains.kotlin.idea.kdoc.KDocTemplate
 import org.jetbrains.kotlin.idea.kdoc.KDocTemplate.DescriptionBodyTemplate
+import org.jetbrains.kotlin.idea.kdoc.KotlinDocExtractorFromJavaDoc
+import org.jetbrains.kotlin.idea.kdoc.KotlinExternalDocUrlsProvider
+import org.jetbrains.kotlin.idea.kdoc.findKDoc
+import org.jetbrains.kotlin.idea.kdoc.insert
+import org.jetbrains.kotlin.idea.kdoc.resolveKDocLink
 import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRenderer
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
@@ -56,9 +77,39 @@ import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.renderer.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
+import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
+import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
+import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
+import org.jetbrains.kotlin.renderer.AnnotationArgumentsRenderingPolicy
+import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
+import org.jetbrains.kotlin.renderer.RenderingFormat
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
@@ -74,6 +125,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.constant
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.function.Consumer
 
+@K1Deprecation
 class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNamePolicyEx {
 
     override fun renderClassifier(classifier: ClassifierDescriptor, renderer: DescriptorRenderer): String =
@@ -112,6 +164,7 @@ class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNameP
     }
 }
 
+@K1Deprecation
 class WrapValueParameterHandler(val base: DescriptorRenderer.ValueParametersHandler) : DescriptorRenderer.ValueParametersHandler {
 
 
@@ -148,6 +201,7 @@ class WrapValueParameterHandler(val base: DescriptorRenderer.ValueParametersHand
     }
 }
 
+@K1Deprecation
 class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDocumentationProvider {
 
     override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {

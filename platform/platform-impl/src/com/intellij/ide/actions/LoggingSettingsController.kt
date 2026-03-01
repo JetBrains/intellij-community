@@ -6,7 +6,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.settings.*
+import com.intellij.platform.settings.DelegatedSettingsController
+import com.intellij.platform.settings.GetResult
+import com.intellij.platform.settings.PersistenceStateComponentPropertyTag
+import com.intellij.platform.settings.SetResult
+import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -24,7 +28,7 @@ interface LoggingSettingsChangesListener {
   }
 }
 
-private class LoggingSettingsController : DelegatedSettingsController {
+internal class LoggingSettingsController : DelegatedSettingsController {
   private val storage = ConcurrentHashMap<PluginId, ConcurrentHashMap<String, Any>>()
   private val ignoredKeys = setOf("EntryPointsManager", "ProjectPlainTextFileTypeManager")
 

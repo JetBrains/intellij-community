@@ -1,7 +1,12 @@
 package com.intellij.database.run.ui.grid.renderers;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.ColumnNamesHierarchyNode;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.NestedTable;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.EditorTextFieldCellRenderer.AbbreviatingRendererComponent;
@@ -10,7 +15,8 @@ import com.intellij.util.ui.JBEmptyBorder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
 import java.util.List;
 
 public class NestedTableCellRendererFactory implements GridCellRendererFactory {

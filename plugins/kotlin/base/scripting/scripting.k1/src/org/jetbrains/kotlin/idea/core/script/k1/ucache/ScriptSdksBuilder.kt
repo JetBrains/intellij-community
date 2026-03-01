@@ -13,11 +13,12 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.utils.ScriptClassRootsStorage
-import org.jetbrains.kotlin.idea.core.script.k1.ucache.SdkId
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
 import java.nio.file.Path
 
+@K1Deprecation
 class ScriptSdksBuilder(
   val project: Project,
   val sdks: MutableMap<SdkId, Sdk?> = mutableMapOf(),

@@ -11,8 +11,10 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import java.awt.BorderLayout;
 
 public class InstancesWindow extends InstancesWindowBase {
 

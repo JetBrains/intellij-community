@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
@@ -6,12 +6,19 @@ import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
-import java.util.*
+import java.util.Collections
+import java.util.WeakHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -105,6 +112,11 @@ sealed interface EelExecApi {
     val exe: String
   }
 
+  @Suppress("FunctionName")
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): Boolean = false
+
   /**
    * Use [environmentVariables] instead.
    *
@@ -115,6 +127,11 @@ sealed interface EelExecApi {
   @ApiStatus.Experimental
   @ApiStatus.Obsolete
   suspend fun fetchLoginShellEnvVariables(): Map<String, String> {
+    if (`_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`()) {
+      @Suppress("checkedExceptions")
+      return environmentVariables().eelIt().await()
+    }
+
     return when (this) {
       is EelExecPosixApi -> {
         if (this is LocalEelExecApi) {
@@ -136,9 +153,16 @@ sealed interface EelExecApi {
         }!!
         try {
           when {
-            expireAt <= now ->
-              return environmentVariables().loginInteractive().onlyActual(true).eelIt().await()
-
+            expireAt <= now -> {
+              val result = environmentVariables().loginInteractive().onlyActual(true).eelIt().await()
+              cacheForObsoleteEnvVarExpireAt.compute(descriptor) { _, expireAtAndSucceeded ->
+                if (expireAtAndSucceeded == expireAt to true)
+                  now + cacheDuration to true
+                else
+                  expireAtAndSucceeded
+              }
+              return result
+            }
             completedSuccessfullyLastTime ->
               return environmentVariables().loginInteractive().onlyActual(false).eelIt().await()
 
@@ -196,7 +220,13 @@ sealed interface EelExecApi {
   ) {
     @ApiStatus.Experimental
     @ThrowsChecked(EnvironmentVariablesException::class)
-    suspend fun await(): Map<String, String> = deferred.await()
+    suspend fun await(): Map<String, String> = try {
+      deferred.await()
+    }
+    catch (e: CancellationException) {
+      currentCoroutineContext().ensureActive()
+      throw RuntimeException("Environment variables fetching was cancelled", e)
+    }
   }
 
   interface EnvironmentVariablesOptions {

@@ -77,7 +77,7 @@ class TextStyleAdapter(
   }
 
   override fun toString(): String {
-    return "TextStyleAdapter(style=TextStyle(fg=${style.foreground}, bg=${style.background}, op=${TextStyle.Option.entries.filter { style.hasOption(it) }}))"
+    return "TextStyleAdapter(style=TextStyle(fg=${style.foreground}, bg=${style.background}, op=${TextStyle.Option.entries.filter { style.hasOption(it) }}), ignoreContrastAdjustment=$ignoreContrastAdjustment)"
   }
 }
 

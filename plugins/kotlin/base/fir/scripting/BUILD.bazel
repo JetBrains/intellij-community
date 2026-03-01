@@ -51,4 +51,30 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
+
+jvm_library(
+  name = "scripting_test_lib",
+  module_name = "intellij.kotlin.scripting",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_scripting",
+  runtime_deps = [
+    ":scripting",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/platforms:platforms_test_lib",
+    "//plugins/kotlin/base/fir/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.kotlin.scripting` end

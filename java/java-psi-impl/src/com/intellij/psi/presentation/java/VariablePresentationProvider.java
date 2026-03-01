@@ -7,7 +7,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 
 public final class VariablePresentationProvider<T extends PsiVariable & NavigationItem> implements ItemPresentationProvider<T> {

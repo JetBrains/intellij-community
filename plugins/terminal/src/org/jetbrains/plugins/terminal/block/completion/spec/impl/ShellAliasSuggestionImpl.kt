@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.terminal.completion.spec.ShellAliasSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
 import javax.swing.Icon
 
@@ -12,12 +11,13 @@ internal class ShellAliasSuggestionImpl(
   override val aliasValue: String,
   override val type: ShellSuggestionType = ShellSuggestionType.COMMAND,
   override val displayName: String? = null,
-  description: @Nls String? = null,
+  description: String? = null,
   override val insertValue: String? = null,
   override val priority: Int = 50,
   override val icon: Icon? = null,
   override val prefixReplacementIndex: Int = 0,
   override val isHidden: Boolean = false,
+  override val shouldEscape: Boolean = true,
 ) : ShellAliasSuggestion {
   override val description: String by lazy {
     description ?: TerminalBundle.message("doc.popup.alias.text", aliasValue)

@@ -63,8 +63,10 @@ object DistributedTestModel : Ext(TestRoot) {
 
   private val RdTestSessionException = structdef {
     field("type", string)
-    field("originalType", string.nullable)
-    field("message", string.nullable)
+    field("messageWithDetails", string)
+    field("messageForTestHistoryConsistency", string)
+    field("messageForDiogen", string.nullable)
+    field("printToStringForDiogen", string)
     field("stacktrace", immutableList(RdTestSessionStackTraceElement))
     field("cause", RdTestSessionLightException.nullable)
     field("suppressedExceptions", immutableList(RdTestSessionLightException).nullable)
@@ -101,6 +103,7 @@ object DistributedTestModel : Ext(TestRoot) {
     call("visibleFrameNames", void, immutableList(string)).async
     call("projectsNames", void, immutableList(string)).async
     call("makeScreenshot", string, bool).async
+    call("dumpThreads", void, bool).async
     call("isResponding", void, bool).async
     call("projectsAreInitialised", void, bool).async
     call("getProductCodeAndVersion", void, RdProductInfo).async

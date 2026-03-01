@@ -3,7 +3,7 @@ package com.intellij.platform.execution.dashboard.splitApi.frontend.tree;
 
 import com.intellij.execution.dashboard.RunDashboardGroup;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author konstantin.aleev

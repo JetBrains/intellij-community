@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.psi.KtElement
 
 
+@K1Deprecation
 class RedundantLabelMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<KtElement>(KtElement::class.java),
     MigrationFix,

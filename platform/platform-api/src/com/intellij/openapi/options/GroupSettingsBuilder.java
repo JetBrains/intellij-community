@@ -7,7 +7,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

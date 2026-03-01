@@ -19,7 +19,13 @@ import org.intellij.markdown.parser.MarkerProcessorFactory
 import org.intellij.markdown.parser.sequentialparsers.EmphasisLikeParser
 import org.intellij.markdown.parser.sequentialparsers.SequentialParser
 import org.intellij.markdown.parser.sequentialparsers.SequentialParserManager
-import org.intellij.markdown.parser.sequentialparsers.impl.*
+import org.intellij.markdown.parser.sequentialparsers.impl.AutolinkParser
+import org.intellij.markdown.parser.sequentialparsers.impl.BacktickParser
+import org.intellij.markdown.parser.sequentialparsers.impl.EmphStrongDelimiterParser
+import org.intellij.markdown.parser.sequentialparsers.impl.ImageParser
+import org.intellij.markdown.parser.sequentialparsers.impl.InlineLinkParser
+import org.intellij.markdown.parser.sequentialparsers.impl.MathParser
+import org.intellij.markdown.parser.sequentialparsers.impl.ReferenceLinkParser
 import org.intellij.plugins.markdown.lang.parser.blocks.DefinitionListMarkerProvider
 import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider
 import org.intellij.plugins.markdown.ui.preview.html.HeaderGeneratingProvider

@@ -8,7 +8,6 @@ import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
-import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -23,7 +22,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigur
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
-import org.jetbrains.plugins.gradle.testFramework.util.*
+import org.jetbrains.plugins.gradle.testFramework.util.getExecutionOperation
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleTaskExecutionOperation
 import org.junit.jupiter.api.Assertions

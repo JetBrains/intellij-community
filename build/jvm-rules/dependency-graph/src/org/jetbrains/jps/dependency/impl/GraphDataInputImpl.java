@@ -12,12 +12,31 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.function.Function;
 
 public class GraphDataInputImpl implements GraphDataInput {
-  private static final MethodType ourDefaultReadConstructorType = MethodType.methodType(void.class, GraphDataInput.class);
-  private static final MethodHandles.Lookup ourLookup = MethodHandles.lookup();
+
+  private static final ClassValue<MethodHandle> ourConstructors = new ClassValue<>() {
+    private final MethodType defaultReadConstructorType = MethodType.methodType(void.class, GraphDataInput.class);
+    @Override
+    protected MethodHandle computeValue(@NotNull Class<?> elemType) {
+      try {
+        if (FactoredExternalizableGraphElement.class.isAssignableFrom(elemType)) {
+          for (Constructor<?> constructor : elemType.getDeclaredConstructors()) {
+            if (constructor.getParameterCount() == 2 && GraphDataInput.class.equals(constructor.getGenericParameterTypes()[1])) {
+              return MethodHandles.lookup().unreflectConstructor(constructor);
+            }
+          }
+        }
+        return MethodHandles.lookup().findConstructor(elemType, defaultReadConstructorType);
+      }
+      catch (Exception e) {
+        throw new ExceptionInInitializerError(e);
+      }
+    }
+  };
 
   private final DataInput myDelegate;
 
@@ -127,15 +146,12 @@ public class GraphDataInputImpl implements GraphDataInput {
   @Override
   public <T extends ExternalizableGraphElement> T readGraphElement() throws IOException {
     try {
-      MethodHandle constructor;
       String className = readUTF();
       Class<?> elemType = Class.forName(className);
+      MethodHandle constructor = ourConstructors.get(elemType);
       if (FactoredExternalizableGraphElement.class.isAssignableFrom(elemType)) {
         ExternalizableGraphElement factorData = readGraphElement();
-        constructor = ourLookup.findConstructor(elemType, MethodType.methodType(void.class, factorData.getClass(), GraphDataInput.class)).bindTo(factorData);
-      }
-      else {
-        constructor = ourLookup.findConstructor(elemType, ourDefaultReadConstructorType);
+        constructor = constructor.bindTo(factorData);
       }
       //noinspection unchecked
       return processLoadedGraphElement((T)constructor.invoke(this));
@@ -165,7 +181,7 @@ public class GraphDataInputImpl implements GraphDataInput {
                 if (constructor == null)  {
                   // first element
                   ExternalizableGraphElement factorData = readGraphElement();
-                  constructor = ourLookup.findConstructor(elemType, MethodType.methodType(void.class, factorData.getClass(), GraphDataInput.class)).bindTo(factorData);
+                  constructor = ourConstructors.get(elemType).bindTo(factorData);
                 }
                 //noinspection unchecked
                 return GraphDataInputImpl.this.processLoadedGraphElement((T)constructor.invoke(GraphDataInputImpl.this));
@@ -182,7 +198,7 @@ public class GraphDataInputImpl implements GraphDataInput {
         return acc;
       }
 
-      MethodHandle constructor = ourLookup.findConstructor(elemType, ourDefaultReadConstructorType);
+      MethodHandle constructor = ourConstructors.get(elemType);
       return RW.readCollection(this, () -> {
         try {
           //noinspection unchecked

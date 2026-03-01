@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
@@ -174,6 +174,47 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
       |  BRANCH:origin/main
       | -TAG
       |  [TAG:ma]
+    """.trimMargin())
+  }
+
+  fun `test user selection is preserved when filter pattern unchanged`() = branchesTreeTest {
+    setState(localBranches = listOf("main", "main-123"), remoteBranches = listOf("main"))
+
+    filter("main")
+    assertTree("""
+      |-ROOT
+      | HEAD
+      | -LOCAL
+      |  [BRANCH:main]
+      |  BRANCH:main-123
+      | -REMOTE
+      |  -REMOTE:origin
+      |   BRANCH:origin/main
+    """.trimMargin())
+
+    selectBranch("main-123")
+    assertTree("""
+      |-ROOT
+      | HEAD
+      | -LOCAL
+      |  BRANCH:main
+      |  [BRANCH:main-123]
+      | -REMOTE
+      |  -REMOTE:origin
+      |   BRANCH:origin/main
+    """.trimMargin())
+
+    // Refiltering with the same pattern (e.g., VCS Log tab switch)
+    refilter()
+    assertTree("""
+      |-ROOT
+      | HEAD
+      | -LOCAL
+      |  BRANCH:main
+      |  [BRANCH:main-123]
+      | -REMOTE
+      |  -REMOTE:origin
+      |   BRANCH:origin/main
     """.trimMargin())
   }
 }

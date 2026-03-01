@@ -15,7 +15,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.projectModel.ProjectModelBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 public class LibraryConfigurable extends ProjectStructureElementConfigurable<Library> {
   private LibraryRootsComponent myLibraryEditorComponent;

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.handlers
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.isArtificialImportAliasedDescriptor
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 
+@K1Deprecation
 abstract class KotlinCallableInsertHandler(val callType: CallType<*>) : BaseDeclarationInsertHandler() {
     companion object {
         val SHORTEN_REFERENCES = ShortenReferences { ShortenReferences.Options.DEFAULT.copy(dropBracesInStringTemplates = false) }

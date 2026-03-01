@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 
 public final class GroovySdkForNewModuleWizardStep extends ModuleWizardStep {

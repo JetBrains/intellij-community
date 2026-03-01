@@ -1,16 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.smartstepinto;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;

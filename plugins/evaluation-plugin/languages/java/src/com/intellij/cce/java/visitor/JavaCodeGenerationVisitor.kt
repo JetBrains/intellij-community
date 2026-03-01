@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.java.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.SimpleTokenProperties
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TokenLocationProperty
+import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.evaluable.INTERNAL_API_CALLS_PROPERTY
 import com.intellij.cce.evaluable.INTERNAL_RELEVANT_FILES_PROPERTY
 import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
@@ -9,7 +15,15 @@ import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiJavaToken
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.startOffset
 
 class JavaCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {

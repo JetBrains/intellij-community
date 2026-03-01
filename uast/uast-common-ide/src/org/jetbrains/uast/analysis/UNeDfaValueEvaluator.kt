@@ -7,7 +7,25 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Plow
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.getContainingUMethod
+import org.jetbrains.uast.getContainingUVariable
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 @ApiStatus.Internal

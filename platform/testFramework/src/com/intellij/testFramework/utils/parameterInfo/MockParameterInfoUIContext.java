@@ -5,7 +5,7 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Maxim.Mossienko

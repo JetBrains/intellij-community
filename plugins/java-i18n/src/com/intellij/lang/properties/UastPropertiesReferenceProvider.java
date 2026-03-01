@@ -7,10 +7,18 @@ import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.UastInjectionHostReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UBinaryExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UPolyadicExpression;
+import org.jetbrains.uast.UastBinaryOperator;
 
 class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider {
 

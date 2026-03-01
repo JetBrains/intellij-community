@@ -19,7 +19,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.XPathVariable;
+import org.intellij.lang.xpath.psi.XPathVariableDeclaration;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

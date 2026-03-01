@@ -28,15 +28,24 @@ import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.EventObject;
 import java.util.List;
-import java.util.*;
 
 public class CsvFormatsListComponent implements Disposable {
 

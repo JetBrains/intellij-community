@@ -7,7 +7,11 @@ import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -17,7 +21,7 @@ import com.intellij.util.ui.update.Update;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class MavenMergingUpdateQueue extends MergingUpdateQueue {

@@ -6,6 +6,7 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
@@ -120,6 +121,7 @@ public class XsltHighlightingTest extends TestBase {
     doXsltHighlighting();
   }
 
+  @PerformanceUnitTest
   public void xtestPerformance() {
     myFixture.configureByFile(getTestFileName() + ".xsl");
     final long l = runHighlighting();

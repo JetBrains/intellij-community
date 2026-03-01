@@ -4,7 +4,7 @@ package com.intellij.restructuredtext.python.editor;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Every reStructuredText editor preview panel must implement this interface.

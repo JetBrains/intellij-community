@@ -4,7 +4,12 @@ package org.intellij.plugins.markdown.lang.formatter.settings
 import com.intellij.application.options.IndentOptionsEditor
 import com.intellij.application.options.SmartIndentOptionsEditor
 import com.intellij.lang.Language
-import com.intellij.psi.codeStyle.*
+import com.intellij.psi.codeStyle.CodeStyleConfigurable
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 

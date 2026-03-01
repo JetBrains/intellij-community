@@ -15,15 +15,15 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 @ApiStatus.Internal
-public final class JavaZipFileWrapper implements GenericZipFile {
+final class JavaZipFileWrapper implements GenericZipFile {
   private final ZipFile myZipFile;
 
-  public JavaZipFileWrapper(File file) throws IOException {
+  JavaZipFileWrapper(File file) throws IOException {
     myZipFile = new ZipFile(file);
   }
 
   @Override
-  public GenericZipEntry getEntry(@NotNull String entryName) throws IOException {
+  public GenericZipEntry getEntry(@NotNull String entryName) {
     ZipEntry entry = myZipFile.getEntry(entryName);
     return entry != null ? new EntryWrapper(entry, myZipFile) : null;
   }
@@ -44,7 +44,7 @@ public final class JavaZipFileWrapper implements GenericZipFile {
     myZipFile.close();
   }
 
-  private static class EntryWrapper implements GenericZipFile.GenericZipEntry {
+  private static final class EntryWrapper implements GenericZipFile.GenericZipEntry {
     private final ZipEntry myEntry;
     private final ZipFile myFile;
 

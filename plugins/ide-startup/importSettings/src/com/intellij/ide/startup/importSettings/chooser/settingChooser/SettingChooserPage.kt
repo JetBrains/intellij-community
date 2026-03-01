@@ -7,7 +7,14 @@ import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsControll
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.chooser.ui.ScrollSnapToFocused
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
-import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
+import com.intellij.ide.startup.importSettings.data.BaseService
+import com.intellij.ide.startup.importSettings.data.DataForSave
+import com.intellij.ide.startup.importSettings.data.DataToApply
+import com.intellij.ide.startup.importSettings.data.IconProductSize
+import com.intellij.ide.startup.importSettings.data.Product
+import com.intellij.ide.startup.importSettings.data.SettingsContributor
+import com.intellij.ide.startup.importSettings.data.SyncActionsDataProvider
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -24,7 +31,11 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 internal sealed class SettingChooserPage(
   private val provider: ActionsDataProvider<*>,

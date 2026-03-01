@@ -17,7 +17,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-jps-common",
     "//platform/core-api:core",
     "//jps/model-api:model",
@@ -39,6 +38,37 @@ jvm_library(
     "//java/idea-ui:ui",
     "//java/compiler/impl",
     "//platform/backend/workspace",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-base-compilerConfiguration-ui_test_lib",
+  module_name = "intellij.kotlin.base.compilerConfiguration.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kotlin-base-compilerConfiguration-ui",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/platforms:platforms_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//plugins/kotlin/base/jps:jps_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//java/openapi:java_test_lib",
+    "//java/idea-ui:ui_test_lib",
+    "//java/compiler/impl:impl_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.compilerConfiguration.ui` end

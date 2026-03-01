@@ -6,12 +6,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.selectionController
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
-import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 

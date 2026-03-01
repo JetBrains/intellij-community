@@ -11,11 +11,21 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.LanguageSpellchecking;
@@ -50,10 +60,10 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
     if (hasForeignLanguageChildren(element)) return EMPTY_TOKENIZER;
     if (element instanceof XmlText text) {
-      return (shouldTextLevelSpellcheckingBeUsed(element) || text.getText().isBlank()) ? EMPTY_TOKENIZER : myXmlTextTokenizer;
+      return (useTextLevelSpellchecking(element) || text.getText().isBlank()) ? EMPTY_TOKENIZER : myXmlTextTokenizer;
     }
     if (isXmlComment(element)) {
-      return shouldTextLevelSpellcheckingBeUsed(element) ? EMPTY_TOKENIZER : myXmlCommentTokenizer;
+      return useTextLevelSpellchecking(element) ? EMPTY_TOKENIZER : myXmlCommentTokenizer;
     }
     if (element instanceof XmlToken
         && ((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS
@@ -62,7 +72,7 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
       return isInTemplateLanguageFile(element) ? EMPTY_TOKENIZER : TEXT_TOKENIZER;
     }
     if (element instanceof XmlAttributeValue attribute) {
-      return (shouldTextLevelSpellcheckingBeUsed(element) || attribute.getValue().isEmpty()) ? EMPTY_TOKENIZER : myXmlAttributeTokenizer;
+      return (useTextLevelSpellchecking(element) || attribute.getValue().isEmpty()) ? EMPTY_TOKENIZER : myXmlAttributeTokenizer;
     }
     return super.getTokenizer(element);
   }
@@ -73,6 +83,12 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
       if (child.getLanguage() != element.getLanguage()) return true;
     }
     return false;
+  }
+
+  private static boolean hasOnlySupportedDialects(PsiElement element) {
+    return TEXT_LEVEL_SUPPORTED_DIALECTS.containsAll(
+      ContainerUtil.map(element.getContainingFile().getViewProvider().getLanguages(), Language::getClass)
+    );
   }
 
   @Override
@@ -115,12 +131,8 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
   }
 
   @Override
-  public boolean useTextLevelSpellchecking() {
-    return Registry.is("spellchecker.grazie.enabled", false);
-  }
-
-  private boolean shouldTextLevelSpellcheckingBeUsed(@NotNull PsiElement element) {
-    return useTextLevelSpellchecking() && TEXT_LEVEL_SUPPORTED_DIALECTS.contains(element.getLanguage().getClass());
+  public boolean useTextLevelSpellchecking(PsiElement element) {
+    return Registry.is("spellchecker.grazie.enabled", false) && hasOnlySupportedDialects(element);
   }
 
   @Override

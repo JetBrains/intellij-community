@@ -6,7 +6,11 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.IOUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.UnmodifiableView;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -18,7 +22,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("LoggingSimilarMessage")

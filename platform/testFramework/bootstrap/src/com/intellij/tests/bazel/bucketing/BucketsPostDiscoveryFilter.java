@@ -24,7 +24,7 @@ public class BucketsPostDiscoveryFilter implements PostDiscoveryFilter {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       included = MethodHandles.publicLookup()
         .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
-                    "isClassIncluded", MethodType.methodType(boolean.class, String.class));
+                    "isClassIncluded", MethodType.methodType(boolean.class, Class.class));
     }
     catch (NoSuchMethodException | ClassNotFoundException | IllegalAccessException e) {
       throw new RuntimeException(e);
@@ -52,10 +52,10 @@ public class BucketsPostDiscoveryFilter implements PostDiscoveryFilter {
       return FilterResult.included("No source for descriptor");
     }
     if (source instanceof MethodSource methodSource) {
-      return isIncluded(methodSource.getClassName());
+      return isIncluded(methodSource.getJavaClass());
     }
     if (source instanceof ClassSource classSource) {
-      return isIncluded(classSource.getClassName());
+      return isIncluded(classSource.getJavaClass());
     }
     return FilterResult.included("Unknown source type " + source.getClass());
   }
@@ -63,24 +63,24 @@ public class BucketsPostDiscoveryFilter implements PostDiscoveryFilter {
   // Cache results per class to avoid redundant reflective calls and incorrect "last only" caching behavior
   private final Map<String, FilterResult> resultsCache = new HashMap<>();
 
-  private FilterResult isIncluded(String className) {
-    FilterResult result = resultsCache.get(className);
+  private FilterResult isIncluded(Class<?> aClass) {
+    FilterResult result = resultsCache.get(aClass.getName());
     if (result == null) {
-      result = isIncludedImpl(className);
-      resultsCache.put(className, result);
+      result = isIncludedImpl(aClass);
+      resultsCache.put(aClass.getName(), result);
       if (result.included()) {
-        includedClasses.add(className);
+        includedClasses.add(aClass.getName());
       }
       else {
-        excludedClasses.add(className);
+        excludedClasses.add(aClass.getName());
       }
     }
     return result;
   }
 
-  private FilterResult isIncludedImpl(String className) {
+  private FilterResult isIncludedImpl(Class<?> aClass) {
     try {
-      if ((boolean)included.invokeExact(className)) {
+      if ((boolean)included.invokeExact(aClass)) {
         return FilterResult.included(null);
       }
       return FilterResult.excluded(null);

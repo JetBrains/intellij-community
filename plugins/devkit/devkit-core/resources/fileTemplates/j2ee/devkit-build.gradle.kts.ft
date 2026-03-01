@@ -46,8 +46,8 @@ dependencies {
 #if ($context.hasLibrary("yaml"))
         bundledPlugin("org.jetbrains.plugins.yaml")
 #end
-#if ($context.hasLibrary("com.intellij.properties"))
-        bundledPlugin("org.jetbrains.plugins.yaml")
+#if ($context.hasLibrary("properties"))
+    bundledPlugin("com.intellij.properties")
 #end
 #if ($context.hasLibrary("markdown"))
         bundledPlugin("org.intellij.plugins.markdown")

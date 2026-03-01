@@ -8,11 +8,11 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.PluginXmlConst
-import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
-import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
-import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.pluginSystem.parser.impl.PluginXmlConst
+import com.intellij.platform.pluginSystem.parser.impl.RawPluginDescriptor
+import com.intellij.platform.pluginSystem.parser.impl.elements.ContentModuleElement
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -21,7 +21,8 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.time.ZoneOffset
-import java.util.*
+import java.util.Date
+import java.util.MissingResourceException
 
 private val LOG: Logger
   get() = PluginManagerCore.logger
@@ -36,7 +37,7 @@ class PluginMainDescriptor(
   private val isBundled: Boolean,
   override val useCoreClassLoader: Boolean = false,
 ) : PluginModuleDescriptor(raw) {
-  private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
+  private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw IllegalArgumentException("Neither id nor name are specified for plugin located at $pluginPath"))
   private val name: String = raw.name ?: id.idString
 
   private val version: String? = raw.version
@@ -91,7 +92,7 @@ class PluginMainDescriptor(
    */
   @VisibleForTesting
   val content: PluginContentDescriptor =
-    raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it, namespace ?: implicitNamespaceForPrivateModules)) }
+    raw.contentModules.takeIf { it.isNotEmpty() }?.let { convertContentModules(it, namespace ?: implicitNamespaceForPrivateModules) }
     ?: PluginContentDescriptor.EMPTY
 
   val contentModules: List<ContentModuleDescriptor>
@@ -195,6 +196,35 @@ class PluginMainDescriptor(
            productModeAliasesForCorePlugin()
   }
 
+  private fun convertContentModules(contentElements: List<ContentModuleElement>, namespace: String): PluginContentDescriptor {
+    val modules = contentElements.map { elem ->
+      val index = elem.name.lastIndexOf('/')
+      val configFile: String? = if (index == -1) {
+        null
+      }
+      else {
+        "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
+      }
+      val moduleId = PluginModuleId(elem.name, namespace)
+      PluginContentDescriptor.ModuleItem(
+        moduleId = moduleId,
+        configFile = configFile,
+        descriptorContent = elem.embeddedDescriptorContent,
+        loadingRule = elem.loadingRule.convert(),
+        requiredIfAvailable = elem.requiredIfAvailable?.let { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) },
+      )
+    }
+    if (modules.size > 1) {
+      val duplicates = HashSet<PluginModuleId>()
+      for (item in modules) {
+        require(duplicates.add(item.moduleId)) {
+          "Duplicate content module declaration: '${item.moduleId}' in plugin '${id}' located at $pluginPath"
+        }
+      }
+    }
+    return PluginContentDescriptor(modules)
+  }
+
   internal fun createContentModule(
     subBuilder: PluginDescriptorBuilder,
     descriptorPath: String,
@@ -217,25 +247,6 @@ class PluginMainDescriptor(
                "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
                "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
     }
-  }
-}
-
-private fun convertContentModules(contentElements: List<ContentModuleElement>, namespace: String): List<PluginContentDescriptor.ModuleItem> {
-  return contentElements.map { elem ->
-    val index = elem.name.lastIndexOf('/')
-    val configFile: String? = if (index == -1) {
-      null
-    }
-    else {
-      "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
-    }
-    PluginContentDescriptor.ModuleItem(
-      moduleId = PluginModuleId(elem.name, namespace),
-      configFile = configFile,
-      descriptorContent = elem.embeddedDescriptorContent,
-      loadingRule = elem.loadingRule.convert(),
-      requiredIfAvailable = elem.requiredIfAvailable?.let { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) },
-    )
   }
 }
 
@@ -284,8 +295,14 @@ private var initContextForLoadingRuleDetermination: PluginInitializationContext 
 // FIXME this should not exist
 @Internal
 @TestOnly
-fun setInitContextForLoadingRuleDetermination(initContext: PluginInitializationContext) {
+fun <T> withInitContextForLoadingRuleDetermination(initContext: PluginInitializationContext, body: () -> T): T {
+  val prev = initContextForLoadingRuleDetermination
   initContextForLoadingRuleDetermination = initContext
+  try {
+    return body()
+  } finally {
+    initContextForLoadingRuleDetermination = prev
+  }
 }
 
 @Internal

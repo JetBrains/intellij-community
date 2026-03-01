@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.project
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -28,6 +27,10 @@ data class ProjectId(private val id: UID) {
   @ApiStatus.Internal
   fun serializeToString(): String {
     return id.toString()
+  }
+
+  override fun toString(): String {
+    return "ProjectId#$id"
   }
 
   companion object {

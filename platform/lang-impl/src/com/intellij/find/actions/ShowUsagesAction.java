@@ -8,7 +8,13 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindUsagesSettings;
-import com.intellij.find.findUsages.*;
+import com.intellij.find.findUsages.AbstractFindUsagesDialog;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesHandlerBase;
+import com.intellij.find.findUsages.FindUsagesHandlerUi;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.find.findUsages.PersistentFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.impl.UsageAdaptersKt;
 import com.intellij.find.usages.api.SearchTarget;
@@ -18,7 +24,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo;
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent;
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
@@ -29,12 +34,31 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.PopupAction;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -52,9 +76,19 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IntRef;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -63,12 +97,26 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.FileRankerMlService;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.ui.*;
+import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -76,10 +124,30 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.*;
-import com.intellij.usages.impl.*;
+import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageInfoAdapter;
+import com.intellij.usages.UsageSearchPresentation;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewProjectProperties;
+import com.intellij.usages.impl.CodeNavigateSource;
+import com.intellij.usages.impl.GroupNode;
+import com.intellij.usages.impl.NullUsage;
+import com.intellij.usages.impl.UsageNode;
+import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.impl.UsageViewManagerImpl;
+import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -91,19 +159,43 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -137,7 +229,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
-  private static final String PREVIEW_PROPERTY_KEY = "ShowUsagesActions.previewPropertyKey";
 
   private static final IJTracer myFindUsagesTracer = TelemetryManager.getInstance().getTracer(FindUsagesScope);
 
@@ -577,9 +668,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     Consumer<AbstractPopup> tableResizer = popup -> {
       if (popup != null && popup.isVisible() && !manuallyResized.get()) {
-        PropertiesComponent properties = PropertiesComponent.getInstance(project);
+        var properties = UsageViewProjectProperties.getInstance(project);
         int dataSize = table.getModel().getRowCount();
-        setPopupSize(table, popup, parameters.popupPosition, parameters.minWidth, properties.isValueSet(PREVIEW_PROPERTY_KEY), dataSize);
+        setPopupSize(table, popup, parameters.popupPosition, parameters.minWidth, properties.isPreviewSource(), dataSize);
       }
     };
 
@@ -917,8 +1008,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       setCancelKeyEnabled(true).
       setDimensionServiceKey(DIMENSION_SERVICE_KEY);
 
-    PropertiesComponent properties = PropertiesComponent.getInstance(project);
-    boolean addCodePreview = properties.isValueSet(PREVIEW_PROPERTY_KEY);
+    var properties = UsageViewProjectProperties.getInstance(project);
+    boolean addCodePreview = properties.isPreviewSource();
     OnePixelSplitter contentSplitter = null;
     if (addCodePreview) {
       contentSplitter = new OnePixelSplitter(true, .6f);
@@ -959,14 +1050,14 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     usageView.addFilteringActions(filteringGroup);
     ActionManager actionManager = ActionManager.getInstance();
 
-    DefaultActionGroup showOptionsActionGroup = createShowOptionsActionGroup(properties, extendedInfoPanel);
+    DefaultActionGroup showOptionsActionGroup = createShowOptionsActionGroup();
     filteringGroup.add(showOptionsActionGroup);
     filteringGroup.add(Separator.getInstance());
 
     filteringGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), null, AllIcons.Actions.PreviewDetailsVertically) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
-        return properties.isValueSet(PREVIEW_PROPERTY_KEY);
+        return properties.isPreviewSource();
       }
 
       @Override
@@ -977,7 +1068,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         if (e.getDataContext() != DataContext.EMPTY_CONTEXT) { // Avoid fake events
-          properties.setValue(PREVIEW_PROPERTY_KEY, state);
+          properties.setPreviewSource(state);
           cancel(popupRef.get(), actionHandler, CLOSE_REASON_PREVIEW);
 
           WindowStateService.getInstance().putSize(DIMENSION_SERVICE_KEY, null);
@@ -1185,7 +1276,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return popup;
   }
 
-  private static DefaultActionGroup createShowOptionsActionGroup(PropertiesComponent properties, JPanel extendedInfoPanel) {
+  private static DefaultActionGroup createShowOptionsActionGroup() {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup showOptionsGroup = new DefaultActionGroup(UsageViewBundle.message("show.options.action.group.description"), null, AllIcons.Actions.Show);
     showOptionsGroup.setPopup(true);
@@ -1412,8 +1503,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         calcMaxWidth(table); // compute column widths
       }
       else {
-        PropertiesComponent properties = PropertiesComponent.getInstance(project);
-        setPopupSize(table, popup, popupPosition, minWidth, properties.isValueSet(PREVIEW_PROPERTY_KEY), data.size());
+        var properties = UsageViewProjectProperties.getInstance(project);
+        setPopupSize(table, popup, popupPosition, minWidth, properties.isPreviewSource(), data.size());
       }
     }
   }

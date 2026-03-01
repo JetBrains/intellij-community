@@ -4,6 +4,8 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Enumeration;
+import java.util.function.BiFunction;
+import java.util.function.IntFunction;
 
 /**
  * Base interface for concurrent int key -> value:V map
@@ -46,4 +48,18 @@ public interface ConcurrentIntObjectMap<V> extends IntObjectMap<V> {
    * or {@code null} if there was no mapping for the key
    */
   V putIfAbsent(int key, @NotNull V value);
+
+  V compute(int key, IntObjectToObjectFunction<? super V, ? extends V> remappingFunction);
+
+  V computeIfAbsent(int key, IntFunction<? extends V> mappingFunction);
+
+  V computeIfPresent(int key, IntObjectToObjectFunction<? super V, ? extends V> remappingFunction);
+
+  V merge(int key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction);
+
+  @FunctionalInterface
+  interface IntObjectToObjectFunction<T, R> {
+
+    R apply(int value, T value2);
+  }
 }

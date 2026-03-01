@@ -15,4 +15,14 @@ jvm_library(
   exports = ["@lib//:libraries-pty4j-pty4j"],
   runtime_deps = ["@lib//:libraries-pty4j-pty4j"]
 )
+
+jvm_library(
+  name = "pty4j_test_lib",
+  module_name = "intellij.libraries.pty4j",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-pty4j-pty4j"],
+  runtime_deps = [":pty4j"]
+)
 ### auto-generated section `build intellij.libraries.pty4j` end

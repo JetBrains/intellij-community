@@ -29,7 +29,13 @@ val EelProcessExecutionResultInfo.stdoutString: String get() = String(stdout)
 val EelProcessExecutionResultInfo.stderrString: String get() = String(stderr)
 
 @ApiStatus.Experimental
-class EelProcessExecutionResult(override val exitCode: Int, override val stdout: ByteArray, override val stderr: ByteArray) : EelProcessExecutionResultInfo
+class EelProcessExecutionResult(
+  override val exitCode: Int,
+  override val stdout: ByteArray,
+  override val stderr: ByteArray,
+) : EelProcessExecutionResultInfo {
+  override fun toString(): String = "EelProcessExecutionResult(exitCode=$exitCode, stdout=$stdoutString}, stderr=$stderrString)"
+}
 
 /**
  * Function that awaits the completion of an [EelProcess] and retrieves its execution result,

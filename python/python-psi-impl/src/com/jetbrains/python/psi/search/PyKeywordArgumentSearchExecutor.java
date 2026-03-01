@@ -10,7 +10,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
 import org.jetbrains.annotations.NotNull;
 
 

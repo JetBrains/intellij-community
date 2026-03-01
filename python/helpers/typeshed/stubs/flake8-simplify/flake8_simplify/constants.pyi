@@ -1,3 +1,6 @@
-BOOL_CONST_TYPES: tuple[type, ...]
-AST_CONST_TYPES: tuple[type, ...]
-STR_TYPES: tuple[type, ...]
+import ast
+from typing import Final
+
+BOOL_CONST_TYPES: Final[tuple[type[ast.Constant]]]
+AST_CONST_TYPES: Final[tuple[type[ast.Constant]]]
+STR_TYPES: Final[tuple[type[ast.Constant]]]

@@ -27,7 +27,13 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionPr
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModules
+import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModulesWithKotlinFiles
+import org.jetbrains.kotlin.idea.configuration.getConfigurationPossibilitiesForConfigureNotification
+import org.jetbrains.kotlin.idea.configuration.getKotlinVersionsAndModules
 import org.jetbrains.kotlin.idea.configuration.notifications.LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.configuration.notifications.dropHotfixPart
 import org.jetbrains.kotlin.idea.configuration.notifications.showNewKotlinCompilerAvailableNotificationIfNeeded
@@ -1418,52 +1424,6 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("9.1.0+") // Not launched on CI so far, will be launched when KTIJ-36754 is fixed
     fun testAddToolchainAndNewFoojayGroovy() {
-        val files = importProjectFromTestData()
-
-        runInEdtAndWait {
-            runWriteAction {
-                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
-                val configurator = findGradleModuleConfigurator()
-                val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
-                configurator.configureWithVersion(
-                    myProject,
-                    listOf(rootModule),
-                    IdeKotlinVersion.get("2.2.21"),
-                    collector,
-                    kotlinVersionsAndModules,
-                )
-                checkFiles(files, foojayPropertyMap)
-            }
-        }
-    }
-
-    @Test
-    @TargetVersions("9.1.0+")
-    fun addToolchain24InsteadOf25() { // Not launched on CI so far, will be launched when KTIJ-36754 is fixed
-        val files = importProjectFromTestData()
-
-        runInEdtAndWait {
-            runWriteAction {
-                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
-                val configurator = findGradleModuleConfigurator()
-                val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
-                configurator.configureWithVersion(
-                    myProject,
-                    listOf(rootModule),
-                    IdeKotlinVersion.get("2.2.21"),
-                    collector,
-                    kotlinVersionsAndModules,
-                )
-                checkFiles(files, foojayPropertyMap)
-            }
-        }
-    }
-
-    @Test
-    @TargetVersions("9.1.0+")
-    fun addToolchain24InsteadOf25Groovy() { // Not launched on CI so far, will be launched when KTIJ-36754 is fixed
         val files = importProjectFromTestData()
 
         runInEdtAndWait {

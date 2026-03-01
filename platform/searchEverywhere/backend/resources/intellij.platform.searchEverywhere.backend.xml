@@ -1,8 +1,11 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.searchEverywhere.backend">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.searchEverywhere"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -11,6 +14,7 @@
     <uiDataRule implementation="com.intellij.platform.searchEverywhere.backend.impl.SeUiDataRule"/>
 
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.files.SeFilesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.nonIndexableFiles.SeNonIndexableFilesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.recentFiles.SeRecentFilesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.classes.SeClassesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.symbols.SeSymbolsProviderFactory"/>

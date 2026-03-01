@@ -23,5 +23,8 @@
     <orderEntry type="module" module-name="intellij.platform.instanceContainer" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
   </component>
 </module>

@@ -10,15 +10,24 @@ import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.ui.mac.foundation.Foundation.*;
+import static com.intellij.ui.mac.foundation.Foundation.createSelector;
+import static com.intellij.ui.mac.foundation.Foundation.getObjcClass;
+import static com.intellij.ui.mac.foundation.Foundation.invoke;
+import static com.intellij.ui.mac.foundation.Foundation.nsString;
+import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
 
 public final class MacUtil {
   private static final Logger LOG = Logger.getInstance(MacUtil.class);

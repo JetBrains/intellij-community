@@ -3,7 +3,16 @@ package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import one.util.streamex.StreamEx;

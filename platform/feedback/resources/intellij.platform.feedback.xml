@@ -13,7 +13,7 @@
                         overrides="true"/>
 
     <applicationService serviceImplementation="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
-    <applicationService serviceImplementation="com.intellij.platform.feedback.eap.EAPFeedbackUrlProvider"/>
+    <applicationService serviceImplementation="com.intellij.platform.feedback.eap.EAPFeedbackUrlProvider" open="true"/>
 
     <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessagesBundle"
                        key="notification.group.feedback"/>
@@ -46,10 +46,15 @@
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.csat.CsatFeedbackSurvey"/>
     <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.csat.CsatNewUserTracker"/>
 
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.editor.smoothcaret.SmoothCaretFeedbackSurvey"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.editor.smoothcaret.SmoothCaretFirstRunActivity"/>
+    <applicationService serviceImplementation="com.intellij.platform.feedback.editor.smoothcaret.SmoothCaretUsageLocalStorage"/>
+
     <registryKey key="csat.survey.enabled" defaultValue="true" description="Enables periodic CSAT survey"/>
     <registryKey key="csat.survey.today" defaultValue="" description="ISO Formatted today date such as 2011-12-03"/>
     <registryKey key="csat.survey.user.created.date" defaultValue="" description="ISO Formatted date when user created such as 2011-12-03"/>
     <registryKey key="csat.survey.show.probability" defaultValue="" description="Override probability of survey, double value from 0 to 1"/>
+    <registryKey key="smooth.caret.survey.first.run.date" defaultValue="" description="ISO Formatted first EAP run date such as 2026-02-10 (for testing)"/>
   </extensions>
 
   <actions>
@@ -61,6 +66,9 @@
               class="com.intellij.platform.feedback.demo.ShowDemoFeedbackDialogWithEmailAction" internal="true"/>
       <action id="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               class="com.intellij.platform.feedback.localization.ShowLocalizationFeedbackDialog"
+              internal="true"/>
+      <action id="Editor.ShowSmoothCaretFeedbackNotification"
+              class="com.intellij.platform.feedback.editor.smoothcaret.ShowSmoothCaretFeedbackNotificationAction"
               internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>

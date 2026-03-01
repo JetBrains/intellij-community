@@ -13,7 +13,12 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.runner.RunWith
 
@@ -73,7 +78,7 @@ class K2AutoImportHighlightingFlickeringTest: KotlinLightCodeInsightFixtureTestC
                 assertTrue(errors.any { info -> "moduleA" == textHighlighted(info.highlighter) })
 
                 AppExecutorUtil.getAppExecutorService().submit {
-                    DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(myFixture.file, myFixture.editor)
+                    DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(project, myFixture.editor)
                 }.get()
 
                 val imports = (myFixture.file as KtFile).importDirectives

@@ -175,7 +175,7 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
     
     window.elementFinder.scrollByXpath = (xpath) => {
       const element = window.elementFinder.findElement(xpath)
-      element.scrollIntoView()
+      element.scrollIntoView({ block: "center" })
     };
     
     window.elementFinder.findElements = (xpath) => {

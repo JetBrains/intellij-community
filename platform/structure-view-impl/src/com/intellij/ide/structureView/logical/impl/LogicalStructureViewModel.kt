@@ -3,14 +3,22 @@ package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.TypePresentationService
 import com.intellij.ide.projectView.PresentationData
-import com.intellij.ide.structureView.*
 import com.intellij.ide.structureView.StructureViewBundle
+import com.intellij.ide.structureView.StructureViewClickEvent
+import com.intellij.ide.structureView.StructureViewEventsCollector
+import com.intellij.ide.structureView.StructureViewModel
+import com.intellij.ide.structureView.StructureViewModelBase
+import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.structureView.logical.ContainerElementsProvider
 import com.intellij.ide.structureView.logical.ExternalElementsProvider
 import com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
 import com.intellij.ide.structureView.logical.PropertyElementProvider
-import com.intellij.ide.structureView.logical.model.*
+import com.intellij.ide.structureView.logical.model.LogicalContainer
+import com.intellij.ide.structureView.logical.model.LogicalContainerPresentationProvider
+import com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
+import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
+import com.intellij.ide.structureView.logical.model.ProvidedLogicalContainer
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.application.WriteIntentReadAction

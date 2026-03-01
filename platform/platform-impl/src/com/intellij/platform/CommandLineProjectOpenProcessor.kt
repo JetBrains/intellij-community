@@ -4,7 +4,6 @@ package com.intellij.platform
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectOpenProcessor
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
@@ -18,20 +17,20 @@ interface CommandLineProjectOpenProcessor {
    * @param file the file to open
    * @param tempProject if `true`, always opens the file in a new temporary project, otherwise searches the parent directories
    * for `.idea` subdirectory, and if found, opens that directory.
+   *
+   * @return project or null if it cannot be opened with that open processor
    */
   suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask = OpenProjectTask()): Project?
 
   companion object {
-    fun getInstance(): CommandLineProjectOpenProcessor = getInstanceIfExists() ?: getDefaultInstance()
-
-    @ApiStatus.Internal
-    fun getDefaultInstance(): CommandLineProjectOpenProcessor = PlatformProjectOpenProcessor.getInstance()
-
-    fun getInstanceIfExists(): CommandLineProjectOpenProcessor? {
-      return ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()
+    suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask = OpenProjectTask()): Project? {
+      val project = ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()
         .asSequence()
         .filterIsInstance<CommandLineProjectOpenProcessor>()
-        .firstOrNull()
+        .firstNotNullOfOrNull {
+          it.openProjectAndFile(file, tempProject, options)
+        }
+      return project
     }
   }
 }

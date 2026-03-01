@@ -28,7 +28,7 @@ internal class StatisticsEventLogConsole(private val project: Project, model: Lo
   init {
     val schemeFile = LocalFileSystem.getInstance().findFileByNioFile(getEventsSchemeFile(recorderId))
     if (schemeFile != null) {
-      val groupIdToLine = ReadAction.compute<HashMap<String, Int>, Throwable> {
+      val groupIdToLine = ReadAction.computeBlocking<HashMap<String, Int>, Throwable> {
         computeLineNumbers(schemeFile)
       }
       if (!groupIdToLine.isNullOrEmpty()) {

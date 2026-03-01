@@ -5,7 +5,11 @@ import com.intellij.filePrediction.FilePredictionSessionHistory
 import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestProjectBuilder
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource
-import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.*
+import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.NEIGHBOR
+import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.OPEN
+import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.RECENT
+import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.REFERENCE
+import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.VCS
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidate
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase

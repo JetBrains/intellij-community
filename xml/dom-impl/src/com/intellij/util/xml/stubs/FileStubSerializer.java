@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.stubs;
 
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.xml.XmlFileHeader;
 import org.jetbrains.annotations.NotNull;
 

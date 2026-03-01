@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-import com.intellij.ide.actions.cache.*
+import com.intellij.ide.actions.cache.CacheInconsistencyProblem
+import com.intellij.ide.actions.cache.ExceptionalCompletionProblem
+import com.intellij.ide.actions.cache.FilesRecoveryScope
+import com.intellij.ide.actions.cache.RecoveryAction
+import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -20,7 +24,7 @@ import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Collections
 import java.util.function.BiPredicate
 
 @ApiStatus.Internal

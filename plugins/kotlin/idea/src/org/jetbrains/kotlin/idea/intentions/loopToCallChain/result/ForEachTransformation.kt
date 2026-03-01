@@ -2,14 +2,26 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ChainedCallGenerator
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.MatchingState
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ReplaceLoopResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatch
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatcher
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.countUsages
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.generateLambda
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 
+@K1Deprecation
 class ForEachTransformation(
     loop: KtForExpression,
     private val inputVariable: KtCallableDeclaration,

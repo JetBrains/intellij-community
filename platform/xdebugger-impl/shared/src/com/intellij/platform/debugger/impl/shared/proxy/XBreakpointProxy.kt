@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.shared.proxy
 
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
@@ -37,6 +38,8 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   fun isDefaultBreakpoint(): Boolean
   fun getSuspendPolicy(): SuspendPolicy
   fun setSuspendPolicy(suspendPolicy: SuspendPolicy)
+  @ApiStatus.Internal
+  fun supportsInterLinePlacement(): Boolean
 
   fun getTimestamp(): Long
 
@@ -81,7 +84,6 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
   fun getCustomizedPresentationForCurrentSession(): CustomizedBreakpointPresentation?
   fun isDisposed(): Boolean
-  fun updateIcon()
 
   fun dispose()
 
@@ -90,4 +92,8 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
   fun createBreakpointDraggableObject(): GutterDraggableObject?
 
+  companion object {
+    @JvmField
+    val DATA_KEY: DataKey<XBreakpointProxy> = DataKey.create("XBreakpointProxy")
+  }
 }

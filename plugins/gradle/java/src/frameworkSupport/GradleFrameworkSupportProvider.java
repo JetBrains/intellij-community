@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 import static org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder.getBuildScriptData;
 

@@ -1,7 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
-import com.intellij.execution.*;
+import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionListener;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionTarget;
+import com.intellij.execution.ExecutionTargetManager;
+import com.intellij.execution.ExecutionTargetManagerImpl;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.compound.ConfigurationSelectionUtil;
 import com.intellij.execution.compound.TypeNameTarget;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -18,7 +29,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -27,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;

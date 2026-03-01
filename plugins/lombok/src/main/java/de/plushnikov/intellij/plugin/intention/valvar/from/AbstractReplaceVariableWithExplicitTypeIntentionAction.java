@@ -2,7 +2,11 @@ package de.plushnikov.intellij.plugin.intention.valvar.from;
 
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;

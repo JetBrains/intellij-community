@@ -11,11 +11,22 @@ java.FILE
           DOC_COMMENT_DATA
         DOC_RBRACKET
         DOC_LBRACKET
+        DOC_TAG_VALUE_ELEMENT
+          MODULE_REFERENCE
+            DOC_COMMENT_DATA
+          DOC_TAG_VALUE_SLASH
         DOC_METHOD_OR_FIELD_REF
+          DOC_REFERENCE_HOLDER
+            JAVA_CODE_REFERENCE
+              IDENTIFIER
+              REFERENCE_PARAMETER_LIST
+                <empty list>
+          DOC_TAG_VALUE_SHARP_TOKEN
+          DOC_TAG_VALUE_TOKEN
+          DOC_LPAREN
           DOC_TAG_VALUE_ELEMENT
-            MODULE_REFERENCE
-              DOC_COMMENT_DATA
-            DOC_TAG_VALUE_SLASH
+            <empty list>
+          DOC_RPAREN
         DOC_RBRACKET
     WHITE_SPACE
     MODIFIER_LIST

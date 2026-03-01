@@ -37,7 +37,5 @@ internal sealed class PythonDebuggerScope : CoroutineScope, Disposable {
     @Service
     private class GlobalScopeService : PythonDebuggerScope()
 
-    @Service(Service.Level.PROJECT)
-    private class ProjectScope : PythonDebuggerScope()
   }
 }

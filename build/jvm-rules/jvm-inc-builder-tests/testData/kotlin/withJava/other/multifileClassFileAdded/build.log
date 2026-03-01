@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_multifileClassFileAdded-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/other/multifileClassFileAdded/a/b.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_other_multifileClassFileAdded-a.kotlin_module
+  test/Test.class
+  test/Test__AKt.class
+  test/Test__BKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/multifileClassFileAdded/a/a.kt
+  kotlin/withJava/other/multifileClassFileAdded/a/b.kt
+End of files
+------------------------------------------
+Exit code: OK

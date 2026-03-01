@@ -7,13 +7,19 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
-import com.intellij.refactoring.changeSignature.*
+import com.intellij.refactoring.changeSignature.ChangeInfo
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
+import com.intellij.refactoring.changeSignature.JavaChangeInfo
+import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.util.CanonicalTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.createInheritanceTypeSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.functionTypeKind
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
@@ -24,14 +30,22 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.*
- import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.builtins.StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
@@ -39,9 +53,24 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.defaultValOrVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
@@ -266,6 +295,11 @@ object ChangeSignatureFixFactory {
             } else {
                 val parameters = (ktCallableDeclaration as? KtCallableDeclaration)?.valueParameters ?: emptyList()
                 val arguments = callElement.valueArguments
+                val substitutor = buildSubstitutor {
+                    for (entry in functionCall.typeArgumentsMapping) {
+                        substitution(entry.key, entry.value)
+                    }
+                }
 
                 for (i in arguments.indices) {
                     val argument = arguments[i]
@@ -274,7 +308,8 @@ object ChangeSignatureFixFactory {
                     if (i < parameters.size) {
                         usedNames.add(parameters[i].name!!)
                         val argumentType = getKtType(expression)
-                        val parameterType = parameters[i].returnType
+                        val parameterType = substitutor.substitute(parameters[i].returnType)
+
                         if (argumentType != null && !argumentType.isSubtypeOf(parameterType)) {
                             changeInfo.newParameters[i + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0].setType(
                                 argumentType.render(position = Variance.IN_VARIANCE)
@@ -343,7 +378,10 @@ object ChangeSignatureFixFactory {
     @OptIn(KaExperimentalApi::class)
     private fun getKtType(argumentExpression: KtExpression?): KaType? {
         val ktType = argumentExpression?.expressionType
-        return ktType?.toFunctionType() ?: ktType
+        val functionType = ktType?.toFunctionType()
+        if (functionType != null) return functionType
+
+        return ktType?.approximateAnonymousObjectToSupertypeOrSelf()
     }
 
 

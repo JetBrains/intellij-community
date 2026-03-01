@@ -1,80 +1,113 @@
 package com.jetbrains.python.sdk.configuration
 
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PythonInfo
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.impl.PySdkBundle
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
-typealias NeedsConfirmation = Boolean
-typealias CheckExistence = Boolean
 typealias CheckToml = Boolean
 typealias EnvExists = Boolean
 
+fun interface SdkCreator {
+  suspend fun createSdk(): PyResult<Sdk>
+}
+
 @ApiStatus.Internal
-sealed interface CreateSdkInfo : Comparable<CreateSdkInfo> {
+sealed class CreateSdkInfo(private val sdkCreator: SdkCreator) :
+  Comparable<CreateSdkInfo> {
   @get:IntentionName
-  val intentionName: String
-  val sdkCreator: suspend (NeedsConfirmation) -> PyResult<Sdk?>
+  abstract val intentionName: String
 
   /**
-   * Nullable SDK is only possible when we requested user confirmation but didn't get it. The idea behind this function is to provide
-   * non-nullable SDK when no confirmation from the user is needed.
-   *
-   * It's a temporary solution until we'll be able to remove all custom user dialogs and enable [enableSDKAutoConfigurator] by default.
-   * After that lands, we'll get rid of nullable SDK.
+   * Creates SDK for a module named [moduleName]. This does **not** affect the module itself but just sets a user-readable title.
    */
-  suspend fun createSdkWithoutConfirmation(): PyResult<Sdk> = sdkCreator(false).mapSuccess { it!! }
-
-  /**
-   * We want to preserve the initial order, but at the same time existing environment should have a higher priority by default
-   */
-  override fun compareTo(other: CreateSdkInfo): Int {
-    val thisExists = if (this is ExistingEnv) 0 else 1
-    val otherExists = if (other is ExistingEnv) 0 else 1
-    return thisExists.compareTo(otherExists)
+  fun getSdkCreator(moduleName: @NlsSafe String): SdkCreator = {
+    withContext(TraceContext(moduleName)) {
+      sdkCreator.createSdk()
+    }
   }
 
-  data class ExistingEnv(
+
+  /**
+   * Creates SDK for a module named [moduleName]. This does **not** affect the module itself but just sets a user-readable title.
+   */
+  suspend fun createSdk(moduleName: @NlsSafe String): PyResult<Sdk> =
+    getSdkCreator(moduleName).createSdk()
+
+  /**
+   * We want to preserve the initial order, but at the same time we'd like to have a sort order depending on the type of CreateSdkInfo
+   */
+  override fun compareTo(other: CreateSdkInfo): Int {
+    return sortOrder.compareTo(other.sortOrder)
+  }
+
+  class ExistingEnv internal constructor(
     val pythonInfo: PythonInfo,
     override val intentionName: String,
-    override val sdkCreator: suspend (NeedsConfirmation) -> PyResult<Sdk?>,
-  ) : CreateSdkInfo
+    sdkCreator: SdkCreator,
+  ) : CreateSdkInfo(sdkCreator)
 
-  data class WillCreateEnv(
+  class WillInstallTool internal constructor(
+    val toolToInstall: String,
+    val pathPersister: (Path) -> Unit,
+    override val intentionName: @IntentionName String,
+  ) : CreateSdkInfo(
+    {
+      /**
+       * This specific CreateSdkInfo is only supposed to be used for proposing tool installation, it never should be used for SDK creation.
+       */
+      PyResult.localizedError(PySdkBundle.message("python.sdk.cannot.create.tool.should.be.installed"))
+    }
+  )
+
+  class WillCreateEnv internal constructor(
     override val intentionName: String,
-    override val sdkCreator: suspend (NeedsConfirmation) -> PyResult<Sdk?>,
-  ) : CreateSdkInfo
+    sdkCreator: SdkCreator,
+  ) : CreateSdkInfo(sdkCreator)
+
+  private val sortOrder: Int
+    get() = when (this) {
+      is ExistingEnv -> 0
+      is WillInstallTool -> 1
+      is WillCreateEnv -> 2
+    }
 }
 
 @ApiStatus.Internal
 sealed interface EnvCheckerResult {
   data class EnvFound(val pythonInfo: PythonInfo, val intentionName: @IntentionName String) : EnvCheckerResult
+  data class SuggestToolInstallation(
+    val toolToInstall: String, val pathPersister: (Path) -> Unit, val intentionName: @IntentionName String,
+  ) : EnvCheckerResult
   data class EnvNotFound(val intentionName: @IntentionName String) : EnvCheckerResult
   object CannotConfigure : EnvCheckerResult
 }
 
 @ApiStatus.Internal
-// TODO: Make internal after we drop WSL sdk configurator
 suspend fun prepareSdkCreator(
-  envChecker: suspend (CheckExistence) -> EnvCheckerResult,
-  sdkCreator: (EnvExists) -> (suspend (NeedsConfirmation) -> PyResult<Sdk?>),
+  envChecker: suspend () -> EnvCheckerResult,
+  sdkCreator: (EnvExists) -> SdkCreator,
 ): CreateSdkInfo? {
-  var res = envChecker(true)
-  return when (res) {
+  return when (val res = envChecker()) {
     is EnvCheckerResult.EnvFound -> CreateSdkInfo.ExistingEnv(
       res.pythonInfo,
       res.intentionName,
       sdkCreator(true)
     )
-    is EnvCheckerResult.EnvNotFound -> {
-      res = envChecker(false)
-      when (res) {
-        is EnvCheckerResult.EnvNotFound -> CreateSdkInfo.WillCreateEnv(res.intentionName, sdkCreator(false))
-        is EnvCheckerResult.EnvFound -> throw AssertionError("Env shouldn't exist if we didn't check for it")
-        is EnvCheckerResult.CannotConfigure -> null
-      }
-    }
+    is EnvCheckerResult.EnvNotFound -> CreateSdkInfo.WillCreateEnv(res.intentionName, sdkCreator(false))
+    is EnvCheckerResult.SuggestToolInstallation -> CreateSdkInfo.WillInstallTool(res.toolToInstall, res.pathPersister, res.intentionName)
     is EnvCheckerResult.CannotConfigure -> null
   }
 }
+
+fun CreateSdkInfo.getSdkCreator(module: Module): SdkCreator =
+  getSdkCreator(module.name)
+
+suspend fun CreateSdkInfo.createSdk(module: Module): PyResult<Sdk> = createSdk(module.name)

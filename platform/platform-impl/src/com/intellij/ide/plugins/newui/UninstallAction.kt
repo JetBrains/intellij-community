@@ -2,7 +2,11 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -89,20 +93,29 @@ internal class UninstallAction<C : JComponent>(
         val bundledUpdate = toDeleteWithAsk.size == 1 && prepareToUninstallResult.isPluginBundled(toDeleteWithAsk.first().pluginId)
         if (askToUninstall(getUninstallAllMessage(toDeleteWithAsk, bundledUpdate), myUiParent, bundledUpdate)) {
           for (model in toDeleteWithAsk) {
-            myPluginModelFacade.uninstallAndUpdateUi(model)
+            uninstallAndUpdateUi(model)
           }
           runFinishAction = true
         }
       }
 
       for (model in toDelete) {
-        myPluginModelFacade.uninstallAndUpdateUi(model)
+        uninstallAndUpdateUi(model)
       }
 
       if (runFinishAction || toDelete.isNotEmpty()) {
         myOnFinishAction.run()
       }
     }
+  }
+
+  suspend fun uninstallAndUpdateUi(model: PluginUiModel) {
+    val pluginManagerCustomizer = PluginManagerCustomizer.getInstance()
+    if (pluginManagerCustomizer == null) {
+      myPluginModelFacade.uninstallAndUpdateUi(model)
+      return
+    }
+    pluginManagerCustomizer.getUninstallButtonCustomizationModel(myPluginModelFacade, model)?.action()
   }
 
   companion object {

@@ -4,11 +4,16 @@ package com.intellij.platform.ide.impl.wsl
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelConnectionError
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.provider.EelMachineProvider
+import com.intellij.platform.eel.EelTunnelsApi
+import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.platform.eel.provider.EelMachineResolver
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.ijent.IjentPosixApi
+import com.intellij.platform.ijent.IjentTunnelsPosixApi
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -16,12 +21,12 @@ private suspend fun WSLDistribution.getIjent(descriptor: EelDescriptor): IjentPo
   return WslIjentManager.instanceAsync().getIjentApi(descriptor, this, null, false)
 }
 
-private class WslEelMachineProvider : EelMachineProvider {
-  override suspend fun getEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
+internal class WslEelMachineResolver : EelMachineResolver {
+  override suspend fun resolveEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
     return getResolvedEelMachine(eelDescriptor)
   }
 
-  override suspend fun getEelMachineByInternalName(internalName: String): EelMachine? {
+  override suspend fun resolveEelMachineByInternalName(internalName: String): EelMachine? {
     return if (internalName.startsWith("WSL-"))
       WslEelMachine(WSLDistribution(internalName.substring(4)))
     else
@@ -43,7 +48,16 @@ class WslEelMachine internal constructor(val distribution: WSLDistribution) : Ee
       "Wrong descriptor: $descriptor for machine: $this"
     }
 
-    return distribution.getIjent(descriptor)
+    val ijentPosixApi = distribution.getIjent(descriptor)
+
+    // Provide API explicitly to prevent SO
+    if (!isMirroredMode(desc = descriptor, eelApi = ijentPosixApi)) {
+      return ijentPosixApi
+    }
+
+    return object : IjentPosixApi by ijentPosixApi {
+      override val tunnels: IjentTunnelsPosixApi = MirrorNetworkTunnelsApi(ijentPosixApi.tunnels)
+    }
   }
 
   override fun equals(other: Any?): Boolean {
@@ -65,5 +79,21 @@ class WslEelMachine internal constructor(val distribution: WSLDistribution) : Ee
   override fun ownsPath(path: Path): Boolean {
     val descriptor = path.getEelDescriptor() as? WslEelDescriptor ?: return false
     return descriptor.distribution == distribution
+  }
+}
+
+private class MirrorNetworkTunnelsApi(
+  wslIjentApi: IjentTunnelsPosixApi,
+) : IjentTunnelsPosixApi by wslIjentApi {
+  private val localApi = localEel.tunnels
+
+  @ThrowsChecked(EelConnectionError::class)
+  override suspend fun getConnectionToRemotePort(args: EelTunnelsApi.GetConnectionToRemotePortArgs): EelTunnelsApi.Connection {
+    return localApi.getConnectionToRemotePort(args)
+  }
+
+  @ThrowsChecked(EelConnectionError::class)
+  override suspend fun getAcceptorForRemotePort(args: EelTunnelsApi.GetAcceptorForRemotePort): EelTunnelsApi.ConnectionAcceptor {
+    return localApi.getAcceptorForRemotePort(args)
   }
 }

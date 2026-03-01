@@ -10,7 +10,8 @@ import com.sun.jdi.Value
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Deque
 
 private sealed class PendingValue {
     class Ordinary(val name: String, val field: Field, val container: Container) : PendingValue() {

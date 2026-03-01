@@ -2,10 +2,23 @@
 package com.intellij.ide.actions.searcheverywhere.footer
 
 import com.intellij.find.impl.SearchEverywhereItem
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ModalityState
@@ -26,6 +39,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.util.concurrent.Callable
@@ -170,8 +184,9 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
     val actualProject = projectFun.invoke(item)
     if (actualFile == null) return null
 
-    return ProjectFileIndex.getInstance(actualProject ?: return null).getSourceRootForFile(actualFile)
-             ?.let { VfsUtilCore.getRelativePath(actualFile, it) }
+    val rootForFile = ProjectFileIndex.getInstance(actualProject ?: return null).getSourceRootForFile(actualFile)
+                      ?: WorkspaceFileIndex.getInstance(actualProject).getContentFileSetRoot(actualFile, true)
+    return rootForFile?.let { VfsUtilCore.getRelativePath(actualFile, it) }
            ?: FileUtil.getLocationRelativeToUserHome(actualFile.path)
   }
 
@@ -195,7 +210,7 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
   return ExtendedInfo(path, split)
 }
 
-private class ExtendedInfoOpenInRightSplitAction(
+internal class ExtendedInfoOpenInRightSplitAction(
   private val originalAction: AnAction,
   private val dataContext: DataContext,
 ) : AnAction() {

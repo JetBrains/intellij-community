@@ -20,7 +20,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.OBJECT_ID_FIELD;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertNotNull;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readInt;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readStringSet;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeStrings;
 
 /**
  * @author Vladislav.Soroka

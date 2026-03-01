@@ -10,15 +10,15 @@ class Logger:
     def write(self, text) -> None: ...
     def __call__(self, text) -> None: ...
 
-logger: Incomplete
+logger: Logger
 
 class WarnOnce:
-    uttered: Incomplete
-    pfx: Incomplete
-    enabled: int
+    uttered: dict[Incomplete, Incomplete]
+    pfx: str
+    enabled: bool | int
     def __init__(self, kind: str = "Warn") -> None: ...
     def once(self, warning) -> None: ...
     def __call__(self, warning) -> None: ...
 
-warnOnce: Incomplete
-infoOnce: Incomplete
+warnOnce: WarnOnce
+infoOnce: WarnOnce

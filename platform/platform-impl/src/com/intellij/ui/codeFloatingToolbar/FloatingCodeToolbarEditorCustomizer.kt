@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.coroutineScope
 
-private class FloatingCodeToolbarEditorCustomizer: TextEditorCustomizer {
+internal class FloatingCodeToolbarEditorCustomizer: TextEditorCustomizer {
   override suspend fun execute(textEditor: TextEditor) {
     val editor = textEditor.editor
     val psiDocumentManager = (editor.project ?: return).serviceAsync<PsiDocumentManager>()

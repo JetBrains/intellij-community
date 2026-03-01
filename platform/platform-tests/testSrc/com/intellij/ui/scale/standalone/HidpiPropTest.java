@@ -8,7 +8,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 
 /**
  * Tests "hidpi" system property.

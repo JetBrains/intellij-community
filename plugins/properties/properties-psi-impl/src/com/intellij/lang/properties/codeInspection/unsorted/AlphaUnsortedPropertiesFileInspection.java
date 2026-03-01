@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeInspection.unsorted;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
@@ -20,7 +24,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public final class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AlphaUnsortedPropertiesFileInspection.class);

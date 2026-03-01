@@ -13,12 +13,25 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTextField;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.time.Duration;
 
-import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DIALOG_WAS_CANCELLED;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DURATION_FROM_ACTION_START_MS;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DURATION_MS;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DURATION_TO_FIRST_RESULT_FROM_ACTION_START_MS;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DURATION_TO_FIRST_RESULT_LAST_QUERY_FROM_ACTION_START_MS;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FIRST_TAB_ID;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.LAST_TAB_ID;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.ML_EXPERIMENT_GROUP;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.ML_EXPERIMENT_VERSION;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.SESSION_FINISHED;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.TIME_TO_FIRST_RESULT;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.TIME_TO_FIRST_RESULT_LAST_QUERY;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.TYPED_NAVIGATION_KEYS;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.TYPED_SYMBOL_KEYS;
 
 @ApiStatus.Internal
 public final class SearchFieldStatisticsCollector implements Disposable {

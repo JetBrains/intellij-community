@@ -18,8 +18,28 @@ import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterListType;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyConcatenateType;
+import com.jetbrains.python.psi.types.PyIntersectionType;
+import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyNarrowedType;
+import com.jetbrains.python.psi.types.PyNeverType;
+import com.jetbrains.python.psi.types.PyParamSpecType;
+import com.jetbrains.python.psi.types.PySelfType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParameterType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyTypeVarType;
+import com.jetbrains.python.psi.types.PyTypeVisitorExt;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.PyUnsafeUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -199,6 +219,12 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
 
     @Override
+    public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+      // There is no way to represent intersections through the standard type hints at the moment
+      return visitUnknownType();
+    }
+
+    @Override
     public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
       HtmlChunk selfTypeRender = className(isRenderingFqn() ? "typing.Self" : "Self"); //NON-NLS
       return selfType.isDefinition() ? wrapInTypingType(selfTypeRender) : selfTypeRender;
@@ -257,7 +283,9 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     HtmlBuilder result = new HtmlBuilder();
     boolean renderTypeArgumentList = !genericType.getElementTypes().isEmpty();
     String className = genericType.getName();
-    if (renderTypeArgumentList && !isGenericBuiltinsAvailable() && PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.containsKey(className)) {
+    if (renderTypeArgumentList &&
+        !isGenericBuiltinsAvailable() &&
+        PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.containsKey(className)) {
       className = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(className);
       if (isRenderingFqn()) {
         className = PyTypingTypeProvider.TYPING + "." + className;
@@ -356,8 +384,8 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       .append(styled("[", PyHighlighter.PY_BRACKETS))
       .append(StreamEx
                 .of(literals)
-                .map(PyLiteralType::getExpression)
-                .map(expr -> styledExpression(expr))
+                .map(PyLiteralType::getExpressionText)
+                .map(HtmlChunk::raw)
                 .collect(HtmlChunk.toFragment(styled(", ", PyHighlighter.PY_COMMA))))
       .append(styled("]", PyHighlighter.PY_BRACKETS))
       .toFragment();
@@ -392,6 +420,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       result.append(styled("]", PyHighlighter.PY_BRACKETS));
     }
     return result.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+    return renderList(ContainerUtil.map(intersectionType.getMembers(), this::render), " & ");
   }
 
   private static @Nullable Pair<@NotNull List<PyLiteralType>, @NotNull List<PyType>> extractLiterals(@NotNull PyUnionType type) {
@@ -434,8 +467,14 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   @Override
+  public HtmlChunk visitAnyType() {
+    return HtmlChunk.raw(isRenderingFqn() ? PyTypingTypeProvider.ANY : PyNames.ANY_TYPE); //NON-NLS
+  }
+
+  @Override
   public HtmlChunk visitUnknownType() {
-    return HtmlChunk.raw(isRenderingFqn() ? "typing.Any" : "Any"); //NON-NLS
+    // TODO: show "Unknown" instead of "typing.Any" when we convert to it
+    return visitAnyType();
   }
 
   @Override
@@ -501,7 +540,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       case ", " -> {
         yield styled(separator, PyHighlighter.PY_COMMA);
       }
-      case " | " -> {
+      case " | ", " & " -> {
         yield styled(separator, PyHighlighter.PY_OPERATION_SIGN);
       }
       default -> {
@@ -554,16 +593,13 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     result.append(HtmlChunk.raw(isRenderingFqn() ? "typing.Literal" : "Literal")); //NON-NLS
     result.append("[");
     @Nullable String classQName = literalType.getClassQName();
-    if (isRenderingFqn() && classQName != null && literalType.getExpression() instanceof PyReferenceExpression refExpr) {
+    if (isRenderingFqn() && classQName != null && literalType.getEnumMemberName() != null) {
       result.append(classQName);
-      if (refExpr.getName() != null) {
-        result.append(".");
-        result.append(refExpr.getName());
-      }
+      result.append(".");
+      result.append(literalType.getEnumMemberName());
     }
     else {
-      String enumOrLiteral = StringUtil.notNullize(literalType.getExpression().getText()).trim();
-      result.appendRaw(enumOrLiteral); // append raw since the literal can include quotes: Literal["foo"]
+      result.appendRaw(literalType.getExpressionText()); // append raw since the literal can include quotes: Literal["foo"]
     }
     result.append("]");
     return result.toFragment();

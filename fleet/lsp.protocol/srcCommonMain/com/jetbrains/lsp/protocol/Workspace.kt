@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonContentPolymorphicSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.jvm.JvmInline
 
 @Serializable
@@ -70,6 +71,114 @@ data class FileRename(
 data class DidChangeWatchedFilesParams(
     val changes: List<FileEvent>,
 )
+
+@Serializable
+data class DidChangeWatchedFilesRegistrationOptions(
+    /**
+     * The watchers to register.
+     */
+    val watchers: List<FileSystemWatcher>,
+)
+
+@Serializable
+data class FileSystemWatcher(
+    /**
+     * The glob pattern to watch. See {@link GlobPattern glob pattern}
+     * for more detail.
+     *
+     * @since 3.17.0 support for relative patterns.
+     */
+    val globPattern: GlobPattern,
+
+    /**
+     * The kind of events of interest. If omitted it defaults
+     * to WatchKind.Create | WatchKind.Change | WatchKind.Delete
+     * which is 7.
+     */
+    val kind: WatchKind?,
+)
+
+/**
+ * The glob pattern. Either a string pattern or a relative pattern.
+ *
+ * @since 3.17.0
+ * @see Pattern
+ */
+typealias GlobPattern = OrString<RelativePattern>
+
+/**
+ * The glob pattern to watch relative to the base path. Glob patterns can have
+ * the following syntax:
+ * - `*` to match zero or more characters in a path segment
+ * - `?` to match on one character in a path segment
+ * - `**` to match any number of path segments, including none
+ * - `{}` to group conditions
+ * - `[]` to declare a range of characters to match in a path segment
+ *   (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+ * - `[!...]` to negate a range of characters to match in a path segment
+ *   (e.g., `example.[!0-9]` to match on `example.a`, `example.b`,
+ *   but not `example.0`)
+ *
+ * @since 3.17.0
+*/
+typealias Pattern = String
+
+/**
+ * A relative pattern is a helper to construct glob patterns that are matched
+ * relatively to a base URI. The common value for a `baseUri` is a workspace
+ * folder root, but it can be another absolute URI as well.
+ *
+ * @since 3.17.0
+ */
+@Serializable
+data class RelativePattern(
+    /**
+     * A workspace folder or a base URI to which this pattern will be matched
+     * against relatively.
+     */
+    val baseUri: BaseURI,
+
+    /**
+     * The actual glob pattern;
+     */
+    val pattern: Pattern,
+) {
+    @Serializable(with = BaseURI.Serializer::class)
+    sealed interface BaseURI {
+        @Serializable
+        @JvmInline
+        value class WorkspaceFolder(val value: com.jetbrains.lsp.protocol.WorkspaceFolder) : BaseURI
+
+        @Serializable
+        @JvmInline
+        value class URI(val value: com.jetbrains.lsp.protocol.URI) : BaseURI
+
+        class Serializer: JsonContentPolymorphicSerializer<BaseURI>(BaseURI::class) {
+            override fun selectDeserializer(element: JsonElement): DeserializationStrategy<BaseURI> {
+                return when (element) {
+                    is JsonPrimitive if element.isString -> URI.serializer()
+                    else -> WorkspaceFolder.serializer()
+                }
+            }
+        }
+    }
+}
+
+@Serializable
+@JvmInline
+value class WatchKind(val value: Int) {
+    infix fun or(flag: WatchKind): WatchKind = WatchKind(value or flag.value)
+
+    fun has(flag: WatchKind): Boolean = value and flag.value == flag.value
+
+    companion object {
+        val Create: WatchKind = WatchKind(0x01)
+        val Change: WatchKind = WatchKind(0x02)
+        val Delete: WatchKind = WatchKind(0x04)
+
+        val All: WatchKind = Create or Change or Delete
+    }
+}
 
 @Serializable
 data class FileEvent(

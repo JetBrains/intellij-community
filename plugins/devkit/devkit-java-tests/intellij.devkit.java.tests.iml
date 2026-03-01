@@ -26,8 +26,10 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.devkit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.backend" exported="" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" />
@@ -52,6 +54,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.core" />
 </module>

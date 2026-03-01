@@ -18,7 +18,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -30,10 +30,14 @@ import java.io.StringReader;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.function.Consumer;
 
-@ApiStatus.Internal
+@Internal
 public final class EclipseProjectDetector extends ProjectDetector {
   private static final Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
 

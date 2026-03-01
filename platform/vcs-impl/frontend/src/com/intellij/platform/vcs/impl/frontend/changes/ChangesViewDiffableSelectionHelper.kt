@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vcs.changes.ui.isUnderTag
+import com.intellij.openapi.vcs.changes.ui.selectedDiffableNode
 import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
@@ -49,9 +50,7 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
 
   @RequiresEdt
   private fun getDiffableSelection(): ChangesViewDiffableSelection? {
-    val selectedDiffableNode = changesView.selectedChanges.firstOrNull()
-                               ?: changesView.selectedUnversionedFiles.firstOrNull()
-                               ?: return null
+    val selectedDiffableNode = changesView.selectedDiffableNode ?: return null
     val selectedNodePath =
       getPathOrLog(selectedDiffableNode) { LOG.warn("Could not create path for selected node: $it") } ?: return null
 

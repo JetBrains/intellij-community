@@ -2,7 +2,11 @@
 package com.intellij.vcs.git.branch.popup
 
 import com.intellij.ide.util.treeView.TreeState
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JTree

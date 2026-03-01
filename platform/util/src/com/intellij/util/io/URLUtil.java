@@ -10,8 +10,18 @@ import com.intellij.util.lang.UrlUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.net.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.regex.Matcher;
@@ -39,8 +49,7 @@ public final class URLUtil {
   public static final Pattern DATA_URI_PATTERN_OPTIMIZED = Pattern.compile("data:[^,;]+/[^,;]+(?:;charset[=:][^,;]+)?(;base64)?,(.+)");
   public static final Pattern URL_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tps?)://|(?<![\\p{L}0-9_.])www\\.)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
   public static final Pattern URL_WITH_PARENS_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tps?)://|(?<![\\p{L}0-9_.])www\\.)[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
-  public static final Pattern FILE_URL_PATTERN_OPTIMIZED = Pattern.compile("\\bfile:(?:///|/)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
-
+  public static final Pattern FILE_URL_PATTERN_OPTIMIZED = Pattern.compile("\\bfile:(?:/|[A-Za-z]:)[^\\s()]*[^\\s():;?!,.]");
   public static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
   private URLUtil() { }
@@ -49,7 +58,7 @@ public final class URLUtil {
    * If {@code false}, then the line contains no URL, otherwise the heavier {@link #URL_PATTERN} check should be used.
    */
   public static boolean canContainUrl(@NotNull String line) {
-    return line.contains("mailto:") || line.contains(SCHEME_SEPARATOR) || line.contains("www.") || line.contains("file:/");
+    return line.contains("mailto:") || line.contains(SCHEME_SEPARATOR) || line.contains("www.") || line.contains("file:");
   }
 
   /**

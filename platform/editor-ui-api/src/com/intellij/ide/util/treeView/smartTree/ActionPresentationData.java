@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsActions.ActionDescription;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * The default implementation of the ActionPresentation interface, specifying the presentation

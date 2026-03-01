@@ -6,14 +6,19 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
-import com.intellij.openapi.fileTypes.*
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders
+import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter
+import com.intellij.openapi.fileTypes.SyntaxHighlighter
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.SlowOperations
 
-private class EditorHighlighterFactoryImpl : EditorHighlighterFactory() {
+internal class EditorHighlighterFactoryImpl : EditorHighlighterFactory() {
   override fun createEditorHighlighter(highlighter: SyntaxHighlighter?, colors: EditorColorsScheme): EditorHighlighter {
     return LexerEditorHighlighter(highlighter ?: PlainSyntaxHighlighter(), colors)
   }

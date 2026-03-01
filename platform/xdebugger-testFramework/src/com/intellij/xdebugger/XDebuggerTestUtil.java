@@ -12,21 +12,34 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XNamedValue;
+import com.intellij.xdebugger.frame.XNavigatable;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -36,8 +49,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @TestOnly
@@ -279,7 +300,7 @@ public class XDebuggerTestUtil {
   // Rider needs this in order to be able to receive messages from the backend when waiting on the EDT.
   private static void flushEventQueue() {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     else {
       UIUtil.pump();

@@ -7,7 +7,13 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyConditionalExpression;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyIfStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

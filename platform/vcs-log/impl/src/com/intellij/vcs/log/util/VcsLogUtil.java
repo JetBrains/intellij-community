@@ -11,7 +11,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -20,23 +24,54 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.CompressedRefs;
-import com.intellij.vcs.log.data.RefsModel;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefs;
+import com.intellij.vcs.log.VcsLogAggregatedStoredRefsKt;
+import com.intellij.vcs.log.VcsLogBranchFilter;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogListener;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRootFilter;
+import com.intellij.vcs.log.VcsLogRootStoredRefs;
+import com.intellij.vcs.log.VcsLogStructureFilter;
+import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
+import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
@@ -153,13 +188,14 @@ public final class VcsLogUtil {
     }));
   }
 
-  public static @Nullable @NlsSafe String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters, @NotNull VcsLogRefs refs) {
+  public static @Nullable @NlsSafe String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters,
+                                                                  @NotNull VcsLogAggregatedStoredRefs refs) {
     VcsLogBranchFilter filter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
     if (filter == null) return null;
 
     String branchName = null;
     Set<VirtualFile> checkedRoots = new HashSet<>();
-    for (VcsRef branch : refs.getBranches()) {
+    for (VcsRef branch : VcsLogAggregatedStoredRefsKt.getBranches(refs)) {
       if (!filter.matches(branch.getName())) continue;
 
       if (branchName == null) {
@@ -217,11 +253,12 @@ public final class VcsLogUtil {
     return s.length() == FULL_HASH_LENGTH && HASH_REGEX.matcher(s).matches();
   }
 
-  public static @Nullable VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
-    CompressedRefs compressedRefs = refs.getAllRefsByRoot().get(root);
-    if (compressedRefs == null) return null;
-    Stream<VcsRef> branches = compressedRefs.streamBranches();
-    return branches.filter(vcsRef -> vcsRef.getName().equals(branchName)).findFirst().orElse(null);
+  public static @Nullable VcsRef findBranch(@NotNull VcsLogAggregatedStoredRefs refs,
+                                            @NotNull VirtualFile root,
+                                            @NotNull String branchName) {
+    VcsLogRootStoredRefs rootRefs = refs.getRefsByRoot().get(root);
+    if (rootRefs == null) return null;
+    return ContainerUtil.find(rootRefs.branches().iterator(), (ref) -> ref.getName().equals(branchName));
   }
 
   public static @NotNull List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
@@ -358,12 +395,18 @@ public final class VcsLogUtil {
     return ContainerUtil.newHashSet(projectRoots).containsAll(roots);
   }
 
-  public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable) {
-    invokeOnChange(ui, runnable, Conditions.alwaysTrue());
+  /**
+   * Invokes the given runnable once when the data pack is updated
+   */
+  public static void invokeOnceOnDataChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable) {
+    invokeOnceOnDataChange(ui, runnable, Conditions.alwaysTrue());
   }
 
-  public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable,
-                                    @NotNull Condition<? super VcsLogDataPack> condition) {
+  /**
+   * Invokes the given runnable once when the data pack is updated if the given condition is met
+   */
+  public static void invokeOnceOnDataChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable,
+                                            @NotNull Condition<? super VcsLogDataPack> condition) {
     ui.addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
@@ -395,12 +438,11 @@ public final class VcsLogUtil {
    * Requests to load more filtered commits.
    *
    * @param ui       target {@link VcsLogUiEx} instance.
-   * @param onLoaded will be called upon task completion on the EDT.
    * @see VcsLogUtil#canRequestMore(VisiblePack)
    */
-  public static void requestToLoadMore(@NotNull VcsLogUiEx ui, @NotNull Runnable onLoaded) {
+  public static void requestToLoadMore(@NotNull VcsLogUiEx ui) {
     MORE_REQUESTED.set(ui.getDataPack(), true);
-    ui.getRefresher().moreCommitsNeeded(onLoaded);
+    ui.getRefresher().moreCommitsNeeded();
   }
 
   /**

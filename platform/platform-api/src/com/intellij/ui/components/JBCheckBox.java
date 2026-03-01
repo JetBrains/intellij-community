@@ -8,10 +8,14 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
 
 /**
  * @author evgeny.zakrevsky

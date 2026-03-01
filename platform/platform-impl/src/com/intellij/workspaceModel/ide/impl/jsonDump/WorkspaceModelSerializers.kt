@@ -6,7 +6,11 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
-import com.intellij.platform.workspace.storage.metadata.model.*
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata
+import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
+import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer

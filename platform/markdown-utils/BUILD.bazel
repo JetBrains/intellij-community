@@ -23,13 +23,18 @@ jvm_library(
   associates = [":markdown-utils"],
   deps = [
     "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
     "@lib//:kotlin-stdlib",
     "//libraries/markdown",
+    "//libraries/markdown:markdown_test_lib",
     "@lib//:junit4",
     "@lib//:kotlin-test",
     "//platform/lang-impl",
+    "//platform/lang-impl:lang-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.markdown.utils` end

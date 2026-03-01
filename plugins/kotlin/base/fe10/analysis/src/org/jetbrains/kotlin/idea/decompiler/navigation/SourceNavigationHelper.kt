@@ -11,12 +11,19 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.base.fe10.analysis.decompiler.ByDescriptorIndexer
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
 import org.jetbrains.kotlin.fileClasses.fileClassInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
+import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.collectLibraryBinariesModuleInfos
+import org.jetbrains.kotlin.idea.base.projectStructure.collectLibrarySourcesModuleInfos
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
@@ -24,18 +31,41 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.receiverAndParametersShortTypesMatch
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.sameReceiverPresenceAndParametersCount
-import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinStringStubIndexHelper
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 
+@K1Deprecation
 @ApiStatus.Internal
 class Fe10LibrarySourceScopeService: LibrarySourceScopeService {
     override fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> =
@@ -43,6 +73,7 @@ class Fe10LibrarySourceScopeService: LibrarySourceScopeService {
 
 }
 
+@K1Deprecation
 object SourceNavigationHelper {
     private val LOG = Logger.getInstance(SourceNavigationHelper::class.java)
 

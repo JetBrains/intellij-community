@@ -9,9 +9,10 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.isEssentialContributorPredictionExperiment
+import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultProviderAdapter
 import com.intellij.searchEverywhereMl.ranking.core.model.CatBoostModelFactory
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereCatBoostBinaryClassifierModel
-import java.util.*
+import java.util.WeakHashMap
 
 
 /**
@@ -34,11 +35,11 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
    * Realistically - we are only interested in the last session, thus we are going to use a weak map,
    * so that past sessions and their related predicted probabilities can be garbage-collected.
 
-   * The key is a `SearchEverywhereMlSearchState` object that represents the state of a search session.
-   * The value is a map associating individual contributors (`SearchEverywhereContributor`) with
+   * The key is a `SearchState` object that represents the state of a search session.
+   * The value is a map associating individual `SearchResultProviderAdapter` with
    * their predicted probabilities (`Float`) for being considered essential in the current search state.
    */
-  private val contributorPredictionCache = WeakHashMap<SearchEverywhereMlSearchState, MutableMap<SearchEverywhereContributor<*>, Float>>()
+  private val contributorPredictionCache = WeakHashMap<SearchEverywhereMLSearchSession.SearchState, MutableMap<SearchResultProviderAdapter, Float>>()
 
   override fun isAvailable(): Boolean {
     return isActiveExperiment() && isSearchStateActive()
@@ -49,61 +50,48 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
   }
 
   private fun isSearchStateActive(): Boolean {
-    try {
-      val rankingService = checkNotNull(searchEverywhereMlRankingService) { "Search Everywhere Ranking Service is null" }
-      val searchSession = checkNotNull(rankingService.getCurrentSession()) { "Search Everywhere Search Session is null" }
-      checkNotNull(searchSession.getCurrentSearchState()) { "Search Everywhere Search State is null" }
-
-      // Search state is active
-      return true
-    } catch (e: IllegalStateException) {
-      thisLogger().debug(e)
-      return false
-    }
+    return SearchEverywhereMlFacade.activeSession != null && SearchEverywhereMlFacade.activeSession!!.activeState != null
   }
 
-  private fun computeProbability(contributor: SearchEverywhereContributor<*>): Float {
-    val features = getFeatures(contributor).associate { it.field.name to it.data }
+  private fun computeProbability(provider: SearchResultProviderAdapter): Float {
+    val features = getFeatures(provider).associate { it.field.name to it.data }
     return model.predict(features).toFloat()
   }
 
   override fun isContributorEssential(contributor: SearchEverywhereContributor<*>): Boolean {
-    val proba = getContributorEssentialPrediction(contributor)
+    val proba = getContributorEssentialPrediction(SearchResultProviderAdapter.createAdapterFor(contributor))
     return proba >= TRUE_THRESHOLD
   }
 
-  internal fun getContributorEssentialPrediction(contributor: SearchEverywhereContributor<*>,
-                                                 searchState: SearchEverywhereMlSearchState = getSearchState()): Float {
+  fun getContributorEssentialPrediction(provider: SearchResultProviderAdapter): Float {
+    val searchSession = checkNotNull(SearchEverywhereMlFacade.activeSession) { "Cannot get prediction without active search session "}
+    val searchState = checkNotNull(searchSession.activeState) { "Cannot get prediction without active search state" }
+
+    return getContributorEssentialPrediction(provider, searchState)
+  }
+
+  fun getContributorEssentialPrediction(provider: SearchResultProviderAdapter,
+                                        searchState: SearchEverywhereMLSearchSession.SearchState): Float {
     val cache = contributorPredictionCache.getOrPut(searchState) { hashMapOf() }
-    return cache.getOrPut(contributor) {
-      computeProbability(contributor).also { probability ->
-        thisLogger().debug("Predicted probability of ${contributor.searchProviderId} is $probability")
+    return cache.getOrPut(provider) {
+      computeProbability(provider).also { probability ->
+        thisLogger().debug("Predicted probability of ${provider.id} is $probability")
       }
     }
   }
 
-  fun getCachedPredictionsForState(searchState: SearchEverywhereMlSearchState): Map<SearchEverywhereContributor<*>, Float> {
+  fun getCachedPredictionsForState(searchState: SearchEverywhereMLSearchSession.SearchState): Map<SearchResultProviderAdapter, Float> {
     return contributorPredictionCache[searchState]?.toMap() ?: emptyMap()
   }
 
-  private fun getFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
-    val searchSession = getSearchSession()
-    val searchState = getSearchState()
+  private fun getFeatures(provider: SearchResultProviderAdapter): List<EventPair<*>> {
+    val searchSession = checkNotNull(SearchEverywhereMlFacade.activeSession) { "Cannot calculate features without active search session "}
+    val searchState = checkNotNull(searchSession.activeState) { "Cannot calculate features without active search state" }
 
     val sessionContextFeatures = searchSession.cachedContextInfo.features
     val stateFeatures = searchState.searchStateFeatures
-    val contributorFeatures = searchState.getContributorFeatures(contributor)
+    val contributorFeatures = searchState.getContributorFeatures(provider)
 
     return sessionContextFeatures + stateFeatures + contributorFeatures
-  }
-
-  private fun getSearchSession(): SearchEverywhereMLSearchSession {
-    val rankingService = checkNotNull(searchEverywhereMlRankingService)
-    return checkNotNull(rankingService.getCurrentSession())
-  }
-
-  private fun getSearchState(): SearchEverywhereMlSearchState {
-    val searchSession = getSearchSession()
-    return checkNotNull(searchSession.getCurrentSearchState())
   }
 }

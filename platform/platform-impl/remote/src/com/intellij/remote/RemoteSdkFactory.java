@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Collection;
 
 @ApiStatus.Internal
@@ -15,9 +15,9 @@ public interface RemoteSdkFactory<T extends RemoteSdkAdditionalData> {
   Sdk createRemoteSdk(@Nullable Project project, @NotNull T data, @Nullable String sdkName, Collection<Sdk> existingSdks)
     throws RemoteSdkException;
 
-  String generateSdkHomePath(@NotNull T data);
+  String generateSdkHomePath(@Nullable Project project, @NotNull T data);
 
-  Sdk createUnfinished(T data, Collection<Sdk> existingSdks);
+  Sdk createUnfinished(@Nullable Project project, T data, Collection<Sdk> existingSdks);
 
   String getDefaultUnfinishedName();
 

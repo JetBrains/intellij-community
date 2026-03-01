@@ -2,7 +2,14 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiFragment;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;

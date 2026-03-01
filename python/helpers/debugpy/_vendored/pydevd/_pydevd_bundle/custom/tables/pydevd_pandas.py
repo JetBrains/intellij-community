@@ -189,7 +189,9 @@ def get_inspection_outliers(table):
                 if outliers_count > 0:
                     results_per_column.append({
                         "columnName": col,
-                        "value": str(outliers_count)
+                        "value": str(outliers_count),
+                        "detailFirst": str(lower_bound),
+                        "detailSecond": str(upper_bound)
                     })
 
         is_triggered = len(results_per_column) > 0
@@ -303,8 +305,8 @@ def __analyze_categorical_column(column):
     if len(value_counts) <= 3 or float(len(value_counts)) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
         # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
         num_unique_values_to_show_in_vis = ColumnVisualisationUtils.MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS - (0 if len(value_counts) == 3 else 1)
-
-        top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda v_c_share: round(v_c_share * 100, 1)).to_dict(OrderedDict)
+        top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda v_c_share: round(v_c_share * 100, 1)).to_dict()
+        top_values = OrderedDict(top_values)
         if len(value_counts) == 3:
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
         else:

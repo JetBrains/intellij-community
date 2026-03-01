@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class ReplaceSizeZeroCheckWithIsEmptyInspection : IntentionBasedInspection<KtBinaryExpression>(
     ReplaceSizeZeroCheckWithIsEmptyIntention::class

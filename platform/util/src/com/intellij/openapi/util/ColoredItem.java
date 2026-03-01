@@ -3,7 +3,7 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Provides background color in all Trees, Lists and ComboBoxes.

@@ -2,7 +2,12 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.EmptyModuleType
@@ -10,21 +15,50 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.TestCustomRootModelSerializerExtension
+import com.intellij.openapi.roots.TestCustomSourceRootProperties
+import com.intellij.openapi.roots.TestCustomSourceRootType
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.platform.backend.workspace.*
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity
 import com.intellij.platform.workspace.jps.entities.DependencyScope
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.toConfigLocation
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -32,9 +66,16 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.stateStore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.workspaceModel.updateProjectModel
@@ -48,16 +89,24 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
-import org.junit.Assert.*
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -115,6 +164,32 @@ class ModuleBridgesTest {
       moduleManager.getModifiableModel().let {
         it.disposeModule(module)
         it.commit()
+      }
+    }
+  }
+
+  @Test
+  fun testModuleChangesSourceAndName(): Unit = timeoutRunBlocking {
+    val customEntitySource = object : EntitySource {}
+
+    val newModuleName = "xxx_renamed"
+    val moduleManager = ModuleManager.getInstance(project)
+
+    val module = writeAction { moduleManager.newModule(temporaryDirectoryRule.newDirectoryPath(), "PYTHON_MODULE") }
+    try {
+      project.workspaceModel.update("...") { storage ->
+        val moduleEntity = module.findModuleEntity(storage)!!
+        storage.modifyModuleEntity(moduleEntity) {
+          name = newModuleName
+          entitySource = customEntitySource
+        }
+
+      }
+      Assertions.assertThat(project.modules.map { it.name }).containsExactly(newModuleName)
+    }
+    finally {
+      writeAction {
+        moduleManager.disposeModule(module)
       }
     }
   }
@@ -396,7 +471,9 @@ class ModuleBridgesTest {
           this.contentRoots = listOf(
             ContentRootEntity(virtualFileUrl, emptyList<@NlsSafe String>(), entitySource) {
               this.sourceRoots = listOf(
-                SourceRootEntity(virtualFileUrl, DEFAULT_SOURCE_ROOT_TYPE_ID, JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+                SourceRootEntity(virtualFileUrl,
+                                 DEFAULT_SOURCE_ROOT_TYPE_ID,
+                                 JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
               )
             }
           )

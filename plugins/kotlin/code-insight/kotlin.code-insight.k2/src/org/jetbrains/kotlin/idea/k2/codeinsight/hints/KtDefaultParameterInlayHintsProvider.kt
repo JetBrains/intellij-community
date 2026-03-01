@@ -9,10 +9,8 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigatio
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.lexer.KtTokens

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -7,14 +7,35 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLiteralValue;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.IndexedContainer;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,14 +90,13 @@ public final class SequencedCollectionMethodCanBeUsedInspection extends Abstract
         PsiExpression collection = qualifierCall.getMethodExpression().getQualifierExpression();
         if (collection == null || collection instanceof PsiThisExpression) return;
         if (!InheritanceUtil.isInheritor(collection.getType(), "java.util.SequencedCollection")) return;
-        String name = "getFirst";
-        report(call, name);
+        report(call, "getFirst");
       }
 
       private void report(@NotNull PsiMethodCallExpression call, String name) {
         holder.registerProblem(
           Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()),
-          JavaBundle.message("inspection.stream.api.migration.can.be.replaced.with.call", name + "()"),
+          JavaBundle.message("inspection.stream.api.migration.can.be.replaced.with.call", name),
           new ReplaceWithCallFix(name));
       }
 

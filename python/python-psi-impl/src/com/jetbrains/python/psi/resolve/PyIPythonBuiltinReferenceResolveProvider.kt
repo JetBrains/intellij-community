@@ -7,7 +7,12 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.psi.util.siblings
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyEmptyExpression
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyNumericLiteralExpression
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.impl.ResolveResultList
 import com.jetbrains.python.psi.types.TypeEvalContext
 

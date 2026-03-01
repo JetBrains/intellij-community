@@ -38,7 +38,12 @@ import org.junit.Test;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -130,7 +135,6 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   public void testPreviewLanguageLevel() throws Exception {
     LanguageLevel highest = JavaRelease.getHighest();
     LanguageLevel highestPreview = highest.getPreviewLevel();
-
     importProject(
       "apply plugin: 'java'\n" +
       "java.sourceCompatibility = " + highest.feature() + "\n" +

@@ -23,8 +23,12 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.Builder;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.ExitCode;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.StopBuildException;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -38,7 +42,14 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends BuildTarget<R>> {

@@ -26,13 +26,22 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.Action;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Component;
+import org.jetbrains.idea.devkit.dom.Group;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.Listeners;
 import org.jetbrains.idea.devkit.dom.index.RegistrationEntry.RegistrationType;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Class FQN or ID -> entry in {@code plugin.xml}.

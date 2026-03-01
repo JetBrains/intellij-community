@@ -2,14 +2,14 @@
 
 package com.intellij.find.impl;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 @ApiStatus.Internal
 public final class RevealingSpaceComboboxEditor extends StringComboboxEditor {

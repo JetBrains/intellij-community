@@ -60,15 +60,29 @@ package org.jdom.input;
  * This way there isles confusion about what a Document or Element is....
  */
 
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.CDATA;
+import org.jdom.DefaultJDOMFactory;
+import org.jdom.DocType;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.w3c.dom.*;
+import org.jdom.EntityRef;
+import org.jdom.JDOMFactory;
+import org.jdom.Namespace;
+import org.w3c.dom.Attr;
+import org.w3c.dom.CDATASection;
+import org.w3c.dom.DocumentType;
+import org.w3c.dom.EntityReference;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
 import java.util.HashMap;
 
-import static org.jdom.JDOMConstants.*;
+import static org.jdom.JDOMConstants.NS_PREFIX_DEFAULT;
+import static org.jdom.JDOMConstants.NS_PREFIX_XMLNS;
+import static org.jdom.JDOMConstants.NS_URI_DEFAULT;
 
 /**
  * Builds a JDOM Document from a pre-existing DOM {@link org.w3c.dom.Document

@@ -38,7 +38,15 @@ import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
@@ -58,13 +66,21 @@ import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 import org.jetbrains.java.generate.view.TemplatesPanel;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 /**
  * The action-handler that does the code generation.

@@ -340,6 +340,19 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }""");
   }
 
+
+  @NeedsIndex.Full
+  public void testPatternInInstanceOfMoreThanRecords() {
+    myFixture.configureByText("a.java", """
+      record Point(int x);
+      class X {
+        void test(Object o) {
+          if(o instanceof Point(int x, <caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+  }
+
   private void selectItem(int index) {
     LookupElement[] elements = myFixture.getLookupElements();
     assertNotNull(elements);

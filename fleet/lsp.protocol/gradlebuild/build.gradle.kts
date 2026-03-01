@@ -33,6 +33,7 @@ kotlin {
     "-Xjvm-default=all",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
+    "-progressive",
   )
   jvm {}
   wasmJs {
@@ -40,6 +41,7 @@ kotlin {
   }
   iosArm64 {}
   iosSimulatorArm64 {}
+  sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
   sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest")) }

@@ -10,8 +10,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.plugins.emojipicker.EmojiCategory;
 import org.jetbrains.plugins.emojipicker.messages.EmojiCategoriesBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.List;
 
 class EmojiCategoryPanel extends JPanel {

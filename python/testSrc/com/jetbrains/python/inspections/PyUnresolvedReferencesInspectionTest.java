@@ -714,7 +714,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                            self.one = lambda x: True
                           \s
                        def some_method(self):
-                           self.one.<warning descr="Cannot find reference 'abc' in 'function'">abc</warning>""");
+                           self.one.<warning descr="Cannot find reference 'abc' in '(x: Any) -> bool'">abc</warning>""");
   }
 
   public void testNamedTupleFunction() {
