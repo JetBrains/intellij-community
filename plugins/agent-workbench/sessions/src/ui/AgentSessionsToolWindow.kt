@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
+import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupDataKeys
@@ -24,6 +25,7 @@ import com.intellij.agent.workbench.sessions.tree.SessionTreeModelDiff
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.tree.archiveTargetFromThreadNode
 import com.intellij.agent.workbench.sessions.tree.buildSessionTreeModel
+import com.intellij.agent.workbench.sessions.tree.copyPathForSessionTreeId
 import com.intellij.agent.workbench.sessions.tree.diffSessionTreeModels
 import com.intellij.agent.workbench.sessions.tree.formatRelativeTimeShort
 import com.intellij.agent.workbench.sessions.tree.parentNodesForSelection
@@ -46,7 +48,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -54,6 +58,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.ExperimentalUI
@@ -540,6 +548,7 @@ internal class AgentSessionsToolWindowPanel(
   override fun uiDataSnapshot(sink: DataSink) {
     val selectedTreeId = selectedTreeId()
     val selectedTreeNode = selectedTreeId?.let(::sessionTreeNode)
+    val selectedCopyFiles = selectedCopyVirtualFiles()
     sink[AgentSessionsTreePopupDataKeys.CONTEXT] = resolveArchiveActionContext(
       popupActionContext = popupActionContext,
       project = project,
@@ -547,6 +556,35 @@ internal class AgentSessionsToolWindowPanel(
       selectedTreeNode = selectedTreeNode,
       selectedArchiveTargets = selectedArchiveTargets(),
     )
+    sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = selectedCopyFiles.takeIf { it.isNotEmpty() }?.toTypedArray()
+    sink[CommonDataKeys.VIRTUAL_FILE] = selectedCopyFiles.firstOrNull()
+    sink.lazyValue(CommonDataKeys.PSI_ELEMENT) { dataProvider ->
+      val copyFiles = dataProvider[CommonDataKeys.VIRTUAL_FILE_ARRAY]?.toList() ?: selectedCopyFiles
+      selectedCopyPsiItems(copyFiles).singleOrNull()
+    }
+    sink.lazyValue(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY) { dataProvider ->
+      val copyFiles = dataProvider[CommonDataKeys.VIRTUAL_FILE_ARRAY]?.toList() ?: selectedCopyFiles
+      selectedCopyPsiItems(copyFiles).takeIf { it.isNotEmpty() }?.toTypedArray()
+    }
+  }
+
+  private fun selectedCopyVirtualFiles(): List<VirtualFile> {
+    val virtualFileManager = VirtualFileManager.getInstance()
+    return selectedTreeIds()
+      .asSequence()
+      .mapNotNull(::copyPathForSessionTreeId)
+      .mapNotNull(::parseAgentWorkbenchPathOrNull)
+      .mapNotNull { path -> virtualFileManager.findFileByNioPath(path) }
+      .distinct()
+      .toList()
+  }
+
+  private fun selectedCopyPsiItems(selectedCopyFiles: List<VirtualFile>): List<PsiFileSystemItem> {
+    return selectedCopyFiles
+      .asSequence()
+      .mapNotNull { file -> PsiUtilCore.findFileSystemItem(project, file) }
+      .distinct()
+      .toList()
   }
 
   private fun selectedArchiveTargets(): List<ArchiveThreadTarget> {

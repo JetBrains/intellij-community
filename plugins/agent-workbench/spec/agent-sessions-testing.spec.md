@@ -74,6 +74,9 @@ This file does not redefine runtime behavior; it maps each contract area to requ
   [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
+- Tree-popup action coverage must include platform copy group registration (`CopyReferencePopupGroup`) for project/worktree context menus.
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+
 - Dedicated-frame coverage must include gear toggle setting wiring, routing behavior in both modes, and dedicated-project filtering.
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt

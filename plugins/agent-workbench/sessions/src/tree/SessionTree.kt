@@ -482,6 +482,14 @@ internal fun pathForThreadNode(id: SessionTreeId, fallbackProjectPath: String): 
   }
 }
 
+internal fun copyPathForSessionTreeId(id: SessionTreeId): String? {
+  return when (id) {
+    is SessionTreeId.Project -> normalizeAgentWorkbenchPath(id.path)
+    is SessionTreeId.Worktree -> normalizeAgentWorkbenchPath(id.worktreePath)
+    else -> null
+  }
+}
+
 internal fun archiveTargetFromThreadNode(
   id: SessionTreeId,
   threadNode: SessionTreeNode.Thread,

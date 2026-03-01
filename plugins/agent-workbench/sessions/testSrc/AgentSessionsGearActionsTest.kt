@@ -185,6 +185,7 @@ class AgentSessionsGearActionsTest {
       .contains("AgentWorkbenchSessions.TreePopup.More")
       .contains("AgentWorkbenchSessions.TreePopup.NewThread")
       .contains("AgentWorkbenchSessions.TreePopup.Archive")
+      .contains("CopyReferencePopupGroup")
 
     assertThat(actionManager.getAction("AgentWorkbenchSessions.TreePopup.NewThread"))
       .isNotNull
