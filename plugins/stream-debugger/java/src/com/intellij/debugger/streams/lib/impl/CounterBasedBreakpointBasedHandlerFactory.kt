@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 internal class CounterBasedBreakpointBasedHandlerFactory(
   private val objectStorage: ObjectStorage,
+  private val getSourceHandler: (time: ObjectReference) -> SourceCallHandler,
   private val getIntermediateHandler: (callOrder: Int, call: IntermediateStreamCall, time: ObjectReference) -> IntermediateCallHandler,
   private val getTerminalHandler: (call: TerminatorStreamCall, time: ObjectReference) -> TerminalCallHandler,
 ) : BreakpointBasedHandlerFactory {
@@ -41,7 +42,7 @@ internal class CounterBasedBreakpointBasedHandlerFactory(
 
   override fun getForSource(): SourceCallHandler {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    return StreamPreparer(objectStorage, time)
+    return getSourceHandler(time)
   }
 
   override fun getForIntermediate(callOrder: Int, call: IntermediateStreamCall): IntermediateCallHandler {

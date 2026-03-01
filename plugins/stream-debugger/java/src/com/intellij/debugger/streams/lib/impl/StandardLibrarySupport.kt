@@ -4,17 +4,23 @@ package com.intellij.debugger.streams.lib.impl
 import com.intellij.debugger.streams.core.trace.impl.interpret.AllMatchTraceInterpreter
 import com.intellij.debugger.streams.core.trace.impl.interpret.AnyMatchTraceInterpreter
 import com.intellij.debugger.streams.core.trace.impl.interpret.NoneMatchTraceInterpreter
+import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointPositionResolver
 import com.intellij.debugger.streams.trace.breakpoint.JavaBreakpointPositionResolver
+import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFilterOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFlatMappingOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMappingOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMatchingOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedOptionalResultOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedDistinctOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedParallelOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedSortedOperation
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedToCollectionOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.PeekCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.PeekTerminalCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.StreamPreparer
 
 /**
  * @author Vitaliy.Bibaev
@@ -56,4 +62,26 @@ class StandardLibrarySupport : JvmLibrarySupportBase() {
   }
 
   override val breakpointResolverFactory: BreakpointPositionResolver = JavaBreakpointPositionResolver()
+
+  override fun canHandleChain(chain: StreamChain): Boolean = true
+
+  override fun createRuntimeHandlerFactory(objectStorage: ObjectStorage): BreakpointBasedHandlerFactory {
+    return CounterBasedBreakpointBasedHandlerFactory(
+      objectStorage,
+      getSourceHandler = { time -> StreamPreparer(objectStorage, time) },
+      getIntermediateHandler = { callOrder, call, time ->
+        val operation = breakpointIntermediateOps[call.name]
+                        ?: jvmCompatibleLibrary?.breakpointIntermediateOps[call.name]
+
+        operation?.getRuntimeTraceHandler(objectStorage, callOrder, call, time)
+        ?: PeekCallHandler(objectStorage, call.getTypeBefore(), call.getTypeAfter(), time)
+      },
+      getTerminalHandler = { call, time ->
+        val operation = breakpointTerminalOps[call.name]
+                        ?: jvmCompatibleLibrary?.breakpointTerminalOps[call.name]
+        operation?.getRuntimeTraceHandler(objectStorage, call, time)
+        ?: PeekTerminalCallHandler(objectStorage, call.getTypeBefore(), null, time)
+      },
+    )
+  }
 }

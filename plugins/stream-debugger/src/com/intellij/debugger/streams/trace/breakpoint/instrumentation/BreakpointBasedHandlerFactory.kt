@@ -25,3 +25,10 @@ interface BreakpointBasedHandlerFactory {
   fun getForIntermediate(callOrder: Int, call: IntermediateStreamCall): IntermediateCallHandler
   fun getForTermination(call: TerminatorStreamCall): TerminalCallHandler
 }
+
+object NopHandlerFactory : BreakpointBasedHandlerFactory {
+  override fun beforeStreamTracing(evaluationContext: EvaluationContextImpl) {}
+  override fun getForSource(): SourceCallHandler = NopHandler
+  override fun getForIntermediate(callOrder: Int, call: IntermediateStreamCall): IntermediateCallHandler = NopHandler
+  override fun getForTermination(call: TerminatorStreamCall): TerminalCallHandler = NopHandler
+}

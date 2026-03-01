@@ -9,7 +9,7 @@ import com.intellij.debugger.streams.trace.breakpoint.BreakpointPositionResolver
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointResolveResult
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
-import com.intellij.debugger.streams.trace.breakpoint.instrumentation.PeekCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.NopHandlerFactory
 
 /**
  * Base class for JVM stream library support with breakpoint-based tracing.
@@ -51,30 +51,15 @@ abstract class JvmLibrarySupportBase(
       jvmCompatibleLibrary?.canHandleIntermediateWithBreakpoints(it.name) == true
     }
     val terminalName = chain.terminationCall.name
-    val terminalOperationSupported = breakpointTerminalOps.containsKey(terminalName) ||
-                                     jvmCompatibleLibrary?.breakpointTerminalOps?.containsKey(terminalName) == true
-    return intermediateOperationsSupported && terminalOperationSupported
+    val terminalOperationSupported = breakpointTerminalOps.containsKey(terminalName)
+    return intermediateOperationsSupported && (terminalOperationSupported || jvmCompatibleLibrary?.canHandleChain(chain) == true)
   }
 
   private fun canHandleIntermediateWithBreakpoints(name: String): Boolean =
     breakpointIntermediateOps.containsKey(name)
     || jvmCompatibleLibrary?.canHandleIntermediateWithBreakpoints(name) == true
 
-  override fun createRuntimeHandlerFactory(objectStorage: ObjectStorage): BreakpointBasedHandlerFactory {
-    val allIntermediateOps = (jvmCompatibleLibrary?.breakpointIntermediateOps ?: emptyMap()) + breakpointIntermediateOps
-    val allTerminalOps = (jvmCompatibleLibrary?.breakpointTerminalOps ?: emptyMap()) + breakpointTerminalOps
-    return CounterBasedBreakpointBasedHandlerFactory(
-      objectStorage,
-      getIntermediateHandler = { callOrder, call, time ->
-        allIntermediateOps[call.name]?.getRuntimeTraceHandler(objectStorage, callOrder, call, time)
-        ?: PeekCallHandler(objectStorage, call.getTypeBefore(), call.getTypeAfter(), time)
-      },
-      getTerminalHandler = { call, time ->
-        allTerminalOps[call.name]?.getRuntimeTraceHandler(objectStorage, call, time)
-        ?: error("No breakpoint handler registered for terminal operation '${call.name}'")
-      },
-    )
-  }
+  override fun createRuntimeHandlerFactory(objectStorage: ObjectStorage): BreakpointBasedHandlerFactory = NopHandlerFactory
 }
 
 private object EmptyBreakpointPositionResolver : BreakpointPositionResolver {
