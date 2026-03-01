@@ -38,6 +38,23 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
+  fun startupShellCommandOverrideIsConsumedOnceAndNotPersisted() {
+    val file = AgentChatVirtualFile(
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = listOf("codex", "resume", "thread-1"),
+      threadId = "thread-1",
+      threadTitle = "Thread One",
+      subAgentId = null,
+    )
+    file.setStartupShellCommandOverride(listOf("codex", "--", "-run this"))
+
+    assertThat(file.consumeStartupShellCommand()).containsExactly("codex", "--", "-run this")
+    assertThat(file.consumeStartupShellCommand()).containsExactly("codex", "resume", "thread-1")
+    assertThat(file.toSnapshot().runtime.shellCommand).containsExactly("codex", "resume", "thread-1")
+  }
+
+  @Test
   fun registersAgentChatFileIconProvider() {
     val descriptor = checkNotNull(javaClass.classLoader.getResource("intellij.agent.workbench.chat.xml")) {
       "Module descriptor intellij.agent.workbench.chat.xml is missing"

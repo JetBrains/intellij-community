@@ -21,6 +21,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessa
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchResult
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.frame.AGENT_SESSIONS_TOOL_WINDOW_ID
@@ -90,6 +91,7 @@ private const val UNARCHIVE_THREADS_ACTION_KEY_PREFIX = "threads-unarchive"
 private const val AGENT_SESSIONS_NOTIFICATION_GROUP_ID = "Agent Workbench Sessions"
 private const val PENDING_LAUNCH_MODE_STANDARD = "standard"
 private const val PENDING_LAUNCH_MODE_YOLO = "yolo"
+private const val MAX_STARTUP_COMMAND_BYTES = 24 * 1024
 private val CODEX_ARCHIVE_REFRESH_DELAY = 1.seconds
 
 @Service(Service.Level.APP)
@@ -343,13 +345,24 @@ internal class AgentSessionsService private constructor(
         ?.takeIf { it.isNotEmpty() }
       val initialMessageToken = initialComposedMessage
         ?.let { message -> buildInitialMessageToken(identity = identity, message = message) }
+      val startupShellCommandOverride = initialComposedMessage
+        ?.let { message ->
+          buildStartupShellCommandOverride(
+            bridge = bridge,
+            baseCommand = launchSpec.command,
+            prompt = message,
+          )
+        }
+      val initialMessageForChat = if (startupShellCommandOverride != null) null else initialComposedMessage
+      val initialMessageTokenForChat = if (startupShellCommandOverride != null) null else initialMessageToken
 
       openNewChat(
         normalizedPath = normalizedPath,
         identity = identity,
         command = launchSpec.command,
-        initialComposedMessage = initialComposedMessage,
-        initialMessageToken = initialMessageToken,
+        startupShellCommandOverride = startupShellCommandOverride,
+        initialComposedMessage = initialMessageForChat,
+        initialMessageToken = initialMessageTokenForChat,
         preferredDedicatedFrame = preferredDedicatedFrame,
       )
       if (provider == AgentSessionProvider.CODEX) {
@@ -793,6 +806,26 @@ private fun buildInitialMessageToken(identity: String, message: String): String 
   return "$identity:${message.hashCode()}:${System.nanoTime()}"
 }
 
+private fun buildStartupShellCommandOverride(
+  bridge: AgentSessionProviderBridge,
+  baseCommand: List<String>,
+  prompt: String,
+): List<String>? {
+  val startupCommand = bridge.buildCommandWithInitialPrompt(baseCommand = baseCommand, prompt = prompt) ?: return null
+  val estimatedCommandSize = estimateCommandSizeBytes(startupCommand)
+  if (estimatedCommandSize <= MAX_STARTUP_COMMAND_BYTES) {
+    return startupCommand
+  }
+  LOG.debug {
+    "Skipped startup prompt command override for ${bridge.provider.value}: estimatedCommandSize=$estimatedCommandSize exceeds $MAX_STARTUP_COMMAND_BYTES"
+  }
+  return null
+}
+
+private fun estimateCommandSizeBytes(command: List<String>): Int {
+  return command.sumOf { part -> part.toByteArray().size + 1 }
+}
+
 private fun buildOpenThreadActionKey(path: String, thread: AgentSessionThread): String {
   return "$OPEN_THREAD_ACTION_KEY_PREFIX:$path:${thread.provider}:${thread.id}"
 }
@@ -846,6 +879,7 @@ private suspend fun openNewChat(
   normalizedPath: String,
   identity: String,
   command: List<String>,
+  startupShellCommandOverride: List<String>?,
   initialComposedMessage: String?,
   initialMessageToken: String?,
   preferredDedicatedFrame: Boolean?,
@@ -857,6 +891,7 @@ private suspend fun openNewChat(
       normalizedPath = normalizedPath,
       identity = identity,
       command = command,
+      startupShellCommandOverride = startupShellCommandOverride,
       title = title,
       initialComposedMessage = initialComposedMessage,
       initialMessageToken = initialMessageToken,
@@ -869,6 +904,7 @@ private suspend fun openNewChat(
     projectPath = normalizedPath,
     identity = identity,
     command = command,
+    startupShellCommandOverride = startupShellCommandOverride,
     title = title,
     initialComposedMessage = initialComposedMessage,
     initialMessageToken = initialMessageToken,
@@ -879,6 +915,7 @@ private suspend fun openNewChatInDedicatedFrame(
   normalizedPath: String,
   identity: String,
   command: List<String>,
+  startupShellCommandOverride: List<String>?,
   title: String,
   initialComposedMessage: String?,
   initialMessageToken: String?,
@@ -892,6 +929,7 @@ private suspend fun openNewChatInDedicatedFrame(
       projectPath = normalizedPath,
       identity = identity,
       command = command,
+      startupShellCommandOverride = startupShellCommandOverride,
       title = title,
       initialComposedMessage = initialComposedMessage,
       initialMessageToken = initialMessageToken,
@@ -917,6 +955,7 @@ private suspend fun openNewChatInDedicatedFrame(
     projectPath = normalizedPath,
     identity = identity,
     command = command,
+    startupShellCommandOverride = startupShellCommandOverride,
     title = title,
     initialComposedMessage = initialComposedMessage,
     initialMessageToken = initialMessageToken,
@@ -928,6 +967,7 @@ private suspend fun openNewChatInProject(
   projectPath: String,
   identity: String,
   command: List<String>,
+  startupShellCommandOverride: List<String>?,
   title: String,
   initialComposedMessage: String?,
   initialMessageToken: String?,
@@ -939,6 +979,7 @@ private suspend fun openNewChatInProject(
     projectPath = projectPath,
     threadIdentity = identity,
     shellCommand = command,
+    startupShellCommandOverride = startupShellCommandOverride,
     threadId = threadId,
     threadTitle = title,
     subAgentId = null,

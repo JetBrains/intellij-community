@@ -46,6 +46,9 @@ internal class AgentChatVirtualFile internal constructor(
   var shellCommand: List<String> = emptyList()
     private set
 
+  @Volatile
+  private var startupShellCommandOverride: List<String>? = null
+
   var threadId: String = ""
     private set
 
@@ -147,6 +150,18 @@ internal class AgentChatVirtualFile internal constructor(
   fun updateCommandAndThreadId(shellCommand: List<String>, threadId: String) {
     this.shellCommand = shellCommand
     this.threadId = threadId
+  }
+
+  @Synchronized
+  fun setStartupShellCommandOverride(shellCommand: List<String>) {
+    startupShellCommandOverride = shellCommand
+  }
+
+  @Synchronized
+  fun consumeStartupShellCommand(): List<String> {
+    val startupCommand = startupShellCommandOverride
+    startupShellCommandOverride = null
+    return startupCommand ?: shellCommand
   }
 
   fun updatePendingMetadata(

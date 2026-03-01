@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.context
 
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncationReasons
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -26,9 +28,12 @@ class AgentPromptProjectViewSelectionContextContributorTest {
     assertThat(result).hasSize(1)
     val item = result.single()
     assertThat(item.kindId).isEqualTo(AgentPromptContextKinds.PATHS)
+    assertThat(item.metadata[AgentPromptContextMetadataKeys.SOURCE]).isEqualTo("projectView")
     assertThat(item.metadata["selectedCount"]).isEqualTo("7")
     assertThat(item.metadata["includedCount"]).isEqualTo("5")
-    assertThat(item.metadata["truncated"]).isEqualTo("true")
+    assertThat(item.metadata[AgentPromptContextMetadataKeys.TRUNCATED]).isEqualTo("true")
+    assertThat(item.metadata[AgentPromptContextMetadataKeys.TRUNCATION_REASON])
+      .isEqualTo(AgentPromptContextTruncationReasons.SOURCE_LIMIT)
     assertThat(item.content.lineSequence().toList()).hasSize(5)
     assertThat(item.content.lineSequence().all { line -> line.startsWith("file: ") }).isTrue()
   }
@@ -47,7 +52,9 @@ class AgentPromptProjectViewSelectionContextContributorTest {
     assertThat(item.kindId).isEqualTo(AgentPromptContextKinds.PATHS)
     assertThat(item.metadata["selectedCount"]).isEqualTo("1")
     assertThat(item.metadata["includedCount"]).isEqualTo("1")
-    assertThat(item.metadata["truncated"]).isEqualTo("false")
+    assertThat(item.metadata[AgentPromptContextMetadataKeys.TRUNCATED]).isEqualTo("false")
+    assertThat(item.metadata[AgentPromptContextMetadataKeys.TRUNCATION_REASON])
+      .isEqualTo(AgentPromptContextTruncationReasons.NONE)
     assertThat(item.metadata["fileCount"]).isEqualTo("1")
     assertThat(item.metadata["directoryCount"]).isEqualTo("0")
     assertThat(item.content).contains("file: ")

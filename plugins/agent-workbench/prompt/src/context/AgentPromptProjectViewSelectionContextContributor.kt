@@ -5,6 +5,8 @@ import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorPhase
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncationReasons
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,6 +35,14 @@ internal class AgentPromptProjectViewSelectionContextContributor : AgentPromptCo
     }
 
     val totalSelected = uniqueSelection.size
+    val fullContent = uniqueSelection.entries.joinToString(separator = "\n") { (path, isDirectory) ->
+      if (isDirectory) {
+        "dir: $path"
+      }
+      else {
+        "file: $path"
+      }
+    }
     val included = uniqueSelection.entries
       .take(MAX_INCLUDED_SELECTION_PATHS)
     val content = included.joinToString(separator = "\n") { (path, isDirectory) ->
@@ -47,15 +57,24 @@ internal class AgentPromptProjectViewSelectionContextContributor : AgentPromptCo
       return emptyList()
     }
 
+    val truncatedBySelection = totalSelected > included.size
     val directoryCount = included.count { it.value }
     val fileCount = included.size - directoryCount
     val metadata = linkedMapOf(
-      "source" to "projectView",
+      AgentPromptContextMetadataKeys.SOURCE to "projectView",
       "selectedCount" to totalSelected.toString(),
       "includedCount" to included.size.toString(),
-      "truncated" to (totalSelected > included.size).toString(),
       "directoryCount" to directoryCount.toString(),
       "fileCount" to fileCount.toString(),
+      AgentPromptContextMetadataKeys.ORIGINAL_CHARS to fullContent.length.toString(),
+      AgentPromptContextMetadataKeys.INCLUDED_CHARS to content.length.toString(),
+      AgentPromptContextMetadataKeys.TRUNCATED to truncatedBySelection.toString(),
+      AgentPromptContextMetadataKeys.TRUNCATION_REASON to if (truncatedBySelection) {
+        AgentPromptContextTruncationReasons.SOURCE_LIMIT
+      }
+      else {
+        AgentPromptContextTruncationReasons.NONE
+      },
     )
 
     return listOf(

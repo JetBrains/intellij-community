@@ -78,6 +78,54 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testNewTabStartupCommandOverrideDoesNotPersistInitialMessageMetadata(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-startup-1",
+      shellCommand = codexCommand,
+      startupShellCommandOverride = listOf("codex", "--", "-draft prompt\nsecond line"),
+      threadId = "thread-startup-1",
+      threadTitle = "Startup prompt thread",
+      subAgentId = null,
+      initialComposedMessage = "-draft prompt\nsecond line",
+      initialMessageToken = "startup-token-1",
+    )
+
+    val file = openedChatFiles().single()
+    assertThat(file.shellCommand).containsExactlyElementsOf(codexCommand)
+    assertThat(file.initialComposedMessage).isNull()
+    assertThat(file.initialMessageToken).isNull()
+    assertThat(file.initialMessageSent).isFalse()
+  }
+
+  @Test
+  fun testExistingTabIgnoresStartupCommandOverrideAndKeepsInitialMessageMetadata(): Unit = timeoutRunBlocking {
+    openChatInModal(
+      threadIdentity = "CODEX:thread-existing-startup",
+      shellCommand = codexCommand,
+      threadId = "thread-existing-startup",
+      threadTitle = "Existing thread",
+      subAgentId = null,
+    )
+
+    openChatInModal(
+      threadIdentity = "CODEX:thread-existing-startup",
+      shellCommand = codexCommand,
+      startupShellCommandOverride = listOf("codex", "--", "Should be ignored for open tab"),
+      threadId = "thread-existing-startup",
+      threadTitle = "Existing thread",
+      subAgentId = null,
+      initialComposedMessage = "Send through open-tab flow",
+      initialMessageToken = "startup-token-2",
+    )
+
+    val file = openedChatFiles().single()
+    assertThat(file.shellCommand).containsExactlyElementsOf(codexCommand)
+    assertThat(file.initialComposedMessage).isEqualTo("Send through open-tab flow")
+    assertThat(file.initialMessageToken).isEqualTo("startup-token-2")
+    assertThat(file.initialMessageSent).isFalse()
+  }
+
+  @Test
   fun testReuseEditorUpdatesTitleForThread(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:thread-1",
@@ -637,24 +685,30 @@ class AgentChatEditorServiceTest {
   private suspend fun openChatInModal(
     threadIdentity: String,
     shellCommand: List<String>,
+    startupShellCommandOverride: List<String>? = null,
     threadId: String,
     threadTitle: String,
     subAgentId: String?,
     pendingCreatedAtMs: Long? = null,
     pendingFirstInputAtMs: Long? = null,
     pendingLaunchMode: String? = null,
+    initialComposedMessage: String? = null,
+    initialMessageToken: String? = null,
   ) {
     openChat(
       project = project,
       projectPath = projectPath,
       threadIdentity = threadIdentity,
       shellCommand = shellCommand,
+      startupShellCommandOverride = startupShellCommandOverride,
       threadId = threadId,
       threadTitle = threadTitle,
       subAgentId = subAgentId,
       pendingCreatedAtMs = pendingCreatedAtMs,
       pendingFirstInputAtMs = pendingFirstInputAtMs,
       pendingLaunchMode = pendingLaunchMode,
+      initialComposedMessage = initialComposedMessage,
+      initialMessageToken = initialMessageToken,
     )
     waitForCondition {
       openedChatFiles().any { file ->

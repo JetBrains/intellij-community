@@ -20,7 +20,7 @@ The palette:
 - Defaults to Codex (provider-extensible).
 - Captures invocation context (selection/caret snippet, file, symbol, project).
 - Falls back to last selected editor context when invoked outside editors.
-- Lets you add custom context entries before sending.
+- Uses invocation-derived context chips; add extra details directly in prompt text.
 - Sends the composed first prompt into a newly opened chat session.
 
 ## Architecture

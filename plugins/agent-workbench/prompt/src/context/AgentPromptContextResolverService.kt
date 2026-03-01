@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContr
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorPhase
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributors
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -46,10 +47,29 @@ internal class AgentPromptContextResolverService(
         emptyList()
       }
       if (items.isNotEmpty()) {
-        return items
+        return appendPhaseMetadata(items, phase)
       }
     }
     return emptyList()
   }
-}
 
+  private fun appendPhaseMetadata(
+    items: List<AgentPromptContextItem>,
+    phase: AgentPromptContextContributorPhase,
+  ): List<AgentPromptContextItem> {
+    val phaseValue = when (phase) {
+      AgentPromptContextContributorPhase.INVOCATION -> "invocation"
+      AgentPromptContextContributorPhase.FALLBACK -> "fallback"
+    }
+    return items.map { item ->
+      if (item.metadata[AgentPromptContextMetadataKeys.PHASE] == phaseValue) {
+        item
+      }
+      else {
+        val metadata = LinkedHashMap(item.metadata)
+        metadata.putIfAbsent(AgentPromptContextMetadataKeys.PHASE, phaseValue)
+        item.copy(metadata = metadata)
+      }
+    }
+  }
+}

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.core.providers
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 
 interface AgentSessionProviderBridge {
@@ -33,6 +34,8 @@ interface AgentSessionProviderBridge {
 
   fun buildNewEntryCommand(): List<String>
 
+  fun buildCommandWithInitialPrompt(baseCommand: List<String>, prompt: String): List<String>? = null
+
   suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec
 
   suspend fun archiveThread(path: String, threadId: String): Boolean = false
@@ -40,30 +43,7 @@ interface AgentSessionProviderBridge {
   suspend fun unarchiveThread(path: String, threadId: String): Boolean = false
 
   fun composeInitialMessage(request: AgentPromptInitialMessageRequest): String {
-    val prompt = request.prompt.trim()
-    if (request.contextItems.isEmpty()) {
-      return prompt
-    }
-
-    val builder = StringBuilder(prompt)
-    if (builder.isNotEmpty()) {
-      builder.append("\n\n")
-    }
-    builder.append("## Context\n")
-    request.contextItems.forEachIndexed { index, item ->
-      builder.append(index + 1)
-        .append(". ")
-        .append(item.title.ifBlank { item.kindId })
-        .append(" [")
-        .append(item.kindId)
-        .append("]\n")
-      if (item.metadata.isNotEmpty()) {
-        val metadata = item.metadata.entries.joinToString(separator = ", ") { (key, value) -> "$key=$value" }
-        builder.append("   metadata: ").append(metadata).append('\n')
-      }
-      builder.append(item.content.trim()).append("\n\n")
-    }
-    return builder.toString().trimEnd()
+    return AgentPromptContextEnvelopeFormatter.composeInitialMessage(request)
   }
 
   fun isCliMissingError(throwable: Throwable): Boolean = false

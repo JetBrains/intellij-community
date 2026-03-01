@@ -174,7 +174,7 @@ private object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
       .workingDirectory(file.projectPath)
       .processType(TerminalProcessType.NON_SHELL)
       .tabName(file.threadTitle)
-      .shellCommand(file.shellCommand)
+      .shellCommand(file.consumeStartupShellCommand())
       .createTab()
     return ToolWindowAgentChatTerminalTab(terminalTab)
   }
