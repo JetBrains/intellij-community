@@ -2,9 +2,7 @@
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -21,19 +19,12 @@ public interface CallHierarchyElementProvider {
     ExtensionPointName.create("com.intellij.hierarchy.elementProvider");
 
   /**
-   * Collects augmented elements, which are not really present in code but virtually references to psiMember
+   * Collects augmented elements, which are not really present in code but virtually references to psiMember -
+   * For example, it could be generated accessor methods of some field or constructor methods.
+   *
    * @param psiMember some PsiMember to find referenced elements for
    * @return collection of virtually augmented elements references to psiMember
    */
   @NotNull
-  Collection<PsiElement> provideReferencedMembers(@NotNull PsiMember psiMember);
-
-
-  /**
-   * Collects augmented PsiMethods, which are not really present in code but virtually references to methodToFind
-   * @param methodToFind some PsiMethod to find virtually referenced other PsiMethods for
-   ** @return collection of virtually augmented PsiMethods references to methodToFind
-   */
-  @NotNull
-  Collection<PsiMethod> provideReferencedMethods(@NotNull PsiMethod methodToFind);
+  Collection<PsiMember> provideReferencedMembers(@NotNull PsiMember psiMember);
 }
