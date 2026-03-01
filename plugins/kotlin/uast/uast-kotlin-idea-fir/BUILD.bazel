@@ -37,8 +37,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//uast/uast-common-ide:ide",
-  ],
-  runtime_deps = ["//plugins/kotlin/gradle/gradle"]
+  ]
 )
 
 jvm_library(
@@ -60,7 +59,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel_test_lib",
     "//uast/uast-common:uast_test_lib",
     "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast_test_lib",
-    "//plugins/kotlin/gradle/gradle:gradle_test_lib",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/base/util:util_test_lib",
