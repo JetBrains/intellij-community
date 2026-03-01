@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.prompt.context
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorPhase
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -30,11 +30,11 @@ class AgentPromptContextResolverServiceTest {
           },
           testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 1) {
             secondInvocationCalls++
-            listOf(contextItem("invocation"))
+            listOf(contextItem(AgentPromptContextRendererIds.SNIPPET))
           },
           testContributor(contributorPhase = AgentPromptContextContributorPhase.FALLBACK, contributorOrder = 0) {
             fallbackCalls++
-            listOf(contextItem("fallback"))
+            listOf(contextItem(AgentPromptContextRendererIds.PATHS))
           },
         )
       }
@@ -42,8 +42,8 @@ class AgentPromptContextResolverServiceTest {
 
     val resolved = service.collectDefaultContext(invocationData())
 
-    assertThat(resolved.map { it.kindId }).containsExactly("invocation")
-    assertThat(resolved.single().metadata[AgentPromptContextMetadataKeys.PHASE]).isEqualTo("invocation")
+    assertThat(resolved.map { it.rendererId }).containsExactly(AgentPromptContextRendererIds.SNIPPET)
+    assertThat(resolved.single().phase).isEqualTo(AgentPromptContextContributorPhase.INVOCATION)
     assertThat(firstInvocationCalls).isEqualTo(1)
     assertThat(secondInvocationCalls).isEqualTo(1)
     assertThat(fallbackCalls).isZero()
@@ -59,7 +59,7 @@ class AgentPromptContextResolverServiceTest {
           testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 0) { emptyList() },
           testContributor(contributorPhase = AgentPromptContextContributorPhase.FALLBACK, contributorOrder = 0) {
             fallbackCalls++
-            listOf(contextItem("fallback"))
+            listOf(contextItem(AgentPromptContextRendererIds.PATHS))
           },
         )
       }
@@ -67,8 +67,8 @@ class AgentPromptContextResolverServiceTest {
 
     val resolved = service.collectDefaultContext(invocationData())
 
-    assertThat(resolved.map { it.kindId }).containsExactly("fallback")
-    assertThat(resolved.single().metadata[AgentPromptContextMetadataKeys.PHASE]).isEqualTo("fallback")
+    assertThat(resolved.map { it.rendererId }).containsExactly(AgentPromptContextRendererIds.PATHS)
+    assertThat(resolved.single().phase).isEqualTo(AgentPromptContextContributorPhase.FALLBACK)
     assertThat(fallbackCalls).isEqualTo(1)
   }
 
@@ -81,7 +81,7 @@ class AgentPromptContextResolverServiceTest {
             error("boom")
           },
           testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 1) {
-            listOf(contextItem("recovered"))
+            listOf(contextItem(AgentPromptContextRendererIds.FILE))
           },
         )
       }
@@ -89,8 +89,8 @@ class AgentPromptContextResolverServiceTest {
 
     val resolved = service.collectDefaultContext(invocationData())
 
-    assertThat(resolved.map { it.kindId }).containsExactly("recovered")
-    assertThat(resolved.single().metadata[AgentPromptContextMetadataKeys.PHASE]).isEqualTo("invocation")
+    assertThat(resolved.map { it.rendererId }).containsExactly(AgentPromptContextRendererIds.FILE)
+    assertThat(resolved.single().phase).isEqualTo(AgentPromptContextContributorPhase.INVOCATION)
   }
 
   private fun invocationData(): AgentPromptInvocationData {
@@ -110,11 +110,12 @@ class AgentPromptContextResolverServiceTest {
     )
   }
 
-  private fun contextItem(kindId: String): AgentPromptContextItem {
+  private fun contextItem(rendererId: String): AgentPromptContextItem {
     return AgentPromptContextItem(
-      kindId = kindId,
+      rendererId = rendererId,
       title = "Context",
-      content = "Value",
+      body = "Value",
+      source = "test",
     )
   }
 

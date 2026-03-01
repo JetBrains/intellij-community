@@ -6,11 +6,66 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 
 data class AgentPromptContextItem(
-  @JvmField val kindId: String,
-  @JvmField val title: String,
-  @JvmField val content: String,
-  @JvmField val metadata: Map<String, String> = emptyMap(),
+  @JvmField val rendererId: String,
+  @JvmField val title: String?,
+  @JvmField val body: String,
+  @JvmField val payload: AgentPromptPayloadValue = AgentPromptPayloadValue.Obj.EMPTY,
+  @JvmField val source: String = "unknown",
+  @JvmField val phase: AgentPromptContextContributorPhase? = null,
+  @JvmField val truncation: AgentPromptContextTruncation = AgentPromptContextTruncation.none(body.length),
 )
+
+sealed interface AgentPromptPayloadValue {
+  data class Obj(
+    @JvmField val fields: Map<String, AgentPromptPayloadValue>,
+  ) : AgentPromptPayloadValue {
+    companion object {
+      @JvmField
+      val EMPTY: Obj = Obj(emptyMap())
+    }
+  }
+
+  data class Arr(
+    @JvmField val items: List<AgentPromptPayloadValue>,
+  ) : AgentPromptPayloadValue
+
+  data class Str(
+    @JvmField val value: String,
+  ) : AgentPromptPayloadValue
+
+  data class Num(
+    @JvmField val value: String,
+  ) : AgentPromptPayloadValue
+
+  data class Bool(
+    @JvmField val value: Boolean,
+  ) : AgentPromptPayloadValue
+
+  data object Null : AgentPromptPayloadValue
+}
+
+enum class AgentPromptContextTruncationReason {
+  NONE,
+  SOURCE_LIMIT,
+  SOFT_CAP_PARTIAL,
+  SOFT_CAP_OMITTED,
+}
+
+data class AgentPromptContextTruncation(
+  @JvmField val originalChars: Int,
+  @JvmField val includedChars: Int,
+  @JvmField val reason: AgentPromptContextTruncationReason,
+) {
+  companion object {
+    fun none(chars: Int): AgentPromptContextTruncation {
+      return AgentPromptContextTruncation(
+        originalChars = chars.coerceAtLeast(0),
+        includedChars = chars.coerceAtLeast(0),
+        reason = AgentPromptContextTruncationReason.NONE,
+      )
+    }
+  }
+}
 
 data class AgentPromptInitialMessageRequest(
   @JvmField val prompt: String,

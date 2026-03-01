@@ -400,7 +400,7 @@ internal class AgentPromptPalettePopup(
           it.background = UIUtil.TRANSPARENT_COLOR
           it.putClientProperty("JButton.backgroundColor", UIUtil.TRANSPARENT_COLOR)
         }
-      entry.tooltipText?.let(::setToolTip)
+      setToolTip(entry.tooltipText)
     }
   }
 
@@ -631,7 +631,7 @@ internal class AgentPromptPalettePopup(
       return ContextSelection(items = emptyList(), summary = baseSummary)
     }
 
-    val normalizedItems = items.map { item -> item.copy(content = item.content.trim()) }
+    val normalizedItems = items.map { item -> item.copy(body = item.body.trim()) }
     val serializedChars = AgentPromptContextEnvelopeFormatter.measureContextBlockChars(
       items = normalizedItems,
       summary = baseSummary,

@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.prompt
 
-import java.nio.file.InvalidPathException
-import java.nio.file.Path
+import com.intellij.openapi.diagnostic.logger
 import kotlin.math.max
 
 private const val CONTEXT_HEADER = "### IDE Context"
@@ -10,14 +9,9 @@ private const val SOFT_CAP_OMITTED_STUB = "[omitted due to soft cap]"
 private const val SOFT_CAP_PARTIAL_SUFFIX = "\n...[truncated:soft_cap_partial]"
 private const val MIN_PARTIAL_BODY_CHARS = 96
 
-private val RESERVED_METADATA_KEYS = setOf(
-  AgentPromptContextMetadataKeys.SOURCE,
-  AgentPromptContextMetadataKeys.PHASE,
-  AgentPromptContextMetadataKeys.ORIGINAL_CHARS,
-  AgentPromptContextMetadataKeys.INCLUDED_CHARS,
-  AgentPromptContextMetadataKeys.TRUNCATED,
-  AgentPromptContextMetadataKeys.TRUNCATION_REASON,
-)
+private class AgentPromptContextEnvelopeFormatterLog
+
+private val LOG = logger<AgentPromptContextEnvelopeFormatterLog>()
 
 object AgentPromptContextEnvelopeFormatter {
   const val DEFAULT_SOFT_CAP_CHARS: Int = 12_000
@@ -67,7 +61,7 @@ object AgentPromptContextEnvelopeFormatter {
     summary: AgentPromptContextEnvelopeSummary,
     projectPath: String? = null,
   ): String {
-    val normalizedItems = items.map { item -> item.toEnvelopeItem() }
+    val normalizedItems = items.map { item -> normalizeItem(item) }
     return buildContextBlock(items = normalizedItems, summary = summary, projectPath = projectPath)
   }
 
@@ -85,11 +79,11 @@ object AgentPromptContextEnvelopeFormatter {
       softCapExceeded = true,
       autoTrimApplied = true,
     )
-    val working = items.map { normalizeItemMetadata(it) }.toMutableList()
+    val working = items.map { item -> normalizeItem(item) }.toMutableList()
 
     var serializedChars = measureContextBlockChars(items = working, summary = summary, projectPath = projectPath)
     while (serializedChars > softCapChars) {
-      val updated = shrinkOneItem(working, serializedChars - softCapChars)
+      val updated = shrinkOneItem(items = working, excessChars = serializedChars - softCapChars)
       if (!updated) {
         break
       }
@@ -106,105 +100,110 @@ object AgentPromptContextEnvelopeFormatter {
   private fun shrinkOneItem(items: MutableList<AgentPromptContextItem>, excessChars: Int): Boolean {
     for (index in items.indices.reversed()) {
       val current = items[index]
-      val content = current.content.trim()
-      if (content.isEmpty() || content == SOFT_CAP_OMITTED_STUB) {
+      val body = current.body.trim()
+      if (body.isEmpty() || body == SOFT_CAP_OMITTED_STUB) {
         continue
       }
 
-      val partiallyTrimmed = shrinkForSoftCap(content, excessChars)
+      val partiallyTrimmed = shrinkForSoftCap(body = body, excessChars = excessChars)
       if (partiallyTrimmed != null) {
-        items[index] = updateTruncationMetadata(
+        items[index] = updateTruncation(
           item = current,
-          content = partiallyTrimmed,
-          reason = AgentPromptContextTruncationReasons.SOFT_CAP_PARTIAL,
+          body = partiallyTrimmed,
+          reason = AgentPromptContextTruncationReason.SOFT_CAP_PARTIAL,
         )
         return true
       }
 
-      items[index] = updateTruncationMetadata(
+      items[index] = updateTruncation(
         item = current,
-        content = SOFT_CAP_OMITTED_STUB,
-        reason = AgentPromptContextTruncationReasons.SOFT_CAP_OMITTED,
+        body = SOFT_CAP_OMITTED_STUB,
+        reason = AgentPromptContextTruncationReason.SOFT_CAP_OMITTED,
       )
       return true
     }
-
     return false
   }
 
-  private fun shrinkForSoftCap(content: String, excessChars: Int): String? {
-    val body = content.trim()
-    if (body.length <= MIN_PARTIAL_BODY_CHARS) {
+  private fun shrinkForSoftCap(body: String, excessChars: Int): String? {
+    val trimmedBody = body.trim()
+    if (trimmedBody.length <= MIN_PARTIAL_BODY_CHARS) {
       return null
     }
 
-    val dynamicCut = max(excessChars, body.length / 3)
-    val targetBodyLength = (body.length - dynamicCut)
+    val dynamicCut = max(excessChars, trimmedBody.length / 3)
+    val targetBodyLength = (trimmedBody.length - dynamicCut)
       .coerceAtLeast(MIN_PARTIAL_BODY_CHARS)
-    if (targetBodyLength + SOFT_CAP_PARTIAL_SUFFIX.length >= body.length) {
+    if (targetBodyLength + SOFT_CAP_PARTIAL_SUFFIX.length >= trimmedBody.length) {
       return null
     }
 
-    val nextBody = body.take(targetBodyLength).trimEnd()
+    val nextBody = trimmedBody.take(targetBodyLength).trimEnd()
     if (nextBody.length <= MIN_PARTIAL_BODY_CHARS) {
       return null
     }
     return nextBody + SOFT_CAP_PARTIAL_SUFFIX
   }
 
-  private fun normalizeItemMetadata(item: AgentPromptContextItem): AgentPromptContextItem {
-    val content = item.content.trim()
-    val metadata = LinkedHashMap(item.metadata)
-
-    val originalChars = metadata[AgentPromptContextMetadataKeys.ORIGINAL_CHARS]
-      ?.toIntOrNull()
-      ?.coerceAtLeast(content.length)
-      ?: content.length
-    val includedChars = metadata[AgentPromptContextMetadataKeys.INCLUDED_CHARS]
-      ?.toIntOrNull()
-      ?.coerceAtLeast(0)
-      ?: content.length
-    val reason = metadata[AgentPromptContextMetadataKeys.TRUNCATION_REASON]
-      ?: if (includedChars < originalChars) AgentPromptContextTruncationReasons.SOURCE_LIMIT else AgentPromptContextTruncationReasons.NONE
-    val truncated = metadata[AgentPromptContextMetadataKeys.TRUNCATED]
-      ?.toBooleanStrictOrNull()
-      ?: (reason != AgentPromptContextTruncationReasons.NONE || includedChars < originalChars)
-
-    metadata[AgentPromptContextMetadataKeys.ORIGINAL_CHARS] = originalChars.toString()
-    metadata[AgentPromptContextMetadataKeys.INCLUDED_CHARS] = includedChars.toString()
-    metadata[AgentPromptContextMetadataKeys.TRUNCATED] = truncated.toString()
-    metadata[AgentPromptContextMetadataKeys.TRUNCATION_REASON] = if (truncated) reason else AgentPromptContextTruncationReasons.NONE
-
-    return item.copy(content = content, metadata = metadata)
+  private fun normalizeItem(item: AgentPromptContextItem): AgentPromptContextItem {
+    val normalizedBody = item.body.trim()
+    val normalizedTruncation = normalizeTruncation(item = item, normalizedBody = normalizedBody)
+    return item.copy(
+      body = normalizedBody,
+      truncation = normalizedTruncation,
+    )
   }
 
-  private fun updateTruncationMetadata(
+  private fun normalizeTruncation(item: AgentPromptContextItem, normalizedBody: String): AgentPromptContextTruncation {
+    val base = item.truncation
+    val normalizedOriginal = base.originalChars
+      .coerceAtLeast(normalizedBody.length)
+      .coerceAtLeast(0)
+    val normalizedIncluded = base.includedChars
+      .coerceAtLeast(0)
+      .coerceAtMost(normalizedOriginal)
+      .coerceAtLeast(normalizedBody.length.coerceAtMost(normalizedOriginal))
+    val reason = if (normalizedIncluded < normalizedOriginal && base.reason == AgentPromptContextTruncationReason.NONE) {
+      AgentPromptContextTruncationReason.SOURCE_LIMIT
+    }
+    else {
+      base.reason
+    }
+    return AgentPromptContextTruncation(
+      originalChars = normalizedOriginal,
+      includedChars = normalizedIncluded,
+      reason = reason,
+    )
+  }
+
+  private fun updateTruncation(
     item: AgentPromptContextItem,
-    content: String,
-    reason: String,
+    body: String,
+    reason: AgentPromptContextTruncationReason,
   ): AgentPromptContextItem {
-    val normalizedContent = content.trim()
-    val metadata = LinkedHashMap(item.metadata)
-    val originalChars = metadata[AgentPromptContextMetadataKeys.ORIGINAL_CHARS]
-      ?.toIntOrNull()
-      ?.coerceAtLeast(normalizedContent.length)
-      ?: max(normalizedContent.length, item.content.length)
-
-    metadata[AgentPromptContextMetadataKeys.ORIGINAL_CHARS] = originalChars.toString()
-    metadata[AgentPromptContextMetadataKeys.INCLUDED_CHARS] = normalizedContent.length.toString()
-    metadata[AgentPromptContextMetadataKeys.TRUNCATED] = true.toString()
-    metadata[AgentPromptContextMetadataKeys.TRUNCATION_REASON] = reason
-
-    return item.copy(content = normalizedContent, metadata = metadata)
+    val normalizedBody = body.trim()
+    val originalChars = max(
+      item.truncation.originalChars,
+      max(normalizedBody.length, item.body.length),
+    )
+    val truncation = AgentPromptContextTruncation(
+      originalChars = originalChars,
+      includedChars = normalizedBody.length,
+      reason = reason,
+    )
+    return item.copy(
+      body = normalizedBody,
+      truncation = truncation,
+    )
   }
 
   private fun buildContextBlock(
-    items: List<EnvelopeItem>,
+    items: List<AgentPromptContextItem>,
     summary: AgentPromptContextEnvelopeSummary,
     projectPath: String?,
   ): String {
     val normalizedSummary = summary.normalized()
-    val builder = StringBuilder(items.sumOf { it.content.length } + 128)
+    val builder = StringBuilder(items.sumOf { item -> item.body.length } + 128)
     builder.append(CONTEXT_HEADER)
     if (normalizedSummary.softCapExceeded) {
       builder.append('\n')
@@ -221,185 +220,36 @@ object AgentPromptContextEnvelopeFormatter {
       if (index > 0) {
         builder.append('\n')
       }
-      renderItem(builder = builder, item = item, projectPath = projectPath)
+      builder.append(renderItem(item = item, projectPath = projectPath).trimEnd())
+      builder.append('\n')
     }
 
     return builder.toString().trimEnd()
   }
 
-  private fun renderItem(builder: StringBuilder, item: EnvelopeItem, projectPath: String?) {
-    when (item.kind) {
-      "snippet" -> {
-        val language = snippetLanguage(item)
-        builder.append(renderSnippetDescriptor(item, language)).append('\n')
-        appendCodeBlock(builder = builder, language = language, content = item.content)
+  private fun renderItem(item: AgentPromptContextItem, projectPath: String?): String {
+    val renderer = AgentPromptContextRenderers.find(item.rendererId)
+    if (renderer != null) {
+      return try {
+        renderer.renderEnvelope(
+          AgentPromptEnvelopeRenderInput(
+            item = item,
+            projectPath = projectPath,
+          )
+        )
       }
-
-      "file" -> {
-        builder.append("file: ")
-          .append(absolutizePath(pathText = item.content, projectPath = projectPath))
-          .append(renderTruncationSuffix(item))
-          .append('\n')
-      }
-
-      "symbol" -> {
-        builder.append("symbol: ")
-          .append(item.content)
-          .append(renderTruncationSuffix(item))
-          .append('\n')
-      }
-
-      "paths" -> {
-        builder.append("paths:")
-          .append(renderTruncationSuffix(item))
-          .append('\n')
-        renderPaths(builder = builder, content = item.content, projectPath = projectPath)
-      }
-
-      else -> {
-        builder.append("context: kind=")
-          .append(item.kind)
-          .append(" title=")
-          .append(item.title)
-          .append(renderTruncationSuffix(item))
-          .append('\n')
-        appendCodeBlock(builder = builder, language = "text", content = item.content)
+      catch (t: Throwable) {
+        LOG.warn("Prompt context renderer failed: ${renderer::class.java.name} (rendererId=${item.rendererId})", t)
+        renderGeneric(item)
       }
     }
+    return renderGeneric(item)
   }
 
-  private fun renderSnippetDescriptor(item: EnvelopeItem, language: String?): String {
-    val details = mutableListOf<String>()
-    val startLine = item.metadata["startLine"]?.takeIf { it.isNotBlank() }
-    val endLine = item.metadata["endLine"]?.takeIf { it.isNotBlank() }
-    if (startLine != null && endLine != null) {
-      details += "lines=$startLine-$endLine"
-    }
-    item.metadata["selection"]
-      ?.takeIf { it.isNotBlank() }
-      ?.let { selection -> details += "selection=$selection" }
-    language?.let { details += "lang=$it" }
-
-    return buildString {
-      append("snippet")
-      if (details.isNotEmpty()) {
-        append(": ")
-        append(details.joinToString(separator = " "))
-      }
-      append(renderTruncationSuffix(item))
-    }
-  }
-
-  private fun snippetLanguage(item: EnvelopeItem): String? {
-    val raw = item.metadata[AgentPromptContextMetadataKeys.LANGUAGE]
-      ?.trim()
-      ?.lowercase()
-      ?.replace(' ', '-')
-      .orEmpty()
-    if (raw.isEmpty()) {
-      return null
-    }
-    return if (raw.all { ch -> ch.isLetterOrDigit() || ch == '-' || ch == '_' || ch == '+' || ch == '.' || ch == '#' }) {
-      raw
-    }
-    else {
-      null
-    }
-  }
-
-  private fun renderPaths(builder: StringBuilder, content: String, projectPath: String?) {
-    val lines = content.lineSequence()
-      .map { line -> line.trim() }
-      .filter { line -> line.isNotEmpty() }
-      .toList()
-    lines.forEach { line ->
-      builder.append(renderPathLine(line = line, projectPath = projectPath)).append('\n')
-    }
-  }
-
-  private fun renderPathLine(line: String, projectPath: String?): String {
-    val parsed = parsePathLine(line)
-    val absolutePath = absolutizePath(pathText = parsed.pathText, projectPath = projectPath)
-    return when (parsed.prefix) {
-      "file" -> "file: $absolutePath"
-      "dir" -> "dir: $absolutePath"
-      else -> absolutePath
-    }
-  }
-
-  private fun parsePathLine(line: String): ParsedPathLine {
-    return when {
-      line.startsWith("file:", ignoreCase = true) -> ParsedPathLine(prefix = "file", pathText = line.substringAfter(':').trim())
-      line.startsWith("dir:", ignoreCase = true) -> ParsedPathLine(prefix = "dir", pathText = line.substringAfter(':').trim())
-      else -> ParsedPathLine(prefix = null, pathText = line)
-    }
-  }
-
-  private fun absolutizePath(pathText: String, projectPath: String?): String {
-    val normalizedPath = pathText.trim()
-    if (normalizedPath.isEmpty()) {
-      return "[path-unresolved]"
-    }
-    val resolved = resolveAbsolutePath(pathText = normalizedPath, projectPath = projectPath)
-    return resolved ?: "$normalizedPath [path-unresolved]"
-  }
-
-  private fun resolveAbsolutePath(pathText: String, projectPath: String?): String? {
-    return try {
-      val path = Path.of(pathText)
-      if (path.isAbsolute) {
-        path.normalize().toString()
-      }
-      else {
-        val normalizedProjectPath = projectPath
-          ?.trim()
-          ?.takeIf { it.isNotEmpty() }
-          ?: return null
-        Path.of(normalizedProjectPath)
-          .resolve(path)
-          .normalize()
-          .toString()
-      }
-    }
-    catch (_: InvalidPathException) {
-      null
-    }
-  }
-
-  private fun renderTruncationSuffix(item: EnvelopeItem): String {
-    if (!item.truncated) {
-      return ""
-    }
-    return " [truncated=${item.truncationReason} ${item.includedChars}/${item.originalChars}]"
-  }
-
-  private fun appendCodeBlock(builder: StringBuilder, language: String?, content: String) {
-    val fence = "`".repeat(max(3, maxConsecutiveBackticks(content) + 1))
-    builder.append(fence)
-    language?.let { builder.append(it) }
-    builder
-      .append('\n')
-      .append(content)
-      .append('\n')
-      .append(fence)
-      .append('\n')
-  }
-
-  private fun maxConsecutiveBackticks(value: String): Int {
-    var best = 0
-    var current = 0
-    value.forEach { ch ->
-      if (ch == '`') {
-        current += 1
-        if (current > best) {
-          best = current
-        }
-      }
-      else {
-        current = 0
-      }
-    }
-    return best
+  private fun renderGeneric(item: AgentPromptContextItem): String {
+    val title = item.title?.takeIf { it.isNotBlank() } ?: "Context"
+    val descriptor = "context: renderer=${item.rendererId} title=$title${renderTruncationSuffix(item)}"
+    return descriptor + "\n" + appendCodeBlock(language = "text", content = item.body)
   }
 
   private fun booleanAsYesNo(value: Boolean): String {
@@ -415,52 +265,5 @@ object AgentPromptContextEnvelopeFormatter {
       copy(softCapChars = normalizedSoftCap)
     }
   }
-
-  private fun AgentPromptContextItem.toEnvelopeItem(): EnvelopeItem {
-    val content = this.content.trim()
-    val originalChars = metadata[AgentPromptContextMetadataKeys.ORIGINAL_CHARS]
-      ?.toIntOrNull()
-      ?.coerceAtLeast(content.length)
-      ?: content.length
-    val includedChars = metadata[AgentPromptContextMetadataKeys.INCLUDED_CHARS]
-      ?.toIntOrNull()
-      ?.coerceAtLeast(0)
-      ?: content.length
-    val reason = metadata[AgentPromptContextMetadataKeys.TRUNCATION_REASON]
-      ?: if (includedChars < originalChars) AgentPromptContextTruncationReasons.SOURCE_LIMIT else AgentPromptContextTruncationReasons.NONE
-    val truncated = metadata[AgentPromptContextMetadataKeys.TRUNCATED]
-      ?.toBooleanStrictOrNull()
-      ?: (reason != AgentPromptContextTruncationReasons.NONE || includedChars < originalChars)
-
-    val nonReservedMetadata = metadata
-      .filterKeys { key -> key !in RESERVED_METADATA_KEYS }
-      .toSortedMap()
-
-    return EnvelopeItem(
-      kind = kindId,
-      title = title,
-      originalChars = originalChars,
-      includedChars = includedChars,
-      truncated = truncated,
-      truncationReason = if (truncated) reason else AgentPromptContextTruncationReasons.NONE,
-      metadata = nonReservedMetadata,
-      content = content,
-    )
-  }
-
-  private data class ParsedPathLine(
-    @JvmField val prefix: String?,
-    @JvmField val pathText: String,
-  )
-
-  private data class EnvelopeItem(
-    @JvmField val kind: String,
-    @JvmField val title: String,
-    @JvmField val originalChars: Int,
-    @JvmField val includedChars: Int,
-    @JvmField val truncated: Boolean,
-    @JvmField val truncationReason: String,
-    @JvmField val metadata: Map<String, String>,
-    @JvmField val content: String,
-  )
 }
+
