@@ -76,6 +76,7 @@ This spec owns:
   - `MainToolbarVCSGroup`
   - `ExecutionTargetsToolbarGroup`
   - `NewUiRunWidget`
+  - `AIAssistantHubPopupAction`
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions plugin must not register `AgentSessionsToolbarActionConfigurationCustomizer`.
