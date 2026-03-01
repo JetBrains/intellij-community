@@ -148,9 +148,9 @@
 - name: lib/modules/intellij.gradle.completion.jar
   contentModules:
   - name: intellij.gradle.completion
-- name: lib/modules/intellij.gradle.kotlin.jar
+- name: lib/modules/intellij.gradle.completion.kotlin.jar
   contentModules:
-  - name: intellij.gradle.kotlin
+  - name: intellij.gradle.completion.kotlin
 - name: lib/modules/intellij.gradle.properties.jar
   contentModules:
   - name: intellij.gradle.properties

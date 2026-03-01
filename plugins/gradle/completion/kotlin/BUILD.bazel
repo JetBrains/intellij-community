@@ -1,4 +1,4 @@
-### auto-generated section `build intellij.gradle.kotlin` start
+### auto-generated section `build intellij.gradle.completion.kotlin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "kotlin",
-  module_name = "intellij.gradle.kotlin",
+  module_name = "intellij.gradle.completion.kotlin",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":kotlin_resources"],
@@ -34,7 +34,7 @@ jvm_library(
 
 jvm_library(
   name = "kotlin_test_lib",
-  module_name = "intellij.gradle.kotlin",
+  module_name = "intellij.gradle.completion.kotlin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   runtime_deps = [
@@ -55,4 +55,4 @@ jvm_library(
     "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
   ]
 )
-### auto-generated section `build intellij.gradle.kotlin` end
+### auto-generated section `build intellij.gradle.completion.kotlin` end

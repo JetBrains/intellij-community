@@ -4,7 +4,7 @@ package com.intellij.gradle.kotlin.tests.completion
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.gradle.kotlin.completion.KotlinGradleScriptCompletionContributor
+import com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestDataPath

@@ -1,4 +1,4 @@
-### auto-generated section `build intellij.gradle.kotlin.tests` start
+### auto-generated section `build intellij.gradle.completion.kotlin.tests` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
@@ -17,7 +17,7 @@ jvm_library(
     "//plugins/repository-search/common",
     "//plugins/gradle/completion",
     "//plugins/gradle/toml",
-    "//plugins/gradle/kotlin",
+    "//plugins/gradle/completion/kotlin",
     "//plugins/gradle",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting",
   ]
@@ -25,7 +25,7 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
-  module_name = "intellij.gradle.kotlin.tests",
+  module_name = "intellij.gradle.completion.kotlin.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
@@ -48,8 +48,8 @@ jvm_library(
     "//plugins/gradle/completion:completion_test_lib",
     "//plugins/gradle/toml",
     "//plugins/gradle/toml:toml_test_lib",
-    "//plugins/gradle/kotlin",
-    "//plugins/gradle/kotlin:kotlin_test_lib",
+    "//plugins/gradle/completion/kotlin",
+    "//plugins/gradle/completion/kotlin:kotlin_test_lib",
     "//plugins/gradle",
     "//plugins/gradle:gradle_test_lib",
     "@lib//:kotlin-test-junit",
@@ -81,13 +81,13 @@ jvm_library(
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting_test_lib",
   ]
 )
-### auto-generated section `build intellij.gradle.kotlin.tests` end
+### auto-generated section `build intellij.gradle.completion.kotlin.tests` end
 
-### auto-generated section `test intellij.gradle.kotlin.tests` start
+### auto-generated section `test intellij.gradle.completion.kotlin.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `test intellij.gradle.kotlin.tests` end
+### auto-generated section `test intellij.gradle.completion.kotlin.tests` end

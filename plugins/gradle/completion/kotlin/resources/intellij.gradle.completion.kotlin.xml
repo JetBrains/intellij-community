@@ -13,6 +13,6 @@
     <completion.contributor language="kotlin"
                             id="KotlinGradleScriptCompletionContributor"
                             order="first, before KotlinCompletionContributor, before liveTemplates"
-                            implementationClass="com.intellij.gradle.kotlin.completion.KotlinGradleScriptCompletionContributor"/>
+                            implementationClass="com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor"/>
   </extensions>
 </idea-plugin>

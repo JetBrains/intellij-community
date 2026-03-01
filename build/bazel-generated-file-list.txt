@@ -1011,6 +1011,8 @@ plugins/gitlab/gitlab-yaml
 plugins/gradle
 plugins/gradle-maven
 plugins/gradle/completion
+plugins/gradle/completion/kotlin
+plugins/gradle/completion/kotlin/tests
 plugins/gradle/gradle-declarative-sync
 plugins/gradle/gradle-dependency-updater
 plugins/gradle/intellij.gradle.analysis
@@ -1024,8 +1026,6 @@ plugins/gradle/java/plugin
 plugins/gradle/java/properties
 plugins/gradle/java/toml
 plugins/gradle/jps-plugin
-plugins/gradle/kotlin
-plugins/gradle/kotlin/tests
 plugins/gradle/native
 plugins/gradle/native/tooling
 plugins/gradle/plugin

@@ -19,7 +19,7 @@
     <orderEntry type="module" module-name="intellij.repository.search.common" />
     <orderEntry type="module" module-name="intellij.gradle.completion" />
     <orderEntry type="module" module-name="intellij.gradle.toml" />
-    <orderEntry type="module" module-name="intellij.gradle.kotlin" />
+    <orderEntry type="module" module-name="intellij.gradle.completion.kotlin" />
     <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.kotlin.completion
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.completion.BaseCompletionLookupArranger
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -54,21 +54,21 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
             // dependencies { implementation(...) { exclude("<caret>") } }
             positionElement.isDependencyArgument(exclude) ->
                 suggestCoordinateCompletions(
-                    result,
-                    parameters,
-                    positionElement.getGroupPrefix(),
-                    positionElement.getExcludeArtifactPrefix(),
-                    ""
+                  result,
+                  parameters,
+                  positionElement.getGroupPrefix(),
+                  positionElement.getExcludeArtifactPrefix(),
+                  ""
                 )
 
             // dependencies { implementation("juni<caret>", "juni", "") }
             positionElement.isPositionalOrNamedDependencyArgument() ->
                 suggestCoordinateCompletions(
-                    result,
-                    parameters,
-                    positionElement.getGroupPrefix(),
-                    positionElement.getArtifactPrefix(),
-                    positionElement.getVersionPrefix()
+                  result,
+                  parameters,
+                  positionElement.getGroupPrefix(),
+                  positionElement.getArtifactPrefix(),
+                  positionElement.getVersionPrefix()
                 )
 
             // dependencies { implementation("juni<caret>") }
