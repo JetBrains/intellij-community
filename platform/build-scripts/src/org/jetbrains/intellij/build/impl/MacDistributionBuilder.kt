@@ -83,6 +83,9 @@ class MacDistributionBuilder(
   private val targetIcnsFileName: String
     get() = "${context.productProperties.baseFileName}.icns"
 
+  private val productInfoPathPrefix: String
+    get() = if (context.options.isLanguageServer) "" else "Resources/"
+
   private fun getDocTypes(): String {
     val associations = mutableListOf<String>()
 
@@ -170,7 +173,7 @@ class MacDistributionBuilder(
     else {
       layoutMacApp(docTypes = getDocTypes(), macDistDir = targetPath, arch = arch)
     }
-    generateBuildTxt(targetPath.resolve("Resources"), context)
+    generateBuildTxt(targetPath.resolve(productInfoPathPrefix), context)
 
     // if copyDistFiles false, it means that we will copy dist files directly without a stage dir
     if (copyDistFiles) {
@@ -266,7 +269,7 @@ class MacDistributionBuilder(
 
   override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path {
     val json = generateProductJson(arch, withRuntime = true, context)
-    val file = targetDir.resolve("Resources/${PRODUCT_INFO_FILE_NAME}")
+    val file = targetDir.resolve("${productInfoPathPrefix}${PRODUCT_INFO_FILE_NAME}")
     writeProductInfoJson(file, json, context)
     return file
   }
@@ -405,18 +408,19 @@ class MacDistributionBuilder(
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(NO_RUNTIME_SUFFIX)
 
   private suspend fun generateProductJson(arch: JvmArchitecture, withRuntime: Boolean, context: BuildContext): String {
+    val toRoot = if (context.options.isLanguageServer) "" else "../"
     return generateProductInfoJson(
-      relativePathToBin = "../bin",
+      relativePathToBin = "${toRoot}bin",
       builtinModules = context.builtinModule,
       launch = listOf(
         ProductInfoLaunchData.create(
           os = OsFamily.MACOS.osName,
           arch = arch.dirName,
           launcherPath =
-            if (context.options.isLanguageServer) "../bin/${context.productProperties.baseFileName}"
+            if (context.options.isLanguageServer) "bin/${context.productProperties.baseFileName}"
             else "../MacOS/${context.productProperties.baseFileName}",
-          javaExecutablePath = if (withRuntime) "../jbr/Contents/Home/bin/java" else null,
-          vmOptionsFilePath = "../bin/${context.productProperties.baseFileName}.vmoptions",
+          javaExecutablePath = if (withRuntime) "${toRoot}jbr/Contents/Home/bin/java" else null,
+          vmOptionsFilePath = "${toRoot}bin/${context.productProperties.baseFileName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
           mainClass = context.ideMainClassName,
@@ -426,7 +430,7 @@ class MacDistributionBuilder(
             )
             else -> listOfNotNull(
               generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context) {
-                "../bin/${it.productProperties.baseFileName}.vmoptions"
+                "$toRoot/bin/${it.productProperties.baseFileName}.vmoptions"
               },
               generateQodanaLaunchData(context, arch, OsFamily.MACOS),
               generateStdioMcpRunnerLaunchData(context)
@@ -470,13 +474,13 @@ class MacDistributionBuilder(
               zipOutStream.setUseZip64(Zip64Mode.Never)
             }
 
-            zipOutStream.entry("${zipRoot}/Resources/${PRODUCT_INFO_FILE_NAME}", productJson.encodeToByteArray())
+            zipOutStream.entry("${zipRoot}/${productInfoPathPrefix}${PRODUCT_INFO_FILE_NAME}", productJson.encodeToByteArray())
 
             val fileFilter: (Path, String) -> Boolean = { sourceFile, relativePath ->
               val isContentDir = !relativePath.contains('/')
               when {
                 isContentDir && relativePath.endsWith(".txt") -> {
-                  zipOutStream.entry("${zipRoot}/Resources/${relativePath}", sourceFile)
+                  zipOutStream.entry("${zipRoot}/${productInfoPathPrefix}${relativePath}", sourceFile)
                   false
                 }
                 sourceFile.fileName.toString() == ".DS_Store" -> false
@@ -516,7 +520,7 @@ class MacDistributionBuilder(
           }
         }
 
-        validateProductJson(targetFile, pathInArchive = "${zipRoot}/Resources", macDistributionBuilder.context)
+        validateProductJson(targetFile, pathInArchive = "${zipRoot}/${productInfoPathPrefix}", macDistributionBuilder.context)
       }
   }
 
@@ -599,7 +603,14 @@ class MacDistributionBuilder(
   }
 
   private fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String {
-    return "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
+    return if (context.options.isLanguageServer) {
+      val appInfo = context.applicationInfo
+      val buildNumber = context.buildNumber
+      "${appInfo.fullProductName}-${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+    }
+    else {
+      "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
+    }
   }
 
   private val publishSitArchive: Boolean
