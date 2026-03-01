@@ -1,8 +1,8 @@
 ---
 name: Agent Threads Tool Window
-description: Requirements for the Swing Async Tree implementation of Agent Threads, including aggregation, loading, activation, and tree lifecycle behavior.
+description: Requirements for the Swing Async Tree implementation of Agent Threads, including aggregation, loading, activation, tree lifecycle behavior, and UI-controller decomposition.
 targets:
-  - ../sessions/src/*.kt
+  - ../sessions/src/**/*.kt
   - ../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../sessions/resources/messages/AgentSessionsBundle.properties
   - ../sessions/intellij.agent.workbench.sessions.iml
@@ -14,7 +14,7 @@ targets:
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-02-28
+Date: 2026-03-01
 
 ## Summary
 Define Agent Threads as a provider-agnostic, project-scoped browser implemented with native IntelliJ Swing tree APIs (`StructureTreeModel` + `AsyncTreeModel` + `Tree`).
@@ -45,6 +45,20 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 ## Architecture Decision
 - The sessions tool window must use IntelliJ-native Swing async tree infrastructure.
   Rationale: this aligns interaction semantics with platform conventions, removes duplicate UI stacks in the plugin, and reduces maintenance/testing overhead.
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
+
+- The sessions tool-window UI implementation must be decomposed into small, single-purpose Swing modules instead of a monolithic panel file.
+  Required decomposition:
+  - composition root panel (`AgentSessionsToolWindowPanel`),
+  - tree state controller,
+  - tree interaction controller,
+  - tree data-context provider,
+  - row-action overlay,
+  - renderer/layout/presentation helpers,
+  - quota-hint controller/panel.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
   [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
 ## Requirements
@@ -170,6 +184,11 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Tool window factory must create Swing panel content and register tool-window title and gear actions.
   [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
   [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+
+- `AgentSessionsToolWindowPanel` must stay a thin composition root and delegate behavior to extracted controllers/services.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
 
 - Claude quota hint visibility and acknowledgement must follow eligibility/ack/widget-enabled gating rules.
   [@test] ../sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
