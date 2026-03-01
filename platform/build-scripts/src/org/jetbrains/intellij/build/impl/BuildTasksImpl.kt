@@ -183,7 +183,10 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
 )
 
 fun createIdeaPropertyFile(context: BuildContext): CharSequence {
-  val builder = StringBuilder(Files.readString(context.paths.communityHomeDir.resolve("bin/idea.properties")))
+  val builder = StringBuilder(Files.readString(context.paths.communityHomeDir.resolve(when {
+    context.options.isLanguageServer -> "../language-server/building/idea.properties"
+    else -> "bin/idea.properties"
+  })))
   for (it in context.productProperties.additionalIDEPropertiesFilePaths) {
     builder.append('\n').append(Files.readString(it))
   }
@@ -195,22 +198,23 @@ fun createIdeaPropertyFile(context: BuildContext): CharSequence {
   val map = LinkedHashMap<String, String>(1)
   map["settings_dir"] = settingsDir
   builder.append(BuildUtils.replaceAll(temp, map, "@@"))
-  if (context.applicationInfo.isEAP) {
+
+  if (!context.options.isLanguageServer) {
     builder.append(
-      "\n#-----------------------------------------------------------------------\n" +
-      "# Change to 'disabled' if you don't want to receive instant visual notifications\n" +
-      "# about fatal errors that happen to an IDE or plugins installed.\n" +
-      "#-----------------------------------------------------------------------\n" +
-      "idea.fatal.error.notification=enabled\n"
-    )
-  }
-  else {
-    builder.append(
-      "\n#-----------------------------------------------------------------------\n" +
-      "# Change to 'enabled' if you want to receive instant visual notifications\n" +
-      "# about fatal errors that happen to an IDE or plugins installed.\n" +
-      "#-----------------------------------------------------------------------\n" +
-      "idea.fatal.error.notification=disabled\n"
+      if (context.applicationInfo.isEAP) {
+        "\n#-----------------------------------------------------------------------\n" +
+        "# Change to 'disabled' if you don't want to receive instant visual notifications\n" +
+        "# about fatal errors that happen to an IDE or plugins installed.\n" +
+        "#-----------------------------------------------------------------------\n" +
+        "idea.fatal.error.notification=enabled\n"
+      }
+      else {
+        "\n#-----------------------------------------------------------------------\n" +
+        "# Change to 'enabled' if you want to receive instant visual notifications\n" +
+        "# about fatal errors that happen to an IDE or plugins installed.\n" +
+        "#-----------------------------------------------------------------------\n" +
+        "idea.fatal.error.notification=disabled\n"
+      }
     )
   }
   return builder

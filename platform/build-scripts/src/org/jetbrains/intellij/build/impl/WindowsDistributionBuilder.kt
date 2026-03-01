@@ -503,7 +503,7 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(
 
 private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
   val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
-  val vmOptions = generateVmOptions(context).asSequence()
+  val vmOptions = generateVmOptions(context)
   writeVmOptions(file = vmOptionsFile, vmOptions = vmOptions, separator = "\r\n")
   return vmOptionsFile
 }

@@ -499,12 +499,17 @@ class LinuxDistributionBuilder(
 
   private fun writeLinuxVmOptions(distBinDir: Path, context: BuildContext): Path {
     val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
-    val waylandOptions = when (context.productProperties.platformPrefix) {
-      "JetBrainsClient" -> emptySequence() // Wayland auto-detection is disabled for JetBrains Client until rem-dev specific compatibility issues are resolved (IJPL-231136)
-      "Gateway" -> emptySequence() // and for Gateway until system tray will be supported in Wayland toolkit in JBR (IJPL-231661/JBR-9966)
-      else -> sequenceOf("-Dawt.toolkit.name=auto")
-    }
-    val vmOptions = generateVmOptions(context).asSequence() + sequenceOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true") + waylandOptions
+    val vmOptions = generateVmOptions(
+      context, listOfNotNull(
+        "-Dsun.tools.attach.tmp.only=true",
+        "-Dawt.lock.fair=true",
+        when (context.productProperties.platformPrefix) {
+          "JetBrainsClient" -> null // Wayland auto-detection is disabled for JetBrains Client until rem-dev specific compatibility issues are resolved (IJPL-231136)
+          "Gateway" -> null // and for Gateway until system tray will be supported in Wayland toolkit in JBR (IJPL-231661/JBR-9966)
+          else -> "-Dawt.toolkit.name=auto"
+        }
+      )
+    )
     writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
     return vmOptionsPath
   }

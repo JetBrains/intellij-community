@@ -141,23 +141,27 @@ class MacDistributionBuilder(
       generateScripts(macBinDir, executable, context)
     }
 
-    val platformProperties = mutableListOf(
-      "\n#---------------------------------------------------------------------",
-      "# macOS-specific system properties",
-      "#---------------------------------------------------------------------",
-      "com.apple.mrj.application.live-resize=false",
-      "apple.awt.fileDialogForDirectories=true",
-      "apple.awt.graphics.UseQuartz=true",
-      "apple.awt.fullscreencapturealldisplays=false"
-    )
-    for ((k, v) in customizer.getCustomIdeaProperties(context.applicationInfo)) {
-      platformProperties.add("$k=$v")
+    val ideaPropertiesContent = if (context.options.isLanguageServer) {
+      ideaProperties!!
     }
-
-    val ideaPropertyContent = ideaProperties!!
+    else {
+      val platformProperties = mutableListOf(
+        "\n#---------------------------------------------------------------------",
+        "# macOS-specific system properties",
+        "#---------------------------------------------------------------------",
+        "com.apple.mrj.application.live-resize=false",
+        "apple.awt.fileDialogForDirectories=true",
+        "apple.awt.graphics.UseQuartz=true",
+        "apple.awt.fullscreencapturealldisplays=false"
+      )
+      for ((k, v) in customizer.getCustomIdeaProperties(context.applicationInfo)) {
+        platformProperties.add("$k=$v")
+      }
+      (ideaProperties!!.lineSequence() + platformProperties).joinToString(separator = "\n")
+    }
     Files.writeString(
       macBinDir.resolve(PROPERTIES_FILE_NAME),
-      (ideaPropertyContent.lineSequence() + platformProperties).joinToString(separator = "\n")
+      ideaPropertiesContent
     )
 
     if (context.options.isLanguageServer) {
@@ -518,7 +522,11 @@ class MacDistributionBuilder(
 
   private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
     val executable = context.productProperties.baseFileName
-    val vmOptions = generateVmOptions(context).asSequence() + sequenceOf("-Dapple.awt.application.appearance=system")
+    val vmOptions = generateVmOptions(
+      context, listOf(
+        "-Dapple.awt.application.appearance=system"
+      )
+    )
     val vmOptionsPath = distBinDir.resolve("${executable}.vmoptions")
     writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
     return vmOptionsPath
