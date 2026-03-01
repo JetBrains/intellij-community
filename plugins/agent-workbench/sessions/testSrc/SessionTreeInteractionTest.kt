@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.tree.copyPathForSessionTreeId
 import com.intellij.agent.workbench.sessions.tree.pathForMoreThreadsNode
 import com.intellij.agent.workbench.sessions.tree.shouldHandleSingleClick
 import org.assertj.core.api.Assertions.assertThat
@@ -33,5 +35,22 @@ class SessionTreeInteractionTest {
       )
     ).isEqualTo("/work/project-feature")
     assertThat(pathForMoreThreadsNode(SessionTreeId.MoreProjects)).isNull()
+  }
+
+  @Test
+  fun resolvesCopyPathForProjectAndWorktreeRowsOnly() {
+    assertThat(copyPathForSessionTreeId(SessionTreeId.Project(path = "/work/project-a")))
+      .isEqualTo("/work/project-a")
+    assertThat(
+      copyPathForSessionTreeId(
+        SessionTreeId.Worktree(projectPath = "/work/project-a", worktreePath = "/work/project-feature")
+      )
+    ).isEqualTo("/work/project-feature")
+    assertThat(
+      copyPathForSessionTreeId(
+        SessionTreeId.Thread(projectPath = "/work/project-a", provider = AgentSessionProvider.CODEX, threadId = "thread-1")
+      )
+    ).isNull()
+    assertThat(copyPathForSessionTreeId(SessionTreeId.MoreProjects)).isNull()
   }
 }

@@ -82,6 +82,8 @@
       <reference ref="AgentWorkbenchSessions.TreePopup.NewThread"/>
       <separator/>
       <reference ref="AgentWorkbenchSessions.TreePopup.Archive"/>
+      <separator/>
+      <reference ref="CopyReferencePopupGroup"/>
     </group>
     <action
       id="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"

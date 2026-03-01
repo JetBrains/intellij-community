@@ -128,6 +128,9 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Context-menu selection policy must preserve multi-selection when right-clicking an already selected row and retarget selection when right-clicking an unselected row.
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
+- Sessions tree popup for project/worktree rows must preserve platform `CopyReferencePopupGroup` so `Copy Path` / `Copy Reference` actions (including keymap shortcuts) remain available.
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+
 - Thread and sub-agent open routing must follow mode policy defined in `spec/agent-dedicated-frame.spec.md`.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
 
@@ -184,6 +187,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - Expand/collapse remains available through disclosure controls and keyboard tree actions.
 - Project/worktree rows expose new-session affordances when hovered/selected.
 - Project/worktree rows being refreshed show a right-side loading indicator in the row action area while refresh is in progress.
+- Project/worktree row context menus include the standard platform copy path/reference group.
 - Provider warnings are inline and non-blocking when partial data exists.
 - Blocking errors are inline and non-openable.
 
