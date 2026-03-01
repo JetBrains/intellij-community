@@ -19,6 +19,7 @@ import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkFilterCo
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigationInterceptor
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
@@ -66,6 +67,10 @@ class BackendTerminalHyperlinkFacade(
 
   suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId, mouseEvent: EditorMouseEvent?) {
     val hyperlink = model.getHyperlink(hyperlinkId)?.hyperlinkInfo ?: return
+    if (TerminalHyperlinkNavigationInterceptor.intercept(project, hyperlink, mouseEvent)) {
+      ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
+      return
+    }
     withContext(Dispatchers.EDT) { // navigation might need the WIL
       SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
         if (hyperlink is HyperlinkInfoBase && mouseEvent != null) {

@@ -29,7 +29,7 @@ targets:
 # Dedicated Frame Project Switching
 
 Status: Draft
-Date: 2026-02-27
+Date: 2026-03-01
 
 ## Summary
 Define how Agent Workbench dedicated-frame mode supports cross-project navigation with dedicated-frame participation in global window traversal while keeping project-window traversal explicit and dedicated-aware.
@@ -41,6 +41,8 @@ This spec owns:
 - dedicated-frame main-toolbar source-project one-click affordance,
 - dedicated-frame explicit open/focus affordance,
 - editor-tab popup affordance to jump to source project.
+
+Terminal hyperlink click routing in dedicated frame is owned by `spec/agent-dedicated-frame-terminal-hyperlink-routing.spec.md`.
 
 ## Goals
 - Keep dedicated frame out of project-window cycling while preserving it in global window cycling.
@@ -128,3 +130,4 @@ This spec owns:
 ## References
 - `spec/agent-dedicated-frame.spec.md`
 - `spec/agent-sessions.spec.md`
+- `spec/agent-dedicated-frame-terminal-hyperlink-routing.spec.md`
