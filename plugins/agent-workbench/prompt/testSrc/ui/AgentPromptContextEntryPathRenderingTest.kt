@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
-import com.intellij.agent.workbench.prompt.context.AgentPromptContextKinds
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.SystemProperties
@@ -19,9 +19,9 @@ class AgentPromptContextEntryPathRenderingTest {
     val filePath = systemPath("$projectBasePath/src/Main.kt")
 
     val entry = contextEntry(
-      kindId = AgentPromptContextKinds.FILE,
+      rendererId = AgentPromptContextRendererIds.FILE,
       title = "File",
-      content = filePath,
+      body = filePath,
       projectBasePath = projectBasePath,
     )
 
@@ -34,9 +34,9 @@ class AgentPromptContextEntryPathRenderingTest {
     val projectBasePath = systemPath("$home/agent-workbench-project-root")
 
     val entry = contextEntry(
-      kindId = AgentPromptContextKinds.FILE,
+      rendererId = AgentPromptContextRendererIds.FILE,
       title = "File",
-      content = projectBasePath,
+      body = projectBasePath,
       projectBasePath = projectBasePath,
     )
 
@@ -50,9 +50,9 @@ class AgentPromptContextEntryPathRenderingTest {
     val expected = FileUtil.getLocationRelativeToUserHome(filePath, false)
 
     val entry = contextEntry(
-      kindId = AgentPromptContextKinds.FILE,
+      rendererId = AgentPromptContextRendererIds.FILE,
       title = "File",
-      content = filePath,
+      body = filePath,
       projectBasePath = systemPath("$home/other-project"),
     )
 
@@ -66,9 +66,9 @@ class AgentPromptContextEntryPathRenderingTest {
     val selectedDirectory = systemPath("$projectBasePath/subdir")
 
     val entry = contextEntry(
-      kindId = AgentPromptContextKinds.PATHS,
+      rendererId = AgentPromptContextRendererIds.PATHS,
       title = "Paths",
-      content = "dir: $selectedDirectory",
+      body = "dir: $selectedDirectory",
       projectBasePath = projectBasePath,
     )
 
@@ -82,9 +82,9 @@ class AgentPromptContextEntryPathRenderingTest {
     val absoluteContent = systemPath("$home/agent-workbench-project-symbol/src/SomeSymbol")
 
     val entry = contextEntry(
-      kindId = AgentPromptContextKinds.SYMBOL,
+      rendererId = AgentPromptContextRendererIds.SYMBOL,
       title = "Symbol",
-      content = absoluteContent,
+      body = absoluteContent,
       projectBasePath = projectBasePath,
     )
 
@@ -92,16 +92,17 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   private fun contextEntry(
-    kindId: String,
+    rendererId: String,
     title: String,
-    content: String,
+    body: String,
     projectBasePath: String?,
   ): ContextEntry {
     return ContextEntry(
       item = AgentPromptContextItem(
-        kindId = kindId,
+        rendererId = rendererId,
         title = title,
-        content = content,
+        body = body,
+        source = "test",
       ),
       projectBasePath = projectBasePath,
     )

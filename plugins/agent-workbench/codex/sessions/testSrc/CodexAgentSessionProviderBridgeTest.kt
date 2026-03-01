@@ -4,14 +4,17 @@ package com.intellij.agent.workbench.codex.sessions
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
+@TestApplication
 class CodexAgentSessionProviderBridgeTest {
   private val bridge = CodexAgentSessionProviderBridge()
 
@@ -83,12 +86,10 @@ class CodexAgentSessionProviderBridgeTest {
         prompt = "Refactor this",
         contextItems = listOf(
           AgentPromptContextItem(
-            kindId = "snippet",
+            rendererId = AgentPromptContextRendererIds.SNIPPET,
             title = "Selection",
-            content = "val answer = 42",
-            metadata = mapOf(
-              AgentPromptContextMetadataKeys.SOURCE to "editor",
-            ),
+            body = "val answer = 42",
+            source = "editor",
           )
         ),
         contextEnvelopeSummary = AgentPromptContextEnvelopeSummary(
@@ -121,13 +122,13 @@ class CodexAgentSessionProviderBridgeTest {
         prompt = "Refactor this",
         contextItems = listOf(
           AgentPromptContextItem(
-            kindId = "snippet",
+            rendererId = AgentPromptContextRendererIds.SNIPPET,
             title = "Selection",
-            content = "val answer = 42",
-            metadata = mapOf(
-              AgentPromptContextMetadataKeys.SOURCE to "editor",
-              AgentPromptContextMetadataKeys.LANGUAGE to "JAVA",
+            body = "val answer = 42",
+            payload = AgentPromptPayload.obj(
+              "language" to AgentPromptPayload.str("JAVA"),
             ),
+            source = "editor",
           )
         ),
       )
@@ -138,19 +139,19 @@ class CodexAgentSessionProviderBridgeTest {
   }
 
   @Test
-  fun composeInitialMessageOmitsSnippetLanguageForInvalidOrLegacyKey() {
+  fun composeInitialMessageOmitsSnippetLanguageForInvalidValue() {
     val invalidLanguage = bridge.composeInitialMessage(
       AgentPromptInitialMessageRequest(
         prompt = "Refactor this",
         contextItems = listOf(
           AgentPromptContextItem(
-            kindId = "snippet",
+            rendererId = AgentPromptContextRendererIds.SNIPPET,
             title = "Selection",
-            content = "val answer = 42",
-            metadata = mapOf(
-              AgentPromptContextMetadataKeys.SOURCE to "editor",
-              AgentPromptContextMetadataKeys.LANGUAGE to "java script!",
+            body = "val answer = 42",
+            payload = AgentPromptPayload.obj(
+              "language" to AgentPromptPayload.str("java script!"),
             ),
+            source = "editor",
           )
         ),
       )
@@ -159,27 +160,6 @@ class CodexAgentSessionProviderBridgeTest {
     assertThat(invalidLanguage).doesNotContain("lang=")
     assertThat(invalidLanguage).contains("```\nval answer = 42\n```")
     assertThat(invalidLanguage).doesNotContain("```java")
-
-    val legacyLanguage = bridge.composeInitialMessage(
-      AgentPromptInitialMessageRequest(
-        prompt = "Refactor this",
-        contextItems = listOf(
-          AgentPromptContextItem(
-            kindId = "snippet",
-            title = "Selection",
-            content = "val answer = 42",
-            metadata = mapOf(
-              AgentPromptContextMetadataKeys.SOURCE to "editor",
-              "language" to "java",
-            ),
-          )
-        ),
-      )
-    )
-
-    assertThat(legacyLanguage).doesNotContain("lang=")
-    assertThat(legacyLanguage).contains("```\nval answer = 42\n```")
-    assertThat(legacyLanguage).doesNotContain("```java")
   }
 
   @Test
@@ -195,16 +175,31 @@ class CodexAgentSessionProviderBridgeTest {
         projectPath = projectRoot.toString(),
         contextItems = listOf(
           AgentPromptContextItem(
-            kindId = "file",
+            rendererId = AgentPromptContextRendererIds.FILE,
             title = "Current File",
-            content = "src/Main.java",
-            metadata = mapOf(AgentPromptContextMetadataKeys.SOURCE to "editor"),
+            body = "src/Main.java",
+            payload = AgentPromptPayload.obj(
+              "path" to AgentPromptPayload.str("src/Main.java"),
+            ),
+            source = "editor",
           ),
           AgentPromptContextItem(
-            kindId = "paths",
+            rendererId = AgentPromptContextRendererIds.PATHS,
             title = "Selection",
-            content = "file: src/App.kt\ndir: src",
-            metadata = mapOf(AgentPromptContextMetadataKeys.SOURCE to "projectView"),
+            body = "file: src/App.kt\ndir: src",
+            payload = AgentPromptPayload.obj(
+              "entries" to AgentPromptPayload.arr(
+                AgentPromptPayload.obj(
+                  "kind" to AgentPromptPayload.str("file"),
+                  "path" to AgentPromptPayload.str("src/App.kt"),
+                ),
+                AgentPromptPayload.obj(
+                  "kind" to AgentPromptPayload.str("dir"),
+                  "path" to AgentPromptPayload.str("src"),
+                ),
+              ),
+            ),
+            source = "projectView",
           ),
         ),
       )
@@ -223,10 +218,13 @@ class CodexAgentSessionProviderBridgeTest {
         prompt = "Review context",
         contextItems = listOf(
           AgentPromptContextItem(
-            kindId = "file",
+            rendererId = AgentPromptContextRendererIds.FILE,
             title = "Current File",
-            content = "src/Main.java",
-            metadata = mapOf(AgentPromptContextMetadataKeys.SOURCE to "editor"),
+            body = "src/Main.java",
+            payload = AgentPromptPayload.obj(
+              "path" to AgentPromptPayload.str("src/Main.java"),
+            ),
+            source = "editor",
           )
         ),
       )

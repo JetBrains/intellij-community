@@ -3,11 +3,13 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
+@TestApplication
 class ClaudeAgentSessionProviderBridgeTest {
   private val bridge = ClaudeAgentSessionProviderBridge()
 
@@ -44,12 +46,10 @@ class ClaudeAgentSessionProviderBridgeTest {
         prompt = "Summarize changes",
         contextItems = listOf(
           AgentPromptContextItem(
-            kindId = "paths",
+            rendererId = AgentPromptContextRendererIds.PATHS,
             title = "Project Selection",
-            content = "file: /tmp/demo.kt",
-            metadata = mapOf(
-              AgentPromptContextMetadataKeys.SOURCE to "projectView",
-            ),
+            body = "file: /tmp/demo.kt",
+            source = "projectView",
           )
         ),
       )

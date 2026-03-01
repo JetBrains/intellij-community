@@ -5,9 +5,12 @@ import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorPhase
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncationReasons
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncation
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncationReason
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -60,29 +63,37 @@ internal class AgentPromptProjectViewSelectionContextContributor : AgentPromptCo
     val truncatedBySelection = totalSelected > included.size
     val directoryCount = included.count { it.value }
     val fileCount = included.size - directoryCount
-    val metadata = linkedMapOf(
-      AgentPromptContextMetadataKeys.SOURCE to "projectView",
-      "selectedCount" to totalSelected.toString(),
-      "includedCount" to included.size.toString(),
-      "directoryCount" to directoryCount.toString(),
-      "fileCount" to fileCount.toString(),
-      AgentPromptContextMetadataKeys.ORIGINAL_CHARS to fullContent.length.toString(),
-      AgentPromptContextMetadataKeys.INCLUDED_CHARS to content.length.toString(),
-      AgentPromptContextMetadataKeys.TRUNCATED to truncatedBySelection.toString(),
-      AgentPromptContextMetadataKeys.TRUNCATION_REASON to if (truncatedBySelection) {
-        AgentPromptContextTruncationReasons.SOURCE_LIMIT
-      }
-      else {
-        AgentPromptContextTruncationReasons.NONE
-      },
+    val payloadEntries = included.map { (path, isDirectory) ->
+      AgentPromptPayload.obj(
+        "kind" to AgentPromptPayload.str(if (isDirectory) "dir" else "file"),
+        "path" to AgentPromptPayload.str(path),
+      )
+    }
+    val payload = AgentPromptPayload.obj(
+      "entries" to AgentPromptPayloadValue.Arr(payloadEntries),
+      "selectedCount" to AgentPromptPayload.num(totalSelected),
+      "includedCount" to AgentPromptPayload.num(included.size),
+      "directoryCount" to AgentPromptPayload.num(directoryCount),
+      "fileCount" to AgentPromptPayload.num(fileCount),
     )
 
     return listOf(
       AgentPromptContextItem(
-        kindId = AgentPromptContextKinds.PATHS,
+        rendererId = AgentPromptContextRendererIds.PATHS,
         title = AgentPromptBundle.message("context.paths.title"),
-        content = content,
-        metadata = metadata,
+        body = content,
+        payload = payload,
+        source = "projectView",
+        truncation = AgentPromptContextTruncation(
+          originalChars = fullContent.length,
+          includedChars = content.length,
+          reason = if (truncatedBySelection) {
+            AgentPromptContextTruncationReason.SOURCE_LIMIT
+          }
+          else {
+            AgentPromptContextTruncationReason.NONE
+          },
+        ),
       )
     )
   }

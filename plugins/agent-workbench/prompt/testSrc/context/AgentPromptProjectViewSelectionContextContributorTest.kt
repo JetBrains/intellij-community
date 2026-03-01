@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.context
 
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncationReasons
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncationReason
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
+import com.intellij.agent.workbench.sessions.core.prompt.number
+import com.intellij.agent.workbench.sessions.core.prompt.objOrNull
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.ProjectManager
@@ -27,15 +29,14 @@ class AgentPromptProjectViewSelectionContextContributorTest {
 
     assertThat(result).hasSize(1)
     val item = result.single()
-    assertThat(item.kindId).isEqualTo(AgentPromptContextKinds.PATHS)
-    assertThat(item.metadata[AgentPromptContextMetadataKeys.SOURCE]).isEqualTo("projectView")
-    assertThat(item.metadata["selectedCount"]).isEqualTo("7")
-    assertThat(item.metadata["includedCount"]).isEqualTo("5")
-    assertThat(item.metadata[AgentPromptContextMetadataKeys.TRUNCATED]).isEqualTo("true")
-    assertThat(item.metadata[AgentPromptContextMetadataKeys.TRUNCATION_REASON])
-      .isEqualTo(AgentPromptContextTruncationReasons.SOURCE_LIMIT)
-    assertThat(item.content.lineSequence().toList()).hasSize(5)
-    assertThat(item.content.lineSequence().all { line -> line.startsWith("file: ") }).isTrue()
+    val payload = item.payload.objOrNull()!!
+    assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.PATHS)
+    assertThat(item.source).isEqualTo("projectView")
+    assertThat(payload.number("selectedCount")).isEqualTo("7")
+    assertThat(payload.number("includedCount")).isEqualTo("5")
+    assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.SOURCE_LIMIT)
+    assertThat(item.body.lineSequence().toList()).hasSize(5)
+    assertThat(item.body.lineSequence().all { line -> line.startsWith("file: ") }).isTrue()
   }
 
   @Test
@@ -49,15 +50,14 @@ class AgentPromptProjectViewSelectionContextContributorTest {
 
     assertThat(result).hasSize(1)
     val item = result.single()
-    assertThat(item.kindId).isEqualTo(AgentPromptContextKinds.PATHS)
-    assertThat(item.metadata["selectedCount"]).isEqualTo("1")
-    assertThat(item.metadata["includedCount"]).isEqualTo("1")
-    assertThat(item.metadata[AgentPromptContextMetadataKeys.TRUNCATED]).isEqualTo("false")
-    assertThat(item.metadata[AgentPromptContextMetadataKeys.TRUNCATION_REASON])
-      .isEqualTo(AgentPromptContextTruncationReasons.NONE)
-    assertThat(item.metadata["fileCount"]).isEqualTo("1")
-    assertThat(item.metadata["directoryCount"]).isEqualTo("0")
-    assertThat(item.content).contains("file: ")
+    val payload = item.payload.objOrNull()!!
+    assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.PATHS)
+    assertThat(payload.number("selectedCount")).isEqualTo("1")
+    assertThat(payload.number("includedCount")).isEqualTo("1")
+    assertThat(item.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.NONE)
+    assertThat(payload.number("fileCount")).isEqualTo("1")
+    assertThat(payload.number("directoryCount")).isEqualTo("0")
+    assertThat(item.body).contains("file: ")
   }
 
   private fun invocationData(dataContext: com.intellij.openapi.actionSystem.DataContext): AgentPromptInvocationData {

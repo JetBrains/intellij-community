@@ -460,9 +460,10 @@ private fun promptLaunchRequest(
       prompt = "Refactor selected code",
       contextItems = listOf(
         AgentPromptContextItem(
-          kindId = "project",
+          rendererId = "project",
           title = "Project",
-          content = "project-a",
+          body = "project-a",
+          source = "test",
         )
       ),
     ),

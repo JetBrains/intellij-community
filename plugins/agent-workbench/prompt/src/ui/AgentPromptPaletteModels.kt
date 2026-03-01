@@ -1,18 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
-import com.intellij.agent.workbench.prompt.context.AgentPromptContextKinds
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptChipRenderInput
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRenderers
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Component
-import java.nio.file.FileSystems
 import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.ListCellRenderer
@@ -27,70 +25,41 @@ internal data class ProviderEntry(
 internal data class ContextEntry(
   val item: AgentPromptContextItem,
   val projectBasePath: String? = null,
-  val id: String = item.kindId + ":" + item.title + ":" + item.content.hashCode(),
+  val id: String = item.rendererId + ":" + item.title + ":" + item.body.hashCode(),
 ) {
-  val displayText: String = run {
-    val firstLine = item.content.lineSequence().firstOrNull()?.trim().orEmpty()
-    val firstLinePreview = firstLine.toShortContextChipPathIfNeeded(
-      kindId = item.kindId,
-      projectBasePath = projectBasePath,
+  private val chipRender = AgentPromptContextRenderers.find(item.rendererId)
+    ?.renderChip(
+      AgentPromptChipRenderInput(
+        item = item,
+        projectBasePath = projectBasePath,
+      )
     )
-    if (firstLinePreview.isEmpty()) {
-      item.title
+
+  val displayText: String = chipRender?.text ?: buildDefaultDisplayText()
+
+  val tooltipText: String = chipRender?.tooltipText ?: buildDefaultTooltip()
+
+  private fun buildDefaultDisplayText(): String {
+    val title = item.title?.takeIf { it.isNotBlank() } ?: "Context"
+    val firstLine = item.body.lineSequence().firstOrNull()?.trim().orEmpty()
+    if (firstLine.isEmpty()) {
+      return title
     }
-    else {
-      val preview = if (firstLinePreview.length <= 60) firstLinePreview else firstLinePreview.take(60) + "\u2026"
-      "${item.title}: $preview"
+    val preview = if (firstLine.length <= 60) firstLine else firstLine.take(60) + "\u2026"
+    return "$title: $preview"
+  }
+
+  private fun buildDefaultTooltip(): String {
+    val details = buildList {
+      add("renderer=${item.rendererId}")
+      add("source=${item.source}")
+      item.phase?.let { add("phase=${it.name.lowercase()}") }
+      if (item.truncation.reason.name != "NONE") {
+        add("truncated=${item.truncation.reason.name.lowercase()} ${item.truncation.includedChars}/${item.truncation.originalChars}")
+      }
     }
+    return details.joinToString(separator = ", ")
   }
-
-  val tooltipText: String? = item.metadata
-    .takeIf { it.isNotEmpty() }
-    ?.entries
-    ?.joinToString(separator = ", ") { (key, value) -> "$key=$value" }
-}
-
-private fun String.toShortContextChipPathIfNeeded(kindId: String, projectBasePath: String?): String {
-  return when (kindId) {
-    AgentPromptContextKinds.FILE -> shortenPathForChip(projectBasePath)
-    AgentPromptContextKinds.PATHS -> shortenPrefixedPathForChip(projectBasePath)
-    else -> this
-  }
-}
-
-private fun String.shortenPrefixedPathForChip(projectBasePath: String?): String {
-  val prefixes = arrayOf("file: ", "dir: ")
-  val prefix = prefixes.firstOrNull { startsWith(it) } ?: return this
-  val pathPart = removePrefix(prefix)
-  val shortenedPath = pathPart.shortenPathForChip(projectBasePath)
-  return prefix + shortenedPath
-}
-
-private fun String.shortenPathForChip(projectBasePath: String?): String {
-  if (!FileUtil.isAbsolute(this)) {
-    return this
-  }
-
-  val path = FileUtil.toSystemDependentName(this)
-  val projectPath = projectBasePath
-    ?.takeIf { it.isNotBlank() }
-    ?.let(FileUtil::toSystemDependentName)
-  if (!projectPath.isNullOrBlank() && FileUtil.isAncestor(projectPath, path, false)) {
-    val relative = FileUtil.getRelativePath(projectPath, path, FileSystems.getDefault().separator[0])
-    return if (relative.isNullOrEmpty()) "." else relative
-  }
-
-  val userHome = FileUtil.toSystemDependentName(SystemProperties.getUserHome())
-  if (FileUtil.isAncestor(userHome, path, false)) {
-    return if (FileUtil.pathsEqual(userHome, path)) {
-      "~"
-    }
-    else {
-      FileUtil.getLocationRelativeToUserHome(path, false)
-    }
-  }
-
-  return path
 }
 
 internal data class ThreadEntry(

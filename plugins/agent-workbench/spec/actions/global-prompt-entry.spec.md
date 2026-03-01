@@ -27,7 +27,7 @@ Current implementation status:
    - first non-empty contributor result in `INVOCATION` phase wins,
    - if `INVOCATION` phase is empty, first non-empty contributor result in `FALLBACK` phase wins.
 4. Invocation-specific default context policy:
-   - editor invocation yields snippet/file/symbol context,
+   - editor invocation yields file/symbol/snippet context,
    - project view invocation yields selected file/directory path context,
    - editor and project-view context are not merged in one launch.
 5. Default context does not include a standalone project context entry.

@@ -1,9 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.context
 
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextMetadataKeys
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncationReasons
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTruncationReason
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
+import com.intellij.agent.workbench.sessions.core.prompt.bool
+import com.intellij.agent.workbench.sessions.core.prompt.number
+import com.intellij.agent.workbench.sessions.core.prompt.objOrNull
+import com.intellij.agent.workbench.sessions.core.prompt.string
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -54,19 +60,22 @@ class AgentPromptEditorContextContributorTest {
 
         val result = contributor.collect(invocationData(project = project, dataContext = dataContext))
 
-        assertThat(result.map { it.kindId }).contains(AgentPromptContextKinds.SNIPPET, AgentPromptContextKinds.FILE)
-        val snippetItem = result.first { it.kindId == AgentPromptContextKinds.SNIPPET }
-        assertThat(snippetItem.metadata).containsKeys("startLine", "endLine", "selection")
-        assertThat(snippetItem.metadata[AgentPromptContextMetadataKeys.SOURCE]).isEqualTo("editor")
-        assertThat(snippetItem.metadata).containsKeys(
-          AgentPromptContextMetadataKeys.ORIGINAL_CHARS,
-          AgentPromptContextMetadataKeys.INCLUDED_CHARS,
-          AgentPromptContextMetadataKeys.TRUNCATED,
-          AgentPromptContextMetadataKeys.TRUNCATION_REASON,
+        assertThat(result.map { it.rendererId }).containsExactly(
+          AgentPromptContextRendererIds.FILE,
+          AgentPromptContextRendererIds.SNIPPET,
         )
-        val fileItem = result.first { it.kindId == AgentPromptContextKinds.FILE }
-        assertThat(fileItem.content).contains("Sample.kt")
-        assertThat(fileItem.metadata[AgentPromptContextMetadataKeys.SOURCE]).isEqualTo("editor")
+        val snippetItem = result.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
+        val snippetPayload = snippetItem.payload.objOrNull()!!
+        assertThat(snippetPayload.number("startLine")).isNotBlank()
+        assertThat(snippetPayload.number("endLine")).isNotBlank()
+        assertThat(snippetPayload.bool("selection")).isNotNull
+        assertThat(snippetItem.source).isEqualTo("editor")
+        assertThat(snippetItem.truncation.reason).isEqualTo(AgentPromptContextTruncationReason.NONE)
+        assertThat(snippetItem.truncation.originalChars).isEqualTo(snippetItem.body.length)
+        assertThat(snippetItem.truncation.includedChars).isEqualTo(snippetItem.body.length)
+        val fileItem = result.first { it.rendererId == AgentPromptContextRendererIds.FILE }
+        assertThat(fileItem.body).contains("Sample.kt")
+        assertThat(fileItem.source).isEqualTo("editor")
       }
       finally {
         editorFactory.releaseEditor(editor)
@@ -76,7 +85,46 @@ class AgentPromptEditorContextContributorTest {
 
   @Test
   fun snippetMetadataCarriesLanguageAndFileMetadataDoesNot() {
-    val snapshot = AgentEditorContextSnapshot(
+    val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = null))
+
+    val snippetItem = items.first { it.rendererId == AgentPromptContextRendererIds.SNIPPET }
+    assertThat(snippetItem.payload.objOrNull()!!.string("language")).isEqualTo("kotlin")
+
+    val fileItem = items.first { it.rendererId == AgentPromptContextRendererIds.FILE }
+    assertThat(fileItem.payload.objOrNull()!!.string("language")).isNull()
+  }
+
+  @Test
+  fun buildContextItemsOrdersFileSymbolThenSnippet() {
+    val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "main"))
+
+    assertThat(items.map { it.rendererId }).containsExactly(
+      AgentPromptContextRendererIds.FILE,
+      AgentPromptContextRendererIds.SYMBOL,
+      AgentPromptContextRendererIds.SNIPPET,
+    )
+  }
+
+  @Test
+  fun composeInitialMessageRendersFileSymbolThenSnippet() {
+    val message = AgentPromptContextEnvelopeFormatter.composeInitialMessage(
+      AgentPromptInitialMessageRequest(
+        prompt = "Review context",
+        contextItems = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "main")),
+      )
+    )
+
+    val fileIndex = message.indexOf("file: /tmp/Sample.kt")
+    val symbolIndex = message.indexOf("symbol: main")
+    val snippetIndex = message.indexOf("snippet:")
+
+    assertThat(fileIndex).isGreaterThanOrEqualTo(0)
+    assertThat(symbolIndex).isGreaterThan(fileIndex)
+    assertThat(snippetIndex).isGreaterThan(symbolIndex)
+  }
+
+  private fun snapshot(symbolName: String?): AgentEditorContextSnapshot {
+    return AgentEditorContextSnapshot(
       filePath = "/tmp/Sample.kt",
       language = "kotlin",
       snippet = AgentPromptSnippet(
@@ -87,18 +135,10 @@ class AgentPromptEditorContextContributorTest {
         originalChars = 15,
         includedChars = 15,
         truncated = false,
-        truncationReason = AgentPromptContextTruncationReasons.NONE,
+        truncationReason = AgentPromptContextTruncationReason.NONE,
       ),
-      symbolName = null,
+      symbolName = symbolName,
     )
-
-    val items = AgentPromptEditorContextSupport.buildContextItems(snapshot)
-
-    val snippetItem = items.first { it.kindId == AgentPromptContextKinds.SNIPPET }
-    assertThat(snippetItem.metadata[AgentPromptContextMetadataKeys.LANGUAGE]).isEqualTo("kotlin")
-
-    val fileItem = items.first { it.kindId == AgentPromptContextKinds.FILE }
-    assertThat(fileItem.metadata).doesNotContainKey(AgentPromptContextMetadataKeys.LANGUAGE)
   }
 
   private fun invocationData(project: com.intellij.openapi.project.Project, dataContext: DataContext): AgentPromptInvocationData {
