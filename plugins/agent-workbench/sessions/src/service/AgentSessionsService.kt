@@ -94,6 +94,67 @@ private const val PENDING_LAUNCH_MODE_YOLO = "yolo"
 private const val MAX_STARTUP_COMMAND_BYTES = 24 * 1024
 private val CODEX_ARCHIVE_REFRESH_DELAY = 1.seconds
 
+internal interface AgentSessionsChatOpenExecutor {
+  suspend fun openChat(
+    normalizedPath: String,
+    thread: AgentSessionThread,
+    subAgent: AgentSubAgent?,
+    shellCommandOverride: List<String>?,
+    initialComposedMessage: String?,
+    initialMessageToken: String?,
+  )
+
+  suspend fun openNewChat(
+    normalizedPath: String,
+    identity: String,
+    command: List<String>,
+    startupShellCommandOverride: List<String>?,
+    initialComposedMessage: String?,
+    initialMessageToken: String?,
+    preferredDedicatedFrame: Boolean?,
+  )
+}
+
+private object DefaultAgentSessionsChatOpenExecutor : AgentSessionsChatOpenExecutor {
+  override suspend fun openChat(
+    normalizedPath: String,
+    thread: AgentSessionThread,
+    subAgent: AgentSubAgent?,
+    shellCommandOverride: List<String>?,
+    initialComposedMessage: String?,
+    initialMessageToken: String?,
+  ) {
+    openAgentSessionChat(
+      normalizedPath = normalizedPath,
+      thread = thread,
+      subAgent = subAgent,
+      shellCommandOverride = shellCommandOverride,
+      initialComposedMessage = initialComposedMessage,
+      initialMessageToken = initialMessageToken,
+    )
+  }
+
+  override suspend fun openNewChat(
+    normalizedPath: String,
+    identity: String,
+    command: List<String>,
+    startupShellCommandOverride: List<String>?,
+    initialComposedMessage: String?,
+    initialMessageToken: String?,
+    preferredDedicatedFrame: Boolean?,
+  ) {
+    openAgentSessionNewChat(
+      normalizedPath = normalizedPath,
+      identity = identity,
+      command = command,
+      startupShellCommandOverride = startupShellCommandOverride,
+      initialComposedMessage = initialComposedMessage,
+      initialMessageToken = initialMessageToken,
+      preferredDedicatedFrame = preferredDedicatedFrame,
+    )
+  }
+}
+
 @Service(Service.Level.APP)
 internal class AgentSessionsService private constructor(
   private val serviceScope: CoroutineScope,
@@ -102,6 +163,7 @@ internal class AgentSessionsService private constructor(
   private val treeUiState: SessionsTreeUiState,
   private val archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit,
   subscribeToProjectLifecycle: Boolean,
+  private val chatOpenExecutor: AgentSessionsChatOpenExecutor,
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
@@ -113,6 +175,7 @@ internal class AgentSessionsService private constructor(
       closeAndForgetAgentChatsForThread(projectPath = projectPath, threadIdentity = threadIdentity, subAgentId = subAgentId)
     },
     subscribeToProjectLifecycle = true,
+    chatOpenExecutor = DefaultAgentSessionsChatOpenExecutor,
   )
 
   internal constructor(
@@ -122,6 +185,7 @@ internal class AgentSessionsService private constructor(
     treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
     archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
     subscribeToProjectLifecycle: Boolean = false,
+    chatOpenExecutor: AgentSessionsChatOpenExecutor = DefaultAgentSessionsChatOpenExecutor,
   ) : this(
     serviceScope = serviceScope,
     sessionSourcesProvider = sessionSourcesProvider,
@@ -129,6 +193,7 @@ internal class AgentSessionsService private constructor(
     treeUiState = treeUiState,
     archiveChatCleanup = archiveChatCleanup,
     subscribeToProjectLifecycle = subscribeToProjectLifecycle,
+    chatOpenExecutor = chatOpenExecutor,
   )
 
   private val actionGate = SingleFlightActionGate()
@@ -284,10 +349,11 @@ internal class AgentSessionsService private constructor(
         }
         if (!proceed) return@launchDropAction
       }
-      openChat(
+      chatOpenExecutor.openChat(
         normalizedPath = normalizedPath,
         thread = thread,
         subAgent = null,
+        shellCommandOverride = null,
         initialComposedMessage = initialComposedMessage,
         initialMessageToken = initialMessageToken,
       )
@@ -302,7 +368,14 @@ internal class AgentSessionsService private constructor(
       droppedActionMessage = "Dropped duplicate open sub-agent action for $normalizedPath:${thread.provider}:${thread.id}:${subAgent.id}",
       progress = dedicatedFrameOpenProgressRequest(currentProject),
     ) {
-      openChat(normalizedPath = normalizedPath, thread = thread, subAgent = subAgent)
+      chatOpenExecutor.openChat(
+        normalizedPath = normalizedPath,
+        thread = thread,
+        subAgent = subAgent,
+        shellCommandOverride = null,
+        initialComposedMessage = null,
+        initialMessageToken = null,
+      )
     }
   }
 
@@ -356,7 +429,7 @@ internal class AgentSessionsService private constructor(
       val initialMessageForChat = if (startupShellCommandOverride != null) null else initialComposedMessage
       val initialMessageTokenForChat = if (startupShellCommandOverride != null) null else initialMessageToken
 
-      openNewChat(
+      chatOpenExecutor.openNewChat(
         normalizedPath = normalizedPath,
         identity = identity,
         command = launchSpec.command,
@@ -756,7 +829,7 @@ private suspend fun openOrFocusDedicatedFrameInternal() {
   focusProjectWindowAndActivateSessions(dedicatedProject)
 }
 
-private suspend fun openChat(
+private suspend fun openAgentSessionChat(
   normalizedPath: String,
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
@@ -875,7 +948,7 @@ private fun resolvePendingCodexMetadata(identity: String, command: List<String>)
   )
 }
 
-private suspend fun openNewChat(
+private suspend fun openAgentSessionNewChat(
   normalizedPath: String,
   identity: String,
   command: List<String>,

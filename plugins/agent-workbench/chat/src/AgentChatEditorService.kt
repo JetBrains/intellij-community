@@ -7,6 +7,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -14,6 +15,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
@@ -21,11 +23,19 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicReference
 
 private class AgentChatEditorServiceLog
 
 private val LOG = logger<AgentChatEditorServiceLog>()
 private const val CODEX_PROVIDER_ID = "codex"
+private val fileEditorProviderOverrideForTests: AtomicReference<FileEditorProvider?> = AtomicReference(null)
+
+@TestOnly
+fun setAgentChatFileEditorProviderOverrideForTests(provider: FileEditorProvider?) {
+  fileEditorProviderOverrideForTests.set(provider)
+}
 
 data class AgentChatPendingTabRebindTarget(
   @JvmField val threadIdentity: String,
@@ -171,6 +181,13 @@ suspend fun openChat(
     tabsService.upsert(file.toSnapshot())
     LOG.debug {
       "openChat created new tab(identity=$threadIdentity, subAgentId=$subAgentId, fileName=${file.name}, activity=$threadActivity)"
+    }
+  }
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    val provider = fileEditorProviderOverrideForTests.get()
+    if (provider != null) {
+      // TestEditorManagerImpl uses FileEditorProvider.KEY for non-text editors and otherwise falls back to doOpenTextEditor.
+      file.putUserData(FileEditorProvider.KEY, provider)
     }
   }
   manager.openFile(
