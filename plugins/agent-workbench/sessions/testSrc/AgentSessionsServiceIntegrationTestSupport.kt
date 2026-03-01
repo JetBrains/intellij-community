@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.WorktreeEntry
+import com.intellij.agent.workbench.sessions.service.AgentSessionsChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionsService
 import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
 import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
@@ -69,19 +70,33 @@ internal suspend fun withService(
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
   treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
   archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
+  chatOpenExecutor: AgentSessionsChatOpenExecutor? = null,
   action: suspend (AgentSessionsService) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
   val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   try {
-    val service = AgentSessionsService(
-      serviceScope = scope,
-      sessionSourcesProvider = sessionSourcesProvider,
-      projectEntriesProvider = projectEntriesProvider,
-      treeUiState = treeUiState,
-      archiveChatCleanup = archiveChatCleanup,
-      subscribeToProjectLifecycle = false,
-    )
+    val service = if (chatOpenExecutor == null) {
+      AgentSessionsService(
+        serviceScope = scope,
+        sessionSourcesProvider = sessionSourcesProvider,
+        projectEntriesProvider = projectEntriesProvider,
+        treeUiState = treeUiState,
+        archiveChatCleanup = archiveChatCleanup,
+        subscribeToProjectLifecycle = false,
+      )
+    }
+    else {
+      AgentSessionsService(
+        serviceScope = scope,
+        sessionSourcesProvider = sessionSourcesProvider,
+        projectEntriesProvider = projectEntriesProvider,
+        treeUiState = treeUiState,
+        archiveChatCleanup = archiveChatCleanup,
+        subscribeToProjectLifecycle = false,
+        chatOpenExecutor = chatOpenExecutor,
+      )
+    }
     action(service)
   }
   finally {

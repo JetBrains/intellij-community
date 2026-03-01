@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
@@ -14,6 +15,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.agent.workbench.sessions.service.AgentSessionsChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionsPromptLauncherBridge
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.TestApplication
@@ -34,6 +36,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
     )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
     AgentSessionProviderBridges.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
@@ -41,6 +44,7 @@ class AgentSessionsPromptLauncherBridgeTest {
         withService(
           sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
         ) { service ->
           val bridge = AgentSessionsPromptLauncherBridge { service }
           val request = promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH)
@@ -61,6 +65,25 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(providerBridge.lastStartupBaseCommand.get())
             .containsExactly("test", "create", INVALID_PROMPT_PROJECT_PATH, AgentSessionLaunchMode.STANDARD.name)
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
+          waitForCondition {
+            chatOpenExecutor.openNewChatCalls.get() == 1
+          }
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
+          assertThat(openRequest.normalizedPath).isEqualTo(INVALID_PROMPT_PROJECT_PATH)
+          assertThat(openRequest.identity).startsWith("codex:new-")
+          assertThat(openRequest.command)
+            .containsExactly("test", "create", INVALID_PROMPT_PROJECT_PATH, AgentSessionLaunchMode.STANDARD.name)
+          assertThat(openRequest.startupShellCommandOverride)
+            .containsExactly(
+              "test",
+              "create",
+              INVALID_PROMPT_PROJECT_PATH,
+              AgentSessionLaunchMode.STANDARD.name,
+              "--",
+              "composed:Refactor selected code",
+            )
+          assertThat(openRequest.initialComposedMessage).isNull()
+          assertThat(openRequest.initialMessageToken).isNull()
         }
       }
     }
@@ -73,6 +96,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       startupPromptCommandSupported = false,
     )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
     AgentSessionProviderBridges.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
@@ -80,6 +104,7 @@ class AgentSessionsPromptLauncherBridgeTest {
         withService(
           sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
         ) { service ->
           val bridge = AgentSessionsPromptLauncherBridge { service }
           val result = bridge.launch(promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH))
@@ -92,6 +117,13 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
+          waitForCondition {
+            chatOpenExecutor.openNewChatCalls.get() == 1
+          }
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
+          assertThat(openRequest.startupShellCommandOverride).isNull()
+          assertThat(openRequest.initialComposedMessage).isEqualTo("composed:Refactor selected code")
+          assertThat(openRequest.initialMessageToken).isNotNull()
         }
       }
     }
@@ -103,6 +135,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
     )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
     AgentSessionProviderBridges.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
@@ -124,6 +157,7 @@ class AgentSessionsPromptLauncherBridgeTest {
             )
           },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
         ) { service ->
           service.refresh()
           waitForCondition {
@@ -141,6 +175,16 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(providerBridge.createCalls.get()).isZero()
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
+          waitForCondition {
+            chatOpenExecutor.openChatCalls.get() == 1
+          }
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
+          assertThat(openRequest.normalizedPath).isEqualTo(PROJECT_PATH)
+          assertThat(openRequest.thread.id).isEqualTo("thread-existing")
+          assertThat(openRequest.subAgent).isNull()
+          assertThat(openRequest.initialComposedMessage).isEqualTo("composed:Refactor selected code")
+          assertThat(openRequest.initialMessageToken).isNotNull()
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
         }
       }
     }
@@ -152,6 +196,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
     )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
     AgentSessionProviderBridges.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
@@ -173,6 +218,7 @@ class AgentSessionsPromptLauncherBridgeTest {
             )
           },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
         ) { service ->
           service.refresh()
           waitForCondition {
@@ -186,6 +232,8 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(result.error).isEqualTo(AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND)
           assertThat(providerBridge.createCalls.get()).isZero()
           assertThat(providerBridge.composeCalls.get()).isZero()
+          assertThat(chatOpenExecutor.openChatCalls.get()).isZero()
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
         }
       }
     }
@@ -193,6 +241,7 @@ class AgentSessionsPromptLauncherBridgeTest {
 
   @Test
   fun launchReturnsProviderUnavailableWhenBridgeIsMissing() {
+    val chatOpenExecutor = RecordingChatOpenExecutor()
     AgentSessionProviderBridges.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(emptyList())
     ) {
@@ -200,12 +249,15 @@ class AgentSessionsPromptLauncherBridgeTest {
         withService(
           sessionSourcesProvider = { emptyList() },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
         ) { service ->
           val bridge = AgentSessionsPromptLauncherBridge { service }
           val result = bridge.launch(promptLaunchRequest(provider = AgentSessionProvider.CODEX))
 
           assertThat(result.launched).isFalse()
           assertThat(result.error).isEqualTo(AgentPromptLaunchError.PROVIDER_UNAVAILABLE)
+          assertThat(chatOpenExecutor.openChatCalls.get()).isZero()
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
         }
       }
     }
@@ -217,6 +269,7 @@ class AgentSessionsPromptLauncherBridgeTest {
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
     )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
     AgentSessionProviderBridges.withRegistryForTest(
       InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
     ) {
@@ -224,6 +277,7 @@ class AgentSessionsPromptLauncherBridgeTest {
         withService(
           sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
           projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
         ) { service ->
           val bridge = AgentSessionsPromptLauncherBridge { service }
           val result = bridge.launch(
@@ -236,6 +290,8 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(result.launched).isFalse()
           assertThat(result.error).isEqualTo(AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE)
           assertThat(providerBridge.createCalls.get()).isZero()
+          assertThat(chatOpenExecutor.openChatCalls.get()).isZero()
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
         }
       }
     }
@@ -446,6 +502,76 @@ class AgentSessionsPromptLauncherBridgeTest {
 }
 
 private const val INVALID_PROMPT_PROJECT_PATH: String = "invalid\u0000project"
+
+private class RecordingChatOpenExecutor : AgentSessionsChatOpenExecutor {
+  val openChatCalls: AtomicInteger = AtomicInteger(0)
+  val openNewChatCalls: AtomicInteger = AtomicInteger(0)
+  val lastOpenChatRequest: AtomicReference<OpenChatRequest?> = AtomicReference(null)
+  val lastOpenNewChatRequest: AtomicReference<OpenNewChatRequest?> = AtomicReference(null)
+
+  override suspend fun openChat(
+    normalizedPath: String,
+    thread: AgentSessionThread,
+    subAgent: AgentSubAgent?,
+    shellCommandOverride: List<String>?,
+    initialComposedMessage: String?,
+    initialMessageToken: String?,
+  ) {
+    openChatCalls.incrementAndGet()
+    lastOpenChatRequest.set(
+      OpenChatRequest(
+        normalizedPath = normalizedPath,
+        thread = thread,
+        subAgent = subAgent,
+        shellCommandOverride = shellCommandOverride,
+        initialComposedMessage = initialComposedMessage,
+        initialMessageToken = initialMessageToken,
+      )
+    )
+  }
+
+  override suspend fun openNewChat(
+    normalizedPath: String,
+    identity: String,
+    command: List<String>,
+    startupShellCommandOverride: List<String>?,
+    initialComposedMessage: String?,
+    initialMessageToken: String?,
+    preferredDedicatedFrame: Boolean?,
+  ) {
+    openNewChatCalls.incrementAndGet()
+    lastOpenNewChatRequest.set(
+      OpenNewChatRequest(
+        normalizedPath = normalizedPath,
+        identity = identity,
+        command = command,
+        startupShellCommandOverride = startupShellCommandOverride,
+        initialComposedMessage = initialComposedMessage,
+        initialMessageToken = initialMessageToken,
+        preferredDedicatedFrame = preferredDedicatedFrame,
+      )
+    )
+  }
+}
+
+private data class OpenChatRequest(
+  @JvmField val normalizedPath: String,
+  @JvmField val thread: AgentSessionThread,
+  @JvmField val subAgent: AgentSubAgent?,
+  @JvmField val shellCommandOverride: List<String>?,
+  @JvmField val initialComposedMessage: String?,
+  @JvmField val initialMessageToken: String?,
+)
+
+private data class OpenNewChatRequest(
+  @JvmField val normalizedPath: String,
+  @JvmField val identity: String,
+  @JvmField val command: List<String>,
+  @JvmField val startupShellCommandOverride: List<String>?,
+  @JvmField val initialComposedMessage: String?,
+  @JvmField val initialMessageToken: String?,
+  @JvmField val preferredDedicatedFrame: Boolean?,
+)
 
 private fun promptLaunchRequest(
   provider: AgentSessionProvider = AgentSessionProvider.CODEX,

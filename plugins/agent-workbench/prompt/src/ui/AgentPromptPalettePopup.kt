@@ -193,6 +193,7 @@ internal class AgentPromptPalettePopup(
   private fun onExistingTaskSelected(selected: ThreadEntry) {
     selectedExistingTaskId = selected.id
     updateSendAvailability()
+    refreshFooterHintForCurrentState()
   }
 
   private fun attachHandlers() {
@@ -214,8 +215,7 @@ internal class AgentPromptPalettePopup(
   private fun onPromptChanged() {
     updateSendAvailability()
     // Clear transient footer messages on user interaction
-    footerLabel.text = AgentPromptBundle.message("popup.footer.hint")
-    footerLabel.foreground = JBUI.CurrentTheme.Advertiser.foreground()
+    clearStatus()
   }
 
   private fun installPromptEnterHandlers() {
@@ -234,18 +234,12 @@ internal class AgentPromptPalettePopup(
     val mode = currentTargetMode()
     // Prompt editor is shared across both modes; only the existing-task picker visibility changes.
     existingTaskScrollPane.isVisible = mode == PromptTargetMode.EXISTING_TASK
-    val existingTaskHint = AgentPromptBundle.message("popup.status.existing.select.task")
     if (mode == PromptTargetMode.EXISTING_TASK) {
       if (allExistingTaskEntries.isEmpty()) {
         reloadExistingTasks()
       }
-      if (selectedExistingTaskId == null) {
-        showInfo(existingTaskHint)
-      }
     }
-    else if (footerLabel.text == existingTaskHint) {
-      clearStatus()
-    }
+    refreshFooterHintForCurrentState()
   }
 
   private fun currentTargetMode(): PromptTargetMode {
@@ -346,6 +340,7 @@ internal class AgentPromptPalettePopup(
           reloadExistingTasks()
         }
         updateSendAvailability()
+        refreshFooterHintForCurrentState()
       }
 
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -758,8 +753,26 @@ internal class AgentPromptPalettePopup(
   }
 
   private fun clearStatus() {
-    footerLabel.text = AgentPromptBundle.message("popup.footer.hint")
+    footerLabel.text = AgentPromptBundle.message(
+      resolveDefaultFooterHintMessageKey(
+        targetMode = currentTargetMode(),
+        selectedProvider = selectedProvider?.bridge?.provider,
+      )
+    )
     footerLabel.foreground = JBUI.CurrentTheme.Advertiser.foreground()
+  }
+
+  private fun refreshFooterHintForCurrentState() {
+    if (shouldShowExistingTaskSelectionHint(
+        targetMode = currentTargetMode(),
+        selectedExistingTaskId = selectedExistingTaskId,
+        selectedProvider = selectedProvider?.bridge?.provider,
+      )) {
+      showInfo(AgentPromptBundle.message("popup.status.existing.select.task"))
+      return
+    }
+
+    clearStatus()
   }
 
   private fun showError(message: @Nls String) {
@@ -777,6 +790,28 @@ private data class ContextSelection(
   @JvmField val items: List<AgentPromptContextItem>,
   @JvmField val summary: AgentPromptContextEnvelopeSummary,
 )
+
+internal fun resolveDefaultFooterHintMessageKey(
+  targetMode: PromptTargetMode,
+  selectedProvider: AgentSessionProvider?,
+): @NonNls String {
+  return if (targetMode == PromptTargetMode.EXISTING_TASK && selectedProvider == AgentSessionProvider.CODEX) {
+    "popup.footer.hint.existing.codex"
+  }
+  else {
+    "popup.footer.hint"
+  }
+}
+
+internal fun shouldShowExistingTaskSelectionHint(
+  targetMode: PromptTargetMode,
+  selectedExistingTaskId: String?,
+  selectedProvider: AgentSessionProvider?,
+): Boolean {
+  return targetMode == PromptTargetMode.EXISTING_TASK &&
+         selectedExistingTaskId.isNullOrBlank() &&
+         selectedProvider != AgentSessionProvider.CODEX
+}
 
 internal fun installPromptEnterHandlers(
   promptArea: JBTextArea,

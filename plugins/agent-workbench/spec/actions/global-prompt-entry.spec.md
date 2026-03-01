@@ -54,6 +54,6 @@ Current implementation status:
 ## Follow-up TODOs
 
 - Define queued-send UX and semantics (`Tab` for queue in Codex flow) together with backend implementation.
-- Define whether queued-send hint should be shown once and persisted via `PropertiesComponent`.
+- For `EXISTING_TASK` with `CODEX` provider, footer hint must keep the default inline style and add a `Tab` segment: `Enter to send · Shift+Enter for newline · Tab to queue`; this condition-specific hint replaces the default footer hint while active and is not persisted.
 - Consider explicit runtime prioritization for `AgentWorkbenchPrompt.OpenGlobalPalette` on `Cmd/Ctrl+\\` when multiple enabled actions share the shortcut (for example `AIAssistant.Editor.AskAiAssistantInEditor`, `CodeCompletion`, or `StepOut`).
   Current implementation relies on known keymap duplicate declarations and does not enforce a runtime winner.
