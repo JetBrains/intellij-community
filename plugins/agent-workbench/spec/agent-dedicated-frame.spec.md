@@ -12,7 +12,7 @@ targets:
 # Agent Chat Dedicated Frame
 
 Status: Draft
-Date: 2026-02-24
+Date: 2026-03-01
 
 ## Summary
 Define dedicated-frame mode behavior for Agent chat routing. This spec owns frame policy, frame lifecycle, filtering, and shortcut semantics. Shared command mapping and action contracts are owned by `spec/agent-core-contracts.spec.md`.
@@ -58,6 +58,15 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 
 - Dedicated-frame project must be excluded from Sessions project registry for both open and recent project enumeration.
   [@test] ../sessions/testSrc/AgentSessionsProjectCatalogTest.kt
+
+- Dedicated-frame project switching and header navigation affordances must follow `spec/agent-dedicated-frame-project-switching.spec.md`.
+  [@test] ../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+
+- Dedicated-frame terminal hyperlink routing to source projects must follow `spec/agent-dedicated-frame-terminal-hyperlink-routing.spec.md`.
+  [@test] ../sessions/testSrc/AgentWorkbenchTerminalHyperlinkNavigationInterceptorTest.kt
+  [@test] ../../terminal/tests/src/com/intellij/terminal/tests/reworked/backend/BackendTerminalHyperlinkHighlighterTest.kt
 
 - Chat terminal `cwd` must remain source project path regardless of frame mode.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt

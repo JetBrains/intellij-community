@@ -29,7 +29,7 @@ targets:
 # Dedicated Frame Project Switching
 
 Status: Draft
-Date: 2026-02-27
+Date: 2026-03-01
 
 ## Summary
 Define how Agent Workbench dedicated-frame mode supports cross-project navigation with dedicated-frame participation in global window traversal while keeping project-window traversal explicit and dedicated-aware.
