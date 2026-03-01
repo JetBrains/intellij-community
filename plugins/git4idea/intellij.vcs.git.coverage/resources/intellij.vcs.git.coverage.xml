@@ -1,8 +1,13 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="Git4Idea"/>
+    <module name="intellij.platform.coverage"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.vcs.log.graph.impl"/>
-    <module name="intellij.platform.coverage"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <coverageModifiedFilesFilterFactory implementation="com.intellij.vcs.git.coverage.GitModifiedFilesFilterFactory"/>
