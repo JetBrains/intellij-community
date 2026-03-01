@@ -19,7 +19,7 @@
   <xi:include href="kotlin-core.xml"/>
   <xi:include href="searching-base.xml"/>
   <xi:include href="statistics.xml"/>
-  <xi:include href="kotlin.highlighting.shared.xml"/>
+  <xi:include href="highlighting-shared.xml"/>
   <xi:include href="light-classes.xml"/>
   <xi:include href="parcelize.k2.xml"/>
   <xi:include href="jvm-debugger.xml"/>
@@ -31,7 +31,7 @@
   <xi:include href="facets-base.xml"/>
   <xi:include href="jvm.xml"/>
   <xi:include href="searching-k2.xml"/>
-  <xi:include href="intellij.kotlin.base.codeInsight.minimal.xml"/>
+  <xi:include href="base-codeInsight-minimal.xml"/>
 
   <xi:include href="extensions.xml"/>
 

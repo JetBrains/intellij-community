@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.inspections">
+<idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.inspections" visibility="internal">
   <dependencies>
     <module name="intellij.kotlin.base.externalSystem"/>
     <module name="intellij.kotlin.codeInsight.intentions"/>

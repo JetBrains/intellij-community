@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.base.analysisApiPlatform">
+<idea-plugin package="org.jetbrains.kotlin.idea.base.analysisApiPlatform" visibility="internal">
   <extensions defaultExtensionNs="com.intellij">
     <registryKey
             defaultValue="true"
