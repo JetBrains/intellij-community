@@ -140,6 +140,9 @@
     <cancellationCheckInLoopsFixProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationCheckInLoopsFixProvider"/>
+    <useHtmlChunkToolTipFixProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUseHtmlChunkToolTipFixProvider"/>
     <visitorProviderForRBCInspection
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider"/>
