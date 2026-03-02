@@ -1,8 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.breakpoint
 
+import com.intellij.debugger.engine.DebugProcessAdapterImpl
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils
-import com.intellij.debugger.engine.InstrumentedTechnicalBreakpoint
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -210,30 +211,6 @@ internal class JdiBreakpointFactory {
       StepOutRequestHint(thread, suspendContext, onComplete), null,
     )
   }
-
-  /**
-   * Creates a one-shot breakpoint at the given [location].
-   * The breakpoint suspends the event thread, calls [onHit] with the resulting [SuspendContextImpl],
-   * and then deletes itself. The returned request is disabled by default — caller must enable it.
-   */
-  fun createOneShotBreakpoint(
-    suspendContext: SuspendContextImpl,
-    location: Location,
-    onHit: (SuspendContextImpl) -> Unit,
-  ): BreakpointRequest {
-    val requestor = object : FilteredRequestorImpl(suspendContext.debugProcess.project), SyntheticBreakpoint, InstrumentedTechnicalBreakpoint {
-      override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
-        event?.request()?.let {
-          suspendContext.debugProcess.requestsManager.deleteRequest(this)
-        }
-        action.suspendContext?.let { onHit(it) }
-        return true  // suspend VM at call site
-      }
-
-      override fun getSuspendPolicy(): String = DebuggerSettings.SUSPEND_THREAD
-    }
-    return suspendContext.debugProcess.requestsManager.createBreakpointRequest(requestor, location)
-  }
 }
 
 private class StepOutRequestHint(
@@ -242,7 +219,17 @@ private class StepOutRequestHint(
   private val onComplete: (EvaluationContextImpl) -> Unit,
 ) : RequestHint(thread, suspendContext, StepRequest.STEP_OUT) {
   override fun getNextStepDepth(context: SuspendContextImpl): Int {
-    onComplete(EvaluationContextImpl(context, context.frameProxy))
+    // Debugger engine may initiate transfer to SUSPEND_ALL and invalidate `context`
+    // To fix that we install a single-shot listener that fires when program is actually paused
+    context.debugProcess.addDebugProcessListener(object : DebugProcessAdapterImpl() {
+      override fun paused(suspendContext: SuspendContextImpl) {
+        context.debugProcess.removeDebugProcessListener(this)
+        onComplete(EvaluationContextImpl(suspendContext, suspendContext.frameProxy))
+      }
+      override fun processDetached(process: DebugProcessImpl, closedByUser: Boolean) {
+        context.debugProcess.removeDebugProcessListener(this)
+      }
+    })
     return STOP
   }
 }
