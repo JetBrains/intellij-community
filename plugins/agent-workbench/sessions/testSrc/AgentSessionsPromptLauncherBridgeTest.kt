@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.service.AgentSessionsChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionsPromptLauncherBridge
@@ -62,7 +63,7 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
           assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
-          assertThat(providerBridge.lastStartupBaseCommand.get())
+          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command)
             .containsExactly("test", "create", INVALID_PROMPT_PROJECT_PATH, AgentSessionLaunchMode.STANDARD.name)
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
           waitForCondition {
@@ -71,9 +72,10 @@ class AgentSessionsPromptLauncherBridgeTest {
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
           assertThat(openRequest.normalizedPath).isEqualTo(INVALID_PROMPT_PROJECT_PATH)
           assertThat(openRequest.identity).startsWith("codex:new-")
-          assertThat(openRequest.command)
+          assertThat(openRequest.launchSpec.command)
             .containsExactly("test", "create", INVALID_PROMPT_PROJECT_PATH, AgentSessionLaunchMode.STANDARD.name)
-          assertThat(openRequest.startupShellCommandOverride)
+          assertThat(openRequest.launchSpec.envVariables).isEmpty()
+          assertThat(openRequest.startupLaunchSpecOverride?.command)
             .containsExactly(
               "test",
               "create",
@@ -82,8 +84,42 @@ class AgentSessionsPromptLauncherBridgeTest {
               "--",
               "composed:Refactor selected code",
             )
+          assertThat(openRequest.startupLaunchSpecOverride?.envVariables).isEmpty()
           assertThat(openRequest.initialComposedMessage).isNull()
           assertThat(openRequest.initialMessageToken).isNull()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun launchCarriesStartupOverrideEnvVariablesForNewSession() {
+    val providerBridge = RecordingPromptLaunchProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      startupPromptCommandEnvVariables = mapOf("DISABLE_AUTOUPDATER" to "1"),
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    AgentSessionProviderBridges.withRegistryForTest(
+      InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
+    ) {
+      runBlocking(Dispatchers.Default) {
+        withService(
+          sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
+          projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { service ->
+          val bridge = AgentSessionsPromptLauncherBridge { service }
+          val result = bridge.launch(promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH))
+
+          assertThat(result.launched).isTrue()
+          assertThat(result.error).isNull()
+          waitForCondition {
+            chatOpenExecutor.openNewChatCalls.get() == 1
+          }
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
+          assertThat(openRequest.startupLaunchSpecOverride?.envVariables)
+            .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
         }
       }
     }
@@ -121,7 +157,7 @@ class AgentSessionsPromptLauncherBridgeTest {
             chatOpenExecutor.openNewChatCalls.get() == 1
           }
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
-          assertThat(openRequest.startupShellCommandOverride).isNull()
+          assertThat(openRequest.startupLaunchSpecOverride).isNull()
           assertThat(openRequest.initialComposedMessage).isEqualTo("composed:Refactor selected code")
           assertThat(openRequest.initialMessageToken).isNotNull()
         }
@@ -176,7 +212,7 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
           assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
-          assertThat(providerBridge.lastStartupBaseCommand.get()).containsExactly("test", "resume", "thread-existing")
+          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
           waitForCondition {
             chatOpenExecutor.openChatCalls.get() == 1
@@ -185,8 +221,9 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(openRequest.normalizedPath).isEqualTo(PROJECT_PATH)
           assertThat(openRequest.thread.id).isEqualTo("thread-existing")
           assertThat(openRequest.subAgent).isNull()
-          assertThat(openRequest.startupShellCommandOverride)
+          assertThat(openRequest.startupLaunchSpecOverride?.command)
             .containsExactly("test", "resume", "thread-existing", "--", "composed:Refactor selected code")
+          assertThat(openRequest.startupLaunchSpecOverride?.envVariables).isEmpty()
           assertThat(openRequest.initialComposedMessage).isNull()
           assertThat(openRequest.initialMessageToken).isNull()
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
@@ -243,7 +280,7 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
           assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
-          assertThat(providerBridge.lastStartupBaseCommand.get()).containsExactly("test", "resume", "thread-existing")
+          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
           waitForCondition {
             chatOpenExecutor.openChatCalls.get() == 1
@@ -252,7 +289,7 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(openRequest.normalizedPath).isEqualTo(PROJECT_PATH)
           assertThat(openRequest.thread.id).isEqualTo("thread-existing")
           assertThat(openRequest.subAgent).isNull()
-          assertThat(openRequest.startupShellCommandOverride).isNull()
+          assertThat(openRequest.startupLaunchSpecOverride).isNull()
           assertThat(openRequest.initialComposedMessage).isEqualTo("composed:Refactor selected code")
           assertThat(openRequest.initialMessageToken).isNotNull()
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
@@ -584,8 +621,8 @@ private class RecordingChatOpenExecutor : AgentSessionsChatOpenExecutor {
     normalizedPath: String,
     thread: AgentSessionThread,
     subAgent: AgentSubAgent?,
-    shellCommandOverride: List<String>?,
-    startupShellCommandOverride: List<String>?,
+    launchSpecOverride: AgentSessionTerminalLaunchSpec?,
+    startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
     initialComposedMessage: String?,
     initialMessageToken: String?,
   ) {
@@ -595,8 +632,8 @@ private class RecordingChatOpenExecutor : AgentSessionsChatOpenExecutor {
         normalizedPath = normalizedPath,
         thread = thread,
         subAgent = subAgent,
-        shellCommandOverride = shellCommandOverride,
-        startupShellCommandOverride = startupShellCommandOverride,
+        launchSpecOverride = launchSpecOverride,
+        startupLaunchSpecOverride = startupLaunchSpecOverride,
         initialComposedMessage = initialComposedMessage,
         initialMessageToken = initialMessageToken,
       )
@@ -606,8 +643,8 @@ private class RecordingChatOpenExecutor : AgentSessionsChatOpenExecutor {
   override suspend fun openNewChat(
     normalizedPath: String,
     identity: String,
-    command: List<String>,
-    startupShellCommandOverride: List<String>?,
+    launchSpec: AgentSessionTerminalLaunchSpec,
+    startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
     initialComposedMessage: String?,
     initialMessageToken: String?,
     preferredDedicatedFrame: Boolean?,
@@ -617,8 +654,8 @@ private class RecordingChatOpenExecutor : AgentSessionsChatOpenExecutor {
       OpenNewChatRequest(
         normalizedPath = normalizedPath,
         identity = identity,
-        command = command,
-        startupShellCommandOverride = startupShellCommandOverride,
+        launchSpec = launchSpec,
+        startupLaunchSpecOverride = startupLaunchSpecOverride,
         initialComposedMessage = initialComposedMessage,
         initialMessageToken = initialMessageToken,
         preferredDedicatedFrame = preferredDedicatedFrame,
@@ -631,8 +668,8 @@ private data class OpenChatRequest(
   @JvmField val normalizedPath: String,
   @JvmField val thread: AgentSessionThread,
   @JvmField val subAgent: AgentSubAgent?,
-  @JvmField val shellCommandOverride: List<String>?,
-  @JvmField val startupShellCommandOverride: List<String>?,
+  @JvmField val launchSpecOverride: AgentSessionTerminalLaunchSpec?,
+  @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   @JvmField val initialComposedMessage: String?,
   @JvmField val initialMessageToken: String?,
 )
@@ -640,8 +677,8 @@ private data class OpenChatRequest(
 private data class OpenNewChatRequest(
   @JvmField val normalizedPath: String,
   @JvmField val identity: String,
-  @JvmField val command: List<String>,
-  @JvmField val startupShellCommandOverride: List<String>?,
+  @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
+  @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   @JvmField val initialComposedMessage: String?,
   @JvmField val initialMessageToken: String?,
   @JvmField val preferredDedicatedFrame: Boolean?,
@@ -677,6 +714,7 @@ private class RecordingPromptLaunchProviderBridge(
   override val provider: AgentSessionProvider,
   private val supportedModes: Set<AgentSessionLaunchMode>,
   private val startupPromptCommandSupported: Boolean = true,
+  private val startupPromptCommandEnvVariables: Map<String, String> = emptyMap(),
 ) : AgentSessionProviderBridge {
   val createCalls: AtomicInteger = AtomicInteger(0)
   val composeCalls: AtomicInteger = AtomicInteger(0)
@@ -684,7 +722,7 @@ private class RecordingPromptLaunchProviderBridge(
   val lastCreatePath: AtomicReference<String?> = AtomicReference(null)
   val lastCreateMode: AtomicReference<AgentSessionLaunchMode?> = AtomicReference(null)
   val lastComposeRequest: AtomicReference<AgentPromptInitialMessageRequest?> = AtomicReference(null)
-  val lastStartupBaseCommand: AtomicReference<List<String>?> = AtomicReference(null)
+  val lastStartupBaseLaunchSpec: AtomicReference<AgentSessionTerminalLaunchSpec?> = AtomicReference(null)
   val lastStartupPrompt: AtomicReference<String?> = AtomicReference(null)
 
   override val displayNameKey: String
@@ -713,27 +751,42 @@ private class RecordingPromptLaunchProviderBridge(
 
   override fun isCliAvailable(): Boolean = true
 
-  override fun buildResumeCommand(sessionId: String): List<String> = listOf("test", "resume", sessionId)
+  override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(command = listOf("test", "resume", sessionId))
+  }
 
-  override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("test", "new", mode.name)
+  override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(command = listOf("test", "new", mode.name))
+  }
 
-  override fun buildNewEntryCommand(): List<String> = listOf("test")
+  override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(command = listOf("test"))
+  }
 
-  override fun buildCommandWithInitialPrompt(baseCommand: List<String>, prompt: String): List<String>? {
+  override fun buildLaunchSpecWithInitialPrompt(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    prompt: String,
+  ): AgentSessionTerminalLaunchSpec? {
     startupCommandCalls.incrementAndGet()
-    lastStartupBaseCommand.set(baseCommand)
+    lastStartupBaseLaunchSpec.set(baseLaunchSpec)
     lastStartupPrompt.set(prompt)
     if (!startupPromptCommandSupported) {
       return null
     }
-    return baseCommand + listOf("--", prompt)
+    return baseLaunchSpec.copy(
+      command = baseLaunchSpec.command + listOf("--", prompt),
+      envVariables = baseLaunchSpec.envVariables + startupPromptCommandEnvVariables,
+    )
   }
 
   override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
     createCalls.incrementAndGet()
     lastCreatePath.set(path)
     lastCreateMode.set(mode)
-    return AgentSessionLaunchSpec(sessionId = null, command = listOf("test", "create", path, mode.name))
+    return AgentSessionLaunchSpec(
+      sessionId = null,
+      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("test", "create", path, mode.name)),
+    )
   }
 
   override fun composeInitialMessage(request: AgentPromptInitialMessageRequest): String {

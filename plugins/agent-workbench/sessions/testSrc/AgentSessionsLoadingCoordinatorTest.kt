@@ -8,8 +8,11 @@ import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatPendingCodexTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.service.AgentSessionsLoadingCoordinator
@@ -433,6 +436,93 @@ class AgentSessionsLoadingCoordinatorTest {
       val target = invocation.target
       assertThat(target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-2"))
       assertThat(target.threadId).isEqualTo("codex-2")
+    }
+  }
+
+  @Test
+  fun providerUpdatePropagatesResumeEnvToPendingTabRebindTargets() {
+    val updates = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+    val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = true,
+      updates = updates,
+      listFromClosedProject = { path ->
+        if (path != PROJECT_PATH) {
+          emptyList()
+        }
+        else {
+          listOf(thread(id = "codex-env", updatedAt = 320L, title = "Env thread", provider = AgentSessionProvider.CODEX))
+        }
+      },
+    )
+
+    val bridge = TestAgentSessionProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+      cliAvailable = true,
+      resumeEnvVariables = mapOf("TEST_ENV" to "1"),
+    )
+
+    AgentSessionProviderBridges.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+      runBlocking(Dispatchers.Default) {
+        withLoadingCoordinator(
+          sessionSourcesProvider = { listOf(source) },
+          isRefreshGateActive = { true },
+          openChatPathsProvider = { setOf(PROJECT_PATH) },
+          openPendingCodexTabsProvider = {
+            mapOf(
+              PROJECT_PATH to listOf(
+                pendingCodexTab(
+                  pendingThreadIdentity = "codex:new-env",
+                  pendingCreatedAtMs = 200L,
+                )
+              )
+            )
+          },
+          openChatPendingTabsBinder = { requestsByPath ->
+            requestsByPath.forEach { (path, requests) ->
+              requests.forEach { request ->
+                rebindInvocations.add(
+                  PendingCodexRebindInvocation(
+                    path = path,
+                    pendingTabKey = request.pendingTabKey,
+                    pendingThreadIdentity = request.pendingThreadIdentity,
+                    target = request.target,
+                  )
+                )
+              }
+            }
+            successfulPendingCodexRebindReport(requestsByPath)
+          },
+        ) { coordinator, stateStore ->
+          stateStore.replaceProjects(
+            projects = listOf(
+              AgentProjectSessions(
+                path = PROJECT_PATH,
+                name = "Project A",
+                isOpen = true,
+                hasLoaded = true,
+                threads = listOf(thread(id = "codex-base", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+              )
+            ),
+            visibleThreadCounts = emptyMap(),
+          )
+
+          coordinator.observeSessionSourceUpdates()
+          updates.tryEmit(Unit)
+
+          waitForCondition {
+            rebindInvocations.isNotEmpty()
+          }
+
+          val invocation = rebindInvocations.single()
+          assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-env"))
+          assertThat(invocation.target.shellEnvVariables)
+            .containsExactlyEntriesOf(mapOf("TEST_ENV" to "1"))
+        }
+      }
     }
   }
 

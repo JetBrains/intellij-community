@@ -6,9 +6,10 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindTarget
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeCommand
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeLaunchSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceIfCreated
@@ -18,7 +19,8 @@ internal class PendingCodexRebindTargetResolver(
   private val stateProvider: () -> AgentSessionsState? = {
     ApplicationManager.getApplication().serviceIfCreated<AgentSessionsService>()?.state?.value
   },
-  private val resumeCommandProvider: (AgentSessionProvider, String) -> List<String> = ::buildAgentSessionResumeCommand,
+  private val resumeLaunchSpecProvider: (AgentSessionProvider, String) -> AgentSessionTerminalLaunchSpec =
+    ::buildAgentSessionResumeLaunchSpec,
 ) {
   fun resolve(context: AgentChatEditorTabActionContext): AgentChatPendingTabRebindTarget? {
     if (!isPendingCodexEditorContext(context)) {
@@ -34,13 +36,14 @@ internal class PendingCodexRebindTargetResolver(
 
     for (thread in candidateThreads) {
       val threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
-      val shellCommand = runCatching {
-        resumeCommandProvider(thread.provider, thread.id)
-      }.getOrDefault(listOf(AgentSessionProvider.CODEX.value, "resume", thread.id))
+      val launchSpec = runCatching {
+        resumeLaunchSpecProvider(thread.provider, thread.id)
+      }.getOrDefault(AgentSessionTerminalLaunchSpec(command = listOf(AgentSessionProvider.CODEX.value, "resume", thread.id)))
       return AgentChatPendingTabRebindTarget(
         threadIdentity = threadIdentity,
         threadId = thread.id,
-        shellCommand = shellCommand,
+        shellCommand = launchSpec.command,
+        shellEnvVariables = launchSpec.envVariables,
         threadTitle = thread.title,
         threadActivity = thread.activity,
         threadUpdatedAt = thread.updatedAt,

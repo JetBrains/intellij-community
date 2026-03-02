@@ -3,12 +3,13 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeCommand
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeLaunchSpec
 
 internal data class AgentSessionChatOpenPayload(
   @JvmField val threadIdentity: String,
-  @JvmField val shellCommand: List<String>,
+  @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
   @JvmField val runtimeThreadId: String,
   @JvmField val threadTitle: String,
   @JvmField val subAgentId: String?,
@@ -19,15 +20,15 @@ internal data class AgentSessionChatOpenPayload(
 internal fun resolveAgentSessionChatOpenPayload(
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
-  shellCommandOverride: List<String>?,
+  launchSpecOverride: AgentSessionTerminalLaunchSpec?,
 ): AgentSessionChatOpenPayload {
   val threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
   val runtimeThreadId = subAgent?.id ?: thread.id
-  val shellCommand = shellCommandOverride ?: buildAgentSessionResumeCommand(provider = thread.provider, sessionId = runtimeThreadId)
+  val launchSpec = launchSpecOverride ?: buildAgentSessionResumeLaunchSpec(provider = thread.provider, sessionId = runtimeThreadId)
   val threadTitle = subAgent?.name?.ifBlank { subAgent.id } ?: thread.title
   return AgentSessionChatOpenPayload(
     threadIdentity = threadIdentity,
-    shellCommand = shellCommand,
+    launchSpec = launchSpec,
     runtimeThreadId = runtimeThreadId,
     threadTitle = threadTitle,
     subAgentId = subAgent?.id,

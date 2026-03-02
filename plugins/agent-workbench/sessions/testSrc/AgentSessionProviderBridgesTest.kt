@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.LoadingOrder
@@ -138,16 +139,22 @@ class AgentSessionProviderBridgesTest {
 
     override fun isCliAvailable(): Boolean = true
 
-    override fun buildResumeCommand(sessionId: String): List<String> = listOf("test", "resume", sessionId)
+    override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+      return AgentSessionTerminalLaunchSpec(command = listOf("test", "resume", sessionId))
+    }
 
-    override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("test", "new", mode.name)
+    override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+      return AgentSessionTerminalLaunchSpec(command = listOf("test", "new", mode.name))
+    }
 
-    override fun buildNewEntryCommand(): List<String> = listOf("test")
+    override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
+      return AgentSessionTerminalLaunchSpec(command = listOf("test"))
+    }
 
     override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
       return AgentSessionLaunchSpec(
         sessionId = null,
-        command = listOf("test", "create", path),
+        launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("test", "create", path)),
       )
     }
   }

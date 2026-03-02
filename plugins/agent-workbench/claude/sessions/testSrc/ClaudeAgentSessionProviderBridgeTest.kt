@@ -14,29 +14,37 @@ class ClaudeAgentSessionProviderBridgeTest {
   private val bridge = ClaudeAgentSessionProviderBridge()
 
   @Test
-  fun buildNewEntryCommand() {
-    assertThat(bridge.buildNewEntryCommand())
+  fun buildNewEntryLaunchSpec() {
+    assertThat(bridge.buildNewEntryLaunchSpec().command)
       .containsExactly("claude")
+    assertThat(bridge.buildNewEntryLaunchSpec().envVariables)
+      .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
   }
 
   @Test
-  fun buildResumeCommand() {
-    assertThat(bridge.buildResumeCommand("session-1"))
+  fun buildResumeLaunchSpec() {
+    assertThat(bridge.buildResumeLaunchSpec("session-1").command)
       .containsExactly("claude", "--resume", "session-1")
+    assertThat(bridge.buildResumeLaunchSpec("session-1").envVariables)
+      .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
   }
 
   @Test
-  fun buildYoloCommand() {
-    assertThat(bridge.buildNewSessionCommand(AgentSessionLaunchMode.YOLO))
+  fun buildYoloLaunchSpec() {
+    assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO).command)
       .containsExactly("claude", "--dangerously-skip-permissions")
   }
 
   @Test
-  fun buildCommandWithInitialPromptForResumeCommand() {
-    val resumeCommand = bridge.buildResumeCommand("session-1")
+  fun buildLaunchSpecWithInitialPromptForResumeCommand() {
+    val resumeLaunchSpec = bridge.buildResumeLaunchSpec("session-1")
 
-    assertThat(bridge.buildCommandWithInitialPrompt(resumeCommand, "-summarize\nchanges"))
+    val launchSpec = bridge.buildLaunchSpecWithInitialPrompt(resumeLaunchSpec, "-summarize\nchanges")
+
+    assertThat(launchSpec.command)
       .containsExactly("claude", "--resume", "session-1", "--", "-summarize\nchanges")
+    assertThat(launchSpec.envVariables)
+      .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
   }
 
   @Test

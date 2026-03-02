@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.service.resolveAgentSessionChatOpenPayload
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.testFramework.junit5.TestApplication
@@ -25,12 +26,12 @@ class AgentSessionChatOpenPayloadTest {
     val payload = resolveAgentSessionChatOpenPayload(
       thread = thread,
       subAgent = null,
-      shellCommandOverride = null,
+      launchSpecOverride = null,
     )
 
     assertThat(payload.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "thread-1"))
     assertThat(payload.runtimeThreadId).isEqualTo("thread-1")
-    assertThat(payload.shellCommand)
+    assertThat(payload.launchSpec.command)
       .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "thread-1")
     assertThat(payload.threadTitle).isEqualTo("Parent title")
     assertThat(payload.subAgentId).isNull()
@@ -50,12 +51,12 @@ class AgentSessionChatOpenPayloadTest {
     val payload = resolveAgentSessionChatOpenPayload(
       thread = thread,
       subAgent = subAgent,
-      shellCommandOverride = null,
+      launchSpecOverride = null,
     )
 
     assertThat(payload.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "thread-1"))
     assertThat(payload.runtimeThreadId).isEqualTo("sub-1")
-    assertThat(payload.shellCommand)
+    assertThat(payload.launchSpec.command)
       .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "sub-1")
     assertThat(payload.threadTitle).isEqualTo("Sub-agent label")
     assertThat(payload.subAgentId).isEqualTo("sub-1")
@@ -75,14 +76,14 @@ class AgentSessionChatOpenPayloadTest {
     val payload = resolveAgentSessionChatOpenPayload(
       thread = thread,
       subAgent = subAgent,
-      shellCommandOverride = null,
+      launchSpecOverride = null,
     )
 
     assertThat(payload.threadTitle).isEqualTo("sub-1")
   }
 
   @Test
-  fun keepsShellCommandOverrideWhenProvided() {
+  fun keepsLaunchSpecOverrideWhenProvided() {
     val thread = AgentSessionThread(
       id = "thread-1",
       title = "Parent title",
@@ -95,9 +96,13 @@ class AgentSessionChatOpenPayloadTest {
     val payload = resolveAgentSessionChatOpenPayload(
       thread = thread,
       subAgent = subAgent,
-      shellCommandOverride = listOf("custom", "resume", "sub-1"),
+      launchSpecOverride = AgentSessionTerminalLaunchSpec(
+        command = listOf("custom", "resume", "sub-1"),
+        envVariables = mapOf("CUSTOM_ENV" to "1"),
+      ),
     )
 
-    assertThat(payload.shellCommand).containsExactly("custom", "resume", "sub-1")
+    assertThat(payload.launchSpec.command).containsExactly("custom", "resume", "sub-1")
+    assertThat(payload.launchSpec.envVariables).containsExactlyEntriesOf(mapOf("CUSTOM_ENV" to "1"))
   }
 }

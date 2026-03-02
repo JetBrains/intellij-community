@@ -167,10 +167,7 @@ internal interface AgentChatTerminalTabs {
 
 private object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
   override fun createTab(project: Project, file: AgentChatVirtualFile): AgentChatTerminalTab {
-    val launchSpec = resolveAgentChatTerminalLaunchSpec(
-      provider = file.provider,
-      command = file.consumeStartupShellCommand(),
-    )
+    val startupLaunchSpec = file.consumeStartupLaunchSpec()
     val terminalTab = TerminalToolWindowTabsManager.getInstance(project)
       .createTabBuilder()
       .shouldAddToToolWindow(false)
@@ -178,8 +175,8 @@ private object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
       .workingDirectory(file.projectPath)
       .processType(TerminalProcessType.NON_SHELL)
       .tabName(file.threadTitle)
-      .shellCommand(launchSpec.command)
-      .envVariables(launchSpec.envVariables)
+      .shellCommand(startupLaunchSpec.command)
+      .envVariables(startupLaunchSpec.envVariables)
       .createTab()
     return ToolWindowAgentChatTerminalTab(terminalTab)
   }
@@ -202,91 +199,6 @@ internal fun closeTerminalToolWindowTab(
   else {
     content.release()
   }
-}
-
-internal data class AgentChatTerminalLaunchSpec(
-  @JvmField val command: List<String>,
-  @JvmField val envVariables: Map<String, String>,
-)
-
-private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"
-private const val CLAUDE_DISABLE_AUTO_UPDATER_ENV: String = "DISABLE_AUTOUPDATER"
-private const val CLAUDE_DISABLE_AUTO_UPDATER_VALUE: String = "1"
-
-internal fun resolveAgentChatTerminalLaunchSpec(
-  provider: AgentSessionProvider?,
-  command: List<String>,
-): AgentChatTerminalLaunchSpec {
-  val commandWithDisabledCodexAutoUpdate = disableCodexAutoUpdateCheck(provider = provider, command = command)
-  val envVariables = if (isClaudeCommand(provider = provider, command = commandWithDisabledCodexAutoUpdate)) {
-    mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE)
-  }
-  else {
-    emptyMap()
-  }
-  return AgentChatTerminalLaunchSpec(
-    command = commandWithDisabledCodexAutoUpdate,
-    envVariables = envVariables,
-  )
-}
-
-private fun disableCodexAutoUpdateCheck(provider: AgentSessionProvider?, command: List<String>): List<String> {
-  if (!isCodexCommand(provider = provider, command = command) || command.isEmpty()) {
-    return command
-  }
-
-  val rewrittenCommand = ArrayList<String>(command.size + 2)
-  rewrittenCommand.add(command.first())
-  var index = 1
-  var replaced = false
-  while (index < command.size) {
-    val argument = command[index]
-    if (argument == "--") {
-      rewrittenCommand.addAll(command.subList(index, command.size))
-      break
-    }
-    if (argument == "-c" && index + 1 < command.size && isCodexAutoUpdateConfig(command[index + 1])) {
-      if (!replaced) {
-        rewrittenCommand.add("-c")
-        rewrittenCommand.add(CODEX_AUTO_UPDATE_CONFIG)
-        replaced = true
-      }
-      index += 2
-      continue
-    }
-    rewrittenCommand.add(argument)
-    index++
-  }
-  if (!replaced) {
-    rewrittenCommand.add(1, CODEX_AUTO_UPDATE_CONFIG)
-    rewrittenCommand.add(1, "-c")
-  }
-  return rewrittenCommand
-}
-
-private fun isCodexAutoUpdateConfig(argument: String): Boolean {
-  return argument.startsWith("check_for_update_on_startup=")
-}
-
-private fun isCodexCommand(provider: AgentSessionProvider?, command: List<String>): Boolean {
-  if (provider == AgentSessionProvider.CODEX) {
-    return true
-  }
-  val executable = command.firstOrNull() ?: return false
-  return hasExecutableName(executablePath = executable, executableName = "codex")
-}
-
-private fun isClaudeCommand(provider: AgentSessionProvider?, command: List<String>): Boolean {
-  if (provider == AgentSessionProvider.CLAUDE) {
-    return true
-  }
-  val executable = command.firstOrNull() ?: return false
-  return hasExecutableName(executablePath = executable, executableName = "claude")
-}
-
-private fun hasExecutableName(executablePath: String, executableName: String): Boolean {
-  val fileName = executablePath.substringAfterLast('/').substringAfterLast('\\')
-  return fileName.equals(executableName, ignoreCase = true) || fileName.equals("$executableName.exe", ignoreCase = true)
 }
 
 private class ToolWindowAgentChatTerminalTab(

@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.components.serviceAsync
 import javax.swing.Icon
 
@@ -45,29 +46,40 @@ internal class CodexAgentSessionProviderBridge(
 
   override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 
-  override fun buildResumeCommand(sessionId: String): List<String> =
-    listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG, "resume", sessionId)
+  override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(
+      command = listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG, "resume", sessionId),
+    )
+  }
 
-  override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> {
-    return if (mode == AgentSessionLaunchMode.YOLO) {
+  override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+    val command = if (mode == AgentSessionLaunchMode.YOLO) {
       listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG, "--full-auto")
     }
     else {
       listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG)
     }
+    return AgentSessionTerminalLaunchSpec(command = command)
   }
 
-  override fun buildNewEntryCommand(): List<String> = listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG)
+  override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(
+      command = listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG),
+    )
+  }
 
-  override fun buildCommandWithInitialPrompt(baseCommand: List<String>, prompt: String): List<String> {
-    return baseCommand + listOf("--", prompt)
+  override fun buildLaunchSpecWithInitialPrompt(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    prompt: String,
+  ): AgentSessionTerminalLaunchSpec {
+    return baseLaunchSpec.copy(command = baseLaunchSpec.command + listOf("--", prompt))
   }
 
   @Suppress("UNUSED_PARAMETER")
   override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
     return AgentSessionLaunchSpec(
       sessionId = null,
-      command = buildNewSessionCommand(mode),
+      launchSpec = buildNewSessionLaunchSpec(mode),
     )
   }
 

@@ -21,6 +21,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
@@ -31,7 +32,7 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeCommand
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeLaunchSpec
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
 import com.intellij.openapi.application.UI
@@ -916,14 +917,15 @@ internal class AgentSessionsLoadingCoordinator(
       for (thread in threads) {
         if (thread.provider != provider) continue
         if (allowedThreadIds != null && thread.id !in allowedThreadIds) continue
-        val command = runCatching {
-          buildAgentSessionResumeCommand(thread.provider, thread.id)
-        }.getOrDefault(listOf(provider.value, "resume", thread.id))
+        val launchSpec = runCatching {
+          buildAgentSessionResumeLaunchSpec(thread.provider, thread.id)
+        }.getOrDefault(AgentSessionTerminalLaunchSpec(command = listOf(provider.value, "resume", thread.id)))
         candidatesByPath.getOrPut(path) { ArrayList() }.add(
           AgentChatPendingTabRebindTarget(
             threadIdentity = buildAgentSessionIdentity(thread.provider, thread.id),
             threadId = thread.id,
-            shellCommand = command,
+            shellCommand = launchSpec.command,
+            shellEnvVariables = launchSpec.envVariables,
             threadTitle = thread.title,
             threadActivity = thread.activity,
             threadUpdatedAt = thread.updatedAt,
