@@ -1605,7 +1605,7 @@
           "border": "presentation-assistant-bg"
         },
         "PopupBackground": "presentation-assistant-bg",
-        "keymapLabel": "blue-50"
+        "keymapLabel": "text-muted"
       },
       "Pale": {
         "Popup": {
