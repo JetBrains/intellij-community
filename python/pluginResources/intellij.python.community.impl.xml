@@ -716,9 +716,6 @@
     <!-- uv -->
     <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
 
-    <!-- ux survey -->
-    <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PyCharmUxSurvey"/>
-
     <python.processOutput.common.processOutputIconMapping implementation="com.jetbrains.python.sdk.SdkIconMapping"/>
 
     <!-- Debugger Show value tooltip -->
