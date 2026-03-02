@@ -68,7 +68,7 @@ abstract class JvmLibrarySupportBase(
   protected open fun getSourceRuntimeHandler(
     objectStorage: ObjectStorage,
     time: ObjectReference,
-  ): SourceCallHandler = NopHandler
+  ): SourceCallHandler = jvmCompatibleLibrary?.getSourceRuntimeHandler(objectStorage, time) ?: NopHandler
 
   protected open fun getIntermediateRuntimeHandler(
     objectStorage: ObjectStorage,
