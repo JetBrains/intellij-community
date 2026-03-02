@@ -419,18 +419,22 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import 'lib.ExampleType'");
   }
 
+  // PY-87970
   public void testNestedClassAutoImport() {
     doMultiFileAutoImportTest("Import 'Outer.Inner from mod'");
   }
 
+  // PY-87971
   public void testNestedClassQualifiedAutoImport() {
     doMultiFileAutoImportTest("Import 'Outer.Inner from mod'");
   }
 
+  // PY-87972
   public void testQualifyWithAlreadyImportedModule() {
     doMultiFileAutoImportTest("Import 'src.MyClass from pkg'");
   }
 
+  // PY-87972
   public void testQualifyNestedClassWithAlreadyImportedModule() {
     doMultiFileAutoImportTest("Import 'src.Outer.Inner from pkg'");
   }
