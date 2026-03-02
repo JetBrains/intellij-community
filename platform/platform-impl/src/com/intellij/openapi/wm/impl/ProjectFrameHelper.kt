@@ -540,6 +540,8 @@ abstract class ProjectFrameHelper internal constructor(
     if (!WindowManagerEx.getInstanceEx().isFrameReused(this)) {
       frame.doDispose()
     }
+
+    glassPane.removeAll()
   }
 
   @Suppress("unused")
