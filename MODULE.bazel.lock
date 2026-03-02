@@ -214,7 +214,7 @@
   "moduleExtensions": {
     "//build:jbr-toolchains.bzl%jbr_toolchains": {
       "general": {
-        "bzlTransitiveDigest": "V5h5crWFyGDq/hV5Eb/FhgWiS0I1VvMvGg37Hp+/sa0=",
+        "bzlTransitiveDigest": "+L6Zko7h2RpzlZFLWeYfmI5Lic/WWX6Lsa0NBupoYrg=",
         "usagesDigest": "t3DMrqbThY2EiblJcntBvQ56ZYlJ8DZtkw69yIOFV2M=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
