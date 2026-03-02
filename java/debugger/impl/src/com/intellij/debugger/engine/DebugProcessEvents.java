@@ -49,7 +49,12 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.DapMode;
+import com.intellij.xdebugger.BreakpointErrorData;
+import com.intellij.xdebugger.XBreakpointBehaviorPolicy.BreakpointErrorAction;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XBreakpointBehaviorPolicy;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -766,13 +771,30 @@ public class DebugProcessEvents extends DebugProcessImpl {
         catch (final LocatableEventRequestor.EventProcessingException ex) {
           // stop timer here to prevent reporting dialog opened time
           endTimeNs = System.nanoTime();
-          String exceptionMessage = ex.getMessage();
+          String exceptionMessage = Objects.toString(ex.getMessage(), "");
           if (LOG.isDebugEnabled()) {
             LOG.debug(exceptionMessage);
           }
           String title = ex.getTitle();
+          XBreakpoint<?> xBreakpoint = requestor instanceof Breakpoint<?> breakpoint ? breakpoint.getXBreakpoint() : null;
+          XDebugSession xDebugSession = getSession().getXDebugSession();
+          BreakpointErrorData errorData = new BreakpointErrorData(title, exceptionMessage, ex.getCause());
+          BreakpointErrorAction policyAction = (xDebugSession == null || xBreakpoint == null)
+                                               ? BreakpointErrorAction.UNHANDLED
+                                               : XBreakpointBehaviorPolicy.doChooseBreakpointErrorAction(xDebugSession, xBreakpoint, errorData);
+
           final String displayName = DebuggerUtilsImpl.getRequestorStringForUser(requestor);
-          requestHit = DebuggerUtilsImpl.askAboutPauseOnException(getProject(), displayName, exceptionMessage, title);
+          if (policyAction != BreakpointErrorAction.UNHANDLED) {
+            requestHit = policyAction == BreakpointErrorAction.PAUSE;
+          }
+          else {
+            requestHit = DebuggerUtilsImpl.askAboutPauseOnException(getProject(), displayName, exceptionMessage, title);
+          }
+
+          if (xDebugSession != null && xBreakpoint != null) {
+            XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(xDebugSession.getProject());
+            debuggerManager.getBreakpointManager().fireBreakpointError(xBreakpoint, xDebugSession, errorData);
+          }
           resumePreferred = !requestHit;
         }
         catch (VMDisconnectedException e) {
