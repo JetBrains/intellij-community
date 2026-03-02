@@ -28,6 +28,7 @@ Current implementation status:
    - if `INVOCATION` phase is empty, first non-empty contributor result in `FALLBACK` phase wins.
 4. Invocation-specific default context policy:
    - editor invocation yields file/symbol/snippet context,
+   - test-runner invocation yields selected test context; it prefers failing selected tests when present, otherwise selected tests; includes concise assertion-message hints only (no stack traces or full output) and caps included entries to five,
    - VCS log invocation yields selected commit revision context as hash identifiers only; one selected revision hash is sufficient by default,
    - project view invocation yields selected file/directory path context,
    - editor and project-view context are not merged in one launch.
@@ -43,7 +44,7 @@ Current implementation status:
 11. Prompt launch routes through `sessions-core` prompt launcher bridge.
 12. Context payload uses a 12k soft cap: when exceeded, user explicitly chooses to send full context, auto-trim, or cancel.
 13. Context chips that preview filesystem paths render short paths: project-relative when under the current project root, otherwise user-home-relative (for example `~/...`) when under user home.
-14. For newly created chat tabs, initial prompt delivery prefers provider startup-command injection (CLI args) when the provider supports it and command-size guard allows it; otherwise fallback is sending the composed prompt exactly once after terminal initialization.
+14. For prompt launches that open a new chat tab (new-thread or existing-thread), initial prompt delivery prefers provider startup-command injection (CLI args) when the provider supports it and command-size guard allows it; otherwise fallback is sending the composed prompt exactly once after terminal initialization.
 15. UI includes target-mode switch (`NEW_TASK` / `EXISTING_TASK`) and existing-thread picker; `EXISTING_TASK` submit requires an explicit thread selection.
 16. Existing-thread picker must consume one shared source of thread data (app-level `AgentSessionsService.state`) and must not call provider session sources directly from prompt UI.
 17. Existing-thread picker refresh policy:

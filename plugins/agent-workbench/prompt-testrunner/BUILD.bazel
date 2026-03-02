@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.agent.workbench.prompt.testrunner` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "agent-workbench-prompt-testrunner",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "agent-workbench-prompt-testrunner_test_lib",
+  module_name = "intellij.agent.workbench.prompt.testrunner",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":agent-workbench-prompt-testrunner"]
+)
+### auto-generated section `build intellij.agent.workbench.prompt.testrunner` end
