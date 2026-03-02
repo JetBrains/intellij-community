@@ -138,32 +138,41 @@ class CspBuilder(val context: TypeEvalContext) {
   fun getSolution(keepUnconstrained: Boolean): Solution {
     val instantiations = if (cp.failed) cp.instantiations else cp.solution
     val typeVars2TypeRefs: MutableMap<PyTypeVarType, Ref<PyType?>> = LinkedHashMap()
-    for (entry in instantiations) {
-      val instantiatedType = entry.value
-      val instantiatedTypeOrTypeVar: PyType?
-      if (instantiatedType is PyUnconstrainedTypeVariable) {
-        val originalTypeVar = instantiatedType.typeVariable
-        instantiatedTypeOrTypeVar = if (keepUnconstrained) originalTypeVar else originalTypeVar.defaultType?.get()
-      }
-      else if (instantiatedType is PyTypeVarType) {
-        // if the solution is another PyTypeVarType, check the declared default types
-        if (instantiatedType.defaultType?.get() != null) {
-          instantiatedTypeOrTypeVar = instantiatedType.defaultType?.get()
-        }
-        else if (entry.key.typeVariable.defaultType?.get() != null) {
-          instantiatedTypeOrTypeVar = entry.key.typeVariable.defaultType?.get()
-        }
-        else {
-          instantiatedTypeOrTypeVar = instantiatedType
-        }
-      }
-      else {
-        instantiatedTypeOrTypeVar = instantiatedType
-      }
-      typeVars2TypeRefs[entry.key.typeVariable] = Ref.create(instantiatedTypeOrTypeVar)
+    for ((inferenceVariable, instantiatedType) in instantiations) {
+      val instantiatedTypeOrTypeVar = getPostComputedSolution(instantiatedType, inferenceVariable, keepUnconstrained)
+      typeVars2TypeRefs[inferenceVariable.typeVariable] = Ref.create(instantiatedTypeOrTypeVar)
     }
     val complete = instantiations.keys.containsAll(cp.inferenceVars.values())
     return Solution(cp.failed, complete, typeVars2TypeRefs)
+  }
+
+  private fun getPostComputedSolution(
+    instantiatedType: PyType?,
+    inferenceVariable: InferenceVariable,
+    keepUnconstrained: Boolean,
+  ): PyType? {
+    when (instantiatedType) {
+      is PyUnconstrainedTypeVariable -> {
+        val originalTypeVar = instantiatedType.typeVariable
+        return when {
+          keepUnconstrained -> originalTypeVar
+          originalTypeVar.defaultType != null -> originalTypeVar.defaultType?.get()
+          originalTypeVar.bound != null -> originalTypeVar.bound
+          else -> null
+        }
+      }
+      is PyTypeVarType -> {
+        // if the solution is another PyTypeVarType, check the declared default types
+        return when {
+          instantiatedType.defaultType?.get() != null -> instantiatedType.defaultType?.get()
+          inferenceVariable.typeVariable.defaultType?.get() != null -> inferenceVariable.typeVariable.defaultType?.get()
+          else -> instantiatedType
+        }
+      }
+      else -> {
+        return instantiatedType
+      }
+    }
   }
 }
 
@@ -1371,6 +1380,12 @@ private object TypeBoundResolver {
       return PyUnionType.union(lowerBoundsWidened)
     }
     else if (lowerBounds.isEmpty() && upperBounds.isNotEmpty()) {
+      if (upperBounds.size == 1 && upperBounds[0] == infVar.typeVariable.bound) {
+        // special case: the type variable is constrained only by its bound (i.e., `[T : int]`).
+        // Therefore, we treat this type variable as unconstrained and use its bound when necessary based on `#keepUnconstrained`.
+        return PyUnconstrainedTypeVariable(infVar.typeVariable)
+      }
+
       // It is debatable whether we should just return PyIntersectionType.intersection(*upperBounds)
       // Note however that intersection types are not part of Python (as of 2026).
       // Hence, the following logic makes it mandatory that the user declares a common subtype at some point.
