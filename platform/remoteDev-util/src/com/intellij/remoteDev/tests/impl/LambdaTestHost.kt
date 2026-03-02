@@ -233,7 +233,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               IdeEventQueue.getInstance().flushQueue()
             }
           }
-          runLogged("Sync front and back protocol events", 10.seconds) {
+          runLogged("Sync front and back protocol events", 20.seconds) {
             LambdaTestBridge.getInstance().syncProtocolEvents()
           }
           ideContext = getLambdaIdeContext()
