@@ -10,7 +10,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.util.containers.DisposableWrapperList
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
@@ -50,11 +52,17 @@ internal class TerminalSessionController(
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
 
   fun handleEvents(session: TerminalSession) {
-    coroutineScope.launch {
-      val outputFlow = session.getOutputFlow()
-      withContext(edtContext) {
-        outputFlow.collect { events ->
-          doHandleEvents(events)
+    coroutineScope.launch(Dispatchers.IO + CoroutineName("Output flow collection")) {
+      // Get output flow again even if it was terminated.
+      // It can happen in case of RemDev if there were any connection problems and backend decided to terminate the flow.
+      while (!session.isClosed) {
+        // Wrap the flow collection into `durable` call to retry in case of connection issues.
+        durable {
+          session.getOutputFlow().collect { events ->
+            withContext(edtContext) {
+              doHandleEvents(events)
+            }
+          }
         }
       }
     }
