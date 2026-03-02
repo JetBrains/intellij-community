@@ -5,6 +5,9 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProcessEx
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionService
+import com.intellij.codeInsight.completion.CompletionSorter
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.Key
@@ -46,9 +49,13 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
       position = 0
       name = ""
     }
-    addCompletions(parameters, result, position, name, queryExecutor, psiContext)
+    addCompletions(parameters,
+                   result.withRelevanceSorter(createSorter(parameters, result.prefixMatcher)),
+                   position, name, queryExecutor, psiContext)
   }
 
+  protected open fun createSorter(parameters: CompletionParameters, prefixMatcher: PrefixMatcher): CompletionSorter =
+    CompletionService.getCompletionService().defaultSorter(parameters, prefixMatcher)
 
   protected abstract fun getContext(position: PsiElement): T?
 
