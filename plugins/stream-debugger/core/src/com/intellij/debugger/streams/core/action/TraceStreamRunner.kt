@@ -177,7 +177,7 @@ class TraceStreamRunner(val cs: CoroutineScope) {
           }
           is StreamTracer.Result.EvaluationFailed -> {
             showError(result.message)
-            throw TraceEvaluationException(result.message, result.traceExpression)
+            throw TraceEvaluationException(result.message, result.traceExpression, result.cause)
           }
           is StreamTracer.Result.CompilationFailed -> {
             showError(result.message)

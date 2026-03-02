@@ -28,7 +28,7 @@ abstract class AbstractStreamTracer(
         catch (t: Throwable) {
           return StreamTracer.Result.EvaluationFailed(streamTraceExpression,
                                                       StreamDebuggerBundle.message("stream.debugger.evaluation.failed.cannot.interpret.result",
-                                                                                   t.message!!))
+                                                                                   t.message!!), t)
         }
         return StreamTracer.Result.Evaluated(interpretedResult, result.evaluationContext)
       }
