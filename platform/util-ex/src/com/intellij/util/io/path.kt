@@ -8,6 +8,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.nio.channels.Channels
 import java.nio.charset.Charset
+import java.nio.file.CopyOption
 import java.nio.file.DirectoryStream
 import java.nio.file.FileSystemException
 import java.nio.file.Files
@@ -156,11 +157,22 @@ fun Path.copy(target: Path): Path {
   return Files.copy(this, target, StandardCopyOption.REPLACE_EXISTING)
 }
 
-fun Path.copyRecursively(target: Path) {
+/**
+ * Recursively copies this directory and its contents to the target location.
+ *
+ * @param target the destination path
+ * @param overwrite if `true`, existing files at the destination will be replaced;
+ *
+ * @throws java.nio.file.FileAlreadyExistsException if [overwrite] is `false` and a target file already exists
+ * @throws IOException if an I/O error occurs during copying
+ */
+@JvmOverloads
+fun Path.copyRecursively(target: Path, overwrite: Boolean = false) {
   target.parent?.createDirectories()
+  val copyOptions: Array<CopyOption> = if (overwrite) arrayOf(StandardCopyOption.REPLACE_EXISTING) else emptyArray()
   Files.walk(this).use { stream ->
     stream.forEach { file ->
-      Files.copy(file, target.resolve(this.relativize(file)))
+      Files.copy(file, target.resolve(this.relativize(file)), *copyOptions)
     }
   }
 }
