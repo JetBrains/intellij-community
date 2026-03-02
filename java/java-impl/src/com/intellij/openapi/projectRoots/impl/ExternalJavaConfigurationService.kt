@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.eel.provider.getEelMachine
@@ -65,28 +66,52 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
     scope.launch {
       val releaseData: T = getReleaseData(configProvider) ?: return@launch
       val configPath = configProvider.getConfigurationFilePath(project)
+      resolveAndSetStatus(releaseData, configPath, configProvider, configureJdk)
+    }
+  }
 
-      when (val candidate = findCandidate(releaseData, configProvider)) {
-        is JdkCandidate.Jdk -> {
-          if (candidate.project) {
-            setStatus(configPath, JavaConfigurationStatus.AlreadyConfigured)
-          }
-          else {
-            setStatus(configPath, JavaConfigurationStatus.Found)
-            if (configureJdk) configure(candidate.jdk, configPath, releaseData)
-          }
+  /**
+   * Variant of [updateFromConfig] that uses an already-resolved [VirtualFile] to read the configuration.
+   * This makes it possible to use the configuration file if it is not at the expected location.
+   */
+  public fun <T> updateFromConfig(configProvider: ExternalJavaConfigurationProvider<T>, virtualFile: VirtualFile, configureJdk: Boolean = false) {
+    scope.launch {
+      val text = readAction {
+        FileDocumentManager.getInstance().getDocument(virtualFile)?.text
+      } ?: return@launch
+      val releaseData: T = configProvider.getReleaseData(text) ?: return@launch
+      val configPath = virtualFile.fileSystem.getNioPath(virtualFile)
+                       ?: configProvider.getConfigurationFilePath(project)
+      resolveAndSetStatus(releaseData, configPath, configProvider, configureJdk)
+    }
+  }
+
+  private fun <T> resolveAndSetStatus(
+    releaseData: T,
+    configPath: Path,
+    configProvider: ExternalJavaConfigurationProvider<T>,
+    configureJdk: Boolean,
+  ) {
+    when (val candidate = findCandidate(releaseData, configProvider)) {
+      is JdkCandidate.Jdk -> {
+        if (candidate.project) {
+          setStatus(configPath, JavaConfigurationStatus.AlreadyConfigured)
         }
-        is JdkCandidate.Path -> {
+        else {
           setStatus(configPath, JavaConfigurationStatus.Found)
-          if (configureJdk) {
-            service<AddJdkService>().createJdkFromPath(candidate.path) {
-              configure(it, configPath, releaseData)
-            }
+          if (configureJdk) configure(candidate.jdk, configPath, releaseData)
+        }
+      }
+      is JdkCandidate.Path -> {
+        setStatus(configPath, JavaConfigurationStatus.Found)
+        if (configureJdk) {
+          service<AddJdkService>().createJdkFromPath(candidate.path) {
+            configure(it, configPath, releaseData)
           }
         }
-        else -> {
-          setStatus(configPath, JavaConfigurationStatus.Missing(releaseData))
-        }
+      }
+      else -> {
+        setStatus(configPath, JavaConfigurationStatus.Missing(releaseData))
       }
     }
   }
