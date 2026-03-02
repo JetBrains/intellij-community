@@ -37,7 +37,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
   private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
   private val projectSettings get() = GitVcsSettings.getInstance(project)
 
-  private val pathSelector = VcsExecutablePathSelector(GitDisplayName.NAME, disposable, GitExecutableHandler())
+  private val pathSelector = VcsExecutablePathSelector(project, GitDisplayName.NAME, disposable, GitExecutableHandler())
 
   @Volatile
   private var versionCheckRequested = false
