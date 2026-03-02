@@ -39,6 +39,8 @@ jvm_library(
     "@lib//:kotlinc-parcelize-compiler-plugin",
     "@lib//:kotlinc-lombok-compiler-plugin",
     "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
+    "@lib//:kotlinc-kotlin-objcexport-header-generator",
+    "@lib//:kotlinc-kotlin-swift-export",
   ]
 )
 

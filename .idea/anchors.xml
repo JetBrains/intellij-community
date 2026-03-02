@@ -46,6 +46,8 @@
         <entry key="kotlinc.kotlin-build-tools-api" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-build-tools-cri-impl" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-build-tools-impl" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-objcexport-header-generator" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-swift-export" value="kotlin.util.compiler-classpath" />
       </map>
     </option>
   </component>

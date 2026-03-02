@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-swift-export" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-swift-export-for-ide:2.4.0-dev-5206">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.4.0-dev-5206/kotlin-swift-export-for-ide-2.4.0-dev-5206.jar">
+          <sha256sum>510210945975ca6685ae99c1dfc596d7e9728c8772de666424d870c42a66de6a</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.4.0-dev-5206/kotlin-swift-export-for-ide-2.4.0-dev-5206.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.4.0-dev-5206/kotlin-swift-export-for-ide-2.4.0-dev-5206-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

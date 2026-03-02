@@ -9476,6 +9476,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.jetbrains.kotlin/kotlin-objcexport-header-generator-for-ide-2.4.0-dev-5206.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-objcexport-header-generator-for-ide-2_4_0-dev-5206_http//file",
+  out = "org.jetbrains.kotlin/kotlin-objcexport-header-generator-for-ide-2.4.0-dev-5206.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinc-kotlin-objcexport-header-generator",
+  jar = "@org_jetbrains_kotlin-kotlin-objcexport-header-generator-for-ide-2_4_0-dev-5206_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-objcexport-header-generator-for-ide-2_4_0-dev-5206-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.0-dev-5206.jar_copy",
   src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_4_0-dev-5206_http//file",
   out = "org.jetbrains.kotlin/kotlin-script-runtime-2.4.0-dev-5206.jar",
@@ -9554,6 +9569,21 @@ jvm_import(
   name = "kotlinc-kotlin-scripting-jvm",
   jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_4_0-dev-5206_http//file",
   source_jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_4_0-dev-5206-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-swift-export-for-ide-2.4.0-dev-5206.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-swift-export-for-ide-2_4_0-dev-5206_http//file",
+  out = "org.jetbrains.kotlin/kotlin-swift-export-for-ide-2.4.0-dev-5206.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinc-kotlin-swift-export",
+  jar = "@org_jetbrains_kotlin-kotlin-swift-export-for-ide-2_4_0-dev-5206_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-swift-export-for-ide-2_4_0-dev-5206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -80,10 +80,8 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-dataframe-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", kotlincCoordinates)
 
-        if (!isCommunity) {
-            kotlincForIdeWithStandardNaming("kotlinc.kotlin-objcexport-header-generator", kotlincCoordinates)
-            kotlincForIdeWithStandardNaming("kotlinc.kotlin-swift-export", kotlincCoordinates)
-        }
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-objcexport-header-generator", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-swift-export", kotlincCoordinates)
 
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-dependencies", kotlincCoordinates)
