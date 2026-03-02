@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.execution.configurations.ParametersList
@@ -41,7 +41,7 @@ class JUnitDevkitPatcherTest : BareTestFixtureTestCase() {
     val jdk = IdeaTestUtil.getMockJdk(JavaVersion.parse("25.0.1"))
     val parametersList = ParametersList()
 
-    JUnitDevKitPatcher.appendAddOpensWhenNeeded(projectRule.project, jdk, parametersList)
+    DevKitPatcherHelper.appendAddOpensWhenNeeded(projectRule.project, jdk, parametersList)
 
     val awtPackage = when (OS.CURRENT) {
       OS.Windows -> "sun.awt.windows"
