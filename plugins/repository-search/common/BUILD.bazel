@@ -49,6 +49,7 @@ jvm_library(
     "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
     "//libraries/mvstore",
     "//platform/eel",
+    "//platform/external-system-api:externalSystem",
   ],
   exports = ["@lib//:package-search-api-client"]
 )
@@ -178,6 +179,8 @@ jvm_library(
     "//libraries/mvstore:mvstore_test_lib",
     "//platform/eel",
     "//platform/eel:eel_test_lib",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-api:externalSystem_test_lib",
   ],
   exports = ["@lib//:package-search-api-client"],
   runtime_deps = [

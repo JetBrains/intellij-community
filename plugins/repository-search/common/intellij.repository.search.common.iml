@@ -57,5 +57,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.document.store.mvstore" />
     <orderEntry type="module" module-name="intellij.libraries.mvstore" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
   </component>
 </module>

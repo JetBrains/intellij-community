@@ -5,6 +5,8 @@ import com.intellij.gradle.completion.GradleDependencyCompletionContributor
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
@@ -18,6 +20,13 @@ import com.intellij.testFramework.replaceService
 import com.intellij.util.application
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionContext
+import org.jetbrains.idea.completion.api.DependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionResult
+import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -600,4 +609,9 @@ class GradleDependencyCompletionContributorTest {
       disposable
     )
   }
+}
+
+private class GradleDependencyCompletionContext(override val eelDescriptor: EelDescriptor) : DependencyCompletionContext {
+  override val buildSystemId: ProjectSystemId
+    get() = GradleConstants.SYSTEM_ID
 }

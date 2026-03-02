@@ -5,6 +5,7 @@
 package com.intellij.repository.search.completion.api
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.platform.eel.EelDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -23,7 +24,7 @@ interface DependencyCompletionService {
 }
 
 interface DependencyCompletionContributor {
-  fun isApplicable(context: DependencyCompletionContext): Boolean
+  val buildSystemId: ProjectSystemId
   suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult>
   suspend fun getGroups(request: DependencyGroupCompletionRequest): List<String>
   suspend fun getArtifacts(request: DependencyArtifactCompletionRequest) : List<String>
@@ -32,15 +33,13 @@ interface DependencyCompletionContributor {
 
 interface DependencyCompletionContext {
   val eelDescriptor: EelDescriptor
+  val buildSystemId: ProjectSystemId
 }
 
-class GradleDependencyCompletionContext(override val eelDescriptor: EelDescriptor) : DependencyCompletionContext
-
-class MavenDependencyCompletionContext(override val eelDescriptor: EelDescriptor) : DependencyCompletionContext
-
-class MavenPluginDependencyCompletionContext(override val eelDescriptor: EelDescriptor) : DependencyCompletionContext
-
-class MavenExtensionDependencyCompletionContext(override val eelDescriptor: EelDescriptor) : DependencyCompletionContext
+class DependencyCompletionContextImpl(
+  override val eelDescriptor: EelDescriptor,
+  override val buildSystemId: ProjectSystemId,
+) : DependencyCompletionContext
 
 interface BaseDependencyCompletionRequest {
   val context: DependencyCompletionContext

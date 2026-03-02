@@ -19,7 +19,7 @@ import kotlin.coroutines.cancellation.CancellationException
 internal class DependencyCompletionServiceImpl : DependencyCompletionService {
   private val allContributors = DependencyCompletionService.EP_NAME.extensionList
 
-  private fun contributors(request: BaseDependencyCompletionRequest) = allContributors.filter { it.isApplicable(request.context) }
+  private fun contributors(request: BaseDependencyCompletionRequest) = allContributors.filter { it.buildSystemId == request.context.buildSystemId }
 
   override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
     parallelStream(contributors(request)) { it.search(request) }

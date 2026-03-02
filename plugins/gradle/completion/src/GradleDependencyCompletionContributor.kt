@@ -11,14 +11,21 @@ import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.repository.search.completion.api.GradleDependencyCompletionContext
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionContributor
+import org.jetbrains.idea.completion.api.DependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionResult
+import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @ApiStatus.Internal
 class GradleDependencyCompletionContributor : DependencyCompletionContributor {
 
-  override fun isApplicable(context: DependencyCompletionContext): Boolean {
-    return context is GradleDependencyCompletionContext
-  }
+  override val buildSystemId: ProjectSystemId
+    get() = GradleConstants.SYSTEM_ID
 
   override suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult> {
     val searchString = request.searchString.trim()

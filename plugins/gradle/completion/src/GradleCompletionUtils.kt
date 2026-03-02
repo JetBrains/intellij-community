@@ -5,8 +5,9 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.repository.search.completion.api.DependencyCompletionContext
-import com.intellij.repository.search.completion.api.GradleDependencyCompletionContext
+import com.intellij.repository.search.completion.api.DependencyCompletionContextImpl
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @ApiStatus.Internal
 fun removeDummySuffix(value: String?): String {
@@ -24,4 +25,4 @@ fun removeDummySuffix(value: String?): String {
 
 @ApiStatus.Internal
 fun CompletionParameters.getCompletionContext(): DependencyCompletionContext =
-  GradleDependencyCompletionContext(originalFile.virtualFile.toNioPath().getEelDescriptor())
+  DependencyCompletionContextImpl(originalFile.virtualFile.toNioPath().getEelDescriptor(), GradleConstants.SYSTEM_ID)
