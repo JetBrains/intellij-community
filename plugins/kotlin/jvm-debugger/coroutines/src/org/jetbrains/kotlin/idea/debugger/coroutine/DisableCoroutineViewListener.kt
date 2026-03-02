@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.debugger.coroutine
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.impl.DebuggerManagerListener
 import com.intellij.debugger.impl.DebuggerSession
-import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.rpc.models.DebuggerSplitTabUtils
 
 private class DisableCoroutineViewListener : DebuggerManagerListener {
     override fun sessionAttached(session: DebuggerSession) {
@@ -29,13 +29,11 @@ private class DisableCoroutineViewListener : DebuggerManagerListener {
 internal fun showOrHideCoroutinePanel(debugProcess: DebugProcessImpl, needShow: Boolean) {
     val xDebugSession = debugProcess.session.xDebugSession as? XDebugSessionImpl ?: return
     xDebugSession.runWhenUiReady { ui ->
-        if (ui !is RunnerLayoutUiImpl) return@runWhenUiReady
-        val contentUi = ui.contentUI
         val key = CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT
         if (needShow) {
-            contentUi.findOrRestoreContentIfNeeded(key)
+            DebuggerSplitTabUtils.restoreContent(ui, key)
         } else {
-            contentUi.hideContent(key)
+            DebuggerSplitTabUtils.hideContent(ui, key)
         }
     }
 }

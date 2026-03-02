@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.ui.RunnerLayoutUi
+import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.ide.rpc.getComponent
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.application.EDT
@@ -65,6 +66,20 @@ private class FrontendXDebugTabLayouter(
             val content = contents[e.contentUniqueId] ?: return@collect
             contentToUniqueId.remove(content)
             ui.removeContent(content, true)
+          }
+          is XDebugTabLayouterEvent.TabHidden -> {
+            val content = contents[e.contentUniqueId] ?: return@collect
+            val contentId = content.getUserData(RunnerLayoutUiImpl.CONTENT_TYPE) ?: return@collect
+            if (ui is RunnerLayoutUiImpl) {
+              ui.contentUI.hideContent(contentId)
+            }
+          }
+          is XDebugTabLayouterEvent.TabRestored -> {
+            val content = contents[e.contentUniqueId] ?: return@collect
+            val contentId = content.getUserData(RunnerLayoutUiImpl.CONTENT_TYPE) ?: return@collect
+            if (ui is RunnerLayoutUiImpl) {
+              ui.contentUI.findOrRestoreContentIfNeeded(contentId)
+            }
           }
         }
       }
