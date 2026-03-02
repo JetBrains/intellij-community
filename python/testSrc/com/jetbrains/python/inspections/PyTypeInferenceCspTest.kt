@@ -386,7 +386,7 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
 
   fun `test Handle inferred intersections 2`() {
     doTestByText("""
-      from typing import Callable, TypeVar, assert_type, Never
+      from typing import Callable, TypeVar, assert_type, Never, Any
   
       class A: ...          
       class B: ...
@@ -437,7 +437,6 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
       """)
   }
 
-
   @TestFor(issues = ["PY-86098"])
   fun `test PY-86098`() {
     doTestByText("""
@@ -446,6 +445,72 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
       
       a1 = A(1)
       assert_type(a1, A[int])
+      """)
+  }
+
+  @TestFor(issues = ["PY-87890"])
+  fun `test Nested csp with type parameter bound`() {
+    doTestByText("""
+      from typing import Any, Callable, assert_type
+      
+      def f[F: Callable[..., Any]]() -> Callable[[F], F]:
+          return lambda x: x
+      
+      assert_type(f()(lambda x: 1)(1), int)
+      """)
+  }
+
+  @TestFor(issues = ["PY-87890"])
+  fun `test Nested csp with type parameter default`() {
+    doTestByText("""
+      from typing import Callable, assert_type, Optional
+
+      def f[T = str]() -> Callable[[Optional[T]], T]: ...
+      
+      assert_type(f()(2), int)
+      assert_type(f()(), str)
+      """)
+  }
+
+  fun `test Nested csp with type parameter default Any`() {
+    doTestByText("""
+      from typing import Callable, assert_type, Any, Optional
+      
+      def f[T = Any]() -> Callable[[Optional[T]], T]: ...
+      
+      assert_type(f()(2), int)
+      assert_type(f()(), Any)
+      """)
+  }
+
+  fun `test Nested csp with type parameter constraint`() {
+    fixme("Support for combined CSPs necessary", AssertionError::class.java) {
+      doTestByText("""
+        from typing import Callable, assert_type, Any
+        
+        def f[T : (str, int)]() -> Callable[[T], T]: ...
+        
+        assert_type(f()(2), int)
+        assert_type(f()("s"), str)
+        """)
+    }
+  }
+
+  fun `test Keep unconstrained type parameters for type return`() {
+    doTestByText("""
+      from typing import Generic, TypeVar
+      
+      T = TypeVar("T", infer_variance=False)
+      
+      class Box(Generic[T]):
+          ...
+      
+      def box_class() -> type[Box[T]]:
+          return Box
+      
+      C = box_class()
+      box_int : Box[int] = C()
+      assert_type(box_int, Box[int])
       """)
   }
 }

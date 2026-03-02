@@ -175,17 +175,17 @@ object PyTypeInferenceCspFactory {
       throw NotSupportedException()
     }
 
-    for (paramType in generics.typeVars) {
-      if (builder.hasInferenceVariable(paramType)) continue
-      builder.addInferenceVariable(paramType)
+    for (typeParam in generics.typeVars) {
+      if (builder.hasInferenceVariable(typeParam)) continue
+      builder.addInferenceVariable(typeParam)
 
       // bounds
-      if (paramType.getBound() != null) {
-        val typeVarBound_selfBounded = substituteSelfTypes(paramType.getBound(), receiverType, context)
+      if (typeParam.getBound() != null) {
+        val typeVarBound_selfBounded = substituteSelfTypes(typeParam.getBound(), receiverType, context)
         // semantics: TV <: Bound
-        builder.addConstraint(paramType, typeVarBound_selfBounded, Variance.COVARIANT, ConstraintPriority.HIGH)
+        builder.addConstraint(typeParam, typeVarBound_selfBounded, Variance.COVARIANT, ConstraintPriority.HIGH)
       }
-      else if (paramType.getConstraints().isNotEmpty()) {
+      else if (typeParam.getConstraints().isNotEmpty()) {
         // Note: The Python type variable constraint(s) cannot be fully modeled without a specific CSP constraint that would model a strict logical OR.
         // A logical OR does unfortunately come with a performance impact since it makes backtracking during the solving process inevitable.
         // As a solution, Python type variable constraints will be modeled using an approximation that ensures that the type variable is both
@@ -194,13 +194,13 @@ object PyTypeInferenceCspFactory {
         // Only at the very end, during instantiation, an actual set of remaining tv-constraints is chosen.
         // Note that both of these bounds are necessary to ensure that the TV will be instantiated as exactly one of the given tv-constraints
         // and not as a subtype of one of the given tv-constraints.
-        val paramTypeConstraints = paramType.getConstraints().map { substituteSelfTypes(it, receiverType, context) }
+        val paramTypeConstraints = typeParam.getConstraints().map { substituteSelfTypes(it, receiverType, context) }
         val intersectionOfConstraints = PyIntersectionType.intersection(paramTypeConstraints)
         val unionOfConstraints = PyUnionType.union(paramTypeConstraints)
         // semantics: TV approximates CV_1 ⊕ CV_2 ⊕ ... ⊕ CV_n by
         // CV_1 & CV_2 & ... & CV_n  <:  TV  <:  CV_1 | CV_2 | ... | CV_n
-        builder.addConstraint(paramType, intersectionOfConstraints, Variance.CONTRAVARIANT, ConstraintPriority.HIGH)
-        builder.addConstraint(paramType, unionOfConstraints, Variance.COVARIANT, ConstraintPriority.HIGH)
+        builder.addConstraint(typeParam, intersectionOfConstraints, Variance.CONTRAVARIANT, ConstraintPriority.HIGH)
+        builder.addConstraint(typeParam, unionOfConstraints, Variance.COVARIANT, ConstraintPriority.HIGH)
       }
     }
   }
