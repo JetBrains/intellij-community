@@ -294,7 +294,9 @@ object IconUtil {
   }
 
   @JvmStatic
-  fun toSize(icon: Icon?, width: Int, height: Int): Icon = IconSizeWrapper(icon, width, height)
+  fun toSize(icon: Icon?, width: Int, height: Int): Icon {
+    return IconSizeWrapper(icon ?: EmptyIcon.create(width, height), width, height)
+  }
 
   @JvmStatic
   fun paintSelectionAwareIcon(icon: Icon, component: JComponent?, g: Graphics, x: Int, y: Int, selected: Boolean) {
@@ -694,7 +696,7 @@ private fun computeFileTypeIcon(vFile: VirtualFile, onlyFastChecks: Boolean): Ic
   }
 }
 
-private class IconSizeWrapper(private val icon: Icon?, private val width: Int, private val height: Int) : Icon {
+private class IconSizeWrapper(private val icon: Icon, private val width: Int, private val height: Int) : Icon, RetrievableIcon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     paintIcon(icon = icon, c = c, g = g, x = x, y = y)
   }
@@ -710,6 +712,14 @@ private class IconSizeWrapper(private val icon: Icon?, private val width: Int, p
   override fun getIconWidth(): Int = width
 
   override fun getIconHeight(): Int = height
+
+  override fun replaceBy(replacer: IconReplacer): Icon {
+    return IconSizeWrapper(replacer.replaceIcon(icon), width, height)
+  }
+
+  override fun retrieveIcon(): Icon = icon
+
+  override fun toString() = "IconUtil.toSize for $icon"
 }
 
 @Internal

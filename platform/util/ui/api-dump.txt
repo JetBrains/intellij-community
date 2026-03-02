@@ -3549,6 +3549,7 @@ f:com.intellij.util.ui.AvatarUtils
 com.intellij.util.ui.CSSFontResolver
 - a:getFont(java.awt.Font,javax.swing.text.AttributeSet):java.awt.Font
 f:com.intellij.util.ui.CenteredIcon
+- com.intellij.ui.RetrievableIcon
 - javax.swing.Icon
 - <init>(javax.swing.Icon):V
 - <init>(javax.swing.Icon,I,I):V
@@ -3556,6 +3557,8 @@ f:com.intellij.util.ui.CenteredIcon
 - getIconHeight():I
 - getIconWidth():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
+- retrieveIcon():javax.swing.Icon
 f:com.intellij.util.ui.Centerizer
 - javax.swing.JPanel
 - <init>(javax.swing.JComponent):V
@@ -3596,6 +3599,7 @@ f:com.intellij.util.ui.ColorPalette$Companion
 - f:select(java.lang.Object[],java.lang.String):java.lang.Object
 - bs:select$default(com.intellij.util.ui.ColorPalette$Companion,java.lang.Object[],java.lang.String,I,java.lang.Object):java.lang.Object
 a:com.intellij.util.ui.ColorizeProxyIcon
+- com.intellij.ui.RetrievableIcon
 - javax.swing.Icon
 - p:<init>(javax.swing.Icon):V
 - getBaseIcon():javax.swing.Icon
@@ -3607,6 +3611,8 @@ f:com.intellij.util.ui.ColorizeProxyIcon$Simple
 - com.intellij.util.ui.ColorizeProxyIcon
 - <init>(javax.swing.Icon,java.awt.Color):V
 - getColor():java.awt.Color
+- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
+- retrieveIcon():javax.swing.Icon
 c:com.intellij.util.ui.ColorsIcon
 - com.intellij.util.ui.ColorIcon
 - <init>(I,java.awt.Color[]):V
@@ -3881,12 +3887,15 @@ f:com.intellij.util.ui.ImageUtil
 - s:toBufferedImage(java.awt.Image,Z):java.awt.image.BufferedImage
 - s:toBufferedImage(java.awt.Image,Z,Z):java.awt.image.BufferedImage
 f:com.intellij.util.ui.IndentedIcon
+- com.intellij.ui.RetrievableIcon
 - javax.swing.Icon
 - <init>(javax.swing.Icon,I):V
 - <init>(javax.swing.Icon,java.awt.Insets):V
 - getIconHeight():I
 - getIconWidth():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
+- retrieveIcon():javax.swing.Icon
 com.intellij.util.ui.ItemRemovable
 - a:removeRow(I):V
 a:com.intellij.util.ui.JBCachingScalableIcon
@@ -5565,11 +5574,14 @@ e:com.intellij.util.ui.UnixDesktopEnv
 - s:valueOf(java.lang.String):com.intellij.util.ui.UnixDesktopEnv
 - s:values():com.intellij.util.ui.UnixDesktopEnv[]
 f:com.intellij.util.ui.WatermarkIcon
+- com.intellij.ui.RetrievableIcon
 - javax.swing.Icon
 - <init>(javax.swing.Icon,F):V
 - getIconHeight():I
 - getIconWidth():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
+- retrieveIcon():javax.swing.Icon
 a:com.intellij.util.ui.WavePainter
 - p:<init>():V
 - s:forColor(java.awt.Color):com.intellij.util.ui.WavePainter
