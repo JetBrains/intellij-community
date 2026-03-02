@@ -21,7 +21,9 @@ import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.MarkupModelImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
@@ -46,6 +48,7 @@ import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -366,28 +369,54 @@ public final class TestDaemonCodeAnalyzerImpl {
     waitForUpdateFileStatusBackgroundQueueInTests();
     Collection<? extends DaemonProgressIndicator> progresses = waitForDaemonToStart(project, document, 60_000);
     assert myDaemonCodeAnalyzer.isUpdateByTimerEnabled() : "codeAnalyzer.isUpdateByTimerEnabled()=false so waitForDaemonToFinish() will never finish";
-    do {
-      if (System.currentTimeMillis() > deadline) {
-        String dump = ThreadDumper.dumpThreadsToString();
-        throw new AssertionError("Too long waiting for daemon to finish (" + (System.currentTimeMillis() - start) + "ms already). " +
-           "file status map:" + myDaemonCodeAnalyzer.getFileStatusMap() + "\n" +
-           "current highlights:" + StringUtil.join(DocumentMarkupModel.forDocument(document, project, true).getAllHighlighters(), Object::toString, "\n")+
-           "thread dump:"+ dump);
-      }
-      callbackWhileWaiting.run();
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      Semaphore listenersCalled = new Semaphore(1);
+      myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+          @Override
+          public void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
+            listenersCalled.up();
+            PassExecutorService.LOG.trace("waitForDaemonToFinish.daemonFinished");
+          }
+
+          @Override
+          public void daemonCancelEventOccurred(@NotNull String reason) {
+            listenersCalled.up();
+            PassExecutorService.LOG.trace("waitForDaemonToFinish.daemonCancelEventOccurred: " + reason);
+          }
+        });
+
+      do {
+        if (System.currentTimeMillis() > deadline) {
+          String dump = ThreadDumper.dumpThreadsToString();
+          MarkupModelImpl markupModel = (MarkupModelImpl)DocumentMarkupModel.forDocument(document, project, true);
+          throw new AssertionError("Too long waiting for daemon to finish (" + (System.currentTimeMillis() - start) + "ms already). " +
+             "file status map:" + myDaemonCodeAnalyzer.getFileStatusMap() + "\n" +
+             "progress: "+progresses+
+             "\ncurrent highlights:\n" + StringUtil.join(markupModel.getAllHighlighters(), Object::toString, "\n")+
+             "thread dump:"+ dump);
+        }
+        callbackWhileWaiting.run();
+        dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
+        for (DaemonProgressIndicator indicator : progresses) {
+          Throwable trace = indicator.getCancellationTrace();
+          if (trace != null && !(trace instanceof ProcessCanceledException) && !DaemonProgressIndicator.CANCEL_WAS_CALLED_REASON.equals(trace.getMessage())) {
+            ExceptionUtil.rethrow(trace);
+          }
+          if (indicator.isCanceled() && indicator.isRunning()) {
+            // wait for daemon listeners to be called,
+            // since many tests do "waitForFinish(); checkSomeState();", and the state is changed in DaemonListener
+            listenersCalled.waitFor();
+            indicator.checkCanceled(); // canceled in the middle, throw PCE
+          }
+        }
+      } while (daemonIsWorkingOrPending(project, document));
       dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
-      for (DaemonProgressIndicator indicator : progresses) {
-        Throwable trace = indicator.getCancellationTrace();
-        if (trace != null && !(trace instanceof ProcessCanceledException) && !DaemonProgressIndicator.CANCEL_WAS_CALLED_REASON.equals(trace.getMessage())) {
-          ExceptionUtil.rethrow(trace);
-        }
-        if (indicator.isCanceled() && indicator.isRunning()) {
-          indicator.checkCanceled(); // canceled in the middle, throw PCE
-        }
-      }
-    } while (daemonIsWorkingOrPending(project, document));
-    dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
-    return progresses;
+      return progresses;
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
 
   @RequiresEdt

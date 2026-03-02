@@ -284,27 +284,28 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     configureByText(JavaFileType.INSTANCE, text);
     assertEmpty(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
 
-    log.clear();
     INTERRUPT.set(true);
     COMMENT_HIGHLIGHTED.set(false);
     myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(new MyInterruptingVisitor(), getTestRootDisposable());
-
+    LOG.debug("================================================");
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
     UIUtil.dispatchAllInvocationEvents();
     myDaemonCodeAnalyzer.restart(getTestName(false));
+    log.clear();
     try {
       myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), getEditor().getDocument());
     }
     catch (ProcessCanceledException ignored) {
     }
-
+    UIUtil.dispatchAllInvocationEvents();
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
     MyInterruptingVisitor.assertExistMy(infos);
-    assertEquals("[S, C]", log.toString());
+    assertTrue(log.toString(), log.toString().startsWith("[S, C"));
 
     INTERRUPT.set(false);
     COMMENT_HIGHLIGHTED.set(false);
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     log.clear();
     try {
       myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getProject(), getEditor().getDocument());

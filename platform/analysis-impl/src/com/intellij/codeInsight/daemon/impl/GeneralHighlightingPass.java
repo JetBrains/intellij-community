@@ -265,7 +265,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress, @NotNull Project project, @NotNull String reason) throws ProcessCanceledException {
     RESTART_REQUESTS.incrementAndGet();
-    progress.cancel();
+    ((DaemonProgressIndicator)progress).cancel(reason);
     int delay = ApplicationManager.getApplication().isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
     EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
       RESTART_REQUESTS.set(0);
