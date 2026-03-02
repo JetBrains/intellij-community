@@ -914,14 +914,13 @@ internal class ReplaceBySourceAsTree {
       }
       else {
         val oppositeEntityData = oppositeStorage.entityDataByIdOrDie(rootEntity.id)
-        goalStorage.entities(rootEntity.id.clazz.findWorkspaceEntity())
-          .filter {
-            val itId = (it as WorkspaceEntityBase).id
-            if (goalState[itId] != null) return@filter false
-            goalStorage.entityDataByIdOrDie(itId).equalsByKey(oppositeEntityData) && goalStorage.refs.getParentRefsOfChild(itId.asChild())
-              .isEmpty()
-          }
-          .firstOrNull()
+        val entityClass = rootEntity.id.clazz.findWorkspaceEntity()
+        val data = goalStorage.entitiesByType[entityClass.toClassId()]?.all()?.firstOrNull { entityData ->
+          if (!entityData.equalsByKey(oppositeEntityData)) return@firstOrNull false
+          val itId = entityData.createEntityId()
+          goalState[itId] == null && goalStorage.refs.getParentRefsOfChild(itId.asChild()).isEmpty()
+        }
+        data?.createEntity(goalStorage)
       }
     }
   }

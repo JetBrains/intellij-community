@@ -48,6 +48,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWith
 import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyNamedEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyOoChildWithNullableParentEntity
@@ -224,6 +225,24 @@ class WorkspaceModelBenchmarksPerformanceTest {
       repeat(size) {
         list.addAll(storage.referrers(NameId("$it"), ComposedIdSoftRefEntity::class.java).toList())
       }
+    }
+      .warmupIterations(0)
+      .attempts(1).start()
+  }
+
+  @Test
+  fun replaceBySourceALotOfRootEntitiesWithoutSymbolicId(testInfo: TestInfo) {
+    val source: MutableEntityStorage = MutableEntityStorage.create()
+    val target: MutableEntityStorage = MutableEntityStorage.create()
+    val size = 30_000
+
+    repeat(size) {
+      source addEntity WithSoftLinkEntity(NameId("$it"), MySource) // could be any entity without symbolic id
+      target addEntity WithSoftLinkEntity(NameId("$it"), MySource)
+    }
+
+    Benchmark.newBenchmark(testInfo.displayName) {
+      target.replaceBySource({ true }, source.toSnapshot())
     }
       .warmupIterations(0)
       .attempts(1).start()
