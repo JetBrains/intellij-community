@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import Any, TypeAlias, TypeVar
 from weakref import WeakSet
 
@@ -42,7 +42,7 @@ class AdminSite:
     _global_actions: dict[str, _ActionCallback]
     _actions: dict[str, _ActionCallback]
     def __init__(self, name: str = ...) -> None: ...
-    def check(self, app_configs: Iterable[AppConfig] | None) -> list[CheckMessage]: ...
+    def check(self, app_configs: Sequence[AppConfig] | None) -> list[CheckMessage]: ...
     def register(
         self,
         model_or_iterable: type[Model] | Iterable[type[Model]],
