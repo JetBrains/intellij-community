@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows to register actions which are activated by typing and navigation keystrokes
@@ -79,7 +80,7 @@ public abstract class EditorActionManager {
    * @param handler  new handler
    * @see Document#createGuardedBlock(int, int)
    */
-  public abstract void setReadonlyFragmentModificationHandler(@NotNull Document document, ReadonlyFragmentModificationHandler handler);
+  public abstract void setReadonlyFragmentModificationHandler(@NotNull Document document, @Nullable ReadonlyFragmentModificationHandler handler);
 
 }
 
