@@ -30,7 +30,8 @@ class AgentSessionChatOpenPayloadTest {
 
     assertThat(payload.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "thread-1"))
     assertThat(payload.runtimeThreadId).isEqualTo("thread-1")
-    assertThat(payload.shellCommand).containsExactly("codex", "resume", "thread-1")
+    assertThat(payload.shellCommand)
+      .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "thread-1")
     assertThat(payload.threadTitle).isEqualTo("Parent title")
     assertThat(payload.subAgentId).isNull()
   }
@@ -54,7 +55,8 @@ class AgentSessionChatOpenPayloadTest {
 
     assertThat(payload.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "thread-1"))
     assertThat(payload.runtimeThreadId).isEqualTo("sub-1")
-    assertThat(payload.shellCommand).containsExactly("codex", "resume", "sub-1")
+    assertThat(payload.shellCommand)
+      .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "sub-1")
     assertThat(payload.threadTitle).isEqualTo("Sub-agent label")
     assertThat(payload.subAgentId).isEqualTo("sub-1")
   }

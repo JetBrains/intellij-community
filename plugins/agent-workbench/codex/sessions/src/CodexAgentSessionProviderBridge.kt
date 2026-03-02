@@ -45,18 +45,19 @@ internal class CodexAgentSessionProviderBridge(
 
   override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 
-  override fun buildResumeCommand(sessionId: String): List<String> = listOf(CodexCliUtils.CODEX_COMMAND, "resume", sessionId)
+  override fun buildResumeCommand(sessionId: String): List<String> =
+    listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG, "resume", sessionId)
 
   override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> {
     return if (mode == AgentSessionLaunchMode.YOLO) {
-      listOf(CodexCliUtils.CODEX_COMMAND, "--full-auto")
+      listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG, "--full-auto")
     }
     else {
-      listOf(CodexCliUtils.CODEX_COMMAND)
+      listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG)
     }
   }
 
-  override fun buildNewEntryCommand(): List<String> = listOf(CodexCliUtils.CODEX_COMMAND)
+  override fun buildNewEntryCommand(): List<String> = listOf(CodexCliUtils.CODEX_COMMAND, "-c", CODEX_AUTO_UPDATE_CONFIG)
 
   override fun buildCommandWithInitialPrompt(baseCommand: List<String>, prompt: String): List<String> {
     return baseCommand + listOf("--", prompt)
@@ -84,3 +85,5 @@ internal class CodexAgentSessionProviderBridge(
     return throwable is CodexCliNotFoundException
   }
 }
+
+private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"
