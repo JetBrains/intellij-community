@@ -222,11 +222,13 @@ internal class AgentPromptPalettePopup(
     installPromptEnterHandlers(
       promptArea = promptArea,
       canSubmit = { canSubmitNow },
-      targetMode = ::currentTargetMode,
-      onSubmit = ::submit,
-      onExistingTaskSubmitDisabled = {
-        showInfo(AgentPromptBundle.message("popup.status.existing.select.task"))
+      isTabQueueEnabled = {
+        isTabQueueShortcutEnabled(
+          targetMode = currentTargetMode(),
+          selectedProvider = selectedProvider?.bridge?.provider,
+        )
       },
+      onSubmit = ::submit,
     )
   }
 
@@ -544,48 +546,43 @@ internal class AgentPromptPalettePopup(
 
   private fun submit() {
     val openedPopup = popup ?: return
+    val selectedProviderEntry = selectedProvider
+    val launcher = launcherProvider()
+    val validationErrorKey = resolveSubmitValidationErrorMessageKey(
+      targetMode = currentTargetMode(),
+      prompt = promptArea.text,
+      selectedProvider = selectedProviderEntry?.bridge?.provider,
+      isProviderCliAvailable = selectedProviderEntry?.isCliAvailable == true,
+      hasProjectPath = !project.basePath.isNullOrBlank(),
+      hasLauncher = launcher != null,
+      selectedExistingTaskId = selectedExistingTaskId,
+    )
+    if (validationErrorKey != null) {
+      val message = if (validationErrorKey == "popup.error.provider.unavailable") {
+        AgentPromptBundle.message(validationErrorKey, selectedProviderEntry?.displayName ?: "")
+      }
+      else {
+        AgentPromptBundle.message(validationErrorKey)
+      }
+      showError(message)
+      return
+    }
 
     val prompt = promptArea.text.trim()
-    if (prompt.isEmpty()) {
-      showError(AgentPromptBundle.message("popup.error.empty.prompt"))
-      return
-    }
-
-    val selectedProviderEntry = selectedProvider
-    if (selectedProviderEntry == null) {
-      showError(AgentPromptBundle.message("popup.error.no.providers"))
-      return
-    }
-    if (!selectedProviderEntry.isCliAvailable) {
-      showError(AgentPromptBundle.message("popup.error.provider.unavailable", selectedProviderEntry.displayName))
-      return
-    }
-
-    val projectPath = project.basePath
-    if (projectPath.isNullOrBlank()) {
-      showError(AgentPromptBundle.message("popup.error.project.path"))
-      return
-    }
+    val providerEntry = selectedProviderEntry ?: return
+    val projectPath = project.basePath ?: return
 
     val selectedContextItems = contextEntries.map { it.item }
     val contextSelection = resolveContextSelection(selectedContextItems) ?: return
-
-    val launcher = launcherProvider()
-    if (launcher == null) {
-      showError(AgentPromptBundle.message("popup.error.no.launcher"))
-      return
-    }
+    val launcherBridge = launcher ?: return
 
     val targetThreadId = when (currentTargetMode()) {
       PromptTargetMode.NEW_TASK -> null
-      PromptTargetMode.EXISTING_TASK -> selectedExistingTaskId ?: run {
-        showInfo(AgentPromptBundle.message("popup.status.existing.select.task"))
-        return
-      }
+      PromptTargetMode.EXISTING_TASK -> selectedExistingTaskId ?: return
     }
 
     val request = AgentPromptLaunchRequest(
-      provider = selectedProviderEntry.bridge.provider,
+      provider = providerEntry.bridge.provider,
       projectPath = projectPath,
       launchMode = AgentSessionLaunchMode.STANDARD,
       initialMessageRequest = AgentPromptInitialMessageRequest(
@@ -598,7 +595,7 @@ internal class AgentPromptPalettePopup(
       preferredDedicatedFrame = null,
     )
 
-    val result = launcher.launch(request)
+    val result = launcherBridge.launch(request)
     if (result.launched) {
       clearDraftOnClose = true
       openedPopup.cancel()
@@ -795,12 +792,19 @@ internal fun resolveDefaultFooterHintMessageKey(
   targetMode: PromptTargetMode,
   selectedProvider: AgentSessionProvider?,
 ): @NonNls String {
-  return if (targetMode == PromptTargetMode.EXISTING_TASK && selectedProvider == AgentSessionProvider.CODEX) {
+  return if (isTabQueueShortcutEnabled(targetMode = targetMode, selectedProvider = selectedProvider)) {
     "popup.footer.hint.existing.codex"
   }
   else {
     "popup.footer.hint"
   }
+}
+
+internal fun isTabQueueShortcutEnabled(
+  targetMode: PromptTargetMode,
+  selectedProvider: AgentSessionProvider?,
+): Boolean {
+  return targetMode == PromptTargetMode.EXISTING_TASK && selectedProvider == AgentSessionProvider.CODEX
 }
 
 internal fun shouldShowExistingTaskSelectionHint(
@@ -813,28 +817,78 @@ internal fun shouldShowExistingTaskSelectionHint(
          selectedProvider != AgentSessionProvider.CODEX
 }
 
+internal fun resolveSubmitValidationErrorMessageKey(
+  targetMode: PromptTargetMode,
+  prompt: String,
+  selectedProvider: AgentSessionProvider?,
+  isProviderCliAvailable: Boolean,
+  hasProjectPath: Boolean,
+  hasLauncher: Boolean,
+  selectedExistingTaskId: String?,
+): @NonNls String? {
+  if (prompt.trim().isEmpty()) {
+    return "popup.error.empty.prompt"
+  }
+  if (selectedProvider == null) {
+    return "popup.error.no.providers"
+  }
+  if (!isProviderCliAvailable) {
+    return "popup.error.provider.unavailable"
+  }
+  if (!hasProjectPath) {
+    return "popup.error.project.path"
+  }
+  if (!hasLauncher) {
+    return "popup.error.no.launcher"
+  }
+  if (targetMode == PromptTargetMode.EXISTING_TASK && selectedExistingTaskId.isNullOrBlank()) {
+    return "popup.error.existing.select.task"
+  }
+  return null
+}
+
 internal fun installPromptEnterHandlers(
   promptArea: JBTextArea,
   canSubmit: () -> Boolean,
-  targetMode: () -> PromptTargetMode,
+  isTabQueueEnabled: () -> Boolean = { false },
   onSubmit: () -> Unit,
-  onExistingTaskSubmitDisabled: () -> Unit,
+  onTabFocusTransfer: () -> Unit = promptArea::transferFocus,
+  onTabBackwardFocusTransfer: () -> Unit = promptArea::transferFocusBackward,
 ) {
   val popupSubmitActionKey = "agent.prompt.submit"
   val popupNewLineActionKey = "agent.prompt.insert.break"
+  val popupQueueActionKey = "agent.prompt.queue"
+  val popupBackwardFocusActionKey = "agent.prompt.focus.backward"
+
+  promptArea.focusTraversalKeysEnabled = false
 
   promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), popupSubmitActionKey)
   promptArea.actionMap.put(popupSubmitActionKey, object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent?) {
-      if (canSubmit()) {
-        onSubmit()
-      }
-      else if (targetMode() == PromptTargetMode.EXISTING_TASK) {
-        onExistingTaskSubmitDisabled()
-      }
+      canSubmit()
+      onSubmit()
     }
   })
 
   promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), popupNewLineActionKey)
   promptArea.actionMap.put(popupNewLineActionKey, promptArea.actionMap.get(DefaultEditorKit.insertBreakAction))
+
+  promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), popupQueueActionKey)
+  promptArea.actionMap.put(popupQueueActionKey, object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent?) {
+      if (isTabQueueEnabled()) {
+        onSubmit()
+      }
+      else {
+        onTabFocusTransfer()
+      }
+    }
+  })
+
+  promptArea.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), popupBackwardFocusActionKey)
+  promptArea.actionMap.put(popupBackwardFocusActionKey, object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent?) {
+      onTabBackwardFocusTransfer()
+    }
+  })
 }
