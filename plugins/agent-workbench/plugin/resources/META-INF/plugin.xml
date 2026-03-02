@@ -16,6 +16,7 @@
     <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.agent.workbench.prompt"/>
     <module name="intellij.agent.workbench.prompt.vcs"/>
+    <module name="intellij.agent.workbench.prompt.testrunner"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.filewatch"/>
