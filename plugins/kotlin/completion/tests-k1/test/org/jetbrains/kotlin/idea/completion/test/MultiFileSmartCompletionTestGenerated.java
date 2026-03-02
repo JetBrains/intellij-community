@@ -50,6 +50,16 @@ public class MultiFileSmartCompletionTestGenerated extends AbstractMultiFileSmar
         runTest("../testData/smartMultiFile/FlexibleType/");
     }
 
+    @TestMetadata("FlexibleTypeMultipleArguments")
+    public void testFlexibleTypeMultipleArguments() throws Exception {
+        runTest("../testData/smartMultiFile/FlexibleTypeMultipleArguments/");
+    }
+
+    @TestMetadata("FlexibleTypeMultipleArgumentsNullable")
+    public void testFlexibleTypeMultipleArgumentsNullable() throws Exception {
+        runTest("../testData/smartMultiFile/FlexibleTypeMultipleArgumentsNullable/");
+    }
+
     @TestMetadata("FlexibleTypeNotNull")
     public void testFlexibleTypeNotNull() throws Exception {
         runTest("../testData/smartMultiFile/FlexibleTypeNotNull/");

@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -94,7 +95,7 @@ internal class K2MultipleArgumentContributor : K2SimpleCompletionContributor<Kot
             // For this contributor, we need at least 2 missing arguments
             if (missingValueParameters.size <= 1) continue
 
-            val missingArgumentMapping = missingValueParameters.associateBy({ it.name }, { it.returnType })
+            val missingArgumentMapping = missingValueParameters.associateBy({ it.name }, { it.returnType.upperBoundIfFlexible() })
 
             signatures.add(MissingArgumentData(applicableCandidate.signature, missingArgumentMapping))
         }
