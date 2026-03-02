@@ -380,7 +380,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     private fun isSimilarName(parameterName: String, otherName: String?): Boolean =
-        if (otherName != null && parameterName.length > 1) {
+        if (otherName?.isNotEmpty() == true && parameterName.isNotEmpty()) {
             val lowercase = otherName.lowercase()
             val name = parameterName.lowercase()
             // avoid cases like "`type = Type(...)`" and "`value =` myValue"
