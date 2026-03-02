@@ -2,6 +2,7 @@
 package com.intellij.debugger.streams.trace.breakpoint.instrumentation
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.intellij.java.debugger.streams.rt.collectors.UniversalCollector
@@ -40,6 +41,7 @@ internal class StreamPreparer(
   private fun findPeekMethod(streamObject: ObjectReference): Method {
     // methodsByName may throw ClassNotPreparedException, but by the time we execute this method,
     // it is guaranteed that the stream class is loaded
-    return streamObject.referenceType().methodsByName("peek").single()
+    return DebuggerUtils.findMethod(streamObject.referenceType(), "peek", null)
+           ?: error("Cannot find peek method on ${streamObject.referenceType().name()}")
   }
 }
