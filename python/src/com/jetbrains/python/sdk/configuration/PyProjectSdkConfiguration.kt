@@ -6,21 +6,18 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.use
+
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.python.common.tools.ToolId
+
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
-import com.intellij.ui.EditorNotifications
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.errorProcessing.PyResult
@@ -33,38 +30,12 @@ import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.installExecutableViaPythonScript
 import com.jetbrains.python.statistics.ConfiguredPythonInterpreterIdsHolder.Companion.SDK_HAS_BEEN_CONFIGURED_AS_THE_PROJECT_INTERPRETER
 import com.jetbrains.python.util.ShowingMessageErrorSync
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 object PyProjectSdkConfiguration {
-  fun configureSdkUsingCreateSdkInfo(module: Module, createSdkInfoWithTool: CreateSdkInfoWithTool) {
-    val lifetime = suppressTipAndInspectionsFor(module, createSdkInfoWithTool.toolId.id)
-
-    val project = module.project
-    project.service<SdkConfigurationService>().scope.launch {
-      withBackgroundProgress(project, createSdkInfoWithTool.createSdkInfo.intentionName, false) {
-        lifetime.use { setSdkUsingCreateSdkInfo(module, createSdkInfoWithTool) }
-      }
-    }
-  }
-
-  fun installToolForInspection(module: Module, createSdkInfo: CreateSdkInfo.WillInstallTool, toolId: ToolId) {
-    val lifetime = suppressTipAndInspectionsFor(module, toolId.id)
-
-    val project = module.project
-    project.service<SdkConfigurationService>().scope.launch {
-      withBackgroundProgress(project, createSdkInfo.intentionName, false) {
-        lifetime.use { installToolAndShowErrorIfNeeded(module, createSdkInfo.pathPersister, createSdkInfo.toolToInstall) }
-      }
-
-      EditorNotifications.getInstance(project).updateAllNotifications()
-    }
-  }
-
-  private suspend fun installToolAndShowErrorIfNeeded(module: Module, pathPersister: (Path) -> Unit, toolToInstall: String) {
+  internal suspend fun installToolAndShowErrorIfNeeded(module: Module, pathPersister: (Path) -> Unit, toolToInstall: String) {
     performToolInstallation(pathPersister, toolToInstall).errorOrNull?.also {
       ShowingMessageErrorSync.emit(it, module.project)
     }
@@ -137,6 +108,3 @@ object PyProjectSdkConfiguration {
       }
   }
 }
-
-@Service(Service.Level.PROJECT)
-private class SdkConfigurationService(val scope: CoroutineScope)

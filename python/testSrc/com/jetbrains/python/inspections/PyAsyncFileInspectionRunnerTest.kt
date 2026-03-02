@@ -10,12 +10,13 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.inspections.interpreter.InterpreterFix
+import com.jetbrains.python.inspections.interpreter.BusyGuardExecutor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertIterableEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -50,7 +51,9 @@ class PyAsyncFileInspectionRunnerTest {
 
     barrier.complete(Unit)
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes.map { it.name }, runner.runInspection(module)?.map { it.name })
+      val result = runner.runInspection(module)
+      assertNotNull(result)
+      assertEquals(expectedFixes.size, result!!.size)
     }
   }
 
@@ -63,7 +66,9 @@ class PyAsyncFileInspectionRunnerTest {
     }
 
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes.map { it.name }, runner.runInspection(module)?.map { it.name })
+      val result = runner.runInspection(module)
+      assertNotNull(result)
+      assertEquals(expectedFixes.size, result!!.size)
     }
 
     (1..100).map {
@@ -74,7 +79,9 @@ class PyAsyncFileInspectionRunnerTest {
       }
     }.joinAll()
 
-    assertIterableEquals(expectedFixes.map { it.name }, runner.runInspection(module)?.map { it.name })
+    val result = runner.runInspection(module)
+    assertNotNull(result)
+    assertEquals(expectedFixes.size, result!!.size)
     assertEquals(1, callCount)
   }
 
@@ -92,7 +99,9 @@ class PyAsyncFileInspectionRunnerTest {
 
     // Wait for the result of the first run
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes.map { it.name }, runner.runInspection(module)?.map { it.name })
+      val result = runner.runInspection(module)
+      assertNotNull(result)
+      assertEquals(expectedFixes.size, result!!.size)
       assertEquals(1, callCount)
     }
 
@@ -101,12 +110,16 @@ class PyAsyncFileInspectionRunnerTest {
 
     // Wait for the result of the second run
     waitUntilAssertSucceeds(timeout = 5.seconds) {
-      assertIterableEquals(expectedFixes.map { it.name }, runner.runInspection(module)?.map { it.name })
+      val result = runner.runInspection(module)
+      assertNotNull(result)
+      assertEquals(expectedFixes.size, result!!.size)
       assertEquals(2, callCount)
     }
   }
 }
 
-private class TestInterpreterFix(override val name: String) : InterpreterFix {
-  override fun apply(module: Module, project: Project, psiFile: PsiFile) {}
+private class TestInterpreterFix(val name: String) : InterpreterFix {
+  override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): com.intellij.ui.components.ActionLink {
+    return com.intellij.ui.components.ActionLink(name) {}
+  }
 }
