@@ -11,16 +11,9 @@ import com.intellij.execution.runners.showRunContent
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 
@@ -40,7 +33,7 @@ open class PythonRunner : AsyncProgramRunner<RunnerSettings>() {
       return resolvedPromise(null)
     }
 
-    return environment.project.service<PythonRunnerCoroutineScope>().cs.async {
+    return asyncPromise(environment.project) {
       writeAction {
         FileDocumentManager.getInstance().saveAllDocuments()
       }
@@ -57,23 +50,6 @@ open class PythonRunner : AsyncProgramRunner<RunnerSettings>() {
       withContext(Dispatchers.EDT) {
         showRunContent(executionResult, environment)
       }
-    }.toPromise()
-  }
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun <T> Deferred<T>.toPromise(): Promise<T> {
-  val promise = AsyncPromise<T>()
-  invokeOnCompletion { throwable ->
-    if (throwable != null) {
-      promise.setError(throwable)
-    }
-    else {
-      promise.setResult(getCompleted())
     }
   }
-  return promise
 }
-
-@Service(Service.Level.PROJECT)
-private class PythonRunnerCoroutineScope(val cs: CoroutineScope)

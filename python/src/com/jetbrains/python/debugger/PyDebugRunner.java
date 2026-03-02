@@ -66,6 +66,7 @@ import com.jetbrains.python.run.DebugAwareConfiguration;
 import com.jetbrains.python.run.EnvironmentController;
 import com.jetbrains.python.run.PlainEnvironmentController;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonRunnerCoroutinesKt;
 import com.jetbrains.python.run.PythonExecution;
 import com.jetbrains.python.run.PythonModuleExecution;
 import com.jetbrains.python.run.PythonScriptCommandLineState;
@@ -194,8 +195,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       int port = PyDebuggerOptionsProvider.getInstance(environment.getProject()).getDebuggerPort();
       TargetEnvironment.TargetPortBinding targetPortBinding =
         new TargetEnvironment.TargetPortBinding(port, port);
-      return Promises
-        .runAsync(() -> {
+      return PythonRunnerCoroutinesKt
+        .runAsync(environment.getProject(), () -> {
           try {
             var debuggerScriptCommandLineBuilder = new PythonDebuggerServerModeTargetedCommandLineBuilder(
               environment.getProject(), pyState, profile, targetPortBinding);
@@ -211,8 +212,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
     else {
       var clientId = ClientId.getCurrentOrNull();
-      return Promises
-        .runAsync(() -> {
+      return PythonRunnerCoroutinesKt
+        .runAsync(environment.getProject(), () -> {
           int serverLocalPort = findAvailableSocketPort();
           try {
             TargetEnvironment.LocalPortBinding localPortBinding =
