@@ -1,4 +1,3 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -12,9 +11,7 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.lazy.tree.BasicLazyTree
 import org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeyActions
-import org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewPointerEventAction
 import org.jetbrains.jewel.foundation.lazy.tree.KeyActions
-import org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
 import org.jetbrains.jewel.foundation.lazy.tree.Tree
 import org.jetbrains.jewel.foundation.lazy.tree.TreeElementState
 import org.jetbrains.jewel.foundation.lazy.tree.TreeState
@@ -37,7 +34,6 @@ public fun <T> LazyTree(
     onElementDoubleClick: (Tree.Element<T>) -> Unit = {},
     onSelectionChange: (List<Tree.Element<T>>) -> Unit = {},
     keyActions: KeyActions = DefaultTreeViewKeyActions(treeState),
-    pointerEventActions: PointerEventActions = DefaultTreeViewPointerEventAction(treeState),
     style: LazyTreeStyle = JewelTheme.treeStyle,
     nodeContent: @Composable (SelectableLazyItemScope.(Tree.Element<T>) -> Unit),
 ) {
@@ -49,7 +45,6 @@ public fun <T> LazyTree(
         onElementDoubleClick = onElementDoubleClick,
         onSelectionChange = onSelectionChange,
         keyActions = keyActions,
-        pointerEventActions = pointerEventActions,
         style = style,
         nodeContent = nodeContent,
         interactionSource = remember { MutableInteractionSource() },
@@ -67,7 +62,6 @@ public fun <T> LazyTree(
     onElementDoubleClick: (Tree.Element<T>) -> Unit = {},
     onSelectionChange: (List<Tree.Element<T>>) -> Unit = {},
     keyActions: KeyActions = DefaultTreeViewKeyActions(treeState),
-    pointerEventActions: PointerEventActions = DefaultTreeViewPointerEventAction(treeState),
     style: LazyTreeStyle = JewelTheme.treeStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     nodeContent: @Composable (SelectableLazyItemScope.(Tree.Element<T>) -> Unit),
@@ -92,7 +86,6 @@ public fun <T> LazyTree(
         modifier = modifier,
         treeState = treeState,
         keyActions = keyActions,
-        pointerEventScopedActions = pointerEventActions,
         interactionSource = interactionSource,
         chevronContent = { elementState ->
             val iconKey = style.icons.chevron(elementState.isExpanded, elementState.isSelected)
