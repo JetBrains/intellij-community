@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.config;
+package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.settings.DelegatingExternalSystemSettingsListener;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 
 public class DelegatingGradleSettingsListenerAdapter extends DelegatingExternalSystemSettingsListener<GradleProjectSettings>
   implements GradleSettingsListener

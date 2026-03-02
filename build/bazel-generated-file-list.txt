@@ -1033,6 +1033,7 @@ plugins/gradle/native
 plugins/gradle/native/tooling
 plugins/gradle/plugin
 plugins/gradle/properties
+plugins/gradle/settings
 plugins/gradle/toml
 plugins/gradle/tooling-extension-api
 plugins/gradle/tooling-extension-impl

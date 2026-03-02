@@ -23,6 +23,7 @@ jvm_library(
     ":gradle_resources_1",
   ],
   deps = [
+    "//plugins/gradle/settings",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/editor-ui-api:editor-ui",
@@ -83,6 +84,7 @@ jvm_library(
     "@lib//:org-codehaus-groovy-groovy-ant-provided",
   ],
   exports = [
+    "//plugins/gradle/settings",
     "//platform/external-system-api:externalSystem",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "@lib//:slf4j-api",
@@ -97,6 +99,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   exports = [
+    "//plugins/gradle/settings",
+    "//plugins/gradle/settings:settings_test_lib",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-api:externalSystem_test_lib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
@@ -107,6 +111,7 @@ jvm_library(
   ],
   runtime_deps = [
     ":gradle",
+    "//plugins/gradle/settings:settings_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/editor-ui-api:editor-ui_test_lib",

@@ -1,13 +1,13 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.externalSystem.impl"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.gradle.toolingExtension"/>
     <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.gradle.toolingProxy"/>
     <module name="intellij.libraries.jspecify"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <resource-bundle>messages.GradleBundle</resource-bundle>
 

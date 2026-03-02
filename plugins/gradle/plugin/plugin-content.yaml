@@ -139,6 +139,7 @@
   - name: intellij.gradle.common
   contentModules:
   - name: intellij.gradle
+  - name: intellij.gradle.settings
 - name: lib/gradle-tooling-extension-api.jar
   modules:
   - name: intellij.gradle.toolingExtension

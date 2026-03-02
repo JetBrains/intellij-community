@@ -25,6 +25,7 @@
     <module name="intellij.gradle.completion.kotlin"/>
     <module name="intellij.gradle.toml"/>
     <module name="intellij.gradle.properties"/>
+    <module name="intellij.gradle.settings" loading="embedded"/>
   </content>
 
 </idea-plugin>

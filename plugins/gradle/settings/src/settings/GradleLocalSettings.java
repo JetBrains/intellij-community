@@ -12,10 +12,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +39,7 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
     return ContainerUtil.notNullize(state.myGradleVersions).get(linkedProjectPath);
   }
 
-  public void setGradleHome(@NotNull String linkedProjectPath, @NotNull String gradleHome) {
+  public void setGradleHome(@NotNull String linkedProjectPath, @NotNull String gradleHome, @Nullable String gradleVersion) {
     if (state.myGradleHomes == null) {
       state.myGradleHomes = new HashMap<>();
     }
@@ -49,7 +47,7 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
     if (state.myGradleVersions == null) {
       state.myGradleVersions = new HashMap<>();
     }
-    state.myGradleVersions.put(linkedProjectPath, GradleInstallationManager.getGradleVersion(Path.of(gradleHome)));
+    state.myGradleVersions.put(linkedProjectPath, gradleVersion);
   }
 
   @ApiStatus.Internal

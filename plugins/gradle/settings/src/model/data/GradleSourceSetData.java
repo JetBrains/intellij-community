@@ -1,16 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 public final class GradleSourceSetData extends ModuleData {
@@ -24,7 +24,16 @@ public final class GradleSourceSetData extends ModuleData {
     @NotNull String moduleFileDirectoryPath,
     @NotNull String externalConfigPath
   ) {
-    this(id, GradleProjectResolverUtil.getDefaultModuleTypeId(), externalName, internalName, moduleFileDirectoryPath, externalConfigPath);
+    this(
+      id,
+      ModuleTypeManager.getInstance()
+        .getDefaultModuleType()
+        .getId(),
+      externalName,
+      internalName,
+      moduleFileDirectoryPath,
+      externalConfigPath
+    );
   }
 
   @VisibleForTesting
