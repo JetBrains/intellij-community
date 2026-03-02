@@ -57,9 +57,7 @@ abstract class TypeEvalContext protected constructor() {
    */
   sealed class Key
 
-  private object KeyImpl : Key()
-
-  protected fun getKey(): Key = KeyImpl
+  protected object KeyImpl : Key()
 
   @ApiStatus.Internal
   companion object {

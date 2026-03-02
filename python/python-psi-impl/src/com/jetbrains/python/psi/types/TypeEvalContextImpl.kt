@@ -143,7 +143,7 @@ open class TypeEvalContextImpl internal constructor(
 
   override fun getKnownType(element: PyTypedElement): PyType? {
     if (element is PyInstantTypeProvider) {
-      return element.getType(this, getKey())
+      return element.getType(this, KeyImpl)
     }
     return myEvaluated[element]?.also {
       assertValid(it, element)
@@ -197,7 +197,7 @@ open class TypeEvalContextImpl internal constructor(
       }
       else {
         val startTime = System.currentTimeMillis()
-        type = element.getType(this, getKey())
+        type = element.getType(this, KeyImpl)
         val duration = System.currentTimeMillis() - startTime
         PyTypeEvaluationStatisticsService.getInstance().logJBTypeEngineTime(duration)
       }
@@ -220,7 +220,7 @@ open class TypeEvalContextImpl internal constructor(
       return if (knownReturnType is PyNullType) null else knownReturnType
     }
     return RecursionManager.doPreventingRecursion(callable to this, false) {
-      val type = callable.getReturnType(this, getKey())
+      val type = callable.getReturnType(this, KeyImpl)
       assertValid(type, callable)
       myEvaluatedReturn[callable] = type ?: PyNullType
       type
