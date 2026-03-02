@@ -882,27 +882,27 @@ object PyCallExpressionHelper {
 
   @JvmStatic
   fun <T> getArgumentsMappedToPositionalContainer(map: Map<T, PyCallableParameter>): List<T> {
-    return map.filterValues { it.isPositionalContainer() }.keys.toList()
+    return map.filterValues { it.isPositionalContainer }.keys.toList()
   }
 
   @JvmStatic
   fun <T> getArgumentsMappedToKeywordContainer(map: Map<T, PyCallableParameter>): List<T> {
-    return map.filterValues { it.isKeywordContainer() }.keys.toList()
+    return map.filterValues { it.isKeywordContainer }.keys.toList()
   }
 
   @JvmStatic
   fun <T> getRegularMappedParameters(map: Map<T, PyCallableParameter>): Map<T, PyCallableParameter> {
-    return map.filterValues { !it.isPositionalContainer() && !it.isKeywordContainer() }
+    return map.filterValues { !it.isPositionalContainer && !it.isKeywordContainer }
   }
 
   @JvmStatic
   fun <T> getMappedPositionalContainer(map: Map<T, PyCallableParameter>): PyCallableParameter? {
-    return map.values.find { it.isPositionalContainer() }
+    return map.values.find { it.isPositionalContainer }
   }
 
   @JvmStatic
   fun <T> getMappedKeywordContainer(map: Map<T, PyCallableParameter>): PyCallableParameter? {
-    return map.values.find { it.isKeywordContainer() }
+    return map.values.find { it.isKeywordContainer }
   }
 
   @JvmStatic
@@ -1083,7 +1083,7 @@ object PyCallExpressionHelper {
         if (!parameter.isSelf && !hasSlashParameter && !isLegacyPositionalOnly(parameter)) {
           positionalOnlyMode = false
         }
-        if (parameter.isPositionalContainer()) {
+        if (parameter.isPositionalContainer) {
           for (argument in allPositionalArguments) {
             if (argument != null) {
               mappedParameters[argument] = parameter
@@ -1099,7 +1099,7 @@ object PyCallExpressionHelper {
           variadicPositionalArguments.clear()
           keywordOnlyMode = true
         }
-        else if (parameter.isKeywordContainer()) {
+        else if (parameter.isKeywordContainer) {
           for (argument in keywordArguments) {
             mappedParameters[argument] = parameter
           }

@@ -1,53 +1,52 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.ast;
+package com.jetbrains.python.ast
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayFactory;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
-import com.jetbrains.python.ast.docstring.DocStringUtilCore;
-import com.jetbrains.python.ast.impl.PyUtilCore;
-import com.jetbrains.python.psi.LanguageLevel;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
-import java.util.Optional;
+import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.StubBasedPsiElement
+import com.intellij.psi.TokenType
+import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.PyElementTypes
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.PythonDialectsTokenSetProvider
+import com.jetbrains.python.ast.controlFlow.AstScopeOwner
+import com.jetbrains.python.ast.docstring.DocStringUtilCore
+import com.jetbrains.python.ast.impl.PyUtilCore
+import com.jetbrains.python.psi.LanguageLevel
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Function declaration in source (the {@code def} and everything within).
  */
 @ApiStatus.Experimental
-public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStatement,
-                                       PyAstDecoratable, PyAstCallable, PyAstStatementListContainer, PyAstPossibleClassMember,
-                                       AstScopeOwner, PyAstDocStringOwner, PyAstTypeCommentOwner, PyAstAnnotationOwner, PyAstTypeParameterListOwner {
+interface PyAstFunction : PsiNameIdentifierOwner, PyAstCompoundStatement,
+                          PyAstDecoratable, PyAstCallable, PyAstStatementListContainer, PyAstPossibleClassMember,
+                          AstScopeOwner, PyAstDocStringOwner, PyAstTypeCommentOwner, PyAstAnnotationOwner, PyAstTypeParameterListOwner {
 
-  PyAstFunction[] EMPTY_ARRAY = new PyAstFunction[0];
-  ArrayFactory<PyAstFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyAstFunction[count];
+  companion object {
+    private fun isRaiseNotImplementedError(statement: PyAstStatement): Boolean {
+      val raisedExpression =
+        (statement as? PyAstRaiseStatement)
+          ?.expressions
+          ?.takeIf { it.size == 1 }
+          ?.first()
+        ?: return false
 
-  @Override
-  default @Nullable String getName() {
-    ASTNode node = getNameNode();
-    return node != null ? node.getText() : null;
+      return when (raisedExpression) {
+        is PyAstCallExpression -> raisedExpression.callee
+        else -> raisedExpression
+      }?.text == PyNames.NOT_IMPLEMENTED_ERROR
+    }
   }
 
-  @Override
-  default @Nullable PsiElement getNameIdentifier() {
-    final ASTNode nameNode = getNameNode();
-    return nameNode != null ? nameNode.getPsi() : null;
-  }
+  override fun getName(): String? =
+    nameNode?.text
+
+  override fun getNameIdentifier(): PsiElement? =
+    nameNode?.psi
 
   /**
    * Returns the AST node for the function name identifier.
@@ -55,118 +54,70 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
    * @return the node, or null if the function is incomplete (only the "def"
    *         keyword was typed)
    */
-  default @Nullable ASTNode getNameNode() {
-    ASTNode id = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-    if (id == null) {
-      ASTNode error = getNode().findChildByType(TokenType.ERROR_ELEMENT);
-      if (error != null) {
-        id = error.findChildByType(PythonDialectsTokenSetProvider.getInstance().getKeywordTokens());
-      }
-    }
-    return id;
-  }
+  val nameNode: ASTNode?
+    get() = node.findChildByType(PyTokenTypes.IDENTIFIER)
+          ?: node.findChildByType(TokenType.ERROR_ELEMENT)?.findChildByType(PythonDialectsTokenSetProvider.getInstance().keywordTokens)
 
-  @Override
-  default @NotNull PyAstStatementList getStatementList() {
-    final PyAstStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
-    assert statementList != null : "Statement list missing for function " + getText();
-    return statementList;
-  }
+  override fun getStatementList(): PyAstStatementList =
+    requireNotNull(childToPsi(PyElementTypes.STATEMENT_LIST)) { "Statement list missing for function $text" }
 
-  @Override
-  default @Nullable PyAstFunction asMethod() {
-    if (getContainingClass() != null) {
-      return this;
-    }
-    else {
-      return null;
-    }
-  }
+  override fun asMethod(): PyAstFunction? =
+    this.takeIf { containingClass != null }
 
-  @Override
-  default @Nullable String getDocStringValue() {
-    return DocStringUtilCore.getDocStringValue(this);
-  }
+  override fun getDocStringValue(): String? =
+    DocStringUtilCore.getDocStringValue(this)
 
-  @Override
-  default int getTextOffset() {
-    final ASTNode name = getNameNode();
-    return name != null ? name.getStartOffset() : getNode().getStartOffset();
-  }
+  override fun getTextOffset(): Int =
+    nameNode?.startOffset ?: node.startOffset
 
-  @Override
-  default @Nullable PyAstStringLiteralExpression getDocStringExpression() {
-    final PyAstStatementList stmtList = getStatementList();
-    return DocStringUtilCore.findDocStringExpression(stmtList);
-  }
+  override fun getDocStringExpression(): PyAstStringLiteralExpression? =
+    DocStringUtilCore.findDocStringExpression(statementList)
 
-  @Override
-  @Nullable
-  PyAstTypeParameterList getTypeParameterList();
+  override fun getTypeParameterList(): PyAstTypeParameterList?
+
   /**
    * Looks for two standard decorators to a function, or a wrapping assignment that closely follows it.
    *
    * @return a flag describing what was detected.
    */
-  @Nullable
-  Modifier getModifier();
+  val modifier: Modifier?
 
-  default boolean isAsync() {
-    return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
-  }
+  val isAsync: Boolean
+    get() = node.findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null
 
-  default boolean isAsyncAllowed() {
-    final LanguageLevel languageLevel = LanguageLevel.forElement(this);
-    if (languageLevel.isOlderThan(LanguageLevel.PYTHON35)) return false;
+  val isAsyncAllowed: Boolean
+    get() {
+      val languageLevel = LanguageLevel.forElement(this)
+      if (languageLevel.isOlderThan(LanguageLevel.PYTHON35)) return false
 
-    final String functionName = getName();
+      val functionName = name
 
-    if (functionName == null ||
-        ArrayUtil.contains(functionName, PyNames.AITER, PyNames.ANEXT, PyNames.AENTER, PyNames.AEXIT, PyNames.CALL)) {
-      return true;
-    }
-
-    final Map<String, PyNames.BuiltinDescription> builtinMethods =
-      asMethod() != null ? PyNames.getBuiltinMethods(languageLevel) : PyNames.getModuleBuiltinMethods(languageLevel);
-
-    return !builtinMethods.containsKey(functionName);
-  }
-
-  default boolean onlyRaisesNotImplementedError() {
-    final PyAstStatement[] statements = getStatementList().getStatements();
-    return statements.length == 1 && isRaiseNotImplementedError(statements[0]) ||
-           statements.length == 2 && PyUtilCore.isStringLiteral(statements[0]) && isRaiseNotImplementedError(statements[1]);
-  }
-
-  private static boolean isRaiseNotImplementedError(@NotNull PyAstStatement statement) {
-    final PyAstExpression raisedExpression = Optional
-      .ofNullable(ObjectUtils.tryCast(statement, PyAstRaiseStatement.class))
-      .map(PyAstRaiseStatement::getExpressions)
-      .filter(expressions -> expressions.length == 1)
-      .map(expressions -> expressions[0])
-      .orElse(null);
-
-    if (raisedExpression instanceof PyAstCallExpression) {
-      final PyAstExpression callee = ((PyAstCallExpression)raisedExpression).getCallee();
-      if (callee != null && callee.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
-        return true;
+      if (name in setOf(PyNames.AITER, PyNames.ANEXT, PyNames.AENTER, PyNames.AEXIT, PyNames.CALL)) {
+        return true
       }
-    }
-    else if (raisedExpression != null && raisedExpression.getText().equals(PyNames.NOT_IMPLEMENTED_ERROR)) {
-      return true;
+
+      val builtinMethods =
+        if (asMethod() != null) PyNames.getBuiltinMethods(languageLevel) else PyNames.getModuleBuiltinMethods(languageLevel)
+
+      return functionName !in builtinMethods
     }
 
-    return false;
+  fun onlyRaisesNotImplementedError(): Boolean {
+    val statements = statementList.statements
+    return statements.size == 1 && isRaiseNotImplementedError(statements[0]) ||
+           statements.size == 2 && PyUtilCore.isStringLiteral(statements[0]) && isRaiseNotImplementedError(statements[1])
   }
+
 
   /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().
    */
-  enum Modifier {
+  enum class Modifier {
     /**
      * Function is decorated with @classmethod, its first param is the class.
      */
     CLASSMETHOD,
+
     /**
      * Function is decorated with {@code @staticmethod}, its first param is as in a regular function.
      */
@@ -176,82 +127,56 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
   /**
    * @return function protection level (underscore based)
    */
-  default @NotNull ProtectionLevel getProtectionLevel() {
-    final int underscoreLevels = PyUtilCore.getInitialUnderscores(getName());
-    for (final ProtectionLevel level : ProtectionLevel.values()) {
-      if (level.getUnderscoreLevel() == underscoreLevels) {
-        return level;
-      }
+  val protectionLevel: ProtectionLevel
+    get() {
+      val underscoreLevels = PyUtilCore.getInitialUnderscores(name)
+      return ProtectionLevel.entries
+               .firstOrNull { it.underscoreLevel == underscoreLevels }
+             ?: ProtectionLevel.PRIVATE
     }
-    return ProtectionLevel.PRIVATE;
-  }
 
-  enum ProtectionLevel {
+  enum class ProtectionLevel(
+    /**
+     * number of underscores
+     */
+    val underscoreLevel: Int,
+  ) {
     /**
      * public members
      */
     PUBLIC(0),
+
     /**
-     * _protected_memebers
+     * _protected_members
      */
     PROTECTED(1),
+
     /**
-     * __private_memebrs
+     * __private_members
      */
     PRIVATE(2);
-    private final int myUnderscoreLevel;
 
-    ProtectionLevel(final int underscoreLevel) {
-      myUnderscoreLevel = underscoreLevel;
-    }
-
-    /**
-     * @return number of underscores
-     */
-    public int getUnderscoreLevel() {
-      return myUnderscoreLevel;
-    }
   }
 
-  @Override
-  @Nullable
-  PyAstDecoratorList getDecoratorList();
+  override fun getContainingClass(): PyAstClass? =
+    PsiTreeUtil.getParentOfType(this, StubBasedPsiElement::class.java) as? PyAstClass
 
-  @Override
-  PyAstAnnotation getAnnotation();
+  override fun acceptPyVisitor(pyVisitor: PyAstElementVisitor): Unit =
+    pyVisitor.visitPyFunction(this)
 
-  @Override
-  @NotNull
-  PyAstParameterList getParameterList();
-
-  @Override
-  default @Nullable PyAstClass getContainingClass() {
-    final PsiElement parent = PsiTreeUtil.getParentOfType(this, StubBasedPsiElement.class);
-    if (parent instanceof PyAstClass) {
-      return (PyAstClass)parent;
-    }
-    return null;
-  }
-
-  @Override
-  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
-    pyVisitor.visitPyFunction(this);
-  }
-
-  @Override
-  default @Nullable PsiComment getTypeComment() {
-    final PsiComment inlineComment = PyUtilCore.getCommentOnHeaderLine(this);
-    if (inlineComment != null && PyUtilCore.getTypeCommentValue(inlineComment.getText()) != null) {
-      return inlineComment;
+  override fun getTypeComment(): PsiComment? {
+    val inlineComment = PyUtilCore.getCommentOnHeaderLine(this)
+    if (inlineComment != null && PyUtilCore.getTypeCommentValue(inlineComment.text) != null) {
+      return inlineComment
     }
 
-    final PyAstStatementList statements = getStatementList();
-    if (statements.getStatements().length != 0) {
-      final PsiComment comment = ObjectUtils.tryCast(statements.getFirstChild(), PsiComment.class);
-      if (comment != null && PyUtilCore.getTypeCommentValue(comment.getText()) != null) {
-        return comment;
+    val statements = statementList
+    if (statements.statements.isNotEmpty()) {
+      val comment = statements.firstChild as? PsiComment
+      if (comment != null && PyUtilCore.getTypeCommentValue(comment.text) != null) {
+        return comment
       }
     }
-    return null;
+    return null
   }
 }

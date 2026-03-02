@@ -92,7 +92,7 @@ object PyTypeInferenceCspFactory {
     for (entry in mappedParameters) {
       val argument = entry.key
       val parameter: PyCallableParameter = entry.value
-      if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {
+      if (parameter.isPositionalContainer || parameter.isKeywordContainer) {
         throw NotSupportedException()
       }
 
