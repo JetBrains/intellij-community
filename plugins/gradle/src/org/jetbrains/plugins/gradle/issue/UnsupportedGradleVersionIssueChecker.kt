@@ -101,10 +101,13 @@ private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, proje
 @ApiStatus.Internal
 class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: String) : ConfigurableGradleBuildIssue() {
   init {
-    val recommendedGradleVersion = GradleJvmSupportMatrix.getRecommendedGradleVersionByIdea()
+    val oldestNonDeprecatedGradleVersion = GradleJvmSupportMatrix.getOldestNonDeprecatedGradleVersionByIdea()
     setTitle(GradleBundle.message("gradle.build.issue.gradle.deprecated.title"))
     addDescription(GradleBundle.message("gradle.build.issue.gradle.deprecated.description", gradleVersion.version))
-    addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
-    addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
+    addDescription(GradleBundle.message(
+      "gradle.build.issue.gradle.recommended.at.least.description",
+      oldestNonDeprecatedGradleVersion.version)
+    )
+    addGradleVersionQuickFix(projectPath, oldestNonDeprecatedGradleVersion)
   }
 }

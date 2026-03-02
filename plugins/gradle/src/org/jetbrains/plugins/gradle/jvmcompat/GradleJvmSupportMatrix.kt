@@ -63,7 +63,7 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   }
 
   private fun isGradleSupportedByIdeaImpl(gradleVersion: GradleVersion): Boolean {
-    return getOldestSupportedGradleVersionByIdeaImpl() <= gradleVersion.baseVersion
+    return getOldestSupportedGradleVersionByIdeaImpl().takeMajorMinor() <= gradleVersion.baseVersion
   }
 
   private fun isGradleDeprecatedByIdeaImpl(gradleVersion: GradleVersion): Boolean {
@@ -223,6 +223,11 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
       return getInstance().getRecommendedGradleVersionByIdeaImpl()
     }
 
+    fun getOldestNonDeprecatedGradleVersionByIdea(): GradleVersion {
+      val withoutPatch = getInstance().getOldestNonDeprecatedGradleVersionByIdeaImpl()
+      return getInstance().getAllSupportedGradleVersionsByIdeaImpl().lastOrNull { it.takeMajorMinor() == withoutPatch } ?: withoutPatch
+    }
+
     fun getOldestSupportedJavaVersionByIdea(): JavaVersion {
       return getInstance().getOldestSupportedJavaVersionByIdeaImpl()
     }
@@ -230,6 +235,10 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
     @JvmStatic
     fun getLatestMinorGradleVersion(major: Int): GradleVersion {
       return getInstance().getLatestMinorGradleVersionImpl(major)
+    }
+
+    private fun GradleVersion.takeMajorMinor(): GradleVersion {
+      this.baseVersion.version.split('.').take(2).joinToString(".").let { return GradleVersion.version(it) }
     }
   }
 }
