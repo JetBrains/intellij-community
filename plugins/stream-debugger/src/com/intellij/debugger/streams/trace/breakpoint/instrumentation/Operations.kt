@@ -80,7 +80,7 @@ class BreakpointBasedToCollectionOperation(name: String) : ToCollectionOperation
     objectStorage: ObjectStorage,
     call: TerminatorStreamCall,
     time: ObjectReference,
-  ): TerminalCallHandler = PeekTerminalCallHandler(objectStorage, call.getTypeBefore(), call.resultType, time)
+  ): TerminalCallHandler = ToCollectionTerminalCallHandler(call, objectStorage, time)
 }
 
 class BreakpointBasedMatchingOperation(name: String, interpreter: CallTraceInterpreter) : MatchingOperation(name, interpreter), BreakpointBasedTerminalOperation {

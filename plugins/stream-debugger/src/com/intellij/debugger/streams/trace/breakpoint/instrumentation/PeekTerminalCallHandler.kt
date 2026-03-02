@@ -36,35 +36,25 @@ internal open class PeekTerminalCallHandler(
     DebuggerManagerThreadImpl.assertIsManagerThread()
     return objectStorage.watch(evaluationContextImpl) {
       val (beforeAfter, wrappedResult) = rawResult(evaluationContextImpl)
-      // Format: [[intermediateTrace, timing], terminalResult]
+      // Format: [intermediateTrace, terminalResult]
       array(beforeAfter, wrappedResult)
     }
   }
 
   /**
    * Returns the two sub-arrays that compose the terminal handler result:
-   * - first: `[intermediateTrace, timing]`
+   * - first: intermediate trace (infos array)
    * - second: the wrapped terminal result
    *
    * Subclasses can call this from within an `objectStorage.watch` block to build
    * customized result structures (e.g. [OptionalRuntimeHandler]).
    */
   protected fun ValueContext.rawResult(evaluationContextImpl: EvaluationContextImpl): Pair<ArrayReference, ArrayReference> {
-    val intermediateTrace = super.result(evaluationContextImpl)
-    val timing = formatTime()
+    val intermediateTrace = super.result(evaluationContextImpl) as ArrayReference
     val wrappedResult = when (val r = streamResult) {
       is VoidValue -> array(CommonClassNames.JAVA_LANG_OBJECT, 1)
       else -> array(r)
     }
-    return Pair(array(intermediateTrace, timing), wrappedResult)
-  }
-
-  private fun ValueContext.formatTime(): ArrayReference {
-    val getMethod = time.referenceType().method("get", "()I")
-    val timeValue = getMethod.invoke(time)
-
-    return array("int", 1).apply {
-      setValue(0, timeValue)
-    }
+    return Pair(intermediateTrace, wrappedResult)
   }
 }

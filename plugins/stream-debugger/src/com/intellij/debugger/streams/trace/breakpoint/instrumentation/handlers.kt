@@ -21,6 +21,8 @@ interface StreamOperationHandler : RuntimeTraceHandler, BeforeCallTransformer, C
 
 interface RuntimeTraceHandler {
   // What the handler has accumulated during tracing
+  // For intermediate operations, it usually should return only infos array
+  // For terminal operation it should return [infos, result]
   fun result(evaluationContextImpl: EvaluationContextImpl): Value?
 }
 

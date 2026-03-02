@@ -37,13 +37,12 @@ internal class OptionalRuntimeHandler(
   override fun result(evaluationContextImpl: EvaluationContextImpl): Value {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     return objectStorage.watch(evaluationContextImpl) {
-      val (peekResult, wrappedResult) = rawResult(evaluationContextImpl)
+      val (beforeAfter, wrappedResult) = rawResult(evaluationContextImpl)
       val optional = wrappedResult.getValue(0) as ObjectReference
       assertIsOptional(optional)
 
       val isPresent = optional.referenceType().method("isPresent", "()Z").invoke(optional)
       val unwrapped = unwrapOptionalOrDefault(optional)
-      val beforeAfter = peekResult.getValue(0)
 
       array(
         array(
