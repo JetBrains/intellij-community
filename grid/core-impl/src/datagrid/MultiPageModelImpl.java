@@ -18,16 +18,17 @@ public class MultiPageModelImpl<Row, Column> extends GridPagingModelImpl<Row, Co
   public MultiPageModelImpl(@NotNull GridModel<Row, Column> model, @Nullable DataGridSettings settings) {
     super(model);
     mySettings = settings;
+    myPageStart = getFirstRowIndex();
   }
 
   @Override
   public boolean isFirstPage() {
-    return myPageStart == 1;
+    return myPageStart == getFirstRowIndex();
   }
 
   @Override
   public boolean isLastPage() {
-    return myPageEnd == -1 || myPageEnd >= myTotalRowCount && myTotalRowCountIsPrecise;
+    return myPageEnd == -1 || myPageEnd + (1 - getFirstRowIndex()) >= myTotalRowCount && myTotalRowCountIsPrecise;
   }
 
   @Override
@@ -96,5 +97,10 @@ public class MultiPageModelImpl<Row, Column> extends GridPagingModelImpl<Row, Co
   @Override
   public void addPageModelListener(@NotNull PageModelListener listener) {
     myPageModelListeners.addListener(listener);
+  }
+
+  @Override
+  public int getFirstRowIndex() {
+    return mySettings == null ? 1 : mySettings.getFirstRowIndex();
   }
 }

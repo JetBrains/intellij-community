@@ -151,4 +151,8 @@ public interface DataGridSettings {
   }
 
   default void setShowGeoAsBinary(boolean value) { }
+
+  default int getFirstRowIndex() {
+    return 1;
+  }
 }
