@@ -288,7 +288,6 @@ class SePopupVm(
   }
 
   fun closePopup() {
-    SeMlService.getInstanceIfEnabled()?.onSessionFinished()
     closePopupHandler()
   }
 
