@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.icons.AllIcons
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -41,20 +42,35 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
-  fun startupShellCommandOverrideIsConsumedOnceAndNotPersisted() {
+  fun startupLaunchSpecOverrideIsConsumedOnceAndNotPersisted() {
     val file = AgentChatVirtualFile(
       projectPath = "/work/project-a",
       threadIdentity = "CODEX:thread-1",
       shellCommand = listOf("codex", "resume", "thread-1"),
+      shellEnvVariables = mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"),
       threadId = "thread-1",
       threadTitle = "Thread One",
       subAgentId = null,
     )
-    file.setStartupShellCommandOverride(listOf("codex", "--", "-run this"))
+    file.setStartupLaunchSpecOverride(
+      AgentSessionTerminalLaunchSpec(
+        command = listOf("codex", "--", "-run this"),
+        envVariables = mapOf("PATH" to "/custom/bin", "DISABLE_AUTOUPDATER" to "1"),
+      )
+    )
 
-    assertThat(file.consumeStartupShellCommand()).containsExactly("codex", "--", "-run this")
-    assertThat(file.consumeStartupShellCommand()).containsExactly("codex", "resume", "thread-1")
+    val startupLaunchSpec = file.consumeStartupLaunchSpec()
+    assertThat(startupLaunchSpec.command).containsExactly("codex", "--", "-run this")
+    assertThat(startupLaunchSpec.envVariables)
+      .containsExactlyEntriesOf(mapOf("PATH" to "/custom/bin", "TERM" to "xterm-256color", "DISABLE_AUTOUPDATER" to "1"))
+
+    val fallbackLaunchSpec = file.consumeStartupLaunchSpec()
+    assertThat(fallbackLaunchSpec.command).containsExactly("codex", "resume", "thread-1")
+    assertThat(fallbackLaunchSpec.envVariables)
+      .containsExactlyEntriesOf(mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"))
     assertThat(file.toSnapshot().runtime.shellCommand).containsExactly("codex", "resume", "thread-1")
+    assertThat(file.toSnapshot().runtime.shellEnvVariables)
+      .containsExactlyEntriesOf(mapOf("PATH" to "/usr/local/bin", "TERM" to "xterm-256color"))
   }
 
   @Test

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFileSystem
@@ -46,8 +47,11 @@ internal class AgentChatVirtualFile internal constructor(
   var shellCommand: List<String> = emptyList()
     private set
 
+  var shellEnvVariables: Map<String, String> = emptyMap()
+    private set
+
   @Volatile
-  private var startupShellCommandOverride: List<String>? = null
+  private var startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null
 
   var threadId: String = ""
     private set
@@ -81,6 +85,7 @@ internal class AgentChatVirtualFile internal constructor(
     projectPath: String,
     threadIdentity: String,
     shellCommand: List<String>,
+    shellEnvVariables: Map<String, String> = emptyMap(),
     threadId: String,
     threadTitle: String,
     subAgentId: String?,
@@ -96,10 +101,10 @@ internal class AgentChatVirtualFile internal constructor(
       threadTitle = threadTitle,
       subAgentId = subAgentId,
       shellCommand = shellCommand,
+      shellEnvVariables = shellEnvVariables,
       threadActivity = threadActivity,
     ))
   )
-
 
   init {
     updateFromResolution(resolution)
@@ -147,21 +152,28 @@ internal class AgentChatVirtualFile internal constructor(
     return true
   }
 
-  fun updateCommandAndThreadId(shellCommand: List<String>, threadId: String) {
+  fun updateCommandAndThreadId(shellCommand: List<String>, shellEnvVariables: Map<String, String>, threadId: String) {
     this.shellCommand = shellCommand
+    this.shellEnvVariables = shellEnvVariables
     this.threadId = threadId
   }
 
   @Synchronized
-  fun setStartupShellCommandOverride(shellCommand: List<String>) {
-    startupShellCommandOverride = shellCommand
+  fun setStartupLaunchSpecOverride(launchSpec: AgentSessionTerminalLaunchSpec) {
+    startupLaunchSpecOverride = AgentSessionTerminalLaunchSpec(
+      command = launchSpec.command,
+      envVariables = shellEnvVariables + launchSpec.envVariables,
+    )
   }
 
   @Synchronized
-  fun consumeStartupShellCommand(): List<String> {
-    val startupCommand = startupShellCommandOverride
-    startupShellCommandOverride = null
-    return startupCommand ?: shellCommand
+  fun consumeStartupLaunchSpec(): AgentSessionTerminalLaunchSpec {
+    val startupLaunchSpec = startupLaunchSpecOverride
+    startupLaunchSpecOverride = null
+    return startupLaunchSpec ?: AgentSessionTerminalLaunchSpec(
+      command = shellCommand,
+      envVariables = shellEnvVariables,
+    )
   }
 
   fun updatePendingMetadata(
@@ -223,6 +235,7 @@ internal class AgentChatVirtualFile internal constructor(
   fun rebindPendingThread(
     threadIdentity: String,
     shellCommand: List<String>,
+    shellEnvVariables: Map<String, String>,
     threadId: String,
     threadTitle: String,
     threadActivity: AgentThreadActivity,
@@ -233,8 +246,8 @@ internal class AgentChatVirtualFile internal constructor(
       updateThreadCoordinates()
       changed = true
     }
-    if (this.shellCommand != shellCommand || this.threadId != threadId) {
-      updateCommandAndThreadId(shellCommand = shellCommand, threadId = threadId)
+    if (this.shellCommand != shellCommand || this.shellEnvVariables != shellEnvVariables || this.threadId != threadId) {
+      updateCommandAndThreadId(shellCommand = shellCommand, shellEnvVariables = shellEnvVariables, threadId = threadId)
       changed = true
     }
     if (updateThreadTitle(threadTitle)) {
@@ -273,8 +286,16 @@ internal class AgentChatVirtualFile internal constructor(
       subAgentId = snapshot.identity.subAgentId
       updateThreadCoordinates()
     }
-    if (snapshot.runtime.threadId.isNotBlank() || snapshot.runtime.shellCommand.isNotEmpty()) {
-      updateCommandAndThreadId(shellCommand = snapshot.runtime.shellCommand, threadId = snapshot.runtime.threadId)
+    if (
+      snapshot.runtime.threadId.isNotBlank() ||
+      snapshot.runtime.shellCommand.isNotEmpty() ||
+      snapshot.runtime.shellEnvVariables.isNotEmpty()
+    ) {
+      updateCommandAndThreadId(
+        shellCommand = snapshot.runtime.shellCommand,
+        shellEnvVariables = snapshot.runtime.shellEnvVariables,
+        threadId = snapshot.runtime.threadId,
+      )
     }
     if (snapshot.runtime.threadTitle.isNotBlank()) {
       updateThreadTitle(snapshot.runtime.threadTitle)
@@ -312,6 +333,7 @@ internal class AgentChatVirtualFile internal constructor(
         threadId = threadId,
         threadTitle = threadTitle,
         shellCommand = shellCommand,
+        shellEnvVariables = shellEnvVariables,
         threadActivity = threadActivity,
         pendingCreatedAtMs = pendingCreatedAtMs,
         pendingFirstInputAtMs = pendingFirstInputAtMs,

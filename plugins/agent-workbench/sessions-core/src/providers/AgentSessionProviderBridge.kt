@@ -29,13 +29,16 @@ interface AgentSessionProviderBridge {
 
   fun isCliAvailable(): Boolean
 
-  fun buildResumeCommand(sessionId: String): List<String>
+  fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec
 
-  fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String>
+  fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec
 
-  fun buildNewEntryCommand(): List<String>
+  fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec
 
-  fun buildCommandWithInitialPrompt(baseCommand: List<String>, prompt: String): List<String>? = null
+  fun buildLaunchSpecWithInitialPrompt(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    prompt: String,
+  ): AgentSessionTerminalLaunchSpec? = null
 
   suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec
 
@@ -50,7 +53,12 @@ interface AgentSessionProviderBridge {
   fun isCliMissingError(throwable: Throwable): Boolean = false
 }
 
+data class AgentSessionTerminalLaunchSpec(
+  @JvmField val command: List<String>,
+  @JvmField val envVariables: Map<String, String> = emptyMap(),
+)
+
 data class AgentSessionLaunchSpec(
   @JvmField val sessionId: String?,
-  @JvmField val command: List<String>,
+  @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
 )

@@ -21,7 +21,7 @@ import kotlinx.serialization.Serializable
 import java.nio.file.Files
 import kotlin.time.Duration.Companion.minutes
 
-private const val AGENT_CHAT_TABS_STATE_VERSION = 3
+private const val AGENT_CHAT_TABS_STATE_VERSION = 4
 private const val AGENT_CHAT_TABS_STATE_TTL_MILLIS = 30L * 24 * 60 * 60 * 1000
 private const val AGENT_CHAT_LEGACY_METADATA_DIR_NAME = "agent-workbench-chat-frame"
 private const val AGENT_CHAT_LEGACY_METADATA_TABS_DIR_NAME = "tabs"
@@ -49,6 +49,7 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
   }
 
   fun load(tabKey: AgentChatTabKey): AgentChatTabSnapshot? {
+    ensureCurrentVersion()
     val entry = state.tabsByKey[tabKey.value] ?: return null
     if (isExpired(entry.updatedAt)) {
       delete(tabKey)
@@ -62,6 +63,7 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
   }
 
   fun upsert(snapshot: AgentChatTabSnapshot) {
+    ensureCurrentVersion()
     val now = System.currentTimeMillis()
     updateState { current ->
       val updatedTabs = current.tabsByKey.toMutableMap()
@@ -74,6 +76,7 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
   }
 
   fun delete(tabKey: AgentChatTabKey): Boolean {
+    ensureCurrentVersion()
     if (tabKey.value !in state.tabsByKey) {
       return false
     }
@@ -102,6 +105,7 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
     threadIdentity: String,
     subAgentId: String? = null,
   ): AgentChatDeleteByThreadResult {
+    ensureCurrentVersion()
     val normalizedProjectPath = normalizeAgentWorkbenchPath(projectPath)
     val keysToDelete = state.tabsByKey.entries
       .filter { (_, tab) ->
@@ -127,6 +131,7 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
   }
 
   fun pruneStale() {
+    ensureCurrentVersion()
     val now = System.currentTimeMillis()
     val filtered = state.tabsByKey.filterValues { tab -> !isExpired(tab.updatedAt, now) }
     if (filtered.size == state.tabsByKey.size && state.version == AGENT_CHAT_TABS_STATE_VERSION) {
@@ -137,6 +142,18 @@ internal class AgentChatTabsStateService(scope: CoroutineScope?)
       AgentChatTabsState(
         version = AGENT_CHAT_TABS_STATE_VERSION,
         tabsByKey = filtered,
+      )
+    }
+  }
+
+  private fun ensureCurrentVersion() {
+    if (state.version == AGENT_CHAT_TABS_STATE_VERSION) {
+      return
+    }
+    updateState {
+      AgentChatTabsState(
+        version = AGENT_CHAT_TABS_STATE_VERSION,
+        tabsByKey = emptyMap(),
       )
     }
   }
@@ -160,6 +177,7 @@ internal data class PersistedAgentChatTabState(
   @JvmField val subAgentId: String?,
   @JvmField val threadId: String,
   @JvmField val shellCommand: List<String>,
+  @JvmField val shellEnvVariables: Map<String, String> = emptyMap(),
   @JvmField val lastKnownTitle: String,
   @JvmField val lastKnownActivity: String,
   @JvmField val pendingCreatedAtMs: Long? = null,
@@ -218,6 +236,7 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
       threadId = threadId,
       threadTitle = lastKnownTitle,
       shellCommand = shellCommand,
+      shellEnvVariables = shellEnvVariables,
       threadActivity = parseThreadActivity(lastKnownActivity),
       pendingCreatedAtMs = resolvedPendingCreatedAtMs,
       pendingFirstInputAtMs = pendingFirstInputAtMs,
@@ -237,6 +256,7 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
     subAgentId = identity.subAgentId,
     threadId = runtime.threadId,
     shellCommand = runtime.shellCommand,
+    shellEnvVariables = runtime.shellEnvVariables,
     lastKnownTitle = runtime.threadTitle,
     lastKnownActivity = runtime.threadActivity.name,
     pendingCreatedAtMs = runtime.pendingCreatedAtMs,

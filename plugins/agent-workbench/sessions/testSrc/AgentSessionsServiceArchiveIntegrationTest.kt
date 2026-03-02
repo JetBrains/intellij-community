@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
@@ -62,11 +63,20 @@ class AgentSessionsServiceArchiveIntegrationTest {
       override val cliMissingMessageKey: String
         get() = "toolwindow.error.claude.cli"
       override fun isCliAvailable(): Boolean = true
-      override fun buildResumeCommand(sessionId: String): List<String> = listOf("claude", "--resume", sessionId)
-      override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("claude")
-      override fun buildNewEntryCommand(): List<String> = listOf("claude")
+      override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+        return AgentSessionTerminalLaunchSpec(command = listOf("claude", "--resume", sessionId))
+      }
+      override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+        return AgentSessionTerminalLaunchSpec(command = listOf("claude"))
+      }
+      override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
+        return AgentSessionTerminalLaunchSpec(command = listOf("claude"))
+      }
       override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-        return AgentSessionLaunchSpec(sessionId = null, command = listOf("claude"))
+        return AgentSessionLaunchSpec(
+          sessionId = null,
+          launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("claude")),
+        )
       }
     }
 
@@ -524,14 +534,23 @@ private fun testCodexBridge(
 
     override fun isCliAvailable(): Boolean = true
 
-    override fun buildResumeCommand(sessionId: String): List<String> = listOf("codex", "resume", sessionId)
+    override fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+      return AgentSessionTerminalLaunchSpec(command = listOf("codex", "resume", sessionId))
+    }
 
-    override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> = listOf("codex")
+    override fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+      return AgentSessionTerminalLaunchSpec(command = listOf("codex"))
+    }
 
-    override fun buildNewEntryCommand(): List<String> = listOf("codex")
+    override fun buildNewEntryLaunchSpec(): AgentSessionTerminalLaunchSpec {
+      return AgentSessionTerminalLaunchSpec(command = listOf("codex"))
+    }
 
     override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-      return AgentSessionLaunchSpec(sessionId = null, command = listOf("codex"))
+      return AgentSessionLaunchSpec(
+        sessionId = null,
+        launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex")),
+      )
     }
 
     override suspend fun archiveThread(path: String, threadId: String): Boolean {

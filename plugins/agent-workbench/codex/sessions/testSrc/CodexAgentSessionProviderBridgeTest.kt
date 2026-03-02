@@ -19,41 +19,41 @@ class CodexAgentSessionProviderBridgeTest {
   private val bridge = CodexAgentSessionProviderBridge()
 
   @Test
-  fun buildResumeCommand() {
-    assertThat(bridge.buildResumeCommand("thread-1"))
+  fun buildResumeLaunchSpec() {
+    assertThat(bridge.buildResumeLaunchSpec("thread-1").command)
       .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "thread-1")
   }
 
   @Test
-  fun buildNewEntryCommand() {
-    assertThat(bridge.buildNewEntryCommand())
+  fun buildNewEntryLaunchSpec() {
+    assertThat(bridge.buildNewEntryLaunchSpec().command)
       .containsExactly("codex", "-c", "check_for_update_on_startup=false")
   }
 
   @Test
-  fun buildNewSessionCommand() {
-    assertThat(bridge.buildNewSessionCommand(AgentSessionLaunchMode.STANDARD))
+  fun buildNewSessionLaunchSpec() {
+    assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD).command)
       .containsExactly("codex", "-c", "check_for_update_on_startup=false")
-    assertThat(bridge.buildNewSessionCommand(AgentSessionLaunchMode.YOLO))
+    assertThat(bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO).command)
       .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--full-auto")
   }
 
   @Test
-  fun buildCommandWithInitialPromptForYoloCommand() {
+  fun buildLaunchSpecWithInitialPromptForYoloCommand() {
     assertThat(
-      bridge.buildCommandWithInitialPrompt(
-        listOf("codex", "-c", "check_for_update_on_startup=false", "--full-auto"),
+      bridge.buildLaunchSpecWithInitialPrompt(
+        baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO),
         "-draft plan\nstep 2",
-      )
+      ).command
     )
       .containsExactly("codex", "-c", "check_for_update_on_startup=false", "--full-auto", "--", "-draft plan\nstep 2")
   }
 
   @Test
-  fun buildCommandWithInitialPromptForResumeCommand() {
-    val resumeCommand = bridge.buildResumeCommand("thread-1")
+  fun buildLaunchSpecWithInitialPromptForResumeCommand() {
+    val resumeLaunchSpec = bridge.buildResumeLaunchSpec("thread-1")
 
-    assertThat(bridge.buildCommandWithInitialPrompt(resumeCommand, "Summarize changes"))
+    assertThat(bridge.buildLaunchSpecWithInitialPrompt(resumeLaunchSpec, "Summarize changes").command)
       .containsExactly("codex", "-c", "check_for_update_on_startup=false", "resume", "thread-1", "--", "Summarize changes")
   }
 
@@ -67,11 +67,11 @@ class CodexAgentSessionProviderBridgeTest {
     runBlocking(Dispatchers.Default) {
       val standard = bridge.createNewSession(path = "/work/project", mode = AgentSessionLaunchMode.STANDARD)
       assertThat(standard.sessionId).isNull()
-      assertThat(standard.command).containsExactly("codex", "-c", "check_for_update_on_startup=false")
+      assertThat(standard.launchSpec.command).containsExactly("codex", "-c", "check_for_update_on_startup=false")
 
       val yolo = bridge.createNewSession(path = "/work/project", mode = AgentSessionLaunchMode.YOLO)
       assertThat(yolo.sessionId).isNull()
-      assertThat(yolo.command).containsExactly("codex", "-c", "check_for_update_on_startup=false", "--full-auto")
+      assertThat(yolo.launchSpec.command).containsExactly("codex", "-c", "check_for_update_on_startup=false", "--full-auto")
     }
   }
 

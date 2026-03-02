@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import java.util.UUID
 
 internal class AgentSessionProviderUnavailableException(provider: AgentSessionProvider) :
@@ -15,17 +16,20 @@ private fun requireAgentSessionProviderBridge(provider: AgentSessionProvider) =
   AgentSessionProviderBridges.find(provider)
   ?: throw AgentSessionProviderUnavailableException(provider)
 
-internal fun buildAgentSessionResumeCommand(provider: AgentSessionProvider, sessionId: String): List<String> =
-  requireAgentSessionProviderBridge(provider).buildResumeCommand(sessionId)
+internal fun buildAgentSessionResumeLaunchSpec(
+  provider: AgentSessionProvider,
+  sessionId: String,
+): AgentSessionTerminalLaunchSpec =
+  requireAgentSessionProviderBridge(provider).buildResumeLaunchSpec(sessionId)
 
-internal fun buildAgentSessionNewCommand(
+internal fun buildAgentSessionNewLaunchSpec(
   provider: AgentSessionProvider,
   mode: AgentSessionLaunchMode,
-): List<String> =
-  requireAgentSessionProviderBridge(provider).buildNewSessionCommand(mode)
+): AgentSessionTerminalLaunchSpec =
+  requireAgentSessionProviderBridge(provider).buildNewSessionLaunchSpec(mode)
 
-internal fun buildAgentSessionEntryCommand(provider: AgentSessionProvider): List<String> {
-  return requireAgentSessionProviderBridge(provider).buildNewEntryCommand()
+internal fun buildAgentSessionEntryLaunchSpec(provider: AgentSessionProvider): AgentSessionTerminalLaunchSpec {
+  return requireAgentSessionProviderBridge(provider).buildNewEntryLaunchSpec()
 }
 
 internal fun buildAgentSessionIdentity(provider: AgentSessionProvider, sessionId: String): String {

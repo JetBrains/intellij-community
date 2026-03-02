@@ -7,6 +7,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
@@ -35,6 +36,7 @@ data class AgentChatPendingTabRebindTarget(
   @JvmField val threadIdentity: String,
   @JvmField val threadId: String,
   @JvmField val shellCommand: List<String>,
+  @JvmField val shellEnvVariables: Map<String, String> = emptyMap(),
   @JvmField val threadTitle: String,
   @JvmField val threadActivity: AgentThreadActivity,
   @JvmField val threadUpdatedAt: Long = 0L,
@@ -82,7 +84,8 @@ suspend fun openChat(
   projectPath: String,
   threadIdentity: String,
   shellCommand: List<String>,
-  startupShellCommandOverride: List<String>? = null,
+  shellEnvVariables: Map<String, String> = emptyMap(),
+  startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
   threadId: String,
   threadTitle: String,
   subAgentId: String?,
@@ -106,7 +109,7 @@ suspend fun openChat(
   )
   val existing = findExistingChatByTabKey(manager.openFiles, tabKey.value)
                  ?: findExistingChat(manager.openFiles, threadIdentity, subAgentId)
-  val startupOverrideForNewTab = if (existing == null) startupShellCommandOverride else null
+  val startupOverrideForNewTab = if (existing == null) startupLaunchSpecOverride else null
   val snapshotInitialComposedMessage = if (startupOverrideForNewTab != null) null else initialComposedMessage
   val snapshotInitialMessageToken = if (startupOverrideForNewTab != null) null else initialMessageToken
   val snapshotInitialMessageSent = if (startupOverrideForNewTab != null) false else initialMessageSent
@@ -119,6 +122,7 @@ suspend fun openChat(
     threadTitle = threadTitle,
     subAgentId = subAgentId,
     shellCommand = shellCommand,
+    shellEnvVariables = shellEnvVariables,
     threadActivity = threadActivity,
     pendingCreatedAtMs = pendingCreatedAtMs,
     pendingFirstInputAtMs = pendingFirstInputAtMs,
@@ -137,7 +141,7 @@ suspend fun openChat(
   val file = existing ?: fileSystem.getOrCreateFile(snapshot)
   if (existing != null) {
     existing.updateFromResolution(AgentChatTabResolution.Resolved(snapshot))
-    existing.updateCommandAndThreadId(shellCommand = shellCommand, threadId = threadId)
+    existing.updateCommandAndThreadId(shellCommand = shellCommand, shellEnvVariables = shellEnvVariables, threadId = threadId)
     val titleUpdated = existing.updateThreadTitle(threadTitle)
     val activityUpdated = existing.updateThreadActivity(threadActivity)
     val pendingUpdated = if (
@@ -183,7 +187,7 @@ suspend fun openChat(
   }
   else {
     if (startupOverrideForNewTab != null) {
-      file.setStartupShellCommandOverride(startupOverrideForNewTab)
+      file.setStartupLaunchSpecOverride(startupOverrideForNewTab)
     }
     tabsService.upsert(file.toSnapshot())
     LOG.debug {
@@ -377,6 +381,7 @@ fun rebindOpenPendingCodexTabs(
       val changed = pendingFile.rebindPendingThread(
         threadIdentity = request.target.threadIdentity,
         shellCommand = request.target.shellCommand,
+        shellEnvVariables = request.target.shellEnvVariables,
         threadId = request.target.threadId,
         threadTitle = request.target.threadTitle,
         threadActivity = request.target.threadActivity,
