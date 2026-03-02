@@ -3,7 +3,7 @@ from _typeshed import SupportsRead
 from collections.abc import Callable, Mapping
 from datetime import _TzInfo, datetime
 from io import StringIO
-from typing import IO, Any
+from typing import IO, Any, Literal, overload
 from typing_extensions import Self, TypeAlias
 
 _FileOrStr: TypeAlias = bytes | str | IO[str] | IO[Any]
@@ -77,6 +77,7 @@ class _ymd(list[int]):
 class parser:
     info: parserinfo
     def __init__(self, info: parserinfo | None = None) -> None: ...
+    @overload
     def parse(
         self,
         timestr: _FileOrStr,
@@ -87,11 +88,25 @@ class parser:
         dayfirst: bool | None = ...,
         yearfirst: bool | None = ...,
         fuzzy: bool = ...,
-        fuzzy_with_tokens: bool = ...,
+        fuzzy_with_tokens: Literal[False] = False,
     ) -> datetime: ...
+    @overload
+    def parse(
+        self,
+        timestr: _FileOrStr,
+        default: datetime | None = None,
+        ignoretz: bool = False,
+        tzinfos: _TzInfos | None = None,
+        *,
+        dayfirst: bool | None = ...,
+        yearfirst: bool | None = ...,
+        fuzzy: bool = ...,
+        fuzzy_with_tokens: Literal[True],
+    ) -> tuple[datetime, tuple[str, ...]]: ...
 
 DEFAULTPARSER: parser
 
+@overload
 def parse(
     timestr: _FileOrStr,
     parserinfo: parserinfo | None = None,
@@ -100,10 +115,23 @@ def parse(
     yearfirst: bool | None = ...,
     ignoretz: bool = ...,
     fuzzy: bool = ...,
-    fuzzy_with_tokens: bool = ...,
+    fuzzy_with_tokens: Literal[False] = False,
     default: datetime | None = ...,
     tzinfos: _TzInfos | None = ...,
 ) -> datetime: ...
+@overload
+def parse(
+    timestr: _FileOrStr,
+    parserinfo: parserinfo | None = None,
+    *,
+    dayfirst: bool | None = ...,
+    yearfirst: bool | None = ...,
+    ignoretz: bool = ...,
+    fuzzy: bool = ...,
+    fuzzy_with_tokens: Literal[True],
+    default: datetime | None = ...,
+    tzinfos: _TzInfos | None = ...,
+) -> tuple[datetime, tuple[str, ...]]: ...
 
 class _tzparser:
     class _result(_resultbase):
