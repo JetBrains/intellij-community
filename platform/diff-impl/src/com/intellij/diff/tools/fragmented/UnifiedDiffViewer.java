@@ -242,6 +242,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   protected void onDispose() {
     super.onDispose();
     EditorFactory.getInstance().releaseEditor(myEditor);
+    EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myDocument, null);
   }
 
   @Override
