@@ -187,7 +187,7 @@ v1: Callable[[], Coroutine[Any, Any, AsyncIterator[int]]] = generator29
 
 async def generator30() -> AsyncIterator[int]:
     raise NotImplementedError
-    yield
+    yield 1
 
 
 async def uses_generator30() -> None:

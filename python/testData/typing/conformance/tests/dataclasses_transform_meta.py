@@ -15,7 +15,7 @@ class ModelField:
 def model_field(
     *, init: bool = True, default: Any | None = None, alias: str | None = None
 ) -> Any:
-    ...
+    raise NotImplementedError
 
 
 @dataclass_transform(

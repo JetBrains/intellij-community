@@ -23,7 +23,7 @@ class Array(Generic[*Shape]):
         ...
 
     def transpose(self) -> Any:
-        pass
+        raise NotImplementedError
 
 
 def func1(a: Array[Axis1, Axis2], b: Array[Axis1, Axis2, Axis3]):

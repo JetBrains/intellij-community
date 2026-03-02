@@ -158,7 +158,7 @@ def func8(x: str) -> A:
 
 
 def func8(x: Any) -> Any:
-    ...
+    raise NotImplementedError
 
 
 assert_type(func8("foo"), C)  # First overload
