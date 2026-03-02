@@ -60,7 +60,7 @@ class PyInterpreterNotificationProvider : EditorNotificationProvider, DumbAware 
       object : EditorNotificationPanel(fileEditor, Status.Warning) {
         init {
           text = PyBundle.message("python.sdk.no.interpreter.configured.for.module", module.name)
-          if (executor.isBusy) {
+          if (executor.isBusy.value) {
             val label = javax.swing.JLabel(PyBundle.message("python.sdk.interpreter.fix.already.in.progress"))
             label.foreground = com.intellij.util.ui.UIUtil.getInactiveTextColor()
             myLinksPanel.add(label)

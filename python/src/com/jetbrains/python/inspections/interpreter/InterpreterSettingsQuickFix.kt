@@ -46,19 +46,26 @@ import com.jetbrains.python.sdk.switchToSdk
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Executor that accepts at most one concurrent task.
- * While a task is running, subsequent submissions are silently discarded.
- *
- * [isBusy] reflects the current state and can be used to update UI accordingly
- * (e.g., replacing action links with a progress indicator).
+ * While a task is running, subsequent submissions are discarded.
  */
 @ApiStatus.Internal
 interface BusyGuardExecutor {
-  val isBusy: Boolean
+  /**
+   * Reflects whether an action is currently being executed.
+   * Can be used to update UI accordingly (e.g., replacing action links with a progress indicator).
+   */
+  val isBusy: StateFlow<Boolean>
+
+  /**
+   * Submits an action for execution.
+   * If another action is already in progress, the submission is silently discarded.
+   */
   fun execute(action: suspend () -> Unit)
 }
 
