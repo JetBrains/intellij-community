@@ -39,6 +39,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
+import com.intellij.platform.debugger.impl.ui.XDebuggerUiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
@@ -62,7 +63,6 @@ import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.frame.XVariablesViewBase;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
-import com.intellij.platform.debugger.impl.ui.XDebuggerUiBundle;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
@@ -209,9 +209,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @ApiStatus.Internal
   public void showTab() {
+    showTab(null);
+  }
+
+  @ApiStatus.Internal
+  public void showTab(@Nullable RunContentDescriptor contentToReuse) {
     RunContentDescriptor descriptor = getRunContentDescriptor();
     if (descriptor == null) return;
-    RunContentManager.getInstance(myProject).showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
+    RunContentManager.getInstance(myProject).showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor, contentToReuse);
   }
 
   protected void initFocusingVariablesFromFramesView() {
