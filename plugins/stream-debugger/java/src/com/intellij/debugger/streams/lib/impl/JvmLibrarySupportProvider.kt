@@ -16,6 +16,7 @@ import com.intellij.debugger.streams.trace.impl.JavaDebuggerCommandLauncher
 import com.intellij.debugger.streams.trace.impl.JavaValueInterpreter
 import com.intellij.debugger.streams.ui.impl.JavaCollectionTreeBuilder
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebugSession
 
 abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
@@ -32,6 +33,9 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
   }
 
   override suspend fun getTracerFor(chain: StreamChain, session: XDebugSession): StreamTracer {
+    if (!Registry.`is`("debugger.streams.use.breakpoint.based.tracing")) {
+      return super.getTracerFor(chain, session)
+    }
     val support = getLibrarySupport()
     val debugProcess = session.debugProcess
 

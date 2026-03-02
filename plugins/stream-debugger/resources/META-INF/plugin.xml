@@ -35,4 +35,8 @@
 
       <p>In the latter mode, you can switch between operations manually using the tabs on top.</p>
     ]]></description>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="debugger.streams.use.breakpoint.based.tracing" defaultValue="true" description="Use new breakpoint based engine for stream tracing" />
+  </extensions>
 </idea-plugin>
