@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.smartPointers;
 
@@ -26,6 +26,7 @@ public abstract class SmartPointerElementInfo {
   abstract @Nullable PsiFile restoreFile(@NotNull SmartPointerManagerEx manager);
 
   abstract int elementHashCode(); // must be immutable
+
   abstract boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerEx manager);
 
   abstract VirtualFile getVirtualFile();
