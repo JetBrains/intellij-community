@@ -151,7 +151,9 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     // In split architecture, the session tab init is asynchronous.
     // This constructor might be called when the session is already running.
     // Therefore, the first session pause event might be missed.
-    myTime.incrementAndGet();
+    if (debugSession.isPaused()) {
+      myTime.incrementAndGet();
+    }
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(suspendContext -> {
       ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(true));
