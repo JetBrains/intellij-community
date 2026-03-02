@@ -50,4 +50,5 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   }
   public void testCyclicInheritanceOfTypeAnnotation() { doTest(true, true); }
   public void testReferenceToPrivateClass() { doTest(true, true); }
+  public void testReferenceToPrivateClassOuterThis() { doTest(true, true); }
 }

@@ -1700,6 +1700,10 @@ final class ExpressionChecker {
           newExpression.getClassOrAnonymousClassReference() == expression) {
         return;
       }
+      if (parent instanceof PsiNewExpression newExpression && newExpression.getQualifier() != null) {
+        // The qualifier will be checked instead
+        return;
+      }
       if (parent instanceof PsiThisExpression || parent instanceof PsiSuperExpression) return;
     }
     if (!(expression instanceof PsiThisExpression) && !(expression instanceof PsiSuperExpression) ||
