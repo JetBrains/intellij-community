@@ -557,7 +557,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
   private void initializeNonCidrSettings(boolean isMultiEditor) {
     setupFileChooser(labelForOutputDirectory, outputDirectory,
                      KotlinBaseCompilerConfigurationUiBundle.message("configuration.title.choose.output.directory"),
-                     false);
+                     false, project);
 
     fillModuleKindList();
     fillSourceMapSourceEmbeddingList();
@@ -665,11 +665,12 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     @NotNull JLabel label,
     @NotNull TextFieldWithBrowseButton fileChooser,
     @NotNull @NlsContexts.DialogTitle String title,
-    boolean forFiles
+    boolean forFiles,
+    @Nullable Project project
   ) {
     label.setLabelFor(fileChooser);
     var descriptor = new FileChooserDescriptor(forFiles, !forFiles, false, false, false, false).withTitle(title);
-    fileChooser.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    fileChooser.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
   }
 
   private static boolean isBrowseFieldModified(@NotNull TextFieldWithBrowseButton chooser, @NotNull String currentValue) {
