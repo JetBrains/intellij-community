@@ -16,6 +16,10 @@ import com.intellij.debugger.streams.core.resolve.PairMapResolver
 import com.intellij.debugger.streams.core.resolve.PrependResolver
 import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctByKeyHandler
 import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTraceHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFilterOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedFlatMappingOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedMappingOperation
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedSortedOperation
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctKeysHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctValuesHandler
 
@@ -65,13 +69,13 @@ class StreamExLibrarySupport
     addTerminationOperationsSupport()
   }
 
-  private fun filterOperations(vararg names: String): Array<IntermediateOperation> = names.map { FilterOperation(it) }.toTypedArray()
+  private fun filterOperations(vararg names: String): Array<IntermediateOperation> = names.map { BreakpointBasedFilterOperation(it) }.toTypedArray()
 
-  private fun mapOperations(vararg names: String): Array<IntermediateOperation> = names.map { MappingOperation(it) }.toTypedArray()
+  private fun mapOperations(vararg names: String): Array<IntermediateOperation> = names.map { BreakpointBasedMappingOperation(it) }.toTypedArray()
 
-  private fun flatMapOperations(vararg names: String): Array<IntermediateOperation> = names.map { FlatMappingOperation(it) }.toTypedArray()
+  private fun flatMapOperations(vararg names: String): Array<IntermediateOperation> = names.map { BreakpointBasedFlatMappingOperation(it) }.toTypedArray()
 
-  private fun sortedOperations(vararg names: String): Array<IntermediateOperation> = names.map { SortedOperation(it) }.toTypedArray()
+  private fun sortedOperations(vararg names: String): Array<IntermediateOperation> = names.map { BreakpointBasedSortedOperation(it) }.toTypedArray()
 
   private fun collapseOperations(vararg names: String): Array<IntermediateOperation> = names.map { CollapseOperation(it) }.toTypedArray()
 }

@@ -4,12 +4,18 @@ package com.intellij.debugger.streams.lib.impl
 import com.intellij.debugger.streams.core.lib.IntermediateOperation
 import com.intellij.debugger.streams.core.lib.TerminalOperation
 import com.intellij.debugger.streams.core.lib.impl.LibrarySupportBase
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointPositionResolver
 import com.intellij.debugger.streams.trace.breakpoint.BreakpointResolveResult
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
-import com.intellij.debugger.streams.trace.breakpoint.instrumentation.NopHandlerFactory
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.IntermediateCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.NopHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.SourceCallHandler
+import com.intellij.debugger.streams.trace.breakpoint.instrumentation.TerminalCallHandler
+import com.sun.jdi.ObjectReference
 
 /**
  * Base class for JVM stream library support with breakpoint-based tracing.
@@ -59,7 +65,44 @@ abstract class JvmLibrarySupportBase(
     breakpointIntermediateOps.containsKey(name)
     || jvmCompatibleLibrary?.canHandleIntermediateWithBreakpoints(name) == true
 
-  override fun createRuntimeHandlerFactory(objectStorage: ObjectStorage): BreakpointBasedHandlerFactory = NopHandlerFactory
+  protected open fun getSourceRuntimeHandler(
+    objectStorage: ObjectStorage,
+    time: ObjectReference,
+  ): SourceCallHandler = NopHandler
+
+  protected open fun getIntermediateRuntimeHandler(
+    objectStorage: ObjectStorage,
+    callOrder: Int,
+    call: IntermediateStreamCall,
+    time: ObjectReference,
+  ): IntermediateCallHandler? {
+    return breakpointIntermediateOps[call.name]?.getRuntimeTraceHandler(objectStorage, callOrder, call, time)
+           ?: jvmCompatibleLibrary?.getIntermediateRuntimeHandler(objectStorage, callOrder, call, time)
+  }
+
+  protected open fun getTerminalRuntimeHandler(
+    call: TerminatorStreamCall,
+    objectStorage: ObjectStorage,
+    time: ObjectReference,
+  ): TerminalCallHandler? {
+    return breakpointTerminalOps[call.name]?.getRuntimeTraceHandler(objectStorage, call, time)
+           ?: jvmCompatibleLibrary?.getTerminalRuntimeHandler(call, objectStorage, time)
+  }
+
+  override fun createRuntimeHandlerFactory(objectStorage: ObjectStorage): BreakpointBasedHandlerFactory {
+    return CounterBasedBreakpointBasedHandlerFactory(
+      objectStorage,
+      getSourceHandler = { time -> getSourceRuntimeHandler(objectStorage, time) },
+      getIntermediateHandler = { callOrder, call, time ->
+        getIntermediateRuntimeHandler(objectStorage, callOrder, call, time)
+        ?: error("No breakpoint handler registered for terminal operation '${call.name}'")
+      },
+      getTerminalHandler = { call, time ->
+        getTerminalRuntimeHandler(call, objectStorage, time)
+        ?: error("No breakpoint handler registered for terminal operation '${call.name}'")
+      },
+    )
+  }
 }
 
 private object EmptyBreakpointPositionResolver : BreakpointPositionResolver {
