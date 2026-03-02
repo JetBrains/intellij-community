@@ -313,10 +313,10 @@ public class XValueHint extends AbstractValueHint {
             mySimpleColoredComponent = createExpandableHintComponent(presentation.icon(), presentation.text(),
                                                                      getShowPopupRunnable(result, presentation.evaluator()),
                                                                      presentation.evaluator(), presentation.valuePresentation(), presentation.link());
-            if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress) {
+            if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress componentWithProgress) {
               // TODO: it seems like that we are skipping "Collecting data..." this way, assuming that it will be the first presentation
               //   But this is not a correct way, UI should send "Collecting data..." presentation instead of the backend
-              ((SimpleColoredComponentWithProgress)mySimpleColoredComponent).startLoading();
+              componentWithProgress.startLoading();
             }
             showTooltipPopup(mySimpleColoredComponent);
           }
@@ -365,8 +365,8 @@ public class XValueHint extends AbstractValueHint {
           if (mySimpleColoredComponent == null) {
             return false;
           }
-          if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress) {
-            ((SimpleColoredComponentWithProgress)mySimpleColoredComponent).stopLoading();
+          if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress componentWithProgress) {
+            componentWithProgress.stopLoading();
           }
           Icon previousIcon = mySimpleColoredComponent.getIcon();
           var previousPreferredWidth = mySimpleColoredComponent.getPreferredSize().width;
