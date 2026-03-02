@@ -746,7 +746,7 @@ public final class FileManagerImpl implements FileManagerEx {
         clearPsiCaches(viewProvider);
 
         if (context != CodeInsightContexts.anyContext()) {
-          if (isContextRelevant(vFile, context)) {
+          if (CodeInsightContextUtil.isContextRelevant(vFile, context, myManager.getProject())) {
             filesHavingRelevantViewProviders.add(vFile);
           }
           else {
@@ -906,7 +906,7 @@ public final class FileManagerImpl implements FileManagerEx {
     }
     myTempProviders.put(file, context, null);
     try {
-      if (!isContextRelevant(file, context)) {
+      if (!CodeInsightContextUtil.isContextRelevant(file, context, myManager.getProject())) {
         // invalid PsiFile if its context is not associated with the file anymore
         return false;
       }
@@ -922,24 +922,6 @@ public final class FileManagerImpl implements FileManagerEx {
         DebugUtil.performPsiModification("invalidate temp view provider", () -> ((AbstractFileViewProvider)temp).markInvalidated());
       }
     }
-  }
-
-  /**
-   * @return true if `context` is still relevant for the `file`. It's relevant if {@link CodeInsightContextManager#getCodeInsightContexts)}
-   *         contain `context` or if `context` is `default` or `any`.
-   */
-  @RequiresReadLock
-  private boolean isContextRelevant(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
-    if (!CodeInsightContexts.isSharedSourceSupportEnabled(myManager.getProject())) {
-      return true;
-    }
-
-    if (context == CodeInsightContexts.anyContext() || file instanceof LightVirtualFile) {
-      return true;
-    }
-
-    List<@NotNull CodeInsightContext> contexts = CodeInsightContextManager.getInstance(myManager.getProject()).getCodeInsightContexts(file);
-    return contexts.contains(context);
   }
 
   private static boolean isValidOriginal(@NotNull PsiFile file) {
