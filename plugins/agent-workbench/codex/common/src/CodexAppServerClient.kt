@@ -369,7 +369,7 @@ class CodexAppServerClient(
       ?.takeIf { it.isNotEmpty() }
     val executable = configuredExecutable ?: CodexCliUtils.CODEX_COMMAND
     val process = try {
-      GeneralCommandLine(executable, "app-server")
+      GeneralCommandLine(executable, "-c", CODEX_AUTO_UPDATE_CONFIG, "app-server")
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
         .withEnvironment(environmentOverrides)
         .apply {
@@ -529,6 +529,8 @@ class CodexAppServerClient(
     }
   }
 }
+
+private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"
 
 private fun isExecutableNotFound(error: Throwable): Boolean {
   return generateSequence(error) { it.cause }
