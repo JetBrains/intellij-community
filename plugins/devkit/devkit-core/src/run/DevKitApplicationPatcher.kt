@@ -76,16 +76,16 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       }
     }
 
-    if (!vmParametersAsList.any { it.contains("CICompilerCount") || it.contains("TieredCompilation") }) {
-      vmParameters.addAll("-XX:CICompilerCount=2")
-      vmParameters.addAll("-XX:+UnlockDiagnosticVMOptions")
-      vmParameters.addAll("-XX:TieredOldPercentage=100000")
-    }
-
     vmParameters.addAll(
-      "-XX:MaxJavaStackTraceDepth=10000",
       "-ea",
+      "-XX:MaxJavaStackTraceDepth=10000",
+      "-XX:+IgnoreUnrecognizedVMOptions",
+      "-XX:+UnlockDiagnosticVMOptions",  // required for `-XX:TieredOldPercentage`
     )
+
+    if (!vmParametersAsList.any { it.contains("CICompilerCount") || it.contains("TieredCompilation") }) {
+      vmParameters.addAll("-XX:CICompilerCount=2", "-XX:TieredOldPercentage=100000")
+    }
 
     if (runnerSettings is DebuggingRunnerData) {
       vmParameters.defineProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "true")
