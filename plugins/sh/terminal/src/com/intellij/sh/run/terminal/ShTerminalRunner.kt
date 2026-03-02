@@ -71,7 +71,7 @@ open class ShTerminalRunner : ShRunner {
     }
     else {
       // The chosen content became invalid during background checks, let's retry.
-      doRun(project, command, workingDirectory, title, false)
+      doRun(project, command, workingDirectory, title, activateToolWindow)
     }
   }
 
