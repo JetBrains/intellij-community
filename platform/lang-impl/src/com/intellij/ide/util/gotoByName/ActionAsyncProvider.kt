@@ -72,6 +72,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
   private val actionManager: ActionManager = ActionManager.getInstance()
   private val intentions = ConcurrentHashMap<String, ApplyIntentionAction>()
   private val MATCHED_VALUE_COMPARATOR = Comparator<MatchedValue> { o1, o2 -> o1.compareWeights(o2) }
+  private val shouldHideInvisible = Registry.`is`("search.everywhere.hide.invisible.actions", false)
 
   fun processActions(
     scope: CoroutineScope,
@@ -154,7 +155,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
     actionIds.forEachConcurrent { id ->
       val action = loadAction(id) ?: return@forEachConcurrent
-      val wrapper = wrapVisibleActionOrNull(action, presentationProvider) ?: return@forEachConcurrent
+      val wrapper = wrapActionOrNull(action, presentationProvider) ?: return@forEachConcurrent
       val degree = matcher.matchingDegree(pattern)
       val matchedValue = abbreviationMatchedValue(wrapper, pattern, degree)
       if (!consumer(matchedValue)) {
@@ -194,9 +195,9 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
       val action = matchedActionOrStub.action
       val matchedAction = if (action is ActionStubBase) loadAction(action.id)?.let { MatchedAction(it, matchedActionOrStub.mode, matchedActionOrStub.weight) } else matchedActionOrStub
       if (matchedAction == null) return@forEachConcurrentOrdered null
-      val wrappedItem = wrapVisibleActionOrNull(action = matchedAction.action,
-                                                presentationProvider = presentationProvider,
-                                                matchMode = matchedAction.mode) ?: return@forEachConcurrentOrdered null
+      val wrappedItem = wrapActionOrNull(action = matchedAction.action,
+                                         presentationProvider = presentationProvider,
+                                         matchMode = matchedAction.mode) ?: return@forEachConcurrentOrdered null
       val matchedValue = matchItem(
         item = wrappedItem,
         matcher = weightMatcher,
@@ -370,7 +371,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
         val weight = calcElementWeight(element = action, pattern = pattern, matcher = weightMatcher)
         val matchedAction = MatchedAction(action = action, mode = mode, weight = weight)
-        val item = wrapVisibleActionOrNull(matchedAction.action, presentationProvider, matchedAction.mode) ?: return@runCatching null
+        val item = wrapActionOrNull(matchedAction.action, presentationProvider, matchedAction.mode) ?: return@runCatching null
         val matchedValue = matchItem(item = item, matcher = weightMatcher, pattern = pattern, matchType = MatchedValueType.ACTION)
         return@runCatching matchedValue
       }.getOrLogException(LOG)
@@ -421,7 +422,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     }
 
     val matchedValues = collector.result.mapConcurrent { item ->
-      val obj = (item as? AnAction)?.let { wrapVisibleActionOrNull(action = it, presentationProvider = presentationProvider) } ?: item
+      val obj = (item as? AnAction)?.let { wrapActionOrNull(action = it, presentationProvider = presentationProvider) } ?: item
       matchItem(item = obj, matcher = matcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT)
     }.sortedWith(MATCHED_VALUE_COMPARATOR)
 
@@ -562,11 +563,11 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     return if (weight == null) MatchedValue(item, pattern, matchType) else MatchedValue(item, pattern, weight, matchType)
   }
 
-  private suspend fun wrapVisibleActionOrNull(action: AnAction, presentationProvider: suspend (AnAction) -> Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper? {
+  private suspend fun wrapActionOrNull(action: AnAction, presentationProvider: suspend (AnAction) -> Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper? {
     val groupMapping = model.getGroupMapping(action)
     groupMapping?.updateBeforeShowSuspend(presentationProvider)
     val presentation = presentationProvider(action)
-    if (!presentation.isVisible) return null
+    if (shouldHideInvisible && !presentation.isVisible) return null
 
     return ActionWrapper(action, groupMapping, matchMode, presentation)
   }
