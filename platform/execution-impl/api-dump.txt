@@ -68,6 +68,9 @@ com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAction
 com.intellij.execution.target.TargetEnvironmentWizard$ValidationCallbackConsumer
 - java.util.function.Consumer
 - a:doValidateAll():java.util.List
+c:com.intellij.execution.ui.CommonProgramParametersPanel
+- <init>(com.intellij.openapi.project.Project):V
+- <init>(Z,com.intellij.openapi.project.Project):V
 com.intellij.execution.ui.TargetAwareRunConfigurationEditor
 - a:targetChanged(java.lang.String):V
 com.intellij.openapi.module.WorkingDirectoryProvider
