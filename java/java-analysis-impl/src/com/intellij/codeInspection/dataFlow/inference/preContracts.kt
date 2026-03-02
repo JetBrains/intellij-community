@@ -49,7 +49,7 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
     val call : PsiMethodCallExpression = expression.restoreExpression(body())
 
     val result = call.resolveMethodGenerics()
-    val targetMethod = result.element as PsiMethod? ?: return emptyList()
+    val targetMethod = result.element as? PsiMethod? ?: return emptyList()
     if (targetMethod == method) return emptyList()
 
     val parameters = targetMethod.parameterList.parameters
