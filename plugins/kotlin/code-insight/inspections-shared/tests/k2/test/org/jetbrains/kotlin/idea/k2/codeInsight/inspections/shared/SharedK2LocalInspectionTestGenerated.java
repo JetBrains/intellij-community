@@ -5402,6 +5402,36 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
                 runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/multiLine.kt");
             }
 
+            @TestMetadata("nestedWithTypeInference.kt")
+            public void testNestedWithTypeInference() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference.kt");
+            }
+
+            @TestMetadata("nestedWithTypeInference2.kt")
+            public void testNestedWithTypeInference2() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference2.kt");
+            }
+
+            @TestMetadata("nestedWithTypeInference3.kt")
+            public void testNestedWithTypeInference3() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference3.kt");
+            }
+
+            @TestMetadata("nestedWithTypeInference4.kt")
+            public void testNestedWithTypeInference4() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference4.kt");
+            }
+
+            @TestMetadata("nestedWithTypeInference5.kt")
+            public void testNestedWithTypeInference5() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference5.kt");
+            }
+
+            @TestMetadata("nestedWithTypeInference6.kt")
+            public void testNestedWithTypeInference6() throws Exception {
+                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/nestedWithTypeInference6.kt");
+            }
+
             @TestMetadata("notPair.kt")
             public void testNotPair() throws Exception {
                 runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/notPair.kt");
