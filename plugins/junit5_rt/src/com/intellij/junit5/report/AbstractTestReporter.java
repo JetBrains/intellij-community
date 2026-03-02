@@ -1,7 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5.report;
 
-import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.launcher.TestIdentifier;
@@ -90,7 +89,6 @@ public abstract class AbstractTestReporter implements TeamCityTestReporter {
   }
 
   protected static String getTrace(Throwable ex) {
-    if (ComparisonFailureData.isAssertionError(ex.getClass())) return "";
     StringWriter writer = new StringWriter();
     ex.printStackTrace(new PrintWriter(writer));
     return writer.toString();

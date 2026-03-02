@@ -2,7 +2,6 @@
 package com.intellij.java.debugger.impl.backend
 
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi
-import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerManagerApi
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
@@ -16,9 +15,6 @@ class BackendJavaDebuggerRemoteApiProvider : RemoteApiProvider {
     }
     remoteApi(remoteApiDescriptor<JavaDebuggerSessionApi>()) {
       BackendJavaDebuggerSessionApi()
-    }
-    remoteApi(remoteApiDescriptor<JavaDebuggerManagerApi>()) {
-      BackendJavaDebuggerManagerApi()
     }
   }
 }

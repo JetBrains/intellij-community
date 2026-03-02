@@ -126,6 +126,8 @@
     </extensionPoint>
     <extensionPoint name="lang.logicalStructureTreeElementProvider" interface="com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider" dynamic="true"/>
 
+    <extensionPoint name="structurePopupProvider" interface="com.intellij.ide.structureView.newStructureView.StructurePopupProvider" dynamic="true"/>
+
     <extensionPoint name="lang.surroundDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.surroundWith.SurroundDescriptor"/>
     </extensionPoint>

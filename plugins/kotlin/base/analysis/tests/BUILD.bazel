@@ -51,6 +51,10 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
   ],
   runtime_deps = [":tests"]
 )

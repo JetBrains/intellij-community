@@ -20,7 +20,7 @@ jvm_library(
   name = "api",
   module_name = "fleet.reporting.api",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
   resources = [":api_resources"],
   kotlinc_opts = ":custom_api",
   deps = [
@@ -33,7 +33,7 @@ jvm_library(
   name = "api_test_lib",
   module_name = "fleet.reporting.api",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_api",
   runtime_deps = [":api"]
 )

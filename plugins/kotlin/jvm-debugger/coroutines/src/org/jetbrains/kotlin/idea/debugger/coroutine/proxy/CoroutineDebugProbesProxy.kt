@@ -10,12 +10,9 @@ import com.sun.jdi.IntegerValue
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoCache
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineInfo
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.executionContext
 
 class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
@@ -41,46 +38,42 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
         return coroutineInfoCache
     }
 
+    /**
+     * Dumps coroutines via [dumpCoroutines] and then enriches them with Job hierarchy
+     * information (job name, job id, and parent job id) via [fetchAndSetJobNamesAndJobUniqueIds].
+     *
+     * Should be invoked on debugger manager thread.
+     *
+     * @return a pair of the [CoroutineInfoCache] and a boolean indicating whether
+     *   the Job hierarchy was successfully fetched (`false` if the cache is empty
+     *   or the hierarchy fetch failed)
+     */
     @Synchronized
-    fun dumpCoroutinesWithHierarchy(): CoroutineInfoCache {
+    fun dumpCoroutinesWithHierarchy(): Pair<CoroutineInfoCache, Boolean> {
         val cache = dumpCoroutines()
         val infos = cache.cache
-        if (cache.cache.isEmpty()) return cache
-        fetchAndSetJobNamesAndJobUniqueIds(infos)
-        return cache
+        if (cache.cache.isEmpty()) return cache to false
+        val jobsHierarchyFetched = fetchAndSetJobNamesAndJobUniqueIds(infos)
+        return cache to jobsHierarchyFetched
     }
 
     /**
-     * This method aims to reduce the overhead of obtaining the whole parent hierarchy for every DebugCoroutineInfo.
-     * It is invoked only when the coroutines hierarchy is requested in the Coroutines View.
+     * Fetches job hierarchy information and sets
+     * [CoroutineInfoData.job], [CoroutineInfoData.jobId], and [CoroutineInfoData.parentJobId]
+     * for each coroutine info entry.
      *
-     * The Helper method getJobAndParentForCoroutines returns the array of Strings with size = infos.size * 2 and
-     * array[2 * i] = info.job
-     * array[2 * i + 1] = info.parent
+     * Invokes [CoroutinesDebugHelper.getCoroutineJobHierarchyInfo] in the debugged JVM,
+     * which returns a 3-element array:
+     * - `1st element`: job names (String[]) — string representations of each coroutine's Job
+     * - `2nd element`: job references (Object[]) — Job object references, used to obtain stable JDI unique IDs
+     * - `3rd element`: parent indexes (int[]) — index into the job references array pointing to the parent Job,
+     *    or `-1` if the coroutine's job has no parent
      *
-     * NOTE: only coroutines which are captured in the coroutine dump will be shown in the Coroutine View,
-     * jobs which do not correspond to any captured coroutine will not be shown (e.g., jobs of completing coroutines or scope coroutines).
-     *
-     * The corresponding properties [CoroutineInfoData.job] and [CoroutineInfoData.parentJob] are set to the obtained values.
+     * Returns `true` if hierarchy was successfully fetched and applied.
      */
     @ApiStatus.Internal
-    fun fetchAndSetJobsAndParentsForCoroutines(infos: List<CoroutineInfoData>): Boolean {
-        val executionContext = suspendContext.executionContext() ?: return false
-        val debugCoroutineInfos = infos.map { it.debugCoroutineInfoRef }
-        val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getJobsAndParentsForCoroutines", debugCoroutineInfos)
-        val jobsWithParents = (array as? ArrayReference)?.values?.map { (it as? StringReference)?.value() }
-            ?: fallBackToMirrorFetchJobsAndParentsForCoroutines(executionContext, infos)
-        if (jobsWithParents.isEmpty()) return false
-        for (i in 0 until jobsWithParents.size step 2) {
-            infos[i / 2].job = jobsWithParents[i]
-            infos[i / 2].parentJob = jobsWithParents[i + 1]
-        }
-        return true
-    }
-
-    @ApiStatus.Internal
     fun fetchAndSetJobNamesAndJobUniqueIds(infos: List<CoroutineInfoData>): Boolean {
-        val executionContext = suspendContext.executionContext() ?: return false
+        val executionContext = suspendContext.executionContext()
         val debugCoroutineInfos = infos.map { it.debugCoroutineInfoRef }
         val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getCoroutineJobHierarchyInfo", debugCoroutineInfos)
         if (array == null) return false
@@ -98,23 +91,5 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
             }
         }
         return true
-    }
-
-    private fun fallBackToMirrorFetchJobsAndParentsForCoroutines(
-        executionContext: DefaultExecutionContext,
-        infos: List<CoroutineInfoData>
-    ): List<String?> {
-        val debugProbesImpl = DebugProbesImpl.instance(executionContext) ?: return emptyList()
-        if (!debugProbesImpl.isInstalled) return emptyList()
-        val debugCoroutineInfoImpl = CoroutineInfo.instance(executionContext) ?: return emptyList()
-        val jobsWithParents = arrayOfNulls<String>(infos.size * 2)
-        for (i in 0 until jobsWithParents.size step 2) {
-            val info = infos[i / 2]
-            val debugCoroutineInfoMirror = debugCoroutineInfoImpl.mirror(info.debugCoroutineInfoRef, executionContext)
-            val job = debugCoroutineInfoMirror?.context?.job
-            jobsWithParents[i] = job?.details
-            jobsWithParents[i + 1] = job?.parent?.getJob()?.details
-        }
-        return jobsWithParents.toList()
     }
 }

@@ -205,6 +205,31 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/FileRefInStringLiteralNoPrefix/");
     }
 
+    @TestMetadata("FlexibleType")
+    public void testFlexibleType() throws Exception {
+        runTest("../testData/basic/multifile/FlexibleType/");
+    }
+
+    @TestMetadata("FlexibleTypeCompanionObjectValues")
+    public void testFlexibleTypeCompanionObjectValues() throws Exception {
+        runTest("../testData/basic/multifile/FlexibleTypeCompanionObjectValues/");
+    }
+
+    @TestMetadata("FlexibleTypeEnum")
+    public void testFlexibleTypeEnum() throws Exception {
+        runTest("../testData/basic/multifile/FlexibleTypeEnum/");
+    }
+
+    @TestMetadata("FlexibleTypeNotNull")
+    public void testFlexibleTypeNotNull() throws Exception {
+        runTest("../testData/basic/multifile/FlexibleTypeNotNull/");
+    }
+
+    @TestMetadata("FlexibleTypeSealed")
+    public void testFlexibleTypeSealed() throws Exception {
+        runTest("../testData/basic/multifile/FlexibleTypeSealed/");
+    }
+
     @TestMetadata("GroovyClassNameCompletionFromDefaultPackage")
     public void testGroovyClassNameCompletionFromDefaultPackage() throws Exception {
         runTest("../testData/basic/multifile/GroovyClassNameCompletionFromDefaultPackage/");

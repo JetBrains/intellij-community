@@ -132,9 +132,8 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
       when (param) {
         is PySlashParameter -> PyCallableParameterImpl.psi(param)
         is PyNamedParameterTypeRepresentation -> {
-          val paramName = param.parameterName
           val paramType = param.typeExpression?.let { resolveTypeExpression(it, context, typeVarMap) }
-          PyCallableParameterImpl.nonPsi(paramName, paramType, param.defaultValue)
+          PyCallableParameterImpl.psi(param, paramType)
         }
         is PyStarExpression -> {
           // *args parameter

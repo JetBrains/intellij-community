@@ -28,7 +28,7 @@ object CommunityRunTestsBuildTarget {
         },
       )
       val options = TestingOptions()
-      options.mainModule = options.mainModule ?: "intellij.idea.community.main"
+      options.mainModule = options.mainModule ?: "intellij.idea.community.main.tests"
       TestingTasks.create(context, options).runTests()
     }
   }

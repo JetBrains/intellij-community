@@ -103,6 +103,7 @@ object DistributedTestModel : Ext(TestRoot) {
     call("visibleFrameNames", void, immutableList(string)).async
     call("projectsNames", void, immutableList(string)).async
     call("makeScreenshot", string, bool).async
+    call("dumpThreads", void, bool).async
     call("isResponding", void, bool).async
     call("projectsAreInitialised", void, bool).async
     call("getProductCodeAndVersion", void, RdProductInfo).async

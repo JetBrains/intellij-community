@@ -60,7 +60,7 @@
 
     <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions" open="true"
                     serviceImplementation="com.intellij.execution.EmptyAdditionalRunningOptions"/>
-    <projectService serviceInterface="com.intellij.execution.ExecutionManager" open="true"
+    <projectService serviceInterface="com.intellij.execution.ExecutionManager"
                     serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
                     serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>

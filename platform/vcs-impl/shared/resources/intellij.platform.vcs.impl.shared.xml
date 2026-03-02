@@ -1,9 +1,13 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.vcs.core"/>
     <module name="intellij.platform.vcs.shared"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean"

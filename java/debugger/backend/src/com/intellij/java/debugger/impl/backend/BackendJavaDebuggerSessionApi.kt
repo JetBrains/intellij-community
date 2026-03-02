@@ -15,6 +15,7 @@ import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.execution.filters.ExceptionFilters
+import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
@@ -26,7 +27,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
-import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.DumpItem
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
@@ -219,15 +219,15 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
                           iconToolTipIndex = iconToolTipToIndex[it.iconToolTip]!!.toByte(),
                           firstLine = firstLine,
                           isContainer = it.isContainer,
-                          id = it.id,
-                          parentId = it.parentId,
+                          treeId = it.treeId,
+                          parentTreeId = it.parentTreeId,
                           canBeHidden = it.canBeHidden
     )
   }
 
   return ThreadDumpWithAwaitingDependencies(items = items,
                                             icons = icons.map { it.rpcId() },
-                                            attributes = attributes.map { it.toRpc() },
+                                            attributes = attributes.map { it.rpcId() },
                                             stackTraces = stackTraces,
                                             awaitingDependencies = awaiting,
                                             stateDescriptions = stateDescriptions,

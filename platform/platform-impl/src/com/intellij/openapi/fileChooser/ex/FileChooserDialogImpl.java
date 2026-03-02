@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserCustomizer;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -31,6 +32,7 @@ import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.fileChooser.impl.FileChooserUsageCollector;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
+import com.intellij.openapi.fileChooser.tree.FileTreeModel;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -87,6 +89,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -251,13 +254,19 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       toolbarPanel.add(extraToolbarPanel, BorderLayout.SOUTH);
     }
 
-    myPath = new ComboBox<>(FileChooserUtil.getRecentPaths().toArray(ArrayUtilRt.EMPTY_STRING_ARRAY));
+    myPath = new ComboBox<>(getFilteredRecentPaths().toArray(ArrayUtilRt.EMPTY_STRING_ARRAY));
     myPath.setEditable(true);
     myPath.setRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
       label.setText(value);
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-338208, EA-831292")) {
-        VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
-        label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
+      final var customIcon = FileChooserCustomizer.Util.fastGetFileIcon(myProject, Path.of(value));
+      if (customIcon != null) {
+        label.setIcon(customIcon);
+      }
+      else {
+        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-338208, EA-831292")) {
+          VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
+          label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
+        }
       }
     }));
 
@@ -299,6 +308,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       });
 
     return panel;
+  }
+
+  private @NotNull List<String> getFilteredRecentPaths() {
+    return FileChooserUtil.getRecentPaths().stream().filter(
+      path -> FileChooserCustomizer.Util.isPathVisible(myProject, Path.of(path))
+    ).toList();
   }
 
   protected @Nullable JPanel createExtraToolbarPanel() {
@@ -369,6 +384,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   protected JTree createTree() {
+    myChooserDescriptor.putUserData(FileTreeModel.SYSTEM_ROOTS_FILTER,
+                                    path -> FileChooserCustomizer.Util.isPathVisible(myProject, path));
     Tree internalTree = createInternalTree();
     myFileSystemTree = new FileSystemTreeImpl(myProject, myChooserDescriptor, internalTree, null, null, null);
     internalTree.setRootVisible(myChooserDescriptor.isTreeRootVisible());

@@ -5,10 +5,12 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.parents
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.quickfix.PyRemoveAssignmentQuickFix
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyLambdaExpression
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyParenthesizedExpression
@@ -52,15 +54,17 @@ class PyNoneFunctionAssignmentInspection : PyInspection() {
           PythonSdkUtil.isElementInSkeletons(callable) ||
           callable is PyFunction && callable.hasInheritors()
         }) return
-      val parent = call.parent
-      if (parent is PyAssignmentStatement) {
-        registerProblem(
-          parent, PyPsiBundle.message("INSP.none.function.assignment", callee.name),
-          PyRemoveAssignmentQuickFix()
-        )
-      }
-      else {
-        registerProblem(call, PyPsiBundle.message("INSP.none.function.assignment", callee.name))
+     when (val parent = call.parent) {
+        is PyLambdaExpression -> return
+        is PyAssignmentStatement -> {
+          registerProblem(
+            parent, PyPsiBundle.message("INSP.none.function.assignment", callee.name),
+            PyRemoveAssignmentQuickFix()
+          )
+        }
+        else -> {
+          registerProblem(call, PyPsiBundle.message("INSP.none.function.assignment", callee.name))
+        }
       }
     }
 
@@ -76,9 +80,8 @@ class PyNoneFunctionAssignmentInspection : PyInspection() {
       return getParentSkippingParentheses() !is PyExpressionStatement
     }
 
-    private fun PsiElement.getParentSkippingParentheses(): PsiElement {
-      return generateSequence(parent) { it.parent }
+    private fun PsiElement.getParentSkippingParentheses(): PsiElement =
+      parents(withSelf = false)
         .first { it !is PyParenthesizedExpression }
-    }
   }
 }

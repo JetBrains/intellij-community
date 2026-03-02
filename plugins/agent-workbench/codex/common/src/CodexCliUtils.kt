@@ -6,8 +6,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 object CodexCliUtils {
   const val CODEX_COMMAND: String = "codex"
 
-  fun isAvailable(): Boolean = findExecutable() != null
-
-  fun findExecutable(): String? =
-    PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(CODEX_COMMAND)?.absolutePath
+  fun findExecutable(): String? {
+    return PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(CODEX_COMMAND)?.absolutePath
+  }
 }

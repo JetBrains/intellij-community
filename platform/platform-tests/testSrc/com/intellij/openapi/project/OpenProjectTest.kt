@@ -24,6 +24,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
 import com.intellij.testFramework.useProject
 import com.intellij.util.io.createDirectories
+import com.intellij.util.io.createParentDirectories
 import com.intellij.workspaceModel.ide.ProjectRootEntity
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.Dispatchers
@@ -173,21 +174,33 @@ internal class OpenProjectTest(private val opener: Opener) {
   }
 
   @Test
-  fun `open project then open regular file in the same valid existing project dir with inability to attach`() = runBlocking(Dispatchers.Default) {
+  fun `open project then open regular file with inability to attach`() = runBlocking(Dispatchers.Default) {
     Assume.assumeTrue(
       "Ignore ModeFolderAsProject/ModeFolderAsFolder, because we are checking open of regular files here, not folders",
       opener.mode != ModeFolderAsProject && opener.mode != ModeFolderAsFolder,
     )
 
-    val projectDir = tempDir.newPath("project")
+    val projectDir = tempDir.newPath("project/project")
     projectDir.resolve(".idea").createDirectories()
-    val javaFile = projectDir.resolve("MyClass.java")
-    javaFile.writeText("public class MyClass {}")
+    val javaFileNextToDotIdea = projectDir.resolve("MyClassInProjectDir.java")
+    javaFileNextToDotIdea.writeText("public class MyClassInProjectDir {}")
+    val javaFileInSubdirectory = projectDir.resolve("subdir/MyClassInSubdir.java")
+    javaFileInSubdirectory.createParentDirectories()
+    javaFileInSubdirectory.writeText("public class MyClassInSubdir {}")
+
+    val javaFileAboveProjectDirectory = projectDir.parent.resolve("MyClassAboveProjectDirectory.java")
+    javaFileAboveProjectDirectory.writeText("public class MyClassAboveProjectDirectory {}")
 
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(), disposableRule.disposable)
     opener.opener(projectDir)!!.useProject { openedProject ->
-      val project = opener.opener(javaFile)
+      var project = opener.opener(javaFileNextToDotIdea)
       // the file should be opened in the already opened project
+      assertThat(project).isSameAs(openedProject)
+
+      project = opener.opener(javaFileInSubdirectory)
+      assertThat(project).isSameAs(openedProject)
+
+      project = opener.opener(javaFileAboveProjectDirectory)
       assertThat(project).isSameAs(openedProject)
     }
     Unit

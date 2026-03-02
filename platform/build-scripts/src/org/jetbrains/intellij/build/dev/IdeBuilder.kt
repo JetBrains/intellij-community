@@ -331,7 +331,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
             newDir = runDir,
             os = request.os,
             arch = JvmArchitecture.currentJvmArch,
-            libcImpl = LibcImpl.current(OsFamily.currentOs),
+            libcImpl = LibcImpl.current(request.os),
             context = context,
           )
         }

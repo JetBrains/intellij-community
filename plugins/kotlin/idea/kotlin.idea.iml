@@ -145,5 +145,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.ide" />
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" />
   </component>
 </module>

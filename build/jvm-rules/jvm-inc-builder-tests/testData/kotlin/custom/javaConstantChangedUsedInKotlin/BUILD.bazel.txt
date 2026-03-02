@@ -1,0 +1,9 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+    name = "a",
+    srcs = glob(["a/*.java", "a/*.kt"], allow_empty = True),
+    deps = [
+      "@rules_jvm//:kotlin-stdlib_import",
+    ],
+)

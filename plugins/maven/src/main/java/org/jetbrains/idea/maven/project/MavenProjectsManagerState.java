@@ -26,4 +26,7 @@ public class MavenProjectsManagerState {
 
   public Set<String> ignoredFiles = new TreeSet<>();
   public List<String> ignoredPathMasks = new ArrayList<>();
+
+  public List<String> enabledProfiles = new ArrayList<>();
+  public List<String> disabledProfiles = new ArrayList<>();
 }

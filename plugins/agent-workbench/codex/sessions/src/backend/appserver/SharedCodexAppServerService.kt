@@ -23,10 +23,6 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     return client.listThreads(archived = false, cwdFilter = cwdFilter)
   }
 
-  internal suspend fun listAllThreads(): List<CodexThread> {
-    return client.listThreads(archived = false, cwdFilter = null)
-  }
-
   suspend fun createThread(cwd: String, yolo: Boolean): CodexThread {
     val thread = if (yolo) {
       client.createThread(cwd = cwd, approvalPolicy = "on-request", sandbox = "workspace-write")
@@ -40,5 +36,9 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
 
   suspend fun archiveThread(threadId: String) {
     client.archiveThread(threadId)
+  }
+
+  suspend fun unarchiveThread(threadId: String) {
+    client.unarchiveThread(threadId)
   }
 }

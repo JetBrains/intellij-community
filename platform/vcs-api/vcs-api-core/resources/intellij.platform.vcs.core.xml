@@ -1,4 +1,9 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.util.diff"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter" open="true"
                     serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>

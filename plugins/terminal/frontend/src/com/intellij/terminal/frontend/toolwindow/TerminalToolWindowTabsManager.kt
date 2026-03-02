@@ -32,7 +32,9 @@ interface TerminalToolWindowTabsManager {
   fun createTabBuilder(): TerminalToolWindowTabBuilder
 
   /**
-   * Close the given tool window tab and terminate the underlying shell process.
+   * Close the given tab and terminate the underlying shell process.
+   *
+   * Supports both tool-window attached tabs and tabs created with `shouldAddToToolWindow(false)`.
    */
   @RequiresEdt
   fun closeTab(tab: TerminalToolWindowTab)

@@ -452,7 +452,7 @@ object ChooserPopupUtil {
     }
 
   private fun <T> createSelectableList(
-    model: MultiChooserListModel<T>,
+    chooserModel: MultiChooserListModel<T>,
     presenter: (T) -> PopupItemPresentation,
   ): JBList<T> {
     val rendererWithChooser = SimpleSelectablePopupItemRenderer.create<T> { item ->
@@ -461,16 +461,17 @@ object ChooserPopupUtil {
         presentation.shortText,
         presentation.icon,
         presentation.fullText,
-        model.isChosen(item),
+        chooserModel.isChosen(item),
       )
     }
-    return createList(model, rendererWithChooser).apply {
+    return createList(chooserModel, rendererWithChooser).apply {
       fun toggleSelectedChosen() {
-        selectedIndex.takeIf { it >= 0 }?.let { idx ->
-          model.toggleChosen(idx)
-          // due to a bug in FilteringListModel the changed item is not redrawn on change, so we have to do it manually
-          getCellBounds(idx, idx)?.let { repaint(it) }
-        }
+        val selectedIndex = selectedIndex.takeIf { it >= 0 } ?: return
+        val selectedItem = model.getElementAt(selectedIndex) ?: return
+        // model is wrapped for filtering, so we can't use the index directly
+        chooserModel.toggleChosen(selectedItem)
+        // due to a bug in FilteringListModel the changed item is not redrawn on change, so we have to do it manually
+        getCellBounds(selectedIndex, selectedIndex)?.let { repaint(it) }
       }
 
       addMouseListener(object : MouseAdapter() {

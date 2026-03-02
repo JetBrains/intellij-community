@@ -2,13 +2,13 @@
 @file:JvmName("PluginXmlReader")
 package com.intellij.platform.runtime.product.serialization.impl
 
-import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
-import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule
 import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
+import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule
 import java.io.IOException
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
@@ -23,7 +23,7 @@ fun loadPluginModules(
   try {
     val modules = ArrayList<RawIncludedRuntimeModule>()
     val addedModules = HashSet<String>()
-    modules.add(RawIncludedRuntimeModule(mainModule.moduleId, RuntimeModuleLoadingRule.EMBEDDED))
+    modules.add(RawIncludedRuntimeModule(mainModule.moduleId, RuntimeModuleLoadingRule.EMBEDDED, null))
     addedModules.add(mainModule.moduleId.stringId)
     resourceFileResolver.readResourceFile(mainModule.moduleId, PLUGIN_XML_PATH).use { inputStream ->
       if (inputStream == null) {
@@ -61,7 +61,7 @@ fun loadPluginModules(
                 "on-demand" -> RuntimeModuleLoadingRule.ON_DEMAND
                 else -> RuntimeModuleLoadingRule.OPTIONAL
               }    
-              modules.add(RawIncludedRuntimeModule(RuntimeModuleId.module(moduleName), loadingRule))
+              modules.add(RawIncludedRuntimeModule(RuntimeModuleId.module(moduleName), loadingRule, null))
             }
           }
         }

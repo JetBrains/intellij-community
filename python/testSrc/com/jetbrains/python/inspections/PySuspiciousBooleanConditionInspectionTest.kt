@@ -65,6 +65,24 @@ class PySuspiciousBooleanConditionInspectionTest : PyInspectionTestCase() {
             print("hi")
     """.trimIndent())
 
+  fun `test coroutine in assert statement`() = doTestByText("""
+    async def check() -> bool:
+        return True
+
+
+    async def main():
+        assert <warning descr="Coroutine not awaited in boolean context">check()</warning>
+    """.trimIndent())
+
+  fun `test coroutine with 'not' operator`() = doTestByText("""
+    async def f() -> bool:
+        return True
+
+
+    async def main():
+        assert not <warning descr="Coroutine not awaited in boolean context">f()</warning>
+    """.trimIndent())
+
   fun `test coroutine variable with 'and' condition`() = doTestByText("""
     async def f() -> bool:
         return True
@@ -72,9 +90,34 @@ class PySuspiciousBooleanConditionInspectionTest : PyInspectionTestCase() {
 
     async def main():
         coro = f()
-        if bool() and <warning descr="Coroutine not awaited in boolean context">coro</warning>:
-            print("hi")
+        assert bool() and <warning descr="Coroutine not awaited in boolean context">coro</warning>
     """.trimIndent())
+
+  fun `test coroutine with 'or' condition`() = doTestByText("""
+    async def f() -> bool:
+        return True
+
+
+    async def main():
+        assert (
+            <warning descr="Coroutine not awaited in boolean context">f()</warning>
+            or <warning descr="Coroutine not awaited in boolean context">f()</warning> 
+            or <warning descr="Coroutine not awaited in boolean context">f()</warning> 
+        )
+    """.trimIndent())
+
+  fun `test coroutine with bare expression`() = doTestByText("""
+    async def f() -> bool:
+      return True
+
+
+    async def main():
+        a = (
+            <warning descr="Coroutine not awaited in boolean context">f()</warning> 
+            or <warning descr="Coroutine not awaited in boolean context">f()</warning>
+        )
+        a = not <warning descr="Coroutine not awaited in boolean context">f()</warning>
+  """.trimIndent())
 
   fun `test awaited coroutine no warning`() = doTestByText("""
     async def f() -> bool:
@@ -96,32 +139,9 @@ class PySuspiciousBooleanConditionInspectionTest : PyInspectionTestCase() {
             print("hi")
     """.trimIndent())
 
-  fun `test coroutine with 'or' condition`() = doTestByText("""
-    async def f() -> bool:
-        return True
-
-
-    async def main():
-        if <warning descr="Coroutine not awaited in boolean context">f()</warning> or bool():
-            print("hi")
-    """.trimIndent())
-
-  fun `test coroutine with 'not' operator`() = doTestByText("""
-    async def f() -> bool:
-        return True
-
-
-    async def main():
-        if not <warning descr="Coroutine not awaited in boolean context">f()</warning>:
-            print("hi")
-    """.trimIndent())
-
-  fun `test coroutine in assert statement`() = doTestByText("""
-    async def check() -> bool:
-        return True
-
-
-    async def main():
-        assert <warning descr="Coroutine not awaited in boolean context">check()</warning>
-    """.trimIndent())
+  fun `test shape type no warning`() = doTestByText("""
+    def f(val):
+      val[0]
+      assert val
+    """)
 }

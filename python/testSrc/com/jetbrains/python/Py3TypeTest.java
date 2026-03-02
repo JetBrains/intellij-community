@@ -2036,7 +2036,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int", "expr = round(1, 1)");
 
     doTest("int", "expr = round(1.1)");
-    doTest("float", "expr = round(1.1, 1)");
+    doTest("float | int", "expr = round(1.1, 1)");
 
     doTest("int", "expr = round(True)");
     doTest("int", "expr = round(True, 1)");
@@ -3694,7 +3694,7 @@ public class Py3TypeTest extends PyTestCase {
   // PY-34617
   public void testClassMethodUnderVersionCheck() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
-      doMultiFileTest("float",
+      doMultiFileTest("Union[float, int]",
                       """
                         from mod import Foo
                         expr = Foo().foo()
@@ -5037,6 +5037,143 @@ public class Py3TypeTest extends PyTestCase {
       def f(foo):
           _ = foo.illegal
           expr = MyClass.foo
+      """);
+  }
+
+  // PY-83206
+  public void testIntNotIsInstanceFloat() {
+    doTest("int", """
+      if not isinstance((x := 42), float):
+          expr = x
+      """);
+  }
+
+  // PY-83206
+  public void testFloatLiteralIsJustFloat() {
+    doTest("Never", """
+      a = .0
+      if isinstance(a, int):
+          expr = a
+      """);
+  }
+
+  // PY-83206
+  public void testIntFloatTowerIsInstanceNever() {
+    doTest("Never", """
+      def foo(y: int | float) -> None:
+          if isinstance(y, float):
+              if isinstance(y, int):
+                  expr = y
+      """);
+  }
+
+  // PY-83206 Disjoint base: @disjoint_base decorator makes classes disjoint
+  public void testDisjointBaseDecorator() {
+    doTest("Never", """
+      from typing_extensions import disjoint_base
+      
+      @disjoint_base
+      class A:
+          pass
+      
+      @disjoint_base
+      class B:
+          pass
+      
+      def foo(x: A) -> None:
+          if isinstance(x, B):
+              expr = x
+      """);
+  }
+
+  // PY-83206 Disjoint base: children of same disjoint base can intersect
+  public void testDisjointBaseSameBase() {
+    doTest("Child1 & Child2", """
+      from typing_extensions import disjoint_base
+      
+      @disjoint_base
+      class Base:
+          pass
+      
+      class Child1(Base):
+          pass
+      
+      class Child2(Base):
+          pass
+      
+      def foo(x: Child1) -> None:
+          if isinstance(x, Child2):
+              expr = x
+      """);
+  }
+
+  // PY-83206 Disjoint base: __slots__ makes classes disjoint
+  public void testSlotsAreDisjoint() {
+    doTest("Never", """
+      class A:
+          __slots__ = ['x']
+      
+      class B:
+          __slots__ = ['y']
+      
+      def foo(x: A) -> None:
+          if isinstance(x, B):
+              expr = x
+      """);
+  }
+
+  // PY-83206 Disjoint base: empty __slots__ is not disjoint
+  public void testEmptySlotsNotDisjoint() {
+    doTest("A & B", """
+      class A:
+          __slots__ = []
+      
+      class B:
+          __slots__ = []
+      
+      def foo(x: A) -> None:
+          if isinstance(x, B):
+              expr = x
+      """);
+  }
+
+  // PY-83206 Disjoint base: @dataclass(slots=True) creates disjoint base
+  public void testDataclassSlotsDisjoint() {
+    doTest("Never", """
+      from dataclasses import dataclass
+      
+      @dataclass(slots=True)
+      class A:
+          x: int
+      
+      @dataclass(slots=True)
+      class B:
+          y: str
+      
+      def foo(a: A) -> None:
+          if isinstance(a, B):
+              expr = a
+      """);
+  }
+
+  // PY-83206 Disjoint base: union with disjoint class filters correctly
+  public void testDisjointBaseWithUnion() {
+    doTest("(B & str) | (C & str)", """
+      from typing_extensions import disjoint_base
+      
+      @disjoint_base
+      class A:
+          pass
+      
+      class B:
+          pass
+      
+      class C:
+          pass
+      
+      def foo(x: A | B | C) -> None:
+          if isinstance(x, str):
+              expr = x
       """);
   }
 

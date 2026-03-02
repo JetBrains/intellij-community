@@ -43,6 +43,7 @@ export interface SearchCapabilities {
 
 export interface ReadCapabilities {
   hasReadFile: boolean
+  hasApplyPatch?: boolean
 }
 
 export interface ToolInputSchema {

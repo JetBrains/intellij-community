@@ -153,7 +153,6 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
     expect(mock.findClass(anyObject(), anyObject())).andReturn(null).anyTimes();
     expect(mock.findClasses(anyObject(), anyObject())).andReturn(PsiClass.EMPTY_ARRAY).anyTimes();
     expect(mock.findPackage(eq("foo"))).andReturn(null);
-    expect(mock.getSubPackages(rootPackage(), anyObject())).andReturn(PsiPackage.EMPTY_ARRAY);
     replay(mock);
     return mock;
   }

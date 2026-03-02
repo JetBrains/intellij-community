@@ -559,7 +559,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     File dir = new File(tempDir.getRoot(), "dir");
     File file = new File(dir, "child.txt");
     assertFalse(file.exists());
-    assertEquals(tempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRoot()));
+    assertEquals(tempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRootPath()));
 
     assertTrue(dir.mkdirs());
     assertTrue(file.createNewFile());

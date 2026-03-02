@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="org.jetbrains.idea.gradle.dsl"/>
     <module name="intellij.gradle.java"/>
+    <module name="intellij.java.psi"/>
   </dependencies>
   <!-- endregion -->
 

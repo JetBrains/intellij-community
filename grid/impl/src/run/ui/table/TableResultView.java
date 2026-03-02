@@ -91,12 +91,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.BadgeIcon;
 import com.intellij.ui.CellRendererPanel;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TableCell;
@@ -2315,7 +2315,8 @@ public final class TableResultView extends JBTableWithResizableCells
     private final JPanel myCompositeLabel;
     private final List<JLabel> myIconLabels;
     private JLabel filterLabel;
-    private final Icon filterIconEnabled = new BadgeIcon(AllIcons.General.Filter, JBUI.CurrentTheme.IconBadge.SUCCESS);
+    private final Icon filterIconEnabled =
+      IconManager.getInstance().withIconBadge(AllIcons.General.Filter, JBUI.CurrentTheme.IconBadge.SUCCESS);
 
     private final List<JPanel> myHeaderLinePanels;
     private TableResultViewColumn myCurrentColumn;
@@ -2342,7 +2343,7 @@ public final class TableResultView extends JBTableWithResizableCells
     }
 
     protected Rectangle getNameRect() {
-      return getLabelTextRect(myNameLabels.get(0));
+      return getLabelTextRect(myNameLabels.getFirst());
     }
 
     protected int getModelIdx() {
@@ -2552,7 +2553,7 @@ public final class TableResultView extends JBTableWithResizableCells
           if (isColumnEnabled(sibling, myTable.myResultPanel)) return false;
         }
         else {
-          HierarchicalGridColumn leftMostChildOfSibling = sibling.getChildren().get(0);
+          HierarchicalGridColumn leftMostChildOfSibling = sibling.getChildren().getFirst();
           if (isColumnEnabled(leftMostChildOfSibling, myTable.myResultPanel)) return false;
           // We do not check every descendant down to the leaf level.
           // It is not possible to disable all child columns without disabling the leftmost column, and vice versa,

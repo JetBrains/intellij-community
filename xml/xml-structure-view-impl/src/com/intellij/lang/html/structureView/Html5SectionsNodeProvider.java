@@ -9,6 +9,7 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.util.PropertyOwner;
+import com.intellij.platform.structureView.impl.DelegatingNodeProvider;
 import com.intellij.psi.filters.XmlTagFilter;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.xml.XmlDocument;
@@ -24,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html5SectionTreeElement>, PropertyOwner,
-                                                  ActionShortcutProvider {
+                                                  ActionShortcutProvider, DelegatingNodeProvider<Html5SectionTreeElement> {
 
   @SuppressWarnings("UnresolvedPluginConfigReference")
   public static final String ACTION_ID = "HTML5_OUTLINE_MODE";

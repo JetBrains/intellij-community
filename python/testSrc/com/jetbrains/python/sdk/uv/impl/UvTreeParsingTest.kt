@@ -129,6 +129,21 @@ class UvTreeParsingTest {
     }
 
     @Test
+    fun `package flag returns single member deps`() {
+      // Output of: uv tree --depth=1 --frozen --package lib
+      val input = """
+        lib v0.1.0
+        └── pydantic v2.0.0
+      """.trimIndent()
+
+      val packages = UvOutputParser.parseUvPackageList(input)
+
+      assertThat(packages).hasSize(1)
+      assertThat(packages[0].name).isEqualTo("pydantic")
+      assertThat(packages[0].version).isEqualTo("2.0.0")
+    }
+
+    @Test
     fun `trailing blank lines are ignored`() {
       val input = "myapp v1.0.0\n├── requests v2.31.0\n\n\n"
 

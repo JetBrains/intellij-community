@@ -8,12 +8,12 @@ import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 class EditorConfigPropertiesServiceTest : BasePlatformTestCase() {
   fun testEmptyValueIsNotFailure() {
     val file = myFixture.configureByFile(".editorconfig")
-    lateinit var props: Map<String, Property>
+    lateinit var props: Map<String, String>
     assertNoThrowable {
-      props = EditorConfigPropertiesService.getInstance(myFixture.project).getProperties(file.virtualFile).properties
+      props = EditorConfigPropertiesService.getInstance(myFixture.project).getProperties(file.virtualFile)
     }
     assertTrue("key" in props)
-    assertTrue(props["key"]!!.sourceValue.isEmpty())
+    assertTrue(props["key"]!!.isEmpty())
   }
 
   override fun getBasePath(): String =

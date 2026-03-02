@@ -31,6 +31,8 @@ import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.BreakpointArea
+import com.intellij.openapi.editor.impl.InterLineBreakpointProperties
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -376,13 +378,23 @@ class XLineBreakpointManager(
 
       val document = editor.document
       PsiDocumentManager.getInstance(project).commitDocument(document)
-      val line = EditorUtil.yToLogicalLineNoCustomRenderers(editor, mouseEvent.y)
+      // Use inter-line detection for click handling; configs are calculated asynchronously by the gutter
+      val hitResult = EditorUtil.yToLogicalLineWithInterLineDetection(editor, mouseEvent.y)
+      val line = hitResult.line
+      val isInterLine = hitResult.isBetweenLines
       val file = FileDocumentManager.getInstance().getFile(document)
-      if (DocumentUtil.isValidLine(line, document) && file != null) {
+      if (line >= 0 && DocumentUtil.isValidLine(line, document) && file != null) {
         val action = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)
         if (action == null) throw AssertionError("'" + IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT + "' action not found")
-        val dataContext = SimpleDataContext.getSimpleContext(BREAKPOINT_LINE_KEY, line,
-                                                             DataManager.getInstance().getDataContext(mouseEvent.component))
+        val baseContext = DataManager.getInstance().getDataContext(mouseEvent.component)
+        val dataContext = SimpleDataContext.builder().apply {
+          setParent(baseContext)
+          add(BREAKPOINT_LINE_KEY, line)
+          add(INTER_LINE_BREAKPOINT_KEY, isInterLine)
+          if (hitResult is BreakpointArea.InterLine) {
+            add(InterLineBreakpointProperties.KEY, hitResult.configuration.breakpointProperties)
+          }
+        }.build()
         val event = AnActionEvent.createFromAnAction(action, mouseEvent, ActionPlaces.EDITOR_GUTTER, dataContext)
         // TODO IJPL-185322 Introduce a better way to handle actions in the frontend
         // TODO We actually want to call the action directly, but dispatch it on frontend if possible
@@ -449,5 +461,7 @@ class XLineBreakpointManager(
   companion object {
     @JvmField
     val BREAKPOINT_LINE_KEY: DataKey<Int> = DataKey.create("xdebugger.breakpoint.line")
+    @JvmField
+    val INTER_LINE_BREAKPOINT_KEY: DataKey<Boolean> = DataKey.create("xdebugger.breakpoint.interline")
   }
 }

@@ -61,6 +61,11 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
       throw new IllegalArgumentException("There should be at least one non-whitespace token");
     }
 
+    PsiFile file = ((PsiToken)tokens.getFirst()).psi.getContainingFile();
+    if (ContainerUtil.exists(tokens, t -> t instanceof PsiToken pt && pt.psi.getContainingFile() != file)) {
+      throw new IllegalArgumentException("TextContent fragments should be from the same file");
+    }
+
     List<TextRange> ranges = getRangesInFile();
     if (!ContainerUtil.sorted(ranges, Segment.BY_START_OFFSET_THEN_END_OFFSET).equals(ranges)) {
       throw new IllegalArgumentException("TextContent fragments should be ordered by the offset ascending: " + ranges);

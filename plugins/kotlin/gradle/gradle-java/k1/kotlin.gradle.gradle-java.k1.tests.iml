@@ -93,6 +93,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="kotlin.gradle.gradle-java.k1" />
 </module>

@@ -62,7 +62,7 @@ object MarkdownActionUtil {
   fun findMarkdownEditor(event: AnActionEvent, strictMarkdown: Boolean = false): Editor? {
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return null
     return when {
-      if (strictMarkdown) file.language.isMarkdownLanguage() else file.language.supportsMarkdown() ->
+      if (strictMarkdown) file.language.isMarkdownLanguage() else file.language.supportsMarkdown(event.dataContext) ->
         event.getData(CommonDataKeys.EDITOR)
       else -> null
     }

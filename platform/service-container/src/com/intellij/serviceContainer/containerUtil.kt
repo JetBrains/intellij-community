@@ -33,7 +33,7 @@ internal fun checkCanceledIfNotInClassInit() {
 }
 
 internal fun isUnderIndicatorOrJob(): Boolean {
-  @Suppress("TestOnlyProblems", "UsagesOfObsoleteApi")
+  @Suppress("UsagesOfObsoleteApi")
   return ProgressManager.getInstanceOrNull()?.getProgressIndicator() != null || Cancellation.currentJob() != null
 }
 

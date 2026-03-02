@@ -4,19 +4,18 @@ package com.intellij.java.completion.modcommand;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaSmartCompletionContributor;
-import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.Set;
-import java.util.function.Consumer;
 
 @NotNullByDefault
 final class ExpectedTypeMemberItemProvider extends JavaModCompletionItemProvider {
   @Override
-  public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
-    if (!(context.getPosition() instanceof PsiIdentifier identifier)) {
+  public void provideItems(CompletionContext context, ModCompletionResult sink) {
+    if (!(context.getPosition() instanceof PsiIdentifier)) {
       return;
     }
     Set<ExpectedTypeInfo> types = ContainerUtil.newHashSet(JavaSmartCompletionContributor.getExpectedTypes(context));

@@ -105,7 +105,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
       var instance = Arrays.stream(telemetryClazz.getDeclaredConstructors())
         .filter((it) -> it.getParameterCount() > 0).findFirst()
         .get()
-        .newInstance(coroutineScope, true);
+        .newInstance(coroutineScope, true, false);
 
       TelemetryManager.Companion.forceSetTelemetryManager((TelemetryManager)instance);
     }

@@ -38,31 +38,23 @@ val isRunningFromSources: Boolean
     get() = KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode == KotlinPluginLayoutMode.SOURCES
 
 object KotlinPluginLayoutModeProvider {
-    @Volatile
-    private var forcedMode: AtomicReference<KotlinPluginLayoutMode?> = AtomicReference(null)
 
     private val lazyMode = lazy {
-        forcedMode.get() ?: computeDefaultMode()
+        computeDefaultMode()
     }
 
     private fun computeDefaultMode(): KotlinPluginLayoutMode {
         val isRunningFromSources =
             !AppMode.isRunningFromDevBuild() && Files.isDirectory(PathManager.getHomeDir().resolve(Project.DIRECTORY_STORE_FOLDER))
-        return if (isRunningFromSources) KotlinPluginLayoutMode.SOURCES else KotlinPluginLayoutMode.INTELLIJ
+        return when {
+            System.getProperty("kotlin.plugin.layout", "") == "LSP" -> KotlinPluginLayoutMode.LSP
+            isRunningFromSources -> KotlinPluginLayoutMode.SOURCES
+            else -> KotlinPluginLayoutMode.INTELLIJ
+        }
     }
 
     @get:ApiStatus.Internal
     val kotlinPluginLayoutMode: KotlinPluginLayoutMode by lazyMode
-
-    @ApiStatus.Internal
-    fun setForcedKotlinPluginLayoutMode(mode: KotlinPluginLayoutMode) {
-        if (lazyMode.isInitialized()) {
-            error("Cannot set forced mode after lazy initialization: ${lazyMode.value} -> $mode")
-        }
-        if (!forcedMode.compareAndSet(null, mode)) {
-            error("Forced mode is already set to ${forcedMode.get()}")
-        }
-    }
 }
 
 @ApiStatus.Internal
@@ -243,6 +235,10 @@ class KotlinPluginLayoutService(private val project: Project) {
 
 
     fun resolveRelativeToRemoteKotlinc(path: Path): Path {
+        if (KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode == KotlinPluginLayoutMode.LSP) {
+            return path
+        }
+
         val kotlinc = KotlinPluginLayout.kotlincPath
         if (!path.startsWith(kotlinc)) return path
 

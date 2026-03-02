@@ -6,6 +6,24 @@ import com.intellij.platform.pluginGraph.ContentSourceKind
 import com.intellij.platform.pluginGraph.GraphScope
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 
+private val EMBEDDED_CHECK_EXCLUDED_PRODUCTS = setOf(
+  // Analysis-only product; not part of runtime embedding contract for plugin dependency filtering.
+  "CodeServer",
+)
+
+/**
+ * Product names used for global embedded checks.
+ *
+ * This scope excludes products that intentionally do not represent runtime embedding
+ * guarantees for plugin/content dependency generation.
+ */
+internal fun embeddedCheckProductNames(discoveredProductNames: Collection<String>): Set<String> {
+  return discoveredProductNames
+    .asSequence()
+    .filterNot { it in EMBEDDED_CHECK_EXCLUDED_PRODUCTS }
+    .toCollection(linkedSetOf())
+}
+
 /**
  * Check if a module has any plugin as content source.
  *
@@ -25,34 +43,51 @@ internal fun GraphScope.hasPluginSource(moduleId: Int): Boolean {
 }
 
 /**
- * Check if a module is globally embedded (always loaded with product).
+ * Check whether module is embedded in a specific product scope.
  *
- * Returns true only if:
- * - Module is contained by at least one product or module set
- * - Module has EMBEDDED loading in ALL product/module-set sources
- *
- * Plugin content sources do not disqualify a module from being globally embedded.
- * They may declare the module, but product/module-set embedding still makes it
- * always available at runtime.
- *
- * Globally embedded modules don't need explicit XML dependencies because
- * they are always loaded with the product.
+ * Returns true only if the module has at least one source reachable from this product
+ * (product/module-set or bundled plugin content) and every such source has EMBEDDED loading.
  */
-internal fun GraphScope.isGloballyEmbedded(moduleId: Int): Boolean {
+internal fun GraphScope.isEmbeddedInProduct(moduleId: Int, productName: String): Boolean {
   val module = ContentModuleNode(moduleId)
-  var hasNonPluginSource = false
+  val product = product(productName) ?: return false
+  var hasSourceInProduct = false
   var allEmbedded = true
 
   module.contentProductionSources { source ->
     when (source.kind) {
       ContentSourceKind.PLUGIN -> {
-        // Ignore plugin sources for global embedding; product/module-set loading wins.
+        val sourcePlugin = source.plugin()
+        var bundledInProduct = false
+        product.bundles { bundledPlugin ->
+          if (bundledPlugin.id == sourcePlugin.id) {
+            bundledInProduct = true
+          }
+        }
+
+        if (!bundledInProduct) {
+          return@contentProductionSources
+        }
+
+        hasSourceInProduct = true
+        var loading: ModuleLoadingRuleValue? = null
+        sourcePlugin.containsContent { contentModule, mode ->
+          if (contentModule.id == moduleId) {
+            loading = mode
+          }
+        }
+        if (loading != ModuleLoadingRuleValue.EMBEDDED) {
+          allEmbedded = false
+        }
       }
       ContentSourceKind.PRODUCT -> {
-        hasNonPluginSource = true
+        val sourceProduct = source.product()
+        if (sourceProduct.id != product.id) return@contentProductionSources
+
+        hasSourceInProduct = true
         var loading: ModuleLoadingRuleValue? = null
-        source.product().containsContent { module, mode ->
-          if (module.id == moduleId) {
+        sourceProduct.containsContent { contentModule, mode ->
+          if (contentModule.id == moduleId) {
             loading = mode
           }
         }
@@ -61,10 +96,13 @@ internal fun GraphScope.isGloballyEmbedded(moduleId: Int): Boolean {
         }
       }
       ContentSourceKind.MODULE_SET -> {
-        hasNonPluginSource = true
+        val sourceModuleSet = source.moduleSet()
+        if (!product.includesModuleSetRecursive(sourceModuleSet)) return@contentProductionSources
+
+        hasSourceInProduct = true
         var loading: ModuleLoadingRuleValue? = null
-        source.moduleSet().containsModule { module, mode ->
-          if (module.id == moduleId) {
+        sourceModuleSet.containsModule { contentModule, mode ->
+          if (contentModule.id == moduleId) {
             loading = mode
           }
         }
@@ -74,16 +112,80 @@ internal fun GraphScope.isGloballyEmbedded(moduleId: Int): Boolean {
       }
     }
   }
+  return hasSourceInProduct && allEmbedded
+}
 
-  return hasNonPluginSource && allEmbedded
+internal fun GraphScope.isGloballyEmbeddedInAllProducts(moduleId: Int, allRealProductNames: Set<String>): Boolean {
+  if (allRealProductNames.isEmpty()) {
+    return false
+  }
+
+  for (productName in allRealProductNames) {
+    if (!isEmbeddedInProduct(moduleId, productName)) {
+      return false
+    }
+  }
+
+  return true
 }
 
 /**
  * Returns true when a plugin.xml module dependency should be skipped
- * because the target module is globally embedded.
+ * because the target module is globally embedded in the provided product scope.
  */
-internal fun GraphScope.shouldSkipEmbeddedPluginDependency(depModuleId: Int): Boolean {
-  return isGloballyEmbedded(depModuleId)
+internal fun GraphScope.shouldSkipEmbeddedPluginDependency(depModuleId: Int, allRealProductNames: Set<String>): Boolean {
+  return isGloballyEmbeddedInAllProducts(depModuleId, allRealProductNames)
+}
+
+/**
+ * Returns products where the plugin is bundled (restricted to discovered real products).
+ * Falls back to [allRealProductNames] for non-bundled plugins.
+ */
+internal fun GraphScope.embeddedCheckProductsForPlugin(pluginId: Int, allRealProductNames: Set<String>): Set<String> {
+  val bundledProducts = linkedSetOf<String>()
+  products { product ->
+    val productName = product.name()
+    if (productName !in allRealProductNames) return@products
+
+    var isBundled = false
+    product.bundles { bundledPlugin ->
+      if (bundledPlugin.id == pluginId) {
+        isBundled = true
+      }
+    }
+
+    if (isBundled) {
+      bundledProducts.add(productName)
+    }
+  }
+  return if (bundledProducts.isEmpty()) allRealProductNames else bundledProducts
+}
+
+/**
+ * Returns products where any bundled production plugin owns this content module.
+ * Falls back to [allRealProductNames] when owners are non-bundled everywhere.
+ */
+internal fun GraphScope.embeddedCheckProductsForPluginOnlyContentModule(moduleId: Int, allRealProductNames: Set<String>): Set<String> {
+  val bundledProducts = linkedSetOf<String>()
+  products { product ->
+    val productName = product.name()
+    if (productName !in allRealProductNames) return@products
+
+    var hasBundledOwnerPlugin = false
+    product.bundles { bundledPlugin ->
+      if (hasBundledOwnerPlugin) return@bundles
+      bundledPlugin.containsContent { contentModule, _ ->
+        if (contentModule.id == moduleId) {
+          hasBundledOwnerPlugin = true
+        }
+      }
+    }
+
+    if (hasBundledOwnerPlugin) {
+      bundledProducts.add(productName)
+    }
+  }
+  return if (bundledProducts.isEmpty()) allRealProductNames else bundledProducts
 }
 
 /**
@@ -99,12 +201,4 @@ internal fun GraphScope.hasNonPluginSource(moduleId: Int): Boolean {
     }
   }
   return hasNonPlugin
-}
-
-/**
- * Returns true when a content-module dependency should be skipped
- * because the source module belongs only to a plugin and the target is globally embedded.
- */
-internal fun GraphScope.shouldSkipEmbeddedContentDependency(sourceModuleId: Int, depModuleId: Int): Boolean {
-  return hasPluginSource(sourceModuleId) && !hasNonPluginSource(sourceModuleId) && isGloballyEmbedded(depModuleId)
 }

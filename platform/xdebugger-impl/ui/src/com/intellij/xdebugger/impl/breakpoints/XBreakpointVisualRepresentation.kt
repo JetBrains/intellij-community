@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
@@ -35,6 +36,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.ui.DebuggerColors
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -168,7 +170,7 @@ class XBreakpointVisualRepresentation(
   private fun getBreakpointAttributes(): TextAttributes? {
     var attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES)
 
-    if (!myBreakpoint.isEnabled()) {
+    if (!myBreakpoint.isEnabled() || (myBreakpoint as? XBreakpointProxy)?.getSuspendPolicy() == SuspendPolicy.NONE) {
       attributes = attributes.clone()
       attributes.backgroundColor = null
     }

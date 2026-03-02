@@ -83,7 +83,6 @@ fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName? {
 
 fun PsiDirectory.getImplicitPackagePrefix(): FqName? {
     return sourceRoot?.takeIf { !it.hasExplicitPackagePrefix(project) }?.let { sourceRoot ->
-        @OptIn(K1ModeProjectStructureApi::class)
         PerModulePackageCacheService.getInstance(project).getImplicitPackagePrefix(sourceRoot)
     }
 }
@@ -91,7 +90,6 @@ fun PsiDirectory.getImplicitPackagePrefix(): FqName? {
 @TestOnly
 fun PsiDirectory.setImplicitPackagePrefix(fqName: FqName?) {
     sourceRoot?.let {
-        @OptIn(K1ModeProjectStructureApi::class)
         PerModulePackageCacheService.getInstance(project).setImplicitPackagePrefix(it, fqName)
     }
 }

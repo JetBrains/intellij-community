@@ -172,7 +172,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
           map(filter(container.getTypeAliases(), ta -> !KJvmUtils.isPrivate(ta)), KmTypeAlias::getName)
         )))) {
           context.affectUsage(new LookupNameUsage(scopeName, symbolName));
-          debug(context, "Affect ", "lookup '" + symbolName + "'", " usage owned by node '", addedClass.getName(), "'");
+          debug(context, "Affect ", "lookup '" + symbolName + "'", " usage owned by '", scopeName, "' ", "(node '", addedClass.getName(), "')");
         }
 
         boolean conflictsFound = false;

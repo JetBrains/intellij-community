@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyAssertStatement
 import com.jetbrains.python.psi.PyBinaryExpression
@@ -20,7 +21,8 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyIfStatement
 import com.jetbrains.python.psi.PyPrefixExpression
 import com.jetbrains.python.psi.PyWhileStatement
-import com.jetbrains.python.psi.types.PyABCUtil
+import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 
@@ -33,63 +35,60 @@ class PySuspiciousBooleanConditionInspection : PyInspection() {
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyIfStatement(node: PyIfStatement) {
-      super.visitPyIfStatement(node)
-      checkBooleanContext(node.ifPart.condition)
-      node.elifParts.forEach { checkBooleanContext(it.condition) }
+      node.ifPart.condition.checkBooleanContext()
+      node.elifParts.forEach { it.condition.checkBooleanContext() }
     }
 
     override fun visitPyWhileStatement(node: PyWhileStatement) {
-      super.visitPyWhileStatement(node)
-      checkBooleanContext(node.whilePart.condition)
+      node.whilePart.condition.checkBooleanContext()
     }
 
     override fun visitPyConditionalExpression(node: PyConditionalExpression) {
-      super.visitPyConditionalExpression(node)
-      checkBooleanContext(node.condition)
+      node.condition.checkBooleanContext()
     }
 
     override fun visitPyBinaryExpression(node: PyBinaryExpression) {
-      super.visitPyBinaryExpression(node)
-      // Check operands of 'and' and 'or' boolean operators
-      if (node.operator == PyTokenTypes.AND_KEYWORD || node.operator == PyTokenTypes.OR_KEYWORD) {
-        checkExpression(node.leftExpression)
-        checkExpression(node.rightExpression)
+      if (node.isShortCircuit) {
+        node.leftExpression.checkBooleanContext()
+        node.rightExpression.checkBooleanContext()
       }
     }
 
     override fun visitPyPrefixExpression(node: PyPrefixExpression) {
-      super.visitPyPrefixExpression(node)
-      // Check operand of 'not' operator
       if (node.operator == PyTokenTypes.NOT_KEYWORD) {
-        checkExpression(node.operand)
+        node.operand.checkBooleanContext()
       }
     }
 
     override fun visitPyAssertStatement(node: PyAssertStatement) {
-      super.visitPyAssertStatement(node)
-      // Check the first argument (the condition being asserted)
-      val arguments = node.arguments
-      if (arguments.isNotEmpty()) {
-        checkExpression(arguments[0])
+      node.arguments.firstOrNull()?.checkBooleanContext()
+    }
+
+    private fun PyExpression?.checkBooleanContext() {
+      if (this == null) {
+        return
       }
+      val node = PyPsiUtils.flattenParens(this)
+      if (node is PyBinaryExpression && node.isShortCircuit) {
+        return
+      }
+      this.checkExpression()
     }
 
-    private fun checkBooleanContext(condition: PyExpression?) {
-      condition ?: return
-      checkExpression(condition)
-    }
-
-    private fun checkExpression(expr: PyExpression?) {
-      expr ?: return
+    private fun PyExpression?.checkExpression() {
+      if (this == null) {
+        return
+      }
 
       // Don't flag awaited expressions - they're already being awaited
-      if (expr is PyPrefixExpression && expr.operator == PyTokenTypes.AWAIT_KEYWORD) return
+      if (this is PyPrefixExpression && this.operator == PyTokenTypes.AWAIT_KEYWORD) return
 
-      val type = myTypeEvalContext.getType(expr) ?: return
+      val type = myTypeEvalContext.getType(this) ?: return
 
-      // Check if the type is a coroutine/awaitable
-      if (PyABCUtil.isSubtype(type, PyNames.AWAITABLE, myTypeEvalContext)) {
-        registerProblem(expr, PyPsiBundle.message("INSP.suspicious.boolean.condition.coroutine"), PyAddAwaitQuickFix())
+      // Check if the type is a coroutine
+      // TODO: use `CoroutineType` instead
+      if (type is PyClassType && type.classQName == PyTypingTypeProvider.COROUTINE) {
+        registerProblem(this, PyPsiBundle.message("INSP.suspicious.boolean.condition.coroutine"), PyAddAwaitQuickFix())
       }
     }
   }

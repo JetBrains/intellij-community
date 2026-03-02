@@ -6,5 +6,4 @@ data class Person(val firstName: String, val lastName: String)
 fun test(person: Person) {
     val (fi<caret>rst , last) = person
 }
-
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.RenameVariableToMatchPropertiesQuickFix

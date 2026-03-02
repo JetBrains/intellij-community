@@ -1229,14 +1229,6 @@
                      language="kotlin"
                      key="inspection.replace.with.enum.map.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.DestructuringWrongNameInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.destructuring.wrong.name.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"

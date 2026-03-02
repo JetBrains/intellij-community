@@ -1154,6 +1154,131 @@ public class KotlinTests extends BazelIncBuildTest {
     performTest("kotlin/withJava/other/optionalParameter").assertSuccessful();
   }
 
+  @Test
+  public void testAllKotlinFilesRemovedThenNewAdded() throws Exception {
+    performTest(2, "kotlin/withJava/other/allKotlinFilesRemovedThenNewAdded").assertSuccessful();
+  }
+
+  @Test
+  public void testClassToPackageFacade() throws Exception {
+    performTest(2, "kotlin/withJava/other/classToPackageFacade").assertSuccessful();
+  }
+
+  @Test
+  public void testConflictingPlatformDeclarations() throws Exception {
+    performTest("kotlin/withJava/other/conflictingPlatformDeclarations").assertFailure();
+  }
+
+  @Test
+  public void testInlineFunctionWithJvmNameInClass() throws Exception {
+    performTest("kotlin/withJava/other/inlineFunctionWithJvmNameInClass").assertSuccessful();
+  }
+
+  @Test
+  public void testInlineTopLevelFunctionWithJvmName() throws Exception {
+    performTest("kotlin/withJava/other/inlineTopLevelFunctionWithJvmName").assertSuccessful();
+  }
+
+  @Test
+  public void testInlineTopLevelValPropertyWithJvmName() throws Exception {
+    performTest("kotlin/withJava/other/inlineTopLevelValPropertyWithJvmName").assertSuccessful();
+  }
+
+  @Test
+  public void testInnerClassNotGeneratedWhenRebuilding() throws Exception {
+    performTest("kotlin/withJava/other/innerClassNotGeneratedWhenRebuilding").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifileClassAddTopLevelFunWithDefault() throws Exception {
+    performTest("kotlin/withJava/other/multifileClassAddTopLevelFunWithDefault").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifileClassFileAdded() throws Exception {
+    performTest("kotlin/withJava/other/multifileClassFileAdded").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifileClassFileChanged() throws Exception {
+    performTest("kotlin/withJava/other/multifileClassFileChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifileClassFileMovedToAnotherMultifileClass() throws Exception {
+    performTest("kotlin/withJava/other/multifileClassFileMovedToAnotherMultifileClass").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifileClassInlineFunction() throws Exception {
+    performTest("kotlin/withJava/other/multifileClassInlineFunction").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifileClassInlineFunctionAccessingField() throws Exception {
+    performTest("kotlin/withJava/other/multifileClassInlineFunctionAccessingField").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifileClassRecreated() throws Exception {
+    performTest(2, "kotlin/withJava/other/multifileClassRecreated").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifileClassRecreatedAfterRenaming() throws Exception {
+    performTest(2, "kotlin/withJava/other/multifileClassRecreatedAfterRenaming").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifileClassRemoved() throws Exception {
+    performTest("kotlin/withJava/other/multifileClassRemoved").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifileDependantUsage() throws Exception {
+    performTest("kotlin/withJava/other/multifileDependantUsage").assertFailure();
+  }
+
+  @Test
+  public void testMultifilePackagePartMethodAdded() throws Exception {
+    performTest("kotlin/withJava/other/multifilePackagePartMethodAdded").assertSuccessful();
+  }
+
+  @Test
+  public void testMultifilePartsWithProperties() throws Exception {
+    performTest("kotlin/withJava/other/multifilePartsWithProperties").assertSuccessful();
+  }
+
+  @Test
+  public void testPackageFacadeToClass() throws Exception {
+    performTest(2, "kotlin/withJava/other/packageFacadeToClass").assertSuccessful();
+  }
+
+  @Test
+  public void testPackageMultifileClassOneFileWithPublicChanges() throws Exception {
+    performTest("kotlin/withJava/other/packageMultifileClassOneFileWithPublicChanges").assertSuccessful();
+  }
+
+  @Test
+  public void testPackageMultifileClassPrivateOnlyChanged() throws Exception {
+    performTest("kotlin/withJava/other/packageMultifileClassPrivateOnlyChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testPublicPropertyWithPrivateSetterMultiFileFacade() throws Exception {
+    performTest("kotlin/withJava/other/publicPropertyWithPrivateSetterMultiFileFacade").assertSuccessful();
+  }
+
+  @Test
+  public void testTopLevelFunctionWithJvmName() throws Exception {
+    performTest("kotlin/withJava/other/topLevelFunctionWithJvmName").assertSuccessful();
+  }
+
+  @Test
+  public void testTopLevelPropertyWithJvmName() throws Exception {
+    performTest("kotlin/withJava/other/topLevelPropertyWithJvmName").assertSuccessful();
+  }
+
   // withJava/javaUsedInKotlin tests
 
   @Test
@@ -1334,5 +1459,332 @@ public class KotlinTests extends BazelIncBuildTest {
   @Test
   public void testSamConversionMethodSignatureChangedSamAdapter() throws Exception {
     performTest("kotlin/withJava/javaUsedInKotlin/samConversions/methodSignatureChangedSamAdapter").assertSuccessful();
+  }
+
+  @Test
+  public void testMixedInheritance() throws Exception {
+    performTest(7, "kotlin/withJava/javaUsedInKotlin/mixedInheritance").assertFailure();
+  }
+
+  // incrementalJvmCompilerOnly tests (Java+Kotlin)
+
+  @Test
+  public void testAddAnnotationToJavaClass() throws Exception {
+    performTest("kotlin/incrementalJvmCompilerOnly/addAnnotationToJavaClass").assertSuccessful();
+  }
+
+  /*
+  todo: seems like kotlin imports tracker never reports on-demand imports, so logic relying on them may miss dependencies
+
+  @Test
+  public void testAddNestedClass() throws Exception {
+    performTest("kotlin/incrementalJvmCompilerOnly/addNestedClass").assertFailure();
+  }
+  */
+
+  @Test
+  public void testChangeAnnotationInJavaClass() throws Exception {
+    performTest("kotlin/incrementalJvmCompilerOnly/changeAnnotationInJavaClass").assertSuccessful();
+  }
+
+  // custom tests
+
+  @Test
+  public void testJavaConstantChangedUsedInKotlin() throws Exception {
+    performTest("kotlin/custom/javaConstantChangedUsedInKotlin").assertSuccessful();
+  }
+
+  @Test
+  public void testJavaConstantUnchangedUsedInKotlin() throws Exception {
+    performTest("kotlin/custom/javaConstantUnchangedUsedInKotlin").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinConstantChangedUsedInJava() throws Exception {
+    performTest("kotlin/custom/kotlinConstantChangedUsedInJava").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinConstantUnchangedUsedInJava() throws Exception {
+    performTest("kotlin/custom/kotlinConstantUnchangedUsedInJava").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinJvmFieldChangedUsedInJava() throws Exception {
+    performTest("kotlin/custom/kotlinJvmFieldChangedUsedInJava").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinJvmFieldUnchangedUsedInJava() throws Exception {
+    performTest("kotlin/custom/kotlinJvmFieldUnchangedUsedInJava").assertSuccessful();
+  }
+
+  // multiModule/common tests
+
+  /*
+    todo: investigate why no lookups are reported for empty "imports-only" *.kt files
+
+  @Test
+  public void testMultiModuleSimple() throws Exception {
+    performTest(2, "kotlin/multiModule/common/simple").assertSuccessful();
+  }
+  */
+
+  @Test
+  public void testMultiModuleSimpleDependency() throws Exception {
+    performTest("kotlin/multiModule/common/simpleDependency").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleSimpleDependencyUnchanged() throws Exception {
+    performTest("kotlin/multiModule/common/simpleDependencyUnchanged").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleConstantValueChanged() throws Exception {
+    performTest("kotlin/multiModule/common/constantValueChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleClassAdded() throws Exception {
+    performTest(2, "kotlin/multiModule/common/classAdded").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleClassRemoved() throws Exception {
+    performTest(2, "kotlin/multiModule/common/classRemoved").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleTransitiveDependency() throws Exception {
+    performTest("kotlin/multiModule/common/transitiveDependency").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleTwoDependants() throws Exception {
+    performTest("kotlin/multiModule/common/twoDependants").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleCopyFileToAnotherModule() throws Exception {
+    performTest("kotlin/multiModule/common/copyFileToAnotherModule").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleMoveFileToAnotherModule() throws Exception {
+    performTest("kotlin/multiModule/common/moveFileToAnotherModule").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleDuplicatedClass() throws Exception {
+    performTest("kotlin/multiModule/common/duplicatedClass").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleFunctionFromDifferentPackageChanged() throws Exception {
+    performTest("kotlin/multiModule/common/functionFromDifferentPackageChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleDefaultParameterAdded() throws Exception {
+    performTest("kotlin/multiModule/common/defaultParameterAdded").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleDefaultParameterRemoved() throws Exception {
+    performTest("kotlin/multiModule/common/defaultParameterRemoved").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleDefaultParameterAddedForTopLevelFun() throws Exception {
+    performTest("kotlin/multiModule/common/defaultParameterAddedForTopLevelFun").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleDefaultParameterRemovedForTopLevelFun() throws Exception {
+    performTest("kotlin/multiModule/common/defaultParameterRemovedForTopLevelFun").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleDefaultArgumentInConstructorRemoved() throws Exception {
+    performTest(2, "kotlin/multiModule/common/defaultArgumentInConstructorRemoved").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleDefaultValueInConstructorRemoved() throws Exception {
+    performTest(2, "kotlin/multiModule/common/defaultValueInConstructorRemoved").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleSimpleDependencyErrorOnAccessToInternal1() throws Exception {
+    performTest("kotlin/multiModule/common/simpleDependencyErrorOnAccessToInternal1").assertFailure();
+  }
+
+  @Test
+  public void testMultiModuleSimpleDependencyErrorOnAccessToInternal2() throws Exception {
+    performTest("kotlin/multiModule/common/simpleDependencyErrorOnAccessToInternal2").assertFailure();
+  }
+
+  @Test
+  public void testMultiModuleInlineFunctionInlined() throws Exception {
+    performTest("kotlin/multiModule/common/inlineFunctionInlined").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleInlineFunctionTwoPackageParts() throws Exception {
+    performTest(2, "kotlin/multiModule/common/inlineFunctionTwoPackageParts").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleTransitiveInlining() throws Exception {
+    performTest("kotlin/multiModule/common/transitiveInlining").assertSuccessful();
+  }
+
+  @Test
+  public void testMultiModuleExportedDependency() throws Exception {
+    performTest(2, "kotlin/multiModule/common/exportedDependency").assertSuccessful();
+  }
+
+  // multiModule/withJavaUsedInKotlin tests
+
+  @Test
+  public void testMultiModuleImportedClassRemoved() throws Exception {
+    performTest("kotlin/multiModule/withJavaUsedInKotlin/importedClassRemoved").assertFailure();
+  }
+
+  // lazyKotlinCaches tests
+
+  @Test
+  public void testLazyKotlinCachesClass() throws Exception {
+    performTest("kotlin/lazyKotlinCaches/class").assertSuccessful();
+  }
+
+  @Test
+  public void testLazyKotlinCachesClassInheritance() throws Exception {
+    performTest("kotlin/lazyKotlinCaches/classInheritance").assertSuccessful();
+  }
+
+  @Test
+  public void testLazyKotlinCachesConstant() throws Exception {
+    performTest("kotlin/lazyKotlinCaches/constant").assertSuccessful();
+  }
+
+  @Test
+  public void testLazyKotlinCachesFunction() throws Exception {
+    performTest("kotlin/lazyKotlinCaches/function").assertSuccessful();
+  }
+
+  @Test
+  public void testLazyKotlinCachesInlineFunctionWithoutUsage() throws Exception {
+    performTest("kotlin/lazyKotlinCaches/inlineFunctionWithoutUsage").assertSuccessful();
+  }
+
+  @Test
+  public void testLazyKotlinCachesInlineFunctionWithUsage() throws Exception {
+    performTest("kotlin/lazyKotlinCaches/inlineFunctionWithUsage").assertSuccessful();
+  }
+
+  @Test
+  public void testLazyKotlinCachesTopLevelPropertyAccess() throws Exception {
+    performTest("kotlin/lazyKotlinCaches/topLevelPropertyAccess").assertSuccessful();
+  }
+
+  // withJava/kotlinUsedInJava tests
+
+  @Test
+  public void testKotlinUsedInJavaAddOptionalParameter() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/addOptionalParameter").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaChangeNotUsedSignature() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/changeNotUsedSignature").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaChangeSignature() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/changeSignature").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaConstantChanged() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/constantChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaConstantUnchanged() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/constantUnchanged").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaFunRenamed() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/funRenamed").assertFailure();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaImportedClassRemoved() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/importedClassRemoved").assertFailure();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaJvmFieldChanged() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/jvmFieldChanged").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaJvmFieldUnchanged() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/jvmFieldUnchanged").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaMethodAddedInSuper() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/methodAddedInSuper").assertFailure();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaNotChangeSignature() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/notChangeSignature").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaOnlyTopLevelFunctionInFileRemoved() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/onlyTopLevelFunctionInFileRemoved").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaPackageFileAdded() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/packageFileAdded").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaPrivateChanges() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/privateChanges").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinUsedInJavaPropertyRenamed() throws Exception {
+    performTest("kotlin/withJava/kotlinUsedInJava/propertyRenamed").assertFailure();
+  }
+
+  // withJava/convertBetweenJavaAndKotlin tests
+
+  @Test
+  public void testJavaToKotlin() throws Exception {
+    performTest("kotlin/withJava/convertBetweenJavaAndKotlin/javaToKotlin").assertSuccessful();
+  }
+
+  @Test
+  public void testJavaToKotlinAndBack() throws Exception {
+    performTest(2, "kotlin/withJava/convertBetweenJavaAndKotlin/javaToKotlinAndBack").assertSuccessful();
+  }
+
+  @Test
+  public void testJavaToKotlinAndRemove() throws Exception {
+    performTest(2, "kotlin/withJava/convertBetweenJavaAndKotlin/javaToKotlinAndRemove").assertSuccessful();
+  }
+
+  @Test
+  public void testKotlinToJava() throws Exception {
+    performTest("kotlin/withJava/convertBetweenJavaAndKotlin/kotlinToJava").assertSuccessful();
   }
 }

@@ -25,6 +25,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit5Pioneer",
+    "//libraries/assertj-core",
+    "//libraries/assertj-core:assertj-core_test_lib",
   ],
   runtime_deps = [":tests"]
 )

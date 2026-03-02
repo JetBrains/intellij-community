@@ -132,6 +132,11 @@ public final class StructureViewCompositeModel extends StructureViewModelBase
     return result;
   }
 
+  @Override
+  public int getMinimumAutoExpandDepth() {
+    return 3;
+  }
+
   private static @NotNull TreeElement createTreeElementFromView(final PsiFile file, final StructureViewComposite.StructureViewDescriptor view) {
     return new StructureViewTreeElement() {
       @Override

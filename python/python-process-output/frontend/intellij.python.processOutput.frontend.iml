@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -P plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -opt-in=kotlin.time.ExperimentalTime -Xcontext-parameters -progressive" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.10-RC/kotlin-compose-compiler-plugin-2.3.10-RC.jar</args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.python.processOutput.frontend" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" packagePrefix="com.intellij.python" />
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.platform.frontend" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.libraries.skiko" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
+    <orderEntry type="library" scope="TEST" name="io.mockk" level="project" />
+    <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.python.processOutput.common" />
+    <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.debug" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
+    <orderEntry type="module" module-name="intellij.python.test.env.junit5" scope="TEST" />
+  </component>
+</module>

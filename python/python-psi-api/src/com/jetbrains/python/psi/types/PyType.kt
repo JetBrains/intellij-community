@@ -44,7 +44,7 @@ interface PyType {
 
 
   @ApiStatus.Experimental
-  fun getAllMembers(resolveContext: PyResolveContext): List<@JvmWildcard PyTypeMember> {
+  fun getAllMembers(resolveContext: PyResolveContext): List<PyTypeMember> {
     return emptyList()
   }
 
@@ -53,7 +53,7 @@ interface PyType {
    * There can be several members with the same name (for example, methods with @overload)
    */
   @ApiStatus.Experimental
-  fun findMember(name: String, resolveContext: PyResolveContext): List<@JvmWildcard PyTypeMember> {
+  fun findMember(name: String, resolveContext: PyResolveContext): List<PyTypeMember> {
     return emptyList()
   }
 

@@ -19,6 +19,16 @@ object PyNames {
   const val TYPE_LONG: String = "long"
 
   /**
+   * float type
+   */
+  const val TYPE_FLOAT: String = "float"
+
+  /**
+   * complex type
+   */
+  const val TYPE_COMPLEX: String = "complex"
+
+  /**
    * unicode string type (see [.TYPE_STRING_TYPES]
    */
   const val TYPE_UNICODE: String = "unicode"
@@ -211,6 +221,9 @@ object PyNames {
   const val MATCH_ARGS: String = "__match_args__"
 
   const val NAME: String = "__name__"
+  const val QUALNAME: String = "__qualname__"
+  const val ANNOTATIONS: String = "__annotations__"
+  const val MODULE: String = "__module__"
   const val ENTER: String = "__enter__"
   const val EXIT: String = "__exit__"
 

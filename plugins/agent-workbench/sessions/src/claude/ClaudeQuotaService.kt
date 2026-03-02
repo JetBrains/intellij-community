@@ -247,38 +247,39 @@ internal class ClaudeQuotaService(private val serviceScope: CoroutineScope) {
     return ClaudeQuotaState(quotaInfo = info)
   }
 
-  private fun parseBucket(parser: JsonParser): Pair<Int?, Long?>? {
-    if (parser.currentToken == JsonToken.VALUE_NULL) return null
-    if (parser.currentToken != JsonToken.START_OBJECT) {
-      parser.skipChildren()
-      return null
-    }
-    var utilization: Int? = null
-    var resetMillis: Long? = null
-    while (parser.nextToken() != JsonToken.END_OBJECT) {
-      val field = parser.currentName()
-      parser.nextToken()
-      when (field) {
-        "utilization" -> {
-          if (parser.currentToken == JsonToken.VALUE_NUMBER_INT || parser.currentToken == JsonToken.VALUE_NUMBER_FLOAT) {
-            utilization = parser.intValue
-          }
-        }
-        "resets_at" -> {
-          if (parser.currentToken == JsonToken.VALUE_STRING) {
-            resetMillis = try {
-              Instant.parse(parser.text).toEpochMilli()
-            }
-            catch (_: Throwable) {
-              null
-            }
-          }
-        }
-        else -> parser.skipChildren()
-      }
-    }
-    return Pair(utilization, resetMillis)
+}
+
+private fun parseBucket(parser: JsonParser): Pair<Int?, Long?>? {
+  if (parser.currentToken == JsonToken.VALUE_NULL) return null
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
   }
+  var utilization: Int? = null
+  var resetMillis: Long? = null
+  while (parser.nextToken() != JsonToken.END_OBJECT) {
+    val field = parser.currentName()
+    parser.nextToken()
+    when (field) {
+      "utilization" -> {
+        if (parser.currentToken == JsonToken.VALUE_NUMBER_INT || parser.currentToken == JsonToken.VALUE_NUMBER_FLOAT) {
+          utilization = parser.intValue
+        }
+      }
+      "resets_at" -> {
+        if (parser.currentToken == JsonToken.VALUE_STRING) {
+          resetMillis = try {
+            Instant.parse(parser.text).toEpochMilli()
+          }
+          catch (_: Throwable) {
+            null
+          }
+        }
+      }
+      else -> parser.skipChildren()
+    }
+  }
+  return Pair(utilization, resetMillis)
 }
 
 @Suppress("FunctionName")

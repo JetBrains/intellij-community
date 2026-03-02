@@ -1,4 +1,5 @@
 import java.text.MessageFormat;
+import java.time.LocalDateTime;
 
 class MessagePatternsExample {
   public static void main(String[] args) {
@@ -79,6 +80,8 @@ class MessagePatternsExample {
     System.out.println(format);
 
     String abc = MessageFormat.format("{1}{2}{3}{65}",6, 5, 4, 3,<error descr="Expression expected">)</error>;
+
+    String abc2 = MessageFormat.format("{0,<warning descr="Unsupported format type ' dtf_date'. Required language level: '23 - Markdown documentation comments'"> dtf_date</warning>, yy}", LocalDateTime.now());
   }
 
   public static String useArray(Object[] arr) {

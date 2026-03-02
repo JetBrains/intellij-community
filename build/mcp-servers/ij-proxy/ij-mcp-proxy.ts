@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import path from 'node:path'
 import {cwd, env} from 'node:process'
+import {fileURLToPath} from 'node:url'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {Server} from '@modelcontextprotocol/sdk/server/index.js'
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
@@ -75,10 +76,29 @@ function buildStreamUrl(port: number): string {
   return `http://${defaultHost}:${port}${defaultPath}`
 }
 
+function resolveProjectPath(rawValue: string | undefined): {projectPath: string; warning?: string} {
+  if (!rawValue) {
+    return {projectPath: path.resolve(cwd())}
+  }
+
+  if (rawValue.startsWith('file://')) {
+    try {
+      return {projectPath: path.resolve(fileURLToPath(new URL(rawValue)))}
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      return {
+        projectPath: path.resolve(rawValue),
+        warning: `Failed to parse JETBRAINS_MCP_PROJECT_PATH as a file URI (${message}); falling back to path resolution.`
+      }
+    }
+  }
+
+  return {projectPath: path.resolve(rawValue)}
+}
+
 const explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH
-const projectPath = explicitProjectPath && explicitProjectPath.length > 0
-  ? path.resolve(explicitProjectPath)
-  : path.resolve(cwd())
+const projectPathResolution = resolveProjectPath(explicitProjectPath)
+const projectPath = projectPathResolution.projectPath
 const defaultProjectPathKey = 'project_path'
 const projectPathManager = createProjectPathManager({projectPath, defaultProjectPathKey})
 
@@ -130,6 +150,10 @@ function warn(message: string): void {
 }
 
 void clearLogFile()
+
+if (projectPathResolution.warning) {
+  warn(projectPathResolution.warning)
+}
 
 if (toolModeInfo.warning) {
   warn(toolModeInfo.warning)

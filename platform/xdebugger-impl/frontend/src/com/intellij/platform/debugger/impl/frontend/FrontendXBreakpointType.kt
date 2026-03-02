@@ -55,6 +55,10 @@ private class FrontendXLineBreakpointType(
 
   override val priority: Int = lineTypeInfo.priority
 
+  private val supportsInterLinePlacement: Boolean = lineTypeInfo.supportsInterLinePlacement
+
+  override fun supportsInterLinePlacement(): Boolean = supportsInterLinePlacement
+
   override suspend fun canPutAt(editor: Editor, line: Int, project: Project): Boolean {
     val availableTypes = FrontendEditorLinesBreakpointsInfoManager.getInstance(project).getBreakpointsInfoForLine(editor, line).types
     return availableTypes.any { it.id == this@FrontendXLineBreakpointType.id }

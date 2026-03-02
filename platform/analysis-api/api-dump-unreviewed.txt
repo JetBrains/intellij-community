@@ -2451,7 +2451,7 @@ a:com.intellij.openapi.vfs.LocalFileSystem
 - refreshFiles(java.lang.Iterable):V
 - a:refreshFiles(java.lang.Iterable,Z,Z,java.lang.Runnable):V
 - refreshIoFiles(java.lang.Iterable):V
-- a:refreshIoFiles(java.lang.Iterable,Z,Z,java.lang.Runnable):V
+- refreshIoFiles(java.lang.Iterable,Z,Z,java.lang.Runnable):V
 - f:refreshNioFiles(java.lang.Iterable):V
 - a:refreshNioFiles(java.lang.Iterable,Z,Z,java.lang.Runnable):V
 - a:registerAuxiliaryFileOperationsHandler(com.intellij.openapi.vfs.LocalFileOperationsHandler):V
@@ -2517,7 +2517,6 @@ a:com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 - getLength(com.intellij.openapi.vfs.VirtualFile):J
 - getLocalByEntry(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getOutputStream(com.intellij.openapi.vfs.VirtualFile,java.lang.Object,J,J):java.io.OutputStream
-- getRank():I
 - p:getRelativePath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getRootByEntry(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getRootByLocal(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
@@ -2604,7 +2603,7 @@ a:com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 - a:findFileByPathIfCached(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - a:getAttributes(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.util.io.FileAttributes
 - getCanonicallyCasedName(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- a:getRank():I
+- getRank():I
 - hasChildren(com.intellij.openapi.vfs.VirtualFile):Z
 - isReadOnly():Z
 - isSymLink(com.intellij.openapi.vfs.VirtualFile):Z

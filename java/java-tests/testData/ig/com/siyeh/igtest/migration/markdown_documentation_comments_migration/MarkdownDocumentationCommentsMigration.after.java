@@ -8,6 +8,9 @@ import java.util.HashMap;
 /// [java.util.ArrayList]
 /// [`description`][java.util.HashMap]
 /// @author Bas
+///
+/// @see <a href="https://jetbrains.com">Check out our cool website !</a>
+/// and our even better [merch](https://www.jetbrainsmerchandise.com) !
 public class MarkdownDocumentationCommentsMigration {
   /// {@return a hash code value for this object} This method is
   /// supported for the benefit of hash tables such as those provided by

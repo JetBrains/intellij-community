@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -11,11 +11,13 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.frame
 import com.intellij.ide.frameInfo
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.recentProjectMetaInfo
 import com.intellij.ide.util.runOnceForProject
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
@@ -248,32 +250,36 @@ internal class IdeProjectFrameAllocator(
 
   private suspend fun createFrameManager(loadingState: FrameLoadingState) {
     val frame = getFrame()
-    val frameInfo = getFrameInfo()
+    val frameSettings = resolveFrameSettings()
 
     withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
       if (frame != null) {
         if (!frame.isVisible) {
           throw CancellationException("Pre-allocated frame was already closed")
         }
-        val frameHelper = IdeProjectFrameHelper(frame = frame, loadingState = loadingState)
+        val frameHelper = IdeProjectFrameHelper(frame = frame, loadingState = loadingState, projectFrameTypeId = frameSettings.projectFrameTypeId)
         completeFrameAndCloseOnCancel(frameHelper) {
           if (options.forceOpenInNewFrame) {
-            frameHelper.updateFullScreenState(frameInfo.fullScreen)
+            frameHelper.updateFullScreenState(frameSettings.frameInfo.fullScreen)
           }
           span("ProjectFrameHelper.init") {
             frameHelper.init()
           }
-          frameHelper.setInitBounds(frameInfo.bounds)
+          frameHelper.setInitBounds(frameSettings.frameInfo.bounds)
         }
       }
       else {
-        val frameHelper = IdeProjectFrameHelper(createIdeFrame(frameInfo), loadingState = loadingState)
+        val frameHelper = IdeProjectFrameHelper(
+          createIdeFrame(frameSettings.frameInfo),
+          loadingState = loadingState,
+          projectFrameTypeId = frameSettings.projectFrameTypeId,
+        )
         // must be after preInit (frame decorator is required to set a full-screen mode)
         withContext(Dispatchers.UiWithModelAccess) {
           frameHelper.frame.isVisible = true
         }
         completeFrameAndCloseOnCancel(frameHelper) {
-          frameHelper.updateFullScreenState(frameInfo.fullScreen)
+          frameHelper.updateFullScreenState(frameSettings.frameInfo.fullScreen)
 
           span("ProjectFrameHelper.init") {
             frameHelper.init()
@@ -308,11 +314,39 @@ internal class IdeProjectFrameAllocator(
            ?: (serviceIfCreated<WindowManager>() as? WindowManagerImpl)?.removeAndGetRootFrame()
   }
 
-  private suspend fun getFrameInfo(): FrameInfo {
-    return options.frameInfo
-           ?: (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).getProjectMetaInfo(projectStoreBaseDir)?.frame
-           ?: FrameInfo()
+  private suspend fun getRecentProjectMetaInfo(): RecentProjectMetaInfo? {
+    return (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).getProjectMetaInfo(projectStoreBaseDir)
   }
+
+  private suspend fun resolveFrameSettings(): ResolvedFrameSettings {
+    var frameInfo: FrameInfo? = options.frameInfo
+    var projectFrameTypeId: String? = options.projectFrameTypeId
+
+    val recentProjectMetaInfoFromOptions = options.recentProjectMetaInfo
+    if (frameInfo == null) {
+      frameInfo = recentProjectMetaInfoFromOptions?.frame
+    }
+    if (projectFrameTypeId == null) {
+      projectFrameTypeId = recentProjectMetaInfoFromOptions?.projectFrameTypeId
+    }
+
+    if (frameInfo == null || projectFrameTypeId == null) {
+      val recentProjectMetaInfo = getRecentProjectMetaInfo()
+      if (frameInfo == null) {
+        frameInfo = recentProjectMetaInfo?.frame
+      }
+      if (projectFrameTypeId == null) {
+        projectFrameTypeId = recentProjectMetaInfo?.projectFrameTypeId
+      }
+    }
+
+    return ResolvedFrameSettings(frameInfo = frameInfo ?: FrameInfo(), projectFrameTypeId = projectFrameTypeId)
+  }
+
+  private data class ResolvedFrameSettings(
+    @JvmField val frameInfo: FrameInfo,
+    @JvmField val projectFrameTypeId: String?,
+  )
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     val frameHelper = if (deferredProjectFrameHelper.isCompleted) {

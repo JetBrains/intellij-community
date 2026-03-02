@@ -61,7 +61,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -8620132101972150534L
+        const val serializationHash = -3762023535056647471L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -698,6 +698,7 @@ class RdTestSession private constructor(
     private val _visibleFrameNames: RdCall<Unit, List<String>>,
     private val _projectsNames: RdCall<Unit, List<String>>,
     private val _makeScreenshot: RdCall<String, Boolean>,
+    private val _dumpThreads: RdCall<Unit, Boolean>,
     private val _isResponding: RdCall<Unit, Boolean>,
     private val _projectsAreInitialised: RdCall<Unit, Boolean>,
     private val _getProductCodeAndVersion: RdCall<Unit, RdProductInfo>
@@ -724,6 +725,7 @@ class RdTestSession private constructor(
         RdCall.write(ctx, buffer, _visibleFrameNames)
         RdCall.write(ctx, buffer, _projectsNames)
         RdCall.write(ctx, buffer, _makeScreenshot)
+        RdCall.write(ctx, buffer, _dumpThreads)
         RdCall.write(ctx, buffer, _isResponding)
         RdCall.write(ctx, buffer, _projectsAreInitialised)
         RdCall.write(ctx, buffer, _getProductCodeAndVersion)
@@ -756,10 +758,11 @@ class RdTestSession private constructor(
             val _visibleFrameNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
             val _projectsNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
+            val _dumpThreads = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _projectsAreInitialised = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _getProductCodeAndVersion = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, RdProductInfo)
-            return RdTestSession(rdAgentInfo, runTestMethod, traceCategories, debugCategories, _ready, _sendException, _startAllureStep, _updateAllureStep, _stopAllureStep, _exitApp, _showNotification, _forceLeaveAllModals, _closeAllOpenedProjects, _runNextAction, _requestFocus, _isFocused, _visibleFrameNames, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised, _getProductCodeAndVersion).withId(_id)
+            return RdTestSession(rdAgentInfo, runTestMethod, traceCategories, debugCategories, _ready, _sendException, _startAllureStep, _updateAllureStep, _stopAllureStep, _exitApp, _showNotification, _forceLeaveAllModals, _closeAllOpenedProjects, _runNextAction, _requestFocus, _isFocused, _visibleFrameNames, _projectsNames, _makeScreenshot, _dumpThreads, _isResponding, _projectsAreInitialised, _getProductCodeAndVersion).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -787,6 +790,7 @@ class RdTestSession private constructor(
     val visibleFrameNames: RdCall<Unit, List<String>> get() = _visibleFrameNames
     val projectsNames: RdCall<Unit, List<String>> get() = _projectsNames
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
+    val dumpThreads: RdCall<Unit, Boolean> get() = _dumpThreads
     val isResponding: RdCall<Unit, Boolean> get() = _isResponding
     val projectsAreInitialised: RdCall<Unit, Boolean> get() = _projectsAreInitialised
     val getProductCodeAndVersion: RdCall<Unit, RdProductInfo> get() = _getProductCodeAndVersion
@@ -810,6 +814,7 @@ class RdTestSession private constructor(
         _visibleFrameNames.async = true
         _projectsNames.async = true
         _makeScreenshot.async = true
+        _dumpThreads.async = true
         _isResponding.async = true
         _projectsAreInitialised.async = true
         _getProductCodeAndVersion.async = true
@@ -831,6 +836,7 @@ class RdTestSession private constructor(
         bindableChildren.add("visibleFrameNames" to _visibleFrameNames)
         bindableChildren.add("projectsNames" to _projectsNames)
         bindableChildren.add("makeScreenshot" to _makeScreenshot)
+        bindableChildren.add("dumpThreads" to _dumpThreads)
         bindableChildren.add("isResponding" to _isResponding)
         bindableChildren.add("projectsAreInitialised" to _projectsAreInitialised)
         bindableChildren.add("getProductCodeAndVersion" to _getProductCodeAndVersion)
@@ -864,6 +870,7 @@ class RdTestSession private constructor(
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, RdProductInfo>(FrameworkMarshallers.Void, RdProductInfo)
     )
     
@@ -892,6 +899,7 @@ class RdTestSession private constructor(
             print("visibleFrameNames = "); _visibleFrameNames.print(printer); println()
             print("projectsNames = "); _projectsNames.print(printer); println()
             print("makeScreenshot = "); _makeScreenshot.print(printer); println()
+            print("dumpThreads = "); _dumpThreads.print(printer); println()
             print("isResponding = "); _isResponding.print(printer); println()
             print("projectsAreInitialised = "); _projectsAreInitialised.print(printer); println()
             print("getProductCodeAndVersion = "); _getProductCodeAndVersion.print(printer); println()
@@ -920,6 +928,7 @@ class RdTestSession private constructor(
             _visibleFrameNames.deepClonePolymorphic(),
             _projectsNames.deepClonePolymorphic(),
             _makeScreenshot.deepClonePolymorphic(),
+            _dumpThreads.deepClonePolymorphic(),
             _isResponding.deepClonePolymorphic(),
             _projectsAreInitialised.deepClonePolymorphic(),
             _getProductCodeAndVersion.deepClonePolymorphic()

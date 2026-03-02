@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
@@ -92,7 +93,7 @@ internal fun computeBreakpointProxy(
           is XRemoveBreakpointResponse -> {
             val breakpoint = XBreakpointUIUtil.findBreakpointsAtLine(project, info).firstOrNull()
             if (breakpoint != null) {
-              XBreakpointUIUtil.removeBreakpointIfPossible(project, info, breakpoint)
+              XBreakpointUIUtil.removeBreakpointIfPossible(info, breakpoint).await()
             }
             result.complete(null)
           }

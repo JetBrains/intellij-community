@@ -114,7 +114,15 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         if (project.isDisposed()) return;
         var breakpoint = createDefaultBreakpoint(type);
         if (breakpoint != null) {
-          addBreakpoint(breakpoint, true, false);
+          boolean hasSimilarBreakpoint = withLockMaybeCancellable(myLock, () -> {
+            var defaultBreakpoints = myDefaultBreakpoints.get(type);
+            if (defaultBreakpoints == null) return false;
+            var defaultStates = ContainerUtil.map(defaultBreakpoints, XBreakpointBase::getState);
+            return hasSimilarBreakpointState(breakpoint.getState(), defaultStates);
+          });
+          if (!hasSimilarBreakpoint) {
+            addBreakpoint(breakpoint, true, false);
+          }
         }
       }
 
@@ -570,6 +578,21 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     return res;
   }
 
+  private static @NotNull List<BreakpointState> distinctDefaultBreakpoints(@NotNull List<BreakpointState> defaultBreakpoints) {
+    List<BreakpointState> uniqueStates = new SmartList<>();
+    for (BreakpointState breakpointState : defaultBreakpoints) {
+      if (hasSimilarBreakpointState(breakpointState, uniqueStates)) {
+        continue;
+      }
+      uniqueStates.add(breakpointState);
+    }
+    return uniqueStates;
+  }
+
+  private static boolean hasSimilarBreakpointState(BreakpointState breakpointState, Collection<? extends BreakpointState> states) {
+    return ContainerUtil.exists(states, existingState -> !statesAreDifferent(existingState, breakpointState, true));
+  }
+
   @ApiStatus.Internal
   public void loadState(@NotNull BreakpointManagerState state) {
     // create default breakpoint without locking
@@ -584,7 +607,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         myDefaultBreakpoints.clear();
         myBreakpointsDefaults.clear();
 
-        state.getDefaultBreakpoints().forEach(breakpointState -> loadBreakpoint(breakpointState, true));
+        distinctDefaultBreakpoints(state.getDefaultBreakpoints())
+          .forEach(breakpointState -> loadBreakpoint(breakpointState, true));
 
         //noinspection unchecked
         StreamEx.of(defaultBreakpoints)

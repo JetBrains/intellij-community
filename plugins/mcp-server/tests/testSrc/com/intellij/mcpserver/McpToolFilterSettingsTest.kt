@@ -2,8 +2,11 @@
 
 package com.intellij.mcpserver
 
+import com.intellij.mcpserver.impl.ENABLE_APPLY_PATCH_TOOL_REGISTRY_KEY
+import com.intellij.mcpserver.impl.ENABLE_GIT_STATUS_TOOL_REGISTRY_KEY
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.settings.McpToolFilterSettings
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -11,14 +14,62 @@ import org.junit.platform.commons.annotation.Testable
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+private const val GIT_STATUS_TOOL_NAME = "git_status"
+private const val APPLY_PATCH_TOOL_NAME = "apply_patch"
+
 @Testable
 @TestApplication
 class McpToolFilterSettingsTest {
-
   @AfterEach
   fun tearDown() {
     // Reset filter to default after each test
     McpToolFilterSettings.getInstance().toolsFilter = McpToolFilterSettings.DEFAULT_FILTER
+  }
+
+  @Test
+  fun `registry keys hide git_status and apply_patch by default`() {
+    val tools = McpServerService.getInstance().getMcpTools()
+
+    assertFalse(
+      tools.any { it.descriptor.name == GIT_STATUS_TOOL_NAME },
+      "Should hide $GIT_STATUS_TOOL_NAME when the key is false"
+    )
+    assertFalse(
+      tools.any { it.descriptor.name == APPLY_PATCH_TOOL_NAME },
+      "Should hide $APPLY_PATCH_TOOL_NAME when the key is false"
+    )
+  }
+
+  @RegistryKey(key = ENABLE_GIT_STATUS_TOOL_REGISTRY_KEY, value = "true")
+  @RegistryKey(key = ENABLE_APPLY_PATCH_TOOL_REGISTRY_KEY, value = "true")
+  @Test
+  fun `registry keys can enable git_status and apply_patch`() {
+    val tools = McpServerService.getInstance().getMcpTools()
+
+    assertTrue(
+      tools.any { it.descriptor.name == GIT_STATUS_TOOL_NAME },
+      "Should expose $GIT_STATUS_TOOL_NAME when the key is true"
+    )
+    assertTrue(
+      tools.any { it.descriptor.name == APPLY_PATCH_TOOL_NAME },
+      "Should expose $APPLY_PATCH_TOOL_NAME when the key is true"
+    )
+  }
+
+  @Test
+  fun `registry keys hard-disable tools even if filters include them`() {
+    McpToolFilterSettings.getInstance().toolsFilter = "-*,+*.$GIT_STATUS_TOOL_NAME,+*.$APPLY_PATCH_TOOL_NAME"
+
+    val tools = McpServerService.getInstance().getMcpTools()
+
+    assertFalse(
+      tools.any { it.descriptor.name == GIT_STATUS_TOOL_NAME },
+      "Should keep $GIT_STATUS_TOOL_NAME hidden when registry key is false"
+    )
+    assertFalse(
+      tools.any { it.descriptor.name == APPLY_PATCH_TOOL_NAME },
+      "Should keep $APPLY_PATCH_TOOL_NAME hidden when registry key is false"
+    )
   }
 
   @Test

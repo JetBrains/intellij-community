@@ -46,6 +46,7 @@ import org.gradle.util.GradleVersion.version
 fun getKotlinVersion(gradleVersion: GradleVersion): String {
   val base = gradleVersion.baseVersion
   return when {
+    base >= version("9.4.0") -> "2.3.0"
     base >= version("9.3.0") -> "2.2.21"
     base >= version("9.2.0") -> "2.2.20"
     base >= version("9.0.0") -> "2.2.0"

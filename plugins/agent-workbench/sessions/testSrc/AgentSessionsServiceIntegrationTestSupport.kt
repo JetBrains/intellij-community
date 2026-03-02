@@ -1,7 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.model.ProjectEntry
+import com.intellij.agent.workbench.sessions.model.WorktreeEntry
+import com.intellij.agent.workbench.sessions.service.AgentSessionsChatOpenExecutor
+import com.intellij.agent.workbench.sessions.service.AgentSessionsService
+import com.intellij.agent.workbench.sessions.state.InMemorySessionsTreeUiState
+import com.intellij.agent.workbench.sessions.state.SessionsTreeUiState
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +33,7 @@ internal class ScriptedSessionSource(
   override val updates: Flow<Unit> = emptyFlow(),
   private val listFromOpenProject: suspend (path: String, project: Project) -> List<AgentSessionThread> = { _, _ -> emptyList() },
   private val listFromClosedProject: suspend (path: String) -> List<AgentSessionThread> = { _ -> emptyList() },
+  private val prefetch: suspend (paths: List<String>) -> Map<String, List<AgentSessionThread>> = { emptyMap() },
 ) : AgentSessionSource {
   override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> {
     return listFromOpenProject(path, project)
@@ -32,6 +42,10 @@ internal class ScriptedSessionSource(
   override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> {
     return listFromClosedProject(path)
   }
+
+  override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {
+    return prefetch(paths)
+  }
 }
 
 internal fun thread(
@@ -39,6 +53,7 @@ internal fun thread(
   updatedAt: Long,
   provider: AgentSessionProvider,
   title: String = id,
+  subAgents: List<AgentSubAgent> = emptyList(),
 ): AgentSessionThread {
   return AgentSessionThread(
     id = id,
@@ -46,6 +61,7 @@ internal fun thread(
     updatedAt = updatedAt,
     archived = false,
     provider = provider,
+    subAgents = subAgents,
   )
 }
 
@@ -53,20 +69,34 @@ internal suspend fun withService(
   sessionSourcesProvider: () -> List<AgentSessionSource>,
   projectEntriesProvider: suspend () -> List<ProjectEntry>,
   treeUiState: SessionsTreeUiState = InMemorySessionsTreeUiState(),
-  archiveChatCleanup: suspend (projectPath: String, threadIdentity: String) -> Unit = { _, _ -> },
+  archiveChatCleanup: suspend (projectPath: String, threadIdentity: String, subAgentId: String?) -> Unit = { _, _, _ -> },
+  chatOpenExecutor: AgentSessionsChatOpenExecutor? = null,
   action: suspend (AgentSessionsService) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
   val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   try {
-    val service = AgentSessionsService(
-      serviceScope = scope,
-      sessionSourcesProvider = sessionSourcesProvider,
-      projectEntriesProvider = projectEntriesProvider,
-      treeUiState = treeUiState,
-      archiveChatCleanup = archiveChatCleanup,
-      subscribeToProjectLifecycle = false,
-    )
+    val service = if (chatOpenExecutor == null) {
+      AgentSessionsService(
+        serviceScope = scope,
+        sessionSourcesProvider = sessionSourcesProvider,
+        projectEntriesProvider = projectEntriesProvider,
+        treeUiState = treeUiState,
+        archiveChatCleanup = archiveChatCleanup,
+        subscribeToProjectLifecycle = false,
+      )
+    }
+    else {
+      AgentSessionsService(
+        serviceScope = scope,
+        sessionSourcesProvider = sessionSourcesProvider,
+        projectEntriesProvider = projectEntriesProvider,
+        treeUiState = treeUiState,
+        archiveChatCleanup = archiveChatCleanup,
+        subscribeToProjectLifecycle = false,
+        chatOpenExecutor = chatOpenExecutor,
+      )
+    }
     action(service)
   }
   finally {

@@ -69,6 +69,15 @@
   - name: kotlinc.analysis-api-platform-interface
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2/analysis-api-platform-interface-for-ide-2.jar
+  - name: kotlinc.kotlin-build-tools-api
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2/kotlin-build-tools-api-2.jar
+  - name: kotlinc.kotlin-build-tools-cri-impl
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2/kotlin-build-tools-cri-impl-2.jar
+  - name: kotlinc.kotlin-build-tools-impl
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-impl/2/kotlin-build-tools-impl-2.jar
   - name: kotlinc.kotlin-compiler-fir
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2/kotlin-compiler-fir-for-ide-2.jar
@@ -209,7 +218,6 @@
   - name: intellij.kotlin.j2k
   - name: intellij.kotlin.onboarding
   - name: intellij.kotlin.onboarding.gradle
-  - name: intellij.kotlin.onboarding.maven
   - name: intellij.kotlin.plugin.updater
   - name: intellij.kotlin.preferences
   - name: intellij.kotlin.projectConfiguration

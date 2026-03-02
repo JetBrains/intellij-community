@@ -8,6 +8,7 @@ import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.lang.LanguageImportStatements
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.executeCommand
@@ -33,7 +34,9 @@ import com.intellij.workspaceModel.codegen.engine.GeneratorSettings
 import com.intellij.workspaceModel.codegen.engine.ObjClassGeneratedCode
 import com.intellij.workspaceModel.codegen.engine.ObjModuleFileGeneratedCode
 import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -95,10 +98,13 @@ object CodeWriter {
     }
 
     waitSmartMode(project)
-    executeCommand(project, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name)) {
+    withContext(Dispatchers.EDT) {
+      executeCommand(project,
+                     DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name)) {
       val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
       ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata")
+
         val metaLoader: WorkspaceMetaModelProvider = service<WorkspaceMetaModelProvider>()
         val (objModules, metaProblems) = metaLoader.loadObjModules(ktClasses, module, processAbstractTypes, isTestSourceFolder)
         if (metaProblems.isNotEmpty()) {
@@ -172,6 +178,7 @@ object CodeWriter {
           LanguageImportStatements.INSTANCE.forFile(file).forEach { it.processFile(file).run() }
           PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(file.viewProvider.document!!)
           CodeStyleManager.getInstance(project).reformat(file)
+        }
         }
       }
     }

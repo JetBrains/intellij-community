@@ -110,8 +110,10 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
           it.createParentDirectories().findOrCreateFile()
         }
         val finalVMOptions = if (ConfigurationStorage.useDockerContainer()) {
+          // Replace $IDE_HOME macro with actual path - the build system already produces
+          // Linux native libraries when useDockerContainer() is true
           vmOptions.copy(data = vmOptions.data()
-            .map { value -> value.replace("\$IDE_HOME", "${GlobalPaths.instance.intelliJOutDirectory.toAbsolutePath()}/dev-run/idea") })
+            .map { value -> value.replace("\$IDE_HOME", installationDirectory.toString()) })
         }
         else {
           vmOptions

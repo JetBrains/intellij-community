@@ -123,4 +123,32 @@ internal fun readOutlinedButtonStyle(): ButtonStyle {
     )
 }
 
+internal fun readDefaultSlimButtonStyle(colors: ButtonColors): ButtonStyle =
+    ButtonStyle(
+        colors = colors,
+        metrics =
+            ButtonMetrics(
+                cornerSize = buttonCornerSize(),
+                padding = PaddingValues(horizontal = 14.dp, vertical = 2.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
+                minSize = DpSize(60.dp, 24.dp),
+                borderWidth = borderWidth,
+                focusOutlineExpand = 1.5.dp,
+            ),
+        focusOutlineAlignment = Stroke.Alignment.Center,
+    )
+
+internal fun readOutlinedSlimButtonStyle(colors: ButtonColors): ButtonStyle =
+    ButtonStyle(
+        colors = colors,
+        metrics =
+            ButtonMetrics(
+                cornerSize = buttonCornerSize(),
+                padding = PaddingValues(horizontal = 14.dp, vertical = 2.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
+                minSize = DpSize(60.dp, 24.dp),
+                borderWidth = borderWidth,
+                focusOutlineExpand = Dp.Unspecified,
+            ),
+        focusOutlineAlignment = Stroke.Alignment.Center,
+    )
+
 private fun buttonCornerSize(): CornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp.safeValue() / 2)

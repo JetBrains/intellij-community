@@ -219,7 +219,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
 
   protected void affectStaticMemberOnDemandUsages(DifferentiateContext context, JvmNodeReferenceID clsId, Iterable<JvmNodeReferenceID> propagated) {
     affectUsages(
-      context, "static member on-demand import usage",
+      context, "static member on-demand import",
       flat(asIterable(clsId), propagated),
       id -> new ImportStaticOnDemandUsage(id),
       null
@@ -237,13 +237,15 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
 
   protected void affectUsages(DifferentiateContext context, String usageKind, Iterable<JvmNodeReferenceID> usageOwners, Function<? super JvmNodeReferenceID, ? extends Usage> usageFactory, @Nullable Predicate<Node<?, ?>> constraint) {
     for (JvmNodeReferenceID id : usageOwners) {
+      Usage usage = usageFactory.apply(id);
       if (constraint != null) {
-        context.affectUsage(usageFactory.apply(id), constraint);
+        context.affectUsage(usage, constraint);
       }
       else {
-        context.affectUsage(usageFactory.apply(id));
+        context.affectUsage(usage);
       }
-      debug(context, "Affect ", usageKind, " usage owned by node '", id.getNodeName(), "'");
+      String usageOwnerName = usage.getElementOwner() instanceof JvmNodeReferenceID? ((JvmNodeReferenceID) usage.getElementOwner()).getNodeName() : usage.getElementOwner().toString();
+      debug(context, "Affect ", usageKind, " usage owned by '", usageOwnerName, "' ", "(node '", id.getNodeName(), "')");
     }
   }
 

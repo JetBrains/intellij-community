@@ -1,19 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.sessions.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
+import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionEntryCommand
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewCommand
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionNewIdentity
+import com.intellij.agent.workbench.sessions.util.buildAgentSessionResumeCommand
+import com.intellij.agent.workbench.sessions.util.isAgentSessionNewIdentity
+import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
+import com.intellij.agent.workbench.sessions.util.resolveAgentSessionId
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import javax.swing.Icon
 
 @TestApplication
 class AgentSessionCliTest {
@@ -24,64 +33,70 @@ class AgentSessionCliTest {
   fun parseIdentityParsesProviderAndSessionId() {
     val parsed = parseAgentSessionIdentity("codex:thread-1")
 
-    assertEquals(AgentSessionProvider.CODEX, parsed?.provider)
-    assertEquals("thread-1", parsed?.sessionId)
+    assertThat(parsed?.provider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(parsed?.sessionId).isEqualTo("thread-1")
   }
 
   @Test
   fun parseIdentityRejectsMalformedValue() {
-    assertNull(parseAgentSessionIdentity("codex"))
-    assertNull(parseAgentSessionIdentity("codex:"))
-    assertNull(parseAgentSessionIdentity(":thread-1"))
-    assertNull(parseAgentSessionIdentity("Codex:thread-1"))
+    assertThat(parseAgentSessionIdentity("codex")).isNull()
+    assertThat(parseAgentSessionIdentity("codex:")).isNull()
+    assertThat(parseAgentSessionIdentity(":thread-1")).isNull()
+    assertThat(parseAgentSessionIdentity("Codex:thread-1")).isNull()
+  }
+
+  @Test
+  fun resolveSessionIdExtractsThreadIdFromIdentity() {
+    assertThat(resolveAgentSessionId("codex:thread-1")).isEqualTo("thread-1")
+  }
+
+  @Test
+  fun resolveSessionIdFallsBackForMalformedIdentity() {
+    assertThat(resolveAgentSessionId("invalid")).isEqualTo("invalid")
   }
 
   @Test
   fun buildResumeCommandUsesProviderSpecificCommands() {
     withTestBridges {
-      assertEquals(
-        listOf("codex", "resume", "thread-1"),
-        buildAgentSessionResumeCommand(AgentSessionProvider.CODEX, "thread-1"),
-      )
-      assertEquals(
-        listOf("claude", "--resume", "session-1"),
-        buildAgentSessionResumeCommand(AgentSessionProvider.CLAUDE, "session-1"),
-      )
+      assertThat(buildAgentSessionResumeCommand(AgentSessionProvider.CODEX, "thread-1"))
+        .isEqualTo(listOf("codex", "resume", "thread-1"))
+      assertThat(buildAgentSessionResumeCommand(AgentSessionProvider.CLAUDE, "session-1"))
+        .isEqualTo(listOf("claude", "--resume", "session-1"))
     }
   }
 
   @Test
   fun buildNewEntryCommandUsesProviderSpecificCommands() {
     withTestBridges {
-      assertEquals(listOf("codex"), buildAgentSessionEntryCommand(AgentSessionProvider.CODEX))
-      assertEquals(listOf("claude"), buildAgentSessionEntryCommand(AgentSessionProvider.CLAUDE))
+      assertThat(buildAgentSessionEntryCommand(AgentSessionProvider.CODEX)).isEqualTo(listOf("codex"))
+      assertThat(buildAgentSessionEntryCommand(AgentSessionProvider.CLAUDE)).isEqualTo(listOf("claude"))
     }
   }
 
   @Test
   fun buildNewClaudeCommands() {
     withTestBridges {
-      assertEquals(
-        listOf("claude"),
-        buildAgentSessionNewCommand(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD),
-      )
-      assertEquals(
-        listOf("claude", "--dangerously-skip-permissions"),
-        buildAgentSessionNewCommand(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO),
-      )
+      assertThat(buildAgentSessionNewCommand(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD))
+        .isEqualTo(listOf("claude"))
+      assertThat(buildAgentSessionNewCommand(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.YOLO))
+        .isEqualTo(listOf("claude", "--dangerously-skip-permissions"))
     }
   }
 
   @Test
-  fun buildNewCodexCommandsThrow() {
+  fun buildNewCodexCommands() {
     withTestBridges {
-      assertThrows(IllegalStateException::class.java) {
-        buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
-      }
-      assertThrows(IllegalStateException::class.java) {
-        buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO)
-      }
+      assertThat(buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD))
+        .isEqualTo(listOf("codex"))
+      assertThat(buildAgentSessionNewCommand(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO))
+        .isEqualTo(listOf("codex", "--full-auto"))
     }
+  }
+
+  @Test
+  fun resolveSessionIdReturnsBlankForPendingIdentity() {
+    assertThat(resolveAgentSessionId("codex:new-123")).isEqualTo("")
+    assertThat(isAgentSessionNewIdentity("codex:new-123")).isTrue()
   }
 
   @Test
@@ -89,15 +104,15 @@ class AgentSessionCliTest {
     val claudeA = buildAgentSessionNewIdentity(AgentSessionProvider.CLAUDE)
     val claudeB = buildAgentSessionNewIdentity(AgentSessionProvider.CLAUDE)
 
-    assertNotEquals(claudeA, claudeB)
-    assertTrue(claudeA.startsWith("claude:"))
-    assertTrue(buildAgentSessionNewIdentity(AgentSessionProvider.CODEX).startsWith("codex:"))
+    assertThat(claudeA).isNotEqualTo(claudeB)
+    assertThat(claudeA.startsWith("claude:")).isTrue()
+    assertThat(buildAgentSessionNewIdentity(AgentSessionProvider.CODEX).startsWith("codex:")).isTrue()
   }
 
   @Test
   fun buildExistingIdentityFormat() {
-    assertEquals("claude:abc", buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "abc"))
-    assertEquals("codex:xyz", buildAgentSessionIdentity(AgentSessionProvider.CODEX, "xyz"))
+    assertThat(buildAgentSessionIdentity(AgentSessionProvider.CLAUDE, "abc")).isEqualTo("claude:abc")
+    assertThat(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "xyz")).isEqualTo("codex:xyz")
   }
 
   private fun withTestBridges(block: () -> Unit) {
@@ -124,8 +139,8 @@ class AgentSessionCliTest {
     override val newSessionLabelKey: String
       get() = "toolwindow.action.new.session.codex"
 
-    override val iconId: String
-      get() = AgentSessionProviderIconIds.CODEX
+    override val icon: Icon
+      get() = if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude_14x14 else AgentWorkbenchCommonIcons.Codex_14x14
 
     override val supportedLaunchModes: Set<AgentSessionLaunchMode>
       get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
@@ -159,8 +174,9 @@ class AgentSessionCliTest {
         return TestBridge(
           provider = AgentSessionProvider.CODEX,
           resumeCommandBuilder = { sessionId -> listOf("codex", "resume", sessionId) },
-          newSessionCommandBuilder = {
-            error("Codex new sessions use thread/start + resume, not direct CLI")
+          newSessionCommandBuilder = { mode ->
+            if (mode == AgentSessionLaunchMode.YOLO) listOf("codex", "--full-auto")
+            else listOf("codex")
           },
           newEntryCommand = listOf("codex"),
         )

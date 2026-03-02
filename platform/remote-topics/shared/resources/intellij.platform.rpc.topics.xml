@@ -1,4 +1,9 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.util.coroutines"/>
+  </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.rpc.applicationRemoteTopicListener"
                     interface="com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener" dynamic="true"/>

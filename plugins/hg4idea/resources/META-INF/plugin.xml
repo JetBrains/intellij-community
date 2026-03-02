@@ -14,6 +14,17 @@
   </description>
   <category>Version Controls</category>
   <vendor>JetBrains</vendor>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.vcs.dvcs"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+  </dependencies>
+  <!-- endregion -->
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">

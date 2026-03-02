@@ -43,9 +43,9 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.initialConfigImport" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />

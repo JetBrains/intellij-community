@@ -80,7 +80,8 @@ public class ExternalJavaConfigurationCodeVision : CodeVisionProvider<Unit> {
       val service = project.service<ExternalJavaConfigurationService>()
       @Suppress("UNCHECKED_CAST")
       service.updateFromConfig(provider as ExternalJavaConfigurationProvider<Any?>)
-      val status = service.statuses[psiFile.virtualFile.path] ?: JavaConfigurationStatus.Unknown
+      val virtualFile = psiFile.virtualFile
+      val status = service.statuses[virtualFile.fileSystem.getNioPath(virtualFile)] ?: JavaConfigurationStatus.Unknown
 
       val entry = buildEntry(project, provider, status)
       if (entry == null) return@computeCodeVisionUnderReadAction CodeVisionState.READY_EMPTY

@@ -19,7 +19,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <psi.implicitReferenceProvider implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinGradleProjectReferenceProvider"/>
     <psi.implicitReferenceProvider implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinGradlePluginReferenceProvider"/>
-    <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeABICompatibilityChecker"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeABICompatibilityChecker"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeRunConfigurationProducer"/>
 
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinConfiguratorExternalSystemSyncListener"/>

@@ -18,6 +18,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -45,6 +46,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.indexing.StorageException
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -58,6 +60,7 @@ import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceSettings
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
+import org.jetbrains.kotlin.idea.search.refIndex.bta.BtaFileWatcher
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -84,7 +87,7 @@ import kotlin.concurrent.write
 /**
  * Based on [com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase] and [com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl]
  */
-class KotlinCompilerReferenceIndexService(private val project: Project) : Disposable, ModificationTracker {
+class KotlinCompilerReferenceIndexService(private val project: Project, private val coroutineScope: CoroutineScope) : Disposable, ModificationTracker {
     private var initialized: Boolean = false
     private var storage: KotlinCompilerReferenceIndexStorage? = null
     private var activeBuildCount = 0
@@ -158,6 +161,30 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
                 withWriteLock { closeStorage() }
             }
         })
+
+        // TODO KTIJ-37446 Make Kotlin Compiler Reference Index JPS-agnostic
+        if (BtaFileWatcher.isApplicable(project)) {
+            BtaFileWatcher(project).watchIn(coroutineScope) { upToDateModules ->
+                executeOnBuildThread {
+                    onExternalCompilationDetected(upToDateModules)
+                }
+            }
+        }
+    }
+
+    private fun onExternalCompilationDetected(compiledModules: List<Module>) {
+        val allModules = if (!initialized) allModules() else null
+        compilationCounter.increment()
+        val projectPath = runReadActionBlocking { projectIfNotDisposed?.basePath }
+        withDirtyScopeUnderWriteLock {
+            openStorage(projectPath)
+
+            if (!initialized) {
+                initialize(allModules, compiledModules)
+            } else {
+                compilerActivityFinished(compiledModules)
+            }
+        }
     }
 
     internal class KCRIIsUpToDateConsumer : IsUpToDateCheckConsumer {

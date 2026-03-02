@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.diagnostic.VMOptions
@@ -230,11 +230,13 @@ internal object SystemHealthMonitor {
       ?.let { NotificationAction.createExpiring(IdeBundle.message("vm.options.edit.action.cap")) { e, _ -> it.actionPerformed(e!!) } }
 
   private suspend fun checkEnvironment() {
-    val usedVars = sequenceOf("_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS")
-      .filter { `var` -> !System.getenv(`var`).isNullOrEmpty() }
-      .toList()
-    if (!usedVars.isEmpty()) {
-      showNotification("vm.options.env.vars", suppressable = true, action = null, usedVars.joinToString(separator = ", "))
+    if (!System.getProperty("ide.native.launcher").toBoolean()) {
+      val usedVars = sequenceOf("_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS")
+        .filter { `var` -> !System.getenv(`var`).isNullOrEmpty() }
+        .toList()
+      if (!usedVars.isEmpty()) {
+        showNotification("vm.options.env.vars", suppressable = true, action = null, usedVars.joinToString(separator = ", "))
+      }
     }
 
     try {

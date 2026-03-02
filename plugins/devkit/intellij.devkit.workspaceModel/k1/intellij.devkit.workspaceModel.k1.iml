@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=org.jetbrains.kotlin.analysis.api.KaIdeApi -opt-in=org.jetbrains.kotlin.analysis.api.KaNonPublicApi -opt-in=com.jetbrains.kotlin.ocSwift.KotlinFE10Usage -opt-in=org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -opt-in=org.jetbrains.kotlin.K1Deprecation" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=org.jetbrains.kotlin.analysis.api.KaIdeApi -opt-in=org.jetbrains.kotlin.analysis.api.KaNonPublicApi -opt-in=org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -opt-in=org.jetbrains.kotlin.K1Deprecation" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -46,5 +46,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" />
   </component>
 </module>

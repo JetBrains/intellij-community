@@ -36,7 +36,6 @@
     <orderEntry type="module" module-name="intellij.platform.welcomeScreen" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.diff" />

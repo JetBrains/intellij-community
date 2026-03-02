@@ -42,12 +42,11 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
-import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.firstOrNull
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -64,7 +63,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
-@K1ModeProjectStructureApi
 class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         // skip events out of scope of this processor
@@ -270,14 +268,13 @@ class ImplicitPackagePrefixCache(private val project: Project) {
 }
 
 @Service(Service.Level.PROJECT)
-@K1ModeProjectStructureApi
 class PerModulePackageCacheService(private val project: Project) : Disposable {
 
     /*
-     * Actually an WeakMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>
+     * Actually an WeakMap<Module, ConcurrentMap<KaSourceModule, ConcurrentMap<FqName, Boolean>>>
      */
     @Volatile
-    private var cacheInstance:ConcurrentMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>? = null
+    private var cacheInstance:ConcurrentMap<Module, ConcurrentMap<KaSourceModule, ConcurrentMap<FqName, Boolean>>>? = null
 
     private val cacheInstanceUpdater =
         AtomicReferenceFieldUpdater.newUpdater(PerModulePackageCacheService::class.java, ConcurrentMap::class.java, "cacheInstance")
@@ -304,10 +301,10 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         }
     }
 
-    private fun cache(): ConcurrentMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>> {
+    private fun cache(): ConcurrentMap<Module, ConcurrentMap<KaSourceModule, ConcurrentMap<FqName, Boolean>>> {
         cacheInstance?.let { return it }
         val map =
-            ContainerUtil.createConcurrentWeakMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>()
+            ContainerUtil.createConcurrentWeakMap<Module, ConcurrentMap<KaSourceModule, ConcurrentMap<FqName, Boolean>>>()
         return if (cacheInstanceUpdater.compareAndSet(this, null, map)) {
             map
         } else {
@@ -323,11 +320,11 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         pendingKtFileChanges += SmartPointerManager.getInstance(project).createSmartPsiElementPointer(file, file)
     }
 
-    private fun invalidateCacheForModuleSourceInfo(moduleSourceInfo: ModuleSourceInfo) {
-        LOG.debugIfEnabled(project) { "Invalidated cache for $moduleSourceInfo" }
+    private fun invalidateCacheForKaSourceModule(sourceModule: KaSourceModule) {
+        LOG.debugIfEnabled(project) { "Invalidated cache for $sourceModule" }
         val cache = cacheInstance
-        val perSourceInfoData = cache?.get(moduleSourceInfo.module) ?: return
-        val dataForSourceInfo = perSourceInfoData[moduleSourceInfo] ?: return
+        val perSourceInfoData = cache?.get(sourceModule.openapiModule) ?: return
+        val dataForSourceInfo = perSourceInfoData[sourceModule] ?: return
         dataForSourceInfo.clear()
     }
 
@@ -353,12 +350,14 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
                         }
                     }
                 } else {
-                    val infoByVirtualFile = ModuleInfoProvider.getInstance(project).firstOrNull(vfile)
-                    if (infoByVirtualFile == null || infoByVirtualFile !is ModuleSourceInfo) {
-                        LOG.debugIfEnabled(project) { "Skip $vfile as it has mismatched ModuleInfo=$infoByVirtualFile" }
+                    val moduleByVirtualFile = PsiManager.getInstance(project).findFile(vfile)?.let {
+                        KaModuleProvider.getModule(project, it, null)
                     }
-                    (infoByVirtualFile as? ModuleSourceInfo)?.let {
-                        invalidateCacheForModuleSourceInfo(it)
+                    if (moduleByVirtualFile == null || moduleByVirtualFile !is KaSourceModule) {
+                        LOG.debugIfEnabled(project) { "Skip $vfile as it has mismatched ModuleInfo=$moduleByVirtualFile" }
+                    }
+                    (moduleByVirtualFile as? KaSourceModule)?.let {
+                        invalidateCacheForKaSourceModule(it)
                     }
                 }
 
@@ -374,9 +373,9 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
                     }
                     return@processPending
                 }
-                val nullableModuleInfo = file.moduleInfoOrNull
-                (nullableModuleInfo as? ModuleSourceInfo)?.let { invalidateCacheForModuleSourceInfo(it) }
-                if (nullableModuleInfo == null || nullableModuleInfo !is ModuleSourceInfo) {
+                val nullableModuleInfo = KaModuleProvider.getModule(project, file, null)
+                (nullableModuleInfo as? KaSourceModule)?.let { invalidateCacheForKaSourceModule(it) }
+                if (nullableModuleInfo !is KaSourceModule) {
                     LOG.debugIfEnabled(project) { "Skip $file as it has mismatched ModuleInfo=$nullableModuleInfo" }
                 }
                 implicitPackagePrefixCache.update(file)
@@ -404,8 +403,8 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
                 || isDirectory && VfsUtilCore.isEqualOrAncestor(root, url))
 
 
-    fun packageExists(packageFqName: FqName, moduleInfo: ModuleSourceInfo): Boolean {
-        val module = moduleInfo.module
+    fun packageExists(packageFqName: FqName, moduleInfo: KaSourceModule): Boolean {
+        val module = moduleInfo.openapiModule
         checkPendingChanges()
 
         val perSourceInfoCache = cache().getOrPut(module) {
@@ -522,7 +521,6 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
     }
 }
 
-@OptIn(K1ModeProjectStructureApi::class)
 private fun Logger.debugIfEnabled(project: Project, withCurrentTrace: Boolean = false, message: () -> String) {
     if (isUnitTestMode() && project.DEBUG_LOG_ENABLE_PerModulePackageCache) {
         val msg = message()

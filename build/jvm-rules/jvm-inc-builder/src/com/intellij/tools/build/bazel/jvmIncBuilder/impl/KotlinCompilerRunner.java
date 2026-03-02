@@ -265,7 +265,11 @@ public class KotlinCompilerRunner implements CompilerRunner {
     return changed? moduleMeta.write() : moduleEntryContent;
   }
 
-  private record GeneratedClass(String jvmClassName, File source) {}
+  private record GeneratedClass(String jvmClassName, File source) {
+    public String getNormalizedSourcePath() {
+      return source.getPath().replace(File.separatorChar, '/');
+    }
+  }
 
   private void processTrackers(OutputSink out, List<GeneratedClass> generated) {
     ensureTrackersInitialized();
@@ -281,7 +285,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
 
   private static void processInlineConstTracker(InlineConstTrackerImpl inlineConstTracker, GeneratedClass output, OutputSink callback) {
     Map<String, Collection<ConstantRef>> constMap = inlineConstTracker.getInlineConstMap();
-    Collection<ConstantRef> constantRefs = constMap.get(output.source.getPath());
+    Collection<ConstantRef> constantRefs = constMap.get(output.getNormalizedSourcePath());
     if (constantRefs == null) return;
 
     List<CompilerDataSink.ConstantRef> cRefs = new ArrayList<>();
@@ -311,7 +315,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
 
   private static void processImportTracker(ImportTrackerImpl importTracker, GeneratedClass output, OutputSink callback) {
     Map<String, Collection<String>> importMap = importTracker.getFilePathToImportedFqNamesMap();
-    Collection<String> importedFqNames = importMap.get(output.source.getPath());
+    Collection<String> importedFqNames = importMap.get(output.getNormalizedSourcePath());
     if (importedFqNames != null) {
       callback.registerImports(output.jvmClassName, importedFqNames, List.of());
     }

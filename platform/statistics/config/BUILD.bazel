@@ -13,6 +13,9 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
   ]
 )
 
@@ -27,6 +30,9 @@ jvm_library(
     "//libraries/jackson/jackson:jackson_test_lib",
     "//libraries/jackson/databind:databind_test_lib",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind:databind_test_lib",
+    "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.statistics.config` end

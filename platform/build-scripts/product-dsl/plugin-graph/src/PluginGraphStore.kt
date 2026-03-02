@@ -414,7 +414,12 @@ private fun buildReverseCsrFromOut(
       val targetId = unpackNodeId(entry)
       val reverseEntry = when (edgeType) {
         EDGE_TARGET_DEPENDS_ON -> packTargetDependencyEntry(sourceId, unpackTargetDependencyScope(entry))
-        EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN -> packPluginDepEntry(sourceId, unpackPluginDepOptional(entry), unpackPluginDepFormats(entry))
+        EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN -> packPluginDepEntry(
+          sourceId,
+          unpackPluginDepOptional(entry),
+          unpackPluginDepFormats(entry),
+          unpackPluginDepHasConfigFile(entry),
+        )
         EDGE_CONTAINS_CONTENT, EDGE_CONTAINS_CONTENT_TEST, EDGE_CONTAINS_MODULE -> packEdgeEntry(sourceId, unpackLoadingMode(entry))
         else -> sourceId
       }

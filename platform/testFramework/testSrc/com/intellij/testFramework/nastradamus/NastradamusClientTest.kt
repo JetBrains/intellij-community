@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.nastradamus
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.nastradamus.NastradamusClient
 import com.intellij.nastradamus.model.BuildInfo
 import com.intellij.nastradamus.model.ChangeEntity
@@ -22,6 +21,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.rules.Timeout
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.net.URI
 import java.nio.file.Path
 import java.util.Properties

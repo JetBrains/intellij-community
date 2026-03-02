@@ -103,7 +103,7 @@ internal class ClassLoaderConfiguratorTest {
         }
       }
     }.buildDir(rootDir.resolve("p_dependent"))
-    val plugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.discoveredPlugins.flatMap { it.plugins }
+    val plugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.pluginLists.flatMap { it.plugins }
     Assertions.assertThat(plugins).hasSize(2)
     val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins.toSet()).createPluginSetWithEnabledModulesMap())
     classLoaderConfigurator.configure()
@@ -133,7 +133,7 @@ internal class ClassLoaderConfiguratorTest {
       depends("1-foo")
     }.buildDir(rootDir.resolve("2-bar"))
 
-    val plugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.discoveredPlugins.flatMap { it.plugins }
+    val plugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.pluginLists.flatMap { it.plugins }
     assertThat(plugins).hasSize(2)
     val barPlugin = plugins.get(1)
     assertThat(barPlugin.pluginId.idString).isEqualTo("2-bar")

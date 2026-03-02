@@ -17,7 +17,10 @@ internal class ModuleContentScope(private val module: Module) : GlobalSearchScop
   override fun contains(file: VirtualFile): Boolean = projectFileIndex.getModuleForFile(file) == module
   override fun isSearchInModuleContent(aModule: Module): Boolean = aModule == module
   override fun isSearchInLibraries(): Boolean = false
-  override fun equals(other: Any?): Boolean = (other as? ModuleContentScope)?.module == module
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    return (other as? ModuleContentScope)?.module == module
+  }
   override fun calcHashCode(): Int = module.hashCode()
   override fun toString(): String = "ModuleContentScope{module=${module.name}}"
   override fun getDisplayName(): String = IndexingBundle.message("search.scope.module", module.name)
@@ -50,7 +53,10 @@ internal class ModuleWithDependenciesContentScope(private val rootModule: Module
     return order2.compareTo(order1)
   }
 
-  override fun equals(other: Any?): Boolean = (other as? ModuleWithDependenciesContentScope)?.rootModule == rootModule
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    return (other as? ModuleWithDependenciesContentScope)?.rootModule == rootModule
+  }
   override fun calcHashCode(): Int = rootModule.hashCode()
   override fun toString(): String = "ModuleWithDependenciesContentScope{rootModule=${rootModule.name}}" 
   override fun getDisplayName(): String = IndexingBundle.message("search.scope.module", rootModule.name)

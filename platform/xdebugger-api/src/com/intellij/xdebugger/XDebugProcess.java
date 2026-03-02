@@ -12,6 +12,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XDescriptor;
 import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -28,6 +29,7 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.event.HyperlinkListener;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Extend this class to provide debugging capabilities for a custom language/framework.
@@ -337,6 +339,18 @@ public abstract class XDebugProcess {
   @ApiStatus.Internal
   @Nullable
   public XMixedModeDebugProcessExtension getMixedModeDebugProcessExtension() {
+    return null;
+  }
+
+  /**
+   * Provides additional information about the debug process
+   * which can be used by UI and actions on the Frontend.
+   *
+   * @see XDescriptor
+   * @see com.intellij.xdebugger.frame.CustomXDescriptorSerializerProvider
+   */
+  @ApiStatus.Internal
+  public @Nullable CompletableFuture<@NotNull XDescriptor> getProcessDescriptor() {
     return null;
   }
 }

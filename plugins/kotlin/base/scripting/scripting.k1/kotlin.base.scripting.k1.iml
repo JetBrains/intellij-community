@@ -79,5 +79,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.kotlin.preferences" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.project-structure" />
   </component>
 </module>

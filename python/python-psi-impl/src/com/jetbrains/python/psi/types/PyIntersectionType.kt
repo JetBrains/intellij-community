@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 
 @ApiStatus.Experimental
-class PyIntersectionType private constructor(members: Collection<PyType?>) : PyCompoundType {
+class PyIntersectionType private constructor(members: Collection<PyType?>) : PyCompositeType {
   override val members: Set<PyType?> = Collections.unmodifiableSet<PyType?>(LinkedHashSet(members))
 
   override fun resolveMember(
@@ -85,6 +85,7 @@ class PyIntersectionType private constructor(members: Collection<PyType?>) : PyC
     fun intersection(types: Collection<PyType?>): PyType? {
       val newMembers = buildSet {
         for (member in types) {
+          if (member is PyNeverType) return@intersection member
           if (member is PyIntersectionType) {
             addAll(member.members)
           }

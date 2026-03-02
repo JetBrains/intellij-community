@@ -18,9 +18,9 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:jetbrains-annotations",
     "@lib//:opentelemetry-exporter-otlp-common",
-    "//libraries/jackson/jackson",
+    "//libraries/jackson3/jackson:libraries-jackson3",
     "@lib//:io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
-    "//libraries/jackson/databind",
+    "//libraries/jackson3/databind",
   ]
 )
 
@@ -35,11 +35,11 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:junit5",
     "@lib//:opentelemetry-exporter-otlp-common",
-    "//libraries/jackson/jackson",
-    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     "@lib//:io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
-    "//libraries/jackson/databind",
-    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/databind:databind_test_lib",
     "@lib//:kotlin-stdlib",
   ]
 )

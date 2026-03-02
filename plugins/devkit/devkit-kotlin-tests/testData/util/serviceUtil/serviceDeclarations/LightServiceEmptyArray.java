@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 
 /**
- * NOT_SPECIFIED
+ * APP
  */
 @Service({})
 public final class LightServiceEmptyArray {

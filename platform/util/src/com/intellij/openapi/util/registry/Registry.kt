@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry
 
 import com.intellij.diagnostic.LoadingState
@@ -29,6 +29,16 @@ data class ValueWithSource(
  *
  * Plugins can provide their own registry keys using the `com.intellij.registryKey` extension point
  * (see `com.intellij.openapi.util.registry.RegistryKeyBean` for more details).
+ * 
+ * ## Registry Access Notes
+ * Any [Registry] access in the early IDE startup phase, before the IDE components are initialized ([LoadingState.COMPONENTS_LOADED]),
+ * might lead to reading an uninitialized value (**without** respect to the actual value stored by the user or the corresponding defaults).
+ * Such access is only allowed from the IDE features that only work after the component initialization, such as action system,
+ * tool windows, editor features. If you access the registry too early, the access will be permitted, but an error will be logged.
+ * 
+ * In any other cases, when you need to access the registry but aren't sure if the component initialization is complete, you should use the
+ * `com.intellij.openapi.util.registry.RegistryManager`: `RegistryManager.getInstance()` or `getInstanceAsync()` guarantees the correct
+ * initialization.
  */
 class Registry {
   private val userProperties = LinkedHashMap<String, ValueWithSource>()
@@ -38,9 +48,6 @@ class Registry {
   @Volatile
   var isLoaded: Boolean = false
     private set
-
-  @Volatile
-  private var loadFuture = CompletableFuture<Void?>()  // cannot use `CompletableDeferred` - the coroutines lib may be not on the classpath
 
   @Volatile
   var valueChangeListener: RegistryValueListener = EMPTY_VALUE_LISTENER
@@ -249,12 +256,6 @@ class Registry {
     @JvmStatic
     fun markAsLoaded() {
       registry.isLoaded = true
-      registry.loadFuture.complete(null)
-    }
-
-    @Internal
-    suspend fun awaitLoad() {
-      registry.loadFuture.asDeferred().join()
     }
 
     @Internal
@@ -337,7 +338,6 @@ class Registry {
       }
 
       registry.isLoaded = true
-      registry.loadFuture.complete(null)
       return userProperties
     }
   }
@@ -354,8 +354,6 @@ class Registry {
     userProperties.clear()
     values.clear()
     isLoaded = false
-    loadFuture.cancel(false)
-    loadFuture = CompletableFuture()
   }
 
   fun getBundleValueOrNull(key: String): @NlsSafe String? =

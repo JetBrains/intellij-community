@@ -34,11 +34,20 @@ class StorageDiagnosticTest {
       IndexDiagnosticDumperUtils.writeValue(dumpFile, stats)
     }
 
-    val diagnosticJson = IndexDiagnosticDumperUtils.jacksonMapper.readTree(dumpFile.toFile())
-    val mapStats = diagnosticJson["otherStorageStats"]["statsPerPhm"][mapFile.pathString]
-    Assert.assertNotNull(mapStats)
-    Assert.assertEquals(1, mapStats["persistentEnumeratorStatistics"]["btreeStatistics"]["pages"].asInt())
-    Assert.assertEquals(2, mapStats["persistentEnumeratorStatistics"]["btreeStatistics"]["elements"].asInt())
-    Assert.assertEquals(65, mapStats["valueStorageSizeInBytes"].asInt())
+    val diagnosticJson = IndexDiagnosticDumperUtils.jacksonMapper.readTree(dumpFile)
+    val statsPerPhm = diagnosticJson["otherStorageStats"]["statsPerPhm"]
+    val mapStats = statsPerPhm[mapFile.pathString]
+                   ?: statsPerPhm.properties().firstOrNull { entry ->
+                     entry.key.endsWith("/map-dir/map") || entry.key.endsWith("\\map-dir\\map")
+                    }?.value
+    Assert.assertNotNull(statsPerPhm.toString(), mapStats)
+    val nonNullMapStats = requireNotNull(mapStats)
+    val persistentEnumeratorStats = requireNotNull(nonNullMapStats["persistentEnumeratorStatistics"]) { nonNullMapStats.toString() }
+    val bTreeStatistics = persistentEnumeratorStats["bTreeStatistics"] ?: persistentEnumeratorStats["btreeStatistics"]
+    Assert.assertNotNull(persistentEnumeratorStats.toString(), bTreeStatistics)
+    val nonNullBTreeStatistics = requireNotNull(bTreeStatistics)
+    Assert.assertEquals(1, nonNullBTreeStatistics["pages"].asInt())
+    Assert.assertEquals(2, nonNullBTreeStatistics["elements"].asInt())
+    Assert.assertEquals(65, nonNullMapStats["valueStorageSizeInBytes"].asInt())
   }
 }

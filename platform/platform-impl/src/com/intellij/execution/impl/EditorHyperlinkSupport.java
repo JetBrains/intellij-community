@@ -505,6 +505,11 @@ public final class EditorHyperlinkSupport {
       HyperlinkInfoTextAttributes attrs = highlighter.getUserData(HYPERLINK);
       return attrs == null ? null : attrs.hoveredHyperlinkAttributes();
     }
+
+    @Override
+    public boolean isInvisibleLink(@NotNull RangeHighlighterEx highlighter) {
+      return false;
+    }
   }
 
   /**

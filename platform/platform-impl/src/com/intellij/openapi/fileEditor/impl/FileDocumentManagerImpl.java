@@ -344,12 +344,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       .beforeAnyDocumentSaving(document, explicit);
     if (!myUnsavedDocuments.contains(document)) return;
 
-    if (EDT.isCurrentThreadEdt()) {
-      saveDocumentInWriteSafeEnvironment(document, explicit);
-    }
-    else {
-      saveDocumentInWriteSafeEnvironment(document, explicit);
-    }
+    saveDocumentInWriteSafeEnvironment(document, explicit);
   }
 
   private void saveDocumentInWriteSafeEnvironment(@NotNull Document document, boolean explicit) {
@@ -1102,12 +1097,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     @Override
     public void beforeAllDocumentsSaving() {
-      invokeOnEdt(() -> myMultiCaster.beforeAllDocumentsSaving());
+      ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.beforeAllDocumentsSaving());
     }
 
     @Override
     public void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
-      invokeOnEdt(() -> myMultiCaster.beforeAnyDocumentSaving(document, explicit));
+      ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.beforeAnyDocumentSaving(document, explicit));
     }
 
     @Override
@@ -1137,7 +1132,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     @Override
     public void unsavedDocumentDropped(@NotNull Document document) {
-      invokeOnEdt(() -> myMultiCaster.unsavedDocumentDropped(document));
+      if (ApplicationManager.getApplication().isWriteAccessAllowed() && !EDT.isCurrentThreadEdt()) {
+        invokeOnEdt(() -> myMultiCaster.unsavedDocumentDropped(document));
+      } else {
+        ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.unsavedDocumentDropped(document));
+      }
     }
 
     @Override
@@ -1152,7 +1151,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     @Override
     public void afterDocumentSaved(@NotNull Document document) {
-      invokeOnEdt(() -> myMultiCaster.afterDocumentSaved(document));
+      ApplicationManager.getApplication().invokeAndWait(() -> myMultiCaster.afterDocumentSaved(document));
     }
   }
 }

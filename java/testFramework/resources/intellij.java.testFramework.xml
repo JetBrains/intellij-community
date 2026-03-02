@@ -4,6 +4,7 @@
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.java.testFramework.backend"/>
     <module name="intellij.java.testFramework.shared"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>

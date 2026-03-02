@@ -7,7 +7,6 @@ create_kotlinc_options(
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
-    "com.jetbrains.kotlin.ocSwift.KotlinFE10Usage",
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.K1Deprecation",
   ]
@@ -41,6 +40,7 @@ jvm_library(
     "//platform/util",
     "//platform/core-api:core",
     "//platform/analysis-api:analysis",
+    "//plugins/kotlin/base/fe10/project-structure",
   ]
 )
 
@@ -89,6 +89,10 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.k1` end

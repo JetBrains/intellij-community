@@ -27,12 +27,13 @@ import java.util.Locale
 @Serializable
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IdeCompatibleUpdate(
-  @get:JsonProperty("id")
+  @param:JsonProperty("id")
   val externalUpdateId: String = "",
-  @get:JsonProperty("pluginId")
+  @param:JsonProperty("pluginId")
   val externalPluginId: String = "",
-  @get:JsonProperty("pluginXmlId")
+  @param:JsonProperty("pluginXmlId")
   val pluginId: String = "",
+  @param:JsonProperty("version")
   val version: String = "",
 )
 
@@ -82,8 +83,8 @@ data class PluginModule(
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijUpdateMetadata(
-  @get:JsonProperty("xmlId")
   val id: String = "",
+  val xmlId: String = "",
   val name: String = "",
   val description: String = "",
   val tags: List<String> = emptyList(),
@@ -104,7 +105,7 @@ data class IntellijUpdateMetadata(
   val pluginAliases: List<String> = emptyList(),
 ) {
   fun toUiModel(): PluginUiModel {
-    val pluginId = PluginId.getId(id)
+    val pluginId = PluginId.getId(xmlId.ifEmpty { id })
     val builder = PluginUiModelBuilderFactory.getInstance().createBuilder(pluginId)
 
     builder.setName(name)
@@ -144,6 +145,7 @@ data class IntellijUpdateMetadata(
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 class MarketplaceSearchPluginData(
+  @param:JsonProperty("xmlId")
   @get:JsonProperty("xmlId")
   val id: String = "",
   var isPaid: Boolean = false,
@@ -151,11 +153,14 @@ class MarketplaceSearchPluginData(
   val name: String = "",
   val cdate: Long? = null,
   val organization: String = "",
+  @param:JsonProperty("updateId")
   @get:JsonProperty("updateId")
   val externalUpdateId: String? = null,
+  @param:JsonProperty("id")
   @get:JsonProperty("id")
   val externalPluginId: String? = null,
   val downloads: String = "",
+  @param:JsonProperty("nearestUpdate")
   @get:JsonProperty("nearestUpdate")
   val nearestUpdate: NearestUpdate? = null,
 ) {
@@ -200,14 +205,19 @@ class MarketplaceSearchPluginData(
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 class NearestUpdate(
+  @param:JsonProperty("id")
   @get:JsonProperty("id")
   val id: String? = null,
+  @param:JsonProperty("xmlId")
   @get:JsonProperty("xmlId")
   val pluginId: String = "",
+  @param:JsonProperty("products")
   @get:JsonProperty("products")
   val products: List<String> = emptyList(),
+  @param:JsonProperty("updateCompatibility")
   @get:JsonProperty("updateCompatibility")
   val updateCompatibility: Map<String, Long> = emptyMap(),
+  @param:JsonProperty("isCompatible")
   @get:JsonProperty("isCompatible")
   val compatible: Boolean = true,
 )
@@ -298,8 +308,8 @@ data class SalesMetadata(
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CustomTrialPeriod(
-  @JsonProperty("productCode") val productCode: String,
-  @JsonProperty("trialPeriod") val trialPeriod: Int,
+  @param:JsonProperty("productCode") val productCode: String,
+  @param:JsonProperty("trialPeriod") val trialPeriod: Int,
 )
 
 @Serializable
@@ -368,8 +378,10 @@ data class IntellijPluginMetadata(
 data class PluginVendorMetadata(
   val name: String = "",
   val url: String? = null,
+  @param:JsonProperty("isTrader")
   @get:JsonProperty("isTrader")
   val trader: Boolean = false,
+  @param:JsonProperty("isVerified")
   @get:JsonProperty("isVerified")
   val verified: Boolean = false,
 )

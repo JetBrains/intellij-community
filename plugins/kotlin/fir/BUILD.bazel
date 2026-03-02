@@ -25,7 +25,6 @@ jvm_library(
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-fir",
     "//libraries/guava",
     "//platform/editor-ui-api:editor-ui",

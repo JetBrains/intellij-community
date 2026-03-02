@@ -26,7 +26,7 @@ jvm_library(
   name = "slf4j",
   module_name = "fleet.util.logging.slf4j",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
   resources = [
     ":slf4j_resources",
     ":slf4j_resources_1",
@@ -44,7 +44,7 @@ jvm_library(
   name = "slf4j_test_lib",
   module_name = "fleet.util.logging.slf4j",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_slf4j",
   exports = ["@lib//:slf4j-api"],
   runtime_deps = [

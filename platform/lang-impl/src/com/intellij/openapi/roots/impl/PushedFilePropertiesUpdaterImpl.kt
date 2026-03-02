@@ -194,8 +194,8 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     return Runnable {
       // delay calling event.getFile() until background to avoid expensive VFileCreateEvent.getFile() in EDT
       val dir = getFile(event)
-      val fileIndex = ReadAction.compute<ProjectFileIndex, RuntimeException> { ProjectFileIndex.getInstance(myProject) }
-      if (dir != null && ReadAction.compute<Boolean, RuntimeException> { fileIndex.isInContent(dir) } && !isProjectOrWorkspaceFile(dir)) {
+      val fileIndex = ReadAction.computeBlocking<ProjectFileIndex, RuntimeException> { ProjectFileIndex.getInstance(myProject) }
+      if (dir != null && ReadAction.computeBlocking<Boolean, RuntimeException> { fileIndex.isInContent(dir) } && !isProjectOrWorkspaceFile(dir)) {
         doPushRecursively(pushers, scanners, ProjectIndexableFilesIteratorImpl(dir))
       }
     }
@@ -476,11 +476,11 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
       return moduleEntities.flatMap { moduleEntity: ModuleEntity ->
-        ReadAction.compute<List<Runnable>, RuntimeException> {
+        ReadAction.computeBlocking<List<Runnable>, RuntimeException> {
           val storage: EntityStorage = WorkspaceModel.getInstance(project).currentSnapshot
           val module: Module? = moduleEntity.findModule(storage)
           if (module == null) {
-            return@compute emptyList()
+            return@computeBlocking emptyList()
           }
           ProgressManager.checkCanceled()
           createIterators(moduleEntity, storage, project).map { it: IndexableFilesIterator ->

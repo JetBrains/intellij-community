@@ -376,7 +376,9 @@ class OutflowSlicer(
                 val partiallyAppliedSymbol = when (call) {
                     is KaCallableMemberCall<*, *> -> call.partiallyAppliedSymbol
                     is KaCompoundVariableAccessCall, is KaCompoundArrayAccessCall -> call.compoundOperation.operationPartiallyAppliedSymbol
+                    else -> return
                 }
+
                 val expression = (partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue)?.expression
                 if (expression == (this@processDereferences).safeDeparenthesize()) {
                     processor.process(KotlinSliceDereferenceUsage(this@processDereferences, parentUsage, mode))

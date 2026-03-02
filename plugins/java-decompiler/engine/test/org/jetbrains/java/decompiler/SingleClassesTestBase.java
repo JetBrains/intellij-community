@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,9 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class SingleClassesTestBase {
   protected DecompilerTestFixture fixture;
@@ -24,13 +23,13 @@ public abstract class SingleClassesTestBase {
     return Map.of();
   }
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     fixture = new DecompilerTestFixture();
     fixture.setUp(getDecompilerOptions());
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws IOException {
     fixture.tearDown();
     fixture = null;
@@ -40,14 +39,14 @@ public abstract class SingleClassesTestBase {
     var decompiler = fixture.getDecompiler();
 
     var classFile = fixture.getTestDataDir().resolve("classes/" + testFile + ".class");
-    assertThat(classFile).isRegularFile();
+    assertTrue(Files.isRegularFile(classFile));
     for (var file : collectClasses(classFile)) {
       decompiler.addSource(file.toFile());
     }
 
     for (String companionFile : companionFiles) {
       var companionClassFile = fixture.getTestDataDir().resolve("classes/" + companionFile + ".class");
-      assertThat(companionClassFile).isRegularFile();
+      assertTrue(Files.isRegularFile(companionClassFile));
       for (var file : collectClasses(companionClassFile)) {
         decompiler.addSource(file.toFile());
       }
@@ -56,10 +55,9 @@ public abstract class SingleClassesTestBase {
     decompiler.decompileContext();
 
     var decompiledFile = fixture.getTargetDir().resolve(classFile.getFileName().toString().replace(".class", ".java"));
-    assertThat(decompiledFile).isRegularFile();
     assertTrue(Files.isRegularFile(decompiledFile));
     var referenceFile = fixture.getTestDataDir().resolve("results/" + classFile.getFileName().toString().replace(".class", ".dec"));
-    assertThat(referenceFile).isRegularFile();
+    assertTrue(Files.isRegularFile(referenceFile));
     assertFilesEqual(referenceFile, decompiledFile);
   }
 

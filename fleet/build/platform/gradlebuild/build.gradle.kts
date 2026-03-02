@@ -36,6 +36,7 @@ kotlin {
     "-progressive",
   )
   jvm {}
+  sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
   sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest")) }

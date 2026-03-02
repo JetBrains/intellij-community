@@ -8079,6 +8079,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("customComponentBeyondProperties.kt")
+        public void testCustomComponentBeyondProperties() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/customComponentBeyondProperties.kt");
+        }
+
         @TestMetadata("entryUsedInLambda.kt")
         public void testEntryUsedInLambda() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/entryUsedInLambda.kt");
@@ -8128,6 +8133,26 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("convertToSquareBrackets.kt")
+        public void testConvertToSquareBrackets() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBrackets.kt");
+        }
+
+        @TestMetadata("convertToSquareBracketsIndexedValue.kt")
+        public void testConvertToSquareBracketsIndexedValue() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBracketsIndexedValue.kt");
+        }
+
+        @TestMetadata("convertToSquareBracketsLambda.kt")
+        public void testConvertToSquareBracketsLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBracketsLambda.kt");
+        }
+
+        @TestMetadata("convertToSquareBracketsTriple.kt")
+        public void testConvertToSquareBracketsTriple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/convertToSquareBracketsTriple.kt");
+        }
+
         @TestMetadata("matchProp.kt")
         public void testMatchProp() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/matchProp.kt");
@@ -8146,6 +8171,26 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("mismatchLambda.kt")
         public void testMismatchLambda() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/mismatchLambda.kt");
+        }
+
+        @TestMetadata("moreEntriesThanParameters.kt")
+        public void testMoreEntriesThanParameters() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/moreEntriesThanParameters.kt");
+        }
+
+        @TestMetadata("underscoreInMiddle.kt")
+        public void testUnderscoreInMiddle() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/underscoreInMiddle.kt");
+        }
+
+        @TestMetadata("underscoreOnly.kt")
+        public void testUnderscoreOnly() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/underscoreOnly.kt");
+        }
+
+        @TestMetadata("underscoreWithMismatch.kt")
+        public void testUnderscoreWithMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/underscoreWithMismatch.kt");
         }
 
         @TestMetadata("valueUsed.kt")
@@ -9623,6 +9668,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("constructorParam.kt")
         public void testConstructorParam() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/constructorParam.kt");
+        }
+
+        @TestMetadata("interdependentProperties.kt")
+        public void testInterdependentProperties() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/memberVisibilityCanBePrivate/interdependentProperties.kt");
         }
 
         @TestMetadata("internal.kt")

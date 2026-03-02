@@ -87,6 +87,7 @@ jvm_library(
     "//python/services/system-python:system-python_test_lib",
   ],
   deps = [
+    "@lib//:assert_j",
     "//platform/util/coroutines",
     "//platform/util/coroutines:coroutines_test_lib",
     "@lib//:kotlin-stdlib",

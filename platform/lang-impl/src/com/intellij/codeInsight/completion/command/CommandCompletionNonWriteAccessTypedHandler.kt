@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
 import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService
-import com.intellij.codeInsight.editorActions.NonWriteAccessTypedHandler
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.idea.AppMode
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -20,6 +19,7 @@ import com.intellij.openapi.editor.ComponentInlayRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
+import com.intellij.openapi.editor.NonWriteAccessTypedHandler
 import com.intellij.openapi.editor.addComponentInlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileTypes.FileTypes
@@ -37,7 +37,6 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Handles non-write access typed events for command-based code completion functionality.
@@ -45,7 +44,6 @@ import org.jetbrains.annotations.ApiStatus
  * and triggering command completions without modifying the editor's document directly.
  *
  */
-@ApiStatus.Internal
 internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTypedHandler {
   override fun isApplicable(editor: Editor, charTyped: Char, dataContext: DataContext): Boolean {
     if (!CommandCompletionSettingsService.getInstance().commandCompletionEnabled()) return false
@@ -83,7 +81,6 @@ internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTyped
 internal val INSTALLED_EDITOR = Key.create<Inlay<ComponentInlayRenderer<LanguageTextField>>>("completion.command.non.writable.editor")
 internal val ORIGINAL_EDITOR = Key.create<Pair<Editor, Int>>("completion.command.original.editor")
 
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 internal class NonWriteAccessCommandCompletionService(
   val coroutineScope: CoroutineScope,

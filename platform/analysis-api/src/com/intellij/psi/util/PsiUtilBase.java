@@ -110,7 +110,12 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
     ensureValid(psiFile);
 
-    if (psiFile instanceof PsiFileWithOneLanguage || RuntimeFlagsKt.isEditorLockFreeTypingEnabled()) {
+    if (psiFile instanceof PsiFileWithOneLanguage) {
+      return psiFile;
+    }
+
+    if (RuntimeFlagsKt.isEditorLockFreeTypingEnabled()) {
+      // TODO: rework for lock-free typing, getLanguageInEditor (findLanguageFromElement) requires RA on EDT
       return psiFile;
     }
 

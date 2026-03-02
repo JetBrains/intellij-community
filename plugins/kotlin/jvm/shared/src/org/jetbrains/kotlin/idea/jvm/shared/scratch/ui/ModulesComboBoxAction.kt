@@ -14,8 +14,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.changes.committed.LabeledComboBoxAction
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.hasProductionSource
+import org.jetbrains.kotlin.idea.base.projectStructure.hasTestSource
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import javax.swing.JComponent
@@ -27,7 +27,7 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile, val moduleSele
         actionGroup.add(ModuleIsNotSelectedAction(KotlinJvmBundle.message("list.item.no.module")))
 
         val modules = ModuleManager.getInstance(scratchFile.project).modules.filter {
-            it.productionSourceInfo != null || it.testSourceInfo != null
+            it.hasProductionSource || it.hasTestSource
         }
 
         actionGroup.addAll(modules.map { SelectModuleAction(it) })

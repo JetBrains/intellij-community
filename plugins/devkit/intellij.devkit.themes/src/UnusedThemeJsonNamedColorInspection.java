@@ -4,15 +4,14 @@ package org.jetbrains.idea.devkit.themes;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.find.usages.impl.DefaultUsageSearchParameters;
 import com.intellij.json.psi.JsonElementVisitor;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.model.search.SearchService;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +32,7 @@ public final class UnusedThemeJsonNamedColorInspection extends LocalInspectionTo
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile file = holder.getFile();
+    if (!(file instanceof JsonFile)) return PsiElementVisitor.EMPTY_VISITOR;
     if (!isThemeFilename(file.getName())) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new JsonElementVisitor() {
@@ -45,8 +45,13 @@ public final class UnusedThemeJsonNamedColorInspection extends LocalInspectionTo
 
         if (ContainerUtil.exists(COLOR_PALETTE_KEY_PREFIXES, name::startsWith)) return;
 
-        Query<PsiReference> query = ReferencesSearch.search(property, new LocalSearchScope(file));
-        if (query.findFirst() == null) {
+        var searchTarget = new ThemeColorKey(name, null);
+        var parameters = new DefaultUsageSearchParameters(holder.getProject(), searchTarget, new LocalSearchScope(file));
+        var isFound = SearchService.getInstance().searchParameters(parameters)
+                        .filtering(usage -> !usage.getDeclaration())
+                        .findFirst() != null;
+
+        if (!isFound) {
           if (getParentNamedColorsMap((JsonFile)file).containsKey(name)) return;
 
           holder.registerProblem(nameElement,

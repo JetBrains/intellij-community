@@ -34,6 +34,7 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/execution",
+    "//platform/platform-impl/eel:ide-impl-wsl",
   ]
 )
 
@@ -64,6 +65,7 @@ jvm_library(
     "//platform/eel:eel_test_lib",
     "//platform/eel-provider:eel-provider_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/platform-impl/eel:ide-impl-wsl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.terminal.backend` end

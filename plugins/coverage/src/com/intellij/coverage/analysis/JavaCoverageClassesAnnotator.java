@@ -58,8 +58,13 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     if (myProjectData == null) return;
     myFlattenPackages.clear();
     var created = initExecutor();
-    super.visitSuite();
-    if (created) stopExecutor();
+    try {
+      super.visitSuite();
+    }
+    finally {
+      if (created) stopExecutor();
+      myPackageAnnotator.close();
+    }
     collectPackageCoverage();
   }
 

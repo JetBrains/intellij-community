@@ -677,6 +677,14 @@ com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 - a:getPriority():I
 com.intellij.openapi.extensions.ExtensionFactory
 - a:createInstance(java.lang.String,java.lang.String):java.lang.Object
+f:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
+- sf:NON_WRITABLE:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
+- sf:WRITABLE:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
+- <init>(java.lang.String):V
+- <init>(java.lang.String,javax.swing.event.HyperlinkListener):V
+- getHyperlinkListener():javax.swing.event.HyperlinkListener
+- getReadOnlyMessage():java.lang.String
+- hasWriteAccess():Z
 com.intellij.openapi.fileEditor.FileDocumentManagerListener
 - java.util.EventListener
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -1806,7 +1814,9 @@ com.intellij.testIntegration.TestFramework
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - findAfterClassMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- findAfterSuiteMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - findBeforeClassMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- findBeforeSuiteMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - a:findOrCreateSetUpMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - a:findSetUpMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - a:findTearDownMethod(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement

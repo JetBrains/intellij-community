@@ -233,6 +233,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
   private JComponent myPreferredFocusedComponent;
   private boolean myRequestFocus;
   private boolean myFocusable;
+  private boolean myForceCancelOnFocusLoss;
   private boolean myForcedHeavyweight;
   private boolean myLocateWithinScreen;
   private boolean myResizable;
@@ -2321,6 +2322,39 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
     myCancelOnClickOutside = cancelOnClickOutside;
   }
 
+  /**
+   * Disables Wayland-specific workarounds for popup focus loss.
+   * <p>
+   *   Normally a focusable popup is closed when another window gets focus.
+   *   A non-focusable popup is also closed when that window is not an ancestor of the popup.
+   * </p>
+   * <p>
+   *   However, on Wayland due to various focus quirks, this behavior is disabled by default,
+   *   because the owner window may get focus for no reason.
+   * </p>
+   * <p>
+   *   In most cases it isn't an issue. For example, when the user clicks outside the popup,
+   *   then it's closed anyway because it's the click itself that closes the popup, not the resulting focus loss.
+   *   In some cases, however, it might be necessary to react to focus changes.
+   *   One such example is the show usages popup that opens a focused editor when a usage is selected.
+   *   In this case, we rely on the focus change to close the popup.
+   * </p>
+   * <p>
+   *   This function should be called whenever we do something and expect a focus change as a result,
+   *   and that focus change should close the popup.
+   *   This is, of course, a hack, and therefore is generally not recommended,
+   *   provided there's a reliable way to just close the popup by explicitly calling {@link #cancel()} instead.
+   *   But it's not always an option, as the activity triggered by the popup can be asynchronous in nature and hard to track,
+   *   as it's the case with usage navigation.
+   * </p>
+   *
+   * @param forceCancelOnFocusLoss pass {@code true} here to enable the normal behavior on Wayland
+   */
+  @ApiStatus.Internal
+  public void setForceCancelOnFocusLoss(boolean forceCancelOnFocusLoss) {
+    myForceCancelOnFocusLoss = forceCancelOnFocusLoss;
+  }
+
   @ApiStatus.Internal
   public void setIsMovable(boolean movable) {
     myMovable = movable;
@@ -3035,6 +3069,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
     if (SwingUtilities.isDescendingFrom(window, popup) || (!myFocusable && SwingUtilities.isDescendingFrom(popup, window))) {
       return false;
     }
+
+    if (myForceCancelOnFocusLoss) return true;
 
     // On Wayland focus gets temporarily transferred to popup's owner while the popup is being
     // interactively moved.

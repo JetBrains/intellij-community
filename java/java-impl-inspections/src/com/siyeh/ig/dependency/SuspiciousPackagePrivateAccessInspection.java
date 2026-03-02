@@ -269,9 +269,18 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
   }
 
   private static boolean isJvmStatic(@NotNull PsiModifierListOwner member) {
-    UAnnotated annotated = UastContextKt.toUElement(member.getNavigationElement(), UAnnotated.class);
-    return annotated != null &&
-           UVariableKt.findSourceAnnotation(annotated, JvmStatic.class.getCanonicalName()) != null;
+    UElement uElement = UastContextKt.toUElement(member);
+    if (uElement == null) return false;
+
+    // Re-convert via sourcePsi to correctly resolve @JvmStatic on Kotlin properties,
+    // since their generated accessor methods don't carry the annotation directly.
+    PsiElement sourcePsi = uElement.getSourcePsi();
+    if (sourcePsi == null) return false;
+
+    UAnnotated annotated = UastContextKt.toUElement(sourcePsi, UAnnotated.class);
+    if (annotated == null) return false;
+
+    return UVariableKt.findSourceAnnotation(annotated, JvmStatic.class.getCanonicalName()) != null;
   }
 
   /**

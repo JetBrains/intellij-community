@@ -85,7 +85,7 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
     @Override
     protected boolean isCaseSensitive(@NotNull File file) {
-      FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file);
+      FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(file.toPath());
       return sensitivity.toBooleanWithDefault(SystemInfo.isFileSystemCaseSensitive);
     }
 

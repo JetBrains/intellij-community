@@ -213,7 +213,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     });
     if (LOG.isTraceEnabled()) {
       List<HighlightInfo> errors = ContainerUtil.filter(myHighlights, h -> h.getSeverity() == HighlightSeverity.ERROR);
-      LOG.trace("GHP finished: progress=" + progress+ " myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ": " +
+      LOG.trace("GHP finished: progress=" + progress+ " myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ":\n" +
                 StringUtil.join(ContainerUtil.getFirstItems(errors, 20), "\n"));
     }
   }

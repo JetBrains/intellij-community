@@ -105,7 +105,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
   private static @NotNull FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
     FileType fileType = file.getFileType();
     if (RuntimeFlagsKt.isEditorLockFreeTypingEnabled()) {
-      // PsiUtilBase.getLanguageInEditor requires RA
+      // TODO: rework for lock-free typing, getLanguageInEditor (findLanguageFromElement) requires RA on EDT
       return fileType;
     }
     Language language = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
@@ -299,12 +299,21 @@ public final class TypedHandler extends TypedActionHandlerBase {
                                        @NotNull Project project,
                                        @NotNull Editor editor,
                                        @NotNull PsiFile file) {
-    if (RuntimeFlagsKt.isEditorLockFreeTypingEnabled()) {
-      return false;
-    }
+    boolean lockFreeTyping = RuntimeFlagsKt.isEditorLockFreeTypingEnabled();
     boolean warned = false;
     for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
-      TypedHandlerDelegate.Result result = action.call(delegate, charTyped, project, editor, file);
+      TypedHandlerDelegate.Result result;
+      try {
+        result = action.call(delegate, charTyped, project, editor, file);
+      }
+      catch (RuntimeException t) {
+        if (lockFreeTyping) {
+          result = TypedHandlerDelegate.Result.DEFAULT;
+        }
+        else {
+          throw t;
+        }
+      }
       if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid() && !warned) {
         LOG.warn(new IllegalStateException(delegate.getClass() +
                                            " has invalidated injected editor on typing char '" +
@@ -364,7 +373,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
     PsiElement element;
     Language language;
-    if (file instanceof PsiFileWithOneLanguage || RuntimeFlagsKt.isEditorLockFreeTypingEnabled()) {
+    if (file instanceof PsiFileWithOneLanguage) {
       language = file.getLanguage();
 
       // we know the language, so let's try to avoid inferring the element at caret
@@ -376,7 +385,9 @@ public final class TypedHandler extends TypedActionHandlerBase {
       if (element == null) {
         return false;
       }
-      language = element.getLanguage();
+      language = RuntimeFlagsKt.isEditorLockFreeTypingEnabled()
+                 ? file.getLanguage() // TODO: rework for lock-free typing, element.getLanguage() requires RA on EDT
+                 : element.getLanguage();
     }
 
     List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(language, file.getProject());
@@ -409,7 +420,16 @@ public final class TypedHandler extends TypedActionHandlerBase {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return false;
-    ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
+    boolean lockFreeTypingEnabled = RuntimeFlagsKt.isEditorLockFreeTypingEnabled();
+    Language language;
+    if (lockFreeTypingEnabled) {
+      // TODO: rework for lock-free typing, element.getLanguage() requires RA on EDT
+      language = file.getLanguage();
+    }
+    else {
+      language = element.getLanguage();
+    }
+    ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (definition != null) {
       TokenSet stringLiteralElements = definition.getStringLiteralElements();
       ASTNode node = element.getNode();
@@ -417,6 +437,10 @@ public final class TypedHandler extends TypedActionHandlerBase {
       IElementType elementType = node.getElementType();
       if (stringLiteralElements.contains(elementType)) {
         return true;
+      }
+      if (lockFreeTypingEnabled) {
+        // TODO: rework for lock-free typing, element.getParent() requires RA on EDT
+        return false;
       }
       PsiElement parent = element.getParent();
       if (parent != null) {

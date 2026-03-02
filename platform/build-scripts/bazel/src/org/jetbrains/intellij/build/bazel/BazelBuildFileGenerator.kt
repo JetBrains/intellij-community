@@ -711,11 +711,7 @@ internal class BazelBuildFileGenerator(
   }
 
   private fun Target.sourcesToGlob(sources: List<SourceDirDescriptor>, module: ModuleDescriptor): Renderable {
-    var exclude = sources.asSequence().flatMap { it.excludes }
-    if (module.module.name.startsWith("fleet.")) {
-      exclude += sequenceOf("**/module-info.java")
-    }
-    return glob(sources.flatMap { it.glob }, exclude = exclude.toList())
+    return glob(sources.flatMap { it.glob }, exclude = sources.flatMap { it.excludes })
   }
 
   private fun BuildFile.generateProvidedLibs(providedLibs: List<BazelLabel>): List<BazelLabel> {

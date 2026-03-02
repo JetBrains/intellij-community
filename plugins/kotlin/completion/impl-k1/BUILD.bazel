@@ -66,6 +66,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/base/fe10/project-structure",
   ]
 )
 
@@ -117,6 +118,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1_test_lib",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.completion.impl.k1` end

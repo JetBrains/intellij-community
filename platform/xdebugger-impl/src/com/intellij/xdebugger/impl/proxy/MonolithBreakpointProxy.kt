@@ -5,10 +5,12 @@ import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.debugger.impl.shared.XBreakpointInterLinePlacementDetector
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XExpression
@@ -84,6 +86,12 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
     breakpoint.suspendPolicy = suspendPolicy
   }
 
+  override fun supportsInterLinePlacement(): Boolean {
+    val lineType = type as? XLineBreakpointTypeProxy ?: return false
+    if (!lineType.supportsInterLinePlacement()) return false
+    return XBreakpointInterLinePlacementDetector.shouldBePlacedBetweenLines(this)
+  }
+
   override fun getTimestamp(): Long = breakpoint.timeStamp
 
 
@@ -149,10 +157,6 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
   }
 
   override fun isDisposed(): Boolean = breakpoint.isDisposed
-
-  override fun updateIcon() {
-    breakpoint.updateIcon()
-  }
 
   override fun dispose() {
     breakpoint.dispose()

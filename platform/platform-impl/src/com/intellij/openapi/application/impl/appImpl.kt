@@ -11,7 +11,6 @@ import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.readLockCompensationTimeout
 import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
@@ -233,8 +232,8 @@ object InternalThreading {
 
     companion object {
       fun execute(action: AtomicReference<RunnableWithTransferredWriteAction>, job: CompletableJob) {
+        val action = action.getAndSet(null) ?: return
         try {
-          val action = action.getAndSet(null) ?: return
           action.run()
         } finally {
           job.complete()

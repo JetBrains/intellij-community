@@ -2,17 +2,16 @@
 package com.intellij.java.completion.modcommand;
 
 import com.intellij.codeInsight.ModNavigatorTailType;
-import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.CommonCompletionItem;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.impl.source.PsiLabelReference;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.util.function.Consumer;
-
 @NotNullByDefault
 final class LabelReferenceItemProvider extends JavaModCompletionItemProvider {
   @Override
-  public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
+  public void provideItems(CompletionContext context, ModCompletionResult sink) {
     if (context.getPosition() instanceof PsiIdentifier id && id.getParent().getReference() instanceof PsiLabelReference labelRef) {
       for (String variant : labelRef.getVariants()) {
         sink.accept(new CommonCompletionItem(variant).withTail(ModNavigatorTailType.semicolonType()));

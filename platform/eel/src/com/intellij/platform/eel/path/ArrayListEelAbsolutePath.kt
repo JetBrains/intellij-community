@@ -21,13 +21,17 @@ internal class ArrayListEelAbsolutePath private constructor(
       if (parts.isEmpty()) null
       else ArrayListEelAbsolutePath(descriptor, _root, parts.dropLast(1))
 
-  override fun startsWith(other: EelPath): Boolean =
-    nameCount >= other.nameCount &&
-    root.fileName == other.root.fileName &&
-    (0..<other.nameCount).all { getName(it) == other.getName(it) }
+  override fun startsWith(other: EelPath): Boolean {
+    val ignoreCase = _root is Root.Windows
+    return nameCount >= other.nameCount &&
+           root.fileName.equals(other.root.fileName, ignoreCase = ignoreCase) &&
+           (0..<other.nameCount).all { getName(it).equals(other.getName(it), ignoreCase = ignoreCase) }
+  }
 
   override fun endsWith(suffix: List<String>): Boolean {
-    return nameCount >= suffix.size && this.parts.takeLast(suffix.size) == suffix
+    if (nameCount < suffix.size) return false
+    if (_root !is Root.Windows) return this.parts.takeLast(suffix.size) == suffix
+    return parts.takeLast(suffix.size).zip(suffix).all { (a, b) -> a.equals(b, ignoreCase = true) }
   }
 
   override fun normalize(): EelPath {
@@ -97,15 +101,16 @@ internal class ArrayListEelAbsolutePath private constructor(
   }
 
   override fun compareTo(other: EelPath): Int {
+    val ignoreCase = _root is Root.Windows
     run {
-      val cmp = root.fileName.compareTo(other.root.fileName)
+      val cmp = root.fileName.compareTo(other.root.fileName, ignoreCase = ignoreCase)
       if (cmp != 0) {
         return cmp
       }
     }
 
     for (index in 0..<nameCount.coerceAtMost(other.nameCount)) {
-      val cmp = getName(index).compareTo(other.getName(index))
+      val cmp = getName(index).compareTo(other.getName(index), ignoreCase = ignoreCase)
       if (cmp != 0) {
         return cmp
       }
@@ -114,14 +119,19 @@ internal class ArrayListEelAbsolutePath private constructor(
     return nameCount - other.nameCount
   }
 
-  override fun equals(other: Any?): Boolean =
-    other is EelPath &&
-    nameCount == other.nameCount &&
-    root.fileName == other.root.fileName &&
-    (0..<nameCount).all { getName(it) == other.getName(it) }
+  override fun equals(other: Any?): Boolean {
+    if (other !is EelPath) return false
+    if (nameCount != other.nameCount) return false
+    val ignoreCase = _root is Root.Windows
+    return root.fileName.equals(other.root.fileName, ignoreCase = ignoreCase) &&
+           (0..<nameCount).all { getName(it).equals(other.getName(it), ignoreCase = ignoreCase) }
+  }
 
   override fun hashCode(): Int =
-    31 * _root.hashCode() + parts.hashCode()
+    if (_root is Root.Windows)
+      31 * _root.name.lowercase().hashCode() + parts.map { it.lowercase() }.hashCode()
+    else
+      31 * _root.hashCode() + parts.hashCode()
 
   private fun checkFileName(name: String): String? =
     checkFileName(name, isWindows = when (_root) {

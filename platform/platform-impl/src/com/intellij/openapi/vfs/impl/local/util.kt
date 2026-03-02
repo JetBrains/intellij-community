@@ -77,13 +77,12 @@ internal fun readWholeFileIfNotTooLargeWithEel(path: Path): ByteArray? {
     return null
   }
 
-  val api = root.getEelDescriptor().toEelApiBlocking()
-
   val limit = FileSizeLimit.getContentLoadLimit(FileUtilRt.getExtension(path.fileName.toString()))
 
   val result = fsBlocking {
     try {
-      api.fs.readFile(eelPath).limit(limit).failFastIfBeyondLimit(true).getOrThrowFileSystemException()
+      val eelApi = eelDescriptor.toEelApi()
+      eelApi.fs.readFile(eelPath).limit(limit).failFastIfBeyondLimit(true).getOrThrowFileSystemException()
     }
     catch (err: FileSystemException) {
       throw err.cause.takeIf { it is FileTooBigException } ?: err
@@ -115,9 +114,9 @@ internal fun fetchCaseSensitivityUsingEel(eelPath: EelPath): FileAttributes.Case
       directAccessPath
     }
     else {
-      val ioFile = directAccessPath.parent?.asNioPath()?.toFile()
-      return if (ioFile != null) {
-        FileSystemUtil.readParentCaseSensitivity(ioFile)
+      val nioPath = directAccessPath.parent?.asNioPath()
+      return if (nioPath != null) {
+        FileSystemUtil.readParentCaseSensitivity(nioPath)
       }
       else {
         FileAttributes.CaseSensitivity.UNKNOWN

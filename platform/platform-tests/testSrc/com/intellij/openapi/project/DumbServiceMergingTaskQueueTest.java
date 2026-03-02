@@ -3,6 +3,8 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
+import com.intellij.platform.util.progress.RawProgressReporter;
+import com.intellij.platform.util.progress.RawProgressReporterImpl;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +20,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     while (true) {
       try (@Nullable QueuedDumbModeTask nextTask = myQueue.extractNextTask()) {
         if (nextTask == null) return;
-        nextTask.executeTask();
+        nextTask.executeTask(new RawProgressReporter() {});
       }
     }
   }

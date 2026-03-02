@@ -4,5 +4,6 @@ class B:
 
 
 class C(B):
-    def foo(self, **kwargs):
+    # can accept foo(x=1) but not foo(1)
+    def foo<warning descr="Signature of method 'C.foo()' does not match signature of the base method in class 'B'">(self, **kwargs)</warning>:
         pass

@@ -4,9 +4,6 @@
 package com.intellij.inspectopedia.extractor
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
 import com.intellij.codeInspection.ex.InspectionMetaInformationService
 import com.intellij.codeInspection.options.LocMessage
 import com.intellij.codeInspection.options.OptCheckbox
@@ -37,6 +34,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import tools.jackson.databind.MapperFeature
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.json.JsonMapper
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -155,7 +155,7 @@ internal class InspectopediaExtractor : ModernApplicationStarter() {
       // we cannot use kotlin serialization - `OptionsPanelInfo.value` uses `Any` type
       val jsonMapper = JsonMapper.builder()
         .enable(SerializationFeature.INDENT_OUTPUT)
-        .serializationInclusion(JsonInclude.Include.NON_DEFAULT)
+        .changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_DEFAULT) }
         .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
         .build()
 

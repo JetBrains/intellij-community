@@ -91,12 +91,12 @@ object IdeInstance {
 
   fun stopIde(): Unit = synchronized(this) {
     if (isStarted()) {
-      LOG.info("Stopping IDE with current ide mode: $currentIdeMode")
+      LOG.info("Killing IDE with current ide mode: $currentIdeMode")
       catchAll { _ide?.forceKill() }
       _ide = null
     }
     else {
-      LOG.info("IDE wasn't started. Skipping stopping it.")
+      LOG.info("IDE wasn't started. Skipping killing it.")
     }
   }
 

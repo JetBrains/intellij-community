@@ -32,6 +32,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
+import org.jetbrains.intellij.build.impl.languageServer.generateLspServerLaunchData
 import org.jetbrains.intellij.build.impl.macOS.MachOUuid
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
@@ -121,11 +122,25 @@ class MacDistributionBuilder(
 
   override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
     withContext(Dispatchers.IO) {
-      doCopyExtraFiles(macDistDir = targetPath, arch = arch, copyDistFiles = true)
+      doCopyFilesForOsDistribution(targetPath = targetPath, arch = arch, copyDistFiles = true)
     }
   }
 
-  private suspend fun doCopyExtraFiles(macDistDir: Path, arch: JvmArchitecture, copyDistFiles: Boolean) {
+  private suspend fun doCopyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture, copyDistFiles: Boolean) {
+    val macBinDir = targetPath.resolve("bin").createDirectories()
+    writeVmOptions(macBinDir)
+
+    context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
+      copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"), macBinDir, customizer.binFilesFilter)
+      copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.MACOS, arch), macBinDir)
+
+      createFrontendContextForLaunchers(context)?.let { clientContext ->
+        writeMacOsVmOptions(macBinDir, clientContext)
+      }
+      val executable = context.productProperties.baseFileName
+      generateScripts(macBinDir, executable, context)
+    }
+
     val platformProperties = mutableListOf(
       "\n#---------------------------------------------------------------------",
       "# macOS-specific system properties",
@@ -139,21 +154,31 @@ class MacDistributionBuilder(
       platformProperties.add("$k=$v")
     }
 
-    layoutMacApp(ideaPropertyContent = ideaProperties!!, platformProperties = platformProperties, docTypes = getDocTypes(), macDistDir = macDistDir, arch = arch)
+    val ideaPropertyContent = ideaProperties!!
+    Files.writeString(
+      macBinDir.resolve(PROPERTIES_FILE_NAME),
+      (ideaPropertyContent.lineSequence() + platformProperties).joinToString(separator = "\n")
+    )
 
-    generateBuildTxt(macDistDir.resolve("Resources"), context)
+    if (context.options.isLanguageServer) {
+       layoutMacCli(macDistDir = targetPath, arch = arch)
+    }
+    else {
+      layoutMacApp(docTypes = getDocTypes(), macDistDir = targetPath, arch = arch)
+    }
+    generateBuildTxt(targetPath.resolve("Resources"), context)
 
     // if copyDistFiles false, it means that we will copy dist files directly without a stage dir
     if (copyDistFiles) {
-      copyDistFiles(newDir = macDistDir, os = OsFamily.MACOS, arch = arch, libcImpl = MacLibcImpl.DEFAULT, context = context)
+      copyDistFiles(newDir = targetPath, os = OsFamily.MACOS, arch = arch, libcImpl = MacLibcImpl.DEFAULT, context = context)
     }
 
-    customizer.copyAdditionalFiles(context, macDistDir, arch)
+    customizer.copyAdditionalFiles(context, targetDir = targetPath, arch = arch)
   }
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     withContext(Dispatchers.IO) {
-      doCopyExtraFiles(macDistDir = osAndArchSpecificDistPath, arch = arch, copyDistFiles = false)
+      doCopyFilesForOsDistribution(osAndArchSpecificDistPath, arch, false)
     }
 
     context.executeStep(spanBuilder("build macOS artifacts").setAttribute("arch", arch.name), BuildOptions.MAC_ARTIFACTS_STEP) {
@@ -257,16 +282,22 @@ class MacDistributionBuilder(
 
   override fun writeVmOptions(distBinDir: Path): Path = writeMacOsVmOptions(distBinDir, context)
 
+  private suspend fun layoutMacCli(macDistDir: Path, arch: JvmArchitecture) {
+    val executable = context.productProperties.baseFileName
+    val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)
+    val copy = macDistDir.resolve("bin/$executable")
+    context.addExtraExecutablePattern(OsFamily.MACOS, "bin/${context.productProperties.baseFileName}")
+    copyFile(execPath, copy)
+    MachOUuid(copy, customizer, context).patch()
+    copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
+    macDistDir.resolve("Resources").createDirectories()
+  }
+
   private suspend fun layoutMacApp(
-    ideaPropertyContent: CharSequence,
-    platformProperties: List<String>,
     docTypes: String?,
     macDistDir: Path,
     arch: JvmArchitecture,
   ) {
-    val macBinDir = macDistDir.resolve("bin")
-    copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"), macBinDir, customizer.binFilesFilter)
-    copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.MACOS, arch), macBinDir)
     copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     val executable = context.productProperties.baseFileName
@@ -302,55 +333,7 @@ class MacDistributionBuilder(
       }
     }
 
-    Files.writeString(
-      macBinDir.resolve(PROPERTIES_FILE_NAME),
-      (ideaPropertyContent.lineSequence() + platformProperties).joinToString(separator = "\n")
-    )
-
-    writeVmOptions(macBinDir)
-    createFrontendContextForLaunchers(context)?.let { clientContext ->
-      writeMacOsVmOptions(macBinDir, clientContext)
-    }
-
     substitutePlaceholdersInInfoPlist(macDistDir, docTypes, arch)
-
-    Files.createDirectories(macBinDir)
-
-    val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/scripts")
-    Files.newDirectoryStream(sourceScriptDir).use { stream ->
-      val inspectCommandName = context.productProperties.inspectCommandName
-      for (file in stream) {
-        if (file.toString().endsWith(".sh")) {
-          var fileName = file.fileName.toString()
-          if (fileName == "inspect.sh" && inspectCommandName != "inspect") {
-            fileName = "${inspectCommandName}.sh"
-          }
-
-          val sourceFileLf = Files.createTempFile(context.paths.tempDir, file.fileName.toString(), "")
-          try {
-            // Until CR (\r) will be removed from the repository checkout, we need to filter it out from Unix-style scripts
-            // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
-            Files.writeString(sourceFileLf, Files.readString(file).replace("\r", ""))
-
-            val target = macBinDir.resolve(fileName)
-            substituteTemplatePlaceholders(
-              sourceFileLf,
-              target,
-              "@@",
-              listOf(
-                Pair("product_full", context.applicationInfo.fullProductName),
-                Pair("script_name", executable),
-                Pair("inspectCommandName", inspectCommandName),
-              ),
-              false,
-            )
-          }
-          finally {
-            Files.delete(sourceFileLf)
-          }
-        }
-      }
-    }
   }
 
   override suspend fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> {
@@ -418,11 +401,6 @@ class MacDistributionBuilder(
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(NO_RUNTIME_SUFFIX)
 
   private suspend fun generateProductJson(arch: JvmArchitecture, withRuntime: Boolean, context: BuildContext): String {
-    val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context) {
-      "../bin/${it.productProperties.baseFileName}.vmoptions"
-    }
-    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.MACOS)
-    val stdioMcpRunnerLaunchData = generateStdioMcpRunnerLaunchData(context)
     return generateProductInfoJson(
       relativePathToBin = "../bin",
       builtinModules = context.builtinModule,
@@ -430,13 +408,26 @@ class MacDistributionBuilder(
         ProductInfoLaunchData.create(
           os = OsFamily.MACOS.osName,
           arch = arch.dirName,
-          launcherPath = "../MacOS/${context.productProperties.baseFileName}",
+          launcherPath =
+            if (context.options.isLanguageServer) "../bin/${context.productProperties.baseFileName}"
+            else "../MacOS/${context.productProperties.baseFileName}",
           javaExecutablePath = if (withRuntime) "../jbr/Contents/Home/bin/java" else null,
           vmOptionsFilePath = "../bin/${context.productProperties.baseFileName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
           mainClass = context.ideMainClassName,
-          customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData, stdioMcpRunnerLaunchData)
+          customCommands = when {
+            context.options.isLanguageServer -> listOf(
+              generateLspServerLaunchData(context)
+            )
+            else -> listOfNotNull(
+              generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context) {
+                "../bin/${it.productProperties.baseFileName}.vmoptions"
+              },
+              generateQodanaLaunchData(context, arch, OsFamily.MACOS),
+              generateStdioMcpRunnerLaunchData(context)
+            )
+          }
         )
       ),
       context
@@ -667,6 +658,44 @@ class MacDistributionBuilder(
     }
     finally {
       NioFiles.deleteRecursively(tempDir)
+    }
+  }
+}
+
+private fun generateScripts(macBinDir: Path, executable: String, context: BuildContext) {
+  val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/scripts")
+  Files.newDirectoryStream(sourceScriptDir).use { stream ->
+    val inspectCommandName = context.productProperties.inspectCommandName
+    for (file in stream) {
+      if (file.toString().endsWith(".sh")) {
+        var fileName = file.fileName.toString()
+        if (fileName == "inspect.sh" && inspectCommandName != "inspect") {
+          fileName = "${inspectCommandName}.sh"
+        }
+
+        val sourceFileLf = Files.createTempFile(context.paths.tempDir, file.fileName.toString(), "")
+        try {
+          // Until CR (\r) will be removed from the repository checkout, we need to filter it out from Unix-style scripts
+          // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
+          Files.writeString(sourceFileLf, Files.readString(file).replace("\r", ""))
+
+          val target = macBinDir.resolve(fileName)
+          substituteTemplatePlaceholders(
+            sourceFileLf,
+            target,
+            "@@",
+            listOf(
+              Pair("product_full", context.applicationInfo.fullProductName),
+              Pair("script_name", executable),
+              Pair("inspectCommandName", inspectCommandName),
+            ),
+            false,
+          )
+        }
+        finally {
+          Files.delete(sourceFileLf)
+        }
+      }
     }
   }
 }

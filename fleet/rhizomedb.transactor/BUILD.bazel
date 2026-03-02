@@ -25,7 +25,7 @@ jvm_library(
   name = "rhizomedb.transactor",
   module_name = "fleet.rhizomedb.transactor",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
   resources = [":rhizomedb.transactor_resources"],
   kotlinc_opts = ":custom_rhizomedb.transactor",
   deps = [
@@ -54,7 +54,7 @@ jvm_library(
   name = "rhizomedb.transactor_test_lib",
   module_name = "fleet.rhizomedb.transactor",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_rhizomedb.transactor",
   exports = [
     "//fleet/rhizomedb",

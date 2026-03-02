@@ -415,7 +415,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myMouseSelectionState;
   private @Nullable FoldRegion myMouseSelectedRegion;
   private PanelWithFloatingToolbar myLayeredPane;
-  private EditorFloatingToolbar editorFloatingToolbar;
+  private @Nullable EditorFloatingToolbar myEditorFloatingToolbar;
 
   @MagicConstant(intValues = {MOUSE_SELECTION_STATE_NONE, MOUSE_SELECTION_STATE_LINE_SELECTED, MOUSE_SELECTION_STATE_WORD_SELECTED})
   private @interface MouseSelectionState {
@@ -1289,16 +1289,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @ApiStatus.Internal
-  public void refreshEditorFloatingToolbar() {
-    if (this.editorFloatingToolbar != null && mayShowToolbar()) {
-      Disposer.dispose(this.editorFloatingToolbar);
-      myLayeredPane.remove(this.editorFloatingToolbar);
-      UiNotifyConnector.doWhenFirstShown(myPanel, () -> {
-        var editorFLoatingToolbar = new EditorFloatingToolbar(this);
-        myLayeredPane.add(editorFLoatingToolbar, FLOATING_TOOLBAR_LAYER);
-        this.editorFloatingToolbar = editorFLoatingToolbar;
-      }, getDisposable());
-    }
+  @RequiresEdt
+  public void recreateEditorFloatingToolbar() {
+    if (isReleased) return;
+    UiNotifyConnector.doWhenFirstShown(myPanel, () -> {
+      if (myEditorFloatingToolbar != null) {
+        Disposer.dispose(myEditorFloatingToolbar);
+        myLayeredPane.remove(myEditorFloatingToolbar);
+      }
+      if (mayShowToolbar()) {
+        var editorFloatingToolbar = new EditorFloatingToolbar(this);
+        myLayeredPane.add(editorFloatingToolbar, FLOATING_TOOLBAR_LAYER);
+        myEditorFloatingToolbar = editorFloatingToolbar;
+      }
+    }, getDisposable());
   }
 
   @RequiresEdt
@@ -1418,6 +1422,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
       myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
+      if (myEditorFloatingToolbar != null) {
+        Disposer.dispose(myEditorFloatingToolbar);
+      }
+
       Disposer.dispose(myDisposable);
 
       // clear error panel's cached image
@@ -1454,16 +1462,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setTransferHandler(new EditorTransferHandler());
     myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
-    this.myLayeredPane = new PanelWithFloatingToolbar();
+    myLayeredPane = new PanelWithFloatingToolbar();
     myLayeredPane.add(myScrollPane, SCROLL_PANE_LAYER);
-    UiNotifyConnector.doWhenFirstShown(myPanel, () -> {
-      if (mayShowToolbar()) {
-        var editorFLoatingToolbar = new EditorFloatingToolbar(this);
-        myLayeredPane.add(editorFLoatingToolbar, FLOATING_TOOLBAR_LAYER);
-        this.editorFloatingToolbar = editorFLoatingToolbar;
-      }
-    }, getDisposable());
     myPanel.add(myLayeredPane, BorderLayout.CENTER);
+
+    recreateEditorFloatingToolbar();
 
     myEditorComponent.addKeyListener(new KeyListener() {
       @Override
@@ -3400,13 +3403,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private boolean shouldSetCursorPositionImmediately() {
-    return !getSettings().isAnimatedCaret() ||
-           gainedFocus.getAndSet(false) ||
-           myMouseIsInDrag ||
-           Registry.is("ui.simplified", false) ||
+  boolean shouldDisableAnimations() {
+    return Registry.is("ui.simplified", false) ||
            PowerSaveMode.isEnabled() ||
            RemoteDesktopService.isRemoteSession();
+  }
+
+  private boolean shouldSetCursorPositionImmediately() {
+    return !getSettings().isSmoothCaretMovement() ||
+           gainedFocus.getAndSet(false) ||
+           myMouseIsInDrag ||
+           shouldDisableAnimations();
   }
 
   private void setCursorPosition() {
@@ -4558,9 +4565,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (EVENT_LOG.isDebugEnabled()) {
         EVENT_LOG.debug(e.toString());
       }
+      boolean isLineNumbersAreaClicked = myMousePressArea == EditorMouseEventArea.LINE_NUMBERS_AREA;
       myMousePressArea = null;
       myLastMousePressedLocation = null;
-      EditorThreading.runWritable(() -> {
+      Runnable processMouseReleased = () -> {
         runMouseReleasedCommand(e);
         if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
             Math.abs(e.getX() - myMousePressedEvent.getX()) < EditorUtil.getSpaceWidth(Font.PLAIN, EditorImpl.this) &&
@@ -4568,7 +4576,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           runMouseClickedCommand(e);
         }
         setFocusGained();
-      });
+      };
+      if (isLineNumbersAreaClicked) {
+        // TODO: XLineBreakpointManager should be reworked to avoid WIL
+        WriteIntentReadAction.run(processMouseReleased);
+      }
+      else {
+        EditorThreading.runWritable(processMouseReleased);
+      }
     }
 
     @Override

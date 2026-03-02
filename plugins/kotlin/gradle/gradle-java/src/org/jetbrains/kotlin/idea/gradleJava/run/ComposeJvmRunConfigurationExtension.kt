@@ -28,8 +28,8 @@ internal class ComposeJvmRunConfigurationExtension :
     ExternalSystemReifiedRunConfigurationExtension<GradleRunConfiguration>(GradleRunConfiguration::class.java) {
 
     private companion object {
-        const val ROOT_KEY = "ComposeJvm"
-        const val MAIN_FUNCTION_FILE_KEY = "mainFunctionFile"
+        const val ROOT_KEY = "composeJvm"
+        const val MAIN_FUNCTION_CLASS_FQN_KEY = "mainFunctionClassFqn"
     }
 
     override fun SettingsEditorFragmentContainer<GradleRunConfiguration>.configureFragments(
@@ -58,7 +58,7 @@ internal class ComposeJvmRunConfigurationExtension :
         if (!runConfiguration.isComposeJvm) return
 
         element.addContent(Element(ROOT_KEY).apply {
-            addContent(Element(MAIN_FUNCTION_FILE_KEY).apply { text = runConfiguration.mainFunctionClassFqn })
+            addContent(Element(MAIN_FUNCTION_CLASS_FQN_KEY).apply { text = runConfiguration.mainFunctionClassFqn })
         })
     }
 
@@ -67,6 +67,6 @@ internal class ComposeJvmRunConfigurationExtension :
         val myElement = element.getChild(ROOT_KEY) ?: return
 
         runConfiguration.isComposeJvm = true
-        runConfiguration.mainFunctionClassFqn = myElement.getChild(MAIN_FUNCTION_FILE_KEY)?.text ?: ""
+        runConfiguration.mainFunctionClassFqn = myElement.getChild(MAIN_FUNCTION_CLASS_FQN_KEY)?.text ?: ""
     }
 }

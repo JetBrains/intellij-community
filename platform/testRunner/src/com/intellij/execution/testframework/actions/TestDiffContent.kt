@@ -120,9 +120,9 @@ class TestDiffContent(
       return TestDiffContent(project, diffContent, text, elemPtr).apply {
         val originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR)
         putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, IntUnaryOperator { value ->
-          val valid = ReadAction.compute<Boolean, Throwable> { element.isValid }
+          val valid = ReadAction.computeBlocking<Boolean, Throwable> { element.isValid }
           if (!valid) return@IntUnaryOperator -1
-          val line = ReadAction.compute<Int, Throwable> { value + original.document.getLineNumber(element.startOffset) }
+          val line = ReadAction.computeBlocking<Int, Throwable> { value + original.document.getLineNumber(element.startOffset) }
           originalLineConvertor?.applyAsInt(line) ?: line
         })
       }

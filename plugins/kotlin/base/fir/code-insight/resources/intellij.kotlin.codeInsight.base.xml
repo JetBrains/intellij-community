@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.base.fir.codeInsight">
+<idea-plugin package="org.jetbrains.kotlin.idea.base.fir.codeInsight" visibility="internal">
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"

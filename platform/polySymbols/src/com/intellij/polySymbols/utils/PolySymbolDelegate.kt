@@ -51,7 +51,7 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
     get() = delegate.priority
 
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
-    delegate[property]
+    super.get(property) ?: delegate[property]
 
   override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
     delegate.getDocumentationTarget(location)

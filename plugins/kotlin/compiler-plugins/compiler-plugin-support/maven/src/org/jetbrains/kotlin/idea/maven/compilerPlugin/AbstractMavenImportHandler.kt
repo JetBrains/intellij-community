@@ -5,15 +5,18 @@ package org.jetbrains.kotlin.idea.maven.compilerPlugin
 import com.intellij.openapi.project.Project
 import org.jdom.Element
 import org.jdom.Text
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayoutService
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPluginWithFacetSettings
 import org.jetbrains.kotlin.idea.maven.MavenProjectImportHandler
-import java.nio.file.Path
 import org.jetbrains.kotlin.idea.maven.findKotlinPlugin
+import java.nio.file.Path
+import kotlin.io.path.relativeTo
 
 abstract class AbstractMavenImportHandler(protected val project: Project) : MavenProjectImportHandler {
     abstract val compilerPluginId: String
@@ -52,8 +55,11 @@ abstract class AbstractMavenImportHandler(protected val project: Project) : Mave
             ?: mutableListOf<String>()
 
         val layoutService = KotlinPluginLayoutService.getInstance(project)
+        // resolve to remote kotlinc could take some time (e.g. copying files), and it is worth having it on the import phase
+        layoutService.resolveRelativeToRemoteKotlinc(pluginJarFileFromIdea)
+
         // We can't use the plugin from Gradle as it may have the incompatible version
-        val classpath = listOf(layoutService.resolveRelativeToRemoteKotlinc(pluginJarFileFromIdea))
+        val classpath = listOf(pluginJarFileFromIdea.toJpsVersionAgnosticKotlinBundledPath())
 
         val options = getOptions(mavenProject, enabledCompilerPlugins, compilerPluginOptions) ?: return null
         return CompilerPluginSetup(options, classpath)
@@ -62,4 +68,20 @@ abstract class AbstractMavenImportHandler(protected val project: Project) : Mave
     private fun Element.getElement(name: String) = content.firstOrNull { it is Element && it.name == name } as? Element
 
     private fun Element.getElements() = content.filterIsInstance<Element>()
+}
+
+/*
+ * Bundled Kotlin compiler plugin uses Paths of bundled kotlinc into IntelliJ for build.
+ * Maven (back-ended by jps) could use a specific version of kotlinc, that could be different to
+ * the originally bundled.
+ * `$KOTLIN_BUNDLED$` path macro is used to specify a path to the compiler plugin within provided kotlinc.
+ *
+ * Note: function returns a String, not a Path, to emphasize that the result contains a macro
+ */
+@VisibleForTesting
+fun Path.toJpsVersionAgnosticKotlinBundledPath(): String {
+    val kotlincDirectory = KotlinPluginLayout.kotlincPath
+    require(this.startsWith(kotlincDirectory)) { "$this should start with ${kotlincDirectory}" }
+    val relativePath = this.relativeTo(kotlincDirectory)
+    return $$"$KOTLIN_BUNDLED$/$$relativePath"
 }

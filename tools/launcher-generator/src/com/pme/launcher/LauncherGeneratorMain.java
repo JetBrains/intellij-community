@@ -81,8 +81,8 @@ public final class LauncherGeneratorMain {
       productVersion = productVersion.substring(0, productCodeSeparator);
     }
 
-    var icoFile = Path.of(args[3]);
-    if (!Files.isRegularFile(icoFile)) {
+    var icoFile = "no-icon".equals(args[3])  ? null : Path.of(args[3]);
+    if (icoFile != null && !Files.isRegularFile(icoFile)) {
       System.err.println("Icon file '" + args[3] + "' not found");
       System.exit(5);
     }
@@ -102,8 +102,10 @@ public final class LauncherGeneratorMain {
       }
       generator.setVersionInfoString("OriginalFilename", outputFile.getFileName().toString());
 
-      try (var iconStream = Files.newInputStream(icoFile)) {
-        generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
+      if (icoFile != null) {
+        try (var iconStream = Files.newInputStream(icoFile)) {
+          generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
+        }
       }
 
       if (fileVersion != null) {

@@ -113,7 +113,7 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler"/>
     <gotoDeclarationHandler
-            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.navigation.GoToBreakContinueHandler"/>
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.navigation.GoToBreakContinueReturnHandler"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2OptimizeImportsFacility"/>

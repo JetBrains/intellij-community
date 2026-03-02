@@ -76,7 +76,7 @@ public final class ProductModulesXmlSerializer {
           RuntimeModuleId moduleId = RuntimeModuleId.module(moduleName);
           if ("main-root-modules".equals(secondLevelTag)) {
             assert loadingRule != null;
-            rootMainGroupModules.add(new RawIncludedRuntimeModule(moduleId, loadingRule));
+            rootMainGroupModules.add(new RawIncludedRuntimeModule(moduleId, loadingRule, null));
           }
           else if ("bundled-plugins".equals(secondLevelTag)) {
             bundledPluginMainModules.add(moduleId);

@@ -1020,7 +1020,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull String getText() {
-    return ReadAction.compute(this::doGetText);
+    return ReadAction.computeBlocking(this::doGetText);
   }
 
   private @NotNull String doGetText() {
@@ -1033,8 +1033,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull String getText(@NotNull TextRange range) {
-    return ReadAction
-      .compute(() -> myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString());
+    return ReadAction.computeBlocking(
+      () -> myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString()
+    );
   }
 
   @Override

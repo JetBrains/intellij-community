@@ -132,6 +132,11 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   @Override
+  public boolean supportsInterLinePlacement() {
+    return true;
+  }
+
+  @Override
   public @NotNull List<JavaBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {
     PsiFile file = DebuggerUtilsEx.getPsiFile(position, project);
     if (file == null) return Collections.emptyList();

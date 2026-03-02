@@ -40,16 +40,18 @@ import javax.swing.Icon;
 import java.util.Date;
 import java.util.List;
 
-import static com.intellij.junit.testFramework.JUnitLibrary.JUNIT3;
-import static com.intellij.junit.testFramework.JUnitLibrary.JUNIT4;
-import static com.intellij.junit.testFramework.JUnitLibrary.JUNIT5;
-import static com.intellij.junit.testFramework.JUnitLibrary.PIONEER;
+import static com.intellij.junit.testFramework.MavenTestLib.JUNIT3;
+import static com.intellij.junit.testFramework.MavenTestLib.JUNIT4;
+import static com.intellij.junit.testFramework.MavenTestLib.JUNIT5;
+import static com.intellij.junit.testFramework.MavenTestLib.PIONEER;
 import static com.intellij.pom.java.LanguageLevel.HIGHEST;
 
 public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
+  public static final LightProjectDescriptor descriptor = new JUnitProjectDescriptor(HIGHEST, JUNIT3, JUNIT4, JUNIT5, PIONEER);
+
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new JUnitProjectDescriptor(HIGHEST, JUNIT3, JUNIT4, JUNIT5, PIONEER);
+    return descriptor;
   }
 
   public void testAbstractTestClassMethods() {

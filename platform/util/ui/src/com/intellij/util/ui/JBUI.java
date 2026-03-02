@@ -926,6 +926,10 @@ public final class JBUI {
     }
 
     public interface IconBadge {
+      /**
+       * @deprecated Not needed anymore
+       */
+      @Deprecated(forRemoval = true)
       Color NEW_UI = JBColor.namedColor("IconBadge.newUiBackground", 0x8F5AE5, 0x8F5AE5);
       Color ERROR = JBColor.namedColor("IconBadge.errorBackground", 0xE55765, 0xDB5C5C);
       Color WARNING = JBColor.namedColor("IconBadge.warningBackground", 0xFFAF0F, 0xF2C55C);
@@ -1677,6 +1681,26 @@ public final class JBUI {
         }
 
         public static final JBValue ARC = new JBValue.UIInteger("PopupMenu.Selection.arc", 8);
+      }
+    }
+
+    public static final class MainMenu {
+      private MainMenu() { }
+
+      public static final class Selection {
+        private Selection() { }
+
+        public static @NotNull JBInsets outerInsets() {
+          return insets("MainMenu.Selection.outerInsets", insets(5, 0));
+        }
+
+        public static @NotNull JBInsets fullScreenOuterInsets() {
+          return insets("MainMenu.Selection.fullScreenOuterInsets", insets(2, 0));
+        }
+
+        public static @NotNull JBValue fullScreenArc() {
+          return new JBValue.UIInteger("MainToolbar.Selection.fullScreenArc", 8);
+        }
       }
     }
 

@@ -3,15 +3,15 @@ package com.intellij.execution.junit.kotlin
 
 import com.intellij.codeInsight.TestFrameworks
 import com.intellij.execution.junit.JUnitConfiguration
-import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
+import com.intellij.junit.testFramework.MavenTestLib
 import com.intellij.psi.PsiClassOwner
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.jupiter.api.Assertions
 
-abstract class KotlinJUnit5AcceptanceTest : JUnitMalformedDeclarationInspectionTestBase(JUnitLibrary.JUNIT5), ExpectedPluginModeProvider {
+abstract class KotlinJUnit5AcceptanceTest : JUnitMalformedDeclarationInspectionTestBase(MavenTestLib.JUNIT5), ExpectedPluginModeProvider {
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     ConfigLibraryUtil.configureKotlinRuntime(module)

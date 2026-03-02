@@ -1,8 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.Usage
+import com.intellij.find.usages.impl.DefaultUsageSearchParameters
+import com.intellij.json.psi.JsonProperty
+import com.intellij.model.psi.PsiSymbolReferenceService
+import com.intellij.model.psi.impl.allDeclarationsInElement
+import com.intellij.model.search.SearchService
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.parentOfType
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ui.ColorIcon
+import org.jetbrains.idea.devkit.themes.ThemeColorKey
 import org.jetbrains.idea.devkit.themes.UnresolvedThemeJsonNamedColorInspection
 import org.jetbrains.idea.devkit.themes.UnresolvedThemeKeyInspection
 import org.jetbrains.idea.devkit.themes.UnusedThemeJsonNamedColorInspection
@@ -235,6 +250,23 @@ class JsonThemeInspectionTest : BasePlatformTestCase() {
     myFixture.checkHighlighting()
   }
 
+  fun testBorderSoftReference() {
+    myFixture.configureByText("test.theme.json", """
+      {
+        "name": "Test Theme",
+        "colors": {
+          "registered-color": "#000000"
+        },
+        "ui": {
+          "ActionButton.focusedBorderColor": "registered-color",
+          "ActionButton.focusedBorderColor": "<error descr="Cannot resolve symbol 'unknown-color'">unknown-color</error>",
+          <warning descr="Unresolved key 'ActionButton.unregisteredBorder'">"ActionButton.unregisteredBorder"</warning>: "unregisteredBorder",
+        }
+      }
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
   fun testLineMarkersColorHex() {
     myFixture.configureByText("test.theme.json", """
       {
@@ -311,5 +343,75 @@ class JsonThemeInspectionTest : BasePlatformTestCase() {
       .mapNotNull { it.icon as? ColorIcon }
     assertEquals(1, colorIcons.size)
     assertEquals(Color.BLUE, colorIcons[0].iconColor)
+  }
+
+  fun testNavigationToNamedColor() {
+    myFixture.configureByText("test.theme.json", """
+      {
+        "name": "Test Theme",
+        "colors": {
+          "my-color": "#FF0000"
+        },
+        "ui": {
+          "ActionButton.focusedBorderColor": "my-co<caret>lor"
+        }
+      }
+    """.trimIndent())
+
+    val host = myFixture.file.findElementAt(myFixture.caretOffset)!!.parent
+    val reference = PsiSymbolReferenceService.getService().getReferences(host).firstOrNull()
+    assertNotNull(reference)
+    val symbol = (reference!!.resolveReference().firstOrNull() ?: fail("Symbol not resolved")) as ThemeColorKey
+    assertEquals("my-color", symbol.colorKey)
+
+    val navigationTarget = symbol as NavigationTarget
+    val navigationRequest = PlatformTestUtil.callOnBgtSynchronously(
+      {
+        runReadActionBlocking {
+          navigationTarget.navigationRequest()
+        }
+      }, 10) as NavigationRequest
+
+    assertNotNull(navigationRequest)
+    val sourceNavigationRequest = navigationRequest as SourceNavigationRequest
+
+    assertEquals("test.theme.json", sourceNavigationRequest.file.name)
+  }
+
+  fun testFindUsagesForNamedColor() {
+    val fileText = """
+      {
+        "name": "Test Theme",
+        "colors": {
+          "my-color": "#FF0000"
+        },
+        "ui": {
+          "ActionButton.focusedBorderColor": "my-color",
+          "ActionButton.separatorColor": "my-color"
+        }
+      }
+    """.trimIndent()
+    myFixture.configureByText("test.theme.json", fileText)
+
+    val element = myFixture.file.findElementAt(fileText.indexOf("my-color"))!!.parentOfType<JsonProperty>()!!
+    val declarations = allDeclarationsInElement(element)
+    assertEquals(1, declarations.size)
+
+    val symbol = declarations.first().symbol as ThemeColorKey
+    assertEquals("my-color", symbol.colorKey)
+
+    val usages: Collection<Usage> = PlatformTestUtil.callOnBgtSynchronously(
+      {
+        runReadActionBlocking {
+          val parameters = DefaultUsageSearchParameters(project, symbol, GlobalSearchScope.fileScope(myFixture.file))
+          SearchService.getInstance().searchParameters(parameters).findAll()
+        }
+      }, 10)!!
+
+    assertEquals(2, usages.size)
+    for (usage in usages.map { it as PsiUsage }) {
+      assertFalse("usage must not be declaration", usage.declaration)
+      assertEquals("test.theme.json", usage.file.name)
+    }
   }
 }

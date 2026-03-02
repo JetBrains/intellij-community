@@ -606,7 +606,7 @@
       "description": "Editor inplace search/replace fields background color"
     },
     {
-      "key": "Editor.SearchField.bordercolor",
+      "key": "Editor.SearchField.borderColor",
       "description": "Editor inplace search/replace fields border color",
       "since": "2024.1"
     },
@@ -1409,6 +1409,21 @@
     {
       "key": "MainMenu.selectionForeground",
       "description": "Selection foreground color for main menu items"
+    },
+    {
+      "key": "MainMenu.Selection.fullScreenArc",
+      "description": "Selection arc diameter for the main menu in full screen (in the normal mode MainToolbar.Dropdown.arc is used)",
+      "since": "2026.1"
+    },
+    {
+      "key": "MainMenu.Selection.outerInsets",
+      "description": "Insets around main menu selection",
+      "since": "2026.1"
+    },
+    {
+      "key": "MainMenu.Selection.fullScreenOuterInsets",
+      "description": "Insets around main menu selection in full screen",
+      "since": "2026.1"
     },
     {
       "key": "MemoryIndicator.usedBackground",

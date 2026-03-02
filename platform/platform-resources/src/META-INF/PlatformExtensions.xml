@@ -93,7 +93,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.ManagingFS"
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileManager" open="true"
+    <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileManager"
                         serviceImplementation="com.intellij.openapi.vfs.PlatformVirtualFileManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.pointers.VirtualFilePointerManager"
@@ -109,7 +109,7 @@
                         serviceImplementation="com.intellij.openapi.util.registry.RegistryManagerImpl"/>
 
     <!-- requested by FileBasedIndexImpl, so, to make start-up more flat, also preload -->
-    <applicationService serviceInterface="com.intellij.openapi.fileEditor.FileDocumentManager" open="true" preload="true"
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.FileDocumentManager" preload="true"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl"/>
     <persistentFsConnectionListener
       implementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl$MyPersistentFsConnectionListener"/>
@@ -200,6 +200,8 @@
 
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacadeImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider"
+                        serviceImplementation="com.intellij.openapi.updateSettings.impl.DefaultPluginUpdateHandlerProvider" open="true"/>
 
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
@@ -223,7 +225,7 @@
     <cachesInvalidator implementation="com.intellij.ui.jcef.JBCefAppCacheInvalidator" order="last"/>
     <cefNativeBundleProvider implementation="com.intellij.ui.jcef.JBCefDefaultNativeBundleProvider" order="last"/>
 
-    <applicationService serviceInterface="com.intellij.ide.ui.IdeUiService" open="true"
+    <applicationService serviceInterface="com.intellij.ide.ui.IdeUiService"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeUiServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.configurationStore.ProjectStorePathManager"
@@ -281,7 +283,7 @@
     <applicationService serviceInterface="com.intellij.ide.CommonActionsManager"
                         serviceImplementation="com.intellij.ide.impl.CommonActionsManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.ide.CopyPasteManager" open="true"
+    <applicationService serviceInterface="com.intellij.openapi.ide.CopyPasteManager"
                         serviceImplementation="com.intellij.ide.CopyPasteManagerEx"/>
     <applicationService serviceInterface="com.intellij.ide.ClientCopyPasteManager" open="true"
                         serviceImplementation="com.intellij.ide.LocalCopyPasteManager"
@@ -313,7 +315,6 @@
 
     <cachesInvalidator implementation="com.intellij.openapi.vfs.newvfs.FSRecordsCacheInvalidator" order="after rootCachesInvalidator"/>
     <cachesInvalidator id="rootCachesInvalidator" implementation="com.intellij.ide.actions.RootCachesInvalidator" order="first"/>
-    <logsPreprocessor implementation="com.intellij.ide.logsUploader.DefaultLogsProcessor"/>
 
     <applicationService serviceInterface="com.intellij.util.ui.RestartDialog" open="true"
                         serviceImplementation="com.intellij.util.ui.RestartDialogImpl"/>
@@ -476,7 +477,7 @@
                  description="Enable plugin category promotion panels with priority sorting in the Installed plugins tab"/>
     <postStartupActivity implementation="com.intellij.ide.actions.IdeScalePostStartupActivity"/>
 
-    <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager" open="true"
+    <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.hint.ClientHintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.LocalHintManager"
@@ -514,7 +515,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
                         serviceImplementation="com.intellij.configurationStore.schemeManager.ApplicationSchemeManagerFactory"/>
-    <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory" open="true"
+    <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
                     serviceImplementation="com.intellij.configurationStore.schemeManager.ProjectSchemeManagerFactory"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
@@ -816,7 +817,7 @@
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
 
-    <applicationService serviceInterface="com.intellij.ide.plugins.PluginEnabler" open="true"
+    <applicationService serviceInterface="com.intellij.ide.plugins.PluginEnabler"
                         serviceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
                         headlessImplementation="com.intellij.ide.plugins.DisabledPluginsState"
                         testServiceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
@@ -892,7 +893,7 @@
 
     <applicationSettings service="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
 
-    <applicationService serviceInterface="com.intellij.ide.SaveAndSyncHandler" open="true" preload="notHeadless"
+    <applicationService serviceInterface="com.intellij.ide.SaveAndSyncHandler" preload="notHeadless"
                         serviceImplementation="com.intellij.configurationStore.SaveAndSyncHandlerImpl"
                         testServiceImplementation="com.intellij.configurationStore.NoOpSaveAndSyncHandler"
                         headlessImplementation="com.intellij.configurationStore.HeadlessSaveAndSyncHandler"/>
@@ -951,7 +952,7 @@
       id="DefaultFloatingToolbarProvider"/>
 
     <editorFloatingToolbarProvider
-      implementation="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarProvider"
+      implementation="com.intellij.ide.browsers.actions.OpenInBrowserFloatingToolbarProvider"
       id="OpenInBrowserFloatingToolbarProvider"/>
 
     <bundledKeymap file="$default.xml"/>
@@ -1177,9 +1178,6 @@
                 factoryClass="com.intellij.notification.impl.NotificationsToolWindowFactory"/>
     <projectService serviceInterface="com.intellij.notification.NotificationsLogController"
                     serviceImplementation="com.intellij.notification.impl.NotificationsLogToolWindowController"/>
-
-    <toolWindow id="Meet New UI" anchor="right" secondary="false" icon="AllIcons.Toolwindows.MeetNewUi"
-                factoryClass="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiToolWindowFactory"/>
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
@@ -1412,7 +1410,7 @@
                         serviceImplementation="com.intellij.net.ssl.CertificateWarningDialogProviderImpl"/>
 
     <!--suppress PluginXmlValidity -->
-    <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.MyRawTypedHandler"/>
+    <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorRawTypedHandler"/>
 
     <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>
 
@@ -1566,7 +1564,7 @@
 
     <applicationService serviceImplementation="com.intellij.internal.DebugAttachDetector" headlessImplementation="" preload="true"/>
 
-    <projectService serviceInterface="com.intellij.ui.EditorNotifications" open="true" serviceImplementation="com.intellij.ui.EditorNotificationsImpl"
+    <projectService serviceInterface="com.intellij.ui.EditorNotifications" serviceImplementation="com.intellij.ui.EditorNotificationsImpl"
                     preload="true"/>
 
     <applicationService serviceInterface="com.intellij.ui.ToolbarService" open="true"

@@ -12,8 +12,10 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiPackageStatementStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageStatementStub> implements PsiPackageStatement {
 
@@ -27,6 +29,11 @@ public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageS
   @Override
   public PsiJavaCodeReferenceElement getPackageReference() {
     throw new UnsupportedOperationException("Method not implemented");
+  }
+
+  @Override
+  public @Nullable PsiDocComment getDocComment() {
+    return null;
   }
 
   @Override

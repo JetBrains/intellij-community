@@ -9,8 +9,8 @@ androidx-constraintlayout = "2.2.1"
 androidx-core-ktx = "1.16.0"
 androidx-lifecycle = "2.8.4"
 androidx-material = "1.12.0"
-compose-multiplatform = "1.8.1+dev2448"
-kotlin = "2.1.20"
+compose-multiplatform = "1.10.1"
+kotlin = "2.3.10"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }

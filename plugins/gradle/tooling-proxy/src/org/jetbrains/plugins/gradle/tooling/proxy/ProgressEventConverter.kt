@@ -153,7 +153,7 @@ class ProgressEventConverter {
         }
         is JvmTestOperationDescriptor -> operationDescriptor.run {
           InternalJvmTestOperationDescriptor(id, name, displayName, convert(parent),
-                                             jvmTestKind, suiteName, className, methodName)
+                                             jvmTestKind, suiteName, className, methodName, source)
         }
         is TestOperationDescriptor -> operationDescriptor.run {
           InternalTestOperationDescriptor(id, name, displayName, convert(parent))

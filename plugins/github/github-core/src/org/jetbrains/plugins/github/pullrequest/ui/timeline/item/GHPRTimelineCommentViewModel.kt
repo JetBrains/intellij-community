@@ -26,11 +26,15 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRMentionableUsersProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsViewModel
 import java.util.Date
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
-interface GHPRTimelineCommentViewModel {
+interface GHPRTimelineCommentViewModel : GHViewModelWithTextCompletion {
   val author: GHActor
   val createdAt: Date
 
@@ -56,8 +60,9 @@ internal class UpdateableGHPRTimelineCommentViewModel(
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
   private val commentsData: GHPRCommentsDataProvider,
-  initialData: GHIssueComment
-) : GHPRTimelineCommentViewModel, GHPRTimelineItem.Comment {
+  viewModelWithTextCompletion: GHViewModelWithTextCompletion,
+  initialData: GHIssueComment,
+) : GHPRTimelineCommentViewModel, GHPRTimelineItem.Comment, GHViewModelWithTextCompletion by viewModelWithTextCompletion {
   private val cs = parentCs.childScope("GitHub Pull Request Timeline Comment View Model")
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
@@ -72,7 +77,7 @@ internal class UpdateableGHPRTimelineCommentViewModel(
   override val createdAt: Date = initialData.createdAt
 
   override val bodyHtml: StateFlow<String> = dataState.map {
-    it.body.convertToHtml(project)
+    it.body.convertToHtml(project, dataContext.repositoryDataService.repositoryMapping.repository.serverPath)
   }.stateIn(cs, SharingStarted.Eagerly, "")
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy

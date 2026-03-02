@@ -7,7 +7,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -67,6 +66,7 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.lang.ref.WeakReference
 import kotlin.time.Duration.Companion.seconds
 
@@ -99,7 +99,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   override fun closeTab(tab: TerminalToolWindowTab) {
     val manager = tab.content.manager ?: return
-    manager.removeContent(tab.content, true, true, true)
+    manager.removeContent(/* content = */ tab.content, /* dispose = */ true, /* requestFocus = */ true, /* forcedFocus = */ true)
   }
 
   override fun detachTab(tab: TerminalToolWindowTab): TerminalView {
@@ -339,6 +339,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     val baseOptions = ShellStartupOptions.Builder()
       .shellCommand(builder.shellCommand)
       .workingDirectory(builder.workingDirectory)
+      .envVariables(builder.envVariables)
+      .processType(builder.processType)
 
     return if (calculateSizeFromComponent) {
       withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
@@ -417,6 +419,8 @@ internal class TerminalToolWindowTabsManagerImpl(
         with(builder) {
           shellCommand(tab.shellCommand)
           workingDirectory(tab.workingDirectory)
+          envVariables(tab.envVariables ?: emptyMap())
+          processType(tab.processType ?: TerminalProcessType.SHELL)
           tabName(tab.name)
           userDefinedName(tab.isUserDefinedName)
           backendTabId(tab.id)
@@ -441,6 +445,10 @@ internal class TerminalToolWindowTabsManagerImpl(
     var workingDirectory: String? = null
       private set
     var shellCommand: List<String>? = null
+      private set
+    var envVariables: Map<String, String> = emptyMap()
+      private set
+    var processType: TerminalProcessType = TerminalProcessType.SHELL
       private set
     var tabName: String? = null
       private set
@@ -471,6 +479,16 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     override fun shellCommand(command: List<String>?): TerminalToolWindowTabBuilder {
       shellCommand = command
+      return this
+    }
+
+    override fun envVariables(envs: Map<String, String>): TerminalToolWindowTabBuilder {
+      envVariables = envs
+      return this
+    }
+
+    override fun processType(processType: TerminalProcessType): TerminalToolWindowTabBuilder {
+      this.processType = processType
       return this
     }
 
@@ -531,7 +549,5 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   companion object {
     val TAB_DETACHED_KEY = Key.create<Unit>("TerminalTabsManager.TabWasDetached")
-
-    private val LOG = logger<TerminalToolWindowTabsManagerImpl>()
   }
 }

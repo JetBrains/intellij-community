@@ -2,10 +2,10 @@
   <dependencies>
     <module name="intellij.python.common"/>
     <module name="intellij.python.community"/>
-    <module name="intellij.python.processOutput"/>
+    <module name="intellij.python.processOutput.common"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <python.common.toolToIconMapper implementation="com.intellij.python.community.impl.poetry.common.impl.PoetryToolIdMapper"/>
-    <python.processOutput.processOutputIconMapping implementation="com.intellij.python.community.impl.poetry.common.impl.PoetryIconMapping"/>
+    <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.community.impl.poetry.common.impl.PoetryIconMapping"/>
   </extensions>
 </idea-plugin>

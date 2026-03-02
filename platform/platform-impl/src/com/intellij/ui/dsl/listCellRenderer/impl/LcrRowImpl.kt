@@ -211,6 +211,9 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
 
     applyRowStyle(result, renderingType, rowHeight ?: (minHeight + JBUIScale.scale(2)), rowWidth, roundSelectionTop, roundSelectionBottom)
 
+    // Free references
+    listCellRendererParams = null
+
     return result
   }
 

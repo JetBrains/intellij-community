@@ -20,6 +20,7 @@
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinUnusedDeclarationHighlightingVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinUnresolvedKDocHighlightVisitor"/>
+    <highlightErrorFilter implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinHighlightInjectionErrorFilter"/>
 
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinHighlightExitPointsHandlerFactory"/>
 

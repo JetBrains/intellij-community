@@ -129,7 +129,8 @@ abstract class GradleProjectTaskRunnerTestCase : GradleProjectTestCase() {
     val buildEnvironment = DefaultBuildEnvironment(
       DefaultBuildIdentifier(Path.of(projectPath)),
       DefaultGradleEnvironment(null, gradleVersion),
-      DefaultJavaEnvironment(Path.of(gradleFixture.gradleJvmFixture.gradleJvmPath), emptyList())
+      DefaultJavaEnvironment(Path.of(gradleFixture.gradleJvmFixture.gradleJvmPath), emptyList()),
+      gradleVersion.version
     )
     val modelBuilder = mock<ModelBuilder<BuildEnvironment>>().apply {
       whenever(get()).thenReturn(buildEnvironment)
@@ -147,10 +148,13 @@ abstract class GradleProjectTaskRunnerTestCase : GradleProjectTestCase() {
     private val buildIdentifier: BuildIdentifier,
     private val gradle: GradleEnvironment,
     private val java: JavaEnvironment,
+    private val versionInfo: String,
   ) : BuildEnvironment {
     override fun getBuildIdentifier(): BuildIdentifier = buildIdentifier
     override fun getGradle(): GradleEnvironment = gradle
     override fun getJava(): JavaEnvironment = java
+
+    override fun getVersionInfo(): String = versionInfo
   }
 
   private class DefaultBuildIdentifier(

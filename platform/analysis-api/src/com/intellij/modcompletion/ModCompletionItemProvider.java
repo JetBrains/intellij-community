@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * A language-specific provider for {@link ModCompletionItem} completion options 
@@ -32,7 +31,7 @@ public interface ModCompletionItemProvider {
    * @param context context to use
    * @param sink a consumer to pass completion items to
    */
-  void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink);
+  void provideItems(CompletionContext context, ModCompletionResult sink);
 
   /**
    * @param context context to use

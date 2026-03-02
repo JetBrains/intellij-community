@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.pluginSystem.parser.impl.PluginXmlConst
@@ -79,13 +78,6 @@ sealed class IdeaPluginDescriptorImpl(
   @Deprecated("Deprecated in Java")
   override fun isEnabled(): Boolean = isMarkedForLoading
 
-  @Deprecated("Deprecated in Java")
-  override fun setEnabled(enabled: Boolean) {
-    if (setEnabledLogCount++ < 10) {
-      LOG.error("no-op deprecated method call on $this", Throwable())
-    }
-  }
-
   override fun equals(other: Any?): Boolean {
     return this === other || other is IdeaPluginDescriptorImpl && pluginId == other.pluginId && descriptorPath == other.descriptorPath
   }
@@ -145,9 +137,6 @@ internal fun reportSubDescriptorUnexpectedElements(raw: RawPluginDescriptor, rep
   if (raw.contentModules.isNotEmpty()) reporter(PluginXmlConst.CONTENT_ELEM)
   if (raw.incompatibleWith.isNotEmpty()) reporter(PluginXmlConst.INCOMPATIBLE_WITH_ELEM)
 }
-
-@Volatile
-private var setEnabledLogCount = 0
 
 /**
  * Either [PluginMainDescriptor] or [ContentModuleDescriptor].

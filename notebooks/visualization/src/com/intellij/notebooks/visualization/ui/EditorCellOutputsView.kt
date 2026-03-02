@@ -74,7 +74,9 @@ class EditorCellOutputsView(
   }
 
   private val surroundingComponent = SurroundingComponent.create(editor, innerComponent)
-  private val outerComponent = EditorCellDataContext.createContextProvider(cell, surroundingComponent)
+  private val outerComponent = EditorCellDataContext.createContextProvider(cell, surroundingComponent).apply {
+    isOpaque = false
+  }
 
   internal var inlay: Inlay<*>? = null
     private set(value) {
@@ -97,9 +99,7 @@ class EditorCellOutputsView(
       innerComponent.scrollingEnabled = it
       innerComponent.revalidate()
     }
-    editor.notebookAppearance.editorBackgroundColor.bind(this) {
-      surroundingComponent.background = it
-    }
+    surroundingComponent.background = editor.notebookAppearance.editorBackgroundColor()
     update()
   }
 
@@ -137,7 +137,6 @@ class EditorCellOutputsView(
       }
     }
   }
-
 
   @RequiresEdt
   private fun updateData(outputs: List<EditorCellOutput>): Boolean {

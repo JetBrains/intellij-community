@@ -41,6 +41,7 @@ import com.intellij.platform.debugger.impl.rpc.XSuspendContextDto
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerId
 import com.intellij.platform.debugger.impl.rpc.actionIds
 import com.intellij.platform.debugger.impl.rpc.consoleView
+import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
 import com.intellij.platform.debugger.impl.shared.childScopeCancelledOnSessionEvents
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
@@ -244,6 +245,11 @@ class FrontendXDebuggerSession(
     DebuggerInlayListener.getInstance(project).startListening()
     sessionDto.initialSuspendData?.applyToCurrents()
     cs.launch {
+      val processDescriptorDeferred = sessionDto.processDescriptor
+      if (processDescriptorDeferred != null) {
+        val processDescriptor = processDescriptorDeferred.await()
+        FrontendDescriptorStateManager.getInstance(project).registerProcessDescriptor(id, processDescriptor, cs)
+      }
       sessionDto.sessionEvents.toFlow().collect { event ->
         with(event) {
           updateCurrents()

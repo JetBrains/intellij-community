@@ -5,7 +5,9 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.impl.EelProxyImpl
 import org.jetbrains.annotations.ApiStatus
+import java.util.ServiceLoader
 
 // TODO Move to a separate package along with EelTunnelsApi
 
@@ -55,7 +57,8 @@ import org.jetbrains.annotations.ApiStatus
 @ThrowsChecked(EelConnectionError::class)
 @ApiStatus.Experimental
 suspend fun eelProxy(@GeneratedBuilder opts: EelTunnelsApiRunProxyOpts): EelProxy {
-  return eelProxyImpl(
+  val impl = ServiceLoader.load(EelProxyImpl::class.java).single()
+  return impl.eelProxyImpl(
     acceptorFactory = opts.acceptorFactory,
     connectionFactory = opts.connectionFactory,
     onConnection = opts.onConnection,

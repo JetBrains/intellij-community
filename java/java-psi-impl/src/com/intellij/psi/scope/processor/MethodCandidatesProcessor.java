@@ -101,8 +101,9 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
   protected @NotNull MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
                                                              boolean staticProblem, boolean accessible, boolean varargs) {
+    PsiType[] arguments = method.hasTypeParameters() ? getTypeArguments() : PsiType.EMPTY_ARRAY;
     return new VarargsAwareMethodCandidateInfo(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,
-                                               getTypeArguments(), getLanguageLevel(), varargs);
+                                               arguments, getLanguageLevel(), varargs);
   }
 
   private static PsiType @NotNull [] getExpressionTypes(@NotNull PsiExpressionList argumentList) {

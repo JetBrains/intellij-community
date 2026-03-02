@@ -51,7 +51,7 @@ import java.util.Collections
  * @see PyUnionType.createWeakType
  */
 @ApiStatus.Experimental
-class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyUnionLikeType {
+class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyCompositeType {
   override val members: Set<PyType?> = LinkedHashSet(members)
     get() = Collections.unmodifiableSet<PyType?>(field)
 

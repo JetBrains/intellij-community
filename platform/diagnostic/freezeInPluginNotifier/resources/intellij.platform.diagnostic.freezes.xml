@@ -1,6 +1,17 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

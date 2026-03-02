@@ -334,7 +334,13 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
       }
 
       switch (nodeName) {
-        case "a" -> result.append("[");
+        case "a" -> {
+          if (!shouldTransformHtmlLink()) {
+            appendWithoutConversion(node);
+            return FilterResult.SKIP_ENTIRELY;
+          }
+          result.append("[");
+        }
         case "i", "em" -> result.append('_');
         case "b", "strong" -> result.append("**");
         case "hr" -> appendWithNewLineIfNeeded("___\n");
@@ -532,6 +538,11 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
         }
       }
       return singleRelevantChild;
+    }
+
+    /// @see <a href="https://docs.oracle.com/en/java/javase/25/docs/specs/javadoc/doc-comment-spec.html#see"> To see why `a` tags shouldn't be converted</a>
+    private boolean shouldTransformHtmlLink() {
+      return !StringUtil.endsWithIgnoreWhitespaces(result, "@see");
     }
 
     /// Append the text with a new line if necessary for the Markdown syntax

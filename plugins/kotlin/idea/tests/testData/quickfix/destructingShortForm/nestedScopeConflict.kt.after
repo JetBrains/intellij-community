@@ -1,6 +1,5 @@
 // "Convert to a full name-based destructuring form" "true"
 // COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
-// IGNORE_K1
 
 data class Product(val id: String, val productName: String)
 

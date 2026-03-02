@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
 import com.intellij.injected.editor.EditorWindow;
@@ -30,12 +31,16 @@ import java.util.List;
 
 public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTestCase {
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
+  protected TestDaemonCodeAnalyzerImpl myTestDaemonCodeAnalyzer;
+  protected DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    new TestDaemonCodeAnalyzerImpl(getProject()).prepareForTest();
+    myTestDaemonCodeAnalyzer = new TestDaemonCodeAnalyzerImpl(getProject());
+    myTestDaemonCodeAnalyzer.prepareForTest();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+    myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
   }
 
   @Override
@@ -43,12 +48,14 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     try {
       // return default value to avoid unnecessary save
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-      new TestDaemonCodeAnalyzerImpl(getProject()).cleanupAfterTest();
+      myTestDaemonCodeAnalyzer.cleanupAfterTest();
     }
     catch (Throwable e) {
       addSuppressedException(e);
     }
     finally {
+      myDaemonCodeAnalyzer = null;
+      myTestDaemonCodeAnalyzer = null;
       super.tearDown();
     }
   }
@@ -145,7 +152,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     return annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting.class);
   }
 
-  protected @Unmodifiable List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
+  protected final @Unmodifiable List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
     return DaemonAnalyzerTestCase.filter(doHighlighting(), minSeverity);
   }
 

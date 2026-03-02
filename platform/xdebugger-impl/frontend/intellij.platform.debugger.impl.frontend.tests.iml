@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.10-RC-0.1/rpc-compiler-plugin-2.3.10-RC-0.1.jar</arg>
+              </args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/tests">
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.kernel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.rpc" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.project" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.frontend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl.frontend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.topics" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.frontend" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.platform.debugger.impl.frontend" />
+</module>

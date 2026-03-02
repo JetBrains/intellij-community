@@ -8,7 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//libraries/fastutil",
-    "//libraries/jackson/jackson",
+    "//libraries/jackson3/jackson:libraries-jackson3",
     "//libraries/kotlinx/coroutines/core",
     "//platform/code-style-api:codeStyle",
     "//platform/lang-core",
@@ -42,7 +42,7 @@ jvm_library(
   runtime_deps = [
     ":usageView-impl",
     "//libraries/fastutil:fastutil_test_lib",
-    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//platform/code-style-api:codeStyle_test_lib",
     "//platform/lang-core:lang-core_test_lib",

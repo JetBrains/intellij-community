@@ -12,6 +12,7 @@ import org.jetbrains.plugins.gradle.execution.build.GradleBaseApplicationEnviron
 import org.jetbrains.plugins.gradle.execution.build.GradleInitScriptParameters
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.isIncludedBuild
 
 /**
  * This provider is responsible for building [ExecutionEnvironment] for Kotlin JVM modules to be run using Gradle.
@@ -41,8 +42,18 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
     // So our one is built using the same principle.
     val projectPath = extModuleData.data.id
     val gradleProjectId = if (projectPath.startsWith(':')) { // shortening (is unique project id)
-        val rootProjectName = (extModuleData.parent?.data as? ProjectData)?.externalName ?: ""
-        rootProjectName + projectPath
+        if (extModuleData.data.isIncludedBuild) {
+            // For included builds, the id is the Gradle identity path:
+            //   ":buildName" (root of included build)→ "buildName:"
+            //   ":buildName:local" (subproject in included build) → "buildName:local"
+            // This matches what "project.rootProject.name + project.path" evaluates to in the
+            // included build's context when the init script runs.
+            val withoutLeadingColon = projectPath.drop(1)
+            if (':' in withoutLeadingColon) withoutLeadingColon else "$withoutLeadingColon:"
+        } else {
+            val rootProjectName = (extModuleData.parent?.data as? ProjectData)?.externalName ?: ""
+            rootProjectName + projectPath
+        }
     } else {
         projectPath.takeIf { ':' in it } ?: "$projectPath:" // includes rootProject.name already, for top level projects has no ':'
     }

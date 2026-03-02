@@ -238,10 +238,6 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     }
 
     if (exceptions.isEmpty()) {
-      if (commitOptions.commitToAmend is CommitToAmend.Specific) {
-        val repository = repositories.single()
-        GitAmendSpecificCommitSquasher.squashLastCommitIntoTarget(repository, commitOptions.commitToAmend.targetHash, commitMessage)
-      }
       if (commitContext.isPushAfterCommit) {
         GitPushAfterCommitDialog.showOrPush(myProject, repositories)
       }

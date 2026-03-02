@@ -358,7 +358,16 @@ public class JBZipEntry {
         return bis;
       case ZipEntry.DEFLATED:
         bis.addDummy();
-        int bufferSize = this.size <= 0 ? 8192 : (int)Math.min(this.size, 8192);
+        int bufferSize;
+        if (myFile.isRemoteIo) {
+          // Remote channel (e.g. IJent/EEL): each BoundedInputStream.read() is a network round-trip.
+          // Size the buffer to the compressed entry size so all data is fetched in fewer calls.
+          // Capped at 128 KB to limit memory; matches IJent RECOMMENDED_MAX_PACKET_SIZE.
+          bufferSize = (int)Math.min(Math.max(size, 8192L), 131072L);
+        }
+        else {
+          bufferSize = this.size <= 0 ? 8192 : (int)Math.min(this.size, 8192);
+        }
         return new InflaterInputStream(bis, new Inflater(true), bufferSize);
       default:
         throw new ZipException("Found unsupported compression method " + getMethod());

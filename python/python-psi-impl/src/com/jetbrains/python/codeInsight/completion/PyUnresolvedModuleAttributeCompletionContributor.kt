@@ -48,72 +48,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor(), DumbAware {
 
-  private companion object {
-    val UNRESOLVED_FIRST_COMPONENT = object : PatternCondition<PyReferenceExpression>("unresolved first component") {
-      override fun accepts(expression: PyReferenceExpression, context: ProcessingContext): Boolean {
-        val qualifier = context.get(REFERENCE_QUALIFIER)
-        val qualifiersFirstComponent = qualifier.firstComponent ?: return false
-        val scopeOwner = ScopeUtil.getScopeOwner(expression) ?: return false
-        return PyResolveUtil.resolveLocally(scopeOwner, qualifiersFirstComponent).isEmpty()
-      }
-    }
-
-    val QUALIFIED_REFERENCE_EXPRESSION = psiElement(PyTokenTypes.IDENTIFIER).withParent(
-      psiElement(PyReferenceExpression::class.java)
-        .andNot(psiElement().inside(PyImportStatementBase::class.java))
-        .with(object : PatternCondition<PyReferenceExpression>("plain qualified name") {
-          override fun accepts(expression: PyReferenceExpression, context: ProcessingContext): Boolean {
-            if (!expression.isQualified) return false
-            val qualifiedName = expression.asQualifiedName() ?: return false
-            context.put(REFERENCE_QUALIFIER, qualifiedName.removeLastComponent())
-            return true
-          }
-        })
-        .with(UNRESOLVED_FIRST_COMPONENT)
-    )
-
-    val REFERENCE_QUALIFIER: Key<QualifiedName> = Key.create("QUALIFIER")
-
-    private val functionInsertHandler: InsertHandler<LookupElement> = object : PyFunctionInsertHandler() {
-      override fun handleInsert(context: InsertionContext, item: LookupElement) {
-        val tailOffset = context.tailOffset - 1
-        super.handleInsert(context, item)  // adds parentheses, modifies tail offset
-        context.commitDocument()
-        addImportForLookupElement(context, item, tailOffset)
-      }
-    }
-
-    private val importingInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
-      addImportForLookupElement(context, item, context.tailOffset - 1)
-    }
-
-    private fun addImportForLookupElement(context: InsertionContext, item: LookupElement, tailOffset: Int) {
-      val manager = PsiDocumentManager.getInstance(context.project)
-      val document = manager.getDocument(context.file)
-      if (document != null) {
-        manager.commitDocument(document)
-      }
-      val ref = context.file.findReferenceAt(tailOffset)
-
-      WriteCommandAction.writeCommandAction(context.project, context.file).run<RuntimeException> {
-        val psiElement = item.psiElement
-        if (psiElement is PsiNamedElement && psiElement.containingFile != null) {
-          val name = QualifiedName.fromDottedString(item.lookupString).removeLastComponent().toString()
-          val packageNameForAlias = PY_COMMON_IMPORT_ALIASES[name]
-          val nameToImport = packageNameForAlias ?: name
-          AddImportHelper.addImportStatement(context.file, nameToImport, if (packageNameForAlias != null) name else null,
-                                             AddImportHelper.getImportPriority(context.file, psiElement.containingFile),
-                                             ref?.element as? PyElement)
-        }
-      }
-    }
-
-    private fun getInsertHandler(elementToInsert: PyElement, position: PsiElement): InsertHandler<LookupElement> {
-      return if (elementToInsert is PyFunction && position.parent?.parent !is PyDecorator) functionInsertHandler
-      else importingInsertHandler
-    }
-  }
-
   init {
     extend(CompletionType.BASIC, QUALIFIED_REFERENCE_EXPRESSION, object : CompletionProvider<CompletionParameters>() {
       override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -202,4 +136,68 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
     }
     super.fillCompletionVariants(parameters, result)
   }
+}
+
+private val UNRESOLVED_FIRST_COMPONENT = object : PatternCondition<PyReferenceExpression>("unresolved first component") {
+  override fun accepts(expression: PyReferenceExpression, context: ProcessingContext): Boolean {
+    val qualifier = context.get(REFERENCE_QUALIFIER)
+    val qualifiersFirstComponent = qualifier.firstComponent ?: return false
+    val scopeOwner = ScopeUtil.getScopeOwner(expression) ?: return false
+    return PyResolveUtil.resolveLocally(scopeOwner, qualifiersFirstComponent).isEmpty()
+  }
+}
+
+private val QUALIFIED_REFERENCE_EXPRESSION = psiElement(PyTokenTypes.IDENTIFIER).withParent(
+  psiElement(PyReferenceExpression::class.java)
+    .andNot(psiElement().inside(PyImportStatementBase::class.java))
+    .with(object : PatternCondition<PyReferenceExpression>("plain qualified name") {
+      override fun accepts(expression: PyReferenceExpression, context: ProcessingContext): Boolean {
+        if (!expression.isQualified) return false
+        val qualifiedName = expression.asQualifiedName() ?: return false
+        context.put(REFERENCE_QUALIFIER, qualifiedName.removeLastComponent())
+        return true
+      }
+    })
+    .with(UNRESOLVED_FIRST_COMPONENT)
+)
+
+private val REFERENCE_QUALIFIER: Key<QualifiedName> = Key.create("QUALIFIER")
+
+private val functionInsertHandler: InsertHandler<LookupElement> = object : PyFunctionInsertHandler() {
+  override fun handleInsert(context: InsertionContext, item: LookupElement) {
+    val tailOffset = context.tailOffset - 1
+    super.handleInsert(context, item)  // adds parentheses, modifies tail offset
+    context.commitDocument()
+    addImportForLookupElement(context, item, tailOffset)
+  }
+}
+
+private val importingInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
+  addImportForLookupElement(context, item, context.tailOffset - 1)
+}
+
+private fun addImportForLookupElement(context: InsertionContext, item: LookupElement, tailOffset: Int) {
+  val manager = PsiDocumentManager.getInstance(context.project)
+  val document = manager.getDocument(context.file)
+  if (document != null) {
+    manager.commitDocument(document)
+  }
+  val ref = context.file.findReferenceAt(tailOffset)
+
+  WriteCommandAction.writeCommandAction(context.project, context.file).run<RuntimeException> {
+    val psiElement = item.psiElement
+    if (psiElement is PsiNamedElement && psiElement.containingFile != null) {
+      val name = QualifiedName.fromDottedString(item.lookupString).removeLastComponent().toString()
+      val packageNameForAlias = PY_COMMON_IMPORT_ALIASES[name]
+      val nameToImport = packageNameForAlias ?: name
+      AddImportHelper.addImportStatement(context.file, nameToImport, if (packageNameForAlias != null) name else null,
+                                         AddImportHelper.getImportPriority(context.file, psiElement.containingFile),
+                                         ref?.element as? PyElement)
+    }
+  }
+}
+
+private fun getInsertHandler(elementToInsert: PyElement, position: PsiElement): InsertHandler<LookupElement> {
+  return if (elementToInsert is PyFunction && position.parent?.parent !is PyDecorator) functionInsertHandler
+  else importingInsertHandler
 }

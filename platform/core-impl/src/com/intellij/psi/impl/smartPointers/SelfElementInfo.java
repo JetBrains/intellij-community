@@ -165,7 +165,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
                                                          @NotNull CodeInsightContext context,
                                                          @NotNull Project project,
                                                          @NotNull Language language) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
       if (child == null || !child.isValid()) return null;

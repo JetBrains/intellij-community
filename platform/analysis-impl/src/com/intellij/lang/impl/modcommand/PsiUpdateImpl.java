@@ -520,9 +520,10 @@ final class PsiUpdateImpl {
           }
           TextRange rangeForTemplate = templateRange(elementRange, rangeInElement);
           TextRange range = mapRange(rangeForTemplate);
-          TextRange rangeForContext = range;
-          Result result = myTemplateValues.computeIfAbsent(varName, v -> expression.calculateResult(new TemplateImpl.DummyContext(
-            rangeForContext, element, getPsiFile())));
+          TemplateImpl.DummyContext context = new TemplateImpl.DummyContext(range, element, getPsiFile());
+          Result result = varName == null
+                          ? expression.calculateResult(context)
+                          : myTemplateValues.computeIfAbsent(varName, v -> expression.calculateResult(context));
           if (result != null) {
             FileTracker tracker = requireNonNull(myTracker); // guarded by getRange call
             String fieldValue = result.toString();

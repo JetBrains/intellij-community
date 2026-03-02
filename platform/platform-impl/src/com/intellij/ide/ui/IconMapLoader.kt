@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -17,6 +14,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
+import tools.jackson.core.ObjectReadContext
+import tools.jackson.core.json.JsonFactory
 import java.util.ArrayDeque
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
@@ -49,7 +50,7 @@ class IconMapLoader {
       IconMapperBean.EP_NAME.filterableLazySequence().map { extension ->
         async {
           loadFromExtension(extension) { data, result ->
-            readDataFromJson(jsonFactory.createParser(data), result)
+            readDataFromJson(jsonFactory.createParser(ObjectReadContext.empty(), data), result)
           }
         }
       }.toList()
@@ -136,7 +137,7 @@ private fun readDataFromJson(parser: JsonParser, result: MutableMap<String, Stri
         addWithCheck(result, parser, path)
         path.setLength(0)
       }
-      JsonToken.FIELD_NAME -> {
+      JsonToken.PROPERTY_NAME -> {
         currentFieldName = parser.currentName()
       }
       null -> return
@@ -148,7 +149,7 @@ private fun readDataFromJson(parser: JsonParser, result: MutableMap<String, Stri
 }
 
 private fun addWithCheck(result: MutableMap<String, String>, parser: JsonParser, path: StringBuilder) {
-  val key = parser.text
+  val key = parser.string
   val p = path.toString()
   val oldValue = result.put(key, p)
   if (oldValue != null && oldValue != p) {

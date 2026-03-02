@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -10,6 +11,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
+import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,6 +138,25 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     FileDocumentManager.WriteAccessStatus writeAccess =
       FileDocumentManager.getInstance().requestWritingStatus(editor.getDocument(), editor.getProject());
     if (!writeAccess.hasWriteAccess()) {
+      HintManager.getInstance().showInformationHint(editor, writeAccess.getReadOnlyMessage(), writeAccess.getHyperlinkListener());
+      return false;
+    }
+    return true;
+  }
+
+  @ApiStatus.Internal
+  public static boolean requestWriting(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+    FileDocumentManager.WriteAccessStatus writeAccess =
+      FileDocumentManager.getInstance().requestWritingStatus(editor.getDocument(), editor.getProject());
+    if (!writeAccess.hasWriteAccess()) {
+      for (NonWriteAccessTypedHandler nonWritable : NonWriteAccessTypedHandler.EP_NAME.getExtensionList()) {
+        if (nonWritable.isApplicable(editor, charTyped, dataContext)) {
+          try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+            nonWritable.handle(editor, charTyped, dataContext);
+          }
+          return false;
+        }
+      }
       HintManager.getInstance().showInformationHint(editor, writeAccess.getReadOnlyMessage(), writeAccess.getHyperlinkListener());
       return false;
     }

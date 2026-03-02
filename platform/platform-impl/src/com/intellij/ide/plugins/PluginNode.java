@@ -67,7 +67,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String myChannel; // TODO parameters map?
   private @NlsSafe String myRepositoryName;
   private String myInstalledVersion;
-  private boolean myEnabled = true;
   private String myRating;
   private boolean myIncomplete;
   private List<String> myTags;
@@ -530,13 +529,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   @Deprecated
   @Override
   public boolean isEnabled() {
-    return myEnabled;
-  }
-
-  @Deprecated
-  @Override
-  public void setEnabled(boolean enabled) {
-    myEnabled = enabled;
+    return true;
   }
 
   public String getDownloadUrl() {

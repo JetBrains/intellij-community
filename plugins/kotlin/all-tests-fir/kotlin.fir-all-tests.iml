@@ -80,16 +80,12 @@
     <orderEntry type="module" module-name="intellij.kotlin.analysis.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectStructure.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.k1.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k1.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k1.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.java.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.move.tests" scope="TEST" />

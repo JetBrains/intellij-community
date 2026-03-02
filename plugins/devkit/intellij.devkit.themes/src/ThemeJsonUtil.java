@@ -9,6 +9,7 @@ import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -139,6 +140,8 @@ public final class ThemeJsonUtil {
   }
 
   private static List<JsonProperty> collectParentNamedColors(@NotNull JsonFile themeFile) {
+    if (DumbService.isDumb(themeFile.getProject())) return List.of(); // may be hit from usages highlighting during indexing
+
     List<JsonProperty> result = new ArrayList<>();
     JsonValue topLevelValue = themeFile.getTopLevelValue();
     if (topLevelValue instanceof JsonObject topLevelObject) {
@@ -179,6 +182,7 @@ public final class ThemeJsonUtil {
   }
 
   private static @Nullable JsonFile findThemeFile(@NotNull Project project, @NotNull String themeNameOrId) {
+    if (DumbService.isDumb(project)) return null; // may be hit from usages highlighting during indexing
     if (StringUtil.isEmptyOrSpaces(themeNameOrId)) return null;
 
     JsonFile fileById = findThemeFileByProviderId(project, themeNameOrId);
@@ -297,9 +301,3 @@ public final class ThemeJsonUtil {
            || key.contains(".Fraction");
   }
 }
-
-record ColorValueDefinition(
-  @NotNull String colorName,
-  @NotNull String colorValue,
-  @NotNull PsiAnchor declaration
-) {}

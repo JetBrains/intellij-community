@@ -316,6 +316,57 @@ class ContentModuleDependencyGeneratorTest {
     }
 
     @Test
+    fun `test plugin only module bypasses library filter for written and test deps`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("intellij.libraries.assertj.core") {
+            descriptor = """<idea-plugin package="assertj"/>"""
+          }
+
+          contentModule("intellij.test.only.consumer") {
+            descriptor = """<idea-plugin package="test.only.consumer"/>"""
+            jpsDependency("intellij.libraries.assertj.core", JpsJavaDependencyScope.TEST)
+          }
+
+          plugin("intellij.test.plugin") {
+            isTestPlugin = true
+            content("intellij.test.only.consumer")
+            content("intellij.libraries.assertj.core")
+          }
+        }
+
+        val graph = pluginGraph {
+          moduleWithScopedDeps("intellij.libraries.assertj.core")
+          moduleWithScopedDeps("intellij.test.only.consumer", "intellij.libraries.assertj.core" to "TEST")
+          testPlugin("intellij.test.plugin") {
+            testContent("intellij.test.only.consumer")
+            testContent("intellij.libraries.assertj.core")
+          }
+        }
+
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val generation = planContentModuleDependenciesWithBothSets(
+          contentModuleName = ContentModuleName("intellij.test.only.consumer"),
+          descriptorCache = descriptorCache,
+          pluginGraph = graph,
+          isTestDescriptor = false,
+          suppressionConfig = SuppressionConfig(),
+          updateSuppressions = false,
+          libraryModuleFilter = { libraryModuleName -> !libraryModuleName.contains(".assertj.") },
+        )
+        val plan = generation.plan
+        assertThat(plan).isNotNull()
+
+        assertThat(plan!!.moduleDependencies)
+          .describedAs("Test-only module should keep filtered library in written deps")
+          .contains(ContentModuleName("intellij.libraries.assertj.core"))
+        assertThat(plan.testDependencies)
+          .describedAs("Test-only module should keep filtered library in test deps")
+          .contains(ContentModuleName("intellij.libraries.assertj.core"))
+      }
+    }
+
+    @Test
     fun `module shared with production source does not include TEST scope dependency in written deps`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
         val setup = pluginTestSetup(tempDir) {
@@ -354,13 +405,72 @@ class ContentModuleDependencyGeneratorTest {
         }
       }
     }
+
+    @Test
+    fun `module shared with production source still applies library filter`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("intellij.libraries.assertj.core") {
+            descriptor = """<idea-plugin package="assertj"/>"""
+          }
+
+          contentModule("intellij.shared.consumer") {
+            descriptor = """<idea-plugin package="shared.consumer"/>"""
+            jpsDependency("intellij.libraries.assertj.core", JpsJavaDependencyScope.TEST)
+          }
+
+          plugin("intellij.production.plugin") {
+            content("intellij.shared.consumer")
+          }
+
+          plugin("intellij.test.plugin") {
+            isTestPlugin = true
+            content("intellij.shared.consumer")
+            content("intellij.libraries.assertj.core")
+          }
+        }
+
+        val graph = pluginGraph {
+          moduleWithScopedDeps("intellij.libraries.assertj.core")
+          moduleWithScopedDeps("intellij.shared.consumer", "intellij.libraries.assertj.core" to "TEST")
+          plugin("intellij.production.plugin") {
+            content("intellij.shared.consumer")
+          }
+          testPlugin("intellij.test.plugin") {
+            testContent("intellij.shared.consumer")
+            testContent("intellij.libraries.assertj.core")
+          }
+        }
+
+        val descriptorCache = ModuleDescriptorCache(setup.jps.outputProvider, this)
+        val generation = planContentModuleDependenciesWithBothSets(
+          contentModuleName = ContentModuleName("intellij.shared.consumer"),
+          descriptorCache = descriptorCache,
+          pluginGraph = graph,
+          isTestDescriptor = false,
+          suppressionConfig = SuppressionConfig(),
+          updateSuppressions = false,
+          libraryModuleFilter = { libraryModuleName -> !libraryModuleName.contains(".assertj.") },
+        )
+        val plan = generation.plan
+        assertThat(plan).isNotNull()
+
+        assertThat(plan!!.moduleDependencies)
+          .describedAs("Shared module should keep production library filtering in written deps")
+          .doesNotContain(ContentModuleName("intellij.libraries.assertj.core"))
+        assertThat(plan.testDependencies)
+          .describedAs("Shared module should keep production library filtering in test deps")
+          .doesNotContain(ContentModuleName("intellij.libraries.assertj.core"))
+      }
+    }
   }
 
   /**
    * Tests for globally embedded module filtering.
    *
-   * Globally embedded modules (in EMBEDDED module sets with no plugin source) are skipped
-   * when generating dependencies for content modules that are in plugins.
+   * Globally embedded modules (in EMBEDDED sources across all relevant products,
+   * including bundled plugin content) are skipped when generating dependencies for content modules
+   * that are in plugins.
    * Content modules directly in products DO include embedded module dependencies.
    */
   @Nested
@@ -446,7 +556,7 @@ class ContentModuleDependencyGeneratorTest {
     }
 
     @Test
-    fun `globally embedded module with plugin source is still skipped`(@TempDir tempDir: Path) {
+    fun `module with plugin source is still treated as globally embedded`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
         val setup = pluginTestSetup(tempDir) {
           contentModule("intellij.platform.core") {
@@ -459,7 +569,7 @@ class ContentModuleDependencyGeneratorTest {
           }
 
           plugin("intellij.core.plugin") {
-            content("intellij.platform.core")
+            content("intellij.platform.core", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
           }
 
           plugin("intellij.my.plugin") {
@@ -481,7 +591,7 @@ class ContentModuleDependencyGeneratorTest {
           .single { it.contentModuleName == ContentModuleName("intellij.my.feature") }
 
         assertThat(contentResult.writtenDependencies)
-          .describedAs("Embedded module remains globally embedded even with plugin source")
+          .describedAs("Target remains globally embedded when reachable from product/module sets")
           .doesNotContain(ContentModuleName("intellij.platform.core"))
       }
     }
@@ -522,6 +632,164 @@ class ContentModuleDependencyGeneratorTest {
         assertThat(contentResult.writtenDependencies)
           .describedAs("Module set content should keep embedded deps")
           .contains(ContentModuleName("intellij.platform.core"))
+      }
+    }
+
+    @Test
+    fun `content module in plugin keeps dependency embedded only in subset of products`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("intellij.platform.frontend.split") {
+            descriptor = """<idea-plugin package="com.intellij.frontend.split"/>"""
+          }
+
+          contentModule("intellij.my.feature") {
+            descriptor = """<idea-plugin package="com.intellij.feature"/>"""
+            jpsDependency("intellij.platform.frontend.split")
+          }
+
+          plugin("intellij.my.plugin") {
+            content("intellij.my.feature")
+          }
+
+          product("Idea") {
+            bundlesPlugin("intellij.my.plugin")
+          }
+
+          product("JetBrainsClient") {
+            bundlesPlugin("intellij.my.plugin")
+            moduleSet("client.set") {
+              module("intellij.platform.frontend.split", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+            }
+          }
+        }
+
+        val result = setup.generateDependencies(listOf("intellij.my.plugin"))
+        val contentResult = result.files
+          .flatMap { it.contentModuleResults }
+          .single { it.contentModuleName == ContentModuleName("intellij.my.feature") }
+
+        assertThat(contentResult.writtenDependencies)
+          .describedAs("Dependency must be kept when target is not globally embedded")
+          .contains(ContentModuleName("intellij.platform.frontend.split"))
+      }
+    }
+
+    @Test
+    fun `content module in plugin skips dependency embedded in all bundled products`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("intellij.platform.frontend.split") {
+            descriptor = """<idea-plugin package="com.intellij.frontend.split"/>"""
+          }
+
+          contentModule("intellij.my.feature") {
+            descriptor = """<idea-plugin package="com.intellij.feature"/>"""
+            jpsDependency("intellij.platform.frontend.split")
+          }
+
+          plugin("intellij.my.plugin") {
+            content("intellij.my.feature")
+          }
+
+          product("Idea") {
+            // Plugin is not bundled in Idea.
+          }
+
+          product("JetBrainsClient") {
+            bundlesPlugin("intellij.my.plugin")
+            moduleSet("client.set") {
+              module("intellij.platform.frontend.split", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+            }
+          }
+        }
+
+        val result = setup.generateDependencies(listOf("intellij.my.plugin"))
+        val contentResult = result.files
+          .flatMap { it.contentModuleResults }
+          .single { it.contentModuleName == ContentModuleName("intellij.my.feature") }
+
+        assertThat(contentResult.writtenDependencies)
+          .describedAs("Dependency should be skipped when embedded in all products where owner plugin is bundled")
+          .doesNotContain(ContentModuleName("intellij.platform.frontend.split"))
+      }
+    }
+
+    @Test
+    fun `content module in plugin skips dependency when only CodeServer misses bundled owner`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("intellij.platform.ide.impl") {
+            descriptor = """<idea-plugin package="com.intellij.ide.impl"/>"""
+          }
+
+          contentModule("intellij.my.feature") {
+            descriptor = """<idea-plugin package="com.intellij.feature"/>"""
+            jpsDependency("intellij.platform.ide.impl")
+          }
+
+          plugin("intellij.platform.owner") {
+            content("intellij.platform.ide.impl", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+          }
+
+          plugin("intellij.my.plugin") {
+            content("intellij.my.feature")
+          }
+
+          product("CodeServer") {
+            bundlesPlugin("intellij.my.plugin")
+          }
+
+          product("Idea") {
+            bundlesPlugin("intellij.my.plugin")
+            bundlesPlugin("intellij.platform.owner")
+          }
+        }
+
+        val result = setup.generateDependencies(listOf("intellij.my.plugin", "intellij.platform.owner"))
+        val contentResult = result.files
+          .flatMap { it.contentModuleResults }
+          .single { it.contentModuleName == ContentModuleName("intellij.my.feature") }
+
+        assertThat(contentResult.writtenDependencies)
+          .describedAs("CodeServer must be excluded from embedded-check scope")
+          .doesNotContain(ContentModuleName("intellij.platform.ide.impl"))
+      }
+    }
+
+    @Test
+    fun `content module in non-bundled plugin skips globally embedded dependency`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val setup = pluginTestSetup(tempDir) {
+          contentModule("intellij.platform.core") {
+            descriptor = """<idea-plugin package="com.intellij.core"/>"""
+          }
+
+          contentModule("intellij.my.feature") {
+            descriptor = """<idea-plugin package="com.intellij.feature"/>"""
+            jpsDependency("intellij.platform.core")
+          }
+
+          plugin("intellij.my.plugin") {
+            content("intellij.my.feature")
+          }
+
+          // Plugin intentionally remains non-bundled.
+          product("TestProduct") {
+            moduleSet("essential") {
+              module("intellij.platform.core", com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue.EMBEDDED)
+            }
+          }
+        }
+
+        val result = setup.generateDependencies(listOf("intellij.my.plugin"))
+        val contentResult = result.files
+          .flatMap { it.contentModuleResults }
+          .single { it.contentModuleName == ContentModuleName("intellij.my.feature") }
+
+        assertThat(contentResult.writtenDependencies)
+          .describedAs("Non-bundled plugin content should skip globally embedded dependency")
+          .doesNotContain(ContentModuleName("intellij.platform.core"))
       }
     }
 
@@ -611,6 +879,35 @@ class ContentModuleDependencyGeneratorTest {
             .describedAs("Module with REQUIRED loading is NOT globally embedded, should be included")
             .contains("<module name=\"intellij.platform.optional\"/>")
         }
+      }
+    }
+  }
+
+  @Nested
+  inner class SelfDependencyTest {
+    @Test
+    fun `content module written deps exclude self dependency`(@TempDir tempDir: Path) {
+      runBlocking(Dispatchers.Default) {
+        val moduleName = "intellij.self.module"
+        val pluginName = "intellij.self.plugin"
+        val setup = pluginTestSetup(tempDir) {
+          contentModule(moduleName) {
+            descriptor = """<idea-plugin package="self.module"/>"""
+            jpsDependency(moduleName, JpsJavaDependencyScope.COMPILE)
+          }
+          plugin(pluginName) {
+            content(moduleName)
+          }
+        }
+
+        val result = setup.generateDependencies(listOf(pluginName))
+        val contentResult = result.files
+          .flatMap { it.contentModuleResults }
+          .single { it.contentModuleName == ContentModuleName(moduleName) }
+
+        assertThat(contentResult.writtenDependencies)
+          .describedAs("Self dependencies should not be written for content modules")
+          .doesNotContain(ContentModuleName(moduleName))
       }
     }
   }

@@ -13,12 +13,13 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 final class IgnoredFileCache {
   private final ConcurrentBitSet myNonIgnoredIds = ConcurrentBitSet.create();
   private final Predicate<? super CharSequence> myIsIgnored;
-  private int myVfsEventNesting;
+  private AtomicInteger myVfsEventNesting = new AtomicInteger();
 
   IgnoredFileCache(@NotNull Predicate<? super CharSequence> isIgnored) {
     myIsIgnored = isIgnored;
@@ -27,14 +28,14 @@ final class IgnoredFileCache {
       @Override
       public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         // during VFS event processing the system may be in inconsistent state, don't cache it
-        myVfsEventNesting++;
+        myVfsEventNesting.incrementAndGet();
         clearCacheForChangedFiles(events);
       }
 
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         clearCacheForChangedFiles(events);
-        myVfsEventNesting--;
+        myVfsEventNesting.decrementAndGet();
       }
 
       private void clearCacheForChangedFiles(@NotNull List<? extends VFileEvent> events) {
@@ -56,7 +57,7 @@ final class IgnoredFileCache {
   }
 
   boolean isFileIgnored(@NotNull VirtualFile file) {
-    boolean idable = myVfsEventNesting == 0 && file instanceof NewVirtualFile;
+    boolean idable = myVfsEventNesting.get() == 0 && file instanceof NewVirtualFile;
     if (!idable) {
       return calcIgnored(file);
     }

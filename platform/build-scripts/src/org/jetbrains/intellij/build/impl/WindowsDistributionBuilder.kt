@@ -28,6 +28,7 @@ import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
+import org.jetbrains.intellij.build.impl.languageServer.generateLspServerLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
@@ -57,6 +58,7 @@ import java.nio.file.StandardCopyOption
 import java.time.LocalDate
 import java.util.Arrays
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.fileSize
@@ -79,42 +81,49 @@ internal class WindowsDistributionBuilder(
     get() = WindowsLibcImpl.DEFAULT
 
   override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
-    val distBinDir = targetPath.resolve("bin")
     withContext(Dispatchers.IO) {
-      val sourceBinDir = context.paths.communityHomeDir.resolve("bin/win")
+      val distBinDir = targetPath.resolve("bin").createDirectories()
+      writeVmOptions(distBinDir)
 
-      copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
+      context.executeStep(spanBuilder("copy product bin files"), BuildOptions.PRODUCT_BIN_DIR_STEP) {
+        val sourceBinDir = context.paths.communityHomeDir.resolve("bin/win")
 
-      copyDir(sourceBinDir, distBinDir, dirFilter = { it == sourceBinDir })
+        copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
+        copyDir(sourceBinDir, distBinDir, dirFilter = { it == sourceBinDir })
 
-      copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
+        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
+
+        createFrontendContextForLaunchers(context)?.let { clientContext ->
+          writeWindowsVmOptions(distBinDir, clientContext)
+          buildWinLauncher(winDistPath = targetPath, arch = arch, copyLicense = false, customizer = customizer, context = clientContext)
+        }
+
+        if (customizer.includeBatchLaunchers) {
+          generateScripts(distBinDir, arch, context)
+        }
+      }
 
       generateBuildTxt(targetDirectory = targetPath, context = context)
       copyDistFiles(newDir = targetPath, os = OsFamily.WINDOWS, arch = arch, libcImpl = WindowsLibcImpl.DEFAULT, context = context)
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))
 
-      val icoFile = locateIcoFileForWindowsLauncher(customizer, context)
-      Files.copy(icoFile, distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
-
-      if (customizer.includeBatchLaunchers) {
-        generateScripts(distBinDir, arch, context)
+      if (context.options.isLanguageServer) {
+        // no icon
       }
-
-      writeVmOptions(distBinDir)
+      else {
+        val icoFile = locateIcoFileForWindowsLauncher(customizer, context)
+        Files.copy(icoFile, distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
+      }
 
       buildWinLauncher(winDistPath = targetPath, arch = arch, copyLicense = true, customizer = customizer, context = context)
-
-      createFrontendContextForLaunchers(context)?.let { clientContext ->
-        writeWindowsVmOptions(distBinDir, clientContext)
-        buildWinLauncher(winDistPath = targetPath, arch = arch, copyLicense = false, customizer = customizer, context = clientContext)
-      }
 
       customizer.copyAdditionalFiles(targetPath, arch, context)
     }
 
     context.executeStep(spanBuilder("sign windows"), BuildOptions.WIN_SIGN_STEP) {
       val binFiles = withContext(Dispatchers.IO) {
+        val distBinDir = targetPath.resolve("bin")
         Files.walk(distBinDir, Int.MAX_VALUE).use { stream ->
           stream.filter { it.extension in setOf("exe", "dll", "ps1") && Files.isRegularFile(it) }.toList()
         }
@@ -339,9 +348,17 @@ private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture, c
     val appInfo = context.applicationInfo
     val executableBaseName = "${context.productProperties.baseFileName}64"
     val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
-      val icoFile = locateIcoFileForWindowsLauncher(customizer, context)
+    val icoFile =
+      if (context.options.isLanguageServer) null
+      else locateIcoFileForWindowsLauncher(customizer, context)
 
-    val productVersion = context.buildNumber.replace(".SNAPSHOT", ".0") + ".0".repeat(3 - context.buildNumber.count { it == '.' })
+    val productVersion = context.buildNumber
+      .replace(".SNAPSHOT", ".0")
+      .replace("-SNAPSHOT", ".0")
+      .let { version ->
+        version + ".0".repeat(3 - version.count { it == '.' })
+      }
+
     val launcherProperties = listOf(
       "CompanyName" to appInfo.companyName,
       "LegalCopyright" to "Copyright 2000-${LocalDate.now().year} ${appInfo.companyName}",
@@ -365,7 +382,7 @@ private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture, c
         execPath.absolutePathString(),
         "${communityHome}/native/XPlatLauncher/resources/windows/resource.h",
         launcherPropertiesPath.absolutePathString(),
-        icoFile.absolutePathString(),
+        icoFile?.absolutePathString() ?: "no-icon",
         outputPath.absolutePathString(),
       ),
       jvmArgs = listOf("-Djava.awt.headless=true"),
@@ -492,11 +509,6 @@ private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path
 }
 
 private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean, context: BuildContext): Path {
-  val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context) {
-    "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
-  }
-  val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.WINDOWS)
-  val stdioMcpRunnerLaunchData = generateStdioMcpRunnerLaunchData(context)
   val json = generateProductInfoJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
@@ -510,7 +522,18 @@ private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture,
         bootClassPathJarNames = context.bootClassPathJarNames,
         additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
         mainClass = context.ideMainClassName,
-        customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData, stdioMcpRunnerLaunchData),
+        customCommands = when {
+          context.options.isLanguageServer -> listOf(
+            generateLspServerLaunchData(context)
+          )
+          else -> listOfNotNull(
+            generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context) {
+              "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
+            },
+            generateQodanaLaunchData(context, arch, OsFamily.WINDOWS),
+            generateStdioMcpRunnerLaunchData(context)
+          )
+        },
       )
     ),
     context

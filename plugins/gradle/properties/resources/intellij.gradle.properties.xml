@@ -1,9 +1,9 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.gradle" />
-    <module name="intellij.gradle.completion"/>
-    <plugin id="com.intellij.properties"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.gradle"/>
     <module name="intellij.properties.backend.psi"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij.properties">
     <implicitPropertyUsageProvider

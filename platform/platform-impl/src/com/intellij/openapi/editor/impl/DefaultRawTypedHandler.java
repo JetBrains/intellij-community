@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.editorActions.NonWriteAccessTypedHandler;
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
@@ -20,94 +19,77 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class DefaultRawTypedHandler implements TypedActionHandlerEx {
-  private final TypedAction myAction;
-  private CommandToken myCurrentCommandToken;
-  private boolean myInOuterCommand;
+  private final TypedAction typedAction;
+  private @Nullable CommandToken currentCommand;
+  private boolean isInOuterCommand;
 
   DefaultRawTypedHandler(TypedAction action) {
-    myAction = action;
+    typedAction = action;
   }
 
   @Override
   public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
-    if (editor.isViewer() || !editor.getDocument().isWritable()) return;
-
-    TypedActionHandler handler = myAction.getHandler();
-
-    if (handler instanceof TypedActionHandlerEx) {
-      ((TypedActionHandlerEx)handler).beforeExecute(editor, c, context, plan);
+    if (editor.isViewer() || !editor.getDocument().isWritable()) {
+      return;
+    }
+    TypedActionHandler handler = typedAction.getHandler();
+    if (handler instanceof TypedActionHandlerEx handlerEx) {
+      handlerEx.beforeExecute(editor, c, context, plan);
     }
   }
 
   @Override
   public void execute(final @NotNull Editor editor, final char charTyped, final @NotNull DataContext dataContext) {
-    CommandProcessorEx commandProcessorEx = (CommandProcessorEx)CommandProcessor.getInstance();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (myCurrentCommandToken != null) {
+    if (currentCommand != null) {
       throw new IllegalStateException("Unexpected reentrancy of DefaultRawTypedHandler");
     }
-    myCurrentCommandToken = commandProcessorEx.startCommand(project, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT);
-    myInOuterCommand = myCurrentCommandToken == null;
+    CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessor.getInstance();
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Document document = editor.getDocument();
+    currentCommand = commandProcessor.startCommand(project, "", /*groupId=*/ document, UndoConfirmationPolicy.DEFAULT);
+    isInOuterCommand = currentCommand == null;
     try {
-      FileDocumentManager.WriteAccessStatus writeAccess =
-        FileDocumentManager.getInstance().requestWritingStatus(editor.getDocument(), editor.getProject());
-      if (!writeAccess.hasWriteAccess()) {
-        for (NonWriteAccessTypedHandler handler : NonWriteAccessTypedHandler.EP_NAME.getExtensionList()) {
-          if (handler.isApplicable(editor, charTyped, dataContext)) {
-            try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-              handler.handle(editor, charTyped, dataContext);
-            }
-            return;
+      boolean isWritable = EditorModificationUtil.requestWriting(editor, charTyped, dataContext);
+      if (isWritable) {
+        EditorThreading.write(() -> {
+          document.startGuardedBlockChecking();
+          try {
+            typedAction.getHandler().execute(editor, charTyped, dataContext);
+          } catch (ReadOnlyFragmentModificationException e) {
+            var readOnlyHandler = EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document);
+            readOnlyHandler.handle(e);
+          } finally {
+            document.stopGuardedBlockChecking();
           }
-        }
-
-        HintManager.getInstance().showInformationHint(editor, writeAccess.getReadOnlyMessage(), writeAccess.getHyperlinkListener());
-        return;
+        });
       }
-      EditorThreading.write(() -> {
-        Document doc = editor.getDocument();
-        doc.startGuardedBlockChecking();
-        try {
-          myAction.getHandler().execute(editor, charTyped, dataContext);
-        }
-        catch (ReadOnlyFragmentModificationException e) {
-          EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-        }
-        finally {
-          doc.stopGuardedBlockChecking();
-        }
-      });
-    }
-    finally {
-      if (!myInOuterCommand) {
-        commandProcessorEx.finishCommand(myCurrentCommandToken, null);
-        myCurrentCommandToken = null;
+    } finally {
+      if (!isInOuterCommand) {
+        commandProcessor.finishCommand(currentCommand, null);
+        currentCommand = null;
       }
-      myInOuterCommand = false;
+      isInOuterCommand = false;
     }
   }
 
   public void beginUndoablePostProcessing() {
-    if (myInOuterCommand) {
+    if (isInOuterCommand) {
       return;
     }
-    if (myCurrentCommandToken == null) {
+    if (currentCommand == null) {
       throw new IllegalStateException("Not in a typed action at this time");
     }
-    CommandProcessorEx commandProcessorEx = (CommandProcessorEx)CommandProcessor.getInstance();
-    Project project = myCurrentCommandToken.getProject();
-    if (!isCommandRestartSupported(project)) {
-      return;
+    Project project = currentCommand.getProject();
+    if (isCommandRestartSupported(project)) {
+      CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessor.getInstance();
+      commandProcessor.finishCommand(currentCommand, null);
+      currentCommand = commandProcessor.startCommand(project, "", null, UndoConfirmationPolicy.DEFAULT);
     }
-    commandProcessorEx.finishCommand(myCurrentCommandToken, null);
-    myCurrentCommandToken = commandProcessorEx.startCommand(project, "", null, UndoConfirmationPolicy.DEFAULT);
   }
 
   private static boolean isCommandRestartSupported(@Nullable Project project) {

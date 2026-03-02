@@ -55,6 +55,10 @@ class SimpleBanner extends JPanel {
       return;
     }
 
+    // Ensure template's internal layout is up-to-date after FlowLayout resizing,
+    // so that getBaseline() returns a value consistent with the current size.
+    template.doLayout();
+
     int baseline = template.getBaseline(template.getWidth(), template.getHeight());
     if (baseline == -1) {
       return;

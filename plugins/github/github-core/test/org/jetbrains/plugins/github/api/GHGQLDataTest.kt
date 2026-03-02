@@ -555,6 +555,7 @@ private object TestCases {
       GHGQLRequests.Repo.getProtectionRules(DUMMY_REPO_COORDINATES, null),
       GHGQLRequests.Repo.getCommitStatus(DUMMY_REPO_COORDINATES, DUMMY_TEXT),
       GHGQLRequests.Repo.getCommitStatusContext(DUMMY_REPO_COORDINATES, DUMMY_TEXT, DUMMY_PAGINATION),
+      GHGQLRequests.Repo.findMentionableUsers(DUMMY_REPO_COORDINATES, DUMMY_SERVER_PATH, DUMMY_PAGINATION),
 
       GHGQLRequests.Comment.updateComment(DUMMY_SERVER_PATH, DUMMY_ID, DUMMY_TEXT),
       GHGQLRequests.Comment.deleteComment(DUMMY_SERVER_PATH, DUMMY_ID),
@@ -579,6 +580,7 @@ private object TestCases {
       GHGQLRequests.PullRequest.files(DUMMY_REPO_COORDINATES, DUMMY_NUMBER, DUMMY_PAGINATION),
       GHGQLRequests.PullRequest.markFileAsViewed(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT),
       GHGQLRequests.PullRequest.unmarkFileAsViewed(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT),
+      GHGQLRequests.PullRequest.findParticipants(DUMMY_REPO_COORDINATES, DUMMY_NUMBER, DUMMY_PAGINATION),
 
       GHGQLRequests.Ref.delete(DUMMY_SERVER_PATH, DUMMY_TEXT),
 

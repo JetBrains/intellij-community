@@ -261,6 +261,16 @@ public final class NioFiles {
     }
   }
 
+  @ApiStatus.Experimental
+  public static @NotNull FileAttributes.CaseSensitivity readCaseSensitivity(@NotNull Path path, LinkOption... options) throws IOException {
+    BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, options);
+    if (attributes instanceof CaseSensitivityAttribute) {
+      return ((CaseSensitivityAttribute)attributes).getCaseSensitivity();
+    } else {
+      return FileSystemUtil.readDirectoryCaseSensitivity(path);
+    }
+  }
+
   private static boolean isNtfsReparsePoint(Path path) {
     int attrs = Kernel32.INSTANCE.GetFileAttributes(path.toString());
     return attrs != WinBase.INVALID_FILE_ATTRIBUTES && BitUtil.isSet(attrs, WinNT.FILE_ATTRIBUTE_REPARSE_POINT);

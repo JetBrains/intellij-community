@@ -34,7 +34,6 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-platform-interface",
@@ -66,7 +65,8 @@ jvm_library(
     "//java/java-impl:impl",
     "@lib//:kotlinc-analysis-api-impl-base",
     "//libraries/fastutil",
-  ]
+  ],
+  runtime_deps = ["@lib//:kotlinc-kotlin-compiler-fe10"]
 )
 
 jvm_library(
@@ -85,7 +85,6 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-api:editor-ui_test_lib",
     "//platform/platform-impl:ide-impl",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-platform-interface",

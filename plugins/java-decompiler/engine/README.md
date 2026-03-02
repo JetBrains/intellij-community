@@ -89,6 +89,7 @@ The rest of options can be left as they are: they are aimed at professional reve
 - `cci` (1): check if resource in try-with-resources actually implements `AutoCloseable` interface
 - `jvn` (0): overwrite any local variable names with JAD style names
 - `jpr` (0): include parameter names in JAD naming
+- `pbo` (0): add clarifying parentheses when bitwise/shift operators are mixed with arithmetic
 
 #### Renaming identifiers
 

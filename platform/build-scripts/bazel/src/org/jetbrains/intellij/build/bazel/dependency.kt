@@ -464,24 +464,6 @@ private fun isTestFriend(
   return false
 }
 
-private val KNOWN_CYCLIC_TEST_TO_TEST_DEPENDENCIES = mapOf(  // TODO: remove these dependencies
-  "intellij.cidr.compiler.custom.tests" to "intellij.clion.dev.build.plugin.tests",
-  "intellij.cidr.core.tests" to "intellij.clion.dev.build.plugin.tests",
-  "intellij.cidr.execution.tests" to "intellij.clion.dev.build.plugin.tests",
-  "intellij.cidr.psi.base.tests" to "intellij.clion.dev.build.plugin.tests",
-  "intellij.cidr.translateCode.tests" to "intellij.clion.dev.build.plugin.tests",
-  "intellij.cidr.util.execution.tests" to "intellij.clion.dev.build.plugin.tests",
-  "intellij.cidr.util.tests" to "intellij.clion.dev.build.plugin.tests",
-  "intellij.clion.coverage.tests" to "intellij.clion.dev.build.plugin.tests",
-  "intellij.fullLine.cpp" to "intellij.clion.main",
-  "intellij.platform.testFramework" to "intellij.platform.monolith.main",
-  "intellij.platform.testFramework.junit5" to "intellij.platform.monolith.main",
-  "intellij.serial.monitor.tests" to "intellij.clion.dev.build.plugin.tests",
-  "toolbox.core.mock.testFramework" to "toolbox.core",
-  "toolbox.feature.enterprise.mock.testFramework" to "toolbox.feature.enterprise",
-  "toolbox.product.vscode.enterprise.mock.testFramework" to "toolbox.product.vscode.enterprise",
-)
-
 private fun addDep(
   isTest: Boolean,
   scope: JpsJavaDependencyScope,
@@ -517,10 +499,6 @@ private fun addDep(
         }
 
         if (dependencyModuleDescriptor != null) {
-          if (KNOWN_CYCLIC_TEST_TO_TEST_DEPENDENCIES[dependentModule.module.name] == dependencyModuleDescriptor.module.name) {
-            return  // prevent cycles in dependency graph
-          }
-
           if (hasSources && needsBackwardCompatibleTestDependency(dependencyModuleDescriptor.module.name, dependentModule)) {
             deps.add(getLabelForTest(dependencyLabel))
           }
@@ -538,10 +516,6 @@ private fun addDep(
         }
 
         if (dependencyModuleDescriptor != null) {
-          if (KNOWN_CYCLIC_TEST_TO_TEST_DEPENDENCIES[dependentModule.module.name] == dependencyModuleDescriptor.module.name) {
-            return  // prevent cycles in dependency graph
-          }
-
           runtimeDeps.add(getLabelForTest(dependencyLabel))
         }
       }

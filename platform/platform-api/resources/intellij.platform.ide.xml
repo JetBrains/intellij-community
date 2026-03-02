@@ -2,7 +2,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
-    <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jcef"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
@@ -11,6 +10,8 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.welcomeScreen"/>

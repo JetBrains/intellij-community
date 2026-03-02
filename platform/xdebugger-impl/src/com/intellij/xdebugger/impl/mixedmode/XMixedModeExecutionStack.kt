@@ -17,6 +17,7 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
@@ -49,10 +50,10 @@ class XMixedModeExecutionStack(
   private val myStackDescriptor: CompletableFuture<XDescriptor?> = coroutineScope.future {
     val highStackDescriptor = highLevelExecutionStack?.xExecutionStackDescriptorAsync?.await()
     val lowStackDescriptor = lowLevelExecutionStack.xExecutionStackDescriptorAsync?.await()
-    val descriptor = XMixedModeExecutionStackDescriptor(
-      highStackDescriptor,
-      lowStackDescriptor
-    )
+
+    // getTopFrame method is not adequate for us since in the split debugger the first call of getTopFrame will be cached forever,
+    // but RiderJumpToStatementHandler needs a real position
+    val descriptor = XMixedModeExecutionStackDescriptor(highStackDescriptor, lowStackDescriptor)
     //FrontendDescriptorStateManager.getInstance(session.project).registerDescriptor(descriptor, coroutineScope)
     descriptor
   }
@@ -70,25 +71,28 @@ class XMixedModeExecutionStack(
   }
 
   override fun getTopFrame(): XStackFrame? {
-    return if (!computedFramesMap.isCompleted)
-      lowLevelExecutionStack.topFrame
-    else {
-      val entries = computedFramesMap.getCompleted().entries
-      val topFrame = entries.firstOrNull()
-      return topFrame?.value ?: topFrame?.key ?: lowLevelExecutionStack.topFrame
-    }
+    return if (!computedFramesMap.isCompleted) lowLevelExecutionStack.topFrame else getCalculatedTopFrame()
+  }
+
+  override fun getTopFrameAsync(): CompletableFuture<XStackFrame?> = coroutineScope.future {
+    computedFramesMap.await()
+    getCalculatedTopFrame()
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun getCalculatedTopFrame(): XStackFrame? {
+    assert(computedFramesMap.isCompleted)
+
+    val entries = computedFramesMap.getCompleted().entries
+    val topFrame = entries.firstOrNull()
+    return topFrame?.value ?: topFrame?.key ?: lowLevelExecutionStack.topFrame
   }
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
     if (computedFramesMap.isCompleted) {
+      container as XStackFrameContainerEx
       val combinedFrames = filterIfNeeded(computedFramesMap.getCompleted().map { /*High frame*/it.value ?: /*Low frame*/it.key })
-      if (container is XStackFrameContainerEx)
-        container.addStackFrames(combinedFrames, currentFrame, true)
-      else {
-        // Split debugger case, we have to set the frame manually since the XStackFrameContainerEx unavailable
-        container.addStackFrames(combinedFrames, true)
-        currentFrame?.let { frame -> session.setCurrentStackFrame(this, frame) }
-      }
+      container.addStackFrames(combinedFrames, currentFrame, true)
       return
     }
 
@@ -156,17 +160,11 @@ class XMixedModeExecutionStack(
       }
       else {
         val builtResult = mixFramesResult.getOrThrow()
+        container as XStackFrameContainerEx
 
         val combinedFrames = builtResult.lowLevelToHighLevelFrameMap.map { /*High frame*/it.value ?: /*Low frame*/it.key }
         val filterIfNeededCombinedFrames = filterIfNeeded(combinedFrames)
-        if (container is XStackFrameContainerEx)
-          container.addStackFrames(filterIfNeededCombinedFrames, builtResult.highestHighLevelFrame, true)
-        else {
-          // Split debugger case, we have to set the frame manually since the XStackFrameContainerEx unavailable
-          container.addStackFrames(filterIfNeededCombinedFrames, true)
-          // TODO: it is not correct for mono
-          filterIfNeededCombinedFrames.firstOrNull()?.let { frame -> session.setCurrentStackFrame(this, frame) }
-        }
+        container.addStackFrames(filterIfNeededCombinedFrames, builtResult.highestHighLevelFrame, true)
         computedFramesMap.complete(builtResult.lowLevelToHighLevelFrameMap)
       }
     }

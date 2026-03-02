@@ -2,10 +2,10 @@
 package com.intellij.java.debugger.impl.shared.rpc
 
 import com.intellij.execution.filters.Filter
+import com.intellij.ide.ui.colors.SerializableSimpleTextAttributes
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.debugger.impl.rpc.SerializableSimpleTextAttributes
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
@@ -89,6 +89,6 @@ data class JavaThreadDumpItemDto(
   val isDeadLocked: Boolean,
   val isContainer: Boolean,
   val canBeHidden: Boolean,
-  val id: Long,
-  val parentId: Long?,
+  val treeId: Long?,
+  val parentTreeId: Long?,
 )

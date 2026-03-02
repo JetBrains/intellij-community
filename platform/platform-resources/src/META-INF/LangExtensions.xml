@@ -176,7 +176,7 @@
     <projectService serviceInterface="com.intellij.psi.search.PsiTodoSearchHelper" open="true"
                     serviceImplementation="com.intellij.psi.impl.search.PsiTodoSearchHelperImpl"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.lookup.LookupManager" open="true"
+    <projectService serviceInterface="com.intellij.codeInsight.lookup.LookupManager"
                     serviceImplementation="com.intellij.codeInsight.lookup.impl.LookupManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.lookup.impl.ClientLookupManager"
@@ -299,7 +299,7 @@
 
     <projectService serviceInterface="com.intellij.formatting.service.FormattingNotificationService"
                     serviceImplementation="com.intellij.formatting.service.FormattingNotificationServiceImpl"/>
-    <projectService serviceInterface="com.intellij.formatting.service.PostQuickFixTaskService" open="true"
+    <projectService serviceInterface="com.intellij.formatting.service.PostQuickFixTaskService"
                     serviceImplementation="com.intellij.formatting.service.PostQuickFixTaskServiceImpl"/>
     <applicationService serviceInterface="com.intellij.formatting.service.AsyncDocumentFormattingSupportFactory"
                         serviceImplementation="com.intellij.formatting.service.AsyncDocumentFormattingSupportFactoryImpl"/>
@@ -326,7 +326,7 @@
     <projectService serviceInterface="com.intellij.openapi.module.ProjectLoadingErrorsNotifier"
                     serviceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsNotifierImpl"
                     testServiceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier"/>
-    <projectService serviceInterface="com.intellij.codeInsight.AutoPopupController" open="true"
+    <projectService serviceInterface="com.intellij.codeInsight.AutoPopupController"
                     serviceImplementation="com.intellij.codeInsight.AutoPopupControllerImpl"/>
 
     <projectService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
@@ -387,7 +387,7 @@
 
     <moduleService serviceImplementation="com.intellij.openapi.module.impl.DeprecatedModuleOptionManager"/>
 
-    <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService" open="true"
+    <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
                         serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
     <treeStructureProvider implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider" order="last"/>
     <advancedSetting id="project.view.show.scratches.and.consoles" groupKey="group.advanced.settings.project.view" default="true"/>
@@ -625,6 +625,8 @@
                  description="Show action icons for logical structure nodes"
                  defaultValue="false"
                  restartRequired="false"/>
+
+    <structurePopupProvider implementation="com.intellij.ide.util.OldStructurePopupProviderImpl"/>
 
     <idIndexer filetype="PLAIN_TEXT" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer"/>
     <todoIndexer filetype="PLAIN_TEXT" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>
@@ -1141,6 +1143,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogs"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.FindUsagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.usages.impl.UsageViewStatisticsCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.usages.impl.UsageViewStateCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileTypes.impl.FileTypeConfigurableInteractions"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.DaemonFusCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.IdentifierHighlightingFUSCollector"/>

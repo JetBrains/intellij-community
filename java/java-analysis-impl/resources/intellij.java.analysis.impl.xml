@@ -14,7 +14,6 @@
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.indexing.impl"/>
     <module name="intellij.java.psi.impl"/>
-    <module name="intellij.java.resources.en"/>
     <!-- endregion -->
   </dependencies>
 

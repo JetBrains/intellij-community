@@ -20,6 +20,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -214,6 +215,10 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
           else if (usage instanceof Navigatable navigatable) {
             navigateBlocking(parameters.project, navigatable, NavigationOptions.requestFocus(), dataContext);
           }
+        }
+        var popup = PopupUtil.getPopupContainerFor(this);
+        if (popup instanceof AbstractPopup abstractPopup) {
+          abstractPopup.setForceCancelOnFocusLoss(true); // Disable the Wayland focus workaround and allow it to close.
         }
         UsageNavigation.getInstance(parameters.project).navigate(usageInfosToNavigate, true, dataContext);
       }

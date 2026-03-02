@@ -76,6 +76,7 @@ jvm_library(
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
     "//plugins/kotlin/preferences",
+    "//plugins/kotlin/base/fe10/project-structure",
   ]
 )
 
@@ -178,6 +179,8 @@ jvm_library(
     "//platform/forms_rt:java-guiForms-rt_test_lib",
     "//plugins/kotlin/preferences",
     "//plugins/kotlin/preferences:preferences_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ],
   runtime_deps = [
     "//platform/platform-impl:ide-impl_test_lib",

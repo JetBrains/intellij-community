@@ -14,7 +14,6 @@ import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.RowLayout
@@ -29,8 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.kotlin.daemon.common.trimQuotes
-import org.jetbrains.kotlin.idea.REGISTRY_KEY_FOR_TESTING_KOTLIN_VERSION
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import java.awt.Dimension
 import javax.swing.DefaultComboBoxModel
@@ -73,12 +70,8 @@ internal class KotlinVersionChooser(
             }
             error.set(loadedVersions == null)
 
-            val kotlinVersionForTesting = Registry.get(REGISTRY_KEY_FOR_TESTING_KOTLIN_VERSION).asString()
-            val kotlinVersions = if (kotlinVersionForTesting.trimQuotes().isNotEmpty()) {
-                listOf(kotlinVersionForTesting)
-            } else {
-                loadedVersions ?: listOf(ConfigureDialogWithModulesAndVersion.DEFAULT_KOTLIN_VERSION)
-            }
+            val kotlinVersions = loadedVersions ?: listOf(ConfigureDialogWithModulesAndVersion.DEFAULT_KOTLIN_VERSION)
+
             comboBoxModel.addAll(kotlinVersions)
             @Suppress("HardCodedStringLiteral")
             comboBoxModel.selectedItem = kotlinVersions.firstOrNull()

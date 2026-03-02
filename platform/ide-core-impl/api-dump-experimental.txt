@@ -5,15 +5,15 @@ f:com.intellij.ide.impl.OpenProjectTask
 c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - com.intellij.openapi.components.PersistentStateComponent
 - *:getCaretEasing():com.intellij.openapi.editor.EditorSettings$CaretEasing
-- *:isAnimatedCaret():Z
 - *:isSmoothBlinkCaret():Z
-- *:setAnimatedCaret(Z):V
+- *:isSmoothCaretMovement():Z
 - *:setCaretEasing(com.intellij.openapi.editor.EditorSettings$CaretEasing):V
 - *:setSmoothBlinkCaret(Z):V
+- *:setSmoothCaretMovement(Z):V
 f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 - *:CARET_EASING:com.intellij.openapi.editor.EditorSettings$CaretEasing
-- *:IS_ANIMATED_CARET:Z
 - *:IS_SMOOTH_CARET_BLINKING:Z
+- *:IS_SMOOTH_CARET_MOVEMENT:Z
 f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
 - *sf:PROP_CARET_EASING:java.lang.String
 - *sf:PROP_IS_ANIMATED_CARET:java.lang.String

@@ -1,0 +1,9 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.gradle.toolingExtension"/>
+    <module name="intellij.libraries.jspecify"/>
+  </dependencies>
+  <!-- endregion -->
+
+</idea-plugin>

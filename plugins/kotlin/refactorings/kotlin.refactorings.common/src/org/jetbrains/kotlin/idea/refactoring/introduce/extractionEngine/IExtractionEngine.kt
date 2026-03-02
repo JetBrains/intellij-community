@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -156,7 +156,7 @@ abstract class IExtractionEngine<KotlinType,
                         MessageType.WARNING
                     ) { event ->
                         if (event?.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-                            runReadActionBlocking {
+                            WriteIntentReadAction.run  {
                                 validateAndRefactor()
                             }
                         }

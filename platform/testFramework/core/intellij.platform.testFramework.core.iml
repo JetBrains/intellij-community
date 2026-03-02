@@ -18,9 +18,9 @@
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity" />

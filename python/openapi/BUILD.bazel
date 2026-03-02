@@ -65,6 +65,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
     "@lib//:junit5",
+    "@lib//:junit5Params",
     "//platform/eel",
     "//platform/eel:eel_test_lib",
     "//platform/eel-provider",

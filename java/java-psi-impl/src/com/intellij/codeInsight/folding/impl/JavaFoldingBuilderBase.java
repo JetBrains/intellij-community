@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -74,6 +74,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -423,6 +424,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                                           @NotNull Document document,
                                           boolean quick) {
     if (!(root instanceof PsiJavaFile)) return;
+    if (PlatformUtils.isJetBrainsClient()) return;
     PsiJavaFile file = (PsiJavaFile) root;
     Set<PsiElement> processedComments = new HashSet<>();
 

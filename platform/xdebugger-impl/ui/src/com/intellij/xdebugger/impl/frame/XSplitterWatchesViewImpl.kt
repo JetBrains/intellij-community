@@ -3,12 +3,10 @@ package com.intellij.xdebugger.impl.frame
 
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.rpc.XMixedModeApi
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.ui.OnePixelSplitter
-import com.intellij.util.asDisposable
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
@@ -24,6 +22,8 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
+
+private val LOG = com.intellij.openapi.diagnostic.logger<XSplitterWatchesViewImpl>()
 
 /**
  * Allows customizing of variables view and splitting into 2 components.
@@ -62,7 +62,12 @@ class XSplitterWatchesViewImpl(
       updateRequests
         .debounce(100.milliseconds)
         .collectLatest {
+          try {
             withContext(Dispatchers.EDT) { updateView() }
+          }
+          catch (ex: Throwable) {
+            LOG.warn("Failed to update watches view", ex)
+          }
         }
     }
   }

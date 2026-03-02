@@ -10,11 +10,12 @@ import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class RestoreLayoutAction extends DumbAwareAction {
+public final class RestoreLayoutAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   
   public static @Nullable RunnerContentUi getRunnerUi(@NotNull AnActionEvent e) {
     return e.getData(RunnerContentUi.KEY);

@@ -58,6 +58,8 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core",
     "//platform/core-api:core_test_lib",
+    "//libraries/jackson/annotations",
+    "//libraries/jackson/annotations:annotations_test_lib",
     "//python/testFramework",
     "//python/testFramework:testFramework_test_lib",
     "@lib//:jackson-module-kotlin",

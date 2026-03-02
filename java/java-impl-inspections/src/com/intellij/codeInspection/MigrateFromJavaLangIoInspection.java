@@ -96,7 +96,7 @@ public final class MigrateFromJavaLangIoInspection extends AbstractBaseJavaLocal
     }
   }
 
-  private static void replaceToSystemOut(@NotNull PsiMethodCallExpression methodCall) {
+  public static void replaceToSystemOut(@NotNull PsiMethodCallExpression methodCall) {
     PsiReferenceExpression methodExpr = methodCall.getMethodExpression();
     String methodName = methodExpr.getReferenceName();
     if (methodName == null) return;

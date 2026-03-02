@@ -39,16 +39,22 @@ suspend fun Module.getModuleInfo(
   configuratorsByTool: Map<ToolId, PyProjectSdkConfigurationExtension> = PyProjectSdkConfigurationExtension.createMap(),
 ): ModuleCreateInfo? { // Save on module level
   val venvsInModule = findPythonVirtualEnvironments()
+  val bestProposalFromTools = PyProjectSdkConfigurationExtension.findAllSortedForModule(this, venvsInModule).firstOrNull()
 
   val suggestedByPyProjectToml = when (val suggestedSdk = suggestSdk()) {
     is SuggestedSdk.PyProjectIndependent -> {
-      configuratorsByTool
-        .filter { it.key in suggestedSdk.preferTools }
-        .firstNotNullOfOrNull { (toolId, extension) ->
-          extension.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(this, venvsInModule)?.let {
-            CreateSdkInfoWithTool(it, toolId).asDTO(suggestedSdk.moduleDir)
-          }
+      when (bestProposalFromTools?.createSdkInfo) {
+        is CreateSdkInfo.ExistingEnv -> bestProposalFromTools.asDTO(suggestedSdk.moduleDir)
+        is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool, null -> {
+          configuratorsByTool
+            .filter { it.key in suggestedSdk.preferTools }
+            .firstNotNullOfOrNull { (toolId, extension) ->
+              extension.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(this, venvsInModule)?.let {
+                CreateSdkInfoWithTool(it, toolId).asDTO(suggestedSdk.moduleDir)
+              }
+            }
         }
+      }
     }
     is SuggestedSdk.SameAs -> {
       ModuleCreateInfo.SameAs(suggestedSdk.parentModule)
@@ -58,8 +64,6 @@ suspend fun Module.getModuleInfo(
   suggestedByPyProjectToml?.let { return it }
 
   // No tools or not pyproject.toml at all? Use EP as a fallback
-  val bestProposalFromTools = PyProjectSdkConfigurationExtension.findAllSortedForModule(this, venvsInModule).firstOrNull()
-
   return bestProposalFromTools?.let {
     CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO(guessModuleDir()?.toNioPath())
   }

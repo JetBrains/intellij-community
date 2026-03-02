@@ -40,6 +40,7 @@ import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GHCachingAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRMentionableUsersProviderImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCreationServiceImpl
@@ -182,13 +183,15 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
           }, true))
       }
 
+      val mentionableUsersProvider = GHPRMentionableUsersProviderImpl(cs, repoDataService)
+
       val interactionState = project.service<GHPRPersistentInteractionState>()
 
       val creationService = GHPRCreationServiceImpl(requestExecutor, repoDataService)
       ensureActive()
       GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
                       securityService, repoDataService, creationService, detailsService, reactionsService,
-                      imageLoader, avatarIconsProvider, reactionIconsProvider,
+                      imageLoader, avatarIconsProvider, mentionableUsersProvider, reactionIconsProvider,
                       interactionState)
     }
   }

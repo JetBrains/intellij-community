@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
-import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.HideFromCompletionProperty
 import com.intellij.polySymbols.PolySymbol.Priority
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolKind
@@ -187,7 +187,7 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
 
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     property.tryCast(additionalProperties[property.name])
-    ?: if (property != PolySymbol.PROP_HIDE_FROM_COMPLETION)
+    ?: if (property != HideFromCompletionProperty)
       reversedSegments().flatMap { it.symbols }.mapNotNull { it[property] }.firstOrNull()
     else null
 

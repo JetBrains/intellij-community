@@ -71,7 +71,7 @@ data class TerminalCommandStartedEvent(val command: String) : TerminalShellInteg
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int, val currentDirectory: String) : TerminalShellIntegrationEvent
+data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int, val currentDirectory: String?) : TerminalShellIntegrationEvent
 
 @ApiStatus.Internal
 @Serializable

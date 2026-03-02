@@ -58,6 +58,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/openapi:java",
     "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/base/fe10/project-structure",
   ]
 )
 
@@ -95,6 +96,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared_test_lib",
     "//java/java-impl:impl_test_lib",
     "//java/openapi:java_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.highlighting.k1` end

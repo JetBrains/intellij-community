@@ -280,7 +280,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Object elementAt = myListModel.getElementAt(i);
       if (getListStep().isSelectable(elementAt) ) {
         countSelectables ++;
-        if (getStep().hasSubstep(elementAt)) {
+        // only open single item if it represents a static menu, meaning it is not executable by itself
+        if (getStep().hasSubstep(elementAt) && !getListStep().isClosableOnExecute(elementAt)) {
           if (oneSubmenuFound) {
             return false;
           }

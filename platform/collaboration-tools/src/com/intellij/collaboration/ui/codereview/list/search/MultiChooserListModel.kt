@@ -31,9 +31,9 @@ internal class MultiChooserListModel<T> : AbstractListModel<T>() {
     }
   }
 
-  fun toggleChosen(idx: Int) {
+  fun toggleChosen(item: T) {
+    val idx = items.indexOf(item)
     if (idx >= 0) {
-      val item = getElementAt(idx) ?: return
       if (chosenItems.contains(item)) {
         chosenItems.remove(item)
       }

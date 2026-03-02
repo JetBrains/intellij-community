@@ -139,6 +139,7 @@ enum class XBreakpointTypeSerializableStandardPanels {
 @Serializable
 data class XLineBreakpointTypeInfo(
   val priority: Int,
+  val supportsInterLinePlacement: Boolean,
 )
 
 

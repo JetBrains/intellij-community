@@ -32,7 +32,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
@@ -65,5 +64,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api-impl-base" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-fe10" level="project" />
   </component>
 </module>

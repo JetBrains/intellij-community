@@ -71,18 +71,26 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
 
   /**
    * This property should be used if it is cheaper to search for a symbol without building the whole cache.
-   * One of use cases is when the scope directly maps to indices. When true, it requires that [getMatchingSymbols]
-   * with `nameVariant` parameter is implemented.
+   * One of use cases is when the scope directly maps to indices. When provided, [PartialMatchingSupport] must supply
+   * [PartialMatchingSupport.getMatchingSymbols] and non-empty [PartialMatchingSupport.cacheDependencies].
    */
-  protected open val supportsSymbolsMatchingWithoutFullCacheInitialization: Boolean get() = false
+  protected open val partialMatchingSupport: PartialMatchingSupport? get() = null
 
-  protected open fun getMatchingSymbols(
-    kind: PolySymbolKind,
-    nameVariant: String,
-    cacheDependencies: MutableSet<Any>,
-  ): List<PolySymbol> =
-    throw NotImplementedError("Subclasses must implement getMatchingSymbols with single name variant if supportsSymbolsMatchingWithoutFullCacheInitialization property returns true")
+  /**
+   * Optional support for querying symbols without building the full cache.
+   */
+  protected interface PartialMatchingSupport {
+    /**
+     * Cache dependencies for [getMatchingSymbolsWithoutFullCacheInit].
+     * Must not be empty.
+     */
+    val cacheDependencies: Collection<Any>
 
+    fun getMatchingSymbols(
+      kind: PolySymbolKind,
+      nameVariant: String,
+    ): List<PolySymbol>
+  }
 
   override fun getModificationCount(): Long =
     PsiModificationTracker.getInstance(project).modificationCount
@@ -121,7 +129,7 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   private fun createCachedSearchMap(namesProvider: PolySymbolNamesProvider): CachedValue<PolySymbolSearchMap> =
     CachedValuesManager.getManager(project).createCachedValue {
       val dependencies = mutableSetOf<Any>()
-      val map = PolySymbolSearchMap(namesProvider)
+      val map = PolySymbolSearchMap(namesProvider, false)
       val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
       initialize(
         {
@@ -130,10 +138,10 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
           if (unitTestMode) {
             val dereferenced = it.createPointer().dereference()
             when {
-                dereferenced == null ->
-                  throw IllegalArgumentException("Poly Symbol dereferenced from pointer is null. $it (${it.javaClass})")
-                !dereferenced.isEquivalentTo(it) ->
-                  throw IllegalArgumentException("Poly Symbol dereferenced from pointer is not equivalent to the original. $dereferenced (${dereferenced.javaClass}) !isEquivalentTo $it (${it.javaClass})")
+              dereferenced == null ->
+                throw IllegalArgumentException("Poly Symbol dereferenced from pointer is null. $it (${it.javaClass})")
+              !dereferenced.isEquivalentTo(it) ->
+                throw IllegalArgumentException("Poly Symbol dereferenced from pointer is not equivalent to the original. $dereferenced (${dereferenced.javaClass}) !isEquivalentTo $it (${it.javaClass})")
             }
           }
           map.add(it)
@@ -146,6 +154,23 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
       CachedValueProvider.Result.create(map, dependencies.toList())
     }
 
+  private fun createCachedPartialSearchMap(
+    namesProvider: PolySymbolNamesProvider,
+    support: PartialMatchingSupport,
+  ): CachedValue<PartiallyInitializedSearchMap> =
+    CachedValuesManager.getManager(project).createCachedValue {
+      val dependencies = support.cacheDependencies.toMutableSet()
+      if (dependencies.isEmpty()) {
+        throw IllegalArgumentException(
+          "CacheDependencies cannot be empty. Failed to initialize $javaClass. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")
+      }
+      dependencies.add(namesProvider)
+      CachedValueProvider.Result.create(
+        PartiallyInitializedSearchMap(namesProvider, support, this::provides),
+        dependencies.toList()
+      )
+    }
+
   override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
@@ -153,9 +178,10 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   ): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && provides(qualifiedName.kind)) {
-      if (supportsSymbolsMatchingWithoutFullCacheInitialization)
+      val support = partialMatchingSupport
+      if (support != null)
         tryGetMap(params.queryExecutor)?.getMatchingSymbols(qualifiedName, params, stack.copy())?.toList()
-        ?: getMatchingSymbolsWithoutFullCacheInit(qualifiedName, params)
+        ?: getPartialMap(params.queryExecutor, support).getMatchingSymbols(qualifiedName, params, stack.copy())
       else
         getMap(params.queryExecutor).getMatchingSymbols(qualifiedName, params, stack.copy()).toList()
     }
@@ -189,36 +215,20 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   private fun tryGetMap(queryExecutor: PolySymbolQueryExecutor): PolySymbolSearchMap? =
     getNamesProviderToMapCache().getMap(queryExecutor.namesProvider)
 
-  private fun getMatchingSymbolsWithoutFullCacheInit(
-    qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolNameMatchQueryParams,
-  ): List<PolySymbol> {
-    val manager = CachedValuesManager.getManager(project)
-    val nameCache = manager.getCachedValue(dataHolder) {
-      CachedValueProvider.Result(ConcurrentHashMap<String, CachedValue<List<PolySymbol>>>(), PsiModificationTracker.NEVER_CHANGED)
+  private fun getPartialMap(
+    queryExecutor: PolySymbolQueryExecutor,
+    support: PartialMatchingSupport,
+  ): PartiallyInitializedSearchMap =
+    getNamesProviderToMapCache().getOrCreatePartialMap(queryExecutor.namesProvider) { namesProvider ->
+      createCachedPartialSearchMap(namesProvider, support)
     }
-    return params.queryExecutor.namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY).flatMap { name ->
-      nameCache.computeIfAbsent(name) { name ->
-        manager.createCachedValue {
-          val dependencies = mutableSetOf<Any>()
-          val symbols = getMatchingSymbols(qualifiedName.kind, name, dependencies)
-          symbols.forEach {
-            if (!provides(it.kind))
-              throw IllegalArgumentException("Poly Symbol with unsupported kind: ${it.kind} provided. $it")
-          }
-          if (dependencies.isEmpty()) {
-            throw IllegalArgumentException(
-              "CacheDependencies cannot be empty. Failed to initialize $javaClass. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")
-          }
-          CachedValueProvider.Result.create(symbols, dependencies)
-        }
-      }.value
-    }
-  }
 
   private class NamesProviderToMapCache(private val project: Project) {
     private val cache: ConcurrentMap<List<Any?>, CachedValue<PolySymbolSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
     private var cacheMisses = 0
+    private val partialCache: ConcurrentMap<List<Any?>, CachedValue<PartiallyInitializedSearchMap>> =
+      ContainerUtil.createConcurrentSoftKeySoftValueMap()
+    private var partialCacheMisses = 0
 
     fun getOrCreateMap(
       namesProvider: PolySymbolNamesProvider,
@@ -239,10 +249,25 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
       namesProvider: PolySymbolNamesProvider,
     ): PolySymbolSearchMap? =
       cache[PolySymbolThreadLocalCacheKeyProvider.getCacheKeys(namesProvider, project)]?.value
+
+    fun getOrCreatePartialMap(
+      namesProvider: PolySymbolNamesProvider,
+      createCachedPartialSearchMap: (namesProvider: PolySymbolNamesProvider) -> CachedValue<PartiallyInitializedSearchMap>,
+    ): PartiallyInitializedSearchMap {
+      if (partialCacheMisses > 20) {
+        // Get rid of old soft keys
+        partialCacheMisses = 0
+        partialCache.clear()
+      }
+      return partialCache.getOrPut(PolySymbolThreadLocalCacheKeyProvider.getCacheKeys(namesProvider, project)) {
+        partialCacheMisses++
+        createCachedPartialSearchMap(namesProvider)
+      }.value
+    }
   }
 
-  private class PolySymbolSearchMap(namesProvider: PolySymbolNamesProvider) :
-    SearchMap<PolySymbol>(namesProvider) {
+  private class PolySymbolSearchMap(namesProvider: PolySymbolNamesProvider, useSyncMaps: Boolean) :
+    SearchMap<PolySymbol>(namesProvider, useSyncMaps) {
 
     override fun Sequence<PolySymbol>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol> = this
 
@@ -250,6 +275,48 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
       add(symbol.qualifiedName, (symbol as? PolySymbolWithPattern)?.pattern, symbol)
     }
 
+  }
+
+  private class PartiallyInitializedSearchMap(
+    private val namesProvider: PolySymbolNamesProvider,
+    private val support: PartialMatchingSupport,
+    private val provides: (PolySymbolKind) -> Boolean,
+  ) {
+    private val map = PolySymbolSearchMap(namesProvider, useSyncMaps = true)
+    private val processedNames = HashSet<PolySymbolQualifiedName>()
+    private val symbols = HashSet<PolySymbol>()
+
+    fun getMatchingSymbols(
+      qualifiedName: PolySymbolQualifiedName,
+      params: PolySymbolNameMatchQueryParams,
+      stack: PolySymbolQueryStack,
+    ): List<PolySymbol> {
+      // We don't want to lock here more than required, so let's allow multiple threads to calculate matching symbols
+      // concurrently. Only the map update needs to be synchronized.
+      if (synchronized(processedNames) { !processedNames.contains(qualifiedName) }) {
+        namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY).forEach { name ->
+          addProcessedSymbols(support.getMatchingSymbols(qualifiedName.kind, name))
+        }
+        synchronized(processedNames) { processedNames.add(qualifiedName) }
+      }
+      // The map internal structures are synchronized, so we can call it without any sync here
+      return map.getMatchingSymbols(qualifiedName, params, stack).toList()
+    }
+
+    private fun addProcessedSymbols(
+      symbolsToAdd: Collection<PolySymbol>,
+    ) {
+      // Lock is needed here to avoid adding the same symbol twice or more times
+      synchronized(symbols) {
+        symbolsToAdd.forEach { symbol ->
+          if (!provides(symbol.kind))
+            throw IllegalArgumentException("Poly Symbol with unsupported kind: ${symbol.kind} provided. $symbol")
+          if (symbols.add(symbol)) {
+            map.add(symbol)
+          }
+        }
+      }
+    }
   }
 
 }

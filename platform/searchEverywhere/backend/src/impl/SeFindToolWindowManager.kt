@@ -7,9 +7,11 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.toPsi
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.TooManyUsagesStatus
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
@@ -30,6 +32,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageLimitUtil
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageViewManager
+import com.intellij.usages.UsageViewManagerWithUsageViewFactoryCallback
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.UsageViewManagerImpl
 import com.intellij.util.containers.toArray
@@ -39,6 +42,8 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+
+private val LOG = logger<SeFindToolWindowManager>()
 
 @ApiStatus.Internal
 class SeFindToolWindowManager(private val project: Project) {
@@ -57,9 +62,11 @@ class SeFindToolWindowManager(private val project: Project) {
     presentation.codeUsagesString = tabCaptionText
     presentation.targetsNodeText = IdeBundle.message("searcheverywhere.found.targets.title", params.inputQuery, contributorsString)
     presentation.tabText = tabCaptionText
+    presentation.searchString = params.inputQuery
 
     val usages = mutableListOf<Usage>()
     val targets = mutableListOf<PsiElement>()
+    val untilShowDoneDisposable = Disposer.newDisposable()
 
     val indicator = ProgressIndicatorBase()
     val tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator)
@@ -67,7 +74,7 @@ class SeFindToolWindowManager(private val project: Project) {
       withModalProgress(ModalTaskOwner.project(project), tabCaptionText, TaskCancellation.cancellable()) {
         indicator.start()
         providerIds.forEach { providerId ->
-          providersHolder.get(providerId, isAllTab)?.getRawItems(params)?.collect { item ->
+          providersHolder.get(providerId, isAllTab)?.getRawItemsWithOperationLifetime(params, untilShowDoneDisposable)?.collect { item ->
             indicator.checkCanceled()
 
             val element = when (item) {
@@ -107,6 +114,7 @@ class SeFindToolWindowManager(private val project: Project) {
         throw e
       }
       SeLog.log { "$tabCaptionText was cancelled" }
+      Disposer.dispose(untilShowDoneDisposable)
     }
 
     val targetsArray = if (targets.isEmpty()) {
@@ -123,7 +131,19 @@ class SeFindToolWindowManager(private val project: Project) {
     val usagesArray = usages.toArray(Usage.EMPTY_ARRAY)
 
     withContext(Dispatchers.EDT) {
-      UsageViewManager.getInstance(projectId.findProject()).showUsages(targetsArray, usagesArray, presentation)
+      val instance = UsageViewManager.getInstance(projectId.findProject())
+      if (instance !is UsageViewManagerWithUsageViewFactoryCallback) {
+        LOG.warn("Rider show in find usages won't work!")
+        try {
+          instance.showUsages(targetsArray, usagesArray, presentation)
+        }
+        finally {
+          Disposer.dispose(untilShowDoneDisposable)
+        }
+        return@withContext
+      }
+
+      instance.showUsages(targetsArray, usagesArray, presentation, null, Runnable { Disposer.dispose(untilShowDoneDisposable) })
     }
   }
 }

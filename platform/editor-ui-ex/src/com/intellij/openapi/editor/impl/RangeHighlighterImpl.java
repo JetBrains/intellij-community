@@ -95,7 +95,9 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
 
     registerInTree((DocumentEx)model.getDocument(), start, end, greedyToLeft, greedyToRight, layer);
     if (LOG.isTraceEnabled()) {
-      LOG.trace("RangeHighlighterImpl: create " + this+"; "+getId()+(ProgressIndicatorProvider.getGlobalProgressIndicator() == null ? "" : "; progress=" +ProgressIndicatorProvider.getGlobalProgressIndicator()));
+      ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      LOG.trace("RangeHighlighterImpl: create " + this + "; " + getId() +
+                (progress == null || progress instanceof NonCancelableIndicator ? "" : "; progress=" + progress));
     }
   }
 

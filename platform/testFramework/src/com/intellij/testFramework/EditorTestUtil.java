@@ -918,6 +918,7 @@ public final class EditorTestUtil {
       }
     }
   }
+  @RequiresEdt
   public static void buildInitialFoldingsInBackground(@NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();

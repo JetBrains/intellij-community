@@ -9,6 +9,7 @@ import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,23 @@ public final class XValueNodePresentationConfigurator {
   }
 
   public abstract static class ConfigurableXValueNodeImpl implements ConfigurableXValueNode, XValueNode {
+    @Override
+    public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
+      XValueNodePresentationConfigurator.setPresentation(icon, type, value, hasChildren, this);
+    }
+
+    @Override
+    public void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren) {
+      XValueNodePresentationConfigurator.setPresentation(icon, presentation, hasChildren, this);
+    }
+
+    @Override
+    public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
+    }
+  }
+
+  @ApiStatus.Internal
+  public abstract static class ConfigurableXValueNodeExImpl implements ConfigurableXValueNode, XValueNodeEx {
     @Override
     public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
       XValueNodePresentationConfigurator.setPresentation(icon, type, value, hasChildren, this);

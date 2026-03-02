@@ -1,5 +1,9 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.testFramework.core" />
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.testFramework.core"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

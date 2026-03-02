@@ -132,10 +132,10 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
                             configurator.configureModule(module, configurationResultBuilder)
                         }
                     }
-                }
-                val result = configurationResultBuilder.build()
-                if (result.configuredModules.isNotEmpty()) {
-                    configurationService.queueSyncIfPossible()
+                    val result = configurationResultBuilder.build()
+                    if (result.configuredModules.isNotEmpty()) {
+                        configurationService.queueSyncIfPossible()
+                    }
                 }
             }
         }

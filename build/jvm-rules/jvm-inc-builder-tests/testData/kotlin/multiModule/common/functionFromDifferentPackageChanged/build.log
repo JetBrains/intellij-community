@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_functionFromDifferentPackageChanged-module1.kotlin_module
+  module1/FooKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/functionFromDifferentPackageChanged/module1/foo.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_functionFromDifferentPackageChanged-module2.kotlin_module
+  module2/UseFooKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/functionFromDifferentPackageChanged/module2/useFoo.kt
+End of files
+------------------------------------------
+Exit code: OK

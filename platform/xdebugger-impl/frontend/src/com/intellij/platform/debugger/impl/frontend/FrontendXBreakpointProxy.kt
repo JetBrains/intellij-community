@@ -17,6 +17,7 @@ import com.intellij.platform.debugger.impl.rpc.XBreakpointDtoState
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.platform.debugger.impl.rpc.xExpression
+import com.intellij.platform.debugger.impl.shared.XBreakpointInterLinePlacementDetector
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
@@ -239,6 +240,12 @@ internal open class FrontendXBreakpointProxy(
     }
   }
 
+  override fun supportsInterLinePlacement(): Boolean {
+    val lineType = type as? XLineBreakpointTypeProxy ?: return false
+    if (!lineType.supportsInterLinePlacement()) return false
+    return XBreakpointInterLinePlacementDetector.shouldBePlacedBetweenLines(this)
+  }
+
   override fun getTimestamp(): Long = currentState.timestamp
 
   override fun isLogMessage(): Boolean = currentState.logMessage
@@ -352,10 +359,6 @@ internal open class FrontendXBreakpointProxy(
 
   override fun isDisposed(): Boolean {
     return !cs.isActive
-  }
-
-  override fun updateIcon() {
-    // TODO IJPL-185322 should we cache icon like in Monolith?
   }
 
   override fun createGutterIconRenderer(): GutterIconRenderer? {

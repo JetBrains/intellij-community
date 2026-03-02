@@ -166,7 +166,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing_extensions import final
                    @final
-                   def <warning descr="Non-method function could not be marked as '@final'">foo</warning>():
+                   def <warning descr="Non-method function cannot be marked as '@final'">foo</warning>():
                        pass""");
   }
 
@@ -179,7 +179,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
 
                            <warning descr="'Final' name should be initialized with a value">a</warning>: Final[int]
                            <warning descr="'Final' name should be initialized with a value">b</warning>: Final
-                           <warning descr="'b' is 'Final' and could not be reassigned">b</warning> = "10"
+                           <warning descr="'b' is 'Final' and cannot be reassigned">b</warning> = "10"
                            c: Final[str] = "10"
                            d: int
                            """)
@@ -194,7 +194,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                            from typing_extensions import Final
 
                            class A:
-                               <warning descr="'Final' name should be initialized with a value">a</warning>: <warning descr="If assigned value is omitted, there should be an explicit type argument to 'Final'">Final</warning>
+                               <warning descr="'Final' name should be initialized with a value">a</warning>: <warning descr="If the assigned value is omitted, an explicit type argument for 'Final' is required">Final</warning>
                                <warning descr="'Final' name should be initialized with a value">b</warning>: Final[int]
                                c: int
                                d: Final[int]
@@ -240,15 +240,15 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("""
                            from typing_extensions import Final
 
-                           def foo(a: <warning descr="'Final' could not be used in annotations for function parameters">Final</warning>) -> None:
+                           def foo(a: <warning descr="'Final' cannot be used in function parameter annotations">Final</warning>) -> None:
                                pass
 
-                           def bar(a, <warning descr="'Final' could not be used in annotations for function parameters"># type: Final[str]</warning>
+                           def bar(a, <warning descr="'Final' cannot be used in function parameter annotations"># type: Final[str]</warning>
                                    ):
                                pass
 
                            def baz(a):
-                               <warning descr="'Final' could not be used in annotations for function parameters"># type: (Final[int]) -> None</warning>
+                               <warning descr="'Final' cannot be used in function parameter annotations"># type: (Final[int]) -> None</warning>
                                pass""")
     );
   }
@@ -259,21 +259,21 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                    from typing_extensions import Final, TypeAlias
 
                    a1: Final[int] = 10
-                   b1: List[<warning descr="'Final' could only be used as the outermost type">Final</warning>[int]] = []
+                   b1: List[<warning descr="'Final' can only be used as the outermost type">Final</warning>[int]] = []
 
                    a2 = 10  # type: Final[int]
-                   b2 = []  # type: List[<warning descr="'Final' could only be used as the outermost type">Final</warning>[int]]
+                   b2 = []  # type: List[<warning descr="'Final' can only be used as the outermost type">Final</warning>[int]]
 
                    a3: Final = 10
-                   b3: List[<warning descr="'Final' could only be used as the outermost type">Final</warning>] = []
+                   b3: List[<warning descr="'Final' can only be used as the outermost type">Final</warning>] = []
 
                    a4 = 10  # type: Final
-                   b4 = []  # type: List[<warning descr="'Final' could only be used as the outermost type">Final</warning>]
+                   b4 = []  # type: List[<warning descr="'Final' can only be used as the outermost type">Final</warning>]
 
-                   A1: TypeAlias = List[<warning descr="'Final' could only be used as the outermost type">Final</warning>[int]]
-                   A2: TypeAlias = 'List[<warning descr="'Final' could only be used as the outermost type">Final</warning>[int]]'
-                   A3 = List[<warning descr="'Final' could only be used as the outermost type">Final</warning>[int]]  # type: TypeAlias
-                   A4 = 'List[<warning descr="'Final' could only be used as the outermost type">Final</warning>[int]]'  # type: TypeAlias""");
+                   A1: TypeAlias = List[<warning descr="'Final' can only be used as the outermost type">Final</warning>[int]]
+                   A2: TypeAlias = 'List[<warning descr="'Final' can only be used as the outermost type">Final</warning>[int]]'
+                   A3 = List[<warning descr="'Final' can only be used as the outermost type">Final</warning>[int]]  # type: TypeAlias
+                   A4 = 'List[<warning descr="'Final' can only be used as the outermost type">Final</warning>[int]]'  # type: TypeAlias""");
   }
 
   // PY-34945
@@ -285,15 +285,15 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
 
                            a: Final[int] = 10
                            print(a)
-                           <warning descr="Already declared name could not be redefined as 'Final'">a</warning>: Final[str] = "10"
+                           <warning descr="Already declared name cannot be redefined as 'Final'">a</warning>: Final[str] = "10"
 
                            b = 10  # type: int
                            print(b)
-                           <warning descr="Already declared name could not be redefined as 'Final'">b</warning> = "10"  # type: Final[str]
+                           <warning descr="Already declared name cannot be redefined as 'Final'">b</warning> = "10"  # type: Final[str]
 
                            c: Final[int] = 10
                            print(c)
-                           <warning descr="'c' is 'Final' and could not be reassigned">c</warning>: str = "10\"""")
+                           <warning descr="'c' is 'Final' and cannot be reassigned">c</warning>: str = "10\"""")
     );
   }
 
@@ -307,15 +307,15 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                            class A:
                                a: Final[int] = 10
                                print(a)
-                               <warning descr="Already declared name could not be redefined as 'Final'">a</warning>: Final[str] = "10"
+                               <warning descr="Already declared name cannot be redefined as 'Final'">a</warning>: Final[str] = "10"
 
                                b = 10  # type: int
                                print(b)
-                               <warning descr="Already declared name could not be redefined as 'Final'">b</warning> = "10"  # type: Final[str]
+                               <warning descr="Already declared name cannot be redefined as 'Final'">b</warning> = "10"  # type: Final[str]
 
                                c: Final[int] = 10
                                print(c)
-                               <warning descr="'c' is 'Final' and could not be reassigned">c</warning>: str = "10\"""")
+                               <warning descr="'c' is 'Final' and cannot be reassigned">c</warning>: str = "10\"""")
     );
   }
 
@@ -329,15 +329,15 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                            def foo():
                                a: Final[int] = 10
                                print(a)
-                               <warning descr="Already declared name could not be redefined as 'Final'">a</warning>: Final[str] = "10"
+                               <warning descr="Already declared name cannot be redefined as 'Final'">a</warning>: Final[str] = "10"
 
                                b = 10  # type: int
                                print(b)
-                               <warning descr="Already declared name could not be redefined as 'Final'">b</warning> = "10"  # type: Final[str]
+                               <warning descr="Already declared name cannot be redefined as 'Final'">b</warning> = "10"  # type: Final[str]
 
                                c: Final[int] = 10
                                print(c)
-                               <warning descr="'c' is 'Final' and could not be reassigned">c</warning>: str = "10\"""")
+                               <warning descr="'c' is 'Final' and cannot be reassigned">c</warning>: str = "10\"""")
     );
   }
 
@@ -353,8 +353,8 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                                    self.a: Final[str] = "str"
 
                                def method(self):
-                                   <warning descr="'Final' attribute should be declared in class body or '__init__'"><warning descr="Already declared name could not be redefined as 'Final'">self.a</warning></warning>: Final[int] = 10
-                                   <warning descr="'Final' attribute should be declared in class body or '__init__'">self.b</warning>: Final[int] = 10""")
+                                   <warning descr="'Final' attribute should be declared in the class body or '__init__'"><warning descr="Already declared name cannot be redefined as 'Final'">self.a</warning></warning>: Final[int] = 10
+                                   <warning descr="'Final' attribute should be declared in the class body or '__init__'">self.b</warning>: Final[int] = 10""")
     );
   }
 
@@ -369,12 +369,12 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
           class A:
               a: Final[int] = 1
               b: Final[str] = "1"
-              <warning descr="Either instance attribute or class attribute could be type hinted as 'Final'">c</warning>: Final[int]
+              <warning descr="Either instance attribute or class attribute can be type-hinted as 'Final'">c</warning>: Final[int]
 
               def __init__(self):
-                  <warning descr="Already declared name could not be redefined as 'Final'">self.a</warning>: Final[int] = 2
-                  <warning descr="'b' is 'Final' and could not be reassigned">self.b</warning> = "2"
-                  <warning descr="Either instance attribute or class attribute could be type hinted as 'Final'">self.c</warning>: Final[int] = 2""")
+                  <warning descr="Already declared name cannot be redefined as 'Final'">self.a</warning>: Final[int] = 2
+                  <warning descr="'b' is 'Final' and cannot be reassigned">self.b</warning> = "2"
+                  <warning descr="Either instance attribute or class attribute can be type-hinted as 'Final'">self.c</warning>: Final[int] = 2""")
     );
   }
 
@@ -386,13 +386,13 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                            from typing_extensions import Final
 
                            a: Final[int] = 1
-                           <warning descr="'a' is 'Final' and could not be reassigned">a</warning> = 2
+                           <warning descr="'a' is 'Final' and cannot be reassigned">a</warning> = 2
 
                            b: Final[str] = "3"
-                           <warning descr="'b' is 'Final' and could not be reassigned">b</warning> += "4"
+                           <warning descr="'b' is 'Final' and cannot be reassigned">b</warning> += "4"
 
                            c: Final[int] = 5
-                           <warning descr="'c' is 'Final' and could not be reassigned">c</warning> += 6""")
+                           <warning descr="'c' is 'Final' and cannot be reassigned">c</warning> += 6""")
     );
   }
 
@@ -412,33 +412,33 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                                a: Final[int] = 1
 
                                def __init__(self):
-                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> = 2
-                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> += 2
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">self.a</warning> = 2
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">self.a</warning> += 2
 
                                def method(self):
-                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> = 3
-                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> += 3
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">self.a</warning> = 3
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">self.a</warning> += 3
 
                                @classmethod
                                def cls_method(cls):
-                                   <warning descr="'a' is 'Final' and could not be reassigned">cls.a</warning> = 5
-                                   <warning descr="'a' is 'Final' and could not be reassigned">cls.a</warning> += 5
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">cls.a</warning> = 5
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">cls.a</warning> += 5
 
-                           <warning descr="'a' is 'Final' and could not be reassigned">A.a</warning> = 4
-                           <warning descr="'a' is 'Final' and could not be reassigned">A.a</warning> += 4
+                           <warning descr="'a' is 'Final' and cannot be reassigned">A.a</warning> = 4
+                           <warning descr="'a' is 'Final' and cannot be reassigned">A.a</warning> += 4
 
                            class B(A):
 
                                @classmethod
                                def my_cls_method(cls):
-                                   <warning descr="'a' is 'Final' and could not be reassigned">cls.a</warning> = 6
-                                   <warning descr="'a' is 'Final' and could not be reassigned">cls.a</warning> += 6
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">cls.a</warning> = 6
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">cls.a</warning> += 6
 
-                           <warning descr="'a' is 'Final' and could not be reassigned">B.a</warning> = 7
-                           <warning descr="'a' is 'Final' and could not be reassigned">B.a</warning> += 7
+                           <warning descr="'a' is 'Final' and cannot be reassigned">B.a</warning> = 7
+                           <warning descr="'a' is 'Final' and cannot be reassigned">B.a</warning> += 7
 
                            class C(A):
-                               <warning descr="'A.a' is 'Final' and could not be reassigned">a</warning> = 8
+                               <warning descr="'A.a' is 'Final' and cannot be reassigned">a</warning> = 8
                            """)
     );
   }
@@ -458,41 +458,41 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                            class A:
                                def __init__(self):
                                    self.a: Final[int] = 1
-                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> += 1
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">self.a</warning> += 1
 
                                def method(self):
-                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> = 2
-                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> = +2
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">self.a</warning> = 2
+                                   <warning descr="'a' is 'Final' and cannot be reassigned">self.a</warning> = +2
 
-                           <warning descr="'a' is 'Final' and could not be reassigned">A().a</warning> = 3
-                           <warning descr="'a' is 'Final' and could not be reassigned">A().a</warning> = +3
+                           <warning descr="'a' is 'Final' and cannot be reassigned">A().a</warning> = 3
+                           <warning descr="'a' is 'Final' and cannot be reassigned">A().a</warning> = +3
 
                            class B:
                                b: Final[int]
 
                                def __init__(self):
                                    self.b = 1
-                                   <warning descr="'b' is 'Final' and could not be reassigned">self.b</warning> += 1
+                                   <warning descr="'b' is 'Final' and cannot be reassigned">self.b</warning> += 1
 
                                def method(self):
-                                   <warning descr="'b' is 'Final' and could not be reassigned">self.b</warning> = 2
-                                   <warning descr="'b' is 'Final' and could not be reassigned">self.b</warning> += 2
+                                   <warning descr="'b' is 'Final' and cannot be reassigned">self.b</warning> = 2
+                                   <warning descr="'b' is 'Final' and cannot be reassigned">self.b</warning> += 2
 
-                           <warning descr="'b' is 'Final' and could not be reassigned">B().b</warning> = 3
-                           <warning descr="'b' is 'Final' and could not be reassigned">B().b</warning> += 3
+                           <warning descr="'b' is 'Final' and cannot be reassigned">B().b</warning> = 3
+                           <warning descr="'b' is 'Final' and cannot be reassigned">B().b</warning> += 3
 
                            class C(B):
                                def __init__(self):
                                    super().__init__()
-                                   <warning descr="'B.b' is 'Final' and could not be reassigned">self.b</warning> = 4
-                                   <warning descr="'B.b' is 'Final' and could not be reassigned">self.b</warning> += 4
+                                   <warning descr="'B.b' is 'Final' and cannot be reassigned">self.b</warning> = 4
+                                   <warning descr="'B.b' is 'Final' and cannot be reassigned">self.b</warning> += 4
 
                                def my_method(self):
-                                   <warning descr="'B.b' is 'Final' and could not be reassigned">self.b</warning> = 5
-                                   <warning descr="'B.b' is 'Final' and could not be reassigned">self.b</warning> += 5
+                                   <warning descr="'B.b' is 'Final' and cannot be reassigned">self.b</warning> = 5
+                                   <warning descr="'B.b' is 'Final' and cannot be reassigned">self.b</warning> += 5
 
-                           <warning descr="'B.b' is 'Final' and could not be reassigned">C().b</warning> = 6
-                           <warning descr="'B.b' is 'Final' and could not be reassigned">C().b</warning> += 6""")
+                           <warning descr="'B.b' is 'Final' and cannot be reassigned">C().b</warning> = 6
+                           <warning descr="'B.b' is 'Final' and cannot be reassigned">C().b</warning> += 6""")
     );
   }
 
@@ -510,11 +510,11 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
 
                            def foo():
                                a: Final[int] = 1
-                               <warning descr="'a' is 'Final' and could not be reassigned">a</warning> = 2
+                               <warning descr="'a' is 'Final' and cannot be reassigned">a</warning> = 2
 
                            def bar():
                                b: Final[int] = 3
-                               <warning descr="'b' is 'Final' and could not be reassigned">b</warning> += 4""")
+                               <warning descr="'b' is 'Final' and cannot be reassigned">b</warning> += 4""")
     );
   }
 
@@ -531,7 +531,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
 
                                def inner():
                                    nonlocal x
-                                   <warning descr="'x' is 'Final' and could not be reassigned">x</warning> = [4, 5]
+                                   <warning descr="'x' is 'Final' and cannot be reassigned">x</warning> = [4, 5]
 
                                inner()""")
     );
@@ -549,7 +549,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
 
                            def foo():
                                global y
-                               <warning descr="'y' is 'Final' and could not be reassigned">y</warning> = [4, 5]
+                               <warning descr="'y' is 'Final' and cannot be reassigned">y</warning> = [4, 5]
                            """)
     );
   }
@@ -563,7 +563,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                            from typing_extensions import Final
 
                            y: Final[List[int]] = [0, 1]
-                           <warning descr="'y' is 'Final' and could not be reassigned">y</warning> += [4, 5]
+                           <warning descr="'y' is 'Final' and cannot be reassigned">y</warning> += [4, 5]
                            """)
     );
   }
@@ -579,7 +579,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                                a: Final[int] = 1
 
                            class B(A):
-                               <warning descr="'A.a' is 'Final' and could not be overridden">a</warning>: Final[str] = "3"
+                               <warning descr="'A.a' is 'Final' and cannot be overridden">a</warning>: Final[str] = "3"
                            """)
     );
   }
@@ -605,10 +605,10 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                            class B(A):
                                def __init__(self):
                                    super().__init__()
-                                   <warning descr="'A.a' is 'Final' and could not be overridden">self.a</warning>: Final[str] = "2"
+                                   <warning descr="'A.a' is 'Final' and cannot be overridden">self.a</warning>: Final[str] = "2"
 
                            class C(A):
-                               <warning descr="'A.a' is 'Final' and could not be overridden">a</warning>: Final[str]
+                               <warning descr="'A.a' is 'Final' and cannot be overridden">a</warning>: Final[str]
 
                                def __init__(self):
                                    super().__init__()
@@ -630,16 +630,16 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
 
                            for i in undefined:
                                if undefined:
-                                   <warning descr="'Final' could not be used inside a loop">x</warning>: Final[int] = 1
+                                   <warning descr="'Final' cannot be used inside a loop">x</warning>: Final[int] = 1
                            while undefined:
-                               <warning descr="'Final' could not be used inside a loop">y</warning>: Final[str] = '1'
+                               <warning descr="'Final' cannot be used inside a loop">y</warning>: Final[str] = '1'
                               \s
                            def foo():
                                for i in undefined:
                                    if undefined:
-                                       <warning descr="'Final' could not be used inside a loop">x</warning>: Final[int] = 1
+                                       <warning descr="'Final' cannot be used inside a loop">x</warning>: Final[int] = 1
                                while undefined:
-                                   <warning descr="'Final' could not be used inside a loop">y</warning>: Final[str] = '1'""")
+                                   <warning descr="'Final' cannot be used inside a loop">y</warning>: Final[str] = '1'""")
     );
   }
 
@@ -650,11 +650,11 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("""
                            from typing_extensions import Final
 
-                           def foo1() <warning descr="'Final' could not be used in annotation for a function return value">-> Final[int]</warning>:
+                           def foo1() <warning descr="'Final' cannot be used in a function return type annotation">-> Final[int]</warning>:
                                pass
 
                            def foo2():
-                               <warning descr="'Final' could not be used in annotation for a function return value"># type: () -> Final[int]</warning>
+                               <warning descr="'Final' cannot be used in a function return type annotation"># type: () -> Final[int]</warning>
                                pass""")
     );
   }
@@ -666,9 +666,9 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                    from abc import ABC, abstractmethod
 
                    @final
-                   class <warning descr="'Final' class could not contain abstract methods">A</warning>(ABC):
+                   class <warning descr="'Final' class cannot contain abstract methods">A</warning>(ABC):
                        @abstractmethod
-                       def <warning descr="'Final' class could not contain abstract methods">method</warning>(self):
+                       def <warning descr="'Final' class cannot contain abstract methods">method</warning>(self):
                            pass
                           \s
                    class B(ABC):
@@ -679,7 +679,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                    class C(ABC):
                        @final
                        @abstractmethod
-                       def <warning descr="'Final' could not be mixed with abstract decorators">method</warning>(self):
+                       def <warning descr="'Final' cannot be mixed with abstract decorators">method</warning>(self):
                            pass""");
   }
 
@@ -691,7 +691,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                    @final
                    class A:
                        @final
-                       def <weak_warning descr="No need to mark method in 'Final' class as '@final'">method</weak_warning>(self):
+                       def <weak_warning descr="No need to mark a method in the 'Final' class as '@final'">method</weak_warning>(self):
                            pass""");
   }
 

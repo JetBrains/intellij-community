@@ -38,7 +38,7 @@ class PyWithItemImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyWithItem {
       .let { (it as? PyCollectionType)?.elementTypes?.getOrNull(1) }
       .let {
         it == PyBuiltinCache.getInstance(this).boolType ||
-        it is PyLiteralType && PyEvaluator.getBooleanLiteralValue(it.expression) == true
+        it is PyLiteralType && it.boolValue == true
       }
   }
 }

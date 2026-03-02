@@ -38,6 +38,8 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   private final int myCacheSize;
   private final MVStore myStore;
 
+  private final long myInitialVersion;
+
   public PersistentMVStoreMapletFactory(String filePath, int maxBuilderThreads) throws IOException {
     Files.createDirectories(Path.of(filePath).getParent());
     myStore = new MVStore.Builder()
@@ -48,7 +50,7 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
       .cacheConcurrency(getConcurrencyLevel(maxBuilderThreads))
       .open();
     myStore.setVersionsToKeep(0);
-
+    myInitialVersion = myStore.getCurrentVersion();
     // MVStore counter-based enumerator?
     myEnumerator = new MVSEnumerator(myStore);
     final int maxGb = (int) (Runtime.getRuntime().maxMemory() / 1_073_741_824L);
@@ -66,6 +68,10 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
       next *= 2;
     }
     return result;
+  }
+
+  public boolean hasUpdates() {
+    return myInitialVersion != myStore.getCurrentVersion();
   }
 
   @Override

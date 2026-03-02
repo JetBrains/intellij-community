@@ -6585,6 +6585,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
                 runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/annotation.kt");
             }
 
+            @TestMetadata("clsParameter.kt")
+            public void testClsParameter() throws Exception {
+                runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/clsParameter.kt");
+            }
+
             @TestMetadata("comment.kt")
             public void testComment() throws Exception {
                 runTest("testData/inspectionsLocal/inconsistentCommentForJavaParameter/comment.kt");
@@ -16197,9 +16202,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPathNonOperator.kt");
         }
 
+        @TestMetadata("minusListOfPathWrapper.kt")
+        public void testMinusListOfPathWrapper() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusListOfPathWrapper.kt");
+        }
+
         @TestMetadata("minusMutableCollectionOfPath.kt")
         public void testMinusMutableCollectionOfPath() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusMutableCollectionOfPath.kt");
+        }
+
+        @TestMetadata("minusSequenceAndPathWrapper.kt")
+        public void testMinusSequenceAndPathWrapper() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceAndPathWrapper.kt");
         }
 
         @TestMetadata("minusSequenceOfPath.kt")
@@ -16207,9 +16222,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceOfPath.kt");
         }
 
+        @TestMetadata("minusSequenceandSequence.kt")
+        public void testMinusSequenceandSequence() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSequenceandSequence.kt");
+        }
+
         @TestMetadata("minusSetOfAny.kt")
         public void testMinusSetOfAny() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/minusSetOfAny.kt");
+        }
+
+        @TestMetadata("plusListAndSequence.kt")
+        public void testPlusListAndSequence() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListAndSequence.kt");
+        }
+
+        @TestMetadata("plusListOfCustomIterableSelfWithPath.kt")
+        public void testPlusListOfCustomIterableSelfWithPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfCustomIterableSelfWithPath.kt");
+        }
+
+        @TestMetadata("plusListOfIntWithList.kt")
+        public void testPlusListOfIntWithList() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfIntWithList.kt");
+        }
+
+        @TestMetadata("plusListOfIterableOfString.kt")
+        public void testPlusListOfIterableOfString() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfIterableOfString.kt");
         }
 
         @TestMetadata("plusListOfPath.kt")
@@ -16227,14 +16267,54 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPathNonOperator.kt");
         }
 
+        @TestMetadata("plusListOfPathWrapper.kt")
+        public void testPlusListOfPathWrapper() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfPathWrapper.kt");
+        }
+
+        @TestMetadata("plusListOfStringWithString.kt")
+        public void testPlusListOfStringWithString() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusListOfStringWithString.kt");
+        }
+
         @TestMetadata("plusMutableCollectionOfPath.kt")
         public void testPlusMutableCollectionOfPath() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusMutableCollectionOfPath.kt");
         }
 
+        @TestMetadata("plusPathAndPath.kt")
+        public void testPlusPathAndPath() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusPathAndPath.kt");
+        }
+
+        @TestMetadata("plusSequenceAndList.kt")
+        public void testPlusSequenceAndList() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndList.kt");
+        }
+
+        @TestMetadata("plusSequenceAndPathWrapper.kt")
+        public void testPlusSequenceAndPathWrapper() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndPathWrapper.kt");
+        }
+
+        @TestMetadata("plusSequenceAndSequence.kt")
+        public void testPlusSequenceAndSequence() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndSequence.kt");
+        }
+
+        @TestMetadata("plusSequenceAndSequenceNonOperator.kt")
+        public void testPlusSequenceAndSequenceNonOperator() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceAndSequenceNonOperator.kt");
+        }
+
         @TestMetadata("plusSequenceOfPath.kt")
         public void testPlusSequenceOfPath() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceOfPath.kt");
+        }
+
+        @TestMetadata("plusSequenceOfPathNonOperator.kt")
+        public void testPlusSequenceOfPathNonOperator() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath/plusSequenceOfPathNonOperator.kt");
         }
 
         @TestMetadata("plusSetOfAny.kt")

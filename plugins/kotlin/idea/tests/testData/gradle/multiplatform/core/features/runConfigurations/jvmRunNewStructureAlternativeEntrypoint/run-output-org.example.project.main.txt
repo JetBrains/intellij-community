@@ -1,6 +1,6 @@
-<time>: Executing 'run --quiet'…
+<time>: Executing ':desktopApp:run --quiet'…
 main function in foo.kt executed
 
-<time>: Execution finished 'run --quiet'.
+<time>: Execution finished ':desktopApp:run --quiet'.
 
 <exitCode: 0>

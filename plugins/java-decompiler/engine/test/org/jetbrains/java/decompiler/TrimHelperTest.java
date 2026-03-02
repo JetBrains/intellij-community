@@ -3,11 +3,11 @@ package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TrimHelperTest extends SingleClassesTestBase {
 

@@ -102,9 +102,10 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * @see NonBlockingReadAction#executeSynchronously for synchronous execution in background threads
    * @see CoroutinesKt#readAction for suspend contexts
    */
+  @SuppressWarnings("SSBasedInspection") // to not replace application call to ReadAction.compute
   @RequiresBlockingContext
   public static <E extends Throwable> void runBlocking(@NotNull ThrowableRunnable<E> action) throws E {
-    computeBlocking(() -> {
+    ApplicationManager.getApplication().runReadAction((ThrowableComputable<Object, E>)() -> {
       action.run();
       return null;
     });

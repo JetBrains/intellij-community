@@ -170,7 +170,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
       return CachedValuesManager.getCachedValue(file) {
         val checkedDomains = checkedDomains()
         val contents = HighlightingUtil.getAllFileTexts(file.viewProvider)
-        logger<GrazieInspection>().debug("Evaluating text length of: ${TextContentRelatedData(file, contents)}")
         val length = contents.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length }
         CachedValueProvider.Result.create(length > MAX_TEXT_LENGTH_IN_FILE, service<GrazieConfig>(), file)
       }
@@ -225,7 +224,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
       }
     }
 
-    data class TextContentRelatedData(private val psiFile: PsiFile, val contents: Collection<TextContent>) {
+    data class TextContentRelatedData(private val psiFile: PsiFile, val contents: List<TextContent>) {
       override fun toString(): String {
         return "[fileType = ${psiFile.viewProvider.virtualFile.fileType}, " +
                "fileLanguage = ${psiFile.language}, " +

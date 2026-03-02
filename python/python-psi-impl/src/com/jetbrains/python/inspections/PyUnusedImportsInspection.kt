@@ -415,7 +415,6 @@ class PyUnusedImportsInspection : PyInspection() {
     return "PyUnresolvedReferences"
   }
 
-  companion object {
-    private val KEY: Key<Visitor> = Key.create<Visitor>("PyUnusedImportsInspection.Visitor")
-  }
 }
+
+private val KEY: Key<PyUnusedImportsInspection.Visitor> = Key.create<PyUnusedImportsInspection.Visitor>("PyUnusedImportsInspection.Visitor")

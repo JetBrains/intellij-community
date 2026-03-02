@@ -12,13 +12,13 @@
     "test:jb-mcp": "JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG=1 JETBRAINS_MCP_STREAM_URL=http://127.0.0.1:64344/stream JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS=search_in_files_by_regex_directory_scope_ignored bun test ./integration-tests/jb-mcp-*.test.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "is-port-reachable": "^4.0.0",
     "p-retry": "^7.1.1",
     "picomatch": "^4.0.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^25.1.0"
+    "@types/node": "^25.3.0"
   }
 }

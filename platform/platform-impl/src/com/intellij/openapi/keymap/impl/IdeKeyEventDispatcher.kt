@@ -610,7 +610,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   @Suppress("NOTHING_TO_INLINE")
   private inline fun <T> runInReadActionConditionally(actions: List<AnAction>, supplier: Supplier<T>): T {
     return if (actions.any(Utils::isLockRequired)) {
-      ReadAction.compute<T, Throwable>(supplier::get)
+      ReadAction.computeBlocking<T, Throwable>(supplier::get)
     } else {
       supplier.get()
     }

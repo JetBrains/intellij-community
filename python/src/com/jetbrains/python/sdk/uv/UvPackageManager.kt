@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.cancelOnDispose
@@ -44,9 +47,12 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDe
     }
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> {
     return withUv { uv ->
-      if (sdk.uvUsePackageManagement) {
+      if (module != null) {
+        uv.addDependency(installRequest, emptyList(), PyWorkspaceMember(module.name))
+      }
+      else if (sdk.uvUsePackageManagement) {
         uv.installPackage(installRequest, emptyList())
       }
       else {
@@ -79,7 +85,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDe
         return@withUv PyResult.success(Unit)
       }
 
-      val (standalonePackages, declaredPackages) = categorizePackages(uv, pythonPackages).getOr {
+      val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages).getOr {
         return@withUv it
       }
 
@@ -91,14 +97,31 @@ internal class UvPackageManager(project: Project, sdk: Sdk, uvExecutionContextDe
   }
 
   override suspend fun extractDependencies(): PyResult<List<PythonPackage>> {
-    return withUv { uv -> uv.listTopLevelPackages() }
+    return listAllTopLevelPackages()
+  }
+
+  private suspend fun listAllTopLevelPackages(): PyResult<List<PythonPackage>> {
+    val modules = readAction { project.modules }
+    val allPackages = mutableSetOf<PythonPackage>()
+    var lastFailure: PyResult<List<PythonPackage>>? = null
+    for (module in modules) {
+      val result = withUv { uv -> uv.listTopLevelPackages(module) }
+      when (result) {
+        is Result.Success -> allPackages.addAll(result.result)
+        is Result.Failure -> lastFailure = result
+      }
+    }
+    if (allPackages.isEmpty() && lastFailure != null) {
+      return lastFailure
+    }
+    return PyResult.success(allPackages.distinctBy { it.name })
   }
 
   /**
    * Categorizes packages into standalone packages and pyproject.toml declared packages.
    */
-  private suspend fun categorizePackages(uv: UvLowLevel<*>, packages: Array<out String>): PyResult<Pair<List<PyPackageName>, List<PyPackageName>>> {
-    val dependencyNames = uv.listTopLevelPackages().getOr {
+  private suspend fun categorizePackages(packages: Array<out String>): PyResult<Pair<List<PyPackageName>, List<PyPackageName>>> {
+    val dependencyNames = listAllTopLevelPackages().getOr {
       return it
     }.map { it.name }
 

@@ -1,10 +1,17 @@
 ### auto-generated section `build fleet.ktor.client.cio` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "cio_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "cio",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
+  resources = [":cio_resources"],
   exports = [
     "@lib//:fleet-io-ktor-client-cio",
     "@lib//:fleet-io-ktor-client-core",
@@ -48,7 +55,7 @@ jvm_library(
   name = "cio_test_lib",
   module_name = "fleet.ktor.client.cio",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   exports = [
     "@lib//:fleet-io-ktor-client-cio",
     "@lib//:fleet-io-ktor-client-core",

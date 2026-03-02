@@ -20,7 +20,7 @@ jvm_library(
     "//platform/util",
     "//python/common",
     "//python/openapi:community",
-    "//python/python-process-output:processOutput",
+    "//python/python-process-output/common",
   ]
 )
 
@@ -35,7 +35,7 @@ jvm_library(
     "//platform/util:util_test_lib",
     "//python/common:common_test_lib",
     "//python/openapi:community_test_lib",
-    "//python/python-process-output:processOutput_test_lib",
+    "//python/python-process-output/common:common_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl.poetry.common` end

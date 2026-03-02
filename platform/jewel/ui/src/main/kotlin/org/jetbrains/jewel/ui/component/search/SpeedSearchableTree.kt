@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.component.search
 
 import androidx.compose.runtime.Composable
@@ -17,7 +17,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeyActions
+import org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewPointerEventAction
 import org.jetbrains.jewel.foundation.lazy.tree.KeyActions
+import org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
 import org.jetbrains.jewel.foundation.lazy.tree.Tree
 import org.jetbrains.jewel.foundation.lazy.tree.TreeState
 import org.jetbrains.jewel.foundation.lazy.tree.rememberTreeState
@@ -57,6 +59,7 @@ public fun <T> SpeedSearchScope.SpeedSearchableTree(
     onElementDoubleClick: (Tree.Element<T>) -> Unit = {},
     onSelectionChange: (List<Tree.Element<T>>) -> Unit = {},
     keyActions: KeyActions = DefaultTreeViewKeyActions(treeState),
+    pointerEventActions: PointerEventActions = DefaultTreeViewPointerEventAction(treeState),
     style: LazyTreeStyle = JewelTheme.treeStyle,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     nodeContent: @Composable (SelectableLazyItemScope.(Tree.Element<T>) -> Unit),
@@ -79,6 +82,7 @@ public fun <T> SpeedSearchScope.SpeedSearchableTree(
         onElementDoubleClick = onElementDoubleClick,
         onSelectionChange = onSelectionChange,
         keyActions = speedSearchKeyActions,
+        pointerEventActions = pointerEventActions,
         style = style,
         interactionSource = interactionSource,
     ) {

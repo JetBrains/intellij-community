@@ -15,6 +15,7 @@ import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 
 private data class ThreadEntry(
   val id: String,
@@ -23,6 +24,16 @@ private data class ThreadEntry(
   val name: String?,
   val summary: String?,
   val cwd: String?,
+  val sourceKind: String,
+  val sourceAsString: Boolean,
+  val sourceSubAgentFieldName: String,
+  val parentThreadId: String?,
+  val agentNickname: String?,
+  val agentRole: String?,
+  val statusType: String,
+  val statusActiveFlagsFieldName: String,
+  val activeFlags: List<String>,
+  val gitBranch: String?,
   var updatedAt: Long?,
   var updatedAtField: String?,
   val createdAt: Long?,
@@ -41,13 +52,18 @@ private data class RequestParams(
   val archived: Boolean? = null,
   val cursor: String? = null,
   val limit: Int? = null,
+  val cwd: String? = null,
+  val sourceKinds: Set<String>? = null,
 )
+
+private val DEFAULT_THREAD_LIST_SOURCE_KINDS = linkedSetOf("cli", "vscode", "appServer")
 
 internal object CodexTestAppServer {
   private val jsonFactory = JsonFactory()
   private const val CWD_MARKER_ENV = "CODEX_TEST_CWD_MARKER"
   private const val ERROR_METHOD_ENV = "CODEX_TEST_ERROR_METHOD"
   private const val ERROR_MESSAGE_ENV = "CODEX_TEST_ERROR_MESSAGE"
+  private const val REQUEST_LOG_ENV = "CODEX_TEST_REQUEST_LOG"
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -56,6 +72,7 @@ internal object CodexTestAppServer {
     val threads = loadThreads(configPath)
     val errorMethod = readEnv(ERROR_METHOD_ENV)
     val errorMessage = readEnv(ERROR_MESSAGE_ENV)
+    val requestLogPath = readEnv(REQUEST_LOG_ENV)?.let(Path::of)
     readEnv(CWD_MARKER_ENV)?.let(::writeWorkingDirectoryMarker)
     val reader = BufferedReader(InputStreamReader(System.`in`, StandardCharsets.UTF_8))
     val writer = BufferedWriter(OutputStreamWriter(System.out, StandardCharsets.UTF_8))
@@ -70,6 +87,7 @@ internal object CodexTestAppServer {
         null
       }
       if (request == null) continue
+      requestLogPath?.let { appendRequestLog(it, request.method) }
       if (errorMethod != null && request.method == errorMethod) {
         writeResponse(writer, request.id, ::writeEmptyObject, errorMessage = errorMessage ?: "Forced error")
         continue
@@ -93,6 +111,8 @@ internal object CodexTestAppServer {
             archived = archived,
             cursor = request.params.cursor,
             limit = request.params.limit,
+            cwd = request.params.cwd,
+            sourceKinds = request.params.sourceKinds,
           )
         })
         "thread/archive" -> {
@@ -127,6 +147,8 @@ internal object CodexTestAppServer {
       var paramsArchived: Boolean? = null
       var paramsCursor: String? = null
       var paramsLimit: Int? = null
+      var paramsCwd: String? = null
+      var paramsSourceKinds: MutableSet<String>? = null
       forEachObjectField(parser) { fieldName ->
         when (fieldName) {
           "id" -> id = readStringOrNull(parser)
@@ -140,6 +162,16 @@ internal object CodexTestAppServer {
                   "archived" -> paramsArchived = readBooleanOrNull(parser)
                   "cursor" -> paramsCursor = readStringOrNull(parser)
                   "limit" -> paramsLimit = readLongOrNull(parser)?.toInt()
+                  "cwd" -> paramsCwd = readStringOrNull(parser)
+                  "sourceKinds", "source_kinds" -> {
+                    if (parser.currentToken == JsonToken.START_ARRAY) {
+                      val kinds = paramsSourceKinds ?: LinkedHashSet<String>().also { paramsSourceKinds = it }
+                      parseStringArray(parser, kinds)
+                    }
+                    else {
+                      parser.skipChildren()
+                    }
+                  }
                   else -> parser.skipChildren()
                 }
                 true
@@ -155,7 +187,18 @@ internal object CodexTestAppServer {
       }
       val requestId = id?.takeIf { it.isNotBlank() } ?: return null
       val requestMethod = method?.takeIf { it.isNotBlank() } ?: return null
-      return Request(requestId, requestMethod, RequestParams(paramsId, paramsArchived, paramsCursor, paramsLimit))
+      return Request(
+        requestId,
+        requestMethod,
+        RequestParams(
+          id = paramsId,
+          archived = paramsArchived,
+          cursor = paramsCursor,
+          limit = paramsLimit,
+          cwd = paramsCwd,
+          sourceKinds = paramsSourceKinds,
+        )
+      )
     }
   }
 
@@ -199,6 +242,16 @@ internal object CodexTestAppServer {
     var name: String? = null
     var summary: String? = null
     var cwd: String? = null
+    var sourceKind = "cli"
+    var sourceAsString = false
+    var sourceSubAgentFieldName = "subAgent"
+    var parentThreadId: String? = null
+    var agentNickname: String? = null
+    var agentRole: String? = null
+    var statusType = "idle"
+    var statusActiveFlagsFieldName = "activeFlags"
+    val activeFlags = ArrayList<String>()
+    var gitBranch: String? = null
     var updatedAt: Long? = null
     var updatedAtField: String? = null
     var createdAt: Long? = null
@@ -212,6 +265,25 @@ internal object CodexTestAppServer {
         "name" -> name = readStringOrNull(parser)
         "summary" -> summary = readStringOrNull(parser)
         "cwd" -> cwd = readStringOrNull(parser)
+        "sourceKind" -> sourceKind = readStringOrNull(parser)?.takeIf { it.isNotBlank() } ?: sourceKind
+        "sourceAsString" -> sourceAsString = readBooleanOrNull(parser) ?: false
+        "sourceSubAgentFieldName" -> sourceSubAgentFieldName = readStringOrNull(parser)?.takeIf { it.isNotBlank() } ?: sourceSubAgentFieldName
+        "parentThreadId" -> parentThreadId = readStringOrNull(parser)
+        "agentNickname" -> agentNickname = readStringOrNull(parser)
+        "agentRole" -> agentRole = readStringOrNull(parser)
+        "statusType" -> statusType = readStringOrNull(parser)?.takeIf { it.isNotBlank() } ?: statusType
+        "statusActiveFlagsFieldName" -> {
+          statusActiveFlagsFieldName = readStringOrNull(parser)?.takeIf { it.isNotBlank() } ?: statusActiveFlagsFieldName
+        }
+        "activeFlags" -> {
+          if (parser.currentToken == JsonToken.START_ARRAY) {
+            parseStringArray(parser, activeFlags)
+          }
+          else {
+            parser.skipChildren()
+          }
+        }
+        "gitBranch" -> gitBranch = readStringOrNull(parser)
         "updated_at" -> {
           updatedAt = readLongOrNull(parser)
           updatedAtField = "updated_at"
@@ -241,6 +313,16 @@ internal object CodexTestAppServer {
       name = name,
       summary = summary,
       cwd = cwd,
+      sourceKind = sourceKind,
+      sourceAsString = sourceAsString,
+      sourceSubAgentFieldName = sourceSubAgentFieldName,
+      parentThreadId = parentThreadId,
+      agentNickname = agentNickname,
+      agentRole = agentRole,
+      statusType = statusType,
+      statusActiveFlagsFieldName = statusActiveFlagsFieldName,
+      activeFlags = activeFlags,
+      gitBranch = gitBranch,
       updatedAt = updatedAt,
       updatedAtField = updatedAtField,
       createdAt = createdAt,
@@ -286,9 +368,19 @@ private fun writeThreadList(
   archived: Boolean,
   cursor: String?,
   limit: Int?,
+  cwd: String?,
+  sourceKinds: Set<String>?,
 ) {
+  val effectiveSourceKinds = sourceKinds
+    ?.filterTo(LinkedHashSet()) { it.isNotBlank() }
+    ?.takeIf { it.isNotEmpty() }
+    ?: DEFAULT_THREAD_LIST_SOURCE_KINDS
   val sorted = threads
-    .filter { it.archived == archived }
+    .filter { thread ->
+      if (thread.archived != archived) return@filter false
+      if (cwd != null && thread.cwd != cwd) return@filter false
+      thread.sourceKind in effectiveSourceKinds
+    }
     .sortedByDescending { it.updatedAt ?: 0L }
   val pageStart = cursor?.toIntOrNull()?.coerceAtLeast(0) ?: 0
   val pageLimit = (limit ?: sorted.size).coerceAtLeast(1)
@@ -316,6 +408,20 @@ private fun writeThreadObject(generator: JsonGenerator, thread: ThreadEntry) {
   thread.name?.let { generator.writeStringField("name", it) }
   thread.summary?.let { generator.writeStringField("summary", it) }
   thread.cwd?.let { generator.writeStringField("cwd", it) }
+  generator.writeFieldName("source")
+  writeThreadSource(generator, thread)
+  thread.agentNickname?.let { generator.writeStringField("agentNickname", it) }
+  thread.agentRole?.let { generator.writeStringField("agentRole", it) }
+  generator.writeFieldName("status")
+  writeThreadStatus(generator, thread)
+  thread.gitBranch?.let { gitBranch ->
+    generator.writeFieldName("gitInfo")
+    generator.writeStartObject()
+    generator.writeNullField("sha")
+    generator.writeStringField("branch", gitBranch)
+    generator.writeNullField("originUrl")
+    generator.writeEndObject()
+  }
   thread.updatedAt?.let { updatedAt ->
     val field = thread.updatedAtField?.takeIf { it.isNotBlank() } ?: "updated_at"
     generator.writeNumberField(field, updatedAt)
@@ -323,6 +429,71 @@ private fun writeThreadObject(generator: JsonGenerator, thread: ThreadEntry) {
   thread.createdAt?.let { createdAt ->
     val field = thread.createdAtField?.takeIf { it.isNotBlank() } ?: "created_at"
     generator.writeNumberField(field, createdAt)
+  }
+  generator.writeEndObject()
+}
+
+private fun writeThreadSource(generator: JsonGenerator, thread: ThreadEntry) {
+  if (thread.sourceAsString) {
+    generator.writeString(thread.sourceKind)
+    return
+  }
+
+  when (thread.sourceKind) {
+    "subAgentThreadSpawn" -> {
+      generator.writeStartObject()
+      generator.writeFieldName(thread.sourceSubAgentFieldName)
+      generator.writeStartObject()
+      generator.writeFieldName("thread_spawn")
+      generator.writeStartObject()
+      generator.writeStringField("parent_thread_id", thread.parentThreadId ?: "missing-parent")
+      generator.writeNumberField("depth", 1)
+      if (thread.agentNickname == null) generator.writeNullField("agent_nickname") else generator.writeStringField("agent_nickname", thread.agentNickname)
+      if (thread.agentRole == null) generator.writeNullField("agent_role") else generator.writeStringField("agent_role", thread.agentRole)
+      generator.writeEndObject()
+      generator.writeEndObject()
+      generator.writeEndObject()
+    }
+
+    "subAgentReview" -> {
+      generator.writeStartObject()
+      generator.writeStringField(thread.sourceSubAgentFieldName, "review")
+      generator.writeEndObject()
+    }
+
+    "subAgentCompact" -> {
+      generator.writeStartObject()
+      generator.writeStringField(thread.sourceSubAgentFieldName, "compact")
+      generator.writeEndObject()
+    }
+
+    "subAgentOther" -> {
+      generator.writeStartObject()
+      generator.writeFieldName(thread.sourceSubAgentFieldName)
+      generator.writeStartObject()
+      generator.writeStringField("other", "custom")
+      generator.writeEndObject()
+      generator.writeEndObject()
+    }
+
+    "subAgent" -> {
+      generator.writeStartObject()
+      generator.writeStringField(thread.sourceSubAgentFieldName, "memory_consolidation")
+      generator.writeEndObject()
+    }
+
+    else -> generator.writeString(thread.sourceKind)
+  }
+}
+
+private fun writeThreadStatus(generator: JsonGenerator, thread: ThreadEntry) {
+  generator.writeStartObject()
+  generator.writeStringField("type", thread.statusType)
+  if (thread.statusType.equals("active", ignoreCase = true)) {
+    generator.writeFieldName(thread.statusActiveFlagsFieldName)
+    generator.writeStartArray()
+    thread.activeFlags.forEach(generator::writeString)
+    generator.writeEndArray()
   }
   generator.writeEndObject()
 }
@@ -338,6 +509,16 @@ private fun startThread(threads: MutableList<ThreadEntry>): ThreadEntry {
     name = null,
     summary = null,
     cwd = cwd,
+    sourceKind = "appServer",
+    sourceAsString = false,
+    sourceSubAgentFieldName = "subAgent",
+    parentThreadId = null,
+    agentNickname = null,
+    agentRole = null,
+    statusType = "idle",
+    statusActiveFlagsFieldName = "activeFlags",
+    activeFlags = emptyList(),
+    gitBranch = null,
     updatedAt = now,
     updatedAtField = "updated_at",
     createdAt = now,
@@ -348,41 +529,74 @@ private fun startThread(threads: MutableList<ThreadEntry>): ThreadEntry {
   return thread
 }
 
-  private fun updateArchive(id: String?, threads: MutableList<ThreadEntry>, archive: Boolean) {
-    if (id == null) return
-    val thread = threads.firstOrNull { it.id == id } ?: return
-    thread.archived = archive
-    thread.updatedAt = System.currentTimeMillis()
-    if (thread.updatedAtField.isNullOrBlank()) {
-      thread.updatedAtField = "updated_at"
+}
+
+private fun updateArchive(id: String?, threads: MutableList<ThreadEntry>, archive: Boolean) {
+  if (id == null) return
+  val thread = threads.firstOrNull { it.id == id } ?: return
+  thread.archived = archive
+  thread.updatedAt = System.currentTimeMillis()
+  if (thread.updatedAtField.isNullOrBlank()) {
+    thread.updatedAtField = "updated_at"
+  }
+}
+
+private fun readEnv(name: String): String? {
+  return System.getenv(name)?.trim()?.takeIf { it.isNotEmpty() }
+}
+
+private fun appendRequestLog(path: Path, method: String) {
+  try {
+    path.parent?.let(Files::createDirectories)
+    Files.writeString(
+      path,
+      "$method\n",
+      StandardCharsets.UTF_8,
+      StandardOpenOption.CREATE,
+      StandardOpenOption.WRITE,
+      StandardOpenOption.APPEND,
+    )
+  }
+  catch (_: Throwable) {
+  }
+}
+
+private fun writeWorkingDirectoryMarker(marker: String) {
+  try {
+    val markerPath = Path.of(marker)
+    val cwd = System.getProperty("user.dir")
+    Files.writeString(markerPath, cwd, StandardCharsets.UTF_8)
+  }
+  catch (_: Throwable) {
+  }
+}
+
+private fun readBooleanOrNull(parser: JsonParser): Boolean? {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_TRUE -> true
+    JsonToken.VALUE_FALSE -> false
+    JsonToken.VALUE_NUMBER_INT -> parser.intValue != 0
+    JsonToken.VALUE_STRING -> parser.text.toBoolean()
+    JsonToken.VALUE_NULL -> null
+    else -> {
+      parser.skipChildren()
+      null
     }
   }
+}
 
-  private fun readEnv(name: String): String? {
-    return System.getenv(name)?.trim()?.takeIf { it.isNotEmpty() }
-  }
-
-  private fun writeWorkingDirectoryMarker(marker: String) {
-    try {
-      val markerPath = Path.of(marker)
-      val cwd = System.getProperty("user.dir")
-      Files.writeString(markerPath, cwd, StandardCharsets.UTF_8)
+private fun parseStringArray(parser: JsonParser, target: MutableCollection<String>) {
+  while (true) {
+    val token = parser.nextToken() ?: return
+    if (token == JsonToken.END_ARRAY) return
+    if (token == JsonToken.VALUE_STRING) {
+      parser.text
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?.let(target::add)
     }
-    catch (_: Throwable) {
-    }
-  }
-
-  private fun readBooleanOrNull(parser: JsonParser): Boolean? {
-    return when (parser.currentToken) {
-      JsonToken.VALUE_TRUE -> true
-      JsonToken.VALUE_FALSE -> false
-      JsonToken.VALUE_NUMBER_INT -> parser.intValue != 0
-      JsonToken.VALUE_STRING -> parser.text.toBoolean()
-      JsonToken.VALUE_NULL -> null
-      else -> {
-        parser.skipChildren()
-        null
-      }
+    else {
+      parser.skipChildren()
     }
   }
 }

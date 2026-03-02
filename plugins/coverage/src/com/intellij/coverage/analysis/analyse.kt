@@ -46,11 +46,13 @@ internal fun collectOutputRoots(bundle: CoverageSuitesBundle, project: Project):
 
   val roots = hashMapOf<ModuleRequest, MutableList<RequestRoot>>()
   for ((root, module) in outputRoots) {
+    val outputRoot = VfsUtilCore.virtualToIoFile(root)
     for ((packageName, simpleName) in requestedPackages) {
       val packagePath = AnalysisUtils.fqnToInternalName(packageName)
-      val packageRoot = PackageAnnotator.findRelativeFile(packagePath, VfsUtilCore.virtualToIoFile(root))
-      if (packageRoot.exists()) {
-        roots.getOrPut(ModuleRequest(packageName, module)) { mutableListOf() }.add(RequestRoot(packageRoot, simpleName))
+      val isValidRoot = outputRoot.isDirectory || outputRoot.isFile && outputRoot.name.endsWith(".jar", ignoreCase = true)
+      if (isValidRoot) {
+        val requestRoot = RequestRoot(outputRoot, simpleName, packagePath)
+        roots.getOrPut(ModuleRequest(packageName, module)) { mutableListOf() }.add(requestRoot)
       }
     }
   }
@@ -58,7 +60,7 @@ internal fun collectOutputRoots(bundle: CoverageSuitesBundle, project: Project):
 }
 
 internal data class ModuleRequest(val packageName: String, val module: Module)
-internal data class RequestRoot(val root: File, val simpleName: String?)
+internal data class RequestRoot(val root: File, val simpleName: String?, val packagePathInRoot: String)
 
 private fun List<String>.removeSubPackages(): List<String> {
   val allPackages = this.sortedBy { it.length }

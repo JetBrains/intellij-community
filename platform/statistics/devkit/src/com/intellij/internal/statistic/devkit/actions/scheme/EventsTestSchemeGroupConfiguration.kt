@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions.scheme
 
-import com.fasterxml.jackson.core.JacksonException
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
@@ -50,6 +48,8 @@ import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBDimension
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.ObjectMapper
 import java.util.Collections
 import javax.swing.JComponent
 import javax.swing.JPanel

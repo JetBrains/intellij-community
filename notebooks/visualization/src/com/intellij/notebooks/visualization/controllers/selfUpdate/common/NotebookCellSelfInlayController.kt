@@ -35,12 +35,12 @@ abstract class NotebookCellSelfInlayController(
   private val highlighterController = object : NotebookCellSelfHighlighterController(editorCell) {
     override fun getHighlighterLayer(): Int = gutterHighlighterLayer
 
-    override fun createLineMarkerRender(rangeHighlighter: RangeHighlighterEx): NotebookLineMarkerRenderer? {
+    override fun createLineMarkerRender(rangeHighlighter: RangeHighlighterEx): NotebookLineMarkerRenderer {
       return this@NotebookCellSelfInlayController.createLineMarkerRender(rangeHighlighter)
     }
   }.also { Disposer.register(this, it) }
 
-  abstract fun createLineMarkerRender(createdHighlighter: RangeHighlighterEx): NotebookLineMarkerRenderer?
+  abstract fun createLineMarkerRender(createdHighlighter: RangeHighlighterEx): NotebookLineMarkerRenderer
 
   override fun checkAndRebuildInlays() {
     editor.notebookViewUpdater.update { updater ->
@@ -73,7 +73,6 @@ abstract class NotebookCellSelfInlayController(
       offset = offset
     )
   }
-
 
   internal fun isInlayCorrect(): Boolean {
     return inlay?.isValid == true && inlay?.offset == inlayOffset

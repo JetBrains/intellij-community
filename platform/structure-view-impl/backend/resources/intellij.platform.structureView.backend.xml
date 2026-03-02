@@ -1,0 +1,22 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.structureView.backend.StructureTreeApiProvider"/>
+    <applicationService serviceImplementation="com.intellij.platform.structureView.backend.BackendStructureTreeService" client="all"/>
+  </extensions>
+</idea-plugin>

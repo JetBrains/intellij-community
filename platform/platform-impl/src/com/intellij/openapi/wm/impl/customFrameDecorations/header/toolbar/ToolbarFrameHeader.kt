@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
@@ -69,6 +69,7 @@ internal class ToolbarFrameHeader(
   private val ideMenuBar: IdeJMenuBar,
   private val isAlwaysCompact: Boolean,
   private val isFullScreen: () -> Boolean,
+  private val projectFrameTypeIdProvider: () -> String?,
 ) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val ideMenuHelper = IdeMenuHelper(menu = ideMenuBar, coroutineScope = coroutineScope)
   private val menuBarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame, isGrey = {true}).apply {
@@ -153,7 +154,9 @@ internal class ToolbarFrameHeader(
             updateLayout()
           }
 
-          val compactHeader = isAlwaysCompact || isCompactHeader { computeMainActionGroups() }
+          val compactHeader = isAlwaysCompact || isCompactHeader {
+            computeMainActionGroups(projectFrameTypeId = projectFrameTypeIdProvider())
+          }
 
           when (mode) {
             ShowMode.TOOLBAR, ShowMode.TOOLBAR_WITH_MENU -> {

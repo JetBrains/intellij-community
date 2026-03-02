@@ -603,6 +603,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       return;
     }
 
+    if (isWriteAccessAllowed()) {
+      throw new IllegalStateException("Calling invokeAndWait from write-action leads to deadlock.");
+    }
+
     if (holdsReadLock()) {
       throw new IllegalStateException("Calling invokeAndWait from read-action leads to possible deadlock.");
     }

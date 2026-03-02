@@ -37,6 +37,13 @@ internal class BackendXDebugSessionTabApi : XDebugSessionTabApi {
     return manager.tabComponentEvents
   }
 
+  override suspend fun updateTabSelection(tabLayouterId: XDebugTabLayouterId, contentUniqueId: Int, isSelected: Boolean) {
+    val layouterModel = tabLayouterId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      layouterModel.setSelection(contentUniqueId, isSelected)
+    }
+  }
+
   override suspend fun tabLayouterEvents(tabLayouterId: XDebugTabLayouterId): Flow<XDebugTabLayouterEvent> {
     val layouterModel = tabLayouterId.findValue() ?: return emptyFlow()
     // TODO Support XDebugTabLayouter.registerConsoleContent

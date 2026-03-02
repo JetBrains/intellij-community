@@ -29,10 +29,12 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
@@ -90,6 +92,7 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionService
 import org.jetbrains.plugins.terminal.util.updateActionShortcut
 import java.awt.Color
 import java.awt.Component
@@ -112,6 +115,18 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
   helpTopic = "reference.settings.terminal",
   _id = TERMINAL_CONFIGURABLE_ID
 ) {
+  private val additionalConfigurables: ClearableLazyValue<List<UnnamedConfigurable>> = ClearableLazyValue.create {
+    @Suppress("DEPRECATION")
+    val old = LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) }
+    val new = TerminalSettingsProvider.EP_NAME.extensionList.mapNotNull { it.createConfigurable(project) }
+    new + old
+  }
+
+  private val blockTerminalConfigurables: ClearableLazyValue<List<UnnamedConfigurable>> = ClearableLazyValue.create {
+    @Suppress("DEPRECATION")
+    LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) }
+  }
+
   override fun createPanel(): DialogPanel {
     val optionsProvider = TerminalOptionsProvider.instance
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
@@ -225,7 +240,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
           panel {
             @Suppress("DEPRECATION")
-            configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getBlockTerminalConfigurable(project) })
+            configurables(blockTerminalConfigurables.value)
           }
 
         }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.NEW_TERMINAL))
@@ -419,9 +434,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                          .and(ComponentPredicate.fromValue(RunCommandUsingIdeUtil.isVisible)))
         }
         panel {
-          configurables(TerminalSettingsProvider.EP_NAME.extensionList.mapNotNull { it.createConfigurable(project) })
-          @Suppress("DEPRECATION")
-          configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
+          configurables(additionalConfigurables.value)
         }
         row(message("settings.cursor.shape.label")) {
           comboBox(
@@ -433,22 +446,28 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     }
   }
 
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    disposeConfigurables(additionalConfigurables)
+    disposeConfigurables(blockTerminalConfigurables)
+  }
+
+  private fun disposeConfigurables(lazy: ClearableLazyValue<List<UnnamedConfigurable>>) {
+    if (lazy.isCached) {
+      for (configurable in lazy.value) {
+        configurable.disposeUIResources()
+      }
+      lazy.drop()
+    }
+  }
+
   private fun createShellPathField(): TextFieldWithHistoryWithBrowseButton {
     val shellPathField = textFieldWithHistoryWithBrowseButton(
       project,
       FileChooserDescriptorFactory.singleFile().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
       historyProvider = {
-        // Use shells detector directly because this code is executed on backend.
-        // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
-        TerminalShellsDetector.detectShells().map { shellInfo ->
-          val filteredOptions = shellInfo.options.filter {
-            // Do not show login and interactive options in the UI.
-            // They anyway will be substituted implicitly in the shell starting logic.
-            // So, there is no need to specify them in the settings.
-            it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
-          }
-          val shellCommand = (listOf(shellInfo.path) + filteredOptions)
-          ParametersListUtil.join(shellCommand)
+        runWithModalProgressBlocking(project, "") {
+          detectAvailableShellCommandLines(project)
         }
       },
     )
@@ -458,6 +477,24 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       }
     })
     return shellPathField
+  }
+
+  private suspend fun detectAvailableShellCommandLines(project: Project): List<String> {
+    // Use shells detector directly because this code is executed on the backend.
+    // But in any other cases, shells should be fetched from the backend using TerminalShellsDetectionApi.
+    return TerminalShellsDetectionService.detectShells(project)
+      .environments
+      .flatMap { it.shells }
+      .map { shellInfo ->
+        val filteredOptions = shellInfo.options.filter {
+          // Do not show login and interactive options in the UI.
+          // They anyway will be substituted implicitly in the shell starting logic.
+          // So, there is no need to specify them in the settings.
+          it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
+        }
+        val shellCommand = (listOf(shellInfo.path) + filteredOptions)
+        ParametersListUtil.join(shellCommand)
+      }
   }
 }
 

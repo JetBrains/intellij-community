@@ -68,7 +68,8 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
         Key.create<Map<RangeMarker, Any>>("PySuggestedRefactoringStateChanges.ChangeSignature.DISAPPEARED_RANGES")
     }
 
-    override fun isApplicable(declaration: PsiElement): Boolean = PySuggestedRefactoringSupport.isAvailableForChangeSignature(declaration)
+    override fun isApplicable(declaration: PsiElement): Boolean =
+      PySuggestedRefactoringSupport.Helper.isAvailableForChangeSignature(declaration)
 
     override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature? {
       val signature = createSignatureData(declaration as PyFunction) ?: return null
@@ -148,7 +149,7 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
 
   private object RenameStateChanges : StateChangesInternal {
 
-    override fun isApplicable(declaration: PsiElement): Boolean = PySuggestedRefactoringSupport.isAvailableForRename(declaration)
+    override fun isApplicable(declaration: PsiElement): Boolean = PySuggestedRefactoringSupport.Helper.isAvailableForRename(declaration)
 
     override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature? {
       val name = (declaration as PsiNameIdentifierOwner).name ?: return null

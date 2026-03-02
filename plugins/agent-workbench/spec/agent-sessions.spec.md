@@ -1,124 +1,244 @@
 ---
 name: Agent Threads Tool Window
-description: Requirements for multi-provider session aggregation and tree behavior in Agent Threads.
+description: Requirements for the Swing Async Tree implementation of Agent Threads, including aggregation, loading, activation, tree lifecycle behavior, and UI-controller decomposition.
 targets:
-  - ../plugin/resources/META-INF/plugin.xml
-  - ../plugin-content.yaml
-  - ../sessions/src/*.kt
+  - ../sessions/src/**/*.kt
   - ../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../sessions/resources/messages/AgentSessionsBundle.properties
-  - ../chat/src/*.kt
+  - ../sessions/intellij.agent.workbench.sessions.iml
+  - ../sessions/BUILD.bazel
   - ../sessions/testSrc/*.kt
+  - ../chat/src/*.kt
 ---
 
 # Agent Threads Tool Window
 
 Status: Draft
-Date: 2026-02-19
+Date: 2026-03-01
 
 ## Summary
-Define the Agent Threads tool window as a provider-agnostic, project-scoped session browser. Threads from supported providers are aggregated per project/worktree, rendered in one tree, opened through a shared chat routing flow, and optionally archived when the provider supports archive.
+Define Agent Threads as a provider-agnostic, project-scoped browser implemented with native IntelliJ Swing tree APIs (`StructureTreeModel` + `AsyncTreeModel` + `Tree`).
+
+This spec owns:
+- session aggregation and loading lifecycle,
+- tree snapshot/rendering rules,
+- interaction policy (selection vs activation),
+- new-session affordances,
+- quota hint visibility behavior.
+
+Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 
 ## Goals
 - Keep project/worktree grouping deterministic across open and recent projects.
-- Aggregate provider results without dropping successful data when one provider fails.
-- Keep tree interactions predictable for load, warning, error, and paging states.
-- Preserve dedicated-frame vs current-project routing for thread and sub-agent opens.
+- Merge provider results without dropping successful data when one provider fails.
+- Keep refresh/on-demand behavior predictable under concurrency.
+- Follow IntelliJ tree conventions: single-click selects, activation happens on Enter or double-click, and double-click on openable rows prefers open/focus over expand/collapse.
+- Use one UI path only (Swing async tree), with no Compose compatibility layer.
 
 ## Non-goals
-- Thread transcript rendering or in-tree compose actions.
-- Search/filter UX beyond tree speed search.
-- Archived-thread browsing or unarchive actions.
+- Thread transcript rendering.
+- Reintroducing Compose/Jewel UI in the sessions module.
+- Feature-flagged dual-path UI rollout for sessions.
+- Backend-specific rollout parsing rules (owned by Codex rollout spec).
+- Shared command/action contracts (owned by core contracts spec).
+
+## Architecture Decision
+- The sessions tool window must use IntelliJ-native Swing async tree infrastructure.
+  Rationale: this aligns interaction semantics with platform conventions, removes duplicate UI stacks in the plugin, and reduces maintenance/testing overhead.
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
+
+- The sessions tool-window UI implementation must be decomposed into small, single-purpose Swing modules instead of a monolithic panel file.
+  Required decomposition:
+  - composition root panel (`AgentSessionsToolWindowPanel`),
+  - tree state controller,
+  - tree interaction controller,
+  - tree data-context provider,
+  - row-action overlay,
+  - renderer/layout/presentation helpers,
+  - quota-hint controller/panel.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
 ## Requirements
-- Project registry must merge currently open projects and recent projects, excluding the dedicated frame project.
-- Git worktrees must be represented under parent projects when detected.
-- Default session sources must include Codex and Claude providers.
-- Thread identity must include provider + session id to avoid collisions across providers.
-- Provider results for a project/worktree load must be merged and sorted by `updatedAt` descending.
-- If at least one provider succeeds, successful threads must be shown and failed providers must surface provider-local warning rows.
-- If all providers fail for a project/worktree load, show blocking project/worktree error state and suppress provider warning rows for that load.
-- Unknown provider totals must propagate via `hasUnknownThreadCount` and drive unknown-count `More…` rendering.
-- Sessions tree UI state must persist by normalized path:
-  - collapsed project/worktree state,
-  - per-path visible thread count,
-  - open-path thread preview cache.
-- Refresh bootstrap must immediately seed open project/worktree nodes from cached previews when available and mark those paths loaded until live provider results arrive.
-- Refresh bootstrap must restore persisted visible thread counts above default for known project/worktree paths.
-- Refresh bootstrap must retain preview cache only for currently open project/worktree paths and prune stale closed-path entries.
-- Final merged refresh results must update preview cache for a path only when that path does not end in blocking error.
-- Auto-open default project expansion must skip paths persisted as collapsed.
-- User collapse/expand interactions must update persisted collapsed state.
-- Cached preview entries must preserve provider identity; missing legacy provider value must default to Codex for backward compatibility.
-- `More` and programmatic visibility expansion (`ensureThreadVisible`) must persist visible-count increments in tree UI state.
-- On-demand project/worktree loading must deduplicate concurrent requests for the same path.
-- Concurrent refresh requests must be deduplicated while a refresh is already running.
-- Project primary click must open/focus the project; closed projects must expose `Open` in context menu.
-- Thread/sub-agent opens must route according to `agent.workbench.chat.open.in.dedicated.frame`.
-- Session-driven thread title refresh must update open chat tab metadata and trigger editor tab presentation refresh.
-- Session source update observation and refresh scheduling must be event-driven; periodic observer polling loops are not allowed.
-- Resume command must be provider-specific:
-  - Codex: `codex resume <sessionId>`
-  - Claude: `claude --resume <sessionId>`
-- New-session action behavior (provider options, Codex/Claude command mapping, and Full Auto semantics) is defined in `spec/actions/new-thread.spec.md` and must be used by both project and worktree rows.
-- Thread context menu must expose `Archive` only when the corresponding provider bridge advertises archive capability.
-- Editor tab popup actions for the currently selected Agent chat tab must expose:
-  - `Open in Agent Threads`,
-  - `Archive Thread`,
-  - `Copy Thread ID`.
-- Editor-tab `Archive Thread` must reuse the same provider archive-capability gate as thread-row archive action.
-- Editor-tab `Open in Agent Threads` must call `ensureThreadVisible(path, provider, threadId)` before activating the Agent Threads tool window.
-- User-visible labels for session entities must use `Thread`; `Chat` terminology is reserved for editor-tab/file surface.
-- Archive action requests must be deduplicated per `(path, provider, threadId)` while in flight.
-- Successful archive must optimistically remove the thread from current state and then trigger refresh.
-- Successful archive must close all open Agent chat tabs for the same normalized project path and thread identity (`provider:threadId`) and delete corresponding chat metadata files.
-- Archive failures (provider missing, unsupported, or backend error) must resolve to provider-unavailable warning behavior.
-- Codex thread discovery must default to rollout session files; app-server thread discovery remains an explicit compatibility override path.
-- Codex thread title normalization and filtering rules are defined in `spec/agent-sessions-codex-rollout-source.spec.md` and must be used for Codex thread rows.
-- Branch mismatch between thread origin and current worktree branch must show a warning confirmation before opening chat.
+- Project registry must merge open projects and recent projects, excluding the dedicated-frame project.
+  [@test] ../sessions/testSrc/AgentSessionsProjectCatalogTest.kt
 
-[@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
-[@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
-[@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
-[@test] ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
-[@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
-[@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
-[@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
-[@test] ../sessions/testSrc/AgentSessionsToolWindowTest.kt
-[@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
+- Git worktrees must be represented under parent projects when detected.
+  [@test] ../sessions/testSrc/GitWorktreeDiscoveryTest.kt
+
+- Default session-source registration must include Codex and Claude provider bridges.
+  [@test] ../sessions/testSrc/AgentSessionProviderBridgesTest.kt
+
+- Provider results for a path load must be merged and sorted by `updatedAt` descending.
+  [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+
+- If at least one provider succeeds, successful threads must be shown and failed providers must surface provider-local warning rows.
+  [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
+
+- If all providers fail for a path load, a blocking path error must be shown and provider warning rows for that load must be suppressed.
+  [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
+
+- Unknown provider totals must propagate through `hasUnknownThreadCount` to tree state.
+  [@test] ../sessions/testSrc/AgentSessionLoadAggregationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeRenderingTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+
+- Refresh bootstrap must seed open project/worktree paths from preview cache immediately and keep those paths marked loaded until live provider results arrive.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+
+- Refresh bootstrap visibility-restoration behavior must follow `spec/agent-sessions-thread-visibility.spec.md`.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+
+- Refresh bootstrap must retain preview cache only for currently open project/worktree paths and prune stale closed-path entries.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+
+- Final refresh results must update preview cache only for paths that are not in blocking error state.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+
+- Explicit refresh must set loading state only for project/worktree paths in the active refresh load scope; rows outside that scope must not show loading indicators.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+
+- For refreshed project/worktree paths, loading state must remain visible until provider loading for that path is complete; first partial provider success must not clear loading.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+
+- Auto-open default project expansion must skip paths persisted as collapsed.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeStatePersistenceTest.kt
+
+- User collapse/expand interactions must update persisted collapsed state.
+  [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
+
+- Cached preview entries missing legacy provider value must default provider to Codex for backward compatibility.
+  [@test] ../sessions/testSrc/AgentSessionsTreeUiStateServiceTest.kt
+
+- On-demand loading must deduplicate concurrent requests for the same normalized path.
+  [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
+
+- Refresh requests must be coalesced while processing is in progress; catalog-sync requests must not be dropped, and any queued full refresh must take precedence.
+  [@test] ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
+
+- Project open/close lifecycle updates must run catalog sync and load threads only for newly opened paths; already open paths must not be reloaded by lifecycle updates.
+  [@test] ../sessions/testSrc/AgentSessionsServiceRefreshIntegrationTest.kt
+
+- Session-source update observation and refresh scheduling must be event-driven; periodic polling loops are not allowed.
+  [@test] ../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
+
+- Tree rendering must preserve precedence and exclusivity rules:
+  - error row suppresses warning/empty rows for that path,
+  - warning rows suppress empty row,
+  - `More` rows preserve exact/unknown count semantics.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeRenderingTest.kt
+
+- Activation policy must follow IntelliJ tree conventions:
+  - single-click selects rows,
+  - single-click actions are reserved for `More...` rows,
+  - Enter/double-click open project/worktree/thread/sub-agent rows,
+  - for rows that are both openable and parents, double-click prefers open/focus and does not toggle expansion.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
+
+- Context-menu selection policy must preserve multi-selection when right-clicking an already selected row and retarget selection when right-clicking an unselected row.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
+
+- Sessions tree popup for project/worktree rows must preserve platform `CopyReferencePopupGroup` so `Copy Path` / `Copy Reference` actions (including keymap shortcuts) remain available.
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+
+- Thread and sub-agent open routing must follow mode policy defined in `spec/agent-dedicated-frame.spec.md`.
+  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
+
+- Dedicated-frame project switching controls and window-order policy must follow `spec/agent-dedicated-frame-project-switching.spec.md`.
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+
+- Tree/chat tab selection synchronization must resolve project/worktree/thread/sub-agent identities to stable tree IDs.
+  [@test] ../sessions/testSrc/SessionTreeSelectionSyncTest.kt
+
+- New-session row affordances for project/worktree rows must be hover-or-selection based and must offer:
+  - quick create with last used provider when standard mode is supported,
+  - provider popup entries split into Standard and YOLO sections.
+  [@test] ../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+
+- Session-driven thread title updates must refresh open chat tab metadata and editor-tab presentation.
+  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
+
+- Codex thread discovery must default to app-server source; rollout discovery remains an explicit compatibility override defined in `spec/agent-sessions-codex-rollout-source.spec.md`.
+  [@test] ../codex/sessions/testSrc/CodexSessionBackendSelectorTest.kt
+
+- Branch mismatch between thread origin and current worktree branch must show warning confirmation before opening chat.
+  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
+
+- Shared command mapping, editor-tab popup actions, archive gating, and visibility primitives must follow `spec/agent-core-contracts.spec.md`.
+  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+
+- Batch archive must archive all targets whose providers support archive, while unsupported targets are skipped without blocking successful targets.
+  [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+
+- Unarchive flow for previously archived Codex targets must restore thread visibility on refresh without requiring tool-window recreation.
+  [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
+
+- Tool window factory must create Swing panel content and register tool-window title and gear actions.
+  [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsGearActionsTest.kt
+
+- `AgentSessionsToolWindowPanel` must stay a thin composition root and delegate behavior to extracted controllers/services.
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingTreeInteractionTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
+
+- Claude quota hint visibility and acknowledgement must follow eligibility/ack/widget-enabled gating rules.
+  [@test] ../sessions/testSrc/AgentSessionsSwingQuotaHintTest.kt
+  [@test] ../sessions/testSrc/AgentSessionsClaudeQuotaWidgetActionRegistrationTest.kt
 
 ## User Experience
 - Project rows are always expandable and may show worktree children.
-- Thread rows show title, provider marker, and short relative time.
-- Provider warning rows are non-blocking and shown inline in the same project/worktree section.
-- Blocking errors show retry action inline.
-- `More...`/`More…` behavior follows `spec/agent-sessions-thread-visibility.spec.md`.
-- Agent chat editor tabs expose `Open in Agent Threads`, `Archive Thread`, and `Copy Thread ID` in editor-tab context menu when a chat tab is selected.
+- Open project rows must be visually emphasized via stronger title weight.
+- Closed project rows must remain readable but visually de-emphasized relative to open rows.
+- Default project visibility must include all open projects and up to 3 closed recent projects; additional closed projects appear behind `More`.
+- Thread rows use a provider-aware leading icon; non-`READY` activities add an overlay badge, and rows show a right-aligned relative activity time.
+- Thread-row archive context menu applies to current multi-selection when invoked from a selected thread and shows `Archive Selected (N)` when `N > 1`.
+- Single-click on normal rows selects only; open happens on Enter or double-click.
+- On rows that are both openable and parents, double-click opens/focuses instead of expanding/collapsing.
+- Expand/collapse remains available through disclosure controls and keyboard tree actions.
+- Project/worktree rows expose new-session affordances when hovered/selected.
+- Project/worktree rows being refreshed show a right-side loading indicator in the row action area while refresh is in progress.
+- Project/worktree row context menus include the standard platform copy path/reference group.
+- Provider warnings are inline and non-blocking when partial data exists.
+- Blocking errors are inline and non-openable.
 
 ## Data & Backend
-- Open projects use long-lived provider sessions where available.
-- Closed project/worktree loads may use short-lived provider calls scoped to path.
-- Provider sources may have different pagination/count capabilities; aggregation layer normalizes into a single state model.
-- Do not force global CLI home overrides from sessions service; provider clients own their process environment rules.
+- Open projects may use long-lived provider sessions where available.
+- Closed project/worktree loads may use path-scoped short-lived provider calls.
+- Aggregation normalizes provider differences (paging/count capability) into one state model.
+- Sessions service must not impose global CLI home overrides; provider clients own process environment rules.
+- UI-layer migration to Swing does not change backend/service contracts.
 
 ## Error Handling
-- Missing provider CLI/tooling must resolve to provider-specific user-facing messages.
-- Unexpected provider failures must resolve to generic provider-unavailable warnings when partial data exists.
-- Refresh/load failures must preserve already loaded thread data when possible.
-- Archive chat-metadata cleanup failures must be logged and must not block successful thread removal and refresh behavior.
+- Missing provider tooling must produce provider-specific messages.
+- Unexpected provider failures must map to provider-unavailable warnings when partial data exists.
+- Load failures should preserve previously loaded thread data where safe.
+- Batch archive/unarchive failures should isolate to failing targets and preserve successful target state updates.
+- Chat metadata cleanup failures during archive must be logged and must not block successful thread removal/refresh.
 
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionLoadAggregationTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsService*IntegrationTest'`
-- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsSwing*Test'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsToolWindowFactorySwingTest'`
 
 ## Open Questions / Risks
-- Thread/sub-agent provider coverage can expand; additional provider-specific UX may be needed.
-- Worktree discovery quality depends on Git metadata availability.
+- New providers may require additional provider-specific warning or context-row UX.
+- Worktree discovery quality depends on Git metadata completeness.
 
 ## References
+- `spec/agent-core-contracts.spec.md`
 - `spec/agent-sessions-thread-visibility.spec.md`
 - `spec/agent-dedicated-frame.spec.md`
+- `spec/agent-dedicated-frame-project-switching.spec.md`
 - `spec/agent-chat-editor.spec.md`
 - `spec/actions/new-thread.spec.md`
 - `spec/agent-sessions-codex-rollout-source.spec.md`

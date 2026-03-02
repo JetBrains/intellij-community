@@ -13,7 +13,6 @@ plugins {
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   alias(jps.plugins.ksp)
-  alias(jps.plugins.rhizomedb)
   id("fleet-ksp-plugin")
   // GRADLE_PLUGINS__MARKER_END
 }

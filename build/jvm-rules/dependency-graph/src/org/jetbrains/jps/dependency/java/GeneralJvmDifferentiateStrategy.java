@@ -9,11 +9,14 @@ import org.jetbrains.jps.dependency.Graph;
 import org.jetbrains.jps.dependency.LogConsumer;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.diff.Difference;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -53,6 +56,7 @@ public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrat
       new Object() {
         private final Predicate<? super NodeSource> inCurrentChunk = context.getParams().belongsToCurrentCompilationChunk();
         private final Set<NodeSource> baseSources = delta.getBaseSources();
+        private final Map<ReferenceID, Boolean> traversed = new HashMap<>();
 
         private boolean isMarked(NodeSource src) {
           return isMarked(Collections.singleton(src));
@@ -63,6 +67,13 @@ public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrat
         }
 
         boolean traverse(JvmClass cl, boolean isRoot) {
+          if (!isRoot) {
+            Boolean cached = traversed.get(cl.getReferenceID());
+            if (cached != null) {
+              return cached;
+            }
+            traversed.put(cl.getReferenceID(), Boolean.FALSE); // default value for cycle safety; overwritten with the actual result below
+          }
           boolean parentsMarked = false;
           if (cl.isLibrary()) {
             return parentsMarked;
@@ -83,7 +94,9 @@ public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrat
               context.affectNodeSource(source);
             }
           }
-          return parentsMarked || isMarked(nodeSources);
+          boolean result = parentsMarked || isMarked(nodeSources);
+          traversed.put(cl.getReferenceID(), result);
+          return result;
         }
 
         void markSources() {

@@ -14,11 +14,13 @@ import org.jetbrains.annotations.Nullable;
 public final class RawIncludedRuntimeModule {
   private final RuntimeModuleId myModuleId;
   private final RuntimeModuleLoadingRule myLoadingRule;
+  private final @Nullable RuntimeModuleId myRequiredIfAvailableId;
 
   @ApiStatus.Internal
-  public RawIncludedRuntimeModule(@NotNull RuntimeModuleId moduleId, @NotNull RuntimeModuleLoadingRule loadingRule) {
+  public RawIncludedRuntimeModule(@NotNull RuntimeModuleId moduleId, @NotNull RuntimeModuleLoadingRule loadingRule, @Nullable RuntimeModuleId requiredIfAvailableId) {
     myModuleId = moduleId;
     myLoadingRule = loadingRule;
+    myRequiredIfAvailableId = requiredIfAvailableId;
   }
 
   public @NotNull RuntimeModuleId getModuleId() {
@@ -27,6 +29,10 @@ public final class RawIncludedRuntimeModule {
 
   public @NotNull RuntimeModuleLoadingRule getLoadingRule() {
     return myLoadingRule;
+  }
+
+  public @Nullable RuntimeModuleId getRequiredIfAvailableId() {
+    return myRequiredIfAvailableId;
   }
 
   @Override

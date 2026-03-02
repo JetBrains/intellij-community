@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.system;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -63,17 +63,17 @@ public enum OS {
    * Returns an instance of {@link OsInfo} for the current OS.
    */
   public final @NotNull OsInfo getOsInfo() {
-    return
+    return (
       this == Windows ? WindowsInfo.INSTANCE :
       this == macOS ? MacOsInfo.INSTANCE :
       this == Linux ? LinuxInfo.INSTANCE :
-      UnixInfo.INSTANCE;
+      UnixInfo.INSTANCE
+    );
   }
 
   /** Represents an operating system this JVM is running on */
   public static final OS CURRENT = fromString(System.getProperty("os.name"));
 
-  @SuppressWarnings("SpellCheckingInspection")
   public static @NotNull OS fromString(@Nullable String os) {
     if (os != null) {
       os = os.toLowerCase(Locale.ENGLISH);

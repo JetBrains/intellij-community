@@ -100,23 +100,31 @@ value class Either<out T, E> internal constructor(
 }
 
 val <T, E> Either<T, E>.value: T
-  get() = requireNotNull(valueOrNull) { "Not a Value" }
+  get() {
+    require(isValue) { "Not a Value" }
+    @Suppress("UNCHECKED_CAST")
+    return valueOrNull as T
+  }
 
 val <T, E> Either<T, E>.error: E
-  get() = requireNotNull(errorOrNull) { "Not a Error" }
+  get() {
+    require(isError) { "Not a Error" }
+    @Suppress("UNCHECKED_CAST")
+    return errorOrNull as E
+  }
 
 inline fun <T, E, R> Either<T, E>.flatMap(f: (T) -> Either<R, E>): Either<R, E> =
   @Suppress("UNCHECKED_CAST")
   when (this.isValue) {
     false -> this as Either<R, E>
-    else -> f(valueOrNull!!)
+    else -> f(value)
   }
 
 inline fun <T, E, R> Either<T, E>.map(f: (T) -> R): Either<R, E> =
   @Suppress("UNCHECKED_CAST")
   when (this.isValue) {
     false -> this as Either<R, E>
-    true -> Either.value(f(valueOrNull!!))
+    true -> Either.value(f(value))
   }
 
 inline fun <T, E, R> Either<T, E>.mapError(f: (E) -> R): Either<T, R> =

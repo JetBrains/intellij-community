@@ -84,5 +84,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
   </component>
 </module>

@@ -551,12 +551,12 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     for (NullabilityProblem<?> problem : problems) {
       PsiExpression expression = problem.getDereferencedExpression();
       boolean nullLiteral = ExpressionUtils.isNullLiteral(expression);
-      if (!REPORT_UNSOUND_WARNINGS) {
-        if (expression == null || !nullLiteral && CommonDataflow.getDfType(expression, IGNORE_ASSERT_STATEMENTS) != DfTypes.NULL) continue;
+      boolean alwaysNull = problem.isAlwaysNull(IGNORE_ASSERT_STATEMENTS);
+      if (!REPORT_UNSOUND_WARNINGS && !alwaysNull) {
+        continue;
       }
       // Expression of null type: could be failed LVTI, skip it to avoid confusion
       if (expression != null && !nullLiteral && PsiTypes.nullType().equals(expression.getType())) continue;
-      boolean alwaysNull = problem.isAlwaysNull(IGNORE_ASSERT_STATEMENTS);
       NullabilityProblemKind.innerClassNPE.ifMyProblem(problem, newExpression -> {
         List<LocalQuickFix> fixes = createNPEFixes(newExpression.getQualifier(), newExpression, reporter.isOnTheFly(), alwaysNull);
         reporter

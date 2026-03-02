@@ -11,11 +11,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyNames.isPrivate
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.PyNames.isPrivate
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyArgumentList
@@ -46,6 +46,8 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
@@ -167,12 +169,12 @@ object PyCallExpressionHelper {
       val result = mutableListOf<PyType?>()
       if (clarified != null) {
         typeFromProviders.toStream().forEach {
-          ContainerUtil.addIfNotNull<PyCallableType?>(result, toCallableType(expression, clarified, it, resolveContext.typeEvalContext))
+          ContainerUtil.addIfNotNull(result, toCallableType(expression, clarified, it, resolveContext.typeEvalContext))
         }
 
         if (result.isEmpty()) {
           val clarifiedResolved = clarified.clarifiedResolved as? PyTypedElement ?: continue
-          ContainerUtil.addIfNotNull<PyCallableType?>(
+          ContainerUtil.addIfNotNull(
             result,
             toCallableType(expression, clarified, resolveContext.typeEvalContext.getType(clarifiedResolved), resolveContext.typeEvalContext)
           )

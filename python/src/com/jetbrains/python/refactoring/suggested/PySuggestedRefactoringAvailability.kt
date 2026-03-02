@@ -12,17 +12,17 @@ import com.intellij.refactoring.suggested.SuggestedRenameData
 internal class PySuggestedRefactoringAvailability(support: PySuggestedRefactoringSupport) : SuggestedRefactoringAvailability(support) {
 
   override fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
-    return PySuggestedRefactoringSupport.shouldSuppressRefactoringForDeclaration(state)
+    return PySuggestedRefactoringSupport.Helper.shouldSuppressRefactoringForDeclaration(state)
   }
 
   override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
     val declaration = state.declaration
     return when {
       declaration == null -> null
-      PySuggestedRefactoringSupport.isAvailableForChangeSignature(declaration) -> {
+      PySuggestedRefactoringSupport.Helper.isAvailableForChangeSignature(declaration) -> {
         SuggestedChangeSignatureData.create(state, RefactoringBundle.message("suggested.refactoring.usages"))
       }
-      PySuggestedRefactoringSupport.isAvailableForRename(declaration) -> {
+      PySuggestedRefactoringSupport.Helper.isAvailableForRename(declaration) -> {
         SuggestedRenameData(declaration as PsiNameIdentifierOwner, state.oldSignature.name)
       }
       else -> null

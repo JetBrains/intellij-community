@@ -24,7 +24,6 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.notebook.editor.BackedVirtualFileProvider;
@@ -128,6 +127,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.codeInsight.daemon.impl.FileLevelComponentUtil.doAddFileLevelInfoComponent;
 import static com.intellij.codeInsight.daemon.impl.FileLevelComponentUtil.doRemoveFileLevelInfoComponent;
+import static com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesKt.isBackgroundActivitiesSuppressedSync;
 
 @State(name = "DaemonCodeAnalyzer", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 @ApiStatus.Internal
@@ -1112,7 +1112,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       // take a number of queued requests to update and pretend we execute them all (they are all the same, so one is enough)
       long requestDelta = analyzer.getDelta();
       try {
-        if (!project.isDefault() && project.isInitialized() && !LightEdit.owns(project)) {
+        if (!project.isDefault() && project.isInitialized() && !isBackgroundActivitiesSuppressedSync(project)) {
           String result = analyzer.runUpdate();
           if (LOG.isDebugEnabled()) {
             LOG.debug("runUpdate result: " + result+"; requestDelta:"+requestDelta);
@@ -1187,6 +1187,17 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         LOG.debug("runUpdate activeEditors: ("+activeEditors.size()+"): "+ContainerUtil.map(activeEditors, e->e+"("+e.getClass()+") for file "+e.getFile()));
       }
       for (FileEditor fileEditor : activeEditors) {
+        DaemonProgressIndicator existingProgress;
+        synchronized (this) {
+          existingProgress = myUpdateProgress.get(fileEditor);
+          if (existingProgress != null && !existingProgress.isCanceled()) {
+            if (PassExecutorService.LOG.isDebugEnabled()) {
+              PassExecutorService.log(existingProgress, null, "found already running progress, will continue running it ", fileEditor);
+            }
+            submitted = true; // there's existing running progress already; since nobody's canceled it, it can continue. Let's pretend we submitted stuff successfully
+            continue;
+          }
+        }
         if (fileEditor instanceof TextEditor textEditor && !textEditor.isEditorLoaded()) {
           // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
           // for instance, `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
@@ -1535,8 +1546,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
 
     // tests usually care about just one explicitly configured editor
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      for (FileEditor tabEditor : getFileEditorManager().getSelectedEditorWithRemotes()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() || activeTextEditors.isEmpty()) {
+      Collection<FileEditor> selectedEditors = getFileEditorManager().getSelectedEditorWithRemotes();
+      for (FileEditor tabEditor : selectedEditors) {
         if (!isValidEditor(tabEditor)) continue;
 
         if (tabEditor instanceof FileEditorWithTextEditors delegate) {

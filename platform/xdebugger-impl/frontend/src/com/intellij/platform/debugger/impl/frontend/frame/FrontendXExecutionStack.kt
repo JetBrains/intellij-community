@@ -15,6 +15,7 @@ import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +28,12 @@ internal class FrontendXExecutionStack(
   private val project: Project,
   private val suspendContextLifetimeScope: CoroutineScope,
 ) : XExecutionStack(stackDto.displayName, stackDto.icon?.icon()) {
+  init {
+    suspendContextLifetimeScope.launch {
+      stackDto.iconFlow.toFlow().collect { iconId -> icon = iconId?.icon() }
+    }
+  }
+
   val id: XExecutionStackId = stackDto.executionStackId
 
   private val topValue: CompletableFuture<XStackFrame?> = stackDto.topFrame.asCompletableFuture().thenApply<XStackFrame> { frameDto ->
@@ -57,7 +64,15 @@ internal class FrontendXExecutionStack(
             //  However, maybe it's possible to set up, for example, a scope that ends when another stack is selected from a combobox.
             //  But it requires further investigation.
             val feFrames = event.frames.map { suspendContextLifetimeScope.getOrCreateStackFrame(it, project) }
-            container.addStackFrames(feFrames, event.last)
+            if (container is XStackFrameContainerEx) {
+              val frameToSelect = event.frameToSelectId?.let { frameToSelectId ->
+                feFrames.firstOrNull { it.id == frameToSelectId }
+              }
+              container.addStackFrames(feFrames, frameToSelect, event.last)
+            }
+            else {
+              container.addStackFrames(feFrames, event.last)
+            }
           }
           is XStackFramesEvent.NewPresentation -> {
             val frame = suspendContextLifetimeScope.findStackFrame(event.stackFrameId)

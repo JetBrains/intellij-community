@@ -5,9 +5,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
 import com.intellij.ide.util.gotoByName.LanguageRef;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +25,8 @@ import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplK
  */
 public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor implements PossibleSlowContributor,
                                                                                             SearchEverywherePreviewProvider {
+
+  private static final Logger LOG = Logger.getInstance(SymbolSearchEverywhereContributor.class);
 
   private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
 
@@ -60,7 +64,25 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     final var contribModules = getContributorModules();
     if (contribModules != null) {
       for (final var it : contribModules) {
-        var customModel = it.createCustomModel(project, this);
+        var customModel = it.createCustomModel(project, this, null);
+        if (customModel != null) return customModel;
+      }
+    }
+
+    GotoSymbolModel2 model = new GotoSymbolModel2(project, this);
+    if (myFilter != null) {
+      model.setFilterItems(myFilter.getSelectedElements());
+    }
+    return model;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  protected @NotNull FilteringGotoByModel<?> createModelWithOperationDisposable(@NotNull Project project, @Nullable Disposable operationDisposable) {
+    final var contribModules = getContributorModules();
+    if (contribModules != null) {
+      for (final var it : contribModules) {
+        var customModel = it.createCustomModel(project, this, operationDisposable);
         if (customModel != null) return customModel;
       }
     }

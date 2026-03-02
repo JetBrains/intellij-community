@@ -2,14 +2,16 @@
 package com.intellij.junit.testFramework
 
 import com.intellij.execution.junit.codeInspection.JUnitMixedFrameworkInspection
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT3
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT4
-import com.intellij.junit.testFramework.JUnitLibrary.JUNIT5
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT3
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT5
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
 import com.intellij.testFramework.LightProjectDescriptor
+
+private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT3, JUNIT4, JUNIT5)
 
 abstract class JUnitMixedFrameworkInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnitMixedFrameworkInspection = JUnitMixedFrameworkInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT3, JUNIT4, JUNIT5)
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 }

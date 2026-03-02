@@ -1264,8 +1264,6 @@
             <module name="intellij.java.psi.impl" />
             <module name="intellij.java.remoteServers" />
             <module name="intellij.java.remoteServers.impl" />
-            <module name="intellij.java.resources" />
-            <module name="intellij.java.resources.en" />
             <module name="intellij.java.rt" />
             <module name="intellij.java.structuralSearch" />
             <module name="intellij.java.structureView" />
@@ -1509,8 +1507,6 @@
           <module name="intellij.java.psi.impl" />
           <module name="intellij.java.remoteServers" />
           <module name="intellij.java.remoteServers.impl" />
-          <module name="intellij.java.resources" />
-          <module name="intellij.java.resources.en" />
           <module name="intellij.java.rt" />
           <module name="intellij.java.structuralSearch" />
           <module name="intellij.java.structureView" />

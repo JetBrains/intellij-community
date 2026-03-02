@@ -2,12 +2,15 @@
 package com.intellij.junit.testFramework
 
 import com.intellij.execution.junit.codeInspection.HamcrestAssertionsConverterInspection
+import com.intellij.junit.testFramework.MavenTestLib.HAMCREST
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
 import com.intellij.testFramework.LightProjectDescriptor
+
+private val descriptor = JUnitProjectDescriptor(HIGHEST, JUNIT4, HAMCREST)
 
 abstract class HamcrestAssertionsConverterInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: HamcrestAssertionsConverterInspection = HamcrestAssertionsConverterInspection()
-  override fun getProjectDescriptor(): LightProjectDescriptor =
-    JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT4, JUnitLibrary.HAMCREST)
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 }

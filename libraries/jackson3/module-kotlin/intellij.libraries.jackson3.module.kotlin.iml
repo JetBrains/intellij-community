@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jackson3-module-kotlin" type="repository">
+        <properties include-transitive-deps="false" maven-id="tools.jackson.module:jackson-module-kotlin:3.1.0-rc1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/module/jackson-module-kotlin/3.1.0-rc1/jackson-module-kotlin-3.1.0-rc1.jar">
+              <sha256sum>3b1834d2f9977994845718007eac782363502413c937b5a0f0ae0e6b32d54b8a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/module/jackson-module-kotlin/3.1.0-rc1/jackson-module-kotlin-3.1.0-rc1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/module/jackson-module-kotlin/3.1.0-rc1/jackson-module-kotlin-3.1.0-rc1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="RUNTIME" />
+  </component>
+</module>

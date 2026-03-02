@@ -142,6 +142,8 @@
     <shellSupport key="zsh" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.zsh.ZshSupport"/>
     <shellSupport key="bash" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.bash.BashSupport"/>
     <shellSupport key="powershell" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.powershell.PowerShellSupport"/>
+
+    <shellsDetector implementation="org.jetbrains.plugins.terminal.shellDetection.LocalProjectShellsDetector"/>
   </extensions>
 
   <extensionPoints>
@@ -172,6 +174,10 @@
                     interface="org.jetbrains.plugins.terminal.TerminalCloudCompletionSettingsProvider"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.toolWindowInitializer"
                     interface="org.jetbrains.plugins.terminal.TerminalToolWindowInitializer" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.hyperlinkNavigationInterceptor" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkNavigationInterceptor"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.shellsDetector" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetector"/>
   </extensionPoints>
 
   <applicationListeners>

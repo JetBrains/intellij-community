@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.impl.ExecResult
 import com.intellij.openapi.wm.impl.LinuxUiUtil
 import com.intellij.openapi.wm.impl.output
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.ui.UnixDesktopEnv
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -50,6 +51,10 @@ private val QUERY_COLOR_SCHEME = arrayOf(
   "string:org.freedesktop.appearance",
   "string:color-scheme")
 
+private val UNSUPPORTED_DESKTOPS = setOf(
+  UnixDesktopEnv.CINNAMON // Doesn't support DBus events during theme auto switching
+)
+
 @Service
 internal class DBusSettingsMonitorService(private val scope: CoroutineScope) {
 
@@ -62,7 +67,7 @@ internal class DBusSettingsMonitorService(private val scope: CoroutineScope) {
   private var dbusMonitorProcess = AtomicReference<Process?>(null)
 
   val isServiceAllowed: Boolean
-    get() = SystemInfoRt.isLinux
+    get() = SystemInfoRt.isLinux && !UNSUPPORTED_DESKTOPS.contains(UnixDesktopEnv.CURRENT)
 
   val darkScheme: StateFlow<Boolean?> = darkSchemeFlow.asStateFlow()
 
@@ -89,6 +94,12 @@ internal class DBusSettingsMonitorService(private val scope: CoroutineScope) {
         finally {
           killDbusMonitorListener()
         }
+      }
+    }
+    else {
+      val current = UnixDesktopEnv.CURRENT
+      if (current != null && UNSUPPORTED_DESKTOPS.contains(current)) {
+        LOG.info("DBus is not fully supported on ${current.presentableName}. Theme synchronization will be disabled.")
       }
     }
   }

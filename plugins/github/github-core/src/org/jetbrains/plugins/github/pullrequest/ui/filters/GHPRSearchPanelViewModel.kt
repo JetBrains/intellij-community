@@ -77,7 +77,7 @@ class GHPRSearchPanelViewModel internal constructor(
   }
 
   suspend fun getAuthors(): List<GHUser> = repositoryDataService.loadCollaborators()
-  suspend fun getAssignees(): List<GHUser> = repositoryDataService.loadIssuesAssignees()
+  suspend fun getAssignees(): List<GHUser> = repositoryDataService.loadPotentialIssuesAssignees()
   suspend fun getLabels(): List<GHLabel> = repositoryDataService.loadLabels()
 }
 

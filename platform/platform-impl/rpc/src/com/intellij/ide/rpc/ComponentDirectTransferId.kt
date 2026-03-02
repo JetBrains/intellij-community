@@ -19,6 +19,8 @@ import javax.swing.JComponent
  *
  * When used in monolith mode, the component returned by [ComponentDirectTransferId.getComponent] is just the original source component,
  * so no bridging of painting and input events is performed.
+ *
+ * IMPORTANT. The provided `disposable` should be disposed on EDT.
  */
 @ApiStatus.Internal
 @RequiresEdt

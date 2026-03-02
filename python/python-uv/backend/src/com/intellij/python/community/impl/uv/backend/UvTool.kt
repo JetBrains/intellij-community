@@ -7,6 +7,7 @@ import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.community.impl.uv.common.UV_UI_INFO
+import com.intellij.python.pyproject.model.internal.pyProjectToml.TomlDependencySpecification
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
@@ -96,6 +97,11 @@ internal class UvTool : Tool {
     )
 
   }
+
+  override fun getTomlDependencySpecifications(): List<TomlDependencySpecification> = listOf(
+    TomlDependencySpecification.PathDependency("tool.uv.sources"),
+    TomlDependencySpecification.Pep621Dependency("tool.uv.dev-dependencies"),
+  )
 
   @RequiresBackgroundThread
   private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {

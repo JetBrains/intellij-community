@@ -194,18 +194,6 @@ class ClaudeQuotaServiceE2eTest {
     }
   }
 
-  private fun fetchUsageRaw(token: String): HttpResponse<String> {
-    val client = HttpClient.newBuilder().build()
-    val request = HttpRequest.newBuilder()
-      .uri(URI.create("https://api.anthropic.com/api/oauth/usage"))
-      .header("Accept", "application/json")
-      .header("Authorization", "Bearer $token")
-      .header("anthropic-beta", "oauth-2025-04-20")
-      .GET()
-      .build()
-    return client.send(request, HttpResponse.BodyHandlers.ofString())
-  }
-
   private fun parseUsageResponse(body: String): ClaudeQuotaState {
     var fiveHourPercent: Int? = null
     var fiveHourReset: Long? = null
@@ -248,36 +236,49 @@ class ClaudeQuotaServiceE2eTest {
     )
   }
 
-  private fun parseBucket(parser: com.fasterxml.jackson.core.JsonParser): Pair<Int?, Long?>? {
-    if (parser.currentToken == JsonToken.VALUE_NULL) return null
-    if (parser.currentToken != JsonToken.START_OBJECT) {
-      parser.skipChildren()
-      return null
-    }
-    var utilization: Int? = null
-    var resetMillis: Long? = null
-    while (parser.nextToken() != JsonToken.END_OBJECT) {
-      val field = parser.currentName()
-      parser.nextToken()
-      when (field) {
-        "utilization" -> {
-          if (parser.currentToken == JsonToken.VALUE_NUMBER_INT || parser.currentToken == JsonToken.VALUE_NUMBER_FLOAT) {
-            utilization = parser.intValue
-          }
-        }
-        "resets_at" -> {
-          if (parser.currentToken == JsonToken.VALUE_STRING) {
-            resetMillis = try {
-              Instant.parse(parser.text).toEpochMilli()
-            }
-            catch (_: Throwable) {
-              null
-            }
-          }
-        }
-        else -> parser.skipChildren()
-      }
-    }
-    return Pair(utilization, resetMillis)
+}
+
+private fun fetchUsageRaw(token: String): HttpResponse<String> {
+  val client = HttpClient.newBuilder().build()
+  val request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.anthropic.com/api/oauth/usage"))
+    .header("Accept", "application/json")
+    .header("Authorization", "Bearer $token")
+    .header("anthropic-beta", "oauth-2025-04-20")
+    .GET()
+    .build()
+  return client.send(request, HttpResponse.BodyHandlers.ofString())
+}
+
+private fun parseBucket(parser: com.fasterxml.jackson.core.JsonParser): Pair<Int?, Long?>? {
+  if (parser.currentToken == JsonToken.VALUE_NULL) return null
+  if (parser.currentToken != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
   }
+  var utilization: Int? = null
+  var resetMillis: Long? = null
+  while (parser.nextToken() != JsonToken.END_OBJECT) {
+    val field = parser.currentName()
+    parser.nextToken()
+    when (field) {
+      "utilization" -> {
+        if (parser.currentToken == JsonToken.VALUE_NUMBER_INT || parser.currentToken == JsonToken.VALUE_NUMBER_FLOAT) {
+          utilization = parser.intValue
+        }
+      }
+      "resets_at" -> {
+        if (parser.currentToken == JsonToken.VALUE_STRING) {
+          resetMillis = try {
+            Instant.parse(parser.text).toEpochMilli()
+          }
+          catch (_: Throwable) {
+            null
+          }
+        }
+      }
+      else -> parser.skipChildren()
+    }
+  }
+  return Pair(utilization, resetMillis)
 }

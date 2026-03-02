@@ -151,7 +151,7 @@ internal abstract class GitApplyChangesProcess(
 
       if (result.success()) {
         refreshChangedVfs(repository, startHash)
-        successfulCommits.addAll(commits)
+        addSuccessfulCommits(successfulCommits, commits)
         return true
       }
       else {
@@ -159,7 +159,7 @@ internal abstract class GitApplyChangesProcess(
         // In this case we should find how many were applied and mark them as successful
         val stoppedAtCommit = findStoppedCommitInSequence(repository, commits)
         val toAdd = commits.subList(0, commits.indexOf(stoppedAtCommit))
-        successfulCommits.addAll(toAdd)
+        addSuccessfulCommits(successfulCommits, toAdd)
         when {
           conflictDetector.isDetected -> {
             val mergeCompleted = GitApplyChangesConflictResolver(project, repository.root, stoppedAtCommit.id.toShortString(),
@@ -173,7 +173,9 @@ internal abstract class GitApplyChangesProcess(
 
             if (mergeCompleted) {
               LOG.debug("All conflicts resolved, will show commit dialog.")
-              return strategy.doUserCommit(onSuccessfulCommit = successfulCommits::add, onSkippedCommit = alreadyPicked::add, onCancelledCommit = {
+              return strategy.doUserCommit(onSuccessfulCommit = {
+                addSuccessfulCommits(successfulCommits, listOf(it))
+              }, onSkippedCommit = alreadyPicked::add, onCancelledCommit = {
                 // don't notify about canceled commit. Notify just in the case when there were already successful commits in the queue.
                 if (successfulCommits.isNotEmpty()) {
                   notifyCommitCancelled(it, successfulCommits, operationName)
@@ -227,11 +229,18 @@ internal abstract class GitApplyChangesProcess(
     vcsNotifier.notify(notification)
   }
 
+  private fun addSuccessfulCommits(successfulCommits: MutableCollection<VcsCommitMetadata>, toAdd: List<VcsCommitMetadata>) {
+    successfulCommits.addAll(toAdd)
+    onSuccessfulCommitsAdded(toAdd)
+  }
+
   protected abstract fun isEmptyCommit(result: GitCommandResult): Boolean
 
   abstract fun cleanupBeforeCommit(repository: GitRepository)
 
   protected abstract fun generateDefaultMessage(repository: GitRepository, commit: VcsCommitMetadata): @NonNls String
+
+  protected open fun onSuccessfulCommitsAdded(commits: Collection<VcsCommitMetadata>) = Unit
 
   protected abstract fun findStoppedCommitInSequence(
     repository: GitRepository,

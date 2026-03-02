@@ -144,11 +144,12 @@ internal class CodexRolloutSessionsWatcher(
     return normalizeWatchPath(sessionsRoot)
   }
 
-  private fun normalizeWatchPath(path: Path): Path {
-    return runCatching {
-      path.toAbsolutePath().normalize()
-    }.getOrElse {
-      path.normalize()
-    }
+}
+
+private fun normalizeWatchPath(path: Path): Path {
+  return runCatching {
+    path.toAbsolutePath().normalize()
+  }.getOrElse {
+    path.normalize()
   }
 }

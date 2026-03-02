@@ -66,7 +66,7 @@ DEFAULT_JVM_FLAGS = [
     "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
 ]
 
-def intellij_dev_binary(name, visibility, data, jvm_flags, env, platform_prefix, config_path, system_path, additional_modules):
+def intellij_dev_binary(name, visibility, data, jvm_flags, env, platform_prefix, config_path, system_path, additional_modules, program_args):
     all_jvm_flags = DEFAULT_JVM_FLAGS + jvm_flags
 
     if platform_prefix:
@@ -100,4 +100,5 @@ def intellij_dev_binary(name, visibility, data, jvm_flags, env, platform_prefix,
         jvm_flags = all_jvm_flags,
         env = env,
         add_opens = INTELLIJ_ADD_OPENS,
+        args = program_args,
     )

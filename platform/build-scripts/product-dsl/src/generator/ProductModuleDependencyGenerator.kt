@@ -148,6 +148,9 @@ private fun computeProductModuleDeps(
       when (val c = classifyTarget(dep.targetId)) {
         is DependencyClassification.ModuleDep -> {
           val depName = c.moduleName.value
+          if (depName == moduleName) {
+            return@dependsOn
+          }
           if (depName.startsWith(LIB_MODULE_PREFIX) && !libraryModuleFilter(depName)) {
             return@dependsOn
           }

@@ -242,26 +242,38 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (options.testConfigurations != null) {
       val testConfigurationsOptionName = "intellij.build.test.configurations"
       if (options.testPatterns != null) {
-        warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.patterns")
+        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.patterns")
       }
       if (options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
-        warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.groups")
+        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.groups")
       }
       if (mainModule != null && !options.validateMainModule) {
-        warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.main.module")
+        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.main.module")
+      }
+      if (options.searchScope != JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized) {
+        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.search.scope")
       }
     }
     else if (options.testPatterns != null && options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
-      warnOptionIgnored("intellij.build.test.patterns", "intellij.build.test.groups")
+      errorOptionIgnored("intellij.build.test.patterns", "intellij.build.test.groups")
     }
 
     if (options.validateMainModule && mainModule.isNullOrEmpty()) {
       context.messages.logErrorAndThrow("'intellij.build.test.main.module.validate' option requires 'intellij.build.test.main.module' to be set")
     }
+
+    if (options.searchScope != JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized) {
+      if (TeamCityHelper.isUnderTeamCity) {
+        context.messages.logErrorAndThrow("'intellij.build.test.search.scope' option should be used only for local runs")
+      }
+      if (options.searchScope != JUnitRunConfigurationProperties.TestSearchScope.SINGLE_MODULE.serialized) {
+        context.messages.logErrorAndThrow("Unsupported 'intellij.build.test.search.scope' value: ${options.searchScope}")
+      }
+    }
   }
 
-  private fun warnOptionIgnored(specifiedOption: String, ignoredOption: String) {
-    context.messages.warning("'${specifiedOption}' option is specified, so '${ignoredOption}' will be ignored.")
+  private fun errorOptionIgnored(specifiedOption: String, ignoredOption: String) {
+    context.messages.logErrorAndThrow("'${specifiedOption}' option is specified, so '${ignoredOption}' will be ignored.")
   }
 
   private suspend fun runTestsFromRunConfigurations(
@@ -281,12 +293,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     additionalJvmOptions: List<String>,
     systemProperties: Map<String, String>,
   ) {
-    if (runConfigurationProperties.testSearchScope != JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES) {
-      context.messages.warning(
-        "Run configuration '${runConfigurationProperties.name}' uses test search scope '${runConfigurationProperties.testSearchScope.serialized}', " +
-        "while only '${JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized}' is supported. Scope will be ignored"
-      )
-    }
     try {
       runTestsProcess(
         mainModule = runConfigurationProperties.moduleName,
@@ -297,6 +303,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         systemProperties = systemProperties,
         envVariables = runConfigurationProperties.envVariables,
         remoteDebugging = false,
+        searchForTestsAcrossModuleDependencies = runConfigurationProperties.testSearchScope == JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES,
       )
     }
     catch (e: NoTestsFound) {
@@ -337,6 +344,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         jvmArgs = additionalJvmOptions,
         systemProperties = systemProperties,
         remoteDebugging = false,
+        searchForTestsAcrossModuleDependencies = options.searchScope == JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized,
       )
     }
     catch (e: NoTestsFound) {
@@ -420,7 +428,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       testPatterns = junitClass,
       jvmArgs = removeStandardJvmOptions(StringUtilRt.splitHonorQuotes(remoteDebugJvmOptions, ' ')) + additionalJvmOptions,
       systemProperties = emptyMap(),
-      remoteDebugging = true
+      remoteDebugging = true,
+      searchForTestsAcrossModuleDependencies = true,
     )
   }
 
@@ -432,6 +441,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     systemProperties: Map<String, String>,
     envVariables: Map<String, String> = emptyMap(),
     remoteDebugging: Boolean,
+    searchForTestsAcrossModuleDependencies: Boolean,
   ) {
     val useKotlinK2 = !System.getProperty("idea.kotlin.plugin.use.k1", "false").toBoolean() ||
                       jvmArgs.contains("-Didea.kotlin.plugin.use.k1=false")
@@ -475,6 +485,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     else {
       modulePath = null
       testClasspath = replaceAllWithArchivedIfNeeded(testRoots).mapNotNull(toExistingAbsolutePathConverter)
+    }
+
+    if (!searchForTestsAcrossModuleDependencies) {  // don't modify testClasspath
+      testRoots.clear()
+      testRoots.addAll(context.outputProvider.getModuleOutputRoots(mainJpsModule, forTests = false))  // for tests in production source roots
+      testRoots.addAll(context.outputProvider.getModuleOutputRoots(mainJpsModule, forTests = true))
     }
 
     val devBuildServerSettings = DevBuildServerSettings.readDevBuildServerSettingsFromIntellijYaml(mainModule)
@@ -802,6 +818,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           systemProperties = systemProperties + listOf(
             "intellij.build.test.list.classes" to testClassesListFile.absolutePathString(),
             "intellij.build.test.engine.vintage" to "false",
+            "intellij.build.test.ignoreFirstAndLastTests" to "true",
           ),
           jvmArgs = jvmArgs,
           envVariables = envVariables,
@@ -827,6 +844,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           systemProperties = systemProperties + listOf(
             "intellij.build.test.list.classes" to testClassesListFile.absolutePathString(),
             "intellij.build.test.engine.vintage" to "only",
+            "intellij.build.test.ignoreFirstAndLastTests" to "true",
             ),
           jvmArgs = jvmArgs,
           envVariables = envVariables,

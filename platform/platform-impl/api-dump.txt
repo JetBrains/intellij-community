@@ -178,8 +178,6 @@ com.intellij.ide.IdeTooltip$Ui
 - a:isInside(com.intellij.ui.awt.RelativePoint):Z
 com.intellij.ide.KeyboardAwareFocusOwner
 - a:skipKeyEventDispatcher(java.awt.event.KeyEvent):Z
-f:com.intellij.ide.ProjectWindowCustomizerService
-- <init>(kotlinx.coroutines.CoroutineScope):V
 com.intellij.ide.ProtocolHandler
 - sf:Companion:com.intellij.ide.ProtocolHandler$Companion
 - sf:PLEASE_DO_NOT_FOCUS:I
@@ -193,7 +191,6 @@ c:com.intellij.ide.RecentProjectListActionProvider
 - bs:getActions$default(com.intellij.ide.RecentProjectListActionProvider,Z,Z,Z,I,java.lang.Object):java.util.List
 - recentProjectsInDocSupported():Z
 c:com.intellij.ide.RecentProjectsManagerBase
-- f:addRecentPath(java.nio.file.Path,com.intellij.ide.RecentProjectMetaInfo):V
 - f:getDisplayName(java.nio.file.Path):java.lang.String
 - f:getProjectIcon(java.nio.file.Path,Z):javax.swing.Icon
 - f:getProjectIcon(java.nio.file.Path,Z,I,java.lang.String):javax.swing.Icon
@@ -235,13 +232,6 @@ c:com.intellij.ide.browsers.StartBrowserSettings
 - setStartJavaScriptDebugger(Z):V
 - setUrl(java.lang.String):V
 - writeExternal(org.jdom.Element):V
-c:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarProvider
-- com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
-- <init>():V
-- isApplicable(com.intellij.openapi.actionSystem.DataContext):Z
-com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarSuppressor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:isSuppressed(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext):Z
 com.intellij.ide.dnd.TransferableWrapper
 - com.intellij.ide.dnd.FileFlavorProvider
 - a:getPsiElements():com.intellij.psi.PsiElement[]
@@ -450,6 +440,13 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 - p:setupDefaultButton(javax.swing.JComponent,java.awt.Graphics):V
 - p:textIconGap():I
 - update(java.awt.Graphics,javax.swing.JComponent):V
+c:com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder
+- javax.swing.border.Border
+- javax.swing.plaf.UIResource
+- <init>():V
+- getBorderInsets(java.awt.Component):java.awt.Insets
+- isBorderOpaque():Z
+- paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
 f:com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI$IconHolder
 - f:bounds:java.awt.Rectangle
 - f:extension:com.intellij.ui.components.fields.ExtendableTextComponent$Extension
@@ -829,9 +826,6 @@ com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$Visib
 com.intellij.openapi.editor.markup.LineMarkerRendererEx
 - com.intellij.openapi.editor.markup.LineMarkerRenderer
 - a:getPosition():com.intellij.openapi.editor.markup.LineMarkerRendererEx$Position
-f:com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar
-- com.intellij.openapi.Disposable
-- dispose():V
 com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 - a:getAutoHideable():Z
 - a:getBackgroundAlpha():F
@@ -856,7 +850,10 @@ com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 - getRetentionTime():I
 - getShowingTime():I
 - isApplicable(com.intellij.openapi.actionSystem.DataContext):Z
+- isApplicableAsync(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
 - register(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
+f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultImpls
+- s:isApplicableAsync(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.fileChooser.ex.FileDrop$Target
 - a:dropFiles(java.util.List):V
 - a:getDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -939,7 +936,7 @@ f:com.intellij.openapi.keymap.impl.ui.KeymapPanel
 f:com.intellij.openapi.observable.util.BindUtilKt
 - sf:bindSelected(com.intellij.ui.CardLayoutPanel,com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.CardLayoutPanel
 a:com.intellij.openapi.options.BeanConfigurable
-- pf:checkBox(java.lang.String,java.lang.String):V
+- bpf:checkBox(java.lang.String,java.lang.String):V
 com.intellij.openapi.progress.util.ProgressIndicatorListener
 - cancelled():V
 - installToProgress(com.intellij.openapi.wm.ex.ProgressIndicatorEx):V
@@ -1636,23 +1633,17 @@ com.intellij.ui.layout.CellBuilder
 - a:constraints(com.intellij.ui.layout.CCFlags[]):com.intellij.ui.layout.CellBuilder
 - ba:focused():com.intellij.ui.layout.CellBuilder
 - a:getComponent():javax.swing.JComponent
-- a:growPolicy(com.intellij.ui.layout.GrowPolicy):com.intellij.ui.layout.CellBuilder
 - ba:withValidationOnApply(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
-- ba:withValidationOnInput(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
 com.intellij.ui.layout.LayoutBuilderImpl
 - a:build(java.awt.Container,com.intellij.ui.layout.LCFlags[]):V
-- a:getComponentValidateCallbacks():java.util.Map
 - a:getPreferredFocusedComponent():javax.swing.JComponent
 - a:getValidateCallbacks():java.util.List
 com.intellij.ui.layout.RowBuilder
 - com.intellij.ui.layout.BaseBuilder
 - b:row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
-- b:row(javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - bs:row$default(com.intellij.ui.layout.RowBuilder,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row
-- bs:row$default(com.intellij.ui.layout.RowBuilder,javax.swing.JLabel,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row
 f:com.intellij.ui.layout.RowBuilder$DefaultImpls
 - s:row(com.intellij.ui.layout.RowBuilder,java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
-- s:row(com.intellij.ui.layout.RowBuilder,javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 com.intellij.ui.popup.BackendRenderedPopup
 com.intellij.ui.popup.ClosableByLeftArrow
 com.intellij.ui.popup.PopupComponent

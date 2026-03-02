@@ -1,10 +1,15 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.debugger.streams.shared"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.debugger.impl.ui"/>
-    <!-- endregion -->
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.platform.debugger.streams.librarySupport" interface="com.intellij.debugger.streams.core.lib.LibrarySupportProvider" dynamic="true"/>
   </extensionPoints>

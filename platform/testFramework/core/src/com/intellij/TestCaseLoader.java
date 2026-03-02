@@ -203,8 +203,7 @@ public class TestCaseLoader {
         GroupBasedTestClassFilter.readGroups(reader, groups);
       }
       catch (IOException e) {
-        System.err.println("Failed to load test groups from " + fileUrl);
-        e.printStackTrace();
+        throw new RuntimeException("Failed to load test groups from " + fileUrl, e);
       }
     }
     System.out.println("Using test groups: " + testGroupNames);
@@ -212,7 +211,7 @@ public class TestCaseLoader {
     testGroupNameSet.removeAll(groups.keySet());
     testGroupNameSet.remove(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED);
     if (!testGroupNameSet.isEmpty()) {
-      System.err.println("Unknown test groups: " + testGroupNameSet);
+      throw new RuntimeException("Unknown test groups: " + testGroupNameSet);
     }
     return new GroupBasedTestClassFilter(groups, testGroupNames);
   }

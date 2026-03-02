@@ -56,6 +56,7 @@ jvm_library(
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/lang-impl",
+    "//plugins/kotlin/base/fe10/project-structure",
   ]
 )
 
@@ -98,6 +99,7 @@ jvm_library(
     "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.common` end

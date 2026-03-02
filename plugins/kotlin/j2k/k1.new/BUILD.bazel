@@ -40,6 +40,7 @@ jvm_library(
     "//plugins/kotlin/j2k/shared",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/idea",
+    "//plugins/kotlin/base/fe10/project-structure",
   ]
 )
 
@@ -68,6 +69,7 @@ jvm_library(
     "//plugins/kotlin/j2k/shared:shared_test_lib",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     "//plugins/kotlin/idea:idea_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.j2k.k1.new` end

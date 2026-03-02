@@ -2,6 +2,7 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.StorageManager;
+import kotlin.metadata.jvm.KotlinClassMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DependencyGraph;
@@ -49,8 +50,14 @@ public final class KotlinIncrementalCacheImpl implements IncrementalCache {
     for (Node<?, ?> node : filter(flat(map(outdatedSources, depGraph::getNodes)), n -> n instanceof JVMClassNode)) {
       JVMClassNode<?, ?> clsNode = (JVMClassNode<?, ?>)node;
       KotlinMeta meta = (KotlinMeta)find(clsNode.getMetadata(), mt -> mt instanceof KotlinMeta);
-      if (meta != null && meta.isTopLevelDeclarationContainer()) {
-        result.add(clsNode.getName());
+      KotlinClassMetadata clsMeta = meta != null? meta.getClassMetadata() : null;
+      if (clsMeta != null) {
+        if (clsMeta instanceof KotlinClassMetadata.FileFacade) {
+          result.add(clsNode.getName());
+        }
+        else if (clsMeta instanceof KotlinClassMetadata.MultiFileClassPart multiPart) {
+          result.add(multiPart.getFacadeClassName().replace('.', '/'));
+        }
       }
     }
     return result;

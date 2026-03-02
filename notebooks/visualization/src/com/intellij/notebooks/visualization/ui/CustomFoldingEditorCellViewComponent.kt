@@ -2,7 +2,6 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.notebooks.ui.afterDistinctChange
-import com.intellij.notebooks.ui.bind
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.ui.EditorEmbeddedComponentLayoutManager.CustomFoldingConstraint
@@ -64,9 +63,8 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
     cell.gutterAction.afterDistinctChange(this) { action ->
       updateGutterIcons(action)
     }
-    editor.notebookAppearance.editorBackgroundColor.bind(this) {
-      bottomContainer.background = it
-    }
+
+    bottomContainer.background = editor.notebookAppearance.editorBackgroundColor()
   }
 
   override fun dispose(): Unit = editor.notebookViewUpdater.update { ctx ->

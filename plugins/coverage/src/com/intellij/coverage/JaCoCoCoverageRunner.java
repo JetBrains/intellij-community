@@ -362,6 +362,19 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   }
 
   @Override
+  public boolean canBeLoaded(@NotNull File candidate) {
+    try {
+      ExecFileLoader loader = new ExecFileLoader();
+      loader.load(candidate);
+      return true;
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+      return false;
+    }
+  }
+
+  @Override
   public @NotNull String getDataFileExtension() {
     return "exec";
   }

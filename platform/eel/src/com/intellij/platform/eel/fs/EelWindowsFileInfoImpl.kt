@@ -20,5 +20,12 @@ data class EelWindowsFileInfoImpl(
     override val isHidden: Boolean,
     override val isArchive: Boolean,
     override val isSystem: Boolean
-  ) : EelWindowsFileInfo.Permissions
+  ) : EelWindowsFileInfo.Permissions {
+    constructor(eelPermissions: EelWindowsFileInfo.Permissions) : this(
+      isReadOnly = eelPermissions.isReadOnly,
+      isHidden = eelPermissions.isHidden,
+      isArchive = eelPermissions.isArchive,
+      isSystem = eelPermissions.isSystem,
+    )
+  }
 }

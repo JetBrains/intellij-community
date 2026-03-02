@@ -87,6 +87,18 @@ internal sealed interface StoredFileSet : StoredFileSetCollection {
     action(this)
   }
 
+  /**
+   * The method compares every property of [StoredFileSet] except for associated [WorkspaceEntity].
+   * For the associated [WorkspaceEntity] it compares class.
+   */
+  fun hasSameProperties(other: StoredFileSet): Boolean
+
+  /**
+   * The method returns [Any.hashCode] for every property of [StoredFileSet] except for associated [WorkspaceEntity].
+   * For the associated [WorkspaceEntity] it computes hashcode for its class.
+   */
+  fun hashcodeOfProperties(): Int
+
   abstract override fun toString(): String
 }
 
@@ -129,6 +141,26 @@ internal class WorkspaceFileSetImpl(
 
   override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> {
     return listOfNotNull(findFileSet(condition))
+  }
+
+  override fun hasSameProperties(other: StoredFileSet): Boolean {
+    if (other !is WorkspaceFileSetImpl) return false
+    return root == other.root &&
+           kind == other.kind &&
+           data == other.data &&
+           recursive == other.recursive &&
+           entityStorageKind == other.entityStorageKind &&
+           entityPointer.isPointerToEntityOfSameTypeAs(other.entityPointer)
+  }
+
+  override fun hashcodeOfProperties(): Int {
+    var result = recursive.hashCode()
+    result = 31 * result + root.hashCode()
+    result = 31 * result + kind.hashCode()
+    result = 31 * result + entityPointer.classHashcode()
+    result = 31 * result + entityStorageKind.hashCode()
+    result = 31 * result + data.hashCode()
+    return result
   }
 
   override fun toString(): String {
@@ -303,11 +335,13 @@ internal object WorkspaceFileKindMask {
 }
 
 internal sealed interface ExcludedFileSet : StoredFileSet {
+  val root: VirtualFile
+
   override fun add(fileSet: StoredFileSet): StoredFileSetCollection {
     return MultipleStoredWorkspaceFileSets(mutableListOf(this, fileSet))
   }
 
-  class ByFileKind(@MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) val mask: Int,
+  class ByFileKind(override val root: VirtualFile, @MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) val mask: Int,
                    override val entityPointer: EntityPointer<WorkspaceEntity>,
                    override val entityStorageKind: EntityStorageKind = EntityStorageKind.MAIN) : ExcludedFileSet {
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
@@ -315,12 +349,28 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
       return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
     }
 
+    override fun hasSameProperties(other: StoredFileSet): Boolean {
+      if (other !is ByFileKind) return false
+      return root == other.root &&
+             mask == other.mask &&
+             entityStorageKind == other.entityStorageKind &&
+             entityPointer.isPointerToEntityOfSameTypeAs(other.entityPointer)
+    }
+
+    override fun hashcodeOfProperties(): Int {
+      var result = mask
+      result = 31 * result + root.hashCode()
+      result = 31 * result + entityPointer.classHashcode()
+      result = 31 * result + entityStorageKind.hashCode()
+      return result
+    }
+
     override fun toString(): String {
       return "ExcludedFileSet.ByFileKind{mask=$mask}"
     }
   }
 
-  class ByPattern(val root: VirtualFile, patterns: List<String>,
+  class ByPattern(override val root: VirtualFile, patterns: List<String>,
                   override val entityPointer: EntityPointer<WorkspaceEntity>,
                   override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
     val table = FileTypeAssocTableUtil.newScalableFileTypeAssocTable<Boolean>()
@@ -347,12 +397,28 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
       return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
     }
 
+    override fun hasSameProperties(other: StoredFileSet): Boolean {
+      if (other !is ByPattern) return false
+      return root == other.root &&
+             table == other.table &&
+             entityStorageKind == other.entityStorageKind &&
+             entityPointer.isPointerToEntityOfSameTypeAs(other.entityPointer)
+    }
+
+    override fun hashcodeOfProperties(): Int {
+      var result = root.hashCode()
+      result = 31 * result + entityPointer.classHashcode()
+      result = 31 * result + entityStorageKind.hashCode()
+      result = 31 * result + table.hashCode()
+      return result
+    }
+
     override fun toString(): String {
       return "ExcludedFileSet.ByPattern{root=$root, patterns=$table}"
     }
   }
 
-  class ByCondition(val root: VirtualFile, val condition: (VirtualFile) -> Boolean,
+  class ByCondition(override val root: VirtualFile, val condition: (VirtualFile) -> Boolean,
                     override val entityPointer: EntityPointer<WorkspaceEntity>,
                     override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
     private fun isExcluded(file: VirtualFile): Boolean {
@@ -370,6 +436,22 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
       val withExclusion = if (honorExclusion && isExcluded(file)) currentMasks.unsetAcceptedKinds(WorkspaceFileKindMask.ALL) else currentMasks
       return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
+    }
+
+    override fun hasSameProperties(other: StoredFileSet): Boolean {
+      if (other !is ByCondition) return false
+      return root == other.root &&
+             condition == other.condition &&
+             entityStorageKind == other.entityStorageKind &&
+             entityPointer.isPointerToEntityOfSameTypeAs(other.entityPointer)
+    }
+
+    override fun hashcodeOfProperties(): Int {
+      var result = root.hashCode()
+      result = 31 * result + condition.hashCode()
+      result = 31 * result + entityPointer.classHashcode()
+      result = 31 * result + entityStorageKind.hashCode()
+      return result
     }
 
     override fun toString(): String {

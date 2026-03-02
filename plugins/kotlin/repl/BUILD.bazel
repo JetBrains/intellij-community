@@ -63,6 +63,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//platform/execution",
     "//platform/lang-api:lang",
+    "//plugins/kotlin/base/fe10/project-structure",
   ]
 )
 
@@ -105,6 +106,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
     "//platform/execution:execution_test_lib",
     "//platform/lang-api:lang_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.repl` end

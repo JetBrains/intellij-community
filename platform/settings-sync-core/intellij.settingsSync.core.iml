@@ -54,9 +54,9 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />

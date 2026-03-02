@@ -1,8 +1,13 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.java.rt" />
-    <module name="intellij.libraries.junit4" />
-    <module name="intellij.libraries.junit5" />
-    <module name="intellij.tools.testsBootstrap" />
+    <module name="intellij.libraries.junit4"/>
+    <module name="intellij.libraries.junit5"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.rt"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.tools.testsBootstrap"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

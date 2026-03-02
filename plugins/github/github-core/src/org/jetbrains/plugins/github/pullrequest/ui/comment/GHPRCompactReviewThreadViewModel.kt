@@ -69,6 +69,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   initialData: GHPullRequestReviewThread,
+  private val viewModelWithTextCompletion: GHViewModelWithTextCompletion
 ) : GHPRCompactReviewThreadViewModel {
   private val cs = parentCs.childScope(javaClass.name)
   private val reviewData: GHPRReviewDataProvider = dataProvider.reviewData
@@ -154,10 +155,12 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
 
   private fun CoroutineScope.createComment(comment: IndexedValue<GHPullRequestReviewComment>): UpdateableGHPRReviewThreadCommentViewModel =
     UpdateableGHPRReviewThreadCommentViewModel(project, this, dataContext, dataProvider,
-                                               this@UpdateableGHPRCompactReviewThreadViewModel, comment)
+                                               this@UpdateableGHPRCompactReviewThreadViewModel, viewModelWithTextCompletion, comment)
 
   private inner class ReplyViewModel
-    : CodeReviewSubmittableTextViewModelBase(project, cs, ""), GHPRNewThreadCommentViewModel {
+    : CodeReviewSubmittableTextViewModelBase(project, cs, ""),
+      GHPRNewThreadCommentViewModel,
+      GHViewModelWithTextCompletion by viewModelWithTextCompletion {
 
     override val currentUser: GHActor = dataContext.securityService.currentUser
 

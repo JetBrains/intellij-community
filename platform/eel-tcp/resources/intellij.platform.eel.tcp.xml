@@ -1,6 +1,9 @@
 <idea-plugin visibility="internal">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <multiRoutingFileSystemBackend implementation="com.intellij.platform.eel.tcp.TcpEelMrfsBackend"/>

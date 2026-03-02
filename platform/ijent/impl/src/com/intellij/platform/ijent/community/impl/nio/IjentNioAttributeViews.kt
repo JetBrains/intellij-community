@@ -1,14 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.fs.EelFileSystemApiHelpers
+import com.intellij.platform.eel.fs.changeAttributes
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
+import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributeView
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.DosFileAttributeView
+import java.nio.file.attribute.DosFileAttributes
 import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.GroupPrincipal
 import java.nio.file.attribute.PosixFileAttributeView
@@ -26,15 +30,15 @@ internal open class IjentNioBasicFileAttributeView(val api: IjentFileSystemApi, 
   }
 
   override fun setTimes(lastModifiedTime: FileTime?, lastAccessTime: FileTime?, createTime: FileTime?) {
-    val builder = EelFileSystemApi.ChangeAttributesOptions.Builder()
+    val builder = api.changeAttributes(path)
     if (lastModifiedTime != null) {
-      builder.updateTime(EelFileSystemApi.ChangeAttributesOptions.Builder::modificationTime, lastModifiedTime)
+      builder.updateTime(EelFileSystemApiHelpers.ChangeAttributes::modificationTime, lastModifiedTime)
     }
     if (lastAccessTime != null) {
-      builder.updateTime(EelFileSystemApi.ChangeAttributesOptions.Builder::accessTime, lastAccessTime)
+      builder.updateTime(EelFileSystemApiHelpers.ChangeAttributes::accessTime, lastAccessTime)
     }
     fsBlocking {
-      api.changeAttributes(path, builder.build()).getOrThrow()
+      builder.getOrThrowFileSystemException()
     }
   }
 }
@@ -75,5 +79,31 @@ internal class IjentNioPosixFileAttributeView(api: IjentFileSystemPosixApi, path
     else {
       throw UnsupportedOperationException("Unsupported user principal: $owner")
     }
+  }
+}
+
+internal class IjentNioDosFileAttributeView(api: IjentFileSystemWindowsApi, path: EelPath, nioPath: IjentNioPath) : IjentNioBasicFileAttributeView(api, path, nioPath), DosFileAttributeView {
+  override fun name(): String {
+    return "dos"
+  }
+
+  override fun readAttributes(): DosFileAttributes {
+    return Files.readAttributes(nioPath, DosFileAttributes::class.java)
+  }
+
+  override fun setReadOnly(value: Boolean) {
+    nioPath.nioFs.provider().setAttribute(nioPath, "dos:readonly", value)
+  }
+
+  override fun setHidden(value: Boolean) {
+    nioPath.nioFs.provider().setAttribute(nioPath, "dos:hidden", value)
+  }
+
+  override fun setSystem(value: Boolean) {
+    nioPath.nioFs.provider().setAttribute(nioPath, "dos:system", value)
+  }
+
+  override fun setArchive(value: Boolean) {
+    nioPath.nioFs.provider().setAttribute(nioPath, "dos:archive", value)
   }
 }

@@ -386,6 +386,8 @@ class ActionMenu constructor(
       // 3. Open the menu again: it will have the wrong position
       // The position is calculated based on the old size, resetting size forces `getPopupMenuOrigin` method to use preferred size
       popupMenu.size = Dimension(0, 0)
+
+      repaint()
     }
 
     super.setPopupMenuVisible(value)

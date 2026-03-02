@@ -16,6 +16,7 @@ import com.intellij.ui.svg.FitToWidthAdaptiveImageView
 import com.intellij.util.asSafely
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extension
+import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.html.BlockViewEx
 import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
 import com.intellij.util.ui.html.DetailsView
@@ -308,6 +309,11 @@ private class JBIconView(elem: Element, private val icon: Icon) : View(elem) {
         r.x += r.width
       }
       r.width = 0
+      if (ScreenReader.isActive() && container != null) {
+        // Align with text for proper line bounds calculation for screen readers.
+        val fm = container.getFontMetrics(container.font)
+        r.y += r.height - fm.descent + 1
+      }
       return r
     }
     throw BadLocationException("$pos not in range $p0,$p1", pos)

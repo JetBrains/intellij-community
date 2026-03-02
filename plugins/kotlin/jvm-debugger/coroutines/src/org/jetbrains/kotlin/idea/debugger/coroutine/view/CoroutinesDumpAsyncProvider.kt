@@ -42,11 +42,11 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
 
         override fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem> {
             return (
-              if (!enabled) emptyList()
+              if (!enabled || suspendContext == null) emptyList()
               else {
-                val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutinesWithHierarchy()
+                val (coroutinesCache, _) = CoroutineDebugProbesProxy(suspendContext).dumpCoroutinesWithHierarchy()
                 if (coroutinesCache.isOk()) coroutinesCache.cache.map { info ->
-                    if (info.parentJobId == null) info.parentJobId = CoroutineRootDumpItem.id
+                    if (info.parentJobId == null) info.parentJobId = CoroutineRootDumpItem.treeId
                     CoroutineDumpItem(info)
                 } + CoroutineRootDumpItem else emptyList()
               })
@@ -61,9 +61,9 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : Mergeable
 
     override val name: String = info.name + ":" + info.id
 
-    override val id: Long get() = info.jobId ?: info.hashCode().toLong()
+    override val treeId: Long? get() = info.jobId
 
-    override val parentId: Long? get() = info.parentJobId
+    override val parentTreeId: Long? get() = info.parentJobId
 
     override val stateDesc: String = " (${info.state.name.lowercase()})"
 
@@ -148,9 +148,9 @@ private object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val name: String = "Dumped Coroutines"
 
-    override val id: Long = Long.MIN_VALUE // todo: this item does not actually exist in the dump, and it's index is artificial
+    override val treeId: Long = Long.MIN_VALUE
 
-    override val parentId: Long? = null
+    override val parentTreeId: Long? = null
 
     override val stateDesc: String = ""
 
@@ -159,7 +159,7 @@ private object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val stackTrace: String = ""
 
-    override val interestLevel: Int = 100 // for now kept on top
+    override val interestLevel: Int = Int.MAX_VALUE // for now kept on top
 
     override val isDeadLocked: Boolean
         get() = false
@@ -176,9 +176,5 @@ private object CoroutineRootDumpItem : MergeableDumpItem {
 
     override val canBeHidden: Boolean get() = true
 
-    override val mergeableToken: MergeableToken get() = object : MergeableToken {
-        override val item get() = this@CoroutineRootDumpItem
-        override fun equals(other: Any?) = other is MergeableToken && item == other.item
-        override fun hashCode() = item.hashCode()
-    }
+    override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
 }

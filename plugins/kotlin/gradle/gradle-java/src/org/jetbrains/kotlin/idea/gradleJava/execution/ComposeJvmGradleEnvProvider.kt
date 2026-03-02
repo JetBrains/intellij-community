@@ -49,7 +49,7 @@ internal class ComposeJvmGradleEnvProvider : GradleExecutionEnvironmentProvider 
             afterEvaluate {
                 if (extensions.findByName("compose") != null) {
                     compose.desktop.application {
-                        mainClass = "$mainClassFqn"
+                        mainClass = '$mainClassFqn'
                     }
                 }
             }

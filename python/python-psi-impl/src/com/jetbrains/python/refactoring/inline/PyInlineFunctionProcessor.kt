@@ -76,7 +76,10 @@ class PyInlineFunctionProcessor(
     if (refUsages.isNull) return false
     val conflicts = MultiMap.create<PsiElement, String>()
     val usagesAndImports = refUsages.get()
-    val (imports, usages) = usagesAndImports.partition { PsiTreeUtil.getParentOfType(it.element, PyImportStatementBase::class.java) != null }
+    val (imports, usages) = usagesAndImports.partition {
+      PsiTreeUtil.getParentOfType(it.element,
+                                  PyImportStatementBase::class.java) != null
+    }
     val filteredUsages = usages.filter { usage ->
       if (usage.reference is PyDunderAllReference) return@filter true
       val element = usage.element!!
@@ -105,12 +108,17 @@ class PyInlineFunctionProcessor(
     return showConflicts(conflicts, filtered.toTypedArray())
   }
 
-  private fun handleUsageError(element: PsiElement, @PropertyKey(resourceBundle = PyPsiBundle.BUNDLE) error: String, conflicts: MultiMap<PsiElement, String>): Boolean {
+  private fun handleUsageError(
+    element: PsiElement,
+    @PropertyKey(resourceBundle = PyPsiBundle.BUNDLE) error: String,
+    conflicts: MultiMap<PsiElement, String>,
+  ): Boolean {
     val errorText = PyPsiBundle.message(error, myFunction.name)
     if (myInlineThisOnly) {
       // shortcut for inlining single reference: show error hint instead of modal dialog
       CommonRefactoringUtil.showErrorHint(myProject, myEditor, errorText, PyPsiBundle.message("refactoring.inline.function.title"),
-                                          PyInlineFunctionHandler.REFACTORING_ID)
+                                          PyInlineFunctionHandler.Helper.REFACTORING_ID
+      )
       prepareSuccessful()
       return false
     }
@@ -122,7 +130,8 @@ class PyInlineFunctionProcessor(
   protected override fun findUsages(): Array<UsageInfo> {
     if (myInlineThisOnly) {
       val element = myReference!!.element as PyReferenceExpression
-      val localImport = PyResolveUtil.resolveLocally(ScopeUtil.getScopeOwner(element)!!, element.name!!).firstOrNull { it is PyImportElement }
+      val localImport =
+        PyResolveUtil.resolveLocally(ScopeUtil.getScopeOwner(element)!!, element.name!!).firstOrNull { it is PyImportElement }
       return if (localImport != null) arrayOf(UsageInfo(element), UsageInfo(localImport)) else arrayOf(UsageInfo(element))
     }
 
@@ -200,7 +209,8 @@ class PyInlineFunctionProcessor(
       val importAsRefs = MultiMap.create<String, PyReferenceExpression>()
       val returnStatements = mutableListOf<PyReturnStatement>()
 
-      val mappedArguments = prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel, resolveContext, selfUsed)
+      val mappedArguments =
+        prepareArguments(callSite, declarations, generatedNames, scopeAnchor, reference, languageLevel, resolveContext, selfUsed)
 
       myFunction.statementList.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -403,8 +413,14 @@ class PyInlineFunctionProcessor(
   }
 
   private fun prepareArguments(
-    callSite: PyCallExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>, scopeAnchor: PsiElement,
-    reference: PyReferenceExpression, languageLevel: LanguageLevel, context: PyResolveContext, selfUsed: Boolean,
+    callSite: PyCallExpression,
+    declarations: MutableList<PyAssignmentStatement>,
+    generatedNames: MutableSet<String>,
+    scopeAnchor: PsiElement,
+    reference: PyReferenceExpression,
+    languageLevel: LanguageLevel,
+    context: PyResolveContext,
+    selfUsed: Boolean,
   ): Map<String, PyExpression> {
     val mapping = PyCallExpressionHelper.mapArguments(callSite, context).firstOrNull() ?: error("Can't map arguments for ${reference.name}")
     val mappedParams = mapping.mappedParameters
@@ -456,7 +472,12 @@ class PyInlineFunctionProcessor(
     return paramName to statement.targets[0]
   }
 
-  private fun generateUniqueAssignment(level: LanguageLevel, name: String, previouslyGeneratedNames: MutableSet<String>, scopeAnchor: PsiElement): PyAssignmentStatement {
+  private fun generateUniqueAssignment(
+    level: LanguageLevel,
+    name: String,
+    previouslyGeneratedNames: MutableSet<String>,
+    scopeAnchor: PsiElement,
+  ): PyAssignmentStatement {
     val uniqueName = PyRefactoringUtil.selectUniqueName(name, scopeAnchor) { newName, anchor ->
       PyRefactoringUtil.isValidNewName(newName, anchor) && newName !in previouslyGeneratedNames
     }
@@ -465,12 +486,14 @@ class PyInlineFunctionProcessor(
   }
 
   override fun getCommandName() = PyPsiBundle.message("refactoring.inline.function.command.name", myFunction.name)
-  override fun getRefactoringId() = PyInlineFunctionHandler.REFACTORING_ID
+  override fun getRefactoringId() = PyInlineFunctionHandler.Helper.REFACTORING_ID
 
   override fun createUsageViewDescriptor(usages: Array<out UsageInfo>) = object : UsageViewDescriptor {
     override fun getElements(): Array<PsiElement> = arrayOf(myFunction)
     override fun getProcessedElementsHeader(): String = PyPsiBundle.message("refactoring.inline.function.function.to.inline")
-    override fun getCodeReferencesText(usagesCount: Int, filesCount: Int): String = PyPsiBundle.message("refactoring.inline.function.invocations.to.be.inlined", filesCount)
+    override fun getCodeReferencesText(usagesCount: Int, filesCount: Int): String =
+      PyPsiBundle.message("refactoring.inline.function.invocations.to.be.inlined", filesCount)
+
     override fun getCommentReferencesText(usagesCount: Int, filesCount: Int): String = ""
   }
 }

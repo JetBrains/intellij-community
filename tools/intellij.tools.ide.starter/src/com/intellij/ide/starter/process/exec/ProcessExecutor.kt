@@ -263,6 +263,7 @@ class ProcessExecutor(
         killProcess()
       }
       process.destroyForcibly()
+      process.descendants().forEach { it.destroyForcibly() }
 
       try {
         Runtime.getRuntime().removeShutdownHook(shutdownHookThread)

@@ -2,9 +2,8 @@
 // FIX: Convert to 'minusElement' call (changes semantics)
 // IGNORE_K1
 // WITH_STDLIB
-package java.nio.file
-
-class Path
+// RUNTIME_WITH_FULL_JDK
+import java.nio.file.Path
 
 fun test(coll: MutableCollection<Path>, path: Path) {
     coll <caret>- path

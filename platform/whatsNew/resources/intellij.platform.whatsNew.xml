@@ -1,4 +1,9 @@
 <idea-plugin visibility="public" package="com.intellij.platform.whatsNew">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.util.coroutines"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.whatsNew.WhatsNewShowOnStartCheckService" order="last"/>
     <applicationService serviceImplementation="com.intellij.platform.whatsNew.WhatsNewInVisionContentProvider" open="true"/>

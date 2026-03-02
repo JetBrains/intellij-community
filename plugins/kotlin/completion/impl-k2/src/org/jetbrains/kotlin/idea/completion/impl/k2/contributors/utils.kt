@@ -177,6 +177,12 @@ internal fun LookupElementBuilder.adaptToExplicitReceiver(
         typeText = typeText,
     )
 )
+
+@OptIn(KaExperimentalApi::class)
+internal fun isRuntimeTypeEvaluatorAvailable(context: K2CompletionSectionContext<*>) =
+    (context.parameters.originalFile as? KtCodeFragment)
+        ?.getCopyableUserData(KotlinK2CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR_K2) != null
+
 @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
 context(kaSession: KaSession)
 internal fun KtExpression.evaluateRuntimeKaType(): KaType? {

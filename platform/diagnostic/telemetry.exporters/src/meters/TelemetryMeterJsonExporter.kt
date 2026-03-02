@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.exporters.meters
 
-import com.fasterxml.jackson.module.kotlin.addMixIn
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.exporters.RollingFileSupplier
@@ -15,6 +13,8 @@ import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.data.PointData
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.module.kotlin.addMixIn
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import java.io.IOException
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.outputStream
@@ -45,9 +45,10 @@ class TelemetryMeterJsonExporter(private val writeToFileSupplier: RollingFileSup
     val writeToFile = writeToFileSupplier.get(forceToGetNewPath = true)
 
     try {
-      jacksonObjectMapper()
+      jacksonMapperBuilder()
         .addMixIn<MetricData, MetricDataMixIn>()
         .addMixIn<PointData, PointDataMixIn>()
+        .build()
         .writeValue(writeToFile.outputStream(StandardOpenOption.CREATE, StandardOpenOption.APPEND), metrics)
 
       result.succeed()

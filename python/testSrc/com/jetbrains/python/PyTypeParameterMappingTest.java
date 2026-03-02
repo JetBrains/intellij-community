@@ -187,16 +187,16 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
 
   public void testExtractingElementsFromUnboundTupleTypeFollowedByExpectedVariadic() {
     doTestShapeMapping("T, *Ts", "*tuple[float, ...]", """
-      T -> float
-      *Ts -> *tuple[float, ...]
+      T -> float | int
+      *Ts -> *tuple[float | int, ...]
       """);
   }
 
   public void testNonTrivialVariadicMatch() {
     doTestShapeMapping("int, T, *Ts, T1", "int, *tuple[float, ...], int, str", """
       int -> int
-      T -> float
-      *Ts -> *tuple[*tuple[float, ...], int]
+      T -> float | int
+      *Ts -> *tuple[*tuple[float | int, ...], int]
       T1 -> str
       """);
   }
@@ -387,7 +387,7 @@ public final class PyTypeParameterMappingTest extends PyTestCase {
   public void testParamSpecWithDefaultAfterTypeVarTupleWithoutDefault() {
     doTestShapeMappingWithDefaults("*Ts, **P=[float, bool]", "int, str", """
       *Ts -> *tuple[int, str]
-      **P -> [float, bool]
+      **P -> [float | int, bool]
       """);
 
     doTestShapeMappingWithDefaults("*Ts, **P=[float, bool]", "int, str, [bytes]", """

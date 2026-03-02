@@ -266,7 +266,11 @@ public class JBInsets extends Insets {
 
     @Override
     public @Nullable Insets get() {
-      return UIManager.getInsets(key);
+      var result = UIManager.getInsets(key);
+      if (result instanceof JBInsets jbInsets) { // the JBInsetsUIResource case
+        return jbInsets.unscaledNoCopy();
+      }
+      return result;
     }
 
     @Override

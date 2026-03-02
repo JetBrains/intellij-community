@@ -378,21 +378,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @Nullable String getSplashImageUrl() {
-    if (getVersionName().equals("IntelliJ IDEA")) {
-      LocalDate startDate = LocalDate.of(2026, Month.JULY, 5);
-      LocalDate endDate = LocalDate.of(2026, Month.JULY, 13);
-      LocalDate nowDate = LocalDate.now();
-      String splashUrl = splashImageUrl;
-      if (splashUrl != null &&
-          (
-            Boolean.parseBoolean(System.getProperty("show.kotlin.anniversary.splash")) ||
-            nowDate.isAfter(startDate) && nowDate.isBefore(endDate)
-          )
-      ) {
-        return splashUrl.replace(".png", "_kotlin_15.png");
-      }
-    }
-
     if (isEap && eapSplashImageUrl != null) return eapSplashImageUrl;
 
     if (simplifiedSplashImageUrl != null) {
@@ -402,14 +387,33 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    String imageUrl = splashImageUrl;
     if (subscriptionModeSplashImageUrl != null) {
       Path markerFile = PathManager.getConfigDir().resolve(SUBSCRIPTION_MODE_SPLASH_MARKER_FILE_NAME);
       if (Files.exists(markerFile)) {
-        return subscriptionModeSplashImageUrl;
+        imageUrl = subscriptionModeSplashImageUrl;
       }
     }
 
-    return splashImageUrl;
+    String specialAnniversarySplash = specialAnniversarySplash(imageUrl);
+    return specialAnniversarySplash != null ? specialAnniversarySplash : imageUrl;
+  }
+
+  private @Nullable String specialAnniversarySplash(String imageUrl) {
+    if (getVersionName().equals("IntelliJ IDEA")) {
+      LocalDate startDate = LocalDate.of(2026, Month.JULY, 5);
+      LocalDate endDate = LocalDate.of(2026, Month.JULY, 13);
+      LocalDate nowDate = LocalDate.now();
+      if (imageUrl != null &&
+          (
+            Boolean.parseBoolean(System.getProperty("show.kotlin.anniversary.splash")) ||
+            nowDate.isAfter(startDate) && nowDate.isBefore(endDate)
+          )
+      ) {
+        return imageUrl.replace(".png", "_kotlin_15.png");
+      }
+    }
+    return null;
   }
 
   @Override

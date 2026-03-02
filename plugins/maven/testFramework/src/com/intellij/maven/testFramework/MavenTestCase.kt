@@ -44,6 +44,7 @@ import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
+import org.jdom.JDOMException
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenConstants

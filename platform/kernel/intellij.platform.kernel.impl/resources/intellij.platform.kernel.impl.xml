@@ -1,4 +1,9 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.util.coroutines"/>
+  </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.platform.kernel.impl.KernelApplicationInitializedListener"/>
   </extensions>

@@ -1,7 +1,10 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradle">
   <dependencies>
-    <module name="intellij.gradle"/>
     <module name="intellij.kotlin.gradle.tooling"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.gradle"/>
+    <module name="intellij.gradle.toolingExtension.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>
@@ -29,7 +32,6 @@
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.gradle.GradleFailedToDownloadSuggestedSolutionsContributor"/>
 
-    <projectStructureInsightsProvider implementation="org.jetbrains.kotlin.idea.gradle.GradleProjectStructureInsightsProvider"/>
     <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.gradle.configuration.GradleModuleDetector"/>
   </extensions>
 

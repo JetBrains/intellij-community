@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.platform.util.diff` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "diff_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "diff",
   module_name = "intellij.platform.util.diff",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":diff_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util/base/multiplatform",

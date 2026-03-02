@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared
 import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -20,14 +21,20 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
-import org.jetbrains.kotlin.idea.base.projectStructure.KtLibraryModuleByModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoVariantsService
+import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
+import org.jetbrains.kotlin.idea.base.projectStructure.bundledLibraryVariant
+import org.jetbrains.kotlin.idea.base.projectStructure.extractLibraryVariantName
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.SourceModuleDependenciesFilterCandidate
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
+import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -176,13 +183,18 @@ fun KaModule.nameForTooltip(): String {
     [prefix:] <groupId>:<artifactId>:<variant>:<version>
     [prefix:] <groupId>:<artifactId>-<variant>:<version>
  */
-@OptIn(K1ModeProjectStructureApi::class)
 private fun Library.extractVariantName(binariesModuleInfo: KaLibraryModule?): String? {
-    (binariesModuleInfo as KtLibraryModuleByModuleInfo?)
-        ?.libraryInfo
-        ?.let(LibraryInfoVariantsService::bundledLibraryVariant)?.displayName?.let { return it }
+    if (binariesModuleInfo == null) return null
 
-    return LibraryInfoVariantsService.extractVariantName(name)
+    val project = binariesModuleInfo.project
+
+    val isNativeStdLib = detectLibraryKind(this, project) == KotlinNativeLibraryKind &&
+            getFiles(OrderRootType.CLASSES).singleOrNull {
+                it.isKlibLibraryRootForPlatform(NativePlatforms.unspecifiedNativePlatform)
+            }?.path?.endsWith(KONAN_STDLIB_NAME) == true
+    bundledLibraryVariant(this, isNativeStdLib, project)?.displayName?.let { return it }
+
+    return extractLibraryVariantName(name)
 }
 
 private fun Collection<KtDeclaration>.hasUniqueModuleNames() =

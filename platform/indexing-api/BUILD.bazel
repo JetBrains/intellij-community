@@ -31,6 +31,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
   ]
 )
 
@@ -50,6 +52,8 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.indexing` end

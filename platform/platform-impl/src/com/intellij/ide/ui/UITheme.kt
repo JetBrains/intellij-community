@@ -3,7 +3,6 @@
 
 package com.intellij.ide.ui
 
-import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.PluginException
@@ -28,6 +27,8 @@ import com.intellij.util.ui.ComparableColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import tools.jackson.core.ObjectReadContext
+import tools.jackson.core.json.JsonFactory
 import java.awt.Color
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
@@ -173,7 +174,7 @@ class UITheme internal constructor(
     fun loadTempThemeFromJson(stream: InputStream, themeId: @NonNls String): UITheme {
       val classLoader = UITheme::class.java.classLoader
       val warn = createWarnFunction(classLoader)
-      val theme = readTheme(JsonFactory().createParser(stream), warn)
+      val theme = readTheme(JsonFactory().createParser(ObjectReadContext.empty(), stream), warn)
       return createTheme(themeId = themeId,
                          theme = theme,
                          parentTheme = resolveParentTheme(theme, themeId),
@@ -190,7 +191,7 @@ class UITheme internal constructor(
                                iconMapper: ((String) -> String?)? = null): UITheme {
       val warn = createWarnFunction(classLoader)
       val jsonFactory = JsonFactory()
-      val theme = readTheme(jsonFactory.createParser(data), warn)
+      val theme = readTheme(jsonFactory.createParser(ObjectReadContext.empty(), data), warn)
 
       val parentThemeId = theme.parentTheme ?: if (theme.dark) DEFAULT_DARK_PARENT_THEME else DEFAULT_LIGHT_PARENT_THEME
       val recursiveReloadParent = (theme.parentTheme != null)
@@ -199,7 +200,7 @@ class UITheme internal constructor(
         if (recursiveReloadParent) {
           loadFromJsonWithParent(data, parentThemeId, classLoader, null).bean
         } else {
-          readTheme(jsonFactory.createParser(data), warn)
+          readTheme(jsonFactory.createParser(ObjectReadContext.empty(), data), warn)
         }
       } ?: resolveParentTheme(theme, themeId)
 
@@ -213,7 +214,7 @@ class UITheme internal constructor(
 
     internal fun loadDeprecatedFromJson(data: ByteArray, themeId: @NonNls String, classLoader: ClassLoader): UITheme {
       val warn = createWarnFunction(classLoader)
-      val theme = readTheme(JsonFactory().createParser(data), warn)
+      val theme = readTheme(JsonFactory().createParser(ObjectReadContext.empty(), data), warn)
       return createTheme(theme = theme, parentTheme = null, classLoader = classLoader, iconMapper = null, themeId = themeId, warn = warn)
     }
 
@@ -252,7 +253,7 @@ class UITheme internal constructor(
                               defaultDarkParent: Supplier<UITheme?>?,
                               defaultLightParent: Supplier<UITheme?>?,
                               warn: (String, Throwable?) -> Unit): UITheme {
-      val bean = readTheme(JsonFactory().createParser(data), warn)
+      val bean = readTheme(JsonFactory().createParser(ObjectReadContext.empty(), data), warn)
       val parent: UIThemeBean?
       if (parentTheme == null) {
         val parentThemeId = bean.parentTheme

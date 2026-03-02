@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
@@ -45,7 +46,7 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return reloadPackages().mapSuccess { }
   }
 
-  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> =
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>, module: Module?): PyResult<Unit> =
     when (installRequest) {
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications ->
         addPackages(installRequest.specifications, options)

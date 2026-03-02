@@ -415,6 +415,8 @@ c:com.intellij.dvcs.repo.RepoStateException
 - java.lang.Exception
 - <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.Throwable):V
+f:com.intellij.dvcs.repo.RepositoryExtKt
+- sf:isHead(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.Hash):Z
 a:com.intellij.dvcs.repo.RepositoryImpl
 - com.intellij.dvcs.repo.Repository
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V

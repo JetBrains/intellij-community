@@ -27,7 +27,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
 import com.intellij.platform.eel.provider.EelInitialization
-import com.intellij.platform.eel.provider.EelUnavailableException
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking

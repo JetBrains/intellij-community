@@ -169,6 +169,14 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
+   * Return {@code true} if breakpoints of this type can be rendered between editor lines.
+   */
+  @ApiStatus.Internal
+  public boolean supportsInterLinePlacement() {
+    return false;
+  }
+
+  /**
    * @return range to highlight on the line, {@code null} to highlight the whole line
    */
   public @Nullable TextRange getHighlightRange(XLineBreakpoint<P> breakpoint) {

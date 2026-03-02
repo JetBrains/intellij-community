@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
-import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.databind.DatabindException;
 import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
@@ -14,6 +12,8 @@ import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.Ev
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.databind.DatabindException;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

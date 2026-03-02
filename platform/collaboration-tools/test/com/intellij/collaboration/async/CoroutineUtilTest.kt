@@ -4,7 +4,6 @@ package com.intellij.collaboration.async
 import app.cash.turbine.test
 import com.intellij.collaboration.async.ComputedListChange.Insert
 import com.intellij.collaboration.async.ComputedListChange.Remove
-import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
@@ -188,42 +187,37 @@ class CoroutineUtilTest {
   }
 
   @Test
-  fun `associateCachingBy preserves order`() = runTest {
+  fun `mapStatefulToStateful preserves order`() = runTest {
     val inputFlow = MutableStateFlow(listOf<Int>())
-    val outputFlow = inputFlow.associateCachingBy(
-      keyExtractor = { it },
-      hashingStrategy = HashingStrategy.canonical(),
-      valueExtractor = { it }
-    )
+    val outputFlow = inputFlow.mapStatefulToStateful(mapper = { it })
 
     outputFlow.test {
-      assertThat(awaitItem().values).isEmpty()
+      assertThat(awaitItem()).isEmpty()
 
       // initial add
       inputFlow.value = listOf(1, 2, 3)
-      assertThat(awaitItem().values.toList()).isEqualTo(listOf(1, 2, 3))
+      assertThat(awaitItem()).isEqualTo(listOf(1, 2, 3))
 
       // simple add
       inputFlow.value = listOf(1, 2, 3, 4)
-      assertThat(awaitItem().values.toList()).isEqualTo(listOf(1, 2, 3, 4))
+      assertThat(awaitItem()).isEqualTo(listOf(1, 2, 3, 4))
 
       // simple remove
       inputFlow.value = listOf(1, 3, 4)
-      assertThat(awaitItem().values.toList()).isEqualTo(listOf(1, 3, 4))
+      assertThat(awaitItem()).isEqualTo(listOf(1, 3, 4))
 
       // simple remove + add
       inputFlow.value = listOf(1, 2, 3)
-      assertThat(awaitItem().values.toList()).isEqualTo(listOf(1, 2, 3))
+      assertThat(awaitItem()).isEqualTo(listOf(1, 2, 3))
     }
   }
 
   @Test
-  fun `associateCachingBy updates existing values`() = runTest {
+  fun `mapDataToModel updates existing values`() = runTest {
     val inputFlow = MutableStateFlow(listOf<UpdatableValue<String>>())
-    val outputFlow = inputFlow.associateCachingBy(
-      keyExtractor = { it.key },
-      hashingStrategy = HashingStrategy.canonical(),
-      valueExtractor = { this to it },
+    val outputFlow = inputFlow.mapDataToModel(
+      sourceIdentifier = { it.key },
+      mapper = { this to it },
       update = { this.second.value = it.value }
     )
 
@@ -231,18 +225,18 @@ class CoroutineUtilTest {
     val v2 = UpdatableValue(1, "b") // different references
 
     outputFlow.test {
-      assertThat(awaitItem().values).isEmpty()
+      assertThat(awaitItem()).isEmpty()
 
       // initial add
       inputFlow.value = listOf(v1)
 
-      val emittedItem1 = awaitItem().values.firstOrNull()
+      val emittedItem1 = awaitItem().firstOrNull()
       assertThat(emittedItem1?.second).isEqualTo(v1)
 
       // simple change
       inputFlow.value = listOf(v2)
 
-      val emittedItem2 = awaitItem().values.firstOrNull()
+      val emittedItem2 = awaitItem().firstOrNull()
       assertThat(emittedItem2?.second).isEqualTo(v2)          // The right value is emitted according to equality
       assertThat(v1.value).isEqualTo(v2.value).isEqualTo("b") // The initial value was updated, rather than the v2 was emitted
       assertThat(emittedItem2).isSameAs(emittedItem1)         // Sanity-check: it's the same exact reference right?
@@ -251,50 +245,65 @@ class CoroutineUtilTest {
   }
 
   @Test
-  fun `associateCachingBy cancels deleted scopes`() = runTest {
+  fun `mapStatefulToStateful cancels deleted scopes`() = runTest {
     val inputFlow = MutableStateFlow(listOf<Int>())
-    val outputFlow = inputFlow.associateCachingBy(
-      keyExtractor = { it },
-      hashingStrategy = HashingStrategy.canonical(),
-      valueExtractor = { this to it },
-    )
+    val outputFlow = inputFlow.mapStatefulToStateful(mapper = { this to it })
 
     outputFlow.test {
-      assertThat(awaitItem().values).isEmpty()
+      assertThat(awaitItem()).isEmpty()
 
       // initial add
       inputFlow.value = listOf(1)
 
-      val emittedItem1 = awaitItem().values.firstOrNull()
+      val emittedItem1 = awaitItem().firstOrNull()
       assertThat(emittedItem1?.second).isEqualTo(1)
 
       // simple remove
       inputFlow.value = listOf()
-      assertThat(awaitItem().values).isEmpty()
+      assertThat(awaitItem()).isEmpty()
 
       assertThat(emittedItem1?.first?.isActive).isFalse()
     }
   }
 
   @Test
-  fun `associateCachingBy does not give two items the same scope`() = runTest {
+  fun `mapStatefulToStateful does not give two items the same scope`() = runTest {
     val inputFlow = MutableStateFlow(listOf<Int>())
-    val outputFlow = inputFlow.associateCachingBy(
-      keyExtractor = { it },
-      hashingStrategy = HashingStrategy.canonical(),
-      valueExtractor = { this to it },
-    )
+    val outputFlow = inputFlow.mapStatefulToStateful(mapper = { this to it })
 
     outputFlow.test {
-      assertThat(awaitItem().values).isEmpty()
+      assertThat(awaitItem()).isEmpty()
 
       // initial add
       inputFlow.value = listOf(1, 2)
 
-      val emitted1 = awaitItem().values.toList()
+      val emitted1 = awaitItem()
       assertThat(emitted1.map { it.second }).isEqualTo(listOf(1, 2))
       assertThat(emitted1[0].first).isNotSameAs(emitted1[1].first)
     }
+  }
+
+  @Test
+  fun `mapDataToModel distinguishes between reordered items`() = runTest {
+    val inputFlow = MutableStateFlow(listOf(2, 1))
+    val outputFlow = inputFlow.mapStatefulToStateful(mapper = { it })
+
+    outputFlow.test {
+      assertThat(awaitItem()).isEqualTo(listOf(2, 1))
+      inputFlow.value = listOf(1, 2)
+      assertThat(awaitItem()).isEqualTo(listOf(1, 2))
+    }
+  }
+
+  @Test
+  fun `MappingScopedItemsContainer addIfAbsent works properly`() = runTest {
+    val container = MappingScopedItemsContainer.byEquality<Int, Int>(backgroundScope, mapper = { it })
+    container.addIfAbsent(1)
+    assertThat(container.mappedState.value[0]).isEqualTo(1)
+    container.addIfAbsent(1)
+    assertThat(container.mappedState.value.size).isEqualTo(1)
+    container.addIfAbsent(2)
+    assertThat(container.mappedState.value.size).isEqualTo(2)
   }
 
   data class UpdatableValue<T>(

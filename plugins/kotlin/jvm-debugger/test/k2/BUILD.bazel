@@ -106,8 +106,6 @@ jvm_library(
     "//plugins/kotlin/native:native_test_lib",
     "//java/java-analysis-api:analysis",
     "//java/java-analysis-api:analysis_test_lib",
-    "//plugins/kotlin/jvm-debugger/test",
-    "//plugins/kotlin/jvm-debugger/test:test_test_lib",
     "//platform/service-container",
     "//platform/service-container:service-container_test_lib",
     "//plugins/kotlin/base/project-structure",

@@ -259,6 +259,10 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
 
   public void testMatchExceptionSealedClass() { doTest(); }
 
+  public void testMatchExceptionSealedClassOnlyNull() {
+    doTestWith((insp, __) -> insp.REPORT_UNSOUND_WARNINGS = false);
+  }
+
   public void testNoMatchExceptionSealedClassDataFlow() { doTest(); }
 
   public void testMatchExceptionDoubleNestedDeconstruction() { doTest(); }

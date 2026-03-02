@@ -48,7 +48,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.native" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.analysis" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" scope="TEST" />

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-cli" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-cli-for-ide:2.4.0-dev-3554">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-cli-for-ide:2.4.0-dev-4766">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.4.0-dev-3554/kotlin-compiler-cli-for-ide-2.4.0-dev-3554.jar">
-          <sha256sum>ff6db35b0069445f50b50b610a7268c32e1b7a410233187c4800d92e815435ec</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.4.0-dev-4766/kotlin-compiler-cli-for-ide-2.4.0-dev-4766.jar">
+          <sha256sum>a35be301205d8aa43551241112520ff538cb71c88ce57dcc1eacae81d0117cb7</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.4.0-dev-3554/kotlin-compiler-cli-for-ide-2.4.0-dev-3554.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.4.0-dev-4766/kotlin-compiler-cli-for-ide-2.4.0-dev-4766.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.4.0-dev-3554/kotlin-compiler-cli-for-ide-2.4.0-dev-3554-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.4.0-dev-4766/kotlin-compiler-cli-for-ide-2.4.0-dev-4766-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

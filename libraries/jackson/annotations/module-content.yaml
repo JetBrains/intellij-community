@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jackson.annotations.jar
+  modules:
+  - name: intellij.libraries.jackson.annotations
+    libraries:
+      jackson-annotations:
+      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2/jackson-annotations-2.jar

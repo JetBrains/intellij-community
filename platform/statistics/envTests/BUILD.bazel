@@ -10,6 +10,8 @@ jvm_library(
     "//platform/core-ui",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/databind",
   ]
 )
 
@@ -37,6 +39,10 @@ jvm_library(
     "//libraries/jackson/jackson:jackson_test_lib",
     "//libraries/jackson/databind",
     "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/databind:databind_test_lib",
   ],
   runtime_deps = [":envTests"]
 )

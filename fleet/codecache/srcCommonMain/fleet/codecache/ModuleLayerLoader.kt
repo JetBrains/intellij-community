@@ -12,6 +12,9 @@ import fleet.modules.api.FleetModuleInfo
 import fleet.modules.api.FleetModuleLayer
 import fleet.modules.api.FleetModuleLayerLoader
 import fleet.util.logging.KLoggers.logger
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 private val logger by lazy { logger(ResolvedPluginLayer::class) }
 
@@ -36,8 +39,10 @@ suspend fun loadPluginModulesAndResources(
         moduleLayerLoader.moduleLayer(modulePath = moduleInfos(resolvedLayer), parentLayers = baseLayers + external + internal)
       }
     }
-    val modules = resolvedLayer.modules.mapNotNull { moduleName ->
-      moduleLayer.findModule(moduleName)
+    val modules = coroutineScope {
+      resolvedLayer.modules.map { moduleName ->
+        async { moduleLayer.findModule (moduleName) }
+      }.awaitAll().filterNotNull()
     }
     result.put(selector, PluginModulesAndResources(layer = moduleLayer, modules = modules, resources = resolvedLayer.resources))
   }

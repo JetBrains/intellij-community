@@ -2848,7 +2848,7 @@ public final class ContainerUtil {
   }
 
   @Contract(mutates = "param1")
-  public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
+  public static <T extends @NotNull Object> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
     if (element != null) {
       result.add(element);
     }

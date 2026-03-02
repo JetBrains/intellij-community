@@ -31,6 +31,8 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />

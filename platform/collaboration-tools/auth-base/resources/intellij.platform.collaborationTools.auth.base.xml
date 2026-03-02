@@ -1,6 +1,11 @@
 <idea-plugin visibility="public">
   <module value="com.intellij.modules.collaborationTools.auth.base"/>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
-  </dependencies> 
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <!-- endregion -->
+  </dependencies>
+ 
 </idea-plugin>

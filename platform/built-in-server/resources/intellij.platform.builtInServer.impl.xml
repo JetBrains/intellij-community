@@ -8,6 +8,7 @@
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jackson.jr.objects"/>
+    <module name="intellij.libraries.jackson3"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.netty.buffer"/>
     <module name="intellij.libraries.netty.codec.compression"/>

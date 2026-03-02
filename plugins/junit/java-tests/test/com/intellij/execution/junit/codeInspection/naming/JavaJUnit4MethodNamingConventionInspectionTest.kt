@@ -1,13 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection.naming
 
-import com.intellij.junit.testFramework.JUnitLibrary
 import com.intellij.junit.testFramework.JUnitProjectDescriptor
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.siyeh.ig.naming.NewMethodNamingConventionInspection
+
+private val descriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUNIT4)
 
 class JavaJUnit4MethodNamingConventionInspectionTest : JvmInspectionTestBase() {
   override val inspection by lazy {
@@ -16,7 +18,7 @@ class JavaJUnit4MethodNamingConventionInspectionTest : JvmInspectionTestBase() {
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT4)
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
 
   fun testJUnit4MethodNamingConvention() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """

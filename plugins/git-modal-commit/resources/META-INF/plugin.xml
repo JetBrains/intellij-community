@@ -12,7 +12,10 @@
   ]]></description>
 
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <resource-bundle>messages.ModalCommitBundle</resource-bundle>

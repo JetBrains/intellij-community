@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.event.BulkAwareDocumentListener.Simple
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -35,6 +36,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.tree.project.ProjectFileNode
 import com.intellij.util.SingleAlarm
+import com.intellij.util.application
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.tree.TreePath
@@ -232,7 +234,11 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
       else -> BookmarkProvider.EP.findExtension(LineBookmarkProvider::class.java, project)
     }
 
-    fun readLineText(bookmark: LineBookmark?): String? = bookmark?.let { readLineText(it.file, it.line) }
+    fun readLineText(bookmark: LineBookmark?): String? = bookmark?.let {
+      application.runReadAction(Computable {
+        readLineText(it.file, it.line)
+      })
+    }
 
     private fun readLineText(file: VirtualFile, line: Int): String? {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null

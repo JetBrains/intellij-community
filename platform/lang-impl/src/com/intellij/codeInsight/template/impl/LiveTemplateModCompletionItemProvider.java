@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.ModCompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.psi.PsiFile;
@@ -15,15 +16,14 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
- * A simplified mirror of {@link LiveTemplateCompletionContributor} to provide live templates as {@link ModCompletionItem}'s. 
+ * A simplified mirror of {@link LiveTemplateCompletionContributor} to provide live templates as {@link ModCompletionItem}s. 
  */
 @NotNullByDefault
 final class LiveTemplateModCompletionItemProvider implements ModCompletionItemProvider {
   @Override
-  public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
+  public void provideItems(CompletionContext context, ModCompletionResult sink) {
     if (!LiveTemplateCompletionContributor.shouldShowAllTemplates()) return;
     PsiFile file = context.getPosition().getContainingFile();
     int offset = context.offset();

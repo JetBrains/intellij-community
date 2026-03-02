@@ -1,7 +1,5 @@
 package com.intellij.remoteDev.downloader
 
-import com.fasterxml.jackson.core.JacksonException
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.BuildNumber
@@ -12,6 +10,8 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
 import com.intellij.util.withFragment
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.ObjectMapper
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
@@ -51,7 +51,7 @@ object ThinClientSessionInfoFetcher {
         val connection = request.connection as HttpURLConnection
         val jsonResponseString = try {
           request.readString()
-        } catch (ioException: IOException) {
+        } catch (_: IOException) {
           val errorPayload = getErrorPayload(connection)
           String(errorPayload, Charsets.UTF_8)
         }
@@ -59,10 +59,10 @@ object ThinClientSessionInfoFetcher {
         if (connection.responseCode == 403 || connection.responseCode == 451) {
           try {
             val sessionInfo = objectMapper.value.reader().readTree(jsonResponseString)
-            if (sessionInfo["messageId"]?.textValue() == "FORBIDDEN_BY_REGION_RESTRICTION") {
-              val learnMoreLink = sessionInfo["learnMoreLink"]?.textValue()
-              val message = sessionInfo["message"]?.textValue() ?: "Forbidden"
-              val reason = sessionInfo["forbiddenReasonText"]?.textValue()
+            if (sessionInfo["messageId"]?.asString() == "FORBIDDEN_BY_REGION_RESTRICTION") {
+              val learnMoreLink = sessionInfo["learnMoreLink"]?.asString()
+              val message = sessionInfo["message"]?.asString("Forbidden") ?: "Forbidden"
+              val reason = sessionInfo["forbiddenReasonText"]?.asString()
               throw CodeWithMeUnavailableException(message, learnMoreLink, reason, null, connection.responseCode)
             }
           } catch (ex: JacksonException) {
@@ -75,12 +75,12 @@ object ThinClientSessionInfoFetcher {
 
         val sessionInfo = objectMapper.value.reader().readTree(jsonResponseString)
         val jreUrlNode = sessionInfo["compatibleJreUrl"]
-        val hostBuildNumber = sessionInfo["hostBuildNumber"].asText()
+        val hostBuildNumber = sessionInfo["hostBuildNumber"].asString()
         return@connect JetBrainsClientDownloadInfo(
           hostBuildNumber = BuildNumber.fromStringOrNull(hostBuildNumber) ?: error("Invalid host build number: $hostBuildNumber"),
-          compatibleClientUrl = sessionInfo["compatibleClientUrl"].asText(),
-          compatibleJreUrl = if (jreUrlNode.isNull) null else jreUrlNode.asText(),
-          downloadPgpPublicKeyUrl = sessionInfo["downloadPgpPublicKeyUrl"]?.asText()
+          compatibleClientUrl = sessionInfo["compatibleClientUrl"].asString(),
+          compatibleJreUrl = if (jreUrlNode.isNull) null else jreUrlNode.asString(),
+          downloadPgpPublicKeyUrl = sessionInfo["downloadPgpPublicKeyUrl"]?.asString()
         )
       }
   }

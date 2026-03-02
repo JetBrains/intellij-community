@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -90,7 +91,7 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
 
     override fun prepareOperation(usages: Array<UsageInfo>, elements: List<PsiElement>): Set<KtFile> {
         return prepareOperation(usages) + elements
-            .mapNotNull { it.containingFile as? KtFile }
+            .mapNotNull { it.unwrapped?.containingFile as? KtFile }
             .filter { ProjectFileIndex.getInstance(elements.first().project).isInSourceContent(it.virtualFile) }.toSet()
     }
 

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   /**
    * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
    */
+  @RequiresReadLock
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
@@ -54,6 +56,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   /**
    * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
    */
+  @RequiresReadLock
   @ApiStatus.Experimental
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,

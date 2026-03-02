@@ -4,9 +4,11 @@ package com.intellij.agent.workbench.chat
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
-import junit.framework.TestCase
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class AgentChatTabSelectionServiceTest : TestCase() {
+class AgentChatTabSelectionServiceTest {
+  @Test
   fun testMapChatEditorToSelection() {
     val chatFile = AgentChatVirtualFile(
       projectPath = "/work/project-a",
@@ -18,21 +20,23 @@ class AgentChatTabSelectionServiceTest : TestCase() {
     )
     val selection = LightweightTestFileEditor(chatFile).toAgentChatTabSelection()
 
-    assertNotNull(selection)
-    assertEquals("/work/project-a", selection?.projectPath)
-    assertEquals("CODEX:thread-1", selection?.threadIdentity)
-    assertEquals("thread-1", selection?.threadId)
-    assertNull(selection?.subAgentId)
+    assertThat(selection).isNotNull
+    assertThat(selection?.projectPath).isEqualTo("/work/project-a")
+    assertThat(selection?.threadIdentity).isEqualTo("CODEX:thread-1")
+    assertThat(selection?.threadId).isEqualTo("thread-1")
+    assertThat(selection?.subAgentId).isNull()
   }
 
+  @Test
   fun testMapReturnsNullForNonChatEditor() {
-    assertNull(LightweightTestFileEditor(LightVirtualFile("notes.txt", "notes")).toAgentChatTabSelection())
-    assertNull((null as FileEditor?).toAgentChatTabSelection())
+    assertThat(LightweightTestFileEditor(LightVirtualFile("notes.txt", "notes")).toAgentChatTabSelection()).isNull()
+    assertThat((null as FileEditor?).toAgentChatTabSelection()).isNull()
   }
 
+  @Test
   fun testDetectOpenChatFiles() {
     val nonChatFiles = arrayOf<VirtualFile>(LightVirtualFile("notes.txt", "notes"))
-    assertFalse(hasOpenAgentChatFiles(nonChatFiles))
+    assertThat(hasOpenAgentChatFiles(nonChatFiles)).isFalse()
 
     val chatFiles = arrayOf<VirtualFile>(
       LightVirtualFile("notes.txt", "notes"),
@@ -45,6 +49,6 @@ class AgentChatTabSelectionServiceTest : TestCase() {
         subAgentId = null,
       ),
     )
-    assertTrue(hasOpenAgentChatFiles(chatFiles))
+    assertThat(hasOpenAgentChatFiles(chatFiles)).isTrue()
   }
 }

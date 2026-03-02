@@ -2,9 +2,12 @@
   <projectListeners>
   </projectListeners>
   <dependencies>
-    <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.frontend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.recentFiles.frontend"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

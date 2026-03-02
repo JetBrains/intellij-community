@@ -110,14 +110,14 @@ object TeamCityClient {
     artifactName: String = source.fileName.toString(),
     zipContent: Boolean = true,
     artifactForPublishingDir: Path = TeamCityClient.artifactForPublishingDir,
-  ) {
+  ): String? {
     logger.debug("TeamCity publishTeamCityArtifacts ${source.fileName}")
     val sanitizedArtifactPath = artifactPath.replaceSpecialCharactersWithHyphens()
     val sanitizedArtifactName = artifactName.replaceSpecialCharactersWithHyphens()
 
     if (!source.exists()) {
       logger.debug("TeamCity artifact $source does not exist")
-      return
+      return null
     }
     var suffix: String
     var nextSuffix = 0
@@ -125,7 +125,8 @@ object TeamCityClient {
     val (artifactFullName, artifactExtension) = if ('.' in sanitizedArtifactName) {
       val dotIndex = sanitizedArtifactName.indexOf('.') //Find the first dot to avoid breaking .tar.gz etc.
       sanitizedArtifactName.take(dotIndex) to sanitizedArtifactName.substring(dotIndex)
-    } else {
+    }
+    else {
       sanitizedArtifactName to ""
     }
     do {
@@ -139,29 +140,36 @@ object TeamCityClient {
     artifactDir.deleteRecursivelyQuietly()
     artifactDir.createDirectories()
 
-    if (source.isDirectory()) {
+    val (artifactCiPattern, targetArtifactPathOnCi, actualArtifactPathOnCi) = if (source.isDirectory()) {
       Files.walk(source).use { files ->
         for (path in files) {
           path.copyTo(target = artifactDir.resolve(source.relativize(path)), overwrite = true)
         }
       }
-      if (zipContent) {
-        printTcArtifactsPublishMessage("${artifactDir.toRealPath()}/** => $sanitizedArtifactPath/$sanitizedArtifactName$suffix.zip")
+      val artifactPathOnCi = if (zipContent) {
+        "$sanitizedArtifactPath/$sanitizedArtifactName$suffix.zip"
       }
       else {
-        printTcArtifactsPublishMessage("${artifactDir.toRealPath()}/** => $sanitizedArtifactPath$suffix")
+        "$sanitizedArtifactPath$suffix"
       }
+
+      Triple("${artifactDir.toRealPath()}/**", artifactPathOnCi, artifactPathOnCi)
     }
     else {
       val tempFile = artifactDir
       source.copyTo(tempFile, overwrite = true)
       if (zipContent) {
-        printTcArtifactsPublishMessage("${tempFile.toRealPath()} => $sanitizedArtifactPath/${sanitizedArtifactName + suffix}.zip")
+        val artifactPath = "$sanitizedArtifactPath/${sanitizedArtifactName + suffix}.zip"
+        Triple("${tempFile.toRealPath()}", artifactPath, artifactPath)
       }
       else {
-        printTcArtifactsPublishMessage("${tempFile.toRealPath()} => $sanitizedArtifactPath")
+        Triple("${tempFile.toRealPath()}", sanitizedArtifactPath, "$sanitizedArtifactPath/${tempFile.fileName}")
       }
     }
+
+    printTcArtifactsPublishMessage("$artifactCiPattern => $targetArtifactPathOnCi")
+
+    return actualArtifactPathOnCi
   }
 }
 

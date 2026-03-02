@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 
 package com.intellij.openapi.project.impl
@@ -100,6 +100,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressed
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PROJECT_NEWLY_CREATED
 import com.intellij.platform.PROJECT_NEWLY_OPENED
@@ -108,8 +109,8 @@ import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.provider.EelInitialization
-import com.intellij.platform.eel.provider.EelUnavailableException
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.project.ProjectEntitiesStorage
@@ -1069,6 +1070,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
 
   open suspend fun configureWorkspace(project: Project, projectStoreBaseDir: Path, options: OpenProjectTask): Module? {
+    if (isBackgroundActivitiesSuppressed(project)) {
+      return null
+    }
+
     if (options.runConfigurators && (options.isNewProject || project.serviceAsync<ModuleManager>().modules.isEmpty())
         || isLoadedFromCacheButHasNoModules(project)
     ) {

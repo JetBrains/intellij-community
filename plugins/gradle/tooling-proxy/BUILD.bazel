@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.gradle.toolingProxy` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tooling-proxy_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "tooling-proxy",
   module_name = "intellij.gradle.toolingProxy",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tooling-proxy_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:gradle",

@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.scope.processor;
 
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpressionList;
@@ -45,10 +47,21 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
     setIsConstructor(true);
     setAccessClass(classConstr);
     setArgumentList(argumentList);
+    obtainConstructorTypeArguments(argumentList);
   }
 
   public MethodResolverProcessor(@NotNull PsiElement place, @NotNull PsiFile placeFile, PsiConflictResolver @NotNull [] resolvers) {
     super(place, placeFile, resolvers, new SmartList<>());
+  }
+
+  private void obtainConstructorTypeArguments(@NotNull PsiExpressionList argumentList) {
+    PsiElement psiElement = argumentList.getParent();
+    if (psiElement instanceof PsiAnonymousClass) {
+      psiElement = psiElement.getParent();
+    }
+    if (psiElement instanceof PsiCallExpression) {
+      obtainTypeArguments((PsiCallExpression) psiElement);
+    }
   }
 
   @Override

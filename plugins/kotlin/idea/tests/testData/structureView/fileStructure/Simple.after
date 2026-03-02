@@ -1,10 +1,10 @@
--Simple.kt
- foo(): String
- Simple
- -Test
-  constructor Test(String, Integer)
-  foo(): Int
-  number: Integer
-  other(): Unit
-  some: Int
-  str: String
+-Simple.kt icon=org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+ foo(): String icon=Function, Local
+ Simple icon=org/jetbrains/kotlin/idea/icons/classKotlin.svg, Local
+ -Test icon=org/jetbrains/kotlin/idea/icons/classKotlin.svg, nodes/c_public.svg
+  constructor Test(String, Integer) icon=Method, nodes/c_public.svg
+  foo(): Int icon=Method, Protected
+  number: Integer icon=org/jetbrains/kotlin/idea/icons/field_value.svg, Private
+  other(): Unit icon=Method, nodes/c_public.svg
+  some: Int icon=org/jetbrains/kotlin/idea/icons/field_value.svg, Private
+  str: String icon=org/jetbrains/kotlin/idea/icons/field_value.svg, nodes/c_public.svg

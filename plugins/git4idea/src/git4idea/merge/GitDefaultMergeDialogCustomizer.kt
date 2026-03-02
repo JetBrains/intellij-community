@@ -191,7 +191,7 @@ internal open class GitDefaultMergeDialogCustomizer(
   }
 
   private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {
-    val result = GitLogUtil.collectMetadata(project, repository.root, listOf(CHERRY_PICK_HEAD)).singleOrNull() ?: return null
+    val result = GitLogUtil.collectMetadataForCommit(project, repository.root, CHERRY_PICK_HEAD) ?: return null
     return CherryPickDetails(result.id.toShortString(), result.author.name, result.fullMessage)
   }
 
@@ -219,7 +219,7 @@ internal fun getDescriptionForRebase(repository: GitRepository?, @NlsSafe rebasi
   }
 
   val conflictOnCommit =
-    if (repository != null) GitLogUtil.collectMetadata(repository.project, repository.root, listOf(REBASE_HEAD)).singleOrNull()
+    if (repository != null) GitLogUtil.collectMetadataForCommit(repository.project, repository.root, REBASE_HEAD)
     else null
 
   return if (conflictOnCommit == null) HtmlChunk.raw(description).toString()

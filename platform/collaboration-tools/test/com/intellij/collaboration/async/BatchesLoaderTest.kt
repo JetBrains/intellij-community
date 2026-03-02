@@ -2,6 +2,7 @@
 package com.intellij.collaboration.async
 
 import app.cash.turbine.test
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class BatchesLoaderTest {
@@ -106,5 +108,33 @@ class BatchesLoaderTest {
     // Should still work after multiple cancels
     val results = loader.getBatches().toList()
     assertThat(results).containsExactly(listOf(1))
+  }
+
+  @Test
+  fun `loader with stopTimeout stops after a period of inactivity and reloads data from scratch on next call`() = runTest {
+    val batchesFlow = flow {
+      emit(listOf(1, 2))
+      emit(listOf(3, 4))
+    }
+    val loader = BatchesLoader(backgroundScope, batchesFlow, stopTimeout = 100.milliseconds)
+
+    loader.getBatches().test(timeout = 1.seconds) {
+      assertThat(awaitItem()).containsExactly(1, 2)
+      assertThat(awaitItem()).containsExactly(3, 4)
+      awaitComplete()
+    }
+    
+    loader.getBatches().test(timeout = 1.seconds) {
+      assertThat(awaitItem()).containsExactly(1, 2, 3, 4)
+      awaitComplete()
+    }
+
+    delay(150.milliseconds)
+
+    loader.getBatches().test(timeout = 1.seconds) {
+      assertThat(awaitItem()).containsExactly(1, 2)
+      assertThat(awaitItem()).containsExactly(3, 4)
+      awaitComplete()
+    }
   }
 }

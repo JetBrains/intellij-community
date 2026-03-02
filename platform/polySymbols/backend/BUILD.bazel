@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":backend_resources"],
   deps = [
+    "//libraries/kotlin/reflect",
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/projectModel-impl",
@@ -36,6 +37,7 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     ":backend",
+    "//libraries/kotlin/reflect:reflect_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/projectModel-impl:projectModel-impl_test_lib",
     "//platform/core-impl:core-impl_test_lib",

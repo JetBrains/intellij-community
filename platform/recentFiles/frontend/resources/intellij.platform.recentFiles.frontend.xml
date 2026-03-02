@@ -1,8 +1,11 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.platform.rpc"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>

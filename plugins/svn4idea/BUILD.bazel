@@ -158,6 +158,8 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/forms_rt:java-guiForms-rt",
     "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/vcs-impl:vcs-impl-tests",
+    "//platform/vcs-impl:vcs-impl-tests_test_lib",
   ],
   runtime_deps = [
     ":vcs-svn-tests",

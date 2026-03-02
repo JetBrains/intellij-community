@@ -6,6 +6,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
@@ -45,6 +46,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
   override suspend fun installPackageCommand(
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
+    module: Module?,
   ): PyResult<Unit> = engine.installPackageCommand(installRequest, options)
 
   override suspend fun syncCommand(): PyResult<Unit> {

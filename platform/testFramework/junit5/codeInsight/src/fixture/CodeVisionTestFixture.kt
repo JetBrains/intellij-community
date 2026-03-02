@@ -50,7 +50,6 @@ class CodeVisionTestFixture(
     context: CodeInsightContext,
     expectedText: String,
     vararg enabledProviderGroupIds: String,
-    beforeAssert: suspend () -> Unit = {},
   ) {
     val sourceText = InlayDumpUtil.removeInlays(expectedText)
     project.waitForSmartMode()
@@ -80,7 +79,6 @@ class CodeVisionTestFixture(
         codeVisionHost.calculateCodeVisionSync(editor, disposable)
       }
     }
-    beforeAssert()
     assertText(expectedText)
   }
 

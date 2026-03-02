@@ -19,5 +19,6 @@ intellij_dev_binary_community = macro(
         "config_path": attr.string(configurable = False, doc = "Path for -Didea.config.path. Defaults to out/dev-data/{name}/config."),
         "system_path": attr.string(configurable = False, doc = "Path for -Didea.system.path. Defaults to out/dev-data/{name}/system."),
         "additional_modules": attr.string(configurable = False, doc = "Value for -Dadditional.modules flag (optional)."),
+        "program_args": attr.string_list(default = [], configurable = False, doc = "Value for program arguments (optional)."),
     },
 )

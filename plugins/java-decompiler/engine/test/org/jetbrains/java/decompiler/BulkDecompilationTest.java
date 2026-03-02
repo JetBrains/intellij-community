@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,13 +18,13 @@ import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqu
 public class BulkDecompilationTest {
   private DecompilerTestFixture fixture;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     fixture = new DecompilerTestFixture();
     fixture.setUp(Map.of());
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws IOException {
     fixture.tearDown();
     fixture = null;

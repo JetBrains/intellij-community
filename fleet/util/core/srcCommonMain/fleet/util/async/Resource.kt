@@ -21,6 +21,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
@@ -28,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
 
 /**
  * Something backed by a coroutine tree.
@@ -275,30 +277,45 @@ fun <T> Resource<T>.useOn(coroutineScope: CoroutineScope): Deferred<T> {
   return deferred
 }
 
-enum class StopMode {
-  NOPE, STOP, CANCEL
+internal sealed interface StopMode {
+  data object DoNotStop : StopMode
+  data class Stop(val stopTimeout: kotlin.time.Duration, val graceful: Boolean) : StopMode
 }
 
 sealed class SharingMode(
-  val runImmediately: Boolean,
-  val stopWithoutConsumersMode: StopMode,
+  internal val runImmediately: Boolean,
+  internal val stopWithoutConsumersMode: StopMode,
 ) {
   /**
    * The resource starts immediately and remains active until the scope is canceled.
    */
-  data object Eager : SharingMode(runImmediately = true, stopWithoutConsumersMode = StopMode.NOPE)
+  data object Eager : SharingMode(
+    runImmediately = true,
+    stopWithoutConsumersMode = StopMode.DoNotStop,
+  )
 
   /**
    * The resource starts when a consumer appears and remains active until the scope is canceled.
    */
-  data object Lazy : SharingMode(runImmediately = false, stopWithoutConsumersMode = StopMode.NOPE)
+  data object Lazy : SharingMode(
+    runImmediately = false,
+    stopWithoutConsumersMode = StopMode.DoNotStop,
+  )
 
   /**
    * The resource starts when a consumer appears and is gracefully shut down when the last consumer leaves.
    * This cycle may repeat multiple times.
    */
-  data class WhileUsed(val graceful: Boolean = true) : SharingMode(runImmediately = false,
-                                                                   stopWithoutConsumersMode = if (graceful) StopMode.STOP else StopMode.CANCEL)
+  data class WhileUsed(
+    val graceful: Boolean = true,
+    /*
+     * configures a delay between the disappearance of the last subscriber and the stopping of the sharing coroutine. It defaults to zero (stop immediately).
+     */
+    val stopTimeout: kotlin.time.Duration = kotlin.time.Duration.ZERO,
+  ) : SharingMode(
+    runImmediately = false,
+    stopWithoutConsumersMode = StopMode.Stop(stopTimeout, graceful),
+  )
 }
 
 /**
@@ -334,32 +351,57 @@ fun <T> Resource<T>.shareIn(coroutineScope: CoroutineScope, sharing: SharingMode
                 null to s.job
               }
             }
+            is SharedResourceState.StoppingAfterDelay<T> -> {
+              s.timeoutCoroutine.cancel()
+              SharedResourceState.Running(1, s.running).also { state = it } to null
+            }
           }
         }
         val (running, obstacle) = r
         when {
           obstacle != null -> obstacle.join()
           running != null -> {
+            // break the loop
             return@resource try {
               running.runnning.use(cc)
             }
             finally {
-              synchronized(lock) {
+              synchronized(lock = lock) {
                 when (val s = state) {
-                  is SharedResourceState.Stopping<*>, is SharedResourceState.NotRunning<*> -> error("we are not yet done with the resource, yet it is not running")
+                  is SharedResourceState.Stopping<*>, is SharedResourceState.NotRunning<*>, is SharedResourceState.StoppingAfterDelay<*> -> error("we are not yet done with the resource, yet it is not running")
                   is SharedResourceState.Running<T> -> {
                     state = if (s.refCount == 1) {
-                      when (sharing.stopWithoutConsumersMode) {
-                        StopMode.STOP -> {
-                          s.runnning.termination.complete()
-                          SharedResourceState.Stopping(s.runnning.job)
+                      when (val mode = sharing.stopWithoutConsumersMode) {
+                        is StopMode.Stop -> {
+                          if (mode.stopTimeout == Duration.ZERO) {
+                            if (!mode.graceful) {
+                              s.runnning.job.cancel()
+                            }
+                            s.runnning.termination.complete()
+                            SharedResourceState.Stopping(s.runnning.job)
+                          }
+                          else {
+                            val marker = Any()
+                            SharedResourceState.StoppingAfterDelay(
+                              running = s.runnning,
+                              marker = marker,
+                              timeoutCoroutine = coroutineScope.launch(start = CoroutineStart.ATOMIC) {
+                                delay(mode.stopTimeout)
+                                synchronized(lock) {
+                                  val s = state
+                                  if (s is SharedResourceState.StoppingAfterDelay<*> && s.marker == marker) {
+                                    if (!mode.graceful) {
+                                      s.running.job.cancel()
+                                    }
+                                    s.running.termination.complete()
+                                    state = SharedResourceState.Stopping(s.running.job)
+                                  }
+                                }
+                              }
+                            )
+                          }
                         }
-                        StopMode.CANCEL -> {
-                          s.runnning.job.cancel()
-                          s.runnning.termination.complete()
-                          SharedResourceState.Stopping(s.runnning.job)
-                        }
-                        StopMode.NOPE -> {
+                        StopMode.DoNotStop -> {
                           s.copy(refCount = 0)
                         }
                       }
@@ -383,6 +425,11 @@ private sealed interface SharedResourceState<T> {
   class NotRunning<T> : SharedResourceState<T>
   data class Running<T>(val refCount: Int, val runnning: HotResource<T>) : SharedResourceState<T>
   data class Stopping<T>(val job: Job) : SharedResourceState<T>
+  data class StoppingAfterDelay<T>(
+    val running: HotResource<T>,
+    val timeoutCoroutine: Job,
+    val marker: Any,
+  ) : SharedResourceState<T>
 }
 
 private class HotResource<T>(

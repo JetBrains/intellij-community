@@ -38,7 +38,6 @@ inline fun panel(vararg constraints: LCFlags, @NlsContexts.DialogTitle title: St
 internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
-  panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
 }
 
 @ApiStatus.ScheduledForRemoval
@@ -47,5 +46,4 @@ internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
 fun initPanelInternal(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
-  panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
 }

@@ -88,6 +88,7 @@ internal object ContentModuleDependencyPlanner : PipelineNode {
       // test descriptor modules (foo._test) have foo._test.xml - these are separate content modules
       val mainDescriptorJobs = ArrayList<Deferred<GenerationOutput>>()
       val testDescriptorJobs = ArrayList<Deferred<GenerationOutput>>()
+      val allRealProductNames = embeddedCheckProductNames(model.discovery.products.map { it.name })
 
       model.pluginGraph.query {
         contentModules { contentModule ->
@@ -105,6 +106,7 @@ internal object ContentModuleDependencyPlanner : PipelineNode {
               contentModuleName = moduleName,
               descriptorCache = model.descriptorCache,
               pluginGraph = model.pluginGraph,
+              allRealProductNames = allRealProductNames,
               isTestDescriptor = isTestDescriptorModule,
               suppressionConfig = model.suppressionConfig,
               updateSuppressions = model.updateSuppressions,
@@ -182,6 +184,11 @@ internal suspend fun planContentModuleDependenciesWithBothSets(
   contentModuleName: ContentModuleName,
   descriptorCache: ModuleDescriptorCache,
   pluginGraph: PluginGraph,
+  allRealProductNames: Set<String> = embeddedCheckProductNames(pluginGraph.query {
+    val names = LinkedHashSet<String>()
+    products { product -> names.add(product.name()) }
+    names
+  }),
   isTestDescriptor: Boolean,
   suppressionConfig: SuppressionConfig,
   updateSuppressions: Boolean,
@@ -206,6 +213,7 @@ internal suspend fun planContentModuleDependenciesWithBothSets(
     contentModuleName = contentModuleName,
     prodInfo = prodInfo,
     graph = pluginGraph,
+    allRealProductNames = allRealProductNames,
     suppressionConfig = suppressionConfig,
     updateSuppressions = updateSuppressions,
     isTestDescriptor = isTestDescriptor,
@@ -233,6 +241,7 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
   contentModuleName: ContentModuleName,
   prodInfo: ModuleDescriptorCache.DescriptorInfo,
   graph: PluginGraph,
+  allRealProductNames: Set<String>,
   suppressionConfig: SuppressionConfig,
   updateSuppressions: Boolean,
   isTestDescriptor: Boolean,
@@ -282,12 +291,23 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     val module = contentModule(contentModuleName)
     isTestDescriptor || (module != null && !hasProductionContentSource(module.id))
   }
+  // Test-runtime-only modules must keep all required library dependencies.
+  // Product-level library filters target production outputs and would drop
+  // required test libraries (for example, assertj) for these modules.
+  val effectiveLibraryModuleFilter: (String) -> Boolean =
+    if (includeTestScopeForWrittenDeps) {
+      { true }
+    }
+    else {
+      libraryModuleFilter
+    }
   val prodGraphDeps = graph.query {
     computeJpsDeps(
       graph = graph,
       moduleName = contentModuleName,
       includeTestScope = includeTestScopeForWrittenDeps,
-      libraryModuleFilter = libraryModuleFilter,
+      allRealProductNames = allRealProductNames,
+      libraryModuleFilter = effectiveLibraryModuleFilter,
     )
   }
   val prodGraphModuleDeps = prodGraphDeps.moduleDeps
@@ -330,7 +350,8 @@ private fun buildContentModuleDependencyPlanFromInfoWithBothSets(
     graph = graph,
     moduleName = contentModuleName,
     includeTestScope = true,
-    libraryModuleFilter = libraryModuleFilter,
+    allRealProductNames = allRealProductNames,
+    libraryModuleFilter = effectiveLibraryModuleFilter,
   ).moduleDeps
 
   for (depModule in testGraphModuleDeps) {
@@ -505,6 +526,7 @@ private fun computeJpsDeps(
   graph: PluginGraph,
   moduleName: ContentModuleName,
   includeTestScope: Boolean,
+  allRealProductNames: Set<String>,
   libraryModuleFilter: (String) -> Boolean,
 ): JpsDeps {
   val moduleDeps = HashSet<ContentModuleName>()
@@ -512,6 +534,13 @@ private fun computeJpsDeps(
   val filteredEmbeddedModuleDeps = HashSet<ContentModuleName>()
   graph.query {
     val mod = contentModule(moduleName) ?: return JpsDeps(moduleDeps, pluginDeps, filteredEmbeddedModuleDeps)
+    val isPluginOnlySource = hasPluginSource(mod.id) && !hasNonPluginSource(mod.id)
+    val embeddedCheckProductNames = if (isPluginOnlySource) {
+      embeddedCheckProductsForPluginOnlyContentModule(mod.id, allRealProductNames)
+    }
+    else {
+      allRealProductNames
+    }
 
     mod.backedBy { target ->
       target.dependsOn { dep ->
@@ -524,14 +553,17 @@ private fun computeJpsDeps(
 
         when (val c = classifyTarget(dep.targetId)) {
           is DependencyClassification.ModuleDep -> {
+            if (c.moduleName == moduleName) {
+              return@dependsOn
+            }
             if (c.moduleName.value.startsWith(LIB_MODULE_PREFIX) && !libraryModuleFilter(c.moduleName.value)) {
               return@dependsOn
             }
-            // Skip globally embedded modules - but only for content modules in plugins
-            // Content modules directly in products should not skip embedded deps
-            val sourceModuleId = mod.id
+            // Skip globally embedded modules for plugin-only source modules.
             val depModuleId = contentModule(c.moduleName)?.id ?: -1
-            if (depModuleId >= 0 && shouldSkipEmbeddedContentDependency(sourceModuleId, depModuleId)) {
+            if (depModuleId >= 0 &&
+                isPluginOnlySource &&
+                shouldSkipEmbeddedPluginDependency(depModuleId, embeddedCheckProductNames)) {
               filteredEmbeddedModuleDeps.add(c.moduleName)
             }
             else {

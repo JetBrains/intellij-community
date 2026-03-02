@@ -3,7 +3,6 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionHost.LensInvalidateSignal
-import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
@@ -16,14 +15,14 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.JdkFinder
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.terminal.ui.TerminalWidget
@@ -31,6 +30,7 @@ import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.nio.file.Path
 
 private val LOG = logger<ExternalJavaConfigurationService>()
 
@@ -50,7 +50,7 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
     data class Missing<T>(val releaseData: T) : JavaConfigurationStatus()
   }
 
-  internal val statuses = HashMap<String, JavaConfigurationStatus>().withDefault { JavaConfigurationStatus.Unknown }
+  internal val statuses = HashMap<Path, JavaConfigurationStatus>().withDefault { JavaConfigurationStatus.Unknown }
 
   public sealed class JdkCandidate<T> {
     public data class Jdk<T>(val releaseData: T, val jdk: Sdk, val project: Boolean) : JdkCandidate<T>()
@@ -64,28 +64,28 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
   public fun <T> updateFromConfig(configProvider: ExternalJavaConfigurationProvider<T>, configureJdk: Boolean = false) {
     scope.launch {
       val releaseData: T = getReleaseData(configProvider) ?: return@launch
-      val file = configProvider.getConfigurationFile(project)
+      val configPath = configProvider.getConfigurationFilePath(project)
 
       when (val candidate = findCandidate(releaseData, configProvider)) {
         is JdkCandidate.Jdk -> {
           if (candidate.project) {
-            setStatus(file.path, JavaConfigurationStatus.AlreadyConfigured)
+            setStatus(configPath, JavaConfigurationStatus.AlreadyConfigured)
           }
           else {
-            setStatus(file.path, JavaConfigurationStatus.Found)
-            if (configureJdk) configure(candidate.jdk, file.name, file.path, releaseData)
+            setStatus(configPath, JavaConfigurationStatus.Found)
+            if (configureJdk) configure(candidate.jdk, configPath, releaseData)
           }
         }
         is JdkCandidate.Path -> {
-          setStatus(file.path, JavaConfigurationStatus.Found)
+          setStatus(configPath, JavaConfigurationStatus.Found)
           if (configureJdk) {
             service<AddJdkService>().createJdkFromPath(candidate.path) {
-              configure(it, file.name, file.path, releaseData)
+              configure(it, configPath, releaseData)
             }
           }
         }
         else -> {
-          setStatus(file.path, JavaConfigurationStatus.Missing(releaseData))
+          setStatus(configPath, JavaConfigurationStatus.Missing(releaseData))
         }
       }
     }
@@ -96,7 +96,7 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
    */
   public suspend fun <T> getReleaseData(configProvider: ExternalJavaConfigurationProvider<T>): T? {
     val text = readAction {
-      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(configProvider.getConfigurationFile(project).toPath().toAbsolutePath())
+      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(configProvider.getConfigurationFilePath(project).toAbsolutePath())
       virtualFile?.let { FileDocumentManager.getInstance().getDocument(it)?.text }
     } ?: return null
 
@@ -107,33 +107,31 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
    * @return a matching JDK candidate for the release data among registered and detected JDKs.
    */
   public fun <T> findCandidate(releaseData: T, configProvider: ExternalJavaConfigurationProvider<T>): JdkCandidate<T>? {
-    val fileName = configProvider.getConfigurationFile(project).name
-
-    val wsl =  SystemInfo.isWindows && project.guessProjectDir()?.let { WslPath.isWslUncPath(it.path) } == true
+    val configFile = configProvider.getConfigurationFilePath(project)
+    val eelMachine = project.getEelMachine()
 
     // Match against the project SDK
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
     if (projectSdk != null && configProvider.matchAgainstSdk(releaseData, projectSdk)) {
       return JdkCandidate.Jdk(releaseData, projectSdk, true)
     } else {
-      LOG.info("[$fileName] $releaseData - Project JDK doesn't match (${projectSdk?.versionString})")
+      LOG.info("[${configFile.fileName}] $releaseData - Project JDK doesn't match (${projectSdk?.versionString})")
     }
 
     // Match against the project JDK table
     val jdks = ProjectJdkTable.getInstance(project).allJdks
     for (jdk in jdks) {
-      val path = jdk.homePath ?: continue
-      if (SystemInfo.isWindows && wsl != WslPath.isWslUncPath(path)) continue
+      if (!ProjectSdksModel.sdkMatchesEel(eelMachine, jdk)) continue
       if (configProvider.matchAgainstSdk(releaseData, jdk)) {
-        LOG.info("[$fileName] $releaseData - Candidate found: ${jdk.versionString}")
+        LOG.info("[$configFile.fileName] $releaseData - Candidate found: ${jdk.versionString}")
         return JdkCandidate.Jdk(releaseData, jdk, false)
       }
     }
 
     // Match against JdkFinder
     JdkFinder.getInstance().suggestHomePaths(project).forEach { path ->
-      if (configProvider.matchAgainstPath(releaseData, path) && (!SystemInfo.isWindows || wsl == WslPath.isWslUncPath(path))) {
-        LOG.info("[$fileName] $releaseData - Candidate found to register")
+      if (configProvider.matchAgainstPath(releaseData, path) && ProjectSdksModel.sdkMatchesEel(eelMachine, path)) {
+        LOG.info("[$configFile.fileName] $releaseData - Candidate found to register")
         return JdkCandidate.Path(releaseData, path)
       }
     }
@@ -141,18 +139,18 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
     return null
   }
 
-  private fun <T> configure(jdk: Sdk, fileName: String, filePath: String, candidate: T) {
+  private fun <T> configure(jdk: Sdk, filePath: Path, candidate: T) {
     scope.launch(Dispatchers.EDT) {
       val rootManager = ProjectRootManager.getInstance(project)
       edtWriteAction { rootManager.projectSdk = jdk }
-      LOG.info("[$fileName] $candidate - JDK registered: ${jdk.versionString}")
+      LOG.info("[${filePath.fileName}] $candidate - JDK registered: ${jdk.versionString}")
 
       // Update status and refresh inlays after configuration
       setStatus(filePath, JavaConfigurationStatus.AlreadyConfigured)
     }
   }
 
-  private fun setStatus(filePath: String, newStatus: JavaConfigurationStatus) {
+  private fun setStatus(filePath: Path, newStatus: JavaConfigurationStatus) {
     if (statuses[filePath] == newStatus) return
     statuses[filePath] = newStatus
     runInEdt {

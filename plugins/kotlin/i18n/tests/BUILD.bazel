@@ -48,6 +48,10 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/lang-core",
+    "//platform/lang-core:lang-core_test_lib",
   ],
   runtime_deps = [":tests"]
 )

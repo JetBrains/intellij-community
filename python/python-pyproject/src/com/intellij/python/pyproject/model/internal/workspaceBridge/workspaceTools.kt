@@ -7,8 +7,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.DependencyScope
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleDependency
@@ -36,7 +36,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
 import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
-import com.intellij.python.pyproject.model.internal.pyProjectToml.getPEP621Deps
+import com.intellij.python.pyproject.model.internal.pyProjectToml.getDependenciesFromToml
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.Tool
@@ -59,7 +59,7 @@ import kotlin.io.path.name
 
 internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWithToml) {
   changeWorkspaceMutex.withLock {
-    val (entries, _) = generatePyProjectTomlEntries(files)
+    val entries = generatePyProjectTomlEntries(files)
     // No pyproject.toml files, no need to touch model at all
     if (entries.isEmpty()) {
       return
@@ -70,8 +70,25 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
       renameSameModule(syncStorage, projectStorage)
       relocateFacetAndSdk(syncStorage, projectStorage)
       projectStorage.replaceBySource({ it.isPythonEntity }, syncStorage)
+
+      // For some reason, WSM duplicates sources instead of merging them, so we remove duplicates
+      for (moduleEntity in projectStorage.entities(ModuleEntity::class.java).filter { it.entitySource.isPythonEntity }) {
+        for (contentRoot in moduleEntity.contentRoots) {
+          if (contentRoot.sourceRoots.size > 1) {
+            projectStorage.modifyContentRootEntity(contentRoot) {
+              removeSrcDuplicates()
+            }
+          }
+        }
+      }
+
     }
   }
+}
+
+private fun ContentRootEntityBuilder.removeSrcDuplicates() {
+  val newSourceRoots = sourceRoots.distinctBy { it.url }
+  sourceRoots = newSourceRoots
 }
 
 private fun renameSameModule(syncStorage: EntityStorage, projectStorage: MutableEntityStorage) {
@@ -113,8 +130,8 @@ private fun relocateFacetAndSdk(syncStorage: MutableEntityStorage, projectStorag
  */
 private suspend fun generatePyProjectTomlEntries(
   fsInfo: FSWalkInfoWithToml,
-): Pair<Set<PyProjectTomlBasedEntryImpl>, Set<Directory>> = withContext(Dispatchers.Default) {
-  val (files, allExcludeDirs) = fsInfo
+): Set<PyProjectTomlBasedEntryImpl> = withContext(Dispatchers.Default) {
+  val files = fsInfo.tomlFiles
   val entries = ArrayList<PyProjectTomlBasedEntryImpl>()
   val usedNamed = mutableSetOf<String>()
   val tools = Tool.EP.extensionList
@@ -138,10 +155,17 @@ private suspend fun generatePyProjectTomlEntries(
     }
     usedNamed.add(projectNameAsString)
     val projectName = ProjectName(projectNameAsString)
-    val sourceRootsAndTools = Tool.EP.extensionList.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
+    val sourceRootsAndTools = tools.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
     val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + findSrc(root)
     participatedTools.addAll(sourceRootsAndTools.map { it.first.id })
-    val excludedDirs = allExcludeDirs.filter { it.startsWith(root) }
+    if (participatedTools.isEmpty()) {
+      // If a tool is mentioned as a tool.<toolId> in pyproject.toml, we consider it participated in project configuration
+      for (tool in tools) {
+        if (toml.toml.contains("tool.${tool.id.id}")) {
+          participatedTools.add(tool.id)
+        }
+      }
+    }
     if (participatedTools.isEmpty()) {
       // Try to use build-tool as last resort
       toml.toml.getString("build-system.build-backend")?.let { buildBackend ->
@@ -158,15 +182,14 @@ private suspend fun generatePyProjectTomlEntries(
                                             projectName,
                                             root,
                                             mutableSetOf(),
-                                            sourceRoots,
-                                            excludedDirs.toSet())
+                                            sourceRoots)
     entries.add(entry)
   }
   val entriesByName = entries.associateBy { it.name }
   val namesByDir = entries.associate { Pair(it.root, it.name) }
   val allNames = entriesByName.keys
-  var dependencies = getPEP621Deps(entriesByName, namesByDir)
-  for (tool in Tool.EP.extensionList) {
+  var dependencies = getDependenciesFromToml(entriesByName, namesByDir, tools.flatMap { it.getTomlDependencySpecifications() })
+  for (tool in tools) {
     // Tool provides deps and workspace members
     val toolSpecificInfo = tool.getProjectStructure(entriesByName, namesByDir)
     // Tool-agnostic pep621 deps
@@ -190,7 +213,7 @@ private suspend fun generatePyProjectTomlEntries(
     val entity = entriesByName[name] ?: error("returned broken name $name")
     entity.dependencies.addAll(deps)
   }
-  return@withContext Pair(entries.toSet(), allExcludeDirs)
+  return@withContext entries.toSet()
 }
 
 private suspend fun Iterable<Tool>.getNameFromEP(projectToml: PyProjectToml): Pair<Tool, @NlsSafe String>? =
@@ -204,9 +227,8 @@ private suspend fun createProjectModel(
 ): ImmutableEntityStorage = withContext(Dispatchers.Default) {
   val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
   val storage = MutableEntityStorage.create()
-  val entitySource = createEntitySource(project)
   for (pyProject in graph) {
-    val moduleEntity = storage addEntity ModuleEntity(pyProject.name.name, emptyList(), entitySource) {
+    val moduleEntity = storage addEntity ModuleEntity(pyProject.name.name, emptyList(), createEntitySource(project)) {
       dependencies += ModuleSourceDependency
       for (moduleName in pyProject.dependencies) {
         dependencies += ModuleDependency(ModuleId(moduleName.name), true, DependencyScope.COMPILE, false)
@@ -214,9 +236,6 @@ private suspend fun createProjectModel(
       contentRoots = listOf(ContentRootEntity(pyProject.root.toVirtualFileUrl(virtualFileUrlManager), emptyList(), entitySource) {
         sourceRoots = pyProject.sourceRoots.map { srcRoot ->
           SourceRootEntity(srcRoot.toVirtualFileUrl(virtualFileUrlManager), PYTHON_SOURCE_ROOT_TYPE, entitySource)
-        }
-        excludedUrls = pyProject.excludedRoots.map { excludedRoot ->
-          ExcludeUrlEntity(excludedRoot.toVirtualFileUrl(virtualFileUrlManager), entitySource)
         }
       })
       val participatedTools: MutableMap<ToolId, ModuleId?> =
@@ -257,7 +276,6 @@ private data class PyProjectTomlBasedEntryImpl(
   override val root: Directory,
   val dependencies: MutableSet<ProjectName>,
   val sourceRoots: Set<Directory>,
-  val excludedRoots: Set<Directory>,
 ) : PyProjectTomlProject
 
 
@@ -289,7 +307,6 @@ private suspend fun findSrc(root: Directory): Set<Directory> =
 
 private val PYTHON_MODULE_ID: ModuleTypeId = ModuleTypeId(PyNames.PYTHON_MODULE_ID)
 
-private val ModuleEntity.isPythonModule: Boolean get() = entitySource.isPythonEntity || type == PYTHON_MODULE_ID
 private val EntitySource.isPythonEntity: Boolean get() = (this as? JpsImportedEntitySource)?.externalSystemId == PY_PROJECT_SYSTEM_ID.id
 
 private class ModuleAnchor(moduleEntity: ModuleEntity) {
@@ -304,6 +321,7 @@ private class ModuleAnchor(moduleEntity: ModuleEntity) {
     (theOnlyContentRoot != null && theOnlyContentRoot.url == o.theOnlyContentRoot?.url)
 }
 
+// Warning: this entity must be unique for each model, it can't be reused
 internal fun createEntitySource(project: Project): EntitySource {
   val moduleRoot =
     project.stateStore.projectBasePath.resolve(DIRECTORY_STORE_FOLDER).toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())

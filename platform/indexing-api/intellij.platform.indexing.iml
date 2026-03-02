@@ -40,5 +40,7 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
   </component>
 </module>

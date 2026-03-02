@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.conda.execution
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.osFamily
 import com.intellij.python.community.execService.BinOnEel
@@ -39,6 +40,7 @@ import kotlin.io.path.pathString
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
+@OptIn(IntellijInternalApi::class)
 @ApiStatus.Internal
 object CondaExecutor {
   suspend fun createNamedEnv(binaryToExec: BinaryToExec, envName: String, pythonVersion: String): PyResult<Unit> {

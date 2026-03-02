@@ -66,6 +66,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
 @Service(Service.Level.PROJECT)
 public final class TerminalToolWindowManager implements Disposable {
   private static final Key<TerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
@@ -150,11 +151,6 @@ public final class TerminalToolWindowManager implements Disposable {
   //------------ Classic Terminal tab creation API methods start ------------------------------------
 
   /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
-  public @NotNull TerminalWidget createNewSession() {
-    return createNewSession(null, myTerminalRunner, TerminalEngine.CLASSIC, null, true, true);
-  }
-
-  /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
   public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner) {
     createNewSession(null, terminalRunner, TerminalEngine.CLASSIC, null, true, true);
   }
@@ -173,25 +169,8 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
-  public @NotNull TerminalWidget createShellWidget(@Nullable String workingDirectory,
-                                                   @Nullable @Nls String tabName,
-                                                   boolean requestFocus,
-                                                   boolean deferSessionStartUntilUiShown) {
-    return createNewSession(workingDirectory, tabName, null, requestFocus, deferSessionStartUntilUiShown);
-  }
-
-  /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
   public @NotNull Content newTab(@NotNull ToolWindow toolWindow, @Nullable TerminalWidget terminalWidget) {
     return createNewTab(null, terminalWidget, myTerminalRunner, TerminalEngine.CLASSIC, null, true, true);
-  }
-
-  /** Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider} */
-  public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
-    TerminalTabState state = new TerminalTabState();
-    if (fileToOpen != null) {
-      state.myWorkingDirectory = fileToOpen.getPath();
-    }
-    createNewSession(null, myTerminalRunner, TerminalEngine.CLASSIC, state, true, true);
   }
 
   //------------ Classic Terminal tab creation API methods end --------------------------------------
@@ -634,7 +613,75 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   * Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider}
+   *
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(workingDirectory)
+   *   .tabName(tabName)
+   *   .createTab()
+   * }</pre>
+   */
+  @Deprecated
+  public @NotNull TerminalWidget createNewSession() {
+    return createNewSession(null, myTerminalRunner, TerminalEngine.CLASSIC, null, true, true);
+  }
+
+  /**
+   * Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider}
+   *
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(workingDirectory)
+   *   .tabName(tabName)
+   *   .createTab()
+   * }</pre>
+   */
+  @Deprecated
+  public @NotNull TerminalWidget createShellWidget(@Nullable String workingDirectory,
+                                                   @Nullable @Nls String tabName,
+                                                   boolean requestFocus,
+                                                   boolean deferSessionStartUntilUiShown) {
+    return createNewSession(workingDirectory, tabName, null, requestFocus, deferSessionStartUntilUiShown);
+  }
+
+  /**
+   * Creates the <b>Classic</b> terminal tab regardless of the {@link TerminalEngine} state in the {@link TerminalOptionsProvider}
+   *
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(fileToOpen.path)
+   *   .createTab()
+   * }</pre>
+   */
+  @Deprecated
+  public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
+    TerminalTabState state = new TerminalTabState();
+    if (fileToOpen != null) {
+      state.myWorkingDirectory = fileToOpen.getPath();
+    }
+    createNewSession(null, myTerminalRunner, TerminalEngine.CLASSIC, state, true, true);
+  }
+
+  /**
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(workingDirectory)
+   *   .tabName(tabName)
+   *   .createTab()
+   * }</pre>
    */
   @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
@@ -642,7 +689,15 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(workingDirectory)
+   *   .tabName(tabName)
+   *   .createTab()
+   * }</pre>
    */
   @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
@@ -652,7 +707,15 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #createShellWidget(String, String, boolean, boolean)} instead
+   * @deprecated please use the Reworked Terminal API instead: {@link com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager}
+   * For example:
+   * <pre>{@code
+   * TerminalToolWindowTabsManager.getInstance(project)
+   *   .createTabBuilder()
+   *   .workingDirectory(workingDirectory)
+   *   .tabName(tabName)
+   *   .createTab()
+   * }</pre>
    */
   @Deprecated(forRemoval = true)
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,

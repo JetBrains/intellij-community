@@ -16,31 +16,14 @@
 package com.jetbrains.python.codeInsight.typeRepresentation.psi
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.impl.PyElementImpl
+import com.jetbrains.python.psi.impl.PyNamedParameterImpl
 
-class PyNamedParameterTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), PsiElement {
+class PyNamedParameterTypeRepresentation(astNode: ASTNode) : PyNamedParameterImpl(astNode) {
   val parameterName: String?
     get() = node.findChildByType(PyTokenTypes.IDENTIFIER)?.text
 
   val typeExpression: PyExpression?
     get() = findChildByClass(PyExpression::class.java)
-
-  val defaultValue: PyExpression?
-    get() {
-      // Find the expression after the = token
-      val children = node.getChildren(null)
-      var foundEquals = false
-      for (child in children) {
-        if (foundEquals && child.psi is PyExpression) {
-          return child.psi as PyExpression
-        }
-        if (child.elementType == PyTokenTypes.EQ) {
-          foundEquals = true
-        }
-      }
-      return null
-    }
 }

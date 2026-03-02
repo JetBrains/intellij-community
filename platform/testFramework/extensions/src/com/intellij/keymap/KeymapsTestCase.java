@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.keymap;
 
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +98,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"control alt DOWN",         "NextOccurence", "Console.TableResult.NextPage"},
       {"control alt E",            "Console.History.Browse", "PerforceDirect.Edit", "ToggleFindInSelection"},
       {"control alt G",            "DatabaseView.SqlGenerator", "org.jetbrains.plugins.ruby.rails.actions.generators.RailsRunGeneratorPopupAction",
-                                   "Mvc.RunTarget", "GoGenerateFileAction"},
+                                   "GoGenerateFileAction"},
       {"control alt I",            "AutoIndentLines", "RMarkdownNewChunk"},
       {"control alt K",            "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
       {"control alt N",            "Inline", "Console.TableResult.SetNull"},
@@ -166,7 +166,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt UP",        "ResizeToolWindowUp", "VcsShowPrevChangeMarker"},
       {"shift ctrl alt M",         "Console.TableResult.MaximizeEditingCell", "FullLine.GenerateMarkerAction"},
       {"ctrl alt N",               "Console.TableResult.SetNull", "Git.CreateNewBranch", "Git.New.Branch.In.Log", "Inline"},
-      {"ctrl BACK_SLASH",          "AIAssistant.Editor.AskAiAssistantInEditor", "FileChooser.GoToRoot"},
+      {"ctrl BACK_SLASH",          "AIAssistant.Editor.AskAiAssistantInEditor", "AgentWorkbenchPrompt.OpenGlobalPalette", "FileChooser.GoToRoot"},
       {"alt BACK_SLASH",           "CallInlineCompletionAction", "MainMenuButton.ShowMenu"},
       {"shift ctrl EQUALS",        "CompilationChartsZoomResetAction", "ExpandAllRegions"},
     }),
@@ -277,7 +277,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"control W",                "EditorKillRegion", "Terminal.DeletePreviousWord"},
       {"control alt A",            "MethodUp", "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
       {"control alt E",            "Console.History.Browse", "MethodDown", "PerforceDirect.Edit", "ToggleFindInSelection"},
-      {"control alt G",            "GotoDeclaration", "org.jetbrains.plugins.ruby.rails.actions.generators.RailsRunGeneratorPopupAction", "Mvc.RunTarget"},
+      {"control alt G",            "GotoDeclaration", "org.jetbrains.plugins.ruby.rails.actions.generators.RailsRunGeneratorPopupAction"},
       {"control alt S",            "ShowSettings", "Find"},
       {"ctrl L",                   "EditorScrollToCenter", "Terminal.ClearBuffer"},
       {"ctrl V",                   "EditorPageDown", "Terminal.Paste", "JupyterNotebookPasteCellCommandModeAction"},
@@ -446,7 +446,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"control 1",                "ActivateProjectToolWindow", "DuplicatesForm.SendToLeft"},
       {"control 2",                "ActivateProjectToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
       {"control 3",                "ActivateProjectToolWindow", "FileChooser.GotoModule"},
-      {"control BACK_SLASH",       "CodeCompletion", "FileChooser.GoToRoot"},
+      {"control BACK_SLASH",       "AgentWorkbenchPrompt.OpenGlobalPalette", "CodeCompletion", "FileChooser.GoToRoot"},
       {"control BACK_SPACE",       "EditorDeleteToWordStart", "ToggleDockMode"},
       {"control DIVIDE",           "CollapseRegionRecursively", "Graph.ActualSize"},
       {"control E",                "EditorDeleteLine", "Terminal.MoveCaretToLineEnd"},
@@ -603,6 +603,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta alt E",               "Console.History.Browse", "GotoNextElementUnderCaretUsage", "PerforceDirect.Edit"},
       {"meta alt I",               "Move", "RMarkdownNewChunk"},
       {"meta alt UP",              "Console.TableResult.PreviousPage", "PreviousOccurence"},
+      {"meta BACK_SLASH",          "AgentWorkbenchPrompt.OpenGlobalPalette", "StepOut"},
       {"meta alt RIGHT",           "AIAssistant.Editor.AcceptOneLineCompletion", "NextTab"},
       {"shift alt SEMICOLON",      "ForceStepInto", SECOND_STROKE},
       {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},

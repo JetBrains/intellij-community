@@ -142,7 +142,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
   var extraExecutables: PersistentList<String> = persistentListOf()
 
   // Method override handlers (stored as lambdas)
-  private var copyAdditionalFilesHandler: (suspend (BuildContext, Path, JvmArchitecture) -> Unit)? = null
+  private var copyAdditionalFilesHandler: (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = null
   private var rootDirectoryNameHandler: ((ApplicationInfoProperties, String) -> String)? = null
   private var customIdeaPropertiesHandler: ((ApplicationInfoProperties) -> Map<String, String>)? = null
   private var binariesToSignHandler: ((BuildContext, JvmArchitecture) -> List<String>)? = null
@@ -153,7 +153,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
    * Gets the current copyAdditionalFiles handler for wrapping purposes.
    * @return the current handler, or null if none is set
    */
-  fun getCopyAdditionalFilesHandler(): (suspend (BuildContext, Path, JvmArchitecture) -> Unit)? = copyAdditionalFilesHandler
+  fun getCopyAdditionalFilesHandler(): (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = copyAdditionalFilesHandler
 
   /**
    * Gets the current distributionUUID handler for checking if one is set.
@@ -167,7 +167,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
    *
    * @param handler Lambda receiving context, targetDir, and arch
    */
-  fun copyAdditionalFiles(handler: suspend (context: BuildContext, targetDir: Path, arch: JvmArchitecture) -> Unit) {
+  fun copyAdditionalFiles(handler: suspend (targetDir: Path, arch: JvmArchitecture, context: BuildContext) -> Unit) {
     this.copyAdditionalFilesHandler = handler
   }
 
@@ -258,7 +258,7 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
 
     override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
       super.copyAdditionalFiles(context = context, targetDir = targetDir, arch = arch)
-      builder.copyAdditionalFilesHandler?.invoke(context, targetDir, arch)
+      builder.copyAdditionalFilesHandler?.invoke(targetDir, arch, context)
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
@@ -463,7 +463,8 @@ open class MacDistributionCustomizer {
   }
 
   open fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, context: BuildContext): Sequence<String> {
-    val basePatterns = sequenceOf(
+    val basePatterns = if (context.options.isLanguageServer) sequenceOf("bin/${context.productProperties.baseFileName}")
+    else sequenceOf(
       "bin/*.sh",
       "plugins/**/*.sh",
       "bin/fsnotifier",

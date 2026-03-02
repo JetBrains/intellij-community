@@ -76,6 +76,6 @@ internal class GitCreateNewBranchFromCommitAction : DumbAwareAction() {
         return@map branch.name
       }
     }
-    return suggestedNames.distinct().singleOrNull()
+    return suggestedNames.filterNotNull().distinct().singleOrNull()
   }
 }

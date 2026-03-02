@@ -26,7 +26,11 @@ import java.util.List;
 import java.util.Map;
 
 public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
-
+  /**
+   * In some scenarios the search for nested classes of the same type goes after the retrieval of super classes for this type which is
+   * not normally possible. This key restricts such search to avoid infinite recursion.
+   */
+  private static final Key<Boolean> IGNORE_INNER_CLASS_SEARCH = Key.create("IGNORE_INNER_CLASS_SEARCH");
   private final T myDefinition;
   private final GrCodeMembersProvider<? super T> myCodeMembersProvider;
   private static final Collection<?> myDependencies = Collections.singletonList(PsiModificationTracker.MODIFICATION_COUNT);
@@ -67,6 +71,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public PsiClass[] getInnerClasses() {
+    if (Boolean.TRUE.equals(IGNORE_INNER_CLASS_SEARCH.get(myDefinition))) return PsiClass.EMPTY_ARRAY;
     return getTransformationResult().getInnerClasses().clone();
   }
 
@@ -81,17 +86,23 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public GrField[] getFields() {
-    return getTransformationResult().getFields().clone();
+    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, Boolean.TRUE);
+    GrField[] fields = getTransformationResult().getFields().clone();
+    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, null);
+    return fields;
   }
 
   public PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic) {
-    return CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
+    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, Boolean.TRUE);
+    PsiClassType[] types = CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] extendsTypes = getTransformationResult().getExtendsTypes();
       return CachedValueProvider.Result.create(extendsTypes, myDependencies);
     } : () -> {
       PsiClassType[] extendsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getExtendsClause());
       return CachedValueProvider.Result.create(extendsTypes, myDependencies);
     }).clone();
+    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, null);
+    return types;
   }
 
   public PsiClassType @NotNull [] getImplementsListTypes(boolean includeSynthetic) {

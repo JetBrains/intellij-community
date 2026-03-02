@@ -27,7 +27,7 @@ internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementF
     internal val CORRECTION_CONFIDENCE_DATA_KEY = EventFields.Double("correction_confidence")
   }
 
-  override fun isContributorSupported(contributorId: String): Boolean = true
+  override fun isSearchResultsProviderSupported(providerId: String): Boolean = true
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return listOf(

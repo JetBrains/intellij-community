@@ -48,8 +48,8 @@
     <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.pgp" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />

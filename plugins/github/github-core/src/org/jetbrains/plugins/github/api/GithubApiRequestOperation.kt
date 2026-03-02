@@ -57,6 +57,8 @@ enum class GithubApiRequestOperation {
   RestSearchIssues,
 
   GraphQLGetUser,
+  GraphQLGetMentionableUsers,
+  GraphQLGetPullRequestParticipants,
   GraphQLGetTeamsForOrganization,
   GraphQLGetRepository,
   GraphQLGetPullRequestTemplates,

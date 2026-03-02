@@ -3,9 +3,8 @@
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.gradle"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.gradle.java"/>
-    <module name="intellij.gradle.java.groovy"/>
-    <module name="intellij.gradle.java.toml"/>
     <module name="intellij.kotlin.base.scripting"/>
     <module name="intellij.kotlin.base.scripting.shared"/>
     <module name="kotlin.gradle.gradle-java"/>
@@ -37,6 +36,11 @@
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptNotificationProvider"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.gradle.scripting.k2.OpenAdvancedSettingsNotificationProvider"/>
+
+    <completion.contributor language="kotlin"
+                            id="GradleAccessorsFilterContributor"
+                            order="first, before KotlinCompletionContributor"
+                            implementationClass="org.jetbrains.kotlin.gradle.scripting.k2.completion.GradleAccessorsFilterContributor"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.gradle.scripting.k2.inspections.KotlinOptionsToCompilerOptionsInspection"
                      shortName="KotlinOptionsToCompilerOptions"

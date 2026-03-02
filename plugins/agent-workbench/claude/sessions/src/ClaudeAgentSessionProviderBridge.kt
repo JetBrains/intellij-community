@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
-import com.intellij.agent.workbench.sessions.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.AgentSessionProviderIconIds
-import com.intellij.agent.workbench.sessions.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
+import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import javax.swing.Icon
 
 internal class ClaudeAgentSessionProviderBridge(
   override val sessionSource: AgentSessionSource = ClaudeSessionSource(),
@@ -23,8 +24,8 @@ internal class ClaudeAgentSessionProviderBridge(
   override val yoloSessionLabelKey: String
     get() = "toolwindow.action.new.session.claude.yolo"
 
-  override val iconId: String
-    get() = AgentSessionProviderIconIds.CLAUDE
+  override val icon: Icon
+    get() = AgentWorkbenchCommonIcons.Claude_14x14
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
@@ -41,6 +42,10 @@ internal class ClaudeAgentSessionProviderBridge(
   }
 
   override fun buildNewEntryCommand(): List<String> = listOf(ClaudeCliSupport.CLAUDE_COMMAND)
+
+  override fun buildCommandWithInitialPrompt(baseCommand: List<String>, prompt: String): List<String> {
+    return baseCommand + listOf("--", prompt)
+  }
 
   override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
     return AgentSessionLaunchSpec(

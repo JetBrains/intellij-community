@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.productLayout.json
 
-import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.platform.pluginGraph.PluginGraph
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -18,6 +17,7 @@ import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetDire
 import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetModuleNames
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleSetNames
+import tools.jackson.core.JsonGenerator
 
 // kotlinx.serialization Json instance for serializing data structures
 internal val kotlinxJson = Json {

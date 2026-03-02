@@ -3,7 +3,8 @@
 // PRIORITY: LOW
 // IGNORE_K1
 // WITH_STDLIB
-package java.nio.file
+// RUNTIME_WITH_FULL_JDK
+import java.nio.file.Path
 
 class Path {
     fun toList(): List<Path> = TODO()

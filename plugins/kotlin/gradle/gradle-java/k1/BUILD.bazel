@@ -262,6 +262,8 @@ jvm_library(
     "//plugins/kotlin/base/psi:psi_test_lib",
     "//plugins/kotlin/gradle/gradle-java/tests.shared",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ],
   exports = [
     "@lib//:kotlin-tooling-core",

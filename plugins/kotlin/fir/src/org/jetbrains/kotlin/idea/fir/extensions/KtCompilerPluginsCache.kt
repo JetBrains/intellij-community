@@ -3,6 +3,8 @@
 
 package org.jetbrains.kotlin.idea.fir.extensions
 
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
@@ -42,6 +44,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayoutService
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsCache.Companion.substitutePluginJar
 import org.jetbrains.kotlin.idea.util.getOriginalOrDelegateFileOrSelf
@@ -246,6 +249,28 @@ class KtCompilerPluginsCache private constructor(
         }
 
         /**
+         * Returns the paths defined in [org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments.pluginClasspaths]
+         * in the absolute form with the expansion of the present path macros
+         * (like 'KOTLIN_BUNDLED').
+         */
+        private fun CommonCompilerArguments.getOriginalPluginClasspaths(project: Project): List<Path> {
+            val pluginClassPaths = this.pluginClasspaths
+
+            if (pluginClassPaths.isNullOrEmpty()) return emptyList()
+
+            val layoutService = KotlinPluginLayoutService.getInstance(project)
+
+            val pathMacroManager = PathMacroManager.getInstance(project)
+            val expandedPluginClassPaths = pluginClassPaths.map { pathMacroManager.expandPath(it) }
+
+            return expandedPluginClassPaths.mapNotNull {
+                runCatching {
+                    layoutService.resolveRelativeToRemoteKotlinc(Path.of(it))
+                }.getOrLogException(LOG)
+            }
+        }
+
+        /**
          * We have the following logic for plugins' substitution:
          * 1. Always replace our own plugins (like "allopen", "noarg", etc.) with bundled ones to avoid binary incompatibility.
          * 2. Allow using other compiler plugins only if [onlyBundledPluginsEnabled] is set to false; otherwise, filter them.
@@ -271,9 +296,7 @@ class KtCompilerPluginsCache private constructor(
             onlyBundledPluginsEnabled: Boolean,
             compilerArguments: List<CommonCompilerArguments>
         ): List<Path> {
-            val combinedOriginalClasspaths = compilerArguments.asSequence().flatMap { arguments: CommonCompilerArguments ->
-                arguments.pluginClasspaths?.map(Path::of) ?: emptyList()
-            }.distinct()
+            val combinedOriginalClasspaths = compilerArguments.asSequence().flatMap { it.getOriginalPluginClasspaths(project) }.distinct()
 
             val substitutedClasspaths = combinedOriginalClasspaths.mapNotNull { userSuppliedPluginJar ->
                 substitutePluginJar(project, onlyBundledPluginsEnabled, userSuppliedPluginJar)

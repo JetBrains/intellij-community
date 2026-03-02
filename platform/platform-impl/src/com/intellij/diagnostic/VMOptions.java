@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.IdeBundle;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -298,7 +299,7 @@ public final class VMOptions {
 
   @ApiStatus.Internal
   public static @NotNull Charset getFileCharset() {
-    return CharsetToolkit.getPlatformCharset();
+    return Boolean.getBoolean("ide.native.launcher") ? StandardCharsets.UTF_8 : CharsetToolkit.getPlatformCharset();
   }
 
   //<editor-fold desc="Deprecated stuff.">

@@ -531,7 +531,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       String pattern = textInfo.formattedString();
       String text = textInfo.text();
       if (pattern == null || text.isEmpty()) return null;
-      MessageFormatUtil.MessageFormatResult result = MessageFormatUtil.checkFormat(pattern);
+      MessageFormatUtil.MessageFormatResult result = MessageFormatUtil.checkFormat(pattern, PsiUtil.getLanguageLevel(expression));
       if (!result.valid()) {
         return null;
       }

@@ -190,4 +190,6 @@ async def generator30() -> AsyncIterator[int]:
     yield
 
 
-assert_type(generator30, Callable[[], AsyncIterator[int]])
+async def uses_generator30() -> None:
+    async for x in generator30():
+        assert_type(x, int)

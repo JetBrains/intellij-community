@@ -337,19 +337,27 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     if (psiFile == null) return false;
     String name = requireNonNullElse(CommandProcessor.getInstance().getCurrentCommandName(),
                                      LangBundle.message("command.title.finishing.template"));
+    TextRange templateRange = template.fields().stream().map(ModStartTemplate.TemplateField::range)
+      .reduce(TextRange::union).orElse(null);
+    if (templateRange == null) return true;
+    PsiElement startElement = psiFile.findElementAt(templateRange.getStartOffset());
+    PsiElement endElement = psiFile.findElementAt(templateRange.getEndOffset() - 1);
+    PsiElement templateElement = endElement != null && startElement != null ?
+                                 requireNonNullElse(PsiTreeUtil.findCommonParent(startElement, endElement), psiFile) : psiFile;
+    int templateStart = templateElement.getTextRange().getStartOffset();
     WriteAction.run(() -> {
-      TemplateBuilderImpl builder = new TemplateBuilderImpl(psiFile);
+      TemplateBuilderImpl builder = new TemplateBuilderImpl(templateElement);
       for (ModStartTemplate.TemplateField field : template.fields()) {
         switch (field) {
           case ModStartTemplate.ExpressionField(TextRange range, String varName, Expression expression) -> {
             if (varName != null) {
-              builder.replaceElement(psiFile, range, varName, expression, true);
+              builder.replaceElement(templateElement, range.shiftLeft(templateStart), varName, expression, true);
             } else {
-              builder.replaceElement(psiFile, range, expression);
+              builder.replaceElement(templateElement, range.shiftLeft(templateStart), expression);
             }
           }
           case ModStartTemplate.DependantVariableField(TextRange range, String varName, String variableName, boolean alwaysStopAt) ->
-            builder.replaceElement(psiFile, range, varName, variableName, alwaysStopAt);
+            builder.replaceElement(templateElement, range.shiftLeft(templateStart), varName, variableName, alwaysStopAt);
           case ModStartTemplate.EndField(TextRange range) -> {
             PsiElement leaf = psiFile.findElementAt(range.getStartOffset());
             if (leaf != null) {
@@ -361,7 +369,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
       final Template tmpl = builder.buildInlineTemplate();
       CaretAutoMoveController.forbidCaretMovementInsideIfNeeded(finalEditor, () -> {
-        finalEditor.getCaretModel().moveToOffset(0);
+        finalEditor.getCaretModel().moveToOffset(templateStart);
         TemplateManager.getInstance(context.project()).startTemplate(finalEditor, tmpl, new TemplateEditingAdapter() {
           @Override
           public void templateFinished(@NotNull Template tmpl, boolean brokenOff) {

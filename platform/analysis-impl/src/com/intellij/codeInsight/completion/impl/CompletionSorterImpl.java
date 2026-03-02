@@ -32,6 +32,11 @@ public final class CompletionSorterImpl extends CompletionSorter {
       public @NotNull Classifier<LookupElement> createClassifier(@NotNull Classifier<LookupElement> next) {
         return new CachingComparingClassifier(next, weigher);
       }
+
+      @Override
+      public String toString() {
+        return "Sorter " + id;
+      }
     };
   }
 

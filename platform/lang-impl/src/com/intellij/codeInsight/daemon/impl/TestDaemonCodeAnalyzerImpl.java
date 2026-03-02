@@ -2,19 +2,25 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.lang.FileASTNode;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -27,6 +33,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.psi.PsiConsistencyAssertions;
@@ -40,6 +47,8 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.ui.EDT;
@@ -49,7 +58,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.awt.AWTEvent;
+import java.awt.event.InvocationEvent;
 import java.lang.ref.Reference;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -58,6 +71,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * methods for running {@link DaemonCodeAnalyzer} in tests and check its results
+ */
 @TestOnly
 @ApiStatus.Internal
 public final class TestDaemonCodeAnalyzerImpl {
@@ -98,9 +114,7 @@ public final class TestDaemonCodeAnalyzerImpl {
     boolean isDebugMode = !ApplicationManagerEx.isInStressTest();
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     do {
-      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-        EDT.dispatchAllInvocationEvents();
-      });
+      dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
       // refresh will fire write actions interfering with highlighting
       // heavy ops are bad, but VFS refresh is ok
     }
@@ -110,14 +124,10 @@ public final class TestDaemonCodeAnalyzerImpl {
       if (System.currentTimeMillis() > dStart + 100_000) {
         throw new IllegalStateException("Timeout waiting for smart mode. If you absolutely want to be dumb, please use DaemonCodeAnalyzerImpl.mustWaitForSmartMode(false).");
       }
-      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-        EDT.dispatchAllInvocationEvents();
-      });
+      dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
     }
     ((GistManagerImpl)GistManager.getInstance()).clearQueueInTests();
-    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-      EDT.dispatchAllInvocationEvents();
-    });
+    dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // wait for async editor loading
 
     myDaemonCodeAnalyzer.clearReferences();
@@ -186,9 +196,7 @@ public final class TestDaemonCodeAnalyzerImpl {
           if (System.currentTimeMillis() > start + 50) {
             TimeoutUtil.sleep(10);
           }
-          TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-            EDT.dispatchAllInvocationEvents();
-          });
+          dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
           progress.checkCanceled();
           return progress.isRunning();
         });
@@ -204,8 +212,7 @@ public final class TestDaemonCodeAnalyzerImpl {
         }
 
         ((HighlightingSessionImpl)session).applyFileLevelHighlightsRequests();
-        EDT.dispatchAllInvocationEvents();
-        EDT.dispatchAllInvocationEvents();
+        dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion();//auto-imports use non-blocking read actions
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
         assert progress.isCanceled();
@@ -323,7 +330,7 @@ public final class TestDaemonCodeAnalyzerImpl {
     waitWhilePumping(future);
   }
 
-  private static void waitWhilePumping(@NotNull Future<?> future) throws InterruptedException, ExecutionException {
+  public static void waitWhilePumping(@NotNull Future<?> future) throws InterruptedException, ExecutionException {
     do {
       try {
         future.get(10, TimeUnit.MILLISECONDS);
@@ -332,7 +339,7 @@ public final class TestDaemonCodeAnalyzerImpl {
       catch (TimeoutException ignored) {
       }
       if (EDT.isCurrentThreadEdt()) {
-        UIUtil.dispatchAllInvocationEvents();
+        dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
       }
       else {
         UIUtil.pump();
@@ -344,5 +351,111 @@ public final class TestDaemonCodeAnalyzerImpl {
   public void waitForUpdateFileStatusBackgroundQueueInTests() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myDaemonCodeAnalyzer.myListeners.waitForUpdateFileStatusQueue();
+  }
+
+  @RequiresEdt
+  public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToFinish(@NotNull Project project, @NotNull Document document) {
+    return waitForDaemonToFinish(project, document, () -> {});
+  }
+
+  @RequiresEdt
+  public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToFinish(@NotNull Project project, @NotNull Document document, @NotNull Runnable callbackWhileWaiting) {
+    ThreadingAssertions.assertEventDispatchThread();
+    long start = System.currentTimeMillis();
+    long deadline = start + 60_000;
+    waitForUpdateFileStatusBackgroundQueueInTests();
+    Collection<? extends DaemonProgressIndicator> progresses = waitForDaemonToStart(project, document, 60_000);
+    assert myDaemonCodeAnalyzer.isUpdateByTimerEnabled() : "codeAnalyzer.isUpdateByTimerEnabled()=false so waitForDaemonToFinish() will never finish";
+    do {
+      if (System.currentTimeMillis() > deadline) {
+        String dump = ThreadDumper.dumpThreadsToString();
+        throw new AssertionError("Too long waiting for daemon to finish (" + (System.currentTimeMillis() - start) + "ms already). " +
+           "file status map:" + myDaemonCodeAnalyzer.getFileStatusMap() + "\n" +
+           "current highlights:" + StringUtil.join(DocumentMarkupModel.forDocument(document, project, true).getAllHighlighters(), Object::toString, "\n")+
+           "thread dump:"+ dump);
+      }
+      callbackWhileWaiting.run();
+      dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
+      for (DaemonProgressIndicator indicator : progresses) {
+        Throwable trace = indicator.getCancellationTrace();
+        if (trace != null && !(trace instanceof ProcessCanceledException) && !DaemonProgressIndicator.CANCEL_WAS_CALLED_REASON.equals(trace.getMessage())) {
+          ExceptionUtil.rethrow(trace);
+        }
+        if (indicator.isCanceled() && indicator.isRunning()) {
+          indicator.checkCanceled(); // canceled in the middle, throw PCE
+        }
+      }
+    } while (daemonIsWorkingOrPending(project, document));
+    dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
+    return progresses;
+  }
+
+  @RequiresEdt
+  public @NotNull Collection<? extends DaemonProgressIndicator> waitForDaemonToStart(@NotNull Project project, @NotNull Document document, long timeoutMs) {
+    waitForUpdateFileStatusBackgroundQueueInTests();
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    long deadline = System.currentTimeMillis() + timeoutMs;
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+    assert codeAnalyzer.isUpdateByTimerEnabled() : "codeAnalyzer.isUpdateByTimerEnabled()=false so waitForDaemonToStart() will never finish";
+    while (!codeAnalyzer.isAllAnalysisFinished(psiFile)) {
+      dispatchAllInvocationEventsInIdeEventQueueReleasingWIL();
+      List<DaemonProgressIndicator> progresses = ContainerUtil.filter(codeAnalyzer.getUpdateProgress().values(), i -> !i.isCanceled());
+      if (!progresses.isEmpty()) {
+        return progresses;
+      }
+      if (System.currentTimeMillis() > deadline) {
+        throw new AssertionError("Too long waiting for daemon to start (" + (System.currentTimeMillis() - deadline + timeoutMs) + "ms) " +
+                      "daemonIsWorkingOrPending=" + daemonIsWorkingOrPending(project, document) +
+                      "; allFinished=" + codeAnalyzer.isAllAnalysisFinished(psiFile) + ": " + codeAnalyzer.getFileStatusMap() +
+                      "; thread dump:\n------" + ThreadDumper.dumpThreadsToString() + "\n======");
+      }
+    }
+    return List.of();
+  }
+
+  public boolean daemonIsWorkingOrPending(@NotNull Project project, @NotNull Document document) {
+    return myDaemonCodeAnalyzer.isRunningOrPending() || PsiDocumentManager.getInstance(project).isUncommited(document);
+  }
+
+  @RequiresEdt
+  public @NotNull List<HighlightInfo> waitHighlighting(@NotNull Project project, @NotNull Document document, @NotNull HighlightSeverity minSeverity) {
+    waitForDaemonToFinish(project, document);
+    return DaemonCodeAnalyzerImpl.getHighlights(document, minSeverity, project);
+  }
+
+  private static void dispatchAllInvocationEventsInIdeEventQueueReleasingWIL() {
+    ThreadingAssertions.assertEventDispatchThread();
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
+    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
+    ThreadContext.resetThreadContext(() -> {
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        // due to non-blocking acquisition of write-intent, `NonBlockingFlushQueue` can appear in the state
+        // where it has stuck WI runnables. This method is called to ensure that _all_ runnables are dispatched,
+        // so we also want to wait for WI runnables here
+        AtomicBoolean canary = new AtomicBoolean(false);
+        ApplicationManager.getApplication().invokeLater(() -> canary.set(true), ModalityState.any());
+        while (true) {
+          AWTEvent event = eventQueue.peekEvent();
+          if (event == null && canary.get()) break;
+          event = eventQueue.getNextEvent();
+          if (event instanceof InvocationEvent) {
+            eventQueue.dispatchEvent(event);
+          }
+        }
+      });
+      return null;
+    });
+  }
+
+  public static <T extends Throwable> void runWithReparseDelay(int reparseDelayMs, @NotNull ThrowableRunnable<T> task) throws T {
+    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+    int oldDelay = settings.getAutoReparseDelay();
+    settings.setAutoReparseDelay(reparseDelayMs);
+    try {
+      task.run();
+    }
+    finally {
+      settings.setAutoReparseDelay(oldDelay);
+    }
   }
 }

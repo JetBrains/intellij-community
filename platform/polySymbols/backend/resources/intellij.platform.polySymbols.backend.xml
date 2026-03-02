@@ -1,8 +1,12 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.polySymbols"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.polySymbols.psiReferenceProvider"

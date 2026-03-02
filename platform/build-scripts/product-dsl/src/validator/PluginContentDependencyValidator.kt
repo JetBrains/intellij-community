@@ -700,7 +700,11 @@ internal fun GraphScope.computeImplicitDeps(moduleName: ContentModuleName): Set<
       if (!dep.isProduction()) return@dependsOn
 
       when (val c = classifyTarget(dep.targetId)) {
-        is DependencyClassification.ModuleDep -> jpsDeps.add(c.moduleName)
+        is DependencyClassification.ModuleDep -> {
+          if (c.moduleName != moduleName) {
+            jpsDeps.add(c.moduleName)
+          }
+        }
         else -> {}
       }
     }

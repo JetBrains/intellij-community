@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction
@@ -14,6 +13,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
@@ -67,7 +67,7 @@ class ProjectEntityIndexingService(
 
   fun indexChanges(changes: List<RootsChangeRescanningInfo>) {
     if (FileBasedIndex.getInstance() !is FileBasedIndexImpl) return
-    if (LightEdit.owns(project)) return
+    if (isIndexingActivitiesSuppressedSync(project)) return
     if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return
 
     if (ModalityState.defaultModalityState() === ModalityState.any()) {
@@ -85,27 +85,21 @@ class ProjectEntityIndexingService(
   }
 
   override fun workspaceFileIndexChanged(event: WorkspaceFileIndexChangedEvent) {
-    if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) return
     if (FileBasedIndex.getInstance() !is FileBasedIndexImpl) return
-    if (LightEdit.owns(project)) return
+    if (isIndexingActivitiesSuppressedSync(project)) return
 
     if (ModalityState.defaultModalityState() === ModalityState.any()) {
       LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL (130820241337)")
     }
 
     val registeredIndexableFileSets = event.registeredFileSets.filter { it.kind.isIndexable }
-    val removedIndexableFileSets = event.removedFileSets.filter { it.kind.isIndexable }
+    val runScanning = event.removedExclusions.isNotEmpty() || registeredIndexableFileSets.isNotEmpty()
 
-    if (registeredIndexableFileSets.isNotEmpty()
-        || removedIndexableFileSets.isNotEmpty()
-        || event.removedExclusions.isNotEmpty()
-    ) {
+    if (runScanning) {
       if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return
 
       val event = WorkspaceFileIndexChangedEvent(
-        removedFileSets = removedIndexableFileSets,
         registeredFileSets = registeredIndexableFileSets,
-        storageBefore = event.storageBefore,
         storageAfter = event.storageAfter,
         removedExclusions = event.removedExclusions,
       )
@@ -131,7 +125,7 @@ class ProjectEntityIndexingService(
     val iterators = ArrayList<IndexableFilesIterator>()
     val wfi = WorkspaceFileIndex.getInstance(project)
 
-    val removedExclusions = event.removedExclusions.mapNotNull { wfi.findFileSet(it, true, true, true, true, true, true, true); }
+    val removedExclusions = event.removedExclusions.mapNotNull { wfi.findFileSet(it, true, true, false, true, true, false, true); }
     generateIteratorsFromWFIChangedEvent(event.registeredFileSets, event.storageAfter, iterators)
     generateIteratorsFromWFIChangedEvent(removedExclusions, event.storageAfter, iterators)
 
@@ -165,6 +159,7 @@ class ProjectEntityIndexingService(
     storage: EntityStorage,
     iterators: MutableList<IndexableFilesIterator>,
   ) {
+    val useWfi = Registry.`is`("use.workspace.file.index.for.partial.scanning")
     val libraryOrigins = HashSet<LibraryOrigin>()
 
     for (fileSet in fileSets) {
@@ -174,13 +169,14 @@ class ProjectEntityIndexingService(
       val customData = fileSet.data
       val root = fileSet.root
 
-      if (customData is ModuleRelatedRootData) {
+      if (useWfi && customData is ModuleRelatedRootData) {
         processModuleRoot(fileSet, project, true)?.let(iterators::add)
       }
-      else if (fileSet.kind.isContent) {
+      else if (useWfi && fileSet.kind.isContent) {
         iterators.add(GenericDependencyIterator.forContentRoot(entityPointer, fileSet.recursive, root))
       }
       else {
+        // here we always use WFI
         val entity = entityPointer.resolve(storage) ?: continue
         if (entity is LibraryEntity) {
           val (origin, iterator) = processLibraryEntity(entity, fileSet)

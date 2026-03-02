@@ -128,7 +128,7 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     }
 
     // extensions may use registry to enable/disable URL handlers
-    RegistryManager.getInstanceAsync().awaitRegistryLoad()
+    RegistryManager.getInstanceAsync()
 
     try {
       server = BuiltInServer.start(firstPort = getDefaultPort(), portsCount = PORTS_COUNT, tryAnyPort = true)

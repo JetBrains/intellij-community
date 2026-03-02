@@ -2,7 +2,8 @@
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class LVTTest extends SingleClassesTestBase {
   }
 
   @Override
+  @BeforeEach
   public void setUp() throws IOException {
       super.setUp();
       fixture.setCleanup(false);
@@ -33,4 +35,5 @@ public class LVTTest extends SingleClassesTestBase {
   @Test public void testVarType() { doTest("pkg/TestVarType"); }
   @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
   @Test public void testPPMM() { doTest("pkg/TestPPMM"); }
+  @Test public void testBoxedPPMM() { doTest("pkg/TestBoxedPPMM"); }
 }

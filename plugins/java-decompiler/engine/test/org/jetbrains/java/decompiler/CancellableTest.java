@@ -1,33 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
-import org.assertj.core.api.Assertions;
 import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Timeout(value = 60, unit = TimeUnit.SECONDS)
 public class CancellableTest {
   public static final int MIN_CALL_NUMBERS = 5;
   private DecompilerTestFixture fixture;
 
-  /*
-   * Set individual test duration time limit to 60 seconds.
-   * This will help us to test bugs hanging decompiler.
-   */
-  @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
-
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     fixture = new DecompilerTestFixture();
     CancellationManager cancellationManager = new CancellationManager() {
@@ -63,7 +59,7 @@ public class CancellableTest {
                   cancellationManager);
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws IOException {
     fixture.tearDown();
     fixture = null;
@@ -87,22 +83,19 @@ public class CancellableTest {
     var decompiler = fixture.getDecompiler();
 
     var classFile = fixture.getTestDataDir().resolve("classes/" + testFile + ".class");
-    assertThat(classFile).isRegularFile();
+    assertTrue(Files.isRegularFile(classFile));
     for (var file : SingleClassesTest.collectClasses(classFile)) {
       decompiler.addSource(file.toFile());
     }
 
     for (String companionFile : companionFiles) {
       var companionClassFile = fixture.getTestDataDir().resolve("classes/" + companionFile + ".class");
-      assertThat(companionClassFile).isRegularFile();
+      assertTrue(Files.isRegularFile(companionClassFile));
       for (var file : SingleClassesTest.collectClasses(companionClassFile)) {
         decompiler.addSource(file.toFile());
       }
     }
-    Assertions.assertThatThrownBy(() -> {
-        decompiler.decompileContext();
-      })
-      .isInstanceOf(CancellationManager.CanceledException.class)
-      .matches(exception -> exception.getCause() instanceof IllegalArgumentException);
+    var e = assertThrows(CancellationManager.CanceledException.class, () -> decompiler.decompileContext());
+    assertInstanceOf(IllegalArgumentException.class, e.getCause());
   }
 }

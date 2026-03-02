@@ -25,6 +25,8 @@ import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.convertToType
 import com.jetbrains.python.psi.types.PyTypeChecker.findGenericDefinitionType
 import com.jetbrains.python.psi.types.PyTypeChecker.match
+import com.jetbrains.python.psi.types.PyTypeUtil.createTupleOfLiteralStringsType
+import com.jetbrains.python.psi.types.PyTypeUtil.extractStringLiteralsFromTupleType
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
@@ -60,10 +62,10 @@ object PyTypeUtil {
    * pair of members.
    */
   fun PyType?.isOverlappingWith(type2: PyType?, context: TypeEvalContext): Boolean {
-    if (this is PyUnionLikeType) {
+    if (this is PyUnionType || this is PyUnsafeUnionType) {
       return this.members.any { it.isOverlappingWith(type2, context) }
     }
-    if (type2 is PyUnionLikeType) {
+    if (type2 is PyUnionType || type2 is PyUnsafeUnionType) {
       return type2.members.any { this.isOverlappingWith(it, context) }
     }
     return match(this, type2, context)
@@ -160,15 +162,15 @@ object PyTypeUtil {
    */
   @JvmStatic
   fun PyType?.toStream(): StreamEx<PyType?> =
-    if (this is PyCompoundType)
+    if (this is PyCompositeType)
       StreamEx.of(this.members)
     else
       StreamEx.of(this)
 
   @JvmStatic
-  val PyType?.notNullToRef: Ref<PyType>?
-    @Contract("null -> null; !null -> !null")
-    get() = if (this == null) null else Ref(this)
+  @Contract("null -> null; !null -> !null")
+  fun PyType?.notNullToRef(): Ref<PyType>? =
+    if (this == null) null else Ref(this)
 
   /**
    * Returns a collector that combines a stream of `Ref<PyType>` back into a single `Ref<PyType>`
@@ -254,11 +256,11 @@ object PyTypeUtil {
 
   val PyType?.components: List<PyType?>
     @ApiStatus.Experimental
-    get() = if (this is PyCompoundType) members.toList() else listOf(this)
+    get() = if (this is PyCompositeType) members.toList() else listOf(this)
 
   val PyType?.componentSequence: Sequence<PyType?>
     @ApiStatus.Experimental
-    get() = if (this is PyCompoundType) members.asSequence() else sequenceOf(this)
+    get() = if (this is PyCompositeType) members.asSequence() else sequenceOf(this)
 
   private fun toUnion(unionFactory: (List<PyType?>) -> PyType?): Collector<PyType?, *, PyType?> {
     return Collectors.collectingAndThen(Collectors.toList(), unionFactory)
@@ -288,7 +290,7 @@ object PyTypeUtil {
   }
 
   @JvmStatic
-  fun PyType.inheritsAny(context: TypeEvalContext): Boolean {
+  fun PyType?.inheritsAny(context: TypeEvalContext): Boolean {
     return this is PyClassLikeType && this.getAncestorTypes(context).contains(null)
   }
 
@@ -324,5 +326,43 @@ object PyTypeUtil {
     })
 
     return Collections.unmodifiableSet(result)
+  }
+
+  /**
+   * Extracts string literal values from a `tuple[Literal["a"], Literal["b"], ...]` type.
+   * Returns `null` if the type is not a non-homogeneous tuple of string literals.
+   * 
+   * @see createTupleOfLiteralStringsType
+   */
+  @JvmStatic
+  @ApiStatus.Internal
+  fun extractStringLiteralsFromTupleType(type: PyType?): List<String>? {
+    if (type !is PyTupleType || type.isHomogeneous) return null
+    return buildList {
+      for (elementType in type.elementTypes) {
+        if (elementType !is PyLiteralType) return null
+        val str = elementType.stringValue ?: return null
+        add(str)
+      }
+    }
+  }
+
+  /**
+   * Creates a `tuple[Literal["name1"], Literal["name2"], ...]` type from a list of strings.
+   * Useful for creating types for synthetic members (e.g. `__match_args__ `, `__slots__ ` in a dataclasses).
+   * 
+   * @see extractStringLiteralsFromTupleType
+   */
+  @ApiStatus.Internal
+  fun createTupleOfLiteralStringsType(anchor: PsiElement, fieldNames: List<String>): PyTupleType? {
+    val literalTypes = fieldNames.mapNotNull { PyLiteralType.stringLiteral(anchor, it) }
+    return PyTupleType.create(anchor, literalTypes)
+  }
+
+  @JvmStatic
+  fun widenLiteralAndNumeric(type: PyType?): PyType? {
+    return type
+      .let { PyLiteralType.upcastLiteralToClass(it) }
+      .let { PyNumericTowerUtil.enrich(it) }
   }
 }

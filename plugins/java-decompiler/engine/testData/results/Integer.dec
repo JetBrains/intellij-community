@@ -118,7 +118,7 @@ public final class Integer extends Number implements Comparable<Integer> {
 
       int var7;
       do {
-         var7 = var0 * '쳍' >>> 19;// 456
+         var7 = (var0 * '쳍') >>> 19;// 456
          int var8 = var0 - ((var7 << 3) + (var7 << 1));// 457
          --var5;
          var2[var5] = digits[var8];// 458
@@ -466,7 +466,7 @@ public final class Integer extends Number implements Comparable<Integer> {
    public static int bitCount(int var0) {
       var0 -= var0 >>> 1 & 1431655765;// 1446
       var0 = (var0 & 858993459) + (var0 >>> 2 & 858993459);// 1447
-      var0 = var0 + (var0 >>> 4) & 252645135;// 1448
+      var0 = (var0 + (var0 >>> 4)) & 252645135;// 1448
       var0 += var0 >>> 8;// 1449
       var0 += var0 >>> 16;// 1450
       return var0 & 63;// 1451

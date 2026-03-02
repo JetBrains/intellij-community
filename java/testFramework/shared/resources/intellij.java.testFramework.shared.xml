@@ -1,6 +1,9 @@
 <idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.java.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.junit4"/>
     <module name="intellij.platform.testFramework"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

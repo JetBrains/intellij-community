@@ -5,10 +5,12 @@ package com.intellij.ide.util.treeView.smartTree;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+@ApiStatus.NonExtendable
 public class GroupWrapper extends CachingChildrenTreeNode<Group> {
   private static final Logger LOG = Logger.getInstance(GroupWrapper.class);
   public GroupWrapper(Project project, @NotNull Group value, @NotNull TreeModel treeModel) {
@@ -37,7 +39,7 @@ public class GroupWrapper extends CachingChildrenTreeNode<Group> {
       if (child == null) {
         LOG.error(group + " returned null child: " + children);
       }
-      TreeElementWrapper childNode = createChildNode(child);
+      TreeElementWrapper childNode = createChildNode(child, null);
       addSubElement(childNode);
     }
   }

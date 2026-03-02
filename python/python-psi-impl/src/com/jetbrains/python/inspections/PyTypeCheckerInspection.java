@@ -309,6 +309,10 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       boolean descriptor = false;
       PyType expected = myTypeEvalContext.getType(node);
+      if (node.isQualified()) {
+        PyTypeChecker.GenericSubstitutions substitutions = PyTypeChecker.unifyReceiver(node.getQualifier(), myTypeEvalContext);
+        expected = PyTypeChecker.substitute(expected, substitutions, myTypeEvalContext);
+      }
       Ref<PyType> classAttrType = getClassAttributeType(node);
       if (classAttrType != null) {
         Ref<PyType> dunderSetValueType =
@@ -642,6 +646,8 @@ public class PyTypeCheckerInspection extends PyInspection {
         if (unmappedContainer.getName() == null || !(containerType instanceof PyPositionalVariadicType)) continue;
         PyType expandedVararg = PyTypeChecker.substitute(containerType, substitutions, myTypeEvalContext);
         if (!(expandedVararg instanceof PyUnpackedTupleType unpackedTuple) || unpackedTuple.isUnbound()) continue;
+        if (unpackedTuple.getElementTypes().isEmpty()) continue;
+        if (ContainerUtil.all(unpackedTuple.getElementTypes(), e -> e instanceof PyPositionalVariadicType)) continue;
         unfilledPositionalVarargs.add(
           new UnfilledPositionalVararg(unmappedContainer.getName(),
                                        PythonDocumentationProvider.getTypeName(expandedVararg, myTypeEvalContext)));

@@ -3,6 +3,8 @@
     <module name="intellij.platform.externalSystem.impl"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.gradle.toolingExtension"/>
+    <module name="intellij.gradle.toolingExtension.impl"/>
+    <module name="intellij.gradle.toolingProxy"/>
     <module name="intellij.libraries.jspecify"/>
     <!-- endregion -->
   </dependencies>
@@ -56,6 +58,7 @@
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor"/>
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleVersionCatalogSyncContributor"/>
     <syncExtension implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleJpsSyncExtension"/>
+    <syncExtension implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleDependencySyncExtension"/>
     <syncExtension implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleBaseSyncExtension"/>
     <syncExtension implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleDependencySubstitutionSyncExtension"/>
 

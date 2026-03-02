@@ -1,11 +1,11 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.jetbrains.idea.reposearch"/>
     <plugin id="org.intellij.groovy"/>
     <plugin id="org.jetbrains.idea.maven"/>
     <module name="intellij.gradle.java"/>
     <module name="intellij.gradle.java.groovy"/>
+    <module name="intellij.repository.search.common"/>
   </dependencies>
   <!-- endregion -->
 

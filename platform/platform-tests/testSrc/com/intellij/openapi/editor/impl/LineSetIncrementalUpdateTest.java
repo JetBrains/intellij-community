@@ -3,16 +3,18 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.PerformanceUnitTest;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 
-@RunWith(JUnit38AssumeSupportRunner.class)
-public class LineSetIncrementalUpdateTest extends UsefulTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class LineSetIncrementalUpdateTest {
+  @Test
   public void testFuzzUpdate() {
     PropertyChecker.customized()
       .withIterationCount(1_000)
@@ -30,12 +32,14 @@ public class LineSetIncrementalUpdateTest extends UsefulTestCase {
       });
   }
 
+  @Test
   public void testSlashRIssues() {
     checkIncrementalUpdate("\n\r", 0, 0, "");
     checkIncrementalUpdate("\r\n", 0, 1, "");
     checkIncrementalUpdate("\r", 0, 0, "\r");
   }
 
+  @Test
   public void testClearSingleLineEnd() {
     checkIncrementalUpdate("\n", 0, 1, "");
   }
@@ -47,25 +51,26 @@ public class LineSetIncrementalUpdateTest extends UsefulTestCase {
     LineSet updated = initial.update(initialText, start, end, replacement, false);
     LineSet fresh = LineSet.createLineSet(newText);
 
-    assertEquals("line count", fresh.getLineCount(), updated.getLineCount());
+    assertEquals(fresh.getLineCount(), updated.getLineCount(), "line count");
     for (int i = 0; i < updated.getLineCount(); i++) {
-      assertEquals("line start " + i, fresh.getLineStart(i), updated.getLineStart(i));
-      assertEquals("line end " + i, fresh.getLineEnd(i), updated.getLineEnd(i));
-      assertEquals("line feed length " + i, fresh.getSeparatorLength(i), updated.getSeparatorLength(i));
+      assertEquals(fresh.getLineStart(i), updated.getLineStart(i), "line start " + i);
+      assertEquals(fresh.getLineEnd(i), updated.getLineEnd(i), "line end " + i);
+      assertEquals(fresh.getSeparatorLength(i), updated.getSeparatorLength(i), "line feed length " + i);
     }
   }
 
   @PerformanceUnitTest
+  @Test
   public void testTypingInLongLinePerformance() {
     String longLine = StringUtil.repeat("a ", 200000);
     Benchmark.newBenchmark("Document changes in a long line", () -> {
-      Document document = new DocumentImpl("a\n" + longLine + "<caret>" + longLine + "\n", true);
+      Document document = new DocumentImpl("a\n" + longLine + "<caret>" + longLine + "\n", true, true);
       for (int i = 0; i < 1000; i++) {
         int offset = i * 2 + longLine.length();
         assertEquals(1, document.getLineNumber(offset));
         document.insertString(offset, "b");
       }
-    }).start();
+    }).runAsStressTest().start();
   }
 
 }

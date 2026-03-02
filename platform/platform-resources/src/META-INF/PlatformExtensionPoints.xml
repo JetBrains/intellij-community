@@ -178,7 +178,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="openInBrowserFloatingToolbarSuppressor"
-                    interface="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarSuppressor"
+                    interface="com.intellij.ide.browsers.actions.OpenInBrowserFloatingToolbarSuppressor"
                     dynamic="true"/>
 
     <extensionPoint name="actionPromoter" interface="com.intellij.openapi.actionSystem.ActionPromoter" dynamic="true"/>
@@ -610,8 +610,6 @@
       <with attribute="implementationClass" implements="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfo"/>
     </extensionPoint>
 
-    <extensionPoint name="meetNewUiCustomization" interface="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiCustomization" dynamic="true"/>
-
     <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
     <extensionPoint name="usageFilteringRuleCustomizer" interface="com.intellij.usages.rules.UsageFilteringRuleCustomizer" dynamic="true"/>
 
@@ -720,6 +718,10 @@
     <extensionPoint name="pluginCategoryPromotionProvider"
                     interface="com.intellij.ide.plugins.PluginCategoryPromotionProvider"
                     dynamic="false"/>
+
+    <extensionPoint name="fileChooserCustomizer"
+                    interface="com.intellij.openapi.fileChooser.FileChooserCustomizer"
+                    dynamic="true"/>
 
 
     <extensionPoint name="openAnotherToolHandler" interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler" dynamic="true"/>

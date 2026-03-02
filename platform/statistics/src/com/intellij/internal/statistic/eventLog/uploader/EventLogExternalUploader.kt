@@ -2,9 +2,6 @@
 package com.intellij.internal.statistic.eventLog.uploader
 
 import com.fasterxml.jackson.annotation.JsonView
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
@@ -54,6 +51,9 @@ import com.jetbrains.fus.reporting.MetadataStorage
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.NotNull
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.JsonNode
+import tools.jackson.module.kotlin.KotlinFeature
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

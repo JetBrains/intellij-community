@@ -19,6 +19,7 @@ import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.mapError
+import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
@@ -142,8 +143,17 @@ interface PythonInstallerService {
    * Returns Unit for now (so you should call [SystemPythonService.findSystemPythons]), but this is a subject to change.
    */
   @ApiStatus.Experimental
-  suspend fun installLatestPython(): Result<Unit, String>
+  suspend fun installLatestPython(
+    versionSpecifiers: PyVersionSpecifiers = PyVersionSpecifiers.ANY_SUPPORTED,
+  ): Result<Unit, String>
 }
+
+/**
+ * Finds the first [SystemPython] matching the given [specifiers].
+ */
+@Internal
+fun List<SystemPython>.findMatchingPython(specifiers: PyVersionSpecifiers = PyVersionSpecifiers.ANY_SUPPORTED): SystemPython? =
+  firstOrNull { specifiers.isValid(it.pythonInfo.languageLevel) }
 
 /**
  * See [createVenv]

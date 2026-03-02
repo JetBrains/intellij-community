@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jackson3.databind.jar
+  modules:
+  - name: intellij.libraries.jackson3.databind
+    libraries:
+      jackson3-databind:
+      - name: $MAVEN_REPOSITORY$/tools/jackson/core/jackson-databind/3/jackson-databind-3.jar

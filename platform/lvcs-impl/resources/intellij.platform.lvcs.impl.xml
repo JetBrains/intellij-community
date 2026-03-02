@@ -1,7 +1,10 @@
 <idea-plugin visibility="public">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.shared"/>
+    <!-- endregion -->
   </dependencies>
 
   <actions resource-bundle="messages.LocalHistoryBundle">

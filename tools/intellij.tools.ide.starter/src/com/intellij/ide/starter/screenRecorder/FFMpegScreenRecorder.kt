@@ -5,6 +5,7 @@ import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -26,7 +27,7 @@ class FFMpegScreenRecorder(recordingPath: Path, recordingFilePrefix: String, pri
     check(!isStarted()) { "FFMpeg screen recorder is already started" }
 
     logOutput("FFMpeg screen recorder: starting")
-    ffmpegProcessJob = testSuiteSupervisorScope.launch(Dispatchers.IO) { startFFMpegRecording() }
+    ffmpegProcessJob = testSuiteSupervisorScope.launch(Dispatchers.IO + CoroutineName("FFMpeg recording")) { startFFMpegRecording() }
   }
 
   override fun stop() {

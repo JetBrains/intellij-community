@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
-import com.fasterxml.jackson.databind.JsonMappingException
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.RepositoryHelper
@@ -19,6 +18,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.VersionComparatorUtil
+import tools.jackson.databind.DatabindException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -148,5 +148,5 @@ private fun isNetworkError(it: Throwable): Boolean {
   return it is SocketTimeoutException
          || it is UnknownHostException
          || it is HttpRequests.HttpStatusException && it.statusCode == HttpURLConnection.HTTP_NOT_FOUND
-         || it is JsonMappingException && it.message?.contains("end-of-input") == true
+         || it is DatabindException && it.message?.contains("end-of-input") == true
 }

@@ -9,10 +9,10 @@ import org.junit.jupiter.api.Test
 
 class CodexSessionBackendSelectorTest {
   @Test
-  fun defaultsToRolloutWhenOverrideMissing() {
+  fun defaultsToAppServerWhenOverrideMissing() {
     val backend = CodexSessionBackendSelector.select(backendOverride = null)
 
-    assertThat(backend).isInstanceOf(CodexRolloutSessionBackend::class.java)
+    assertThat(backend).isInstanceOf(CodexAppServerSessionBackend::class.java)
   }
 
   @Test
@@ -23,9 +23,16 @@ class CodexSessionBackendSelectorTest {
   }
 
   @Test
-  fun fallsBackToRolloutWhenOverrideUnknown() {
-    val backend = CodexSessionBackendSelector.select(backendOverride = "unknown-backend")
+  fun usesRolloutWhenOverrideIsRollout() {
+    val backend = CodexSessionBackendSelector.select(backendOverride = "rollout")
 
     assertThat(backend).isInstanceOf(CodexRolloutSessionBackend::class.java)
+  }
+
+  @Test
+  fun fallsBackToAppServerWhenOverrideUnknown() {
+    val backend = CodexSessionBackendSelector.select(backendOverride = "unknown-backend")
+
+    assertThat(backend).isInstanceOf(CodexAppServerSessionBackend::class.java)
   }
 }

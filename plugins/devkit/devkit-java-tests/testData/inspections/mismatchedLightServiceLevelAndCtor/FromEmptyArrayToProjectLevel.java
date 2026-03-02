@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 final class MyService {
   private final Project myProject;
 
-  public MyService(Project project) {
+  public <warning descr="Application-level service requires a no-arg or single parameter constructor with 'kotlinx.coroutines.CoroutineScope' type">MyService</warning>(Project project) {
     myProject = project;
   }
 }

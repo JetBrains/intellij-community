@@ -7,7 +7,6 @@
     <module name="intellij.java.execution"/>
     <module name="intellij.jsp"/>
     <module name="intellij.java.psi"/>
-    <module name="intellij.java.resources.en"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide"/>

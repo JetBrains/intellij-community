@@ -15,7 +15,7 @@ jvm_library(
   kotlinc_opts = ":custom_startUpPerformanceReporter",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//libraries/jackson/jackson",
+    "//libraries/jackson3/jackson:libraries-jackson3",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/util-ex",
@@ -43,7 +43,7 @@ jvm_library(
   kotlinc_opts = ":custom_startUpPerformanceReporter",
   runtime_deps = [
     ":startUpPerformanceReporter",
-    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/core-impl:core-impl_test_lib",
     "//platform/util-ex:util-ex_test_lib",

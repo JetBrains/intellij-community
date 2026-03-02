@@ -194,7 +194,9 @@ interface TextAttributes {
 }
 
 @Remote("com.intellij.openapi.editor.markup.EffectType")
-interface EffectType
+interface EffectType {
+  fun name(): String
+}
 
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {
   return withContext(OnDispatcher.EDT) {

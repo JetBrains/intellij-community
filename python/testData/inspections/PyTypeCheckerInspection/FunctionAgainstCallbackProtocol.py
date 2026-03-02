@@ -22,7 +22,7 @@ def star_parameter_wrong_type(*args: int) -> float:
     pass
 
 foo0: NamedParam = named_parameter
-foo1: NamedParam = <warning descr="Expected type 'NamedParam', got '(arg: int) -> float' instead">named_parameter_wrong_type</warning>
+foo1: NamedParam = <warning descr="Expected type 'NamedParam', got '(arg: int) -> float | int' instead">named_parameter_wrong_type</warning>
 foo2: StarParam = star_parameter
-foo3: StarParam = <warning descr="Expected type 'StarParam', got '(*args: int) -> float' instead">star_parameter_wrong_type</warning>
-foo4: StarParam = <warning descr="Expected type 'StarParam', got '(arg: float) -> float' instead">named_parameter</warning>
+foo3: StarParam = <warning descr="Expected type 'StarParam', got '(*args: int) -> float | int' instead">star_parameter_wrong_type</warning>
+foo4: StarParam = <warning descr="Expected type 'StarParam', got '(arg: float | int) -> float | int' instead">named_parameter</warning>

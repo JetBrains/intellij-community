@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Describes conditions under which a {@link RuntimeModuleDescriptor} must be loaded.
  * Meaning of the entries is the same as entries in {@link com.intellij.ide.plugins.ModuleLoadingRule} for content modules in plugins, but
@@ -29,5 +31,12 @@ public enum RuntimeModuleLoadingRule {
    * The module provides code which can be reused in other modules rather when user-visible functionality, it will be loaded only if some 
    * {@link #REQUIRED} or {@link #OPTIONAL} module depends on it.
    */
-  ON_DEMAND
+  ON_DEMAND,
+
+  /**
+   * The same as {@link #EMBEDDED}, but also indicates that the module doesn't have an explicit XML descriptor.
+   * Modules with this loading rule represent just a set of classes and resources included in the classpath of the main plugin classloader.
+   */
+  @ApiStatus.Internal
+  IMPLICIT_EMBEDDED,
 }

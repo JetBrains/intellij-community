@@ -11,8 +11,7 @@ jvm_library(
   name = "plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":plugin_resources"],
-  runtime_deps = ["//libraries/jspecify"]
+  resources = [":plugin_resources"]
 )
 
 jvm_library(
@@ -20,9 +19,6 @@ jvm_library(
   module_name = "intellij.gradle.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":plugin",
-    "//libraries/jspecify:jspecify_test_lib",
-  ]
+  runtime_deps = [":plugin"]
 )
 ### auto-generated section `build intellij.gradle.plugin` end

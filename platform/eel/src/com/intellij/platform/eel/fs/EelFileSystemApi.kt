@@ -670,6 +670,7 @@ interface EelFileSystemApi {
     val modificationTime: TimeSinceEpoch? get() = null
     val permissions: EelFileInfo.Permissions? get() = null
 
+    @Deprecated("Use generated builder instead")
     interface Builder {
       fun permissions(permissions: EelFileInfo.Permissions): Builder
       fun modificationTime(duration: TimeSinceEpoch): Builder
@@ -679,6 +680,7 @@ interface EelFileSystemApi {
     }
 
     companion object {
+      @Deprecated("Use generated builder instead")
       fun Builder(): Builder = ChangeAttributesOptionsImpl2()
     }
   }

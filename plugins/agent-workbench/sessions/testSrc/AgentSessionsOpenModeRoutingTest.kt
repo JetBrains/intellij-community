@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import org.junit.Assert.assertEquals
+import com.intellij.agent.workbench.sessions.codex.AgentChatOpenRoute
+import com.intellij.agent.workbench.sessions.codex.resolveAgentChatOpenRoute
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class AgentSessionsOpenModeRoutingTest {
@@ -12,7 +14,7 @@ class AgentSessionsOpenModeRoutingTest {
       hasOpenSourceProject = true,
     )
 
-    assertEquals(AgentChatOpenRoute.DedicatedFrame, route)
+    assertThat(route).isEqualTo(AgentChatOpenRoute.DedicatedFrame)
   }
 
   @Test
@@ -22,7 +24,7 @@ class AgentSessionsOpenModeRoutingTest {
       hasOpenSourceProject = false,
     )
 
-    assertEquals(AgentChatOpenRoute.DedicatedFrame, route)
+    assertThat(route).isEqualTo(AgentChatOpenRoute.DedicatedFrame)
   }
 
   @Test
@@ -32,7 +34,7 @@ class AgentSessionsOpenModeRoutingTest {
       hasOpenSourceProject = true,
     )
 
-    assertEquals(AgentChatOpenRoute.CurrentProject, route)
+    assertThat(route).isEqualTo(AgentChatOpenRoute.CurrentProject)
   }
 
   @Test
@@ -42,7 +44,7 @@ class AgentSessionsOpenModeRoutingTest {
       hasOpenSourceProject = false,
     )
 
-    assertEquals(AgentChatOpenRoute.OpenSourceProject, route)
+    assertThat(route).isEqualTo(AgentChatOpenRoute.OpenSourceProject)
   }
 
   @Test
@@ -56,7 +58,7 @@ class AgentSessionsOpenModeRoutingTest {
       hasOpenSourceProject = false,
     )
 
-    assertEquals(AgentChatOpenRoute.OpenSourceProject, threadRoute)
-    assertEquals(threadRoute, subAgentRoute)
+    assertThat(threadRoute).isEqualTo(AgentChatOpenRoute.OpenSourceProject)
+    assertThat(subAgentRoute).isEqualTo(threadRoute)
   }
 }

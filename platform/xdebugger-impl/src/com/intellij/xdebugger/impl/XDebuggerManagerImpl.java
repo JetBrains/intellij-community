@@ -106,8 +106,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
   private final MutableStateFlow<@Nullable XDebugSessionImpl> myActiveSession = createMutableStateFlow(null);
 
-  private XDebuggerState myState = new XDebuggerState();
-
   private InlayRunToCursorEditorListener myNewRunToCursorListener = null;
 
   private @NotNull XFrontendDebuggerCapabilities myFrontendCapabilities =
@@ -400,7 +398,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   @Override
   public XDebuggerState getState() {
-    XDebuggerState state = myState;
+    XDebuggerState state = new XDebuggerState();
     myBreakpointManager.saveState(state.getBreakpointManagerState());
     ((XDebuggerWatchesManagerImpl)getWatchesManager()).saveState(state.getWatchesManagerState());
     getPinToTopManager().saveState(state.getPinToTopManagerState());
@@ -409,7 +407,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   @Override
   public void loadState(@NotNull XDebuggerState state) {
-    myState = state;
     myBreakpointManager.loadState(state.getBreakpointManagerState());
     ((XDebuggerWatchesManagerImpl)getWatchesManager()).loadState(state.getWatchesManagerState());
     getPinToTopManager().loadState(state.getPinToTopManagerState());

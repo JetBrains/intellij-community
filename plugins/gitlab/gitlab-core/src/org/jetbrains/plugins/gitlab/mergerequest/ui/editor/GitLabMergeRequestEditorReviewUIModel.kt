@@ -7,13 +7,13 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.MutableCodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 import com.intellij.collaboration.ui.codereview.editor.asLst
@@ -120,7 +120,11 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     fileVm.requestNewDiscussion(location, true)
   }
 
-  override fun canCreateComment(lineRange: LineRange) = true
+  override fun canCreateComment(lineRange: LineRange): Boolean {
+    val gutterControls = gutterControlsState.value ?: return false
+    return gutterControls.isLineCommentable(lineRange.start) &&
+           gutterControls.isLineCommentable(lineRange.end)
+  }
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()

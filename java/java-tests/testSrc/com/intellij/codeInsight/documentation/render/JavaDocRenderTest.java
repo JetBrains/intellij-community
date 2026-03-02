@@ -136,6 +136,21 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     verifyItem(0, 19, "whatever");
   }
 
+  public void testPackageInfoToggle() {
+    EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(false);
+    configureFromFileText("package-info.java",
+                          """
+                            /**
+                             * whatever
+                             */
+                            <caret>package some;""");
+    updateRenderedItems(false);
+    verifyFoldingState();
+    toggleItem();
+    verifyFoldingState(0, 19);
+    verifyItem(0, 19, "whatever");
+  }
+
   public void testModuleInfo() {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
     configureFromFileText("module-info.java",

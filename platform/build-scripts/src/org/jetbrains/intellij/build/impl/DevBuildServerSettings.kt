@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.dataformat.yaml.YAMLFactory
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
@@ -31,22 +31,27 @@ data class DevBuildServerSettings(
         return@lazy emptyList()
       }
       val yamlRoot = ObjectMapper(YAMLFactory()).readTree(intellijYaml.readText())
-      yamlRoot.path("unitTesting").path("runners").map {
-        DevBuildServerSettings(
-          name = it.path("name").asText(),
-          mainClassModule = it.path("mainClassModule").asText(),
-          mainClass = it.path("mainClass").asText(),
-          enabledForModules = it.path("enabledForModules").map(JsonNode::asText),
-          disabledForModules = it.path("disabledForModules").map(JsonNode::asText),
-          jvmArgs = it.path("jvmArgs").map(JsonNode::asText),
-          envs = it.path("envs").map(JsonNode::asText),
+      val result = mutableListOf<DevBuildServerSettings>()
+      for (runner in yamlRoot.path("unitTesting").path("runners").values()) {
+        result.add(
+          DevBuildServerSettings(
+            name = runner.path("name").asString(),
+            mainClassModule = runner.path("mainClassModule").asString(),
+            mainClass = runner.path("mainClass").asString(),
+            enabledForModules = runner.path("enabledForModules").values().map(JsonNode::asString),
+            disabledForModules = runner.path("disabledForModules").values().map(JsonNode::asString),
+            jvmArgs = runner.path("jvmArgs").values().map(JsonNode::asString),
+            envs = runner.path("envs").values().map(JsonNode::asString),
+          )
         )
       }
+      result
     }
 
     fun readDevBuildServerSettingsFromIntellijYaml(moduleName: String): DevBuildServerSettings? {
-      val result = runners.filter {
-        it.enabledForModules.any { matchesName(moduleName, it) } && it.disabledForModules.none { matchesName(moduleName, it) }
+      val result = runners.filter { settings ->
+        settings.enabledForModules.any { pattern -> matchesName(moduleName, pattern) } &&
+        settings.disabledForModules.none { pattern -> matchesName(moduleName, pattern) }
       }
       check(result.size < 2) {
         "More than one runner for module '${moduleName}' in intellij.yaml"

@@ -22,8 +22,8 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":engine"],
   deps = [
-    "@lib//:junit4",
-    "@lib//:assert_j",
+    "@lib//:junit6",
+    "@lib//:junit6Launcher",
     "@lib//:jetbrains-annotations",
     "@lib//:hamcrest",
   ]

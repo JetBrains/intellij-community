@@ -65,8 +65,8 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final int MAX_BUFFER_LENGTH = Integer.getInteger("idea.single.test.log.max.length", 10_000_000);
 
   private final StringBuilder myBuffer = new StringBuilder();
-  private int myBufferStaticFixturesEndOffset = 0;
-  private int myBufferFixturesEndOffset = 0;
+  private int myBufferStaticFixturesEndOffset;
+  private int myBufferFixturesEndOffset;
   private long myTestStartedMillis;
   private boolean myInitialized;
 
@@ -84,7 +84,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   private static @Nullable TestLoggerFactory getTestLoggerFactory() {
     Logger.Factory factory = Logger.getFactory();
-    return factory instanceof TestLoggerFactory ? (TestLoggerFactory)factory : null;
+    return factory instanceof TestLoggerFactory test ? test : null;
   }
 
   @Override
@@ -471,7 +471,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final class TestLogger extends JulLogger {
     private final TestLoggerFactory myFactory;
 
-    private TestLogger(java.util.logging.Logger julLogger, TestLoggerFactory factory) {
+    private TestLogger(@NotNull java.util.logging.Logger julLogger, @NotNull TestLoggerFactory factory) {
       super(julLogger);
       myFactory = factory;
     }

@@ -1,6 +1,6 @@
 ### auto-generated section `build fleet.codecache` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_codecache",
@@ -14,11 +14,18 @@ create_kotlinc_options(
   x_lambdas = "class"
 )
 
+resourcegroup(
+  name = "codecache_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
 jvm_library(
   name = "codecache",
   module_name = "fleet.codecache",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
+  resources = [":codecache_resources"],
   kotlinc_opts = ":custom_codecache",
   deps = [
     "@lib//:kotlinx-coroutines-core",
@@ -38,7 +45,7 @@ jvm_library(
   name = "codecache_test_lib",
   module_name = "fleet.codecache",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_codecache",
   runtime_deps = [
     ":codecache",

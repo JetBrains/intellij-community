@@ -522,14 +522,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return builder.toString();
   }
 
-  @ApiStatus.Internal
-  public void updateIcon() {
-    myIcon = XBreakpointUIUtil.calculateIcon(asProxy(this));
-  }
-
   public Icon getIcon() {
     if (myIcon == null) {
-      updateIcon();
+      myIcon = XBreakpointUIUtil.calculateIcon(asProxy(this));
     }
     return myIcon;
   }

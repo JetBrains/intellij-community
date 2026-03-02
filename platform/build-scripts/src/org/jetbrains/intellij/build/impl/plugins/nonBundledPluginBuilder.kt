@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl.plugins
 
-import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.NioFiles
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -56,6 +55,7 @@ import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.productLayout.util.mapConcurrent
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import tools.jackson.jr.ob.JSON
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path

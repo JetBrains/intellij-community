@@ -13,6 +13,13 @@ public class IncorrectLazyConstantUsageInspectionTest extends LightJavaCodeInsig
     doTest();
   }
 
+  public void testIncorrectLazyConstantUsageFix() {
+    String name = getTestName(false);
+    myFixture.configureByFile(name + ".java");
+    myFixture.launchAction(myFixture.findSingleIntention("Make 'f' 'final'"));
+    myFixture.checkResultByFile(name + "_after.java");
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

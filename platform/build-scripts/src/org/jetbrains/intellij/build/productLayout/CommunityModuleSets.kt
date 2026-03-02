@@ -142,6 +142,9 @@ object CommunityModuleSets {
     module("intellij.platform.navbar.monolith")
     module("intellij.platform.clouds")
 
+    module("intellij.platform.structureView.backend")
+    module("intellij.platform.structureView.frontend")
+
     module("intellij.platform.execution.serviceView")
     module("intellij.platform.execution.serviceView.frontend")
     module("intellij.platform.execution.serviceView.backend")
@@ -416,6 +419,7 @@ object CommunityModuleSets {
     moduleSet(xml())
     moduleSet(duplicates())
     module("intellij.platform.structuralSearch")
+    embeddedModule("intellij.libraries.batik")
 
     // Note: rd.common is intentionally NOT included in ide.common
     // Reason: Rider uses custom module loading mode due to early backend startup requirements.

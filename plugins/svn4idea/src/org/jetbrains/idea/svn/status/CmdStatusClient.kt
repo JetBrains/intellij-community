@@ -70,8 +70,12 @@ private fun parseResult(base: File,
     val baseFile = externalsBase ?: base
     val baseInfo = if (externalsBase != null) externalsMap[externalsBase] else infoBase
 
-    if (baseInfo != null) {
-      builder.url = append(baseInfo.url!!, toSystemIndependentName(getRelativePath(baseFile, file)!!))
+    val baseUrl = baseInfo?.url
+    if (baseUrl != null) {
+      val relativePath = getRelativePath(baseFile, file)
+      if (relativePath != null) {
+        builder.url = append(baseUrl, toSystemIndependentName(relativePath))
+      }
     }
     val status = builder.build()
     if (status.`is`(StatusType.STATUS_EXTERNAL)) {

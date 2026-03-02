@@ -1,0 +1,93 @@
+================ Step #1 =================
+Cleaning output files:
+  BaseClass.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/BaseClass.java
+End of files
+Cleaning output files:
+  DerivedClass1.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_mixedInheritance-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/DerivedClass1.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  BaseClass.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_mixedInheritance-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/DerivedClass1.kt
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/BaseClass.java
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #3 =================
+Cleaning output files:
+  BaseClass.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/BaseClass.java
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #4 =================
+Cleaning output files:
+  BaseClass.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/BaseClass.java
+End of files
+Cleaning output files:
+  DerivedClass1.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_mixedInheritance-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/DerivedClass1.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #5 =================
+Cleaning output files:
+  BaseClass.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_mixedInheritance-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/DerivedClass1.kt
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/BaseClass.java
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #6 =================
+Cleaning output files:
+  DerivedClass1.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_mixedInheritance-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/DerivedClass1.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #7 =================
+Cleaning output files:
+  BaseClass.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/BaseClass.java
+End of files
+Cleaning output files:
+  DerivedClass1.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_mixedInheritance-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/mixedInheritance/a/DerivedClass1.kt
+End of files
+------------------------------------------
+Exit code: ERROR

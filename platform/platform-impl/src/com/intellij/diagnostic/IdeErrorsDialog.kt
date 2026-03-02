@@ -38,6 +38,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
@@ -51,6 +52,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.ide.impl.diagnostic.errorsDialog.ErrorMessageCluster
+import com.intellij.platform.ide.impl.diagnostic.errorsDialog.ErrorMessageClustering
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.ComponentUtil
@@ -62,6 +65,7 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.application
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.system.OS
@@ -71,6 +75,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
@@ -115,11 +120,10 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   private val hideClearButton: Boolean = false,
 ) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
   private val myAcceptedNotices: MutableSet<String>
-  private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
+  @Volatile
+  private var myMessageClusters = emptyList<ErrorMessageCluster>() // exceptions with the same stacktrace
+  @Volatile
   private var myIndex: Int = 0
-    set(value) {
-      field = value.coerceIn(0, (myMessageClusters.size - 1).coerceAtLeast(0))
-    }
   private var myLastIndex = -1
   private var myUpdateControlsJob: Job = SupervisorJob()
 
@@ -145,9 +149,8 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     setCancelButtonText(CommonBundle.message("close.action.name"))
     val rawValue = PropertiesComponent.getInstance().getValue(ACCEPTED_NOTICES_KEY, "")
     myAcceptedNotices = Collections.synchronizedSet(LinkedHashSet(rawValue.split(ACCEPTED_NOTICES_SEPARATOR)))
-    updateMessages()
-    myIndex = selectMessage(defaultMessage)
-    updateControls()
+    myLoadingDecorator.startLoading(false)
+    updateMessages(defaultMessage)
     @Suppress("LeakingThis")
     myMessagePool.addListener(this)
     peer.isMaximizable = true
@@ -185,22 +188,23 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   }
 
   private fun selectMessage(defaultMessage: LogMessage?): Int {
+    val messageClusters = myMessageClusters
     if (defaultMessage != null) {
-      for (i in myMessageClusters.indices) {
-        if (myMessageClusters[i].messages.contains(defaultMessage)) return i
+      for (i in messageClusters.indices) {
+        if (messageClusters[i].messages.contains(defaultMessage)) return i
       }
     }
     else {
-      for (i in myMessageClusters.indices) {
-        if (!myMessageClusters[i].messages[0].isRead) return i
+      for (i in messageClusters.indices) {
+        if (!messageClusters[i].messages[0].isRead) return i
       }
-      for (i in myMessageClusters.indices) {
-        for (message in myMessageClusters[i].messages) {
+      for (i in messageClusters.indices) {
+        for (message in messageClusters[i].messages) {
           if (!message.isRead) return i
         }
       }
-      for (i in myMessageClusters.indices) {
-        if (!myMessageClusters[i].messages[0].isSubmitted) return i
+      for (i in messageClusters.indices) {
+        if (!messageClusters[i].messages[0].isSubmitted) return i
       }
     }
     return 0
@@ -244,7 +248,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
   private fun enableOkButtonIfReady() {
     val cluster = selectedCluster()
-    isOKActionEnabled = cluster.canSubmit && !cluster.detailsText.isNullOrBlank() && myUpdateControlsJob.isCompleted
+    isOKActionEnabled = cluster != null && cluster.canSubmit && !cluster.detailsText.isNullOrBlank() && myUpdateControlsJob.isCompleted
   }
 
   override fun createCenterPanel(): JComponent? {
@@ -255,7 +259,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     myCommentArea.margin = JBUI.insets(2)
     myCommentArea.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        selectedMessage().additionalInfo = myCommentArea.text.trim { it <= ' ' }
+        selectedMessage()?.additionalInfo = myCommentArea.text.trim { it <= ' ' }
       }
     })
     myAttachmentList = AttachmentList()
@@ -267,18 +271,18 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       }
       else if (index == 0) {
         val cluster = selectedCluster()
-        myAttachmentArea.text = cluster.detailsText
-        myAttachmentArea.isEditable = cluster.isUnsent
+        myAttachmentArea.text = cluster?.detailsText ?: ""
+        myAttachmentArea.isEditable = cluster?.isUnsent ?: false
       }
       else {
-        myAttachmentArea.text = selectedMessage().allAttachments[index - 1].displayText
+        myAttachmentArea.text = selectedMessage()?.allAttachments?.getOrNull(index - 1)?.displayText ?: ""
         myAttachmentArea.isEditable = false
       }
       myAttachmentArea.caretPosition = 0
     }
     myAttachmentList.setCheckBoxListListener { index: Int, value: Boolean ->
       if (index > 0) {
-        selectedMessage().allAttachments[index - 1].isIncluded = value
+        selectedMessage()?.allAttachments?.getOrNull(index - 1)?.isIncluded = value
       }
     }
     myAttachmentList.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
@@ -290,7 +294,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
         if (myAttachmentList.selectedIndex == 0) {
           val detailsText = myAttachmentArea.text
           val cluster = selectedCluster()
-          cluster.detailsText = detailsText
+          cluster?.detailsText = detailsText
           enableOkButtonIfReady()
         }
       }
@@ -300,7 +304,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       text = heightSample
       addHyperlinkListener {
         if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-          selectedCluster().submitter?.let { submitter ->
+          selectedCluster()?.submitter?.let { submitter ->
             submitter.changeReporterAccount(rootPane)
             updateControls()
           }
@@ -378,18 +382,28 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     super.dispose()
   }
 
-  private fun selectedCluster(): MessageCluster = myMessageClusters[myIndex]
+  private fun selectedCluster(): ErrorMessageCluster? = myMessageClusters.getOrNull(myIndex)
 
-  private fun selectedMessage(): AbstractMessage = selectedCluster().first
+  private fun selectedMessage(): AbstractMessage? = selectedCluster()?.first
 
-  private fun updateMessages() {
-    val messages = myMessagePool.getFatalErrors(true, true)
-    val clusters = LinkedHashMap<Long, MessageCluster>()
-    for (message in messages) {
-      clusters.computeIfAbsent(hashMessage(message)) { MessageCluster(message) }.messages.add(message)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun updateMessages(defaultMessage: LogMessage?) {
+    val deferred = ErrorMessageClustering.getInstance().clusterMessages()
+    deferred.cancelOnDispose(disposable)
+    deferred.invokeOnCompletion { error ->
+      if (error != null) {
+        logger<IdeErrorsDialog>().error("Error clustering messages", error)
+        return@invokeOnCompletion
+      }
+
+      UIUtil.invokeLaterIfNeeded {
+        myMessageClusters = deferred.getCompleted()
+        myIndex = selectMessage(defaultMessage)
+        if (isShowing) {
+          updateControls()
+        }
+      }
     }
-    myMessageClusters.clear()
-    myMessageClusters.addAll(clusters.values)
   }
 
   @RequiresEdt
@@ -402,12 +416,15 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
     myUpdateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(context) {
       val cluster = selectedCluster()
-      val submitter = cluster.submitter
-      cluster.messages.forEach { it.isRead = true }
-      updateLabels(cluster)
-      updateDetails(cluster)
+      val submitter = cluster?.submitter
+      // if there are no messages left, the dialog will be closed automatically, so there is no need to update controls in that case
+      if (cluster != null) {
+        cluster.messages.forEach { it.isRead = true }
+        updateLabels(cluster)
+        updateDetails(cluster)
+      }
       updateCredentialsPanel(submitter)
-      isOKActionEnabled = cluster.canSubmit
+      isOKActionEnabled = cluster != null && cluster.canSubmit
       setDefaultReportActionText(submitter?.reportActionText ?: DiagnosticBundle.message("error.report.impossible.action"))
       setDefaultReportActionTooltip(if (submitter != null) null else DiagnosticBundle.message("error.report.impossible.tooltip"))
       myLoadingDecorator.stopLoading()
@@ -437,7 +454,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  private suspend fun updateLabels(cluster: MessageCluster) {
+  private suspend fun updateLabels(cluster: ErrorMessageCluster) {
     val message = cluster.first
     myCountLabel.text = DiagnosticBundle.message("error.list.message.index.count", myIndex + 1, myMessageClusters.size)
     val t = message.throwable
@@ -448,17 +465,17 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       myPrivacyNotice.panel.isVisible = false
     }
     val pluginId = cluster.pluginId
-    val plugin = cluster.plugin
+    val pluginInfo = cluster.pluginInfo
     val info = StringBuilder()
 
-    if (t is RemoteSerializedThrowable) {
-      info.append("[backend] ")
+    if (t is RemoteSerializedThrowable && t.headerPrefix != null) {
+      info.append("[${t.headerPrefix}] ")
     }
 
-    if (pluginId != null && !t.isSpecialBackendException()) {
-      val name = if (plugin != null) plugin.name else pluginId.toString()
-      if (plugin != null && (!plugin.isBundled || plugin.allowBundledUpdate())) {
-        info.append(DiagnosticBundle.message("error.list.message.blame.plugin.version", name, plugin.version))
+    if (pluginId != null) {
+      val name = if (pluginInfo != null) pluginInfo.name else pluginId.toString()
+      if (pluginInfo != null && (!pluginInfo.isBundled || pluginInfo.allowsBundledUpdate)) {
+        info.append(DiagnosticBundle.message("error.list.message.blame.plugin.version", name, pluginInfo.version))
       }
       else {
         info.append(DiagnosticBundle.message("error.list.message.blame.plugin", name))
@@ -517,12 +534,12 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     val date = DateFormatUtil.formatPrettyDateTime(cluster.messages[count - 1].date)
     myDetailsLabel.text = DiagnosticBundle.message("error.list.message.info", date, count)
     val submitter = cluster.submitter
-    if (submitter == null && plugin != null && !PluginManagerCore.isDevelopedByJetBrains(plugin)) {
+    if (submitter == null && pluginInfo != null && !PluginManagerCore.isDevelopedByJetBrains(pluginInfo.pluginId, pluginInfo.vendor, pluginInfo.organization)) {
       myForeignPluginWarningLabel.isVisible = true
-      val vendor = plugin.vendor
+      val vendor = pluginInfo.vendor
       val vendorUrl =
-        plugin.vendorUrl?.trim()?.let { URLUtil.addSchemaIfMissing(it) }?.takeIf(::isValidUrl)
-        ?: plugin.vendorEmail?.trim()?.let { "mailto:" + it.removePrefix("mailto:") }?.takeIf(::isValidUrl)
+        pluginInfo.vendorUrl?.trim()?.let { URLUtil.addSchemaIfMissing(it) }?.takeIf(::isValidUrl)
+        ?: pluginInfo.vendorEmail?.trim()?.let { "mailto:" + it.removePrefix("mailto:") }?.takeIf(::isValidUrl)
       myForeignPluginWarningLabel.text = when {
         !vendor.isNullOrEmpty() && vendorUrl != null -> DiagnosticBundle.message("error.dialog.foreign.plugin.warning", vendor, vendorUrl)
         vendorUrl != null -> DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unnamed", vendorUrl)
@@ -544,7 +561,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
   private fun isValidUrl(url: String): Boolean = runCatching { URI(url).toURL() }.isSuccess
 
-  private fun updateDetails(cluster: MessageCluster) {
+  private fun updateDetails(cluster: ErrorMessageCluster) {
     val message = cluster.first
     val canReport = cluster.canSubmit
     if (myLastIndex != myIndex) {
@@ -572,7 +589,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  private fun reportMessage(cluster: MessageCluster, dialogClosed: Boolean): Boolean {
+  private fun reportMessage(cluster: ErrorMessageCluster, dialogClosed: Boolean): Boolean {
     val submitter = cluster.submitter ?: return false
     val message = cluster.first
     message.isSubmitting = true
@@ -593,7 +610,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       return false
     }
 
-    val events = arrayOf(IdeaLoggingEvent(pair.first, pair.second, message.includedAttachments, cluster.plugin, message))
+    val events = arrayOf(IdeaLoggingEvent(pair.first, pair.second, message.includedAttachments, cluster.pluginInfo, message))
     var parentComponent: Container = rootPane
     if (dialogClosed) {
       val frame = ComponentUtil.getParentOfType(IdeFrame::class.java, parentComponent)
@@ -610,7 +627,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   }
 
   private fun disablePlugin() {
-    selectedCluster().plugin?.let { plugin ->
+    selectedCluster()?.pluginInfo?.let { plugin ->
       DisablePluginsDialog.confirmDisablePlugins(myProject, listOf(plugin))
     }
   }
@@ -637,8 +654,10 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      myLastIndex = myIndex--
-      updateControls()
+      if (myIndex > 0) {
+        myLastIndex = myIndex--
+        updateControls()
+      }
     }
   }
 
@@ -657,8 +676,10 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      myLastIndex = myIndex++
-      updateControls()
+      if (myIndex < myMessageClusters.size - 1) {
+        myLastIndex = myIndex++
+        updateControls()
+      }
     }
   }
 
@@ -666,13 +687,15 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = myIndex != myMessageClusters.size - 1
+      e.presentation.isEnabled = myIndex < myMessageClusters.size - 1
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      myLastIndex = myIndex
-      myIndex = myMessageClusters.size - 1
-      updateControls()
+      if (myIndex < myMessageClusters.size - 1) {
+        myLastIndex = myIndex
+        myIndex = myMessageClusters.size - 1
+        updateControls()
+      }
     }
   }
 
@@ -716,12 +739,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
   /* interfaces */
   override fun newEntryAdded() {
-    UIUtil.invokeLaterIfNeeded {
-      if (isShowing) {
-        updateMessages()
-        updateControls()
-      }
-    }
+    updateMessages(defaultMessage = null)
   }
 
   override fun poolCleared() {
@@ -733,54 +751,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
-    sink[CURRENT_TRACE_KEY] = selectedMessage().throwableText
-  }
-
-  /* helpers */
-  private class MessageCluster(val first: AbstractMessage) {
-    val pluginId: PluginId? = PluginUtil.getInstance().findPluginId(first.throwable)
-    val plugin: IdeaPluginDescriptor? = PluginManagerCore.getPlugin(pluginId)
-    val submitter: ErrorReportSubmitter? = DefaultIdeaErrorLogger.findSubmitter(first.throwable, plugin)
-    var detailsText: String? = detailsText()
-    val messages: MutableList<AbstractMessage> = ArrayList()
-
-    private fun detailsText(): String? {
-      val t = first.throwable
-      if (t is TooManyErrorsException) {
-        return t.message
-      }
-      val userMessage = first.message
-      val stacktrace = first.throwableText
-      return if (userMessage.isNullOrBlank()) stacktrace else "${userMessage}\n\n${stacktrace}"
-    }
-
-    val isUnsent: Boolean get() = !first.isSubmitted && !first.isSubmitting
-
-    val canSubmit: Boolean get() = submitter != null && isUnsent
-
-    fun decouple(): Pair<String?, Throwable>? {
-      val detailsText = detailsText!!
-      val originalThrowableText = first.throwableText
-      val originalThrowableClass = first.throwable.javaClass.name
-
-      val p1 = detailsText.indexOf(originalThrowableText)
-      if (p1 >= 0) {
-        val message = detailsText.substring(0, p1).trim { it <= ' ' }.takeIf(String::isNotEmpty)
-        return message to first.throwable
-      }
-
-      if (detailsText.startsWith(originalThrowableClass)) {
-        return null to RecoveredThrowable.fromString(detailsText)
-      }
-
-      val p2 = detailsText.indexOf('\n' + originalThrowableClass)
-      if (p2 >= 0) {
-        val message = detailsText.substring(0, p2).trim { it <= ' ' }.takeIf(String::isNotEmpty)
-        return message to RecoveredThrowable.fromString(detailsText.substring(p2 + 1))
-      }
-
-      return null
-    }
+    sink[CURRENT_TRACE_KEY] = selectedMessage()?.throwableText
   }
 
   private class CompositeAction(mainAction: Action, additionalActions: List<Action>) :
@@ -839,7 +810,8 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
         NOTIFY_SUCCESS_EACH_REPORT.set(true)
 
-        val reportingStarted = reportMessage(selectedCluster(), closeDialog)
+        val selectedCluster = selectedCluster()
+        val reportingStarted = selectedCluster != null && reportMessage(selectedCluster, closeDialog)
         if (!reportingStarted) {
           if (!closeDialog) {
             updateControls()
@@ -867,7 +839,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  private val gratitudeMessagesInternal: List<String> = listOf(
+  private val gratitudeMessagesInternal: List<@NlsSafe String> = listOf(
     "You are breathtaking!",
     "The world is a better place because of you!",
     "I couldn’t have done this without you. Thank you for being there!",
@@ -943,8 +915,9 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
   private fun reportAll(onlyEligibleForAutoReport: Boolean = false): Boolean {
     var reportingStarted = true
-    for (i in myMessageClusters.indices) {
-      val cluster = myMessageClusters[i]
+    val messageClusters = myMessageClusters
+    for (i in messageClusters.indices) {
+      val cluster = messageClusters[i]
       if (!cluster.canSubmit) {
         continue
       }
@@ -992,11 +965,6 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     this is RemoteSerializedThrowable && classFqn == T::class.qualifiedName
 
   private inline fun <reified T : Throwable> Throwable.isInstance() = this is T || isBackendInstance<T>()
-
-  // Since we do not handle Freezes/Abstract Methods/JBR Crashes gracefully for now. TODO: IJPL-182368
-  private fun Throwable.isSpecialBackendException() =
-    this is RemoteSerializedThrowable &&
-    (isInstance<AbstractMethodError>() || isInstance<Freeze>() || isInstance<JBRCrash>() || isInstance<KotlinCompilerCrash>())
 
   // This is a very hacky method, since no actual cast is done for `RemoteSerializedThrowable``
   private val Throwable.kotlinVersionOrEmpty: String

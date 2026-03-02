@@ -110,9 +110,9 @@ class EditorConfigPropertiesService(private val project: Project) : SimpleModifi
     return result
   }
 
-  fun getProperties(file: VirtualFile): ResourceProperties = mergeEditorConfigs(file.path, relevantEditorConfigsFor(file))
+  fun getProperties(file: VirtualFile): Map<String, String> = mergeEditorConfigs(file.path, relevantEditorConfigsFor(file))
 
-  fun getPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
+  fun getPropertiesAndEditorConfigs(file: VirtualFile): Pair<Map<String, String>, List<VirtualFile>> {
     val editorConfigs = relevantEditorConfigsFor(file)
     val properties = mergeEditorConfigs(file.path, editorConfigs)
     return Pair(properties, editorConfigs.map(ValidEditorConfig::file))
@@ -122,8 +122,6 @@ class EditorConfigPropertiesService(private val project: Project) : SimpleModifi
     editorConfigsCache.clear()
   }
 }
-
-private val EMPTY_PROPERTIES = ResourceProperties.builder().build()
 
 private sealed interface LoadEditorConfigResult
 
@@ -143,21 +141,22 @@ private fun makeLoader(): EditorConfigLoader =
  * @param editorConfigs the relevant [EditorConfig]s, starting with the one closest to the file for which properties are polled, ending with
  * the root
  */
-private fun mergeEditorConfigs(queriedFilePath: String, editorConfigs: List<ValidEditorConfig>): ResourceProperties =
+private fun mergeEditorConfigs(queriedFilePath: String, editorConfigs: List<ValidEditorConfig>): Map<String, String> =
   editorConfigs
-    .foldRight(ResourceProperties.builder()) { (editorConfigFile, parsedEditorConfig), builder ->
-      val containingDir = editorConfigFile.parent ?: return EMPTY_PROPERTIES
+    .foldRight(LinkedHashMap()) { (editorConfigFile, parsedEditorConfig), builder ->
+      val containingDir = editorConfigFile.parent ?: return emptyMap()
       val queriedFileRelativeEc4jPath = Ec4jPath.Ec4jPaths.of(
         FileUtil.getRelativePath(containingDir.path,
                                  queriedFilePath,
                                  '/',
-                                 containingDir.fileSystem.isCaseSensitive) ?: return EMPTY_PROPERTIES
+                                 containingDir.fileSystem.isCaseSensitive) ?: return emptyMap()
       )
       for (section in parsedEditorConfig.sections) {
         if (section.match(queriedFileRelativeEc4jPath)) {
-          builder.properties(section.properties)
+          section.properties.forEach { (_, prop) ->
+            builder[prop.name] = prop.sourceValue
+          }
         }
       }
       builder
     }
-    .build()

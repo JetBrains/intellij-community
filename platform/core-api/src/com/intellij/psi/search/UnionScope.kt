@@ -23,8 +23,11 @@ internal class UnionScope private constructor(
   val myScopes: Array<GlobalSearchScope>
 ) : GlobalSearchScope(project), VirtualFileEnumerationAware, CodeInsightContextAwareSearchScope {
 
+  private val myScopesHashSet: HashSet<GlobalSearchScope>
+
   init {
     require(myScopes.size >= 2) { "expected >= 2 scopes but got: ${myScopes.contentToString()}" }
+    myScopesHashSet = hashSetOf(*myScopes)
   }
 
   override fun extractFileEnumeration(): VirtualFileEnumeration? {
@@ -100,7 +103,7 @@ internal class UnionScope private constructor(
     if (this === other) return true
     if (other !is UnionScope) return false
 
-    return hashSetOf(*myScopes) == hashSetOf(*other.myScopes)
+    return myScopesHashSet == other.myScopesHashSet
   }
 
   override fun calcHashCode(): Int {

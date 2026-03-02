@@ -6,10 +6,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolKind
-import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.polySymbols.utils.PolySymbolTypeSupport.Companion.PROP_TYPE_SUPPORT
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport.TypeSupportProperty
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -30,11 +30,9 @@ interface CustomElementsSymbol : PolySymbol, PolySymbolScope {
       library = symbol.origin.library + (symbol.origin.version?.takeIf { it != "0.0.0" }?.let { "@$it" } ?: "")
     }
 
-  override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
-    when (property) {
-      PROP_TYPE_SUPPORT -> property.tryCast(origin.typeSupport)
-      else -> super.get(property)
-    }
+  @PolySymbol.Property(TypeSupportProperty::class)
+  val typeSupport: PolySymbolTypeSupport?
+    get() = origin.typeSupport
 
   override fun createPointer(): Pointer<out CustomElementsSymbol>
 

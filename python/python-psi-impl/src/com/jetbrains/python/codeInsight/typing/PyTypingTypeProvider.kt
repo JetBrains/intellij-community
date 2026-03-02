@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.resolve.FileContextUtil
@@ -20,6 +21,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
@@ -38,8 +40,6 @@ import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typeRepresentation.PyModuleTypeName
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation
 import com.jetbrains.python.codeInsight.typing.PyTypeHintProvider.Companion.parseTypeHint
-import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Companion.getTypedDictTypeForResolvedElement
-import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Companion.isTypedDict
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Context
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.FutureFeature
@@ -111,6 +111,7 @@ import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyNarrowedType
 import com.jetbrains.python.psi.types.PyNarrowedType.Companion.create
 import com.jetbrains.python.psi.types.PyNeverType
+import com.jetbrains.python.psi.types.PyNumericTowerUtil
 import com.jetbrains.python.psi.types.PyParamSpecType
 import com.jetbrains.python.psi.types.PyPositionalVariadicType
 import com.jetbrains.python.psi.types.PySelfType
@@ -137,7 +138,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 import java.util.Collections
 import java.util.Objects
 import java.util.Optional
@@ -960,7 +960,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun getTypedDictTypeForTarget(referenceTarget: PyTargetExpression, context: TypeEvalContext): PyType? {
-      if (isTypedDict(referenceTarget, context)) {
+      if (PyTypedDictTypeProvider.Helper.isTypedDict(referenceTarget, context)) {
         return PyCustomType(
           TYPED_DICT, null, false, true,
           getInstance(referenceTarget).dictType
@@ -1369,7 +1369,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         if (anyType != null) {
           return anyType
         }
-        val typedDictType: PyType? = getTypedDictTypeForResolvedElement(
+        val typedDictType: PyType? = PyTypedDictTypeProvider.Helper.getTypedDictTypeForResolvedElement(
           resolved,
           context.typeContext
         )
@@ -1457,10 +1457,10 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val moduleReferenceExpression = moduleDefinition.indexExpression as? PyReferenceExpression ?: return null
       val moduleName = moduleReferenceExpression.name ?: return null
       val project = moduleDefinition.project
-      val moduleInitFiles = PyModuleNameIndex.findByShortName(moduleName, project, GlobalSearchScope.everythingScope(project))
+      val moduleInitFiles = PyModuleNameIndex.findByQualifiedName(QualifiedName.fromDottedString(moduleName), project, GlobalSearchScope.everythingScope(project))
       val skeletons = PythonSdkUtil.getSkeletonsRootPath(PathManager.getSystemDir().toString())
       val firstModuleInitFile =
-        moduleInitFiles.find { it != null && !Path.of(it.virtualFile.path).startsWith(skeletons) }
+        moduleInitFiles.find { it != null && !it.virtualFile.path.toNioPathOrNull()!!.startsWith(skeletons) }
         ?: moduleInitFiles.find { it != null }
         ?: return null
 
@@ -1674,7 +1674,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
                 return Ref(parameterized.toInstance())
               }
             }
-            val instanceType: PyType = type.toInstance()
+            val instanceType: PyType? = PyNumericTowerUtil.enrich(type.toInstance())
             return Ref(instanceType)
           }
         }
@@ -1837,6 +1837,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     fun <T> isFinal(owner: T, context: TypeEvalContext): Boolean where T : PyTypeCommentOwner?, T : PyAnnotationOwner? {
       return PyUtil.getParameterizedCachedValue(owner!!, context) {
         typeHintedWithName(owner, context, FINAL, FINAL_EXT)
+      }
+    }
+
+    @JvmStatic
+    fun <T> isReadOnly(owner: T, context: TypeEvalContext): Boolean where T : PyTypeCommentOwner?, T : PyAnnotationOwner? {
+      return PyUtil.getParameterizedCachedValue(owner!!, context) {
+        typeHintedWithName(owner, context, READONLY, READONLY_EXT)
       }
     }
 

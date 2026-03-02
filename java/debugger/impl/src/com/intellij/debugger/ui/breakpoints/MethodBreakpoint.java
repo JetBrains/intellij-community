@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodBreakpoint
@@ -24,16 +24,15 @@ import com.intellij.debugger.jdi.ClassesByNameProvider;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
@@ -154,45 +153,46 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       request.enable();
     }
 
-    ProgressWindow indicator =
-      new ProgressWindow(true, false, debugProcess.getProject(), JavaDebuggerBundle.message("cancel.emulation"));
-    indicator.setDelayInMillis(2000);
+    MethodBreakpointProgressSupport.getInstance().runWithModalProgress(
+      debugProcess.getProject(),
+      JavaDebuggerBundle.message("cancel.emulation"),
+      2000,
+      indicator -> {
+        AtomicBoolean changed = new AtomicBoolean();
+        Disposable disposable = Disposer.newDisposable("BreakpointsEmulation");
+        XBreakpointListener<XBreakpoint<?>> listener = new XBreakpointListener<XBreakpoint<?>>() {
+          void changed(@NotNull XBreakpoint<?> b) {
+            if (b == breakpoint.getXBreakpoint()) {
+              changed.set(true);
+              indicator.cancel();
+            }
+          }
 
-    AtomicBoolean changed = new AtomicBoolean();
-    XBreakpointListener<XBreakpoint<?>> listener = new XBreakpointListener<XBreakpoint<?>>() {
-      void changed(@NotNull XBreakpoint b) {
-        if (b == breakpoint.getXBreakpoint()) {
-          changed.set(true);
-          indicator.cancel();
+          @Override
+          public void breakpointRemoved(@NotNull XBreakpoint b) {
+            changed(b);
+          }
+
+          @Override
+          public void breakpointChanged(@NotNull XBreakpoint b) {
+            changed(b);
+          }
+        };
+
+        debugProcess.getProject().getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, listener);
+        try {
+          processPreparedSubTypes(baseType,
+                                  (subType, classesByName) ->
+                                    createRequestForPreparedClassEmulated(breakpoint, debugProcess, subType, classesByName, false),
+                                  indicator);
         }
-      }
-
-      @Override
-      public void breakpointRemoved(@NotNull XBreakpoint b) {
-        changed(b);
-      }
-
-      @Override
-      public void breakpointChanged(@NotNull XBreakpoint b) {
-        changed(b);
-      }
-    };
-
-    debugProcess.getProject().getMessageBus().connect(indicator).subscribe(XBreakpointListener.TOPIC, listener);
-    try {
-      ProgressManager.getInstance().executeProcessUnderProgress(
-        () -> processPreparedSubTypes(baseType,
-                                      (subType, classesByName) ->
-                                        createRequestForPreparedClassEmulated(breakpoint, debugProcess, subType, classesByName, false),
-                                      indicator),
-        indicator);
-      if (indicator.isCanceled() && !changed.get()) {
-        breakpoint.disableEmulation();
-      }
-    }
-    catch (ProcessCanceledException e) {
-      breakpoint.disableEmulation();
-    }
+        finally {
+          if (indicator.isCanceled() && !changed.get()) {
+            breakpoint.disableEmulation();
+          }
+          Disposer.dispose(disposable);
+        }
+      });
   }
 
   @Override

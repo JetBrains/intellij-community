@@ -111,7 +111,6 @@ Edition impact:
 - Main template: `community/.ai/guide.md`
 - Local partials: `community/.ai/partials/*.md`
 - Shared partial overrides: `.ai/partials/*.md`
-- Compilation rule template: `community/.ai/compilation.md`
 
 ### Template directives
 
@@ -141,7 +140,6 @@ internal notes only
 
 ## Required placeholders
 
-- `{{COMPILATION_RULE}}` must remain in `guide.md`.
 - `{{FORBIDDEN_TOOLS_SUFFIX}}` is filled per output target.
 
 If placeholders remain after rendering, the renderer fails fast.

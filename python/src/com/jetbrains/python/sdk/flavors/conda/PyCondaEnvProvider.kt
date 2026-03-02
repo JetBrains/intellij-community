@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.flavors.conda
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.python.community.execService.BinOnEel
@@ -15,6 +16,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isFailure
 import com.jetbrains.python.isSuccess
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
+import com.jetbrains.python.sdk.conda.execution.models.CondaEnvInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.future.asDeferred
@@ -65,13 +67,33 @@ class PyCondaEnvProvider(
       is BinOnEel -> binaryToExec.path.toString()
       is BinOnTarget -> binaryToExec.getLocalExePath().value
     }
-    val info = CondaExecutor.listEnvs(binaryToExec, execService).getOr { return it }
-    val condaPrefix = info.condaPrefix ?: condaPath.removeSuffix("/bin/conda")
-    val envs = info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }
+    val condaEnvInfo = CondaExecutor.listEnvs(binaryToExec, execService).getOr { return it }
+    val condaEnvs = fromEnvsDetails(condaEnvInfo, condaPath) ?: fromEnvsDirs(condaEnvInfo, condaPath)
+    return PyResult.success(condaEnvs)
+  }
+
+  private fun fromEnvsDetails(condaEnvInfo: CondaEnvInfo, condaPath: FullPathOnTarget): List<PyCondaEnv>? {
+    if (condaEnvInfo.envsDetails == null) return null
+
+    val envs = condaEnvInfo.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }
+    return envs.map { envPath ->
+      val envInDetails = condaEnvInfo.envsDetails[envPath]
+
+      val (envName, base) = envInDetails?.let { envDetails ->
+        envDetails.name.takeIf { it.isNotBlank() } to envDetails.base
+      } ?: (null to false)
+
+      constructCondaEnv(envName, envPath, base, condaPath)
+    }
+  }
+
+  private fun fromEnvsDirs(condaEnvInfo: CondaEnvInfo, condaPath: FullPathOnTarget): List<PyCondaEnv> {
+    val condaPrefix = condaEnvInfo.condaPrefix ?: condaPath.removeSuffix("/bin/conda")
+    val envs = condaEnvInfo.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }
     val identities = envs.map { envPath ->
       // Env name is the basename for envs inside of default location
       // envPath should be direct child of envs_dirs to be a NamedEnv
-      val isEnvName = info.envsDirs.any {
+      val isEnvName = condaEnvInfo.envsDirs.any {
         Path.of(it) == Path.of(envPath).parent
       }
       val envName = if (isEnvName)
@@ -79,15 +101,20 @@ class PyCondaEnvProvider(
       else
         null
       val base = envPath.equals(condaPrefix, ignoreCase = true)
-      val identity = if (envName != null) {
-        PyCondaEnvIdentity.NamedEnv(envName)
-      }
-      else {
-        PyCondaEnvIdentity.UnnamedEnv(envPath, base)
-      }
-      PyCondaEnv(identity, condaPath)
+      constructCondaEnv(envName, envPath, base, condaPath)
     }
 
-    return PyResult.success(identities)
+    return identities
+  }
+
+  private fun constructCondaEnv(envName: String?, envPath: String, base: Boolean, condaPath: FullPathOnTarget): PyCondaEnv {
+    val identity = if (envName != null) {
+      PyCondaEnvIdentity.NamedEnv(envName)
+    }
+    else {
+      PyCondaEnvIdentity.UnnamedEnv(envPath, base)
+    }
+
+    return PyCondaEnv(identity, condaPath)
   }
 }

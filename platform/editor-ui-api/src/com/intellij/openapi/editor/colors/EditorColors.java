@@ -33,7 +33,7 @@ public interface EditorColors {
   ColorKey MATCHED_BRACES_INDENT_GUIDE_COLOR = ColorKey.createColorKey("MATCHED_BRACES_INDENT_GUIDE_COLOR");
   ColorKey SELECTION_BACKGROUND_COLOR = ColorKey.createColorKey("SELECTION_BACKGROUND");
   @ApiStatus.Experimental
-  ColorKey INACTIVE_SELECTION_BACKGROUND_COLOR = ColorKey.createColorKey("INACTIVE_SELECTION_BACKGROUND");
+  ColorKey SELECTION_BACKGROUND_COLOR_INACTIVE = ColorKey.createColorKey("SELECTION_BACKGROUND_INACTIVE");
   ColorKey SELECTION_FOREGROUND_COLOR = ColorKey.createColorKey("SELECTION_FOREGROUND");
   /**
    * @deprecated use {@code ScrollBarPainter.THUMB_OPAQUE_BACKGROUND} instead

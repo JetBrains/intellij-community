@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -18,9 +17,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.actionSystem.ActionPlan
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler
-import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorEventMulticaster
@@ -308,25 +304,6 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
       Necropolis.getInstance(it, onlyIfCreated = true)
     }
     necropolis?.turnIntoZombiesAndBury(editor)
-  }
-}
-
-@Suppress("unused")
-internal class MyRawTypedHandler(private val delegate: TypedActionHandler) : TypedActionHandlerEx {
-  override fun execute(editor: Editor, charTyped: Char, dataContext: DataContext) {
-    editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, true)
-    try {
-      delegate.execute(editor, charTyped, dataContext)
-    }
-    finally {
-      editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, null)
-    }
-  }
-
-  override fun beforeExecute(editor: Editor, c: Char, context: DataContext, plan: ActionPlan) {
-    if (delegate is TypedActionHandlerEx) {
-      delegate.beforeExecute(editor, c, context, plan)
-    }
   }
 }
 

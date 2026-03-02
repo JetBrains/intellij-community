@@ -6,6 +6,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.JavaReferringObjectsValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -40,6 +41,7 @@ import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.ui.tree.render.OnDemandRenderer;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.debugger.ui.tree.render.XValuePresentationProvider;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -618,7 +620,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                 }
                 else if (psiExpression != null) {
                   ReadAction.nonBlocking(() -> {
-                    XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
+                    SourcePosition sourcePosition = getDebuggerContext().getSourcePosition();
+                    Language language = (sourcePosition != null) ? sourcePosition.getFile().getLanguage() : psiExpression.getLanguage();
+                    TextWithImports convertedTextWithImports = TextWithImportsImpl.convertToLanguage(psiExpression, language);
+                    XExpression res = TextWithImportsImpl.toXExpression(convertedTextWithImports);
                     // add runtime imports if any
                     Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
                     if (imports != null && res != null) {

@@ -19,6 +19,7 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
   <!-- endregion -->
 

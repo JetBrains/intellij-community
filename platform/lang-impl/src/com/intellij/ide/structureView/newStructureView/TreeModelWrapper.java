@@ -23,11 +23,16 @@ import java.util.List;
 
 public final class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel, StructureViewModel.ExpandInfoProvider {
   private final StructureViewModel myModel;
-  private final TreeActionsOwner myStructureView;
+  private final TreeActionsOwnerEx myTreeActionsOwner;
 
-  public TreeModelWrapper(@NotNull StructureViewModel model, @NotNull TreeActionsOwner structureView) {
+  public TreeModelWrapper(@NotNull StructureViewModel model, @NotNull TreeActionsOwner treeActionsOwner) {
     myModel = model;
-    myStructureView = structureView;
+    if (treeActionsOwner instanceof TreeActionsOwnerEx) {
+      myTreeActionsOwner = (TreeActionsOwnerEx)treeActionsOwner;
+    }
+    else {
+      myTreeActionsOwner = new TreeActionOwnerWrapper(treeActionsOwner);
+    }
   }
 
   @Override
@@ -60,7 +65,7 @@ public final class TreeModelWrapper implements StructureViewModel, ProvidingTree
   }
 
   private boolean isFiltered(@NotNull TreeAction action) {
-    return action instanceof Sorter && !((Sorter)action).isVisible() || myStructureView.isActionActive(action.getName());
+    return action instanceof Sorter && !((Sorter)action).isVisible() || myTreeActionsOwner.isActionActive(action);
   }
 
   @Override
@@ -156,6 +161,6 @@ public final class TreeModelWrapper implements StructureViewModel, ProvidingTree
 
   @Override
   public boolean isEnabled(@NotNull NodeProvider<?> provider) {
-    return myStructureView.isActionActive(provider.getName());
+    return myTreeActionsOwner.isActionActive(provider);
   }
 }

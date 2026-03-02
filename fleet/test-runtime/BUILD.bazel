@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "test-runtime",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   exports = [
     "@lib//:junit5",
     "@lib//:junit5Params",
@@ -29,7 +29,7 @@ jvm_library(
   name = "test-runtime_test_lib",
   module_name = "fleet.test.runtime",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   exports = [
     "@lib//:junit5",
     "@lib//:junit5Params",

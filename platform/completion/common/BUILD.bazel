@@ -30,9 +30,39 @@ jvm_library(
 
 jvm_library(
   name = "common_test_lib",
+  module_name = "intellij.platform.completion.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":common",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.completion.common` end
+
+### auto-generated section `build intellij.platform.completion.common.tests` start
+jvm_library(
+  name = "common-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "common-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":common"],
+  associates = [
+    "//platform/completion/common",
+    "//platform/completion/common:common_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -61,17 +91,18 @@ jvm_library(
     "@lib//:junit5",
   ],
   runtime_deps = [
+    ":common-tests",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/rpc:rpc_test_lib",
   ]
 )
-### auto-generated section `build intellij.platform.completion.common` end
+### auto-generated section `build intellij.platform.completion.common.tests` end
 
-### auto-generated section `test intellij.platform.completion.common` start
+### auto-generated section `test intellij.platform.completion.common.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "common_test",
-  runtime_deps = [":common_test_lib"]
+  name = "common-tests_test",
+  runtime_deps = [":common-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.completion.common` end
+### auto-generated section `test intellij.platform.completion.common.tests` end

@@ -236,7 +236,7 @@ internal class GHPRCreateViewModelImpl(
       .stateIn(cs, SharingStarted.Eagerly, null)
 
   override val assigneesVm: LabeledListPanelViewModel<GHUser> = MetadataListViewModel(cs) {
-    dataContext.repositoryDataService.loadIssuesAssignees()
+    dataContext.repositoryDataService.loadPotentialIssuesAssignees()
   }
   override val reviewersVm: LabeledListPanelViewModel<GHPullRequestRequestedReviewer> = MetadataListViewModel(cs) {
     dataContext.repositoryDataService.loadPotentialReviewers().filter { it.id != dataContext.securityService.currentUser.id }

@@ -13,6 +13,8 @@ import org.jetbrains.intellij.build.productLayout.discovery.ContentModuleInfo
 import org.jetbrains.intellij.build.productLayout.discovery.LegacyDepends
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.discovery.PluginSource
+import org.jetbrains.intellij.build.productLayout.generator.collectPluginGraphDeps
+import org.jetbrains.intellij.build.productLayout.generator.filterPluginDependencies
 import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -33,14 +35,17 @@ class PluginDependencyGraphTest {
       val deps = mutableListOf<Pair<String, Boolean>>()
       val modernFlags = mutableListOf<Boolean>()
       val legacyFlags = mutableListOf<Boolean>()
+      val configFileFlags = mutableListOf<Boolean>()
       pluginA.dependsOnPlugin { dep ->
         deps.add(dep.target().name().value to dep.isOptional)
         modernFlags.add(dep.hasModernFormat)
         legacyFlags.add(dep.hasLegacyFormat)
+        configFileFlags.add(dep.hasConfigFile)
       }
       assertThat(deps).containsExactlyInAnyOrder("plugin.b" to false)
       assertThat(modernFlags).containsExactly(true)
       assertThat(legacyFlags).containsExactly(false)
+      assertThat(configFileFlags).containsExactly(false)
 
       val pluginB = requireNotNull(plugin("plugin.b"))
       val requiredBy = mutableListOf<String>()
@@ -67,14 +72,17 @@ class PluginDependencyGraphTest {
       val optionalFlags = mutableListOf<Boolean>()
       val modernFlags = mutableListOf<Boolean>()
       val legacyFlags = mutableListOf<Boolean>()
+      val configFileFlags = mutableListOf<Boolean>()
       pluginA.dependsOnPlugin { dep ->
         optionalFlags.add(dep.isOptional)
         modernFlags.add(dep.hasModernFormat)
         legacyFlags.add(dep.hasLegacyFormat)
+        configFileFlags.add(dep.hasConfigFile)
       }
       assertThat(optionalFlags).containsExactly(true)
       assertThat(modernFlags).containsExactly(false)
       assertThat(legacyFlags).containsExactly(true)
+      assertThat(configFileFlags).containsExactly(false)
     }
 
     assertThat(graph.getPluginDependencies(TargetName("plugin.a"))).isEmpty()
@@ -101,19 +109,85 @@ class PluginDependencyGraphTest {
       val optionalFlags = mutableListOf<Boolean>()
       val modernFlags = mutableListOf<Boolean>()
       val legacyFlags = mutableListOf<Boolean>()
+      val configFileFlags = mutableListOf<Boolean>()
       pluginA.dependsOnPlugin { dep ->
         optionalFlags.add(dep.isOptional)
         modernFlags.add(dep.hasModernFormat)
         legacyFlags.add(dep.hasLegacyFormat)
+        configFileFlags.add(dep.hasConfigFile)
       }
       assertThat(optionalFlags).containsExactly(true)
       assertThat(modernFlags).containsExactly(false)
       assertThat(legacyFlags).containsExactly(true)
+      assertThat(configFileFlags).containsExactly(true)
     }
 
     assertThat(graph.getPluginDependencies(TargetName("plugin.a"))).isEmpty()
     assertThat(graph.getPluginDependencies(TargetName("plugin.a"), includeOptional = true))
       .containsExactlyInAnyOrder(PluginId("com.b"))
+  }
+
+  @Test
+  fun `collectPluginGraphDeps captures config-file legacy deps separately`() {
+    val graph = pluginGraph {
+      plugin("plugin.a") {
+        pluginId("com.a")
+        dependsOnLegacyPlugin("com.b", hasConfigFile = true)
+      }
+      plugin("plugin.b") {
+        pluginId("com.b")
+      }
+      target("plugin.a") {
+        dependsOn("plugin.b")
+      }
+      linkPluginMainTarget("plugin.a")
+      linkPluginMainTarget("plugin.b")
+    }
+
+    val graphDeps = collectPluginGraphDeps(
+      graph = graph,
+      allRealProductNames = emptySet(),
+      libraryModuleFilter = { true },
+    )
+      .single { it.pluginContentModuleName == ContentModuleName("plugin.a") }
+
+    assertThat(graphDeps.jpsPluginDependencies).containsExactly(PluginId("com.b"))
+    assertThat(graphDeps.legacyConfigFilePluginDependencies).containsExactly(PluginId("com.b"))
+  }
+
+  @Test
+  fun `filterPluginDependencies excludes jps deps covered by legacy config-file depends`() {
+    val graph = pluginGraph {
+      plugin("plugin.a") {
+        pluginId("com.a")
+        dependsOnLegacyPlugin("com.b", hasConfigFile = true)
+      }
+      plugin("plugin.b") {
+        pluginId("com.b")
+      }
+      target("plugin.a") {
+        dependsOn("plugin.b")
+      }
+      linkPluginMainTarget("plugin.a")
+      linkPluginMainTarget("plugin.b")
+    }
+
+    val graphDeps = collectPluginGraphDeps(
+      graph = graph,
+      allRealProductNames = emptySet(),
+      libraryModuleFilter = { true },
+    )
+      .single { it.pluginContentModuleName == ContentModuleName("plugin.a") }
+
+    val filtered = filterPluginDependencies(
+      graphDeps = graphDeps,
+      pluginInfo = pluginInfo("com.a"),
+      jpsPluginDependencies = graphDeps.jpsPluginDependencies - graphDeps.legacyConfigFilePluginDependencies,
+      suppressedModules = emptySet(),
+      suppressedPlugins = emptySet(),
+    )
+
+    assertThat(filtered.pluginDependencies).isEmpty()
   }
 
   @Test
@@ -131,12 +205,15 @@ class PluginDependencyGraphTest {
       val pluginA = requireNotNull(plugin("plugin.a"))
       val legacyFlags = mutableListOf<Boolean>()
       val modernFlags = mutableListOf<Boolean>()
+      val configFileFlags = mutableListOf<Boolean>()
       pluginA.dependsOnPlugin { dep ->
         legacyFlags.add(dep.hasLegacyFormat)
         modernFlags.add(dep.hasModernFormat)
+        configFileFlags.add(dep.hasConfigFile)
       }
       assertThat(legacyFlags).containsExactly(true)
       assertThat(modernFlags).containsExactly(true)
+      assertThat(configFileFlags).containsExactly(false)
     }
   }
 

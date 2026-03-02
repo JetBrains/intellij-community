@@ -100,6 +100,9 @@ internal class EditorCellActionsToolbarController(
 
   override fun checkAndRebuildInlays() {
     val component = targetComponent ?: return
+    toolbar?.apply {
+      background = editor.notebookAppearance.editorBackgroundColor()
+    }
     updateToolbarPosition(component)
   }
 
@@ -119,7 +122,9 @@ internal class EditorCellActionsToolbarController(
     val component = targetComponent ?: return
     val actionGroup = getActionGroup(cell.interval.type) ?: return
 
-    toolbar = JupyterCellActionsToolbar(actionGroup, component, actionsUpdatedCallback = { updateToolbarPosition(component) })
+    toolbar = JupyterCellActionsToolbar(actionGroup, component, actionsUpdatedCallback = { updateToolbarPosition(component) }).apply {
+      background = editor.notebookAppearance.editorBackgroundColor()
+    }
     showToolbarJob?.cancel()
 
     showToolbarJob = coroutineScope.launch {

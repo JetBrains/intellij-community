@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle"/>
+    <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.java"/>
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.compiler.impl"/>
@@ -19,20 +20,31 @@
   <resource-bundle>messages.GradleInspectionBundle</resource-bundle>
 
   <extensionPoints>
-    <extensionPoint name="frameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider"
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.frameworkSupport"
+                    interface="org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider"
                     dynamic="true"/>
-    <extensionPoint name="kotlinDslFrameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider"
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.kotlinDslFrameworkSupport"
+                    interface="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider"
                     dynamic="true"/>
-    <extensionPoint name="buildTasksProvider" interface="org.jetbrains.plugins.gradle.execution.build.GradleBuildTasksProvider"
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.buildTasksProvider"
+                    interface="org.jetbrains.plugins.gradle.execution.build.GradleBuildTasksProvider"
                     dynamic="true"/>
-    <extensionPoint name="testTasksProvider" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.testTasksProvider"
+                    interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"
                     dynamic="true"/>
-    <extensionPoint name="externallyHandledExtensions" interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler"
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.externallyHandledExtensions"
+                    interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler"
                     dynamic="true"/>
-    <extensionPoint name="dslInspectionProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.dslInspectionProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider"/>
     </extensionPoint>
-    <extensionPoint name="initScriptGenerator" interface="org.jetbrains.plugins.gradle.execution.build.GradleInitScriptGenerator"
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.initScriptGenerator"
+                    interface="org.jetbrains.plugins.gradle.execution.build.GradleInitScriptGenerator"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.versionCatalogPsiResolver"
+                    interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResolver"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -98,9 +110,6 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsModuleLibrariesService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.MavenRepositoriesDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.AnnotationProcessingDataService"/>
-
-    <documentation.documentationDownloader
-      implementation="org.jetbrains.plugins.gradle.codeInsight.documentation.GradleDocumentationDownloader"/>
 
     <starter.moduleImporter implementation="org.jetbrains.plugins.gradle.starters.GradleStarterModuleImporter"/>
 

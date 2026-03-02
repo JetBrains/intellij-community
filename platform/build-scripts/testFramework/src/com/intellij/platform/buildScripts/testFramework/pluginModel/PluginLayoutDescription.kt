@@ -34,12 +34,18 @@ data class PluginLayoutDescription(
   val jpsModulesInClasspath: Set<String>,
 )
 
+/**
+ * Creates a description of plugins using data from IDE and plugins' content.yaml files.
+ * @param includeOnlyPluginsSpecifiedInYamlFile if `true`, checks only bundled and non-bundled plugins specified in [ideContentYamlPath];
+ *                                              if `false`, checks all plugins which has `plugin-content.yaml` file in their content roots.
+ */
 fun createLayoutProviderByContentYamlFiles(
   ideContentYamlPath: Path,
   ultimateHome: Path,
   mainModuleOfCorePlugin: String,
   corePluginDescriptorPath: String,
   nameOfTestWhichGeneratesFiles: String,
+  includeOnlyPluginsSpecifiedInYamlFile: Boolean = false,
   project: JpsProject,
 ): PluginLayoutProvider {
   return YamlFileBasedPluginLayoutProvider(
@@ -47,6 +53,7 @@ fun createLayoutProviderByContentYamlFiles(
     mainModuleOfCorePlugin = mainModuleOfCorePlugin,
     corePluginDescriptorPath = corePluginDescriptorPath,
     nameOfTestWhichGeneratesFiles = nameOfTestWhichGeneratesFiles,
+    includeOnlyPluginsSpecifiedInYamlFile = includeOnlyPluginsSpecifiedInYamlFile,
     project = project,
     ultimateHome = ultimateHome,
   )
@@ -57,11 +64,18 @@ private class YamlFileBasedPluginLayoutProvider(
   private val mainModuleOfCorePlugin: String,
   private val corePluginDescriptorPath: String,
   private val nameOfTestWhichGeneratesFiles: String,
+  private val includeOnlyPluginsSpecifiedInYamlFile: Boolean,
   private val project: JpsProject,
   private val ultimateHome: Path,
 ) : PluginLayoutProvider {
   private val ideContentData by lazy {
     deserializeContentData(ideContentYamlPath.readText())
+  }
+  private val mainModulesOfBundledPlugins by lazy {
+    ideContentData.asSequence().flatMap { it.bundled }.mapTo(LinkedHashSet()) { it.mainModule }
+  }
+  private val mainModulesOfNonBundledPlugins by lazy {
+    ideContentData.asSequence().flatMap { it.nonBundled }.mapTo(LinkedHashSet()) { it.mainModule }
   }
 
   private val mergedContentDataForEmbeddedModules by lazy {
@@ -124,10 +138,13 @@ private class YamlFileBasedPluginLayoutProvider(
   }
 
   override fun loadMainModulesOfBundledPlugins(): List<String> {
-    return ideContentData.flatMap { it.bundled }.map { it.mainModule }
+    return mainModulesOfBundledPlugins.toList()
   }
 
   override fun loadPluginLayout(mainModule: JpsModule): PluginLayoutDescription? {
+    if (includeOnlyPluginsSpecifiedInYamlFile && mainModule.name !in mainModulesOfBundledPlugins && mainModule.name !in mainModulesOfNonBundledPlugins) {
+      return null
+    }
     val contentRootUrl = mainModule.contentRootsList.urls.firstOrNull() ?: return null
     val pluginContentPath = "plugin-content.yaml"
     val contentDataPath = JpsPathUtil.urlToNioPath(contentRootUrl).resolve(pluginContentPath)

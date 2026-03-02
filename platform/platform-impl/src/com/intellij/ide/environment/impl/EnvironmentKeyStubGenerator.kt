@@ -1,9 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.environment.impl
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -12,9 +9,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.util.ArgsParser
 import com.intellij.util.io.createParentDirectories
+import com.intellij.util.io.jackson.createGenerator
+import com.intellij.util.io.jackson.writeStringField
 import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.util.DefaultIndenter
+import tools.jackson.core.util.DefaultPrettyPrinter
 import java.io.ByteArrayOutputStream
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
@@ -66,13 +69,13 @@ private suspend fun generateKeyConfig(generateDescriptions: Boolean, configurati
   val unregisteredValues = configuration.map.entries.filter { it.key !in registeredKeys }
 
   val byteStream = ByteArrayOutputStream()
-  val generator = JsonFactory().createGenerator(byteStream).setPrettyPrinter(KeyConfigPrettyPrinter())
+  val generator = JsonFactory().createGenerator(byteStream, KeyConfigPrettyPrinter())
   with(generator) {
     writeStartArray()
     for ((key, descr) in environmentKeys) {
       writeStartObject()
       if (generateDescriptions) {
-        writeArrayFieldStart("description")
+        writeArrayPropertyStart("description")
         for (line in descr.get().lines()) {
           writeString(line)
         }
@@ -98,8 +101,11 @@ private class KeyConfigPrettyPrinter : DefaultPrettyPrinter() {
   private val INDENTER = DefaultIndenter("  ", "\n")
   override fun createInstance(): DefaultPrettyPrinter = KeyConfigPrettyPrinter()
 
+  override fun writeObjectNameValueSeparator(g: JsonGenerator?) {
+    g?.writeRaw(": ")
+  }
+
   init {
-    _objectFieldValueSeparatorWithSpaces = ": "
     _objectIndenter = INDENTER
     _arrayIndenter = INDENTER
   }

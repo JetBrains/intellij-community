@@ -207,7 +207,7 @@ internal fun createTerminalOutputFlow(
   })
 
   shellIntegrationController.addListener(object : TerminalShellIntegrationEventsListener {
-    override fun initialized(currentDirectory: String) {
+    override fun initialized(currentDirectory: String?) {
       textBuffer.withLock {
         stateChangesTracker.updateState { it.copy(isShellIntegrationEnabled = true) }
         collectAndSendEvents(contentUpdate = null, otherEvent = null)
@@ -218,7 +218,7 @@ internal fun createTerminalOutputFlow(
       collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCommandStartedEvent(command))
     }
 
-    override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
+    override fun commandFinished(command: String, exitCode: Int, currentDirectory: String?) {
       collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCommandFinishedEvent(command, exitCode, currentDirectory))
     }
 

@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.junit.jupiter.api.Assertions
-import java.nio.file.Path
 
 class IdePluginUtilsTest : KotlinFacetTestCase() {
     val facet
@@ -23,7 +22,7 @@ class IdePluginUtilsTest : KotlinFacetTestCase() {
     fun `test modify empty compiler arguments for plugin with new classpath and new options`() {
         val compilerPluginSetup = CompilerPluginSetup(
             listOf(CompilerPluginSetup.PluginOption("optionKey", "optionValue")),
-            listOf(Path.of("newClassPath"))
+            listOf("newClassPath")
         )
 
         modifyCompilerArgumentsForPlugin(facet, compilerPluginSetup, compilerPluginId, pluginName)
@@ -53,7 +52,7 @@ class IdePluginUtilsTest : KotlinFacetTestCase() {
 
         val compilerPluginSetup = CompilerPluginSetup(
             listOf(CompilerPluginSetup.PluginOption("optionKey", "optionValue")),
-            listOf(Path.of("newClassPath"))
+            listOf("newClassPath")
         )
 
         modifyCompilerArgumentsForPlugin(facet, compilerPluginSetup, compilerPluginId, pluginName)

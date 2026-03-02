@@ -256,7 +256,7 @@ The generator computes **both** production and test dependencies for each conten
 | `EDGE_CONTENT_MODULE_DEPENDS_ON` | COMPILE, RUNTIME (and TEST for test-runtime-only modules) | Yes | Production validation |
 | `EDGE_CONTENT_MODULE_DEPENDS_ON_TEST` | COMPILE, RUNTIME, TEST | No | Test plugin validation |
 
-For written XML, test scope is also included when a module runs only in test runtime (test descriptor `._test` modules and modules that only have test-plugin content sources).
+For written XML, test scope is also included when a module runs only in test runtime (test descriptor `._test` modules and modules that only have test-plugin content sources). For these test-runtime-only modules, `libraryModuleFilter` is bypassed for both written and test dependency sets, so required test libraries are preserved.
 
 **Key insight**: Content modules are production code with intrinsic dependencies. Scope filtering is based on where the module is sourced (production vs test-only), not on ad-hoc XML state.
 
@@ -314,39 +314,46 @@ See [errors.md](errors.md) for error handling details.
 
 ## Globally Embedded Module Filtering
 
-Modules that are **globally embedded** are automatically skipped when generating dependencies. This reduces XML bloat and eliminates the need for manual suppressions.
+Dependencies to globally embedded modules are automatically skipped when generating dependencies. This reduces XML bloat and eliminates the need for manual suppressions.
 
 ### Definition
 
-A module is **globally embedded** if ALL of these conditions are true:
-1. The module **is contained** by at least one product or module set (non-plugin content source)
-2. The module has **EMBEDDED loading** in ALL product/module-set sources
+A dependency target is skipped only if ALL of these conditions are true:
+1. In every product from the dependency's embedded-check scope, the target is reachable via non-plugin source(s).
+2. In every matching source in that scope, target loading mode is `EMBEDDED`.
 
-Plugin content sources do not disqualify a module from being globally embedded.
+Embedded-check scope depends on dependency origin:
+- Plugin XML dependency: products where the plugin is bundled; fallback to all discovered real products for non-bundled plugins.
+- Content module dependency (plugin-only source module): products where owner plugins are bundled; fallback to all discovered real products for non-bundled owners.
+- DSL test plugin dependency: only the owning DSL test plugin product.
+
+"Discovered real products" means `GenerationModel.discovery.products` (synthetic test product specs are excluded).
+
+Embedded-check scope excludes analysis-only products that do not define runtime embedding guarantees for plugin dependencies (currently `CodeServer`).
 
 ### Why Skip Globally Embedded Modules?
 
-Globally embedded modules are **always loaded** with the product. They're part of the core platform and don't need explicit XML dependencies because:
+If a target is embedded in every product from the embedded-check scope, it is always loaded at runtime and doesn't need explicit XML dependency declarations because:
 - They're available at runtime without declaring a dependency
 - They can't be disabled or unloaded
 - Declaring them adds no value but creates maintenance burden
 
 ### Examples
 
-| Module | Plugin Source? | Loading Mode | Globally Embedded? |
-|--------|----------------|--------------|-------------------|
-| `intellij.platform.core` | No | EMBEDDED in `essential` | ✓ Yes - skip |
-| `intellij.libraries.ktor.client` | No | EMBEDDED in `essential.minimal` | ✓ Yes - skip |
-| `intellij.vcs.impl` | Yes (`vcs` plugin) | - | ✗ No - keep |
-| `intellij.platform.optional` | No | REQUIRED in `optional.set` | ✗ No - keep |
+| Target module | Plugin source present? | Embedded in embedded-check scope? | Skip? |
+|---------------|------------------------|----------------------------------|-------|
+| `intellij.platform.core` | No | Yes | ✓ Yes |
+| `intellij.platform.frontend.split` | No | No (embedded only in JetBrainsClient while plugin is bundled in Idea + JetBrainsClient) | ✗ No |
+| `intellij.platform.core` | Yes | Yes | ✓ Yes |
 
 ### Scope
 
 This filtering applies to:
 - **Plugin XML dependencies** (`<dependencies><module>` in plugin.xml)
 - **Content module dependencies** (only for content modules **in plugins**, not directly in products)
+- **DSL test plugin dependency planning**
 
-Content modules directly in products (via module sets) do NOT skip embedded deps because they're not "inside a plugin" - they're at the product level where the embedment relationship is defined. If a module is present both in a plugin and a module set, treat it as product content and do not skip embedded deps.
+Content modules directly in products (via module sets) do NOT skip embedded deps because they're not "inside a plugin" - they're at the product level where the embedding relationship is defined.
 
 ### Implementation
 
@@ -354,14 +361,15 @@ The filtering is implemented in:
 - `EmbeddedModuleUtils.kt` - shared utility functions
 - `collectPluginGraphDeps()` + `filterPluginDependencies()` (PluginDependencyPlanner) - plugin.xml filtering
 - `ContentModuleDependencyPlanner.computeJpsDeps()` - content module filtering
+- `TestPluginDependencyPlanner` - DSL test plugin filtering
 
 **Key functions:**
 ```kotlin
 // Check if module has any plugin as content source
 fun GraphScope.hasPluginSource(moduleId: Int): Boolean
 
-// Check if module is globally embedded
-fun GraphScope.isGloballyEmbedded(moduleId: Int): Boolean
+// Check if target is globally embedded across all real products
+fun GraphScope.shouldSkipEmbeddedPluginDependency(depModuleId: Int, allRealProductNames: Set<String>): Boolean
 ```
 
 ## Skipping Dependency Generation for Module Set Modules
@@ -426,6 +434,8 @@ For DSL-defined test plugins, the generator can **automatically add** JPS module
 
 **Key Principle**: Only add **unresolvable** modules - those not available in the same product (module sets + bundled production plugins; other test plugins excluded).
 
+DSL test plugins also support a test-descriptor fallback for JPS targets: when dependency target `X` has no `X.xml` descriptor but has `X._test.xml`, dependency planning treats it as content module `X._test`.
+
 ```
 JPS Dependencies (.iml)
         │
@@ -446,6 +456,8 @@ explicit content modules. Project library dependencies resolve via `ModuleSetGen
 (built from JPS library modules, not graph targets), and `libraryModuleFilter` is ignored for DSL test plugins
 because the test plugin must be a complete container in dev mode. Auto-added modules are written into the
 generated test plugin content (the `<!-- region additional -->` block), so repeat runs are clean.
+
+This fallback is scoped to **DSL test plugin auto-add** and does not change global content-module dependency generation/classification.
 
 **Why this design**: Module sets are just convenience for avoiding duplication - they're NOT special. The auto-add logic respects them naturally without special handling.
 

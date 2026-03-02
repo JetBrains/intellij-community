@@ -28,7 +28,6 @@ import com.intellij.ide.structureView.logical.model.LogicalPsiDescription;
 import com.intellij.ide.structureView.symbol.DelegatingPsiElementWithSymbolPointer;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
@@ -162,11 +161,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.ide.structureView.newStructureView.UtilKt.getElementInfoProvider;
+
 public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, StructureView {
   private static final Logger LOG = Logger.getInstance(StructureViewComponent.class);
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
-  private static final Key<Boolean> STRUCTURE_VIEW_STATE_RESTORED_KEY = Key.create("STRUCTURE_VIEW_STATE_RESTORED_KEY");
+  @ApiStatus.Internal
+  public static final Key<Boolean> STRUCTURE_VIEW_STATE_RESTORED_KEY = Key.create("STRUCTURE_VIEW_STATE_RESTORED_KEY");
   private static final AtomicInteger ourSettingsModificationCount = new AtomicInteger();
 
   private FileEditor myFileEditor;
@@ -225,7 +227,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
       @Override
       protected @NotNull TreeElementWrapper createTree() {
-        return new MyNodeWrapper(myProject, myModel.getRoot(), myModel);
+        return new MyNodeWrapper(myProject, myModel.getRoot(), myModel, null);
       }
 
       @Override
@@ -317,7 +319,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     TreeSpeedSearch.installOn(getTree(), false, treePath -> {
       Object userObject = TreeUtil.getLastUserObject(treePath);
-      return userObject != null ? FileStructurePopup.getSpeedSearchText(userObject) : null;
+      return userObject != null ? StructureViewUtil.getSpeedSearchText(userObject) : null;
     });
 
     addTreeKeyListener();
@@ -931,8 +933,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     private long childrenStamp = -1;
     private int modificationCountForChildren = ourSettingsModificationCount.get();
 
-    MyNodeWrapper(Project project, @NotNull TreeElement value, @NotNull TreeModel treeModel) {
-      super(project, value, treeModel);
+    MyNodeWrapper(Project project, @NotNull TreeElement value, @NotNull TreeModel treeModel, @Nullable NodeProvider<?> provider) {
+      super(project, value, treeModel, provider);
     }
 
     @Override
@@ -982,33 +984,19 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public boolean isAlwaysShowPlus() {
-      StructureViewModel.ElementInfoProvider elementInfoProvider = getElementInfoProvider();
+      StructureViewModel.ElementInfoProvider elementInfoProvider = getElementInfoProvider(myTreeModel);
       return elementInfoProvider == null || elementInfoProvider.isAlwaysShowsPlus((StructureViewTreeElement)getValue());
     }
 
     @Override
     public boolean isAlwaysLeaf() {
-      StructureViewModel.ElementInfoProvider elementInfoProvider = getElementInfoProvider();
+      StructureViewModel.ElementInfoProvider elementInfoProvider = getElementInfoProvider(myTreeModel);
       return elementInfoProvider != null && elementInfoProvider.isAlwaysLeaf((StructureViewTreeElement)getValue());
     }
 
-    private @Nullable StructureViewModel.ElementInfoProvider getElementInfoProvider() {
-      if (myTreeModel instanceof StructureViewModel.ElementInfoProvider) {
-        return (StructureViewModel.ElementInfoProvider)myTreeModel;
-      }
-      if (myTreeModel instanceof TreeModelWrapper) {
-        StructureViewModel model = ((TreeModelWrapper)myTreeModel).getModel();
-        if (model instanceof StructureViewModel.ElementInfoProvider) {
-          return (StructureViewModel.ElementInfoProvider)model;
-        }
-      }
-
-      return null;
-    }
-
     @Override
-    protected @NotNull TreeElementWrapper createChildNode(@NotNull TreeElement child) {
-      return new MyNodeWrapper(myProject, child, myTreeModel);
+    protected @NotNull TreeElementWrapper createChildNode(@NotNull TreeElement child, @Nullable NodeProvider<?> provider) {
+      return new MyNodeWrapper(myProject, child, myTreeModel, provider);
     }
 
     @Override
@@ -1047,8 +1035,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
 
     @Override
-    protected @NotNull TreeElementWrapper createChildNode(@NotNull TreeElement child) {
-      return new MyNodeWrapper(getProject(), child, myTreeModel);
+    protected @NotNull TreeElementWrapper createChildNode(@NotNull TreeElement child, @Nullable NodeProvider<?> provider) {
+      return new MyNodeWrapper(getProject(), child, myTreeModel, provider);
     }
 
 
@@ -1251,7 +1239,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   // for FileStructurePopup only
   public static @NotNull TreeElementWrapper createWrapper(@NotNull Project project, @NotNull TreeElement value, TreeModel treeModel) {
-    return new MyNodeWrapper(project, value, treeModel);
+    return new MyNodeWrapper(project, value, treeModel, null);
   }
 
   @Contract(mutates = "param1")

@@ -26,6 +26,7 @@ import de.plushnikov.intellij.plugin.quickfix.AddAbstractAndStaticModifiersFix;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -123,7 +124,7 @@ public class SuperBuilderHandler extends BuilderHandler {
     }
 
     final Collection<PsiMethod> existedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-    if (ContainerUtil.exists(existedConstructors, psiMethod -> psiMethod.getParameterList().getParametersCount() == 1)) {
+    if (!PsiMethodUtil.noConstructorWithParamsOfTypesDefined(existedConstructors, psiTypeBaseWithGenerics)) {
       return Optional.empty();
     }
 

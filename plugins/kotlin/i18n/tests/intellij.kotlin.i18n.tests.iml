@@ -22,5 +22,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
   </component>
 </module>

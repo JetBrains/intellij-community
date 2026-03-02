@@ -136,28 +136,45 @@ object IconUtil {
 
   @JvmStatic
   fun flip(icon: Icon, horizontal: Boolean): Icon {
-    return object : Icon {
-      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-        val g2d = g.create() as Graphics2D
-        try {
-          val transform = AffineTransform.getTranslateInstance((if (horizontal) x + iconWidth else x).toDouble(),
-                                                               (if (horizontal) y else y + iconHeight).toDouble())
-          transform.concatenate(AffineTransform.getScaleInstance((if (horizontal) -1 else 1).toDouble(), (if (horizontal) 1 else -1).toDouble()))
-          transform.preConcatenate(g2d.transform)
-          g2d.transform = transform
-          icon.paintIcon(c, g2d, 0, 0)
-        }
-        finally {
-          g2d.dispose()
-        }
-      }
+    return FlippedIcon(icon, horizontal)
+  }
 
-      override fun getIconWidth(): Int = icon.iconWidth
-
-      override fun getIconHeight(): Int = icon.iconHeight
-
-      override fun toString(): String = "IconUtil.flip for $icon"
+  private fun drawFlipped(
+    g: Graphics, x: Int, y: Int, c: Component?,
+    icon: Icon, horizontal: Boolean,
+  ) {
+    val g2d = g.create() as Graphics2D
+    try {
+      val transform = AffineTransform.getTranslateInstance(
+        (if (horizontal) x + icon.iconWidth else x).toDouble(),
+        (if (horizontal) y else y + icon.iconHeight).toDouble())
+      transform.concatenate(AffineTransform.getScaleInstance(
+        (if (horizontal) -1 else 1).toDouble(),
+        (if (horizontal) 1 else -1).toDouble()))
+      transform.preConcatenate(g2d.transform)
+      g2d.transform = transform
+      icon.paintIcon(c, g2d, 0, 0)
     }
+    finally {
+      g2d.dispose()
+    }
+  }
+
+  private class FlippedIcon(private val icon: Icon, private val horizontal: Boolean) : Icon, RetrievableIcon {
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+      drawFlipped(g = g, c = c, x = x, y = y, icon = icon, horizontal = horizontal)
+    }
+
+    override fun getIconWidth() = icon.iconWidth
+    override fun getIconHeight() = icon.iconHeight
+
+    override fun replaceBy(replacer: IconReplacer): Icon {
+      return FlippedIcon(replacer.replaceIcon(icon), horizontal)
+    }
+
+    override fun retrieveIcon(): Icon = icon
+
+    override fun toString() = "IconUtil.flip for $icon"
   }
 
   /**
@@ -300,49 +317,76 @@ object IconUtil {
       return null
     }
 
-    return object : Icon {
-      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-        paintIconWithSelection(icon = iconUnderSelection, c = c, g = g, x = x, y = y)
-      }
-
-      override fun getIconWidth() = iconUnderSelection.iconWidth
-
-      override fun getIconHeight() = iconUnderSelection.iconHeight
-
-      override fun toString() = "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
-    }
+    return SelectionAwareIcon(iconUnderSelection)
   }
 
-  @Deprecated("use {@link #scale(Icon, Component, float)}")
+  private class SelectionAwareIcon(private val iconUnderSelection: Icon) : Icon, RetrievableIcon {
+    override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
+      paintIconWithSelection(icon = iconUnderSelection, c = c, g = g, x = x, y = y)
+    }
+
+    override fun getIconWidth() = iconUnderSelection.iconWidth
+    override fun getIconHeight() = iconUnderSelection.iconHeight
+
+    override fun replaceBy(replacer: IconReplacer): Icon {
+      return SelectionAwareIcon(replacer.replaceIcon(iconUnderSelection))
+    }
+
+    override fun retrieveIcon(): Icon = iconUnderSelection
+
+    override fun toString() = "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
+  }
+
+  @Deprecated("use {@link #scale(Icon, Component?, float)}",
+              replaceWith = ReplaceWith("scale(source, null, scale)", "com.intellij.util.IconUtil"))
   @JvmStatic
   fun scale(source: Icon, scale: Double): Icon {
-    return object : Icon {
-      private val clampedScale = clampScale(scale)
-
-      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-        paintScaled(c = c, g = g, x = x, y = y, scale = clampedScale, source = source)
-      }
-
-      override fun getIconWidth(): Int = (source.iconWidth * clampedScale).toInt()
-      override fun getIconHeight(): Int = (source.iconHeight * clampedScale).toInt()
-      override fun toString(): String = "IconUtil.scale for $source"
-    }
+    return OldScaledIcon(source, scale)
   }
+
+  private class OldScaledIcon(private val icon: Icon, private val scale: Double) : Icon, RetrievableIcon {
+    private val clampedScale = clampScale(scale)
+
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+      paintScaled(c = c, g = g, x = x, y = y, scale = clampedScale, source = icon)
+    }
+
+    override fun getIconWidth() = (icon.iconWidth * clampedScale).toInt()
+    override fun getIconHeight() = (icon.iconHeight * clampedScale).toInt()
+
+    override fun replaceBy(replacer: IconReplacer): Icon {
+      return OldScaledIcon(replacer.replaceIcon(icon), scale)
+    }
+
+    override fun retrieveIcon(): Icon = icon
+
+    override fun toString() = "IconUtil.scale(deprecated) for $icon"
+  }
+
 
   @JvmStatic
   fun resizeSquared(source: Icon, size: Int): Icon {
-    return object : Icon {
-      private val sizeValue = JBUI.uiIntValue("ResizedIcon", size)
+    return ResizeSquareIcon(source, size)
+  }
 
-      override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-        val scale = clampScale(sizeValue.get().toDouble() / source.iconWidth.toDouble())
-        paintScaled(c = c, g = g, x = x, y = y, scale = scale, source = source)
-      }
+  private class ResizeSquareIcon(private val icon: Icon, private val size: Int) : Icon, RetrievableIcon {
+    private val sizeValue = JBUI.uiIntValue("ResizedIcon", size)
 
-      override fun getIconWidth(): Int = sizeValue.get()
-      override fun getIconHeight(): Int = sizeValue.get()
-      override fun toString(): String = "IconUtil.resizeSquared for $source"
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+      val scale = clampScale(sizeValue.get().toDouble() / icon.iconWidth.toDouble())
+      paintScaled(c = c, g = g, x = x, y = y, scale = scale, source = icon)
     }
+
+    override fun getIconWidth() = sizeValue.get()
+    override fun getIconHeight() = sizeValue.get()
+
+    override fun replaceBy(replacer: IconReplacer): Icon {
+      return ResizeSquareIcon(replacer.replaceIcon(icon), size)
+    }
+
+    override fun retrieveIcon(): Icon = icon
+
+    override fun toString() = "IconUtil.resizeSquared for $icon"
   }
 
   @JvmStatic

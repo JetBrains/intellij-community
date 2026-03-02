@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />

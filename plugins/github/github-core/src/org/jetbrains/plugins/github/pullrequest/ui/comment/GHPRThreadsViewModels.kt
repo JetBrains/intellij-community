@@ -70,6 +70,7 @@ internal class GHPRThreadsViewModelsImpl(
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
+  private val viewModelWithTextCompletion: GHViewModelWithTextCompletion,
 ) : GHPRThreadsViewModels {
   private val cs = parentCs.childScope(javaClass.name)
   override val canComment: Boolean = dataProvider.reviewData.canComment()
@@ -123,7 +124,7 @@ internal class GHPRThreadsViewModelsImpl(
       }
 
   private fun CoroutineScope.createThread(initialData: GHPullRequestReviewThread) =
-    UpdateableGHPRCompactReviewThreadViewModel(project, this, dataContext, dataProvider, initialData)
+    UpdateableGHPRCompactReviewThreadViewModel(project, this, dataContext, dataProvider, initialData, viewModelWithTextCompletion)
 
   override val threadMappingData: StateFlow<Map<String, GHPRThreadsViewModels.ThreadMappingData>> =
     dataProvider.reviewData.threadsComputationFlow
@@ -172,6 +173,7 @@ internal class GHPRThreadsViewModelsImpl(
     GHPRReviewNewCommentEditorViewModelImpl(project, cs, dataProvider,
                                             dataContext.repositoryDataService.remoteCoordinates.repository,
                                             dataContext.securityService.currentUser,
+                                            viewModelWithTextCompletion,
                                             dataContext.avatarIconsProvider,
                                             position) { position ->
       cancelNewComment(position.change, position.location.side, position.location.lineIdx)

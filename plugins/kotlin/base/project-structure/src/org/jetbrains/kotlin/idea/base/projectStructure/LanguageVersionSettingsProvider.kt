@@ -11,7 +11,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
@@ -24,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArgumentsConfigurator
 import org.jetbrains.kotlin.cli.common.arguments.JavaTypeEnhancementStateParser
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.configureAnalysisFlags
@@ -45,8 +44,6 @@ import org.jetbrains.kotlin.config.additionalArgumentsAsList
 import org.jetbrains.kotlin.config.createArguments
 import org.jetbrains.kotlin.config.toKotlinVersion
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
@@ -82,18 +79,7 @@ val Project.languageVersionSettings: LanguageVersionSettings
 val PsiElement.languageVersionSettings: LanguageVersionSettings
     get() {
         return runReadAction {
-            when (KotlinPluginModeProvider.currentPluginMode) {
-                KotlinPluginMode.K1 -> {
-                    if (project.serviceOrNull<ProjectFileIndex>() == null) {
-                        return@runReadAction LanguageVersionSettingsImpl.DEFAULT
-                    }
-                    project.service<LanguageSettingsProvider>().getLanguageVersionSettings(this.moduleInfo, project)
-                }
-                KotlinPluginMode.K2 -> {
-                    val kaModule = getKaModule(project, useSiteModule = null)
-                    kaModule.languageVersionSettings
-                }
-            }
+            getKaModule(this.project, useSiteModule = null).languageVersionSettings
         }
     }
 
@@ -172,15 +158,15 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         val commonFacetSettings = if (useCommonFacetSettings) collectCommonFacetSettings() else null
 
         val analysisFlags = merge(
-            arguments.configureAnalysisFlags(MessageCollector.NONE, languageVersion),
-            additionalArguments.configureAnalysisFlags(MessageCollector.NONE, languageVersion),
+            arguments.configureAnalysisFlags(CommonCompilerArgumentsConfigurator.Reporter.DoNothing, languageVersion),
+            additionalArguments.configureAnalysisFlags(CommonCompilerArgumentsConfigurator.Reporter.DoNothing, languageVersion),
             commonFacetSettings?.analysisFlags,
             getIdeSpecificAnalysisFlags()
         )
 
         val languageFeatures = merge(
-            arguments.configureLanguageFeatures(MessageCollector.NONE),
-            additionalArguments.configureLanguageFeatures(MessageCollector.NONE),
+            arguments.configureLanguageFeatures(CommonCompilerArgumentsConfigurator.Reporter.DoNothing),
+            additionalArguments.configureLanguageFeatures(CommonCompilerArgumentsConfigurator.Reporter.DoNothing),
             commonFacetSettings?.languageFeatures
         )
 
@@ -203,12 +189,12 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         val arguments = facetSettings.mergedCompilerArguments
 
         val analysisFlags = merge(
-            arguments?.configureAnalysisFlags(MessageCollector.NONE, languageVersion),
+            arguments?.configureAnalysisFlags(CommonCompilerArgumentsConfigurator.Reporter.DoNothing, languageVersion),
             getIdeSpecificAnalysisFlags(),
         )
 
         val languageFeatures = merge(
-            arguments?.configureLanguageFeatures(MessageCollector.NONE),
+            arguments?.configureLanguageFeatures(CommonCompilerArgumentsConfigurator.Reporter.DoNothing),
             getMultiPlatformLanguageFeatures(module, facetSettings)
         )
 
@@ -253,7 +239,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
 
             // TODO definitely wrong implementation, merge state properly
             analysisFlags[JvmAnalysisFlags.javaTypeEnhancementState] =
-                JavaTypeEnhancementStateParser(MessageCollector.NONE, kotlinVersion).parse(
+                JavaTypeEnhancementStateParser(CommonCompilerArgumentsConfigurator.Reporter.DoNothing, kotlinVersion).parse(
                     arguments.jsr305,
                     arguments.supportCompatqualCheckerFrameworkAnnotations,
                     arguments.jspecifyAnnotations,

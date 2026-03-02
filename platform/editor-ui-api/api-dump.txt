@@ -81,7 +81,9 @@ c:com.intellij.ide.projectView.PresentationData
 - f:setChanged(Z):V
 - f:setForcedTextForeground(java.awt.Color):V
 - f:setIcon(javax.swing.Icon):V
+- f:setLocationPrefix(java.lang.String):V
 - f:setLocationString(java.lang.String):V
+- f:setLocationSuffix(java.lang.String):V
 - f:setPresentableText(java.lang.String):V
 - f:setSeparatorAbove(Z):V
 - f:setTooltip(java.lang.String):V

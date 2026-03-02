@@ -42,7 +42,7 @@ final class PyJavaTypeProvider extends PyTypeProviderBase {
       return Ref.create(new PyJavaMethodType((PsiMethod)referenceTarget));
     }
     if (referenceTarget instanceof PsiField) {
-      return PyTypeUtil.getNotNullToRef(asPyType(((PsiField)referenceTarget).getType()));
+      return PyTypeUtil.notNullToRef(asPyType(((PsiField)referenceTarget).getType()));
     }
     return null;
   }

@@ -91,6 +91,10 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-jvm", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-script-runtime", kotlincCoordinates, transitive = true)
 
+        kotlincWithStandardNaming("kotlinc.kotlin-build-tools-api", kotlincCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-build-tools-impl", kotlincCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-build-tools-cri-impl", kotlincCoordinates)
+
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates, repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
         kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide", repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
         kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates, repository = INTELLIJ_DEPENDENCIES_REPOSITORY)

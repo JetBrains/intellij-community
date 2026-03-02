@@ -36,6 +36,11 @@ public final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIc
   }
 
   @Override
+  public @NotNull VerticalAlignment getVerticalAlignment() {
+    return myBreakpoint.supportsInterLinePlacement() ? VerticalAlignment.BETWEEN_LINES : VerticalAlignment.ON_LINE;
+  }
+
+  @Override
   public @NotNull String getAccessibleName() {
     // [tav] todo: add "hit" state
     return XDebuggerBundle.message("accessible.name.icon.0.1.2", myBreakpoint.getType().getTitle(),
@@ -102,11 +107,12 @@ public final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIc
   public boolean equals(Object obj) {
     return obj instanceof BreakpointGutterIconRenderer renderer
            && myBreakpoint.equals(renderer.myBreakpoint)
-           && Comparing.equal(getIcon(), renderer.getIcon());
+           && Comparing.equal(getIcon(), renderer.getIcon())
+           && getVerticalAlignment() == renderer.getVerticalAlignment();
   }
 
   @Override
   public int hashCode() {
-    return getBreakpoint().hashCode();
+    return 31 * getBreakpoint().hashCode() + getVerticalAlignment().hashCode();
   }
 }

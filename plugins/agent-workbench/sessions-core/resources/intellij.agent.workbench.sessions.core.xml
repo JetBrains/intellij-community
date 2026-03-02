@@ -1,0 +1,33 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionProviderBridge"
+      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptLauncher"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptContextContributor"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorBridge"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.promptContextRenderer"
+      interface="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererBridge"
+      dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSnippetContextRendererBridge"/>
+    <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptFileContextRendererBridge"/>
+    <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSymbolContextRendererBridge"/>
+    <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPathsContextRendererBridge"/>
+  </extensions>
+</idea-plugin>

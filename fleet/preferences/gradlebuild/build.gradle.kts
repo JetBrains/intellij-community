@@ -26,6 +26,7 @@ fleetModule {
 kotlin {
   sourceSets.wasmJsMain.dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-browser:0.3")
+    implementation("org.jetbrains.kotlin-wrappers:kotlin-web:2026.2.18")
   }
 
   // KOTLIN__MARKER_START
@@ -42,6 +43,7 @@ kotlin {
   }
   iosArm64 {}
   iosSimulatorArm64 {}
+  sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
   sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest")) }

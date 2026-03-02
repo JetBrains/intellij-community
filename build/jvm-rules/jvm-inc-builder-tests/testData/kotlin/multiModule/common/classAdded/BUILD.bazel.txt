@@ -1,0 +1,18 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+    name = "module1",
+    srcs = glob(["module1/*.kt"], allow_empty = True),
+    deps = [
+      "@rules_jvm//:kotlin-stdlib_import",
+    ],
+)
+
+jvm_library(
+    name = "module2",
+    srcs = glob(["module2/*.kt"], allow_empty = True),
+    deps = [
+      ":module1",
+      "@rules_jvm//:kotlin-stdlib_import",
+    ],
+)

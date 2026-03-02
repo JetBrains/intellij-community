@@ -4,6 +4,7 @@ package com.intellij.platform.runtime.repository.serialization.impl;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData;
+import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -51,13 +53,13 @@ public final class JarFileSerializer {
       XMLInputFactory factory = XMLInputFactory.newDefaultFactory();
       while ((entry = input.getNextJarEntry()) != null) {
         String name = entry.getName();
-        if (name.endsWith(".xml")) {
+        if (name.endsWith(".xml") && name.indexOf('/') == -1) {
           RawRuntimeModuleDescriptor data = ModuleXmlSerializer.parseModuleXml(factory, input);
           rawData.put(data.getModuleId(), data);
         }
       }
     }
-    return RawRuntimeModuleRepositoryData.create(rawData, jarPath.getParent());
+    return RawRuntimeModuleRepositoryData.create(rawData, Collections.emptyList(), jarPath.getParent());
   }
 
   public static @NotNull String @Nullable [] loadBootstrapClasspath(@NotNull Path jarPath, @NotNull String bootstrapModuleName)
@@ -81,6 +83,7 @@ public final class JarFileSerializer {
   }
 
   public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors,
+                               @NotNull Collection<RawRuntimePluginHeader> pluginHeaders,
                                @Nullable String bootstrapModuleName,
                                @NotNull Path jarFile,
                                int generatorVersion)
@@ -104,6 +107,13 @@ public final class JarFileSerializer {
         jarOutput.putNextEntry(new JarEntry(id + ".xml"));
         PrintWriter output = new PrintWriter(jarOutput, false, StandardCharsets.UTF_8);
         ModuleXmlSerializer.writeModuleXml(descriptor, output, factory);
+        jarOutput.closeEntry();
+      }
+      for (RawRuntimePluginHeader pluginHeader : pluginHeaders) {
+        String id = pluginHeader.getPluginId();
+        jarOutput.putNextEntry(new JarEntry("plugins/" + id + ".xml"));
+        PrintWriter output = new PrintWriter(jarOutput, false, StandardCharsets.UTF_8);
+        PluginHeaderXmlSerializer.writePluginHeaderXml(pluginHeader, output, factory);
         jarOutput.closeEntry();
       }
     }

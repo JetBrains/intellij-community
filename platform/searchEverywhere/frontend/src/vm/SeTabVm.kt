@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
@@ -13,10 +15,13 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
@@ -38,6 +43,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultKeep
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultText
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabInfo
+import com.intellij.platform.searchEverywhere.frontend.ml.SeMlService
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
 import com.intellij.platform.searchEverywhere.isCommand
 import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPresentation
@@ -51,10 +57,12 @@ import com.intellij.platform.searchEverywhere.withPresentation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -68,6 +76,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -176,6 +185,7 @@ class SeTabVmImpl(
             if (lastNotFoundString != null) {
               val newPatternContainsPrevious = lastNotFoundString!!.length > 1 && it.contains(lastNotFoundString!!)
               if (!newPatternContainsPrevious) {
+                SeLog.log(SeLog.PATTERN) { "SeTabVm<$tabId>: resetting auto toggle due to pattern family change" }
                 (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
               }
             }
@@ -190,9 +200,14 @@ class SeTabVmImpl(
           val params = SeParams(searchPattern, filterData)
           val searchId = UUID.randomUUID().toString()
 
+          SeMlService.getInstanceIfEnabled()?.onStateStarted(this@SeTabVmImpl.tabId, params)
+
           val resultsFlow = tab.getItems(params).let { resultsFlow ->
             val resultsFlowWithAdaptedPresentations = resultsFlow.mapNotNull {
               checkAndAddMissingPresentationIfPossible(it)
+                ?.let { withPresentation ->
+                  calculateMlWeight(withPresentation)
+                }
             }
 
             val essential = tab.essentialProviderIds()
@@ -285,6 +300,19 @@ class SeTabVmImpl(
     }
     else {
       resultEvent
+    }
+  }
+
+  private fun calculateMlWeight(resultEvent: SeResultEvent): SeResultEvent {
+    if (resultEvent !is SeResultAddedEvent && resultEvent !is SeResultReplacedEvent) return resultEvent
+    val mlService = SeMlService.getInstanceIfEnabled() ?: return resultEvent
+
+    val itemData = resultEvent.itemDataOrNull() ?: return resultEvent
+    val newItemData = mlService.applyMlWeight(itemData)
+
+    return when (resultEvent) {
+      is SeResultAddedEvent -> SeResultAddedEvent(newItemData)
+      is SeResultReplacedEvent -> SeResultReplacedEvent(resultEvent.uuidsToReplace, newItemData)
     }
   }
 

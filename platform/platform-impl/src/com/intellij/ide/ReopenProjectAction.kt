@@ -19,7 +19,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem.Companion.openProjectAndLogRecent
 import com.intellij.platform.eel.provider.EelInitialization
-import com.intellij.platform.eel.provider.EelUnavailableException
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil

@@ -1,10 +1,12 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.todo"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.vcs.impl"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
                         serviceImplementation="com.intellij.conversion.ConversionServiceImpl"/>

@@ -1,7 +1,5 @@
 package com.intellij.settingsSync.core
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
@@ -9,6 +7,9 @@ import com.intellij.settingsSync.core.plugins.SettingsSyncPluginsState
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
 import kotlinx.serialization.json.Json
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -166,8 +167,9 @@ object SettingsSnapshotZipSerializer {
     try {
       val infoFile = path / INFO
       if (infoFile.exists()) {
-        val metaInfo = ObjectMapper()
+        val metaInfo = JsonMapper.builder()
           .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+          .build()
           .readValue(infoFile.readText(), MetaInfo::class.java)
         val date = DateTimeFormatter.ISO_INSTANT.parse(metaInfo.date, Instant::from)
         val appInfo = SettingsSnapshot.AppInfo(

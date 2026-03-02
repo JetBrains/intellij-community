@@ -165,6 +165,7 @@ jvm_library(
     "//plugins/kotlin/kotlin.ide",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//plugins/kotlin/base/fe10/project-structure",
   ],
   exports = [
     "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",
@@ -293,6 +294,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared_test_lib",
     "//plugins/kotlin/kotlin.ide:kotlin.ide_test_lib",
     "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.idea` end

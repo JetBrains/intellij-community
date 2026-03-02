@@ -45,9 +45,54 @@ jvm_library(
 
 jvm_library(
   name = "shared_test_lib",
+  module_name = "intellij.platform.vcs.impl.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":shared",
+    "//platform/core-api:core_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/diff-impl:diff-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/vcs-api/shared:shared_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.impl.shared` end
+
+### auto-generated section `build intellij.platform.vcs.impl.shared.tests` start
+jvm_library(
+  name = "vcs-impl-shared-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "vcs-impl-shared-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":shared"],
+  associates = [
+    "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
+  ],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -101,18 +146,19 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
   ],
   runtime_deps = [
+    ":vcs-impl-shared-tests",
     "//platform/platform-impl/rpc:rpc_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
   ]
 )
-### auto-generated section `build intellij.platform.vcs.impl.shared` end
+### auto-generated section `build intellij.platform.vcs.impl.shared.tests` end
 
-### auto-generated section `test intellij.platform.vcs.impl.shared` start
+### auto-generated section `test intellij.platform.vcs.impl.shared.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "shared_test",
-  runtime_deps = [":shared_test_lib"]
+  name = "vcs-impl-shared-tests_test",
+  runtime_deps = [":vcs-impl-shared-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.vcs.impl.shared` end
+### auto-generated section `test intellij.platform.vcs.impl.shared.tests` end

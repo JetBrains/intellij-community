@@ -49,6 +49,8 @@ object StandardKotlinNames {
             }
             pkg + it
         }
+
+        @JvmField val IndexedValue: ClassId = ClassId.topLevel(FqName("kotlin.collections.IndexedValue"))
     }
 
     object Enum {
@@ -122,6 +124,9 @@ object StandardKotlinNames {
         @JvmField val put: CallableId = CallableId(mutableMapClassId, Name.identifier("put"))
         @JvmField val putAll: CallableId = CallableId(mutableMapClassId, Name.identifier("putAll"))
     }
+
+    @JvmField val Pair: ClassId = ClassId.topLevel(FqName("kotlin.Pair"))
+    @JvmField val Triple: ClassId = ClassId.topLevel(FqName("kotlin.Triple"))
 
     @JvmField val also: FqName = BUILT_INS_PACKAGE_FQ_NAME + "also"
     @JvmField val lazy: FqName = BUILT_INS_PACKAGE_FQ_NAME + "lazy"

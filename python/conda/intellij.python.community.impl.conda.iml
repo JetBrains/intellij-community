@@ -12,7 +12,7 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.python.processOutput" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.python.processOutput.common" />
   </component>
 </module>

@@ -2,8 +2,10 @@
 package com.intellij.platform.runtime.repository.serialization.impl;
 
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import com.intellij.platform.runtime.repository.RuntimeModuleVisibility;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
@@ -19,6 +21,8 @@ import java.util.List;
 final class ModuleXmlSerializer {
   private static final String MODULE_TAG = "module";
   private static final String NAME_ATTRIBUTE = "name";
+  private static final String NAMESPACE_ATTRIBUTE = "namespace";
+  private static final String VISIBILITY_ATTRIBUTE = "visibility";
   private static final String RESOURCE_ROOT_TAG = "resource-root";
   private static final String PATH_ATTRIBUTE = "path";
 
@@ -28,7 +32,9 @@ final class ModuleXmlSerializer {
     writer.writeStartDocument("UTF-8", "1.0");
     writeEolAndIndent(writer, 0);
     writer.writeStartElement(MODULE_TAG);
-    writer.writeAttribute(NAME_ATTRIBUTE, descriptor.getModuleId().getStringId());
+    writer.writeAttribute(NAME_ATTRIBUTE, descriptor.getModuleId().getName());
+    writer.writeAttribute(NAMESPACE_ATTRIBUTE, descriptor.getModuleId().getNamespace());
+    writer.writeAttribute(VISIBILITY_ATTRIBUTE, convertToString(descriptor.getVisibility()));
     List<RuntimeModuleId> dependencies = descriptor.getDependencyIds();
     if (!dependencies.isEmpty()) {
       writeEolAndIndent(writer, 1);
@@ -36,7 +42,10 @@ final class ModuleXmlSerializer {
       for (RuntimeModuleId dependency : dependencies) {
         writeEolAndIndent(writer, 2);
         writer.writeEmptyElement(MODULE_TAG);
-        writer.writeAttribute(NAME_ATTRIBUTE, dependency.getStringId());
+        writer.writeAttribute(NAME_ATTRIBUTE, dependency.getName());
+        if (!dependency.getNamespace().equals(RuntimeModuleId.DEFAULT_NAMESPACE)) {
+          writer.writeAttribute(NAMESPACE_ATTRIBUTE, dependency.getNamespace());
+        }
       }
       writeEolAndIndent(writer, 1);
       writer.writeEndElement();
@@ -59,7 +68,16 @@ final class ModuleXmlSerializer {
     output.flush();
   }
 
-  private static void writeEolAndIndent(XMLStreamWriter writer, int indent) throws XMLStreamException {
+  private static String convertToString(@NotNull RuntimeModuleVisibility visibility) {
+    switch (visibility) {
+      case PUBLIC: return "public";
+      case PRIVATE: return "private";
+      case INTERNAL: return "internal";
+      default: throw new IllegalArgumentException("Unknown visibility: " + visibility);
+    }
+  }
+
+  static void writeEolAndIndent(XMLStreamWriter writer, int indent) throws XMLStreamException {
     writer.writeCharacters("\n");
     for (int i = 0; i < indent; i++) {
       writer.writeCharacters("  ");
@@ -71,6 +89,8 @@ final class ModuleXmlSerializer {
     ArrayList<RuntimeModuleId> dependencies = new ArrayList<>();
     ArrayList<String> resources = new ArrayList<>();
     String moduleName = null;
+    String moduleNamespace = RuntimeModuleId.DEFAULT_NAMESPACE;
+    String visibilityString = null;
     int level = 0;
     while (reader.hasNext()) {
       int event = reader.next();
@@ -79,10 +99,18 @@ final class ModuleXmlSerializer {
         String tagName = reader.getLocalName();
         if (level == 1 && tagName.equals(MODULE_TAG)) {
           moduleName = XmlStreamUtil.readFirstAttribute(reader, NAME_ATTRIBUTE);
+          if (reader.getAttributeCount() > 1 && reader.getAttributeLocalName(1).equals(NAMESPACE_ATTRIBUTE)) {
+            moduleNamespace = reader.getAttributeValue(1);
+          }
+          if (reader.getAttributeCount() > 2 && reader.getAttributeLocalName(2).equals(VISIBILITY_ATTRIBUTE)) {
+            visibilityString = reader.getAttributeValue(2);
+          }
         }
         else if (level == 3 & tagName.equals(MODULE_TAG)) {
           String dependencyName = XmlStreamUtil.readFirstAttribute(reader, NAME_ATTRIBUTE);
-          dependencies.add(RuntimeModuleId.raw(dependencyName));
+          String dependencyNamespace =
+            reader.getAttributeCount() > 1 && reader.getAttributeLocalName(1).equals(NAMESPACE_ATTRIBUTE) ? reader.getAttributeValue(1) : RuntimeModuleId.DEFAULT_NAMESPACE;
+          dependencies.add(RuntimeModuleId.raw(dependencyName, dependencyNamespace));
         }
         else if (level == 3 && tagName.equals(RESOURCE_ROOT_TAG)) {
           String relativePath = XmlStreamUtil.readFirstAttribute(reader, PATH_ATTRIBUTE);
@@ -100,6 +128,17 @@ final class ModuleXmlSerializer {
     if (moduleName == null) {
       throw new XMLStreamException("Required attribute 'module' is not specified");
     }
-    return RawRuntimeModuleDescriptor.create(RuntimeModuleId.raw(moduleName), resources, dependencies);
+    RuntimeModuleVisibility visibility = parseVisibility(visibilityString);
+    return RawRuntimeModuleDescriptor.create(RuntimeModuleId.raw(moduleName, moduleNamespace), visibility, resources, dependencies);
+  }
+
+  private static RuntimeModuleVisibility parseVisibility(@Nullable String visibilityString) {
+    if (visibilityString == null) return RuntimeModuleVisibility.PRIVATE;
+    switch (visibilityString) {
+      case "public": return RuntimeModuleVisibility.PUBLIC;
+      case "private": return RuntimeModuleVisibility.PRIVATE;
+      case "internal": return RuntimeModuleVisibility.INTERNAL;
+    }
+    return RuntimeModuleVisibility.PRIVATE;
   }
 }

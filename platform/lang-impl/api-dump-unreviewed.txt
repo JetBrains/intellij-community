@@ -7592,7 +7592,6 @@ f:com.intellij.ide.actions.ViewStructureAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:createPopup(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.FileEditor):com.intellij.ide.util.FileStructurePopup
 - s:createStructureViewModel(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.FileEditor,com.intellij.ide.structureView.StructureView):com.intellij.ide.structureView.StructureViewModel
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -10277,18 +10276,13 @@ f:com.intellij.ide.util.FileStructurePopup
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.FileEditor,com.intellij.ide.structureView.StructureViewModel):V
 - createCenterPanel():javax.swing.JComponent
 - dispose():V
-- getCurrentElement(com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
-- getSpeedSearch():com.intellij.ui.TreeSpeedSearch
 - s:getSpeedSearchText(java.lang.Object):java.lang.String
-- getTree():com.intellij.ui.treeStructure.Tree
 - isActionActive(java.lang.String):Z
 - isDisposed():Z
 - rebuildAndUpdate():org.jetbrains.concurrency.AsyncPromise
 - select(java.lang.Object):org.jetbrains.concurrency.Promise
 - setActionActive(java.lang.String,Z):V
-- setSearchFilterForTests(java.lang.String):V
 - setTitle(java.lang.String):V
-- setTreeActionState(java.lang.Class,Z):V
 - show():V
 - showWithResult():org.jetbrains.concurrency.Promise
 c:com.intellij.ide.util.MemberChooser
@@ -12793,11 +12787,6 @@ f:com.intellij.openapi.vcs.changes.PsiChangeTracker
 com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:settingsUpdated():V
-f:com.intellij.openapi.wm.impl.WindowDressing
-- com.intellij.ide.lightEdit.LightEditServiceListener
-- com.intellij.openapi.project.ProjectCloseListener
-- <init>():V
-- projectClosed(com.intellij.openapi.project.Project):V
 f:com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory
 - com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
 - <init>():V

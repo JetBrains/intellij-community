@@ -101,11 +101,6 @@ internal class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : Id
   @Deprecated("Deprecated in Java")
   override fun isEnabled(): Boolean = pluginDto.isEnabled
 
-  @Deprecated("see com.intellij.openapi.extensions.PluginDescriptor.setEnabled")
-  override fun setEnabled(enabled: Boolean) {
-    LOG.error("Write operations are not allowed here")
-  }
-
   companion object {
     private val LOG = Logger.getInstance(PluginDtoDescriptorWrapper::class.java)
   }

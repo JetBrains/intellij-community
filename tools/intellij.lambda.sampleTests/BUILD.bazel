@@ -1,10 +1,16 @@
 ### auto-generated section `build intellij.lambda.sampleTests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_lambda-sampleTests",
   x_context_parameters = True
+)
+
+resourcegroup(
+  name = "lambda-sampleTests_test_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
 jvm_library(
@@ -22,6 +28,7 @@ jvm_library(
   module_name = "intellij.lambda.sampleTests",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":lambda-sampleTests_test_resources"],
   kotlinc_opts = ":custom_lambda-sampleTests",
   deps = [
     "@lib//:kotlin-stdlib",

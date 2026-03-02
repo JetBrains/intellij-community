@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -604,7 +604,7 @@ public class FilePartNode {
     buffer.append(prefix).append(" ").append(getName()).append(" isCaseSensitive:").append(isCaseSensitive());
     VirtualFile file = fileOrNull();
     if (recheck && file != null && fs instanceof LocalFileSystem) {
-      buffer.append(" really parent sensitive: ").append(FileSystemUtil.readParentCaseSensitivity(new File(file.getPath())));
+      buffer.append(" really parent sensitive: ").append(FileSystemUtil.readParentCaseSensitivity(Path.of(file.getPath())));
     }
     buffer.append("\n");
     for (FilePartNode child : children) {

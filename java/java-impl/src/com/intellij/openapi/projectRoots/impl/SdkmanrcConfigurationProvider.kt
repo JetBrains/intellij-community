@@ -6,8 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.project.stateStore
 import org.jetbrains.jps.model.java.JdkVersionDetector
-import java.io.File
+import java.nio.file.Path
 import java.util.Properties
 
 private val LOG = logger<SdkmanrcConfigurationProvider>()
@@ -68,7 +69,9 @@ private val JAVA_PATTERN: Regex = Regex("^java=(.*)$", RegexOption.MULTILINE)
 public class SdkmanrcConfigurationProvider: ExternalJavaConfigurationProvider<SdkmanReleaseData> {
   override fun isConfigurationFile(fileName: String): Boolean = fileName == SDKMANRC
 
-  override fun getConfigurationFile(project: Project): File = File(project.basePath, SDKMANRC)
+  override fun getConfigurationFilePath(project: Project): Path {
+    return project.stateStore.projectBasePath.resolve(SDKMANRC)
+  }
 
   override fun getReleaseData(text: String): SdkmanReleaseData? {
     val properties = Properties().apply {

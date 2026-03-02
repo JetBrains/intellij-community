@@ -55,6 +55,7 @@ import com.intellij.lang.jvm.actions.typeRequest
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -173,6 +174,7 @@ import org.jetbrains.uast.UClassLiteralExpression
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UField
+import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.UReferenceExpression
@@ -659,9 +661,8 @@ private class JUnitMalformedSignatureVisitor(
 
     if (javaClass.hasModifierProperty(PsiModifier.ABSTRACT)) return
     if (javaClass.isInterface) return
-    val suiteAnnotation = javaClass.getAnnotation(ORG_JUNIT_PLATFORM_SUITE_API_SUITE) ?: return
-    val failIfNoTestsValue = suiteAnnotation.findAttributeValue(SUITE_ATTRIBUTE_NAME)
-    if (failIfNoTestsValue != null && failIfNoTestsValue.asSafely<PsiLiteralExpression>()?.value == false) return
+    val suiteAnnotation = aClass.findAnnotation(ORG_JUNIT_PLATFORM_SUITE_API_SUITE) ?: return
+    if (suiteAnnotation.findAttributeValue(SUITE_ATTRIBUTE_NAME).asSafely<ULiteralExpression>()?.value == false) return
     if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(javaClass, SUITE_SELECTOR_ANNOTATIONS)) return
 
     if (suiteAnnotation.hasSuiteFailIfNoTestsAttribute()) {
@@ -1360,7 +1361,7 @@ private class JUnitMalformedSignatureVisitor(
       return registerUProblem(element, message, quickFix)
     }
 
-    private fun getContainingClass(element: UElement): PsiClass? {
+    private fun findTestClassForElement(element: UElement): PsiClass? {
       var containingClass = element.getContainingUClass()?.javaPsi ?: return null
       while (TestFrameworks.detectFramework(containingClass) == null) {
         containingClass = containingClass.containingClass ?: return null
@@ -1377,7 +1378,7 @@ private class JUnitMalformedSignatureVisitor(
                          ?.substringAfterLast('.') ?: return
 
       if (requiredClassAnnotation != null) {
-        val containingClass = getContainingClass(element)
+        val containingClass = findTestClassForElement(element)
         if (containingClass != null && !AnnotationUtil.isAnnotated(containingClass, requiredClassAnnotation, CHECK_HIERARCHY)) {
           val message = JUnitBundle.message("jvm.inspections.junit.malformed.requires.class.annotation.descriptor",
                                             annotation, requiredClassAnnotation.substringAfterLast('.'))
@@ -1643,24 +1644,16 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
-  private class AddFailIfNoTestsAttributeFix : CompositeModCommandQuickFix() {
+  private class AddFailIfNoTestsAttributeFix : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName(): String = JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.quickfix")
 
-    override fun getName(): String = JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.quickfix")
-
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-      val javaDeclaration = getUParentForIdentifier(element)?.asSafely<UClass>() ?: return
-      applyFixes(project, javaDeclaration.javaPsi, element.containingFile ?: return)
-    }
-
-    override fun getActions(project: Project): List<(JvmModifiersOwner) -> List<IntentionAction>> {
-      return listOf({ jvmClass ->
-                      if (jvmClass !is PsiClass) return@listOf emptyList()
-                      val annotation = jvmClass.getAnnotation(ORG_JUNIT_PLATFORM_SUITE_API_SUITE) ?: return@listOf emptyList()
-                      if (!annotation.hasSuiteFailIfNoTestsAttribute()) return@listOf emptyList()
-                      val value = constantAttribute(SUITE_ATTRIBUTE_NAME, "false")
-                      return@listOf createChangeAnnotationAttributeActions(annotation, 0, value, name, familyName)
-                    })
+      val uClass = getUParentForIdentifier(element)?.asSafely<UClass>() ?: return
+      val suiteAnnotation = uClass.findAnnotation(ORG_JUNIT_PLATFORM_SUITE_API_SUITE) ?: return
+      if (!suiteAnnotation.hasSuiteFailIfNoTestsAttribute()) return
+      val value = constantAttribute(SUITE_ATTRIBUTE_NAME, "false")
+      val actions = createChangeAnnotationAttributeActions(suiteAnnotation.javaPsi ?: return, 0, value, familyName, familyName)
+      CompositeModCommandQuickFix.performActions(actions, element.containingFile ?: return)
     }
   }
 
@@ -1748,7 +1741,7 @@ private class JUnitMalformedSignatureVisitor(
     )
 
     private const val SUITE_ATTRIBUTE_NAME = "failIfNoTests"
-    private fun PsiAnnotation.hasSuiteFailIfNoTestsAttribute() =
-      resolveAnnotationType()?.findMethodsByName(SUITE_ATTRIBUTE_NAME) != null
+    private fun UAnnotation.hasSuiteFailIfNoTestsAttribute() =
+      resolve()?.findMethodsByName(SUITE_ATTRIBUTE_NAME) != null
   }
 }

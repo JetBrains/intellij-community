@@ -82,7 +82,7 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
   @RequiresEdt
   @JvmStatic
   fun triggerEdit(project: Project, file: VirtualFile) {
-    val projectState = ReadAction.compute<List<EventPair<*>>, Throwable> {
+    val projectState = ReadAction.computeBlocking<List<EventPair<*>>, Throwable> {
       listOf(
         EventFields.Dumb.with(isDumb(project)),
         INCOMPLETE_DEPENDENCIES_MODE.with(project.service<IncompleteDependenciesService>().getState())

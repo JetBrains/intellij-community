@@ -2,15 +2,21 @@
 <idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.vcs"/>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <module name="intellij.libraries.microba"/>
-    <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.shared"/>
-    <module name="intellij.platform.vcs"/>
-    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.libraries.microba"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
   </dependencies>
+  <!-- endregion -->
 
   <xi:include href="/META-INF/VcsExtensionPoints.xml"/>
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management.ui
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.PyBundle
@@ -74,6 +75,7 @@ fun PythonPackageManagerUI.launchInstallPackageWithBalloonBackground(packageName
 suspend fun PythonPackageManagerUI.installPyRequirementsBackground(
   packages: List<PyRequirement>,
   options: List<String> = emptyList(),
+  module: Module? = null,
 ): List<PythonPackage>? {
   //Wait here to load spec
   manager.waitForInit()
@@ -81,7 +83,8 @@ suspend fun PythonPackageManagerUI.installPyRequirementsBackground(
     manager.repositoryManager.findPackageSpecification(it)
   }
   return installPackagesRequestBackground(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
-                                          options = options)
+                                          options = options,
+                                          module)
 }
 
 @ApiStatus.Internal

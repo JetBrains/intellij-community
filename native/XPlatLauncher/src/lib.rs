@@ -39,7 +39,6 @@ use serde::Deserialize;
 #[cfg(target_os = "windows")]
 use {
     std::io::Write,
-    std::ptr::null_mut,
     windows::Win32::Foundation,
     windows::Win32::Foundation::HANDLE,
     windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole, SetStdHandle, STD_ERROR_HANDLE, STD_OUTPUT_HANDLE},
@@ -50,6 +49,12 @@ use {
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+use {
+    std::os::unix::process::CommandExt,
+    libc::{dl_iterate_phdr, dl_phdr_info, size_t},
+};
 
 use crate::cef_sandbox::CefScopedSandboxInfo;
 use crate::default::DefaultLaunchConfiguration;
@@ -115,14 +120,14 @@ fn attach_console() {
             // but even if it's some other error, let's not write there
             // passing null here is not explicitly documented,
             // but it works and is consistent with the GetStdHandle returning null
-            if SetStdHandle(STD_ERROR_HANDLE, HANDLE(null_mut())).is_err() {
+            if SetStdHandle(STD_ERROR_HANDLE, HANDLE(std::ptr::null_mut())).is_err() {
                 std::process::exit(1011)
             }
         }
 
         #[allow(clippy::collapsible_if)]
         if writeln!(std::io::stdout(), ".").is_err() {
-            if SetStdHandle(STD_OUTPUT_HANDLE, HANDLE(null_mut())).is_err() {
+            if SetStdHandle(STD_OUTPUT_HANDLE, HANDLE(std::ptr::null_mut())).is_err() {
                 std::process::exit(1012)
             }
         }
@@ -157,20 +162,21 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
         ensure_env_vars_set()?;
     }
 
-    #[cfg(all(target_os = "linux", target_env = "gnu"))]
-    {
-        // on Linux, glibc allocates arenas too aggressively 
-        if unsafe { libc::mallopt(libc::M_ARENA_MAX, 1) } == 0 {
-            bail!(std::io::Error::last_os_error());
-        }
-    }
-
     debug!("** Preparing launch configuration");
     let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?, started_via_remote_dev_launcher).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
     let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
     debug!("Resolved runtime: {jre_home:?}");
+
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    {
+        if is_running_with_gcompat() {
+            adjust_to_musl(&exe_path, &jre_home)?;
+        } else {
+            call_mallopt();
+        }
+    }
 
     #[cfg(target_os = "windows")]
     {
@@ -253,6 +259,83 @@ fn restore_working_directory() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+fn is_running_with_gcompat() -> bool {
+    unsafe {
+        dl_iterate_phdr(Some(check_gcompat_callback), std::ptr::null_mut()) == 1
+    }
+}
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+extern "C" fn check_gcompat_callback(info: *mut dl_phdr_info, _size: size_t, _data: *mut std::ffi::c_void,) -> std::ffi::c_int {
+    unsafe {
+        let name_ptr = (*info).dlpi_name;
+        if !name_ptr.is_null() {
+            if let Ok(name) = std::ffi::CStr::from_ptr(name_ptr).to_str() {
+                if name.contains("libgcompat.so") {
+                    return 1;
+                }
+            }
+        }
+    }
+    0
+}
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+fn adjust_to_musl(exe_path: &Path, jre_home: &Path) -> Result<()> {
+    let ext_lib_path = exe_path.parent_or_err()?.join("libgcompat-ext.so");
+    if !ext_lib_path.exists() {
+        debug!("gcompat extensions missing: {ext_lib_path:?}");
+        return Ok(());
+    }
+
+    let jvm_dir = jre_home.join("lib/server");
+    let ld_lib_path = env::var_os("LD_LIBRARY_PATH").unwrap_or_default();
+    if env::split_paths(&ld_lib_path).any(|p| p == jvm_dir) {
+        debug!("gcompat patch already applied: LD_LIBRARY_PATH={ld_lib_path:?}");
+        return Ok(());
+    }
+
+    let mut new_ld_lib_path = std::ffi::OsString::from(jvm_dir);
+    if !ld_lib_path.is_empty() {
+        new_ld_lib_path.push(":");
+        new_ld_lib_path.push(ld_lib_path);
+    };
+
+    let ld_preload = env::var_os("LD_PRELOAD").unwrap_or_default();
+    let mut new_ld_preload = std::ffi::OsString::from(ext_lib_path);
+    if !ld_preload.is_empty() {
+        new_ld_preload.push(":");
+        new_ld_preload.push(ld_preload);
+    }
+
+    debug!("*** restarting with LD_LIBRARY_PATH={new_ld_lib_path:?} LD_PRELOAD={new_ld_preload:?}");
+    Err(std::process::Command::new(exe_path)
+        .args(env::args())
+        .env("LD_LIBRARY_PATH", new_ld_lib_path)
+        .env("LD_PRELOAD", new_ld_preload)
+        .exec().into())
+}
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+fn call_mallopt() {
+    // on Linux, glibc allocates arenas too aggressively
+    // (dynamic loading to avoid unresolvable dependency on musl systems)
+    type MalloptFn = extern "C" fn(std::ffi::c_int, std::ffi::c_int) -> std::ffi::c_int;
+    unsafe {
+        let mallopt_ptr = libc::dlsym(std::ptr::null_mut(), c"mallopt".as_ptr());
+        if mallopt_ptr.is_null() {
+            warn!("mallopt: symbol not found");
+        } else {
+            let mallopt: MalloptFn = std::mem::transmute(mallopt_ptr);
+            debug!("calling 'mallopt' at {mallopt:?}'");
+            if mallopt(libc::M_ARENA_MAX, 1) == 1 {
+                warn!("mallopt: {}", std::io::Error::last_os_error());
+            }
+        }
+    }
 }
 
 #[macro_export]

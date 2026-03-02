@@ -21,6 +21,7 @@
     <module name="intellij.markdown.spellchecker"/>
     <module name="intellij.markdown.compose.preview"/>
     <module name="intellij.markdown.frontend"/>
+    <module name="intellij.markdown.frontend.split"/>
     <module name="intellij.markdown.backend"/>
   </content>
 

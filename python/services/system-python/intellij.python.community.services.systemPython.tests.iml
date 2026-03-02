@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />

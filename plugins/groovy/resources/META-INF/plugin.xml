@@ -380,6 +380,8 @@
                  description="Enable type inference with using info from explicitly typed closures"/>
     <registryKey key="groovy.flat.dfa" defaultValue="true"
                  description="Merges all control flows graphs in method"/>
+    <registryKey key="ide.dfa.time.limit.online" defaultValue="1000"
+                 description="Time limit (in milliseconds) that is allowed to analyze data flow for one method"/>
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>

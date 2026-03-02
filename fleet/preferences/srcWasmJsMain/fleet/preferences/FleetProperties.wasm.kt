@@ -2,12 +2,25 @@
 package fleet.preferences
 
 import fleet.util.multiplatform.Actual
+import js.core.JsPrimitives.toKotlinString
 import kotlinx.browser.window
 import org.w3c.dom.Window
+import web.url.URL
+
+private val urlParameters by lazy {
+  buildMap {
+    URL(window.location.href).searchParams.forEach { value, key ->
+      put(key.toKotlinString(), value.toKotlinString())
+    }
+  }
+}
 
 @Actual
 fun fleetPropertyWasmJs(name: String, defaultValue: String?): String? {
-  return getJsConfigProperty(window, name.removePrefix("fleet."))?.toString() ?: defaultValue
+  val name = name.removePrefix("fleet.")
+  return getJsConfigProperty(window, name)?.toString()
+         ?: urlParameters[name.replace('.', '_')]
+         ?: defaultValue
 }
 
 private fun getJsConfigProperty(obj: Window, name: String): JsString? {

@@ -7,9 +7,11 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.EelUnavailableException
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@Throws(EelUnavailableException::class)
 suspend fun EelDescriptor.resolveEelMachine(): EelMachine {
   if (this === LocalEelDescriptor) return LocalEelMachine
   return EelMachineResolver.EP_NAME.extensionList.firstNotNullOfOrNull { it.resolveEelMachine(this) }
@@ -24,7 +26,11 @@ fun EelDescriptor.getResolvedEelMachine(): EelMachine? {
   }
 }
 
+/**
+ * @see [com.intellij.platform.eel.EelMachine.toEelApi]
+ */
 @ApiStatus.Experimental
+@Throws(EelUnavailableException::class)
 suspend fun EelDescriptor.toEelApi(): EelApi {
   return resolveEelMachine().toEelApi(this)
 }
@@ -50,6 +56,7 @@ interface EelMachineResolver {
   @ApiStatus.Internal
   fun getResolvedEelMachine(eelDescriptor: EelDescriptor): EelMachine?
 
+  @Throws(EelUnavailableException::class)
   suspend fun resolveEelMachine(eelDescriptor: EelDescriptor): EelMachine?
 
   @ApiStatus.Internal

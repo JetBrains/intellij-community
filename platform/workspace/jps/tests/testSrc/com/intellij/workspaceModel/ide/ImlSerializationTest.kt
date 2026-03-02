@@ -63,9 +63,7 @@ class ImlSerializationTest {
     loadProjectAndCheck(projectDir)
   }
 
-  // TODO: IJPL-15946
   @Test
-  @Ignore("Started failing after adding new ProjectRootEntity")
   fun externalIndexIsNotSerialized() {
     val builder = MutableEntityStorage.create()
     val entity = builder addEntity SampleEntity2("Test", true, Source)

@@ -110,8 +110,7 @@
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
 
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportLocationHelper"
-                        serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportLocationHelper"
-                        open="true"/>
+                        serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportLocationHelper"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor" language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"
@@ -228,6 +227,7 @@
     <localInspection language="Python" shortName="PyNamedTupleInspection" suppressId="PyNamedTuple" bundle="messages.PyPsiBundle" key="INSP.named.tuple" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNamedTupleInspection"/>
     <localInspection language="Python" shortName="PyArgumentListInspection" suppressId="PyArgumentList" bundle="messages.PyPsiBundle" key="INSP.NAME.incorrect.call.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyArgumentListInspection"/>
     <localInspection language="Python" shortName="PyRedeclarationInspection" suppressId="PyRedeclaration" bundle="messages.PyPsiBundle" key="INSP.NAME.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRedeclarationInspection"/>
+    <localInspection language="Python" shortName="PyGlobalVariableRedeclarationInNotebookInspection" suppressId="PyGlobalVariableRedeclarationInNotebook" bundle="messages.PyPsiBundle" key="INSP.NAME.global.variable.redeclaration.in.notebook" groupKey="INSP.GROUP.python" enabledByDefault="false" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyGlobalVariableRedeclarationInNotebookInspection"/>
     <localInspection language="Python" shortName="PyTypeAliasRedeclarationInspection" suppressId="PyTypeAliasRedeclaration" bundle="messages.PyPsiBundle" key="INSP.NAME.type.alias.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypeAliasRedeclarationInspection"/>
     <localInspection language="Python" shortName="PyMethodParametersInspection" suppressId="PyMethodParameters" bundle="messages.PyPsiBundle" key="INSP.NAME.problematic.first.parameter" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMethodParametersInspection"/>
     <localInspection language="Python" shortName="PyUnreachableCodeInspection" suppressId="PyUnreachableCode" bundle="messages.PyPsiBundle" key="INSP.NAME.unreachable.code" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.jetbrains.python.inspections.PyUnreachableCodeInspection"/>
@@ -574,6 +574,8 @@
                  description="Enable soft-key caching for TypeEvalContext"/>
     <registryKey key="python.typing.weak.keys.type.eval.context" defaultValue="true"
                  description="Enable weak-key caching for TypeEvalContext"/>
+    <registryKey key="python.numeric.tower.type" defaultValue="true"
+                 description="Enable specialized class type representing Python's numeric tower (int -> float -> complex)"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
   </extensions>
@@ -691,4 +693,16 @@
     <pyModuleMembersProvider implementation="com.jetbrains.python.tensorFlow.PyTensorFlowModuleMembersProvider"/>
     <pyiStubSuppressor implementation="com.jetbrains.python.tensorFlow.TensorflowPyiStubsSuppressor"/>
   </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Python.Internal" displayType="BALLOON" isLogByDefault="true" hideFromSettings="true"/>
+  </extensions>
+
+  <actions resource-bundle="messages.PyPsiBundle">
+    <group id="PythonPsiInternalGroup" internal="true" popup="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+      <action id="PyTypeBenchmarkAction"
+              class="com.jetbrains.python.actions.internal.PyTypeBenchmarkAction"
+              internal="true"/>
+    </group>
+  </actions>
 </idea-plugin>

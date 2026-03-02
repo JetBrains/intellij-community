@@ -3,22 +3,27 @@ package com.intellij.collaboration.ui.codereview.list
 
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JList
 import javax.swing.JScrollPane
 import javax.swing.ListModel
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
+import javax.swing.SwingUtilities
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -29,6 +34,25 @@ class ReviewListComponentFactory<T>(private val listModel: ListModel<T>) {
   ): JBList<T> {
     return createList(itemPresenter).also {
       JListHoveredRowMaterialiser.install(it, ReviewListCellRenderer(itemPresenter))
+    }.apply {
+      launchOnShow("ReviewListGlassPane") {
+        val cs = this
+        val list = this@apply
+        val glassPane = IdeGlassPaneUtil.find(list)
+        val mouseListener = object : MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent?) {
+            if (e == null) return
+            val pointInList = SwingUtilities.convertPoint(e.component, e.point, list)
+            val index = list.locationToIndex(pointInList)
+            if (index < 0) return
+            val cellBounds = list.getCellBounds(index, index)
+            if (cellBounds != null && cellBounds.contains(pointInList)) {
+              list.selectedIndex = index
+            }
+          }
+        }
+        glassPane.addMouseListener(mouseListener, cs)
+      }
     }
   }
 

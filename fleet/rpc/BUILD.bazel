@@ -25,7 +25,7 @@ jvm_library(
   name = "rpc",
   module_name = "fleet.rpc",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
   resources = [":rpc_resources"],
   kotlinc_opts = ":custom_rpc",
   exported_compiler_plugins = ["@community//fleet/compiler-plugins/rpc:rpc-plugin"],
@@ -47,7 +47,7 @@ jvm_library(
   name = "rpc_test_lib",
   module_name = "fleet.rpc",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_rpc",
   runtime_deps = [
     ":rpc",

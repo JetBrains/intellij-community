@@ -89,7 +89,6 @@
 + -org-intellij-groovy-
 + -cucumber-groovy-
 + -org-jetbrains-idea-maven-
-+ -Osmorc-
 + -com-intellij-flex-
 + -com-intellij-aspectj-
 + -org-jetbrains-plugins-gradle-
@@ -121,7 +120,6 @@
 + -com-intellij-spring-
 + -com-intellij-spring-websocket-
 + -com-intellij-spring-batch-
-+ -org-intellij-grails-
 + -com-intellij-spring-ws-
 + -com-intellij-spring-data-
 + -Java EE: Web Services (JAX-WS)-

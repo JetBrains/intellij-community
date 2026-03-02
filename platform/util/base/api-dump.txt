@@ -2,6 +2,7 @@ f:com.intellij.diagnostic.CoroutineDumperKt
 - sf:dumpCoroutines(kotlinx.coroutines.CoroutineScope,Z,Z):java.lang.String
 - bs:dumpCoroutines$default(kotlinx.coroutines.CoroutineScope,Z,Z,I,java.lang.Object):java.lang.String
 f:com.intellij.diagnostic.ThreadDumper
+- s:dumpEdtToString():java.lang.String
 - s:dumpThreadsToString():java.lang.String
 f:com.intellij.filename.UniqueNameBuilder
 - <init>(java.lang.String,java.lang.String):V

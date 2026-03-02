@@ -101,7 +101,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   fun initialize(toolWindowPanel: PyPackagingToolWindowPanel) {
     this.toolWindowPanel = toolWindowPanel
     serviceScope.launch(Dispatchers.IO) {
-      initForSdk(project.modules.firstOrNull()?.pythonSdk)
+      initForSdk(readAction { project.modules.firstNotNullOfOrNull { it.pythonSdk } })
     }
     subscribeToChanges()
   }
@@ -300,7 +300,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   @ApiStatus.Internal
   suspend fun initForSdk(sdk: Sdk?) {
-    if (sdk == currentSdk) {
+    if (sdk != null && sdk == currentSdk) {
       return
     }
 
@@ -370,7 +370,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         serviceScope.launch(Dispatchers.IO) {
-          initForSdk(project.modules.firstOrNull()?.pythonSdk)
+          initForSdk(readAction { project.modules.firstNotNullOfOrNull { it.pythonSdk } })
         }
       }
     })

@@ -56,7 +56,11 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.editor.impl.InterLineBreakpointConfiguration;
+import com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider;
+import com.intellij.openapi.editor.impl.InterLineShiftAnimator;
 import com.intellij.openapi.editor.impl.Interval;
+import com.intellij.openapi.editor.impl.BreakpointArea;
 import com.intellij.openapi.editor.impl.ScrollingModelImpl;
 import com.intellij.openapi.editor.impl.TextRangeInterval;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
@@ -906,16 +910,82 @@ public final class EditorUtil {
       int visualLine = editor.yToVisualLine(y);
       int visualLineStartY = editor.visualLineToY(visualLine);
       if (y < visualLineStartY || y >= visualLineStartY + editor.getLineHeight()) return -1;
-      int line = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line;
-      Document document = editor.getDocument();
-      if (line < document.getLineCount()) {
-        int lineStartOffset = document.getLineStartOffset(line);
-        FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(lineStartOffset);
-        if (foldRegion instanceof CustomFoldRegion) {
-          return -1;
-        }
+      return visualToLogicalLine(editor, visualLine);
+    });
+  }
+
+  private static int visualToLogicalLine(@NotNull Editor editor, int visualLine) {
+    int line = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line;
+    Document document = editor.getDocument();
+    if (line < document.getLineCount()) {
+      int lineStartOffset = document.getLineStartOffset(line);
+      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(lineStartOffset);
+      if (foldRegion instanceof CustomFoldRegion) {
+        return -1;
       }
-      return line;
+    }
+    return line;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull BreakpointArea yToLogicalLineWithInterLineDetection(@NotNull Editor editor, int y) {
+    if (!(editor instanceof EditorImpl editorImpl)) {
+      int logicalLine = yToLogicalLineNoCustomRenderers(editor, y);
+      if (logicalLine < 0) {
+        return BreakpointArea.INVALID;
+      }
+      return new BreakpointArea.OnLine(logicalLine);
+    }
+
+    return EditorThreading.compute(() -> {
+      int visualLine = editor.yToVisualLine(y);
+      int visualLineStartY = editor.visualLineToY(visualLine);
+      int logicalLine = visualToLogicalLine(editor, visualLine);
+      int lineHeight = editor.getLineHeight();
+
+      if (logicalLine < 0) {
+        return BreakpointArea.INVALID;
+      }
+
+      int lineNumberMiddle = visualLineStartY + lineHeight / 2;
+      boolean hitAboveLineNumber = y < lineNumberMiddle;
+      int documentLineCount = editor.getDocument().getLineCount();
+      int nextLogicalLine = logicalLine + (hitAboveLineNumber ? 0 : 1);
+      int configurationLine = !hitAboveLineNumber && nextLogicalLine >= documentLineCount ? logicalLine : nextLogicalLine;
+
+      InterLineBreakpointConfiguration configuration = InterLineBreakpointConfigurationProvider.findConfigurationForLine(editor, configurationLine);
+      if (configuration == null) {
+        // no interline configuration -- proceed with the standard logic
+        if (y < visualLineStartY || y >= visualLineStartY + lineHeight) {
+          return BreakpointArea.INVALID;
+        }
+        return new BreakpointArea.OnLine(logicalLine);
+      }
+
+      // Inter-line hit is registered if the y coordinate falls inside the empty space between the adjacent line numbers
+      int ascent = editorImpl.getAscent();
+      InterLineShiftAnimator animator = configuration.getAnimator();
+      int shift = animator == null ? 0 : animator.getShiftForVisualLine(visualLine);
+      // as animator expands the vertical space between the lines,
+      // we can increase the hit area as well. 2/3 is purely arbitrary here.
+      int padding = Math.max(0, lineHeight - ascent + 2 * shift / 3);
+
+      if (y >= visualLineStartY + padding && y <= visualLineStartY + ascent) {
+        return new BreakpointArea.OnLine(logicalLine);
+      }
+
+      if (hitAboveLineNumber && logicalLine > 0) {
+        return new BreakpointArea.InterLine(logicalLine, configuration);
+      }
+
+      if (!hitAboveLineNumber) {
+        if (nextLogicalLine >= documentLineCount) {
+          return BreakpointArea.INVALID;
+        }
+        return new BreakpointArea.InterLine(nextLogicalLine, configuration);
+      }
+
+      return BreakpointArea.INVALID;
     });
   }
 

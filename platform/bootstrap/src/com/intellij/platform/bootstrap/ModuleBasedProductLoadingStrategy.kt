@@ -27,12 +27,10 @@ import com.intellij.platform.runtime.product.PluginModuleGroup
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
-import com.intellij.platform.runtime.repository.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
-import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
@@ -406,16 +404,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
     return singlePath
   }
-}
-
-private class CustomPluginModuleGroup(
-  moduleDescriptors: List<RuntimeModuleDescriptor>,
-  override val mainModule: RuntimeModuleDescriptor,
-) : PluginModuleGroup {
-  private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, RuntimeModuleLoadingRule.REQUIRED) }
-  override fun getIncludedModules(): List<IncludedRuntimeModule> = includedModules
-  override fun getOptionalModuleIds(): Set<RuntimeModuleId> = emptySet()
-  override fun getNotLoadedModuleIds(): Map<RuntimeModuleId, List<RuntimeModuleId>> = emptyMap()
 }
 
 private const val PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module"

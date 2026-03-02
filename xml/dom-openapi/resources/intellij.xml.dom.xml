@@ -1,8 +1,19 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.psi"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint name="dom.customAnnotationChecker"

@@ -4,6 +4,7 @@ package com.intellij.devkit.runtimeModuleRepository.generator
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator.enumerateRuntimeDependencies
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.ex.JpsElementBase
@@ -62,8 +63,9 @@ object RuntimeModuleRepositoryGenerator {
     try {
       val bootstrapModuleName = "intellij.platform.bootstrap"
       targetDirectory.createDirectories()
-      RuntimeModuleRepositorySerialization.saveToCompactFile(descriptors, bootstrapModuleName, targetDirectory.resolve(COMPACT_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
-      RuntimeModuleRepositorySerialization.saveToJar(descriptors, bootstrapModuleName, targetDirectory.resolve(JAR_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
+      val pluginHeaders = emptyList<RawRuntimePluginHeader>()
+      RuntimeModuleRepositorySerialization.saveToCompactFile(descriptors, pluginHeaders, bootstrapModuleName, targetDirectory.resolve(COMPACT_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
+      RuntimeModuleRepositorySerialization.saveToJar(descriptors, pluginHeaders, bootstrapModuleName, targetDirectory.resolve(JAR_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
     }
     catch (e: IOException) {
       throw RuntimeException("Failed to save runtime module repository: ${e.message}", e)

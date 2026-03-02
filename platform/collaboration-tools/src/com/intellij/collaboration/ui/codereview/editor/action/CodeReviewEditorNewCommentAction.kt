@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.editor.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
+import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -35,7 +36,8 @@ internal class CodeReviewEditorNewCommentAction
       if (selectedRange != null) {
         e.presentation.text = CollaborationToolsBundle.message("review.editor.action.add.comment.multiline.text")
         e.presentation.description = CollaborationToolsBundle.message("review.editor.action.add.comment.multiline.description")
-        e.presentation.isEnabled = model.canCreateComment(selectedRange)
+        e.presentation.isEnabled =
+          !ReviewInEditorUtil.isLastBlankLine(editor.document, selectedRange.end) && model.canCreateComment(selectedRange)
         return
       }
     }
@@ -43,7 +45,8 @@ internal class CodeReviewEditorNewCommentAction
     val caretLine = caret.logicalPosition.line.takeIf { it >= 0 }
     e.presentation.text = CollaborationToolsBundle.message("review.editor.action.add.comment.text")
     e.presentation.description = CollaborationToolsBundle.message("review.editor.action.add.comment.description")
-    e.presentation.isEnabled = caretLine != null && model.canCreateComment(caretLine)
+    e.presentation.isEnabled =
+      caretLine != null && !ReviewInEditorUtil.isLastBlankLine(editor.document, caretLine) && model.canCreateComment(caretLine)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

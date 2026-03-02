@@ -4,7 +4,7 @@ TypeRepresentation:a.pythonTypeRepresentation
       PsiElement(Py:LPAR)('(')
       PyStarExpression
         PsiElement(Py:MULT)('*')
-        PyNamedParameterTypeRepresentation
+        PyNamedParameterTypeRepresentation('a')
           PsiElement(Py:IDENTIFIER)('a')
           PsiElement(Py:COLON)(':')
           PsiWhiteSpace(' ')
@@ -26,7 +26,7 @@ TypeRepresentation:a.pythonTypeRepresentation
       PsiWhiteSpace(' ')
       PyDoubleStarExpression
         PsiElement(Py:EXP)('**')
-        PyNamedParameterTypeRepresentation
+        PyNamedParameterTypeRepresentation('b')
           PsiElement(Py:IDENTIFIER)('b')
           PsiElement(Py:COLON)(':')
           PsiWhiteSpace(' ')

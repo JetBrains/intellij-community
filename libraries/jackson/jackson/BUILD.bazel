@@ -12,8 +12,14 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jackson_resources"],
-  exports = ["@lib//:jackson"],
-  runtime_deps = ["@lib//:jackson"]
+  exports = [
+    "@lib//:jackson",
+    "//libraries/jackson/annotations",
+  ],
+  runtime_deps = [
+    "@lib//:jackson",
+    "//libraries/jackson/annotations",
+  ]
 )
 
 jvm_library(
@@ -22,7 +28,14 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  exports = ["@lib//:jackson"],
-  runtime_deps = [":jackson"]
+  exports = [
+    "@lib//:jackson",
+    "//libraries/jackson/annotations",
+    "//libraries/jackson/annotations:annotations_test_lib",
+  ],
+  runtime_deps = [
+    ":jackson",
+    "//libraries/jackson/annotations:annotations_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.libraries.jackson` end

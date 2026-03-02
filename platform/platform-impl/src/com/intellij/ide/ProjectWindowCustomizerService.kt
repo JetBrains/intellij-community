@@ -144,7 +144,7 @@ internal class ProjectGradients(val index: Int) {
 }
 
 @Service
-class ProjectWindowCustomizerService(private val coroutineScope: CoroutineScope) : Disposable {
+class ProjectWindowCustomizerService internal constructor(private val coroutineScope: CoroutineScope) : Disposable {
   companion object {
     private var instance: ProjectWindowCustomizerService? = null
     private var leftGradientCache: GradientTextureCache = GradientTextureCache()

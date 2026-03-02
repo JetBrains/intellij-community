@@ -39,7 +39,7 @@ jvm_library(
     "//python/python-sdk-ui:sdk-ui",
     "//python/common",
     "//python/python-exec-service/execService.python",
-    "//python/python-process-output:processOutput",
+    "//python/python-process-output/common",
   ]
 )
 
@@ -68,7 +68,7 @@ jvm_library(
     "//python/python-sdk-ui:sdk-ui_test_lib",
     "//python/common:common_test_lib",
     "//python/python-exec-service/execService.python:execService.python_test_lib",
-    "//python/python-process-output:processOutput_test_lib",
+    "//python/python-process-output/common:common_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.hatch` end

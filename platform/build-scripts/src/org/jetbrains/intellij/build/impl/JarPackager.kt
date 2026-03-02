@@ -847,7 +847,8 @@ private fun getLibraryFiles(library: JpsLibrary, copiedFiles: MutableMap<CopiedF
   return files
 }
 
-private fun nameToJarFileName(name: String): String = "${sanitizeFileName(name.lowercase(), replacement = "-")}.jar"
+private fun nameToJarFileName(name: String): String =
+  "${sanitizeFileName(name.lowercase(), replacement = "-") { c -> c == ' '}}.jar"
 
 @Suppress("SpellCheckingInspection", "RedundantSuppression")
 private val excludedFromMergeLibs = setOf(
@@ -1083,7 +1084,7 @@ private suspend fun buildAsset(
           override fun updateDigest(digest: HashStream64) {
             if (layout is PluginLayout) {
               digest.putString(layout.mainModule)
-              digest.putInt(layout.bundlingRestrictions.hashCode())
+              layout.bundlingRestrictions.updateDigest(digest)
               digest.putUnorderedIterable(layout.pathsToScramble, HashFunnel.forString(), Hashing.xxh3_64())
             }
             else {

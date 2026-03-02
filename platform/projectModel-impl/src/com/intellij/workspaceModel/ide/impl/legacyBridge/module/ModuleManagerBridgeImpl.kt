@@ -79,6 +79,7 @@ import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.graph.CachingSemiGraph
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
@@ -324,6 +325,7 @@ abstract class ModuleManagerBridgeImpl(
     return ModifiableModuleModelBridgeImpl(project = project, moduleManager = this, diff = diff, cacheStorageResult = false)
   }
 
+  @RequiresWriteLock
   override fun newModule(filePath: String, moduleTypeId: String): Module = newModuleTimeMs.addMeasuredTime {
     incModificationCount()
     val modifiableModel = getModifiableModel()

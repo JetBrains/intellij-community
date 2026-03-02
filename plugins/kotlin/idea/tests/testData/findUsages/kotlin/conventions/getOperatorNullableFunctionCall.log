@@ -1,0 +1,6 @@
+Checked type of y
+Searched references to Y
+Searched references to Y.it in non-Java files
+Searched references to y in non-Java files
+Used plain search of Y.get(index: Int) in LocalSearchScope:
+    OBJECT_DECLARATION:Y

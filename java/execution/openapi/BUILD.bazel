@@ -16,7 +16,6 @@ jvm_library(
   deps = [
     "//java/openapi:java",
     "//java/java-indexing-api:indexing",
-    "//resources:java-resources",
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -44,7 +43,6 @@ jvm_library(
     "//platform/backend:backend_test_lib",
     "//java/openapi:java_test_lib",
     "//java/java-indexing-api:indexing_test_lib",
-    "//resources:java-resources_test_lib",
     "//platform/analysis-api:analysis_test_lib",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core_test_lib",

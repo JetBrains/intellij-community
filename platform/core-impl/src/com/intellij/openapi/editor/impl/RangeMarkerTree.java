@@ -170,7 +170,11 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
     @Override
     public String toString() {
-      return (isGreedyToLeft() ? "[" : "(") + intervalStart() + "," + intervalEnd() + (isGreedyToRight() ? "]" : ")");
+      return (isGreedyToLeft() ? "[" : "(")
+             + intervalStart() + "," + intervalEnd()
+             + (isValid() ? "" : "-invalid")
+             + (isGreedyToRight() ? "]" : ")")
+        ;
     }
 
     // return a list of invalidated range markers

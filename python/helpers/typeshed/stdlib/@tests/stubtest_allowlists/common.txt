@@ -204,8 +204,26 @@ _collections_abc\.ByteString
 typing\.ByteString
 
 _collections_abc.Callable  # Typing-related weirdness
-_collections_abc.Mapping.get  # Adding None to the Union messed up mypy
-_collections_abc.Sequence.index  # Supporting None in end is not mandatory
+
+# While the implementation in _collections_abc.py uses positional-or-keyword args,
+# this is unsafe as canonical types list/dict/set etc. only support positional args.
+# See: https://github.com/python/typeshed/issues/14071
+# See: https://github.com/python/cpython/issues/135312
+_collections_abc.Mapping.get
+_collections_abc.MutableSequence.append
+_collections_abc.MutableSequence.extend
+_collections_abc.MutableSequence.insert
+_collections_abc.MutableSequence.pop
+_collections_abc.MutableSequence.remove
+_collections_abc.MutableSet.add
+_collections_abc.MutableSet.discard
+_collections_abc.MutableSet.remove
+_collections_abc.Sequence.count
+_collections_abc.Sequence.index
+_collections_abc.Set.isdisjoint
+_collections_abc.Set._from_iterable
+_collections_abc.ItemsView._from_iterable
+_collections_abc.KeysView._from_iterable
 
 _ctypes.CFuncPtr  # stubtest erroneously thinks it can't be subclassed
 

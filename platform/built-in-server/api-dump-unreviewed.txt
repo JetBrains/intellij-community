@@ -161,9 +161,6 @@ f:org.jetbrains.builtInWebServer.ssi.Strftime
 - format(java.util.Date):java.lang.String
 - getTimeZone():java.util.TimeZone
 - setTimeZone(java.util.TimeZone):V
-f:org.jetbrains.ide.AboutHttpServiceKt
-- sf:writeAboutJson(com.fasterxml.jackson.core.JsonGenerator):V
-- sf:writeApplicationInfoJson(java.io.OutputStream,io.netty.handler.codec.http.QueryStringDecoder,Z):V
 f:org.jetbrains.ide.BuiltInServerManagerImpl
 - org.jetbrains.ide.BuiltInServerManager
 - sf:Companion:org.jetbrains.ide.BuiltInServerManagerImpl$Companion

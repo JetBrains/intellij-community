@@ -3,8 +3,6 @@
 
 package com.intellij.ide.plugins
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.parser.impl.RawPluginDescriptor
 import com.intellij.platform.pluginSystem.parser.impl.ScopedElementsContainer
@@ -17,9 +15,15 @@ import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.junit5.NamedFailure
 import com.intellij.testFramework.junit5.groupFailures
 import com.intellij.util.io.jackson.array
+import com.intellij.util.io.jackson.createGenerator
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.io.jackson.writeFieldName
+import com.intellij.util.io.jackson.writeStringField
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.core.util.DefaultPrettyPrinter
 import java.io.StringWriter
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -109,8 +113,7 @@ class PluginValidationResult internal constructor(
 
   fun graphAsString(projectHomePath: Path): CharSequence {
     val stringWriter = StringWriter()
-    val writer = JsonFactory().createGenerator(stringWriter)
-    writer.useDefaultPrettyPrinter()
+    val writer = JsonFactory().createGenerator(stringWriter, DefaultPrettyPrinter())
     writer.use {
       writer.obj {
         val entries = pluginIdToInfo.entries.toMutableList()

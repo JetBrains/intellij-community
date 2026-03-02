@@ -4,10 +4,10 @@ from b import A
 class B(A):
     def __init__(self):
         super().__init__()
-        <warning descr="'A.a' is 'Final' and could not be overridden">self.a</warning>: Final[str] = "2"
+        <warning descr="'A.a' is 'Final' and cannot be overridden">self.a</warning>: Final[str] = "2"
 
 class C(A):
-    <warning descr="'A.a' is 'Final' and could not be overridden">a</warning>: Final[str]
+    <warning descr="'A.a' is 'Final' and cannot be overridden">a</warning>: Final[str]
 
     def __init__(self):
         super().__init__()

@@ -126,6 +126,7 @@ private fun toLevelType(levels: Collection<Service.Level>): LevelType {
     levels.containsAll(setOf(Service.Level.APP, Service.Level.PROJECT)) -> LevelType.APP_AND_PROJECT
     levels.contains(Service.Level.APP) -> LevelType.APP
     levels.contains(Service.Level.PROJECT) -> LevelType.PROJECT
+    levels.isEmpty() -> LevelType.APP
     else -> LevelType.NOT_SPECIFIED
   }
 }

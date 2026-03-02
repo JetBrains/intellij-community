@@ -4,7 +4,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -64,7 +64,7 @@ import java.util.Random;
 import java.util.Set;
 
 @SkipSlowTestLocally
-public class HighlightAfterRandomTypingTest extends LightDaemonAnalyzerTestCase {
+public class HighlightAfterRandomTypingTest extends ProductionLightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -74,7 +74,6 @@ public class HighlightAfterRandomTypingTest extends LightDaemonAnalyzerTestCase 
     }
     // preload extensions to avoid "PSI/document/model changes are not allowed during highlighting"
     EntryPointsManagerBase.getInstance(getProject()).getAdditionalAnnotations();
-    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).disableUpdateByTimer(getTestRootDisposable());
   }
 
   @Override
@@ -162,8 +161,8 @@ class X {
       ((PsiManagerEx)getPsiManager()).cleanupForNextTest();
 
       configureFromFileText("A.java", text);
-      List<HighlightInfo> infos = doHighlighting();
-      assertEmpty(DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.ERROR));
+      List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
+      assertEmpty(infos);
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
     }
@@ -172,7 +171,7 @@ class X {
 
   public void testThatInsertingJavadocCommentsInRandomWhitespaceDoesNotCrashAnything() {
     configureFromFileText("A.java", text);
-    List<HighlightInfo> oldWarnings = new ArrayList<>(doHighlighting());
+    List<HighlightInfo> oldWarnings = new ArrayList<>(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING));
     Comparator<HighlightInfo> infoComparator = (o1, o2) -> {
       if (o1.equals(o2)) return 0;
       if (o1.getActualStartOffset() != o2.getActualStartOffset()) return o1.getActualStartOffset() - o2.getActualStartOffset();
@@ -204,11 +203,13 @@ class X {
       int offset;
       while (true) {
         offset = random.nextInt(s.length());
-        if (s.charAt(offset) == ' ') break;
+        if (s.charAt(offset) == ' ') {
+          break;
+        }
       }
       getEditor().getCaretModel().moveToOffset(offset);
       type("/*--*/");
-      List<HighlightInfo> infos = doHighlighting();
+      List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING);
       if (oldWarningSize != infos.size()) {
         infos = new ArrayList<>(infos);
         infos.sort(infoComparator);
@@ -227,7 +228,7 @@ class X {
         String oldText = StringUtil.join(oldWarningTexts, "\n");
         String newText = StringUtil.join(infos, info->text(info), "\n");
         if (!oldText.equals(newText)) {
-          List<HighlightInfo> infos1 = doHighlighting();
+          List<HighlightInfo> infos1 = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING);
           int size1 = infos1.size();
         }
         assertEquals(seed+"",oldText, newText);
@@ -287,7 +288,7 @@ class X {
     final String text = imports + "\n class X {{\n" + usages + "}}";
     WriteCommandAction.runWriteCommandAction(null, () -> getEditor().getDocument().setText(text));
 
-    List<HighlightInfo> errors = DaemonAnalyzerTestCase.filter(doHighlighting(), HighlightSeverity.WARNING);
+    List<HighlightInfo> errors = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING);
     assertEmpty(text, errors);
     Random random = new Random();
     int unused = 0;
@@ -297,7 +298,9 @@ class X {
       int offset;
       while (true) {
         offset = random.nextInt(s.length());
-        if (CharArrayUtil.regionMatches(s, offset, "/**/") || CharArrayUtil.regionMatches(s, offset, "//")) break;
+        if (CharArrayUtil.regionMatches(s, offset, "/**/") || CharArrayUtil.regionMatches(s, offset, "//")) {
+          break;
+        }
       }
 
       char next = offset < s.length()-1 ? s.charAt(offset+1) : 0;
@@ -326,7 +329,7 @@ class X {
 
       //System.out.println("i = " + i + " " + next + " at "+offset);
 
-      List<HighlightInfo> infos = doHighlighting();
+      List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING);
       errors = DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.ERROR);
       assertEmpty(errors);
       List<HighlightInfo> warns = DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.WARNING);
@@ -361,7 +364,7 @@ class X {
     }
     configureFromFileText("A.java", t.toString());
 
-    List<HighlightInfo> initErrors = ContainerUtil.sorted(highlightErrors(), HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST);
+    List<HighlightInfo> initErrors = ContainerUtil.sorted(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR), HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST);
 
     int N = 100;
 
@@ -375,17 +378,16 @@ class X {
         int offset = random.nextInt(20/*do not mess with * in imports*/,s.length()-5);
         getEditor().getCaretModel().moveToOffset(offset);
         type("/*-");
-        List<HighlightInfo> infos = highlightErrors();
+        List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
         assertNotEmpty(infos);
 
-        PsiElement comment =
-          SyntaxTraverser.psiTraverser(getFile()).filter(e -> e instanceof PsiComment && e.getText().startsWith("/*-")).toList().get(0);
+        PsiElement comment = SyntaxTraverser.psiTraverser(getFile()).filter(e -> e instanceof PsiComment && e.getText().startsWith("/*-")).toList().getFirst();
 
         List<HighlightInfo> collect = new ArrayList<>();
-        TextRange crange = comment.getTextRange().cutOut(TextRange.create(4, comment.getTextRange().getLength()-1)); // to strictly contain
+        TextRange cRange = comment.getTextRange().cutOut(TextRange.create(4, comment.getTextRange().getLength()-1)); // to strictly contain
         //noinspection ConstantValue
-        DaemonCodeAnalyzerEx.processHighlights(getEditor().getDocument(), getProject(), HighlightSeverity.ERROR, crange.getStartOffset(), crange.getEndOffset(),
-                                               h -> !crange.contains(h) || !collect.add(h));
+        DaemonCodeAnalyzerEx.processHighlights(getEditor().getDocument(), getProject(), HighlightSeverity.ERROR, cRange.getStartOffset(), cRange.getEndOffset(),
+                                               h -> !cRange.contains(h) || !collect.add(h));
         assertEmpty("Found error inside comment: "+collect+"; seed="+seed, collect);
 
         backspace();
@@ -393,7 +395,7 @@ class X {
         backspace();
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
-        List<HighlightInfo> after = ContainerUtil.sorted(highlightErrors(), HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST);
+        List<HighlightInfo> after = ContainerUtil.sorted(myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR), HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST);
         assertEquals("highlighters didn't restore; seed="+seed, initErrors, after);
       }
       catch (Throwable e) {
@@ -425,7 +427,7 @@ class X {
     return errOffset;
   }
   private @NotNull List<HighlightInfo> doHighlightAndSort(long seed) {
-    List<HighlightInfo> infos = doHighlighting();
+    List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING);
     List<HighlightInfo> sorted = ContainerUtil.sorted(infos, Comparator.comparing(h->text(h)));
     for (HighlightInfo info : sorted) {
       assertTrue(info.getHighlighter().isValid());
@@ -495,7 +497,7 @@ class X {
     }
   }
 
-  private @NotNull String typeAndCheck(long seed, int num, Random random, List<HighlightInfo> initInfos) {
+  private @NotNull String typeAndCheck(long seed, int num, Random random, List<? extends HighlightInfo> initInfos) {
     //System.out.println("num = " + num);
     String initInfoText = StringUtil.join(initInfos, h->text(h), "\n");
     if (num == 0) return initInfoText;
@@ -516,8 +518,6 @@ class X {
   }
 
   public void testCheckThatTypingRandomErrorsAndThenOpenJavadocCommentDoesGenerateGiantCommentedTextButDoesNotLeaveErrorsInsideCommentedOutText() {
-    //ApplicationManagerEx.setInStressTest(false);
-
     disableHyperlinkAnnotator();
     long seed = //2518799306412815874L;
     new Random().nextLong();
@@ -537,10 +537,10 @@ class X {
         withTypedLetter(0, genRandomChar(random), random, () -> {
           withTypedLetter(0, genRandomChar(random), random, () -> {
             withTypedLetter(0, "/*", random, () -> {
-              List<HighlightInfo> infos = highlightErrors();
+              List<HighlightInfo> infos = myTestDaemonCodeAnalyzer.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR);
               assertNotEmpty(infos);
 
-              PsiElement comment = SyntaxTraverser.psiTraverser(getFile()).filter(e -> e instanceof PsiComment && e.getText().startsWith("/*")).toList().get(0);
+              PsiElement comment = SyntaxTraverser.psiTraverser(getFile()).filter(e -> e instanceof PsiComment && e.getText().startsWith("/*")).toList().getFirst();
 
               List<HighlightInfo> collect = new ArrayList<>();
               TextRange cringe =

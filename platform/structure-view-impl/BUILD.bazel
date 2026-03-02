@@ -28,6 +28,17 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/statistics",
+    "@lib//:kotlin-stdlib",
+    "//platform/kernel/shared:kernel",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/rpc",
+    "//platform/project/shared:project",
+    "//platform/util/concurrency",
+    "//platform/lang-core",
+    "//platform/platform-impl/concurrency",
+    "//platform/util/coroutines",
+    "//platform/remote-topics/shared:rpc-topics",
   ],
   exports = ["//platform/util"]
 )
@@ -57,6 +68,16 @@ jvm_library(
     "//libraries/fastutil:fastutil_test_lib",
     "//platform/core-ui:core-ui_test_lib",
     "//platform/statistics:statistics_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/platform-impl/concurrency:concurrency_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.structureView.impl` end

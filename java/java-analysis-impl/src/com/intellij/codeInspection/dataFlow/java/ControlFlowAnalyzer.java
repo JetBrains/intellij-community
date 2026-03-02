@@ -18,6 +18,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchDeconstructionLabelAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
 import com.intellij.codeInspection.dataFlow.java.inliner.AccessorInliner;
 import com.intellij.codeInspection.dataFlow.java.inliner.AllNotNullInliner;
@@ -1363,9 +1364,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
               PsiField field = PropertyUtil.getFieldOfGetter(accessor);
               VariableDescriptor descriptor = field == null ? new GetterDescriptor(accessor) : new PlainDescriptor(field);
               DfaVariableValue accessorDfaVar = getFactory().getVarFactory().createVariableValue(descriptor, patternDfaVar);
-              addInstruction(new PushInstruction(accessorDfaVar, null));
+              JavaSwitchDeconstructionLabelAnchor labelAnchor = new JavaSwitchDeconstructionLabelAnchor(patternComponent);
+              addInstruction(new PushInstruction(accessorDfaVar, labelAnchor));
               if (JavaPsiSwitchUtil.mayCauseMatchExceptionDuringDeconstruction(deconstructionPattern, recordComponent, patternComponent, Set.of())) {
-                addNullCheck(deconstructionMatchException.problem(patternComponent, null));
+                addNullCheck(deconstructionMatchException.problem(labelAnchor, patternComponent));
               }
               processPattern(sourcePattern, patternComponent, substitutor.substitute(recordComponent.getType()), null, endPatternOffset);
             }

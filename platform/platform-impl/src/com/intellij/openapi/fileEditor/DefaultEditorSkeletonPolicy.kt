@@ -6,6 +6,6 @@ import com.intellij.openapi.util.registry.Registry
 
 internal class DefaultEditorSkeletonPolicy : EditorSkeletonPolicy {
   override fun shouldShowSkeleton(fileEditorComposite: FileEditorComposite): Boolean {
-    return Registry.`is`("editor.skeleton.enabled", true)
+    return Registry.`is`("editor.skeleton.enabled", false)
   }
 }

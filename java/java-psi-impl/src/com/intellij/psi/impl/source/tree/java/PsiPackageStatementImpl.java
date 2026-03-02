@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiModifierList;
@@ -27,7 +28,10 @@ import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiPackageStatementImpl extends JavaStubPsiElement<PsiPackageStatementStub> implements PsiPackageStatement {
   public PsiPackageStatementImpl(PsiPackageStatementStub stub) {
@@ -61,6 +65,13 @@ public class PsiPackageStatementImpl extends JavaStubPsiElement<PsiPackageStatem
   @Override
   public PsiModifierList getAnnotationList() {
     return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
+  }
+
+  @Override
+  public @Nullable PsiDocComment getDocComment() {
+    if (!"package-info.java".equals(getContainingFile().getName())) return null;
+    PsiElement sibling = PsiTreeUtil.skipWhitespacesBackward(this);
+    return sibling instanceof PsiDocComment ? (PsiDocComment)sibling : null;
   }
 
   @Override

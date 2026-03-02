@@ -64,3 +64,19 @@ class NullMarkedChainEnd extends UnmarkedIntermediate {
   @Override
   void chainMethod(String <warning descr="Parameter annotated @NullMarked should not override non-annotated parameter">param</warning>) {}
 }
+
+// Multiple inheritance: class + generic interface
+
+class UnmarkedBase3 {
+  public void a(String a) {}
+}
+
+interface UnmarkedGenericInterface<T extends Object> {
+  void a(T a);
+}
+
+@NullMarked
+class NullMarkedWithMultipleSupers extends UnmarkedBase3 implements UnmarkedGenericInterface<String> {
+  @Override
+  public void a(String <warning descr="Parameter annotated @NullMarked should not override non-annotated parameter">a</warning>) {}
+}

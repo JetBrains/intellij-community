@@ -13,11 +13,6 @@
                  defaultValue="true"
                  description="Show notification about Kotlin missing configuration"/>
 
-    <registryKey key="kotlin.version.for.testing.wizard.and.configure.kotlin.dialog"
-                 defaultValue=""
-                 description="The kotlin version to use for testing the new project wizard and the configure kotlin dialog. To reset the setting, set the value to empty quotes"
-                 restartRequired="false"/>
-
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

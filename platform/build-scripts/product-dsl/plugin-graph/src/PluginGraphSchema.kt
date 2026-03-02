@@ -225,6 +225,9 @@ const val PLUGIN_DEP_LEGACY_SHIFT: Int = 25
 /** Bit position for modern format flag in packed plugin-dep entries */
 const val PLUGIN_DEP_MODERN_SHIFT: Int = 26
 
+/** Bit position for legacy config-file flag in packed plugin-dep entries */
+const val PLUGIN_DEP_CONFIG_FILE_SHIFT: Int = 27
+
 /** Mask for optional flag in packed plugin-dep entries */
 const val PLUGIN_DEP_OPTIONAL_MASK: Int = 1 shl PLUGIN_DEP_OPTIONAL_SHIFT
 
@@ -234,14 +237,18 @@ const val PLUGIN_DEP_LEGACY_MASK: Int = 1 shl PLUGIN_DEP_LEGACY_SHIFT
 /** Mask for modern format flag in packed plugin-dep entries */
 const val PLUGIN_DEP_MODERN_MASK: Int = 1 shl PLUGIN_DEP_MODERN_SHIFT
 
+/** Mask for legacy config-file flag in packed plugin-dep entries */
+const val PLUGIN_DEP_CONFIG_FILE_MASK: Int = 1 shl PLUGIN_DEP_CONFIG_FILE_SHIFT
+
 /** Mask for format flags in packed plugin-dep entries */
 const val PLUGIN_DEP_FORMAT_MASK: Int = PLUGIN_DEP_LEGACY_MASK or PLUGIN_DEP_MODERN_MASK
 
 /** Pack node ID with optional + format flags into single Int */
-fun packPluginDepEntry(nodeId: Int, isOptional: Boolean, formatMask: Int): Int {
+fun packPluginDepEntry(nodeId: Int, isOptional: Boolean, formatMask: Int, hasConfigFile: Boolean = false): Int {
   require(nodeId <= NODE_ID_MASK) { "nodeId $nodeId exceeds 24-bit limit ($NODE_ID_MASK)" }
   val optionalBit = if (isOptional) PLUGIN_DEP_OPTIONAL_MASK else 0
-  return nodeId or optionalBit or (formatMask and PLUGIN_DEP_FORMAT_MASK)
+  val configFileBit = if (hasConfigFile) PLUGIN_DEP_CONFIG_FILE_MASK else 0
+  return nodeId or optionalBit or (formatMask and PLUGIN_DEP_FORMAT_MASK) or configFileBit
 }
 
 /** Unpack optional flag from packed plugin-dep entry */
@@ -255,6 +262,9 @@ fun unpackPluginDepHasLegacy(packedEntry: Int): Boolean = (packedEntry and PLUGI
 
 /** Check if packed plugin-dep entry includes modern format */
 fun unpackPluginDepHasModern(packedEntry: Int): Boolean = (packedEntry and PLUGIN_DEP_MODERN_MASK) != 0
+
+/** Check if packed plugin-dep entry includes legacy config-file marker */
+fun unpackPluginDepHasConfigFile(packedEntry: Int): Boolean = (packedEntry and PLUGIN_DEP_CONFIG_FILE_MASK) != 0
 
 // endregion
 
@@ -465,7 +475,7 @@ value class TargetDependencyInvoker @PublishedApi internal constructor(
  * Zero-allocation wrapper for plugin dependency traversal with optional + format flag access.
  *
  * Packs sourceId (upper 32 bits) + packed edge entry (lower 32 bits).
- * Use [isOptional], [hasLegacyFormat], and [hasModernFormat] for flags.
+ * Use [isOptional], [hasLegacyFormat], [hasModernFormat], and [hasConfigFile] for flags.
  */
 @JvmInline
 value class PluginDependency @PublishedApi internal constructor(
@@ -482,6 +492,9 @@ value class PluginDependency @PublishedApi internal constructor(
 
   /** Whether modern <dependencies><plugin> format is present for this dependency */
   val hasModernFormat: Boolean get() = unpackPluginDepHasModern(packed.toInt())
+
+  /** Whether this dependency is declared via legacy `<depends ... config-file="...">` */
+  val hasConfigFile: Boolean get() = unpackPluginDepHasConfigFile(packed.toInt())
 
   /** Get target as PluginNode */
   fun target(): PluginNode = PluginNode(targetId)

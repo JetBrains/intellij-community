@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -136,12 +136,12 @@ public final class Group implements KeymapGroup {
   }
 
   public void normalizeSeparators() {
-    while (!myChildren.isEmpty() && (myChildren.get(0) instanceof Separator s) && s.getText() != null) {
-      myChildren.remove(0);
+    while (!myChildren.isEmpty() && (myChildren.getFirst() instanceof Separator s) && s.getText() != null) {
+      myChildren.removeFirst();
     }
 
-    while (!myChildren.isEmpty() && myChildren.get(myChildren.size() - 1) instanceof Separator) {
-      myChildren.remove(myChildren.size() - 1);
+    while (!myChildren.isEmpty() && myChildren.getLast() instanceof Separator) {
+      myChildren.removeLast();
     }
 
     for (int i = 1; i < myChildren.size() - 1; i++) {

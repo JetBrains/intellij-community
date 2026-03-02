@@ -15,15 +15,16 @@
     <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5" level="project" />
     <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5Params" level="project" />
     <orderEntry type="library" name="assertJ" level="project" />
+    <orderEntry type="library" scope="TEST" name="byte-buddy" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.slf4j" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
-    <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.customization" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" exported="" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="PROVIDED" />
@@ -119,5 +120,6 @@
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.structureView.frontend" />
   </component>
 </module>

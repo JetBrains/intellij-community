@@ -11,11 +11,14 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.REPLACE_EVERYTHING
+import com.intellij.platform.eel.fs.EelFileSystemApiHelpers
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
 import com.intellij.platform.eel.fs.EelWindowsFileInfo
+import com.intellij.platform.eel.fs.EelWindowsFileInfoImpl
+import com.intellij.platform.eel.fs.changeAttributes
 import com.intellij.platform.eel.fs.copy
 import com.intellij.platform.eel.fs.move
 import com.intellij.platform.eel.fs.stat
@@ -253,7 +256,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
               val childIjentPath = dir.eelPath.getChild(childName)
               val childAttrs = when (childStat) {
                 is EelPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
-                is EelWindowsFileInfo -> IjentNioBasicFileAttributes(childStat)
+                is EelWindowsFileInfo -> IjentNioWindowsFileAttributes(childStat)
               }
               AbsoluteIjentNioPath(childIjentPath, nioFs, childAttrs)
             }
@@ -361,7 +364,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val nioFs = path.nioFs
 
     return fsBlocking {
-      nioFs.ijentFs.sameFile(path.eelPath, path2.eelPath)
+      nioFs.ijentFs.sameFile(path.eelPath.normalize(), path2.eelPath.normalize())
     }
       .getOrThrowFileSystemException()
   }
@@ -434,8 +437,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         return null
       }
       DosFileAttributeView::class.java -> {
-        // TODO
-        return null
+        if (ijentFs is IjentFileSystemWindowsApi) {
+          @Suppress("UNCHECKED_CAST")
+          return IjentNioDosFileAttributeView(ijentFs, path.eelPath, path) as V
+        }
+        else return null
       }
       FileOwnerAttributeView::class.java -> {
         // TODO
@@ -475,7 +481,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         val fileInfo = fsBlocking {
           ijentFs.stat(path.eelPath).symlinkPolicy(linkPolicy).getOrThrowFileSystemException()
         }
-        IjentNioBasicFileAttributes(fileInfo)
+        IjentNioWindowsFileAttributes(fileInfo)
       }
     }
 
@@ -527,52 +533,65 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun setAttribute(path: Path, attribute: String, value: Any, vararg options: LinkOption) {
     val (viewName, requestedAttributes) = parseAttributesParameter(attribute)
     val nioFs = ensureAbsoluteIjentNioPath(path).nioFs
-    val builder = EelFileSystemApi.ChangeAttributesOptions.Builder()
+    val builder = nioFs.ijentFs.changeAttributes(path.eelPath)
     when (viewName) {
       "basic" -> when (requestedAttributes.singleOrNull()) {
-        "lastModifiedTime" -> builder.updateTime(EelFileSystemApi.ChangeAttributesOptions.Builder::modificationTime, value)
-        "lastAccessTime" -> builder.updateTime(EelFileSystemApi.ChangeAttributesOptions.Builder::accessTime, value)
+        "lastModifiedTime" -> builder.updateTime(EelFileSystemApiHelpers.ChangeAttributes::modificationTime, value)
+        "lastAccessTime" -> builder.updateTime(EelFileSystemApiHelpers.ChangeAttributes::accessTime, value)
         "creationTime" -> value as FileTime // intentionally no-op, like in Java; but we need to throw CCE just in case
         else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
       }
       "posix" -> {
-        val oldPermissions =
-          (readAttributes(path, PosixFileAttributes::class.java, *options) as IjentNioPosixFileAttributes).fileInfo.permissions
-        builder.permissions(when (requestedAttributes.singleOrNull()) {
-                              "permissions" -> {
-                                value as Set<*> // ClassCastException is expected
-                                @Suppress("UNCHECKED_CAST") val mask = PosixFilePermissionsUtil.toUnixMode(value as Set<PosixFilePermission>)
-                                EelPosixFileInfoImpl.Permissions(oldPermissions.owner, oldPermissions.group, mask)
-                              }
-                              "owner" -> {
-                                if (value is EelPosixUserPrincipal) {
-                                  if (value.uid != oldPermissions.owner) {
-                                    TODO("Changing uid is not supported yet")
-                                  }
-                                  oldPermissions
-                                }
-                                else {
-                                  throw UnsupportedOperationException("Unsupported owner principal: $value")
-                                }
-                              }
-                              "group" -> {
-                                if (value is EelPosixGroupPrincipal) {
-                                  if (value.gid != oldPermissions.group) {
-                                    TODO("Changing gid is not supported yet")
-                                  }
-                                  oldPermissions
-                                }
-                                else {
-                                  throw java.lang.UnsupportedOperationException("Unsupported group principal: $value")
-                                }
-                              }
-                              else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
-                            })
+        val attributes = readAttributes(path, PosixFileAttributes::class.java, *options)
+        val oldPermissions = (attributes as IjentNioPosixFileAttributes).fileInfo.permissions
+        val newPermissions = when (requestedAttributes.singleOrNull()) {
+          "permissions" -> {
+            value as Set<*> // ClassCastException is expected
+            @Suppress("UNCHECKED_CAST") val mask = PosixFilePermissionsUtil.toUnixMode(value as Set<PosixFilePermission>)
+            EelPosixFileInfoImpl.Permissions(oldPermissions.owner, oldPermissions.group, mask)
+          }
+          "owner" -> {
+            if (value is EelPosixUserPrincipal) {
+              if (value.uid != oldPermissions.owner) {
+                TODO("Changing uid is not supported yet")
+              }
+              oldPermissions
+            }
+            else {
+              throw UnsupportedOperationException("Unsupported owner principal: $value")
+            }
+          }
+          "group" -> {
+            if (value is EelPosixGroupPrincipal) {
+              if (value.gid != oldPermissions.group) {
+                TODO("Changing gid is not supported yet")
+              }
+              oldPermissions
+            }
+            else {
+              throw java.lang.UnsupportedOperationException("Unsupported group principal: $value")
+            }
+          }
+          else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
+        }
+        builder.permissions(newPermissions)
+      }
+      "dos" -> {
+        val attributes = readAttributes(path, BasicFileAttributes::class.java, *options)
+        val oldPermissions = EelWindowsFileInfoImpl.Permissions((attributes as IjentNioWindowsFileAttributes).fileInfo.permissions)
+        val newPermissions = when (requestedAttributes.singleOrNull()) {
+          "hidden" -> oldPermissions.copy(isHidden = value as Boolean)
+          "readonly" -> oldPermissions.copy(isReadOnly = value as Boolean)
+          "system" -> oldPermissions.copy(isSystem = value as Boolean)
+          "archive" -> oldPermissions.copy(isArchive = value as Boolean)
+          else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
+        }
+        builder.permissions(newPermissions)
       }
       else -> throw java.lang.IllegalArgumentException("Unrecognized attribute: $attribute")
     }
     fsBlocking {
-      nioFs.ijentFs.changeAttributes(path.eelPath, builder.build()).getOrThrowFileSystemException()
+      builder.getOrThrowFileSystemException()
     }
   }
 
@@ -678,7 +697,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 }
 
 
-internal fun EelFileSystemApi.ChangeAttributesOptions.Builder.updateTime(selector: EelFileSystemApi.ChangeAttributesOptions.Builder.(EelFileSystemApi.TimeSinceEpoch) -> Unit, obj: Any) {
+internal fun EelFileSystemApiHelpers.ChangeAttributes.updateTime(selector: EelFileSystemApiHelpers.ChangeAttributes.(EelFileSystemApi.TimeSinceEpoch) -> Unit, obj: Any) {
   obj as FileTime // ClassCastException is expected
   val instant = obj.toInstant()
   selector(EelFileSystemApi.timeSinceEpoch(instant.epochSecond.toULong(), instant.nano.toUInt()))

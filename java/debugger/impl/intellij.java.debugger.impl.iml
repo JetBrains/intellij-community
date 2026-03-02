@@ -35,7 +35,6 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.execution" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
-    <orderEntry type="module" module-name="intellij.java.resources" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core" />

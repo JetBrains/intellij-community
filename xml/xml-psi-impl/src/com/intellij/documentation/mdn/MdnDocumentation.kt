@@ -1,16 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.documentation.mdn
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.TreeNode
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.TextNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.lang.documentation.DocumentationMarkup
@@ -34,6 +24,16 @@ import com.intellij.xml.psi.impl.icons.XmlPsiImplIcons
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import tools.jackson.core.JsonParser
+import tools.jackson.core.TreeNode
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.ValueDeserializer
+import tools.jackson.databind.annotation.JsonDeserialize
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.module.kotlin.jacksonMapperBuilder
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -644,7 +644,7 @@ enum class MdnCssSymbolKind {
 @ApiStatus.Internal
 val webApiFragmentStarts: Array<Char> = arrayOf('a', 'e', 'l', 'r', 'u')
 
-private class CompatibilityMapDeserializer : JsonDeserializer<CompatibilityMap>() {
+private class CompatibilityMapDeserializer : ValueDeserializer<CompatibilityMap>() {
 
   override fun deserialize(p: JsonParser, ctxt: DeserializationContext): CompatibilityMap =
     p.readValueAsTree<TreeNode>()
@@ -663,7 +663,7 @@ private class CompatibilityMapDeserializer : JsonDeserializer<CompatibilityMap>(
 
   private fun ObjectNode.toBcdMap(): Map<MdnJavaScriptRuntime, String> =
     this.properties().asSequence().map { (key, value) ->
-      Pair(MdnJavaScriptRuntime.valueOf(key), (value as TextNode).asText())
+      Pair(MdnJavaScriptRuntime.valueOf(key), value.asString())
     }.toMap()
 
 }
@@ -678,8 +678,13 @@ private val documentationCache: LoadingCache<Pair<MdnApiNamespace, Char?>, MdnDo
   .build { (namespace, segment) -> loadDocumentation(namespace, segment) }
 
 private val webApiIndex: Map<String, String> by lazy {
+  val mapper = jacksonMapperBuilder()
+    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .build()
+
   MdnHtmlDocumentation::class.java.getResource("WebApi-index.json")!!
-    .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it) }
+    .openStream()
+    .use { mapper.readValue(it) }
 }
 
 private fun fixMdnUrls(content: String, lang: String): String =
@@ -717,7 +722,7 @@ private fun <T : MdnDocumentation> loadDocumentation(namespace: MdnApiNamespace,
   val obsoleteFile = MdnHtmlDocumentation::class.java.getResource("${namespace.name}${segment?.let { "-$it" } ?: ""}-obsolete.json")
   return sequenceOf(mainFile, obsoleteFile)
     .filterNotNull()
-    .map { jacksonObjectMapper().readValue(it, clazz) }
+    .map { it.openStream().use { stream -> jacksonObjectMapper().readValue(stream, clazz) } }
     .reduce(::mergeDocumentation)
 }
 

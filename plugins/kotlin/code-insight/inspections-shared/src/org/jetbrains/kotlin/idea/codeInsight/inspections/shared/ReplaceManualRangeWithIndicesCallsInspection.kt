@@ -201,7 +201,11 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
         val target = extractTargetExpression(type, expression) ?: return null
         val selector = (target as? KtDotQualifiedExpression)?.selectorExpression ?: target
         val receiverType = resolveReceiverType(target) ?: return null
-        
+
+        // lastIndex is only valid for inclusive ranges (RANGE_TO)
+        // For open ranges (UNTIL, RANGE_UNTIL), 0..<lastIndex excludes the last element
+        if (selector.text == "lastIndex" && type != RANGE_TO) return null
+
         return when (selector.text) {
             "size", "lastIndex" -> if (receiverType.isArrayOrPrimitiveArray || receiverType.isSubtypeOf(StandardClassIds.Collection)) target else null
             "length" -> if (receiverType.isSubtypeOf(StandardClassIds.CharSequence)) target else null

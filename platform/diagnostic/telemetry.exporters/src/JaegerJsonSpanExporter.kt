@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.exporters
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.trace.IdGenerator
@@ -14,6 +12,10 @@ import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.ObjectWriteContext
+import tools.jackson.core.StreamWriteFeature
+import tools.jackson.core.json.JsonFactory
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.channels.FileChannel
@@ -38,10 +40,10 @@ class JaegerJsonSpanExporter(
 
   private val lock = Mutex()
 
-  private fun initWriter() = JsonFactory().createGenerator(Channels.newOutputStream(fileChannel))
-    .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
+  private fun initWriter() = JsonFactory().createGenerator(ObjectWriteContext.empty(), Channels.newOutputStream(fileChannel))
+    .configure(StreamWriteFeature.AUTO_CLOSE_TARGET, true)
     // Channels.newOutputStream doesn't implement flush, but just to be sure
-    .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
+    .configure(StreamWriteFeature.FLUSH_PASSED_TO_STREAM, false)
 
   init {
     val parent = file.parent
@@ -64,31 +66,31 @@ class JaegerJsonSpanExporter(
     lock.withReentrantLock {
       for (span in spans) {
         writer.writeStartObject()
-        writer.writeStringField("traceID", span.traceId)
-        writer.writeStringField("spanID", span.spanId)
-        writer.writeStringField("operationName", span.name)
-        writer.writeStringField("processID", "p1")
-        writer.writeNumberField("startTime", TimeUnit.NANOSECONDS.toMicros(span.startEpochNanos)) // in microseconds (Jaeger format)
-        writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMicros(span.endEpochNanos - span.startEpochNanos)) // // in microseconds (Jaeger format)
-        writer.writeNumberField("startTimeNano", span.startEpochNanos) // in nanoseconds
-        writer.writeNumberField("durationNano", span.endEpochNanos - span.startEpochNanos) // in nanoseconds
+        writer.writeStringProperty("traceID", span.traceId)
+        writer.writeStringProperty("spanID", span.spanId)
+        writer.writeStringProperty("operationName", span.name)
+        writer.writeStringProperty("processID", "p1")
+        writer.writeNumberProperty("startTime", TimeUnit.NANOSECONDS.toMicros(span.startEpochNanos)) // in microseconds (Jaeger format)
+        writer.writeNumberProperty("duration", TimeUnit.NANOSECONDS.toMicros(span.endEpochNanos - span.startEpochNanos)) // // in microseconds (Jaeger format)
+        writer.writeNumberProperty("startTimeNano", span.startEpochNanos) // in nanoseconds
+        writer.writeNumberProperty("durationNano", span.endEpochNanos - span.startEpochNanos) // in nanoseconds
 
         val parentContext = span.parentSpanContext
         val hasError = span.status.statusCode == StatusData.error().statusCode
 
         val attributes = span.attributes
         if (!attributes.isEmpty || hasError) {
-          writer.writeArrayFieldStart("tags")
+          writer.writeArrayPropertyStart("tags")
           if (hasError) {
             writer.writeStartObject()
-            writer.writeStringField("key", "otel.status_code")
-            writer.writeStringField("type", "string")
-            writer.writeStringField("value", "ERROR")
+            writer.writeStringProperty("key", "otel.status_code")
+            writer.writeStringProperty("type", "string")
+            writer.writeStringProperty("value", "ERROR")
             writer.writeEndObject()
             writer.writeStartObject()
-            writer.writeStringField("key", "error")
-            writer.writeStringField("type", "boolean")
-            writer.writeStringField("value", "true")
+            writer.writeStringProperty("key", "error")
+            writer.writeStringProperty("type", "boolean")
+            writer.writeStringProperty("value", "true")
             writer.writeEndObject()
           }
           writeAttributesAsJson(writer, attributes)
@@ -97,17 +99,17 @@ class JaegerJsonSpanExporter(
 
         val events = span.events
         if (!events.isEmpty()) {
-          writer.writeArrayFieldStart("logs")
+          writer.writeArrayPropertyStart("logs")
           for (event in events) {
             writer.writeStartObject()
-            writer.writeNumberField("timestamp", TimeUnit.NANOSECONDS.toMicros(event.epochNanos))
-            writer.writeArrayFieldStart("fields")
+            writer.writeNumberProperty("timestamp", TimeUnit.NANOSECONDS.toMicros(event.epochNanos))
+            writer.writeArrayPropertyStart("fields")
 
             // event name as event attribute
             writer.writeStartObject()
-            writer.writeStringField("key", "event")
-            writer.writeStringField("type", "string")
-            writer.writeStringField("value", event.name)
+            writer.writeStringProperty("key", "event")
+            writer.writeStringProperty("type", "string")
+            writer.writeStringProperty("value", event.name)
             writer.writeEndObject()
             writeAttributesAsJson(writer, event.attributes)
             writer.writeEndArray()
@@ -117,11 +119,11 @@ class JaegerJsonSpanExporter(
         }
 
         if (parentContext.isValid) {
-          writer.writeArrayFieldStart("references")
+          writer.writeArrayPropertyStart("references")
           writer.writeStartObject()
-          writer.writeStringField("refType", "CHILD_OF")
-          writer.writeStringField("traceID", parentContext.traceId)
-          writer.writeStringField("spanID", parentContext.spanId)
+          writer.writeStringProperty("refType", "CHILD_OF")
+          writer.writeStringProperty("traceID", parentContext.traceId)
+          writer.writeStringProperty("spanID", parentContext.spanId)
           writer.writeEndObject()
           writer.writeEndArray()
         }
@@ -140,35 +142,35 @@ class JaegerJsonSpanExporter(
         for (span in scopeSpan.spans) {
           writer.writeStartObject()
           val traceId = span.traceId.toHexString()
-          writer.writeStringField("traceID", traceId)
-          writer.writeStringField("spanID", span.spanId.toHexString())
-          writer.writeStringField("operationName", span.name)
+          writer.writeStringProperty("traceID", traceId)
+          writer.writeStringProperty("spanID", span.spanId.toHexString())
+          writer.writeStringProperty("operationName", span.name)
 
-          writer.writeStringField("processID", "p1")
-          writer.writeNumberField("startTime", TimeUnit.NANOSECONDS.toMicros(span.startTimeUnixNano))
-          writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMicros(span.endTimeUnixNano - span.startTimeUnixNano))
+          writer.writeStringProperty("processID", "p1")
+          writer.writeNumberProperty("startTime", TimeUnit.NANOSECONDS.toMicros(span.startTimeUnixNano))
+          writer.writeNumberProperty("duration", TimeUnit.NANOSECONDS.toMicros(span.endTimeUnixNano - span.startTimeUnixNano))
 
           val attributes = span.attributes
           if (!attributes.isEmpty()) {
-            writer.writeArrayFieldStart("tags")
+            writer.writeArrayPropertyStart("tags")
             for (k in attributes) {
               val w = writer
               w.writeStartObject()
-              w.writeStringField("key", k.key)
-              w.writeStringField("type", "string")
-              w.writeStringField("value", k.value.string)
+              w.writeStringProperty("key", k.key)
+              w.writeStringProperty("type", "string")
+              w.writeStringProperty("value", k.value.string)
               w.writeEndObject()
             }
             writer.writeEndArray()
           }
 
           if (span.parentSpanId != null) {
-            writer.writeArrayFieldStart("references")
+            writer.writeArrayPropertyStart("references")
             writer.writeStartObject()
-            writer.writeStringField("refType", "CHILD_OF")
+            writer.writeStringProperty("refType", "CHILD_OF")
             // not an error - space trace id equals to parent, OpenTelemetry opposite to Jaeger doesn't support cross-trace parent
-            writer.writeStringField("traceID", traceId)
-            writer.writeStringField("spanID", span.parentSpanId.toHexString())
+            writer.writeStringProperty("traceID", traceId)
+            writer.writeStringProperty("spanID", span.parentSpanId.toHexString())
             writer.writeEndObject()
             writer.writeEndArray()
           }
@@ -236,21 +238,21 @@ private fun beginWriter(
   serviceNamespace: String?,
 ) {
   w.writeStartObject()
-  w.writeArrayFieldStart("data")
+  w.writeArrayPropertyStart("data")
   w.writeStartObject()
-  w.writeStringField("traceID", IdGenerator.random().generateTraceId())
+  w.writeStringProperty("traceID", IdGenerator.random().generateTraceId())
 
   // process info
-  w.writeObjectFieldStart("processes")
-  w.writeObjectFieldStart("p1")
-  w.writeStringField("serviceName", serviceName)
+  w.writeObjectPropertyStart("processes")
+  w.writeObjectPropertyStart("p1")
+  w.writeStringProperty("serviceName", serviceName)
 
-  w.writeArrayFieldStart("tags")
+  w.writeArrayPropertyStart("tags")
 
   w.writeStartObject()
-  w.writeStringField("key", "time")
-  w.writeStringField("type", "string")
-  w.writeStringField("value", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
+  w.writeStringProperty("key", "time")
+  w.writeStringProperty("type", "string")
+  w.writeStringProperty("value", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
   w.writeEndObject()
 
   if (serviceVersion != null) {
@@ -264,31 +266,31 @@ private fun beginWriter(
 
   w.writeEndObject()
   w.writeEndObject()
-  w.writeArrayFieldStart("spans")
+  w.writeArrayPropertyStart("spans")
 }
 
 private fun writeStringTag(name: String, value: String, w: JsonGenerator) {
   w.writeStartObject()
-  w.writeStringField("key", name)
-  w.writeStringField("type", "string")
-  w.writeStringField("value", value)
+  w.writeStringProperty("key", name)
+  w.writeStringProperty("type", "string")
+  w.writeStringProperty("value", value)
   w.writeEndObject()
 }
 
 private fun writeAttributesAsJson(w: JsonGenerator, attributes: Attributes) {
   attributes.forEach { k, v ->
     w.writeStartObject()
-    w.writeStringField("key", k.key)
-    w.writeStringField("type", k.type.name.lowercase())
+    w.writeStringProperty("key", k.key)
+    w.writeStringProperty("type", k.type.name.lowercase())
     if (v is Iterable<*>) {
-      w.writeArrayFieldStart("value")
+      w.writeArrayPropertyStart("value")
       for (item in v) {
         w.writeString(item as String)
       }
       w.writeEndArray()
     }
     else {
-      w.writeStringField("value", v.toString())
+      w.writeStringProperty("value", v.toString())
     }
     w.writeEndObject()
   }

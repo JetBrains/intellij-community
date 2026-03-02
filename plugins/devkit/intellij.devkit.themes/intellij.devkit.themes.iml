@@ -8,6 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" packagePrefix="org.jetbrains.idea.devkit.themes" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.json.backend" />

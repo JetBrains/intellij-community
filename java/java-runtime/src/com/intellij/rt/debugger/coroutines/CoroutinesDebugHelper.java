@@ -227,57 +227,6 @@ public final class CoroutinesDebugHelper {
   }
 
   /**
-   * This method takes the array of {@link kotlinx.coroutines.debug.internal.DebugCoroutineInfo} instances
-   * and for each coroutine finds it's job and the first parent, which corresponds to some coroutine, captured in the dump.
-   * That means that parent jobs corresponding to ScopeCoroutines (coroutineScope) or DispatchedCoroutine (withContext)
-   * will be skipped. Their frames will be seen in the async stack trace.
-   *
-   * @return an array of Strings of size (debugCoroutineInfos.size * 2), where
-   * (2 * i)-th element is a String representation of the job and
-   * (2 * i + 1)-th element is a String representation of the parent of the i-th coroutine from debugCoroutineInfos array.
-   */
-  public static String[] getJobsAndParentsForCoroutines(Object ... debugCoroutineInfos) throws ReflectiveOperationException {
-    if (debugCoroutineInfos.length == 0) return new String[]{};
-    ClassLoader loader = debugCoroutineInfos[0].getClass().getClassLoader();
-    Class<?> debugCoroutineInfoClass = Class.forName(DEBUG_COROUTINE_INFO_FQN, false, loader);
-    Class<?> coroutineContext = Class.forName(COROUTINE_CONTEXT_FQN, false, loader);
-    Class<?> coroutineContextKey = Class.forName(COROUTINE_CONTEXT_KEY_FQN, false, loader);
-    Class<?> coroutineJobClass = Class.forName(COROUTINE_JOB_FQN, false, loader);
-    Object coroutineJobKey = coroutineJobClass.getField("Key").get(null); // Job.Key
-    Method coroutineContextGet = coroutineContext.getMethod("get", coroutineContextKey);
-    Method getParentJob = coroutineJobClass.getMethod("getParent");
-    Method getContext = debugCoroutineInfoClass.getMethod("getContext");
-
-    String[] jobToCapturedParent = new String[debugCoroutineInfos.length * 2];
-    Set<String> capturedJobs = new HashSet<>();
-    for(Object info : debugCoroutineInfos) {
-      Object context = invoke(info, getContext);
-      Object job = invoke(context, coroutineContextGet, coroutineJobKey);
-      capturedJobs.add(job.toString());
-    }
-    for (int i = 0; i < debugCoroutineInfos.length * 2; i += 2) {
-      Object info = debugCoroutineInfos[i / 2];
-      Object context = invoke(info, getContext);
-      Object job = invoke(context, coroutineContextGet, coroutineJobKey);
-      if (job == null) {
-        jobToCapturedParent[i] = null;
-        jobToCapturedParent[i + 1] = null;
-        continue;
-      }
-      jobToCapturedParent[i] = job.toString();
-      Object parent = invoke(job, getParentJob);
-      while (parent != null) {
-        if (capturedJobs.contains(parent.toString())) {
-          jobToCapturedParent[i + 1] = parent.toString();
-          break;
-        }
-        parent = invoke(parent, getParentJob);
-      }
-    }
-    return jobToCapturedParent;
-  }
-
-  /**
    * Returns an Object array containing coroutine job hierarchy information, or {@code null} if something went wrong
    * or job corresponding to some coroutine does not exist.
    * <ol>

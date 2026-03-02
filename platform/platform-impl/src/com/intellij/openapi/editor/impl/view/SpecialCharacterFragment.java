@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -25,6 +25,8 @@ final class SpecialCharacterFragment implements LineFragment {
                 0x81,   0x82,   0x83,   0x84,   0x85,   0x86,   0x87,   0x88,   0x89,   0x8A,   0x8B,   0x8C,   0x8D,   0x8E,   0x8F,
         0x90,   0x91,   0x92,   0x93,   0x94,   0x95,   0x96,   0x97,   0x98,   0x99,   0x9A,   0x9B,   0x9C,   0x9D,   0x9E,   0x9F,
         0xA0,                                                                                                   0xAD,
+       0x34F,
+       0x61C,
       0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x200B, 0x200C, 0x200D, 0x200E, 0x200F,
                                                                       0x2028, 0x2029, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x202F,
                                                                                                                               0x205F,
@@ -38,6 +40,8 @@ final class SpecialCharacterFragment implements LineFragment {
                "HOP",  "BPH",  "NBH",  "IND",  "NEL",  "SSA",  "ESA",  "HTS",  "HTJ",  "VTS",  "PLD",  "PLU",   "RI",  "SS2",  "SS3",
        "DCS",  "PU1",  "PU2",  "STS",  "CCH",   "MW",  "SPA",  "EPA",  "SOS", "SGCI",  "SCI",  "CSI",   "ST",  "OSC",   "PM",  "APC",
       "NBSP",                                                                                                  "SHY",
+       "CGJ",
+       "ALM",
       "NQSP", "MQSP", "ENSP", "EMSP","3/MSP","4/MSP","6/MSP",  "FSP",  "PSP", "THSP",  "HSP", "ZWSP", "ZWNJ",  "ZWJ",  "LRM",  "RLM",
                                                                       "LSEP", "PSEP",  "LRE",  "RLE",  "PDF",  "LRO",  "RLO","NNBSP",
                                                                                                                               "MMSP",

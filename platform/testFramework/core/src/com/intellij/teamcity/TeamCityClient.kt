@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.teamcity
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.TestCaseLoader
 import com.intellij.nastradamus.model.ChangeEntity
 import com.intellij.openapi.application.PathManager
@@ -15,6 +12,9 @@ import org.apache.http.HttpRequest
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.auth.BasicScheme
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.io.InputStreamReader
 import java.net.URI
 import java.nio.file.Files
@@ -155,9 +155,9 @@ class TeamCityClient(
     val fullUrl = restUri.resolve("changes/id:$changeId")
 
     fun processData(jsonRoot: JsonNode): List<ChangeEntity> {
-      val comment = jsonRoot.findValue("comment").asText()
-      val userName = jsonRoot.findValue("username").asText()
-      val date = jsonRoot.findValue("date").asText()
+      val comment = jsonRoot.findValue("comment").asString()
+      val userName = jsonRoot.findValue("username").asString()
+      val date = jsonRoot.findValue("date").asString()
 
       val filesFields = jsonRoot.findValue("files")
         .findValue("file")
@@ -165,11 +165,11 @@ class TeamCityClient(
 
       return filesFields.map { fileField ->
         ChangeEntity(
-          filePath = fileField.findValue("file").asText(),
-          relativeFile = fileField.findValue("relative-file").asText(),
-          beforeRevision = fileField.findValue("before-revision")?.asText("") ?: "",
-          afterRevision = fileField.findValue("after-revision")?.asText("") ?: "",
-          changeType = fileField.findValue("changeType").asText(),
+          filePath = fileField.findValue("file").asString(),
+          relativeFile = fileField.findValue("relative-file").asString(),
+          beforeRevision = fileField.findValue("before-revision")?.asString("") ?: "",
+          afterRevision = fileField.findValue("after-revision")?.asString("") ?: "",
+          changeType = fileField.findValue("changeType").asString(),
           comment = comment,
           userName = userName,
           date = date

@@ -25,6 +25,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
   </dependencies>
   <!-- endregion -->

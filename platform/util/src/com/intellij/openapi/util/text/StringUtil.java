@@ -1776,6 +1776,17 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
+  public static boolean endsWithIgnoreWhitespaces(@NotNull CharSequence text, @NotNull CharSequence suffix) {
+    int i = text.length();
+    for (; i > 0; i--) {
+      if (!Strings.isWhiteSpace(text.charAt(i - 1))) {
+        break;
+      }
+    }
+    return endsWith(text, 0, i, suffix);
+  }
+
+  @Contract(pure = true)
   public static @NotNull String commonPrefix(@NotNull String s1, @NotNull String s2) {
     return s1.substring(0, commonPrefixLength(s1, s2));
   }

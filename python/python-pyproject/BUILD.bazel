@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   resources = [":pyproject_resources"],
   deps = [
+    "//libraries/caffeine",
     "@lib//:kotlin-stdlib",
     "//python/openapi:community",
     "//python/python-psi-impl:psi-impl",
@@ -50,6 +51,7 @@ jvm_library(
   exports = ["@lib//:tuweni-toml"],
   runtime_deps = [
     ":pyproject",
+    "//libraries/caffeine:caffeine_test_lib",
     "//python/openapi:community_test_lib",
     "//python/python-psi-impl:psi-impl_test_lib",
     "//platform/core-api:core_test_lib",

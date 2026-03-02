@@ -2,9 +2,9 @@
 package com.intellij.python.community.impl.pipenv
 
 import com.intellij.python.community.impl.pipenv.icons.PythonCommunityImplPipenvIcons
-import com.intellij.python.processOutput.ProcessBinaryFileName
-import com.intellij.python.processOutput.ProcessIcon
-import com.intellij.python.processOutput.ProcessOutputIconMapping
+import com.intellij.python.processOutput.common.ProcessBinaryFileName
+import com.intellij.python.processOutput.common.ProcessIcon
+import com.intellij.python.processOutput.common.ProcessOutputIconMapping
 
 internal class PipenvIconMapping : ProcessOutputIconMapping() {
   override val mapping: Map<ProcessBinaryFileName, ProcessIcon> = mapOf(

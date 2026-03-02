@@ -92,6 +92,8 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
   ]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.k2` end

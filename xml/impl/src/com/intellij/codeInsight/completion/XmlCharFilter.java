@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.RuntimeFlagsKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -21,6 +22,11 @@ public class XmlCharFilter extends CharFilter {
 
   public static boolean isInXmlContext(Lookup lookup) {
     if (!lookup.isCompletion()) return false;
+
+    if (RuntimeFlagsKt.isEditorLockFreeTypingEnabled()) {
+      // TODO: rework for lock-free typing, getContainingFile requires RA on EDT
+      return false;
+    }
 
     PsiElement psiElement = lookup.getPsiElement();
     PsiFile file = lookup.getPsiFile();

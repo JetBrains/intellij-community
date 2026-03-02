@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.newui.MyPluginModel;
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent;
 import com.intellij.ide.plugins.newui.PluginModelFacade;
 import com.intellij.ide.plugins.newui.PluginUiModel;
-import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.plugins.newui.PluginsGroup;
 import com.intellij.ide.plugins.newui.PluginsGroupComponent;
 import com.intellij.ide.plugins.newui.PluginsGroupComponentWithProgress;
@@ -70,7 +69,6 @@ class InstalledPluginsTab extends PluginsTab {
     ExtensionPointName.create("com.intellij.pluginCategoryPromotionProvider");
 
   private final @NotNull PluginModelFacade myPluginModelFacade;
-  private final @NotNull PluginUpdatesService myPluginUpdatesService;
   private final @NotNull CoroutineScope myCoroutineScope;
   private final @Nullable Consumer<String> mySearchInMarketplaceTabHandler;
 
@@ -89,12 +87,10 @@ class InstalledPluginsTab extends PluginsTab {
   private final JLabel myUpdateCounterBundled = new CountComponent();
 
   InstalledPluginsTab(@NotNull PluginModelFacade facade,
-                      @NotNull PluginUpdatesService service,
                       @NotNull CoroutineScope scope,
                       @Nullable Consumer<String> searchInMarketplaceHandler) {
     super();
     myPluginModelFacade = facade;
-    myPluginUpdatesService = service;
     myCoroutineScope = scope;
     mySearchInMarketplaceTabHandler = searchInMarketplaceHandler;
     myInstalledSearchGroup = new DefaultActionGroup();
@@ -275,16 +271,17 @@ class InstalledPluginsTab extends PluginsTab {
             myPluginModelFacade.getModel().addEnabledGroup(group);
           });
 
-        myPluginUpdatesService.calculateUpdates(updates -> {
-          if (ContainerUtil.isEmpty(updates)) {
+        PluginUpdateListener.calculateUpdates(myCoroutineScope, updates -> {
+          List<PluginUiModel> updateModels = updates == null ? null : new ArrayList<>(updates);
+          if (ContainerUtil.isEmpty(updateModels)) {
             clearUpdates(myInstalledPanel);
             clearUpdates(myInstalledSearchPanel.getPanel());
           }
           else {
-            applyUpdates(myInstalledPanel, updates);
-            applyUpdates(myInstalledSearchPanel.getPanel(), updates);
+            applyUpdates(myInstalledPanel, updateModels);
+            applyUpdates(myInstalledSearchPanel.getPanel(), updateModels);
           }
-          applyBundledUpdates(updates);
+          applyBundledUpdates(updateModels);
           selectionListener.accept(myInstalledPanel);
           selectionListener.accept(myInstalledSearchPanel.getPanel());
         });

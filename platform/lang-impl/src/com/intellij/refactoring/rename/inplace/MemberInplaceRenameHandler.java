@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -30,9 +30,7 @@ import java.util.List;
 
 public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   @Override
-  protected boolean isAvailable(@Nullable PsiElement element,
-                                @NotNull Editor editor,
-                                @NotNull PsiFile file) {
+  protected boolean isAvailable(@Nullable PsiElement element, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
     if (nameSuggestionContext == null && editor.getCaretModel().getOffset() > 0) {
       nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset() - 1);
@@ -41,8 +39,8 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
     if (element == null && LookupManager.getActiveLookup(editor) != null) {
       element = PsiTreeUtil.getParentOfType(nameSuggestionContext, PsiNamedElement.class);
     }
-    final RefactoringSupportProvider
-      supportProvider = element == null ? null : LanguageRefactoringSupport.getInstance().forContext(element);
+    final RefactoringSupportProvider supportProvider = 
+      element == null ? null : LanguageRefactoringSupport.getInstance().forContext(element);
     return editor.getSettings().isVariableInplaceRenameEnabled()
            && supportProvider != null
            && element instanceof PsiNameIdentifierOwner
@@ -50,17 +48,17 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   }
 
   @Override
-  public InplaceRefactoring doRename(@NotNull PsiElement elementToRename,
-                                     @NotNull Editor editor,
-                                     @Nullable DataContext dataContext) {
-    Component contextComponent = ObjectUtils.notNull(dataContext != null ? PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext) : null, editor.getComponent());
+  public InplaceRefactoring doRename(@NotNull PsiElement elementToRename, @NotNull Editor editor, @Nullable DataContext dataContext) {
+    Component contextComponent = 
+      ObjectUtils.notNull(dataContext != null ? PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext) : null, editor.getComponent());
     String newName = dataContext != null ? PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext) : null;
     PsiElement newElementToRename = null;
     if (elementToRename instanceof PsiNameIdentifierOwner) {
       final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(elementToRename);
       if (processor.isInplaceRenameSupported()) {
         final StartMarkAction startMarkAction = StartMarkAction.canStart(editor);
-        if (startMarkAction == null || (newElementToRename = processor.substituteElementToRename(elementToRename, editor)) == elementToRename) {
+        if (startMarkAction == null 
+            || (newElementToRename = processor.substituteElementToRename(elementToRename, editor)) == elementToRename) {
           processor.substituteElementToRename(elementToRename, editor, new Pass<>() {
             @Override
             public void pass(PsiElement element) {
@@ -68,7 +66,8 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
               List<String> names = dataContext == null ? null : PsiElementRenameHandler.NAME_SUGGESTIONS.getData(dataContext);
               boolean startedRename = renamer.performInplaceRename(names);
               if (!startedRename) {
-                performDialogRename(elementToRename, editor, createDataContext(contextComponent, newName, elementToRename), renamer.myInitialName);
+                performDialogRename(elementToRename, editor, createDataContext(contextComponent, newName, elementToRename), 
+                                    renamer.myInitialName);
               }
             }
           });

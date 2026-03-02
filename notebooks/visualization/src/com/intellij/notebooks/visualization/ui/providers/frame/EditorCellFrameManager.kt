@@ -44,22 +44,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
       updateCellFrameShow()
     }
 
-    editor.notebookAppearance.cellFrameSelectedColor.afterChange(this) {
-      updateCellFrameShow()
-    }
-
-    editor.notebookAppearance.cellFrameHoveredColor.afterChange(this) {
-      updateCellFrameShow()
-    }
-
-    editor.notebookAppearance.editorBackgroundColor.afterChange(this) {
-      updateCellFrameShow()
-    }
-
-    editor.notebookAppearance.codeCellBackgroundColor.afterChange(this) {
-      updateCellFrameShow()
-    }
-
     JupyterBoundsChangeHandler.get(editor).subscribe(this) {
       cachedRightLine = null
     }
@@ -115,10 +99,10 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
 
     when {
       isSelected -> {
-        state.set(CellFrameState(true, editor.notebookAppearance.cellFrameSelectedColor.get()))
+        state.set(CellFrameState(true, editor.notebookAppearance.cellFrameSelectedColor()))
       }
       isHovered -> {
-        state.set(CellFrameState(true, editor.notebookAppearance.cellFrameHoveredColor.get()))
+        state.set(CellFrameState(true, editor.notebookAppearance.cellFrameHoveredColor()))
       }
       else -> {
         state.set(CellFrameState(false))
@@ -128,7 +112,7 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
 
   private fun updateCellFrameShowCode() {
     if (isSelected) {
-      state.set(CellFrameState(true, editor.notebookAppearance.cellFrameSelectedColor.get()))
+      state.set(CellFrameState(true, editor.notebookAppearance.cellFrameSelectedColor()))
     }
     else {
       state.set(CellFrameState(false))

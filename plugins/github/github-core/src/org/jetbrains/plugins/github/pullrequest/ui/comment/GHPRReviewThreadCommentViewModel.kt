@@ -29,7 +29,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsViewModel
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import java.util.Date
 
-interface GHPRReviewThreadCommentViewModel {
+interface GHPRReviewThreadCommentViewModel : GHViewModelWithTextCompletion {
   val avatarIconsProvider: GHAvatarIconsProvider
 
   val author: GHActor
@@ -59,8 +59,9 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
   thread: GHPRReviewThreadViewModel,
+  viewModelWithTextCompletion: GHViewModelWithTextCompletion,
   initialDataWithIndex: IndexedValue<GHPullRequestReviewComment>
-) : GHPRReviewThreadCommentViewModel {
+) : GHPRReviewThreadCommentViewModel, GHViewModelWithTextCompletion by viewModelWithTextCompletion {
   private val cs = parentCs.childScope("GitHub Pull Request Thread Comment View Model")
   private val reviewData = dataProvider.reviewData
   private val taskLauncher = SingleCoroutineLauncher(cs)

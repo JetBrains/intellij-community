@@ -79,6 +79,7 @@ jvm_library(
     "//platform/xdebugger-impl/ui",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/execution",
+    "//platform/ide-core",
   ]
 )
 
@@ -139,6 +140,7 @@ jvm_library(
     "//platform/xdebugger-impl/ui:ui_test_lib",
     "//platform/remote-topics/shared:rpc-topics_test_lib",
     "//platform/execution:execution_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl` end

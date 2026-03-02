@@ -97,8 +97,14 @@ internal class TestPluginGraphBuilder {
     delegate.addEdgeWithLoadingMode(source, target, edgeType, loadingMode)
   }
 
-  internal fun addPluginDependencyEdge(sourcePluginId: Int, depId: PluginId, isOptional: Boolean, formatMask: Int) {
-    delegate.addPluginDependencyEdgeForTest(sourcePluginId, depId, isOptional, formatMask)
+  internal fun addPluginDependencyEdge(
+    sourcePluginId: Int,
+    depId: PluginId,
+    isOptional: Boolean,
+    formatMask: Int,
+    hasConfigFile: Boolean = false,
+  ) {
+    delegate.addPluginDependencyEdgeForTest(sourcePluginId, depId, isOptional, formatMask, hasConfigFile)
   }
 
   internal suspend fun markDescriptorModules(descriptorCache: ModuleDescriptorCache) {
@@ -338,8 +344,14 @@ internal class GraphPluginBuilder(
   /**
    * Add a legacy plugin.xml <depends> dependency to this plugin.
    */
-  fun dependsOnLegacyPlugin(id: String, optional: Boolean = false) {
-    builder.addPluginDependencyEdge(pluginId, PluginId(id), isOptional = optional, formatMask = PLUGIN_DEP_LEGACY_MASK)
+  fun dependsOnLegacyPlugin(id: String, optional: Boolean = false, hasConfigFile: Boolean = false) {
+    builder.addPluginDependencyEdge(
+      pluginId,
+      PluginId(id),
+      isOptional = optional,
+      formatMask = PLUGIN_DEP_LEGACY_MASK,
+      hasConfigFile = hasConfigFile,
+    )
   }
 
   /**

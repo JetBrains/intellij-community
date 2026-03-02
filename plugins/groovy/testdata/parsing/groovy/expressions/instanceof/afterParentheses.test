@@ -1,0 +1,21 @@
+a instanceof b c()
+-----
+Groovy script
+  Instanceof expression
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(instanceof)('instanceof')
+    PsiWhiteSpace(' ')
+    Type element
+      Reference element
+        PsiElement(identifier)('b')
+  PsiErrorElement:';' or new line expected, got 'c'
+    <empty list>
+  PsiWhiteSpace(' ')
+  Method call
+    Reference expression
+      PsiElement(identifier)('c')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')

@@ -220,7 +220,6 @@ object CreateClassUtil {
     private fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName? {
         val packageFqName = getNonRootFqNameOrNull() ?: return null
         sourceRoot?.takeIf { !it.hasExplicitPackagePrefix(project) }?.let { sourceRoot ->
-            @OptIn(K1ModeProjectStructureApi::class)
             val implicitPrefix = PerModulePackageCacheService.getInstance(project).getImplicitPackagePrefix(sourceRoot)
             return FqName.fromSegments((implicitPrefix.pathSegments() + packageFqName.pathSegments()).map { it.asString() })
         }

@@ -42,7 +42,7 @@ fun generateRuntimeModuleRepositoryForTests(monorepoProject: JpsProject): Runtim
   
   //the repository won't be saved on disk so the actual location of the directory doesn't matter much
   val outputDirectory = JpsModelSerializationDataService.getBaseDirectoryPath(monorepoProject)!!.resolve("out/module-descriptors-for-tests")
-  val repositoryData = RawRuntimeModuleRepositoryData.create(moduleDescriptors.associateBy { it.moduleId }, outputDirectory)
+  val repositoryData = RawRuntimeModuleRepositoryData.create(moduleDescriptors.associateBy { it.moduleId }, emptyList(), outputDirectory)
   return RuntimeModuleRepositoryImpl(outputDirectory.resolve(RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME), repositoryData)
 }
 

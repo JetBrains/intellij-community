@@ -542,14 +542,21 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Asami Tomoharu", "Murata Makoto", "Kohsuke Kawaguchi"),
 
     LibraryLicense("Jackson", libraryName = "jackson", url = "https://github.com/FasterXML/jackson")
+      .additionalLibraryNames("jackson3")
+      .apache("https://github.com/FasterXML/jackson-core/blob/2.14/LICENSE")
+      .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
+
+    LibraryLicense("jackson-annotations", libraryName = "jackson-annotations", url = "https://github.com/FasterXML/jackson")
       .apache("https://github.com/FasterXML/jackson-core/blob/2.14/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense("jackson-jr-objects", libraryName = "jackson-jr-objects", url = "https://github.com/FasterXML/jackson-jr")
+      .additionalLibraryNames("jackson3-jr-objects")
       .apache("https://github.com/FasterXML/jackson-jr/blob/2.16/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense("Jackson Databind", libraryName = "jackson-databind", url = "https://github.com/FasterXML/jackson-databind")
+      .additionalLibraryNames("jackson3-databind")
       .apache("https://github.com/FasterXML/jackson-databind/blob/2.16/LICENSE")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
@@ -562,10 +569,12 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense("Jackson Dataformat YAML", libraryName = "jackson-dataformat-yaml", url = "https://github.com/FasterXML/jackson-dataformats-text")
+      .additionalLibraryNames("jackson3-dataformat-yaml")
       .apache("https://github.com/FasterXML/jackson-dataformats-text/blob/2.16/pom.xml")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense("Jackson Module Kotlin", libraryName = "jackson-module-kotlin", url = "https://github.com/FasterXML/jackson-module-kotlin")
+      .additionalLibraryNames("jackson3-module-kotlin")
       .apache("https://github.com/FasterXML/jackson-module-kotlin/blob/2.16/LICENSE")
       .suppliedByPersons(
         "Tatu Saloranta", "Christopher Currie", "Paul Brown", "Jayson Minard",
@@ -1486,6 +1495,9 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.incremental-compilation-impl-tests"),
     jetbrainsLibrary("kotlinc.js-plain-objects-compiler-plugin"),
     jetbrainsLibrary("kotlinc.kotlin-build-common-tests"),
+    jetbrainsLibrary("kotlinc.kotlin-build-tools-api"),
+    jetbrainsLibrary("kotlinc.kotlin-build-tools-cri-impl"),
+    jetbrainsLibrary("kotlinc.kotlin-build-tools-impl"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-cli"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-common"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-fe10"),

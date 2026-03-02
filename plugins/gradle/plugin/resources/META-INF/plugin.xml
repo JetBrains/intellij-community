@@ -19,19 +19,12 @@
   <content namespace="jetbrains">
     <module name="intellij.gradle" loading="embedded"/>
     <module name="intellij.gradle.toolingExtension" loading="embedded"/>
+    <module name="intellij.gradle.toolingExtension.impl" loading="embedded"/>
+    <module name="intellij.gradle.toolingProxy" loading="required"/>
     <module name="intellij.gradle.completion"/>
+    <module name="intellij.gradle.completion.kotlin"/>
     <module name="intellij.gradle.toml"/>
     <module name="intellij.gradle.properties"/>
-    <module name="intellij.gradle.kotlin"/>
   </content>
-
-  <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.intellij.modules.externalSystem"/>
-    <module name="intellij.platform.externalSystem.impl"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.libraries.jspecify"/>
-    <!-- endregion -->
-  </dependencies>
 
 </idea-plugin>

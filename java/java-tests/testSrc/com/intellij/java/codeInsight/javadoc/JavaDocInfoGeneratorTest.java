@@ -160,6 +160,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testSuperJavadocErasureResolve() { doTestAtCaret(); }
   public void testPackageInfo() { doTestPackageInfo(); }
   public void testPackageWithoutPackageInfo() { doTestPackageInfo(); }
+  public void testEmptyPackage() { doTestPackageInfo(); }
   public void testPackageHtml() { doTestPackageInfo(); }
   public void testSyntheticEnumValues() { doTestAtCaret(); }
   public void testVariableDoc() { doTestAtCaret(); }
@@ -244,12 +245,14 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testSeeTagWithNestedLink() { doTestClass(); }
   public void testSeeTagWithNestedLinkMarkdown() { doTestClass(); }
   public void testLinkInParamDescriptionMarkdown() { doTestAtCaret(); }
+  public void testSeeTagMarkdownDescription() { doTestClass(); }
   public void testAllTags() { doTestAtCaret(); }
   public void testAllTagsMarkdown() { doTestAtCaret(); }
   public void testFragmentReference()  { doTestClass(); }
   public void testPackageInfoMarkdown() { doTestPackageInfo(); }
   public void testListInTags() { doTestMethod(); }
   public void testParagraphInTagsMarkdown() { doTestMethod(); }
+  public void testPreTagInJavadocTag() { doTestClass();}
 
   public void testRepeatableAnnotations() {
     useJava8();

@@ -196,7 +196,11 @@ private class DiffEditorModel(
     diffReviewVm.requestNewDiscussion(loc, true)
   }
 
-  override fun canCreateComment(lineRange: LineRange) = true
+  override fun canCreateComment(lineRange: LineRange): Boolean {
+    val gutterControls = gutterControlsState.value ?: return false
+    return gutterControls.isLineCommentable(lineRange.start) &&
+           gutterControls.isLineCommentable(lineRange.end)
+  }
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()

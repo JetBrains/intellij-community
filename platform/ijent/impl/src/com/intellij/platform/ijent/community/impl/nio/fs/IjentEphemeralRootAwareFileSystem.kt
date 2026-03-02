@@ -251,7 +251,9 @@ class IjentEphemeralRootAwareFileSystemProvider(
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     return when {
-      SystemInfo.isWindows -> ijentFsProvider.readAttributesUsingDosAttributesAdapter(path, path.toIjentPath(), type, *options)
+      originalFs.supportedFileAttributeViews().contains("dos") && eelDescriptor.osFamily == EelOsFamily.Posix -> {
+        ijentFsProvider.readAttributesUsingDosAttributesAdapter(path, path.toIjentPath(), type, *options)
+      }
       else -> super.readAttributes(path, type, *options)
     }
   }

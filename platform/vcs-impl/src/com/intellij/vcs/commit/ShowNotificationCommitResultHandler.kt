@@ -57,20 +57,24 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
       CommitNotificationType.Successful, CommitNotificationType.SuccessfulInitial -> message("vcs.commit.files.committed", changesCommitted)
     }
 
-    val notificationActions = commitExceptions.filterIsInstance<CommitExceptionWithActions>().flatMap { it.actions }
-
     val notification = CommitNotification(VcsNotifier.importantNotification().displayId, title, message, type.notificationType).apply {
       setDisplayId(type.displayId)
 
       if (commitExceptions.isNotEmpty()) {
+        val exceptionActions = commitExceptions.filterIsInstance<CommitExceptionWithActions>()
+          .flatMap { it.getActions(this) }
+        exceptionActions.forEach(this::addAction)
 
-        notificationActions.forEach(this::addAction)
-        VcsNotifier.addShowDetailsAction(committer.project, this)
+        val shouldAddShowDetailsAction = commitExceptions.any { exception ->
+          exception !is CommitExceptionWithActions || exception.shouldAddShowDetailsAction
+        }
+        if (shouldAddShowDetailsAction) {
+          VcsNotifier.addShowDetailsAction(committer.project, this)
+        }
       }
 
       if (commitErrors.isEmpty()) {
-        addActions(CommitSuccessNotificationActionProvider.EP_NAME.extensionList.flatMap { it.getActions(committer, this) }
-        )
+        addActions(CommitSuccessNotificationActionProvider.EP_NAME.extensionList.flatMap { it.getActions(committer, this) })
       }
 
       if (freshRoot != null && commitErrors.isEmpty()) {

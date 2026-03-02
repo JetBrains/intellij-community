@@ -34,7 +34,7 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
   }
 
   private fun processInitializedEvent(args: List<String>) {
-    val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(args.getOrNull(1))
+    val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValueOrNull(args.getOrNull(1))
     dispatcher.multicaster.initialized(currentDirectory)
   }
 
@@ -50,7 +50,7 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
       currentCommand = null
 
       val exitCode = Param.EXIT_CODE.getIntValue(args.getOrNull(1))
-      val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(args.getOrNull(2))
+      val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValueOrNull(args.getOrNull(2))
       dispatcher.multicaster.commandFinished(command, exitCode, currentDirectory)
     }
   }

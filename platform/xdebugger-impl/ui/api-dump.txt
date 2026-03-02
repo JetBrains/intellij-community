@@ -155,13 +155,14 @@ c:com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator
 - getTitle(com.intellij.openapi.util.Pair):java.lang.String
 c:com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 - com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
-- p:createHintComponent(javax.swing.Icon,com.intellij.ui.SimpleColoredText,com.intellij.xdebugger.frame.presentation.XValuePresentation,com.intellij.xdebugger.frame.XFullValueEvaluator):javax.swing.JComponent
+- p:createHintComponent(javax.swing.Icon,com.intellij.ui.SimpleColoredText,com.intellij.xdebugger.frame.presentation.XValuePresentation,com.intellij.xdebugger.frame.XFullValueEvaluator,com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink):javax.swing.JComponent
 - p:evaluateAndShowHint():V
 - hideHint():V
 - p:onHintHidden():V
 a:com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - pf:myPoint:java.awt.Point
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,com.intellij.openapi.util.TextRange):V
+- ps:appendAdditionalHyperlink(com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink,com.intellij.ui.SimpleColoredComponent):V
 - pf:appendEvaluatorLink(com.intellij.xdebugger.frame.XFullValueEvaluator,com.intellij.ui.SimpleColoredComponent):V
 - s:calculateOffset(com.intellij.openapi.editor.Editor,java.awt.Point):I
 - p:createExpandableHintComponent(javax.swing.Icon,com.intellij.ui.SimpleColoredText,java.lang.Runnable,com.intellij.xdebugger.frame.XFullValueEvaluator):javax.swing.JComponent

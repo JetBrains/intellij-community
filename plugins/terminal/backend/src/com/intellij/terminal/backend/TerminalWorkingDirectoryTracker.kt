@@ -25,16 +25,20 @@ internal fun addWorkingDirectoryListener(
   addHeuristicBasedCwdListener(ttyConnector, heuristicBasedTrackerScope, listener)
 
   shellIntegrationController.addListener(object : TerminalShellIntegrationEventsListener {
-    override fun initialized(currentDirectory: String) {
+    override fun initialized(currentDirectory: String?) {
       // Stop heuristic-based working directory tracking if there is a shell integration.
       // We will receive the current directory from the shell integration.
       heuristicBasedTrackerScope.cancel()
 
-      listener(currentDirectory)
+      if (currentDirectory != null) {
+        listener(currentDirectory)
+      }
     }
 
-    override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
-      listener(currentDirectory)
+    override fun commandFinished(command: String, exitCode: Int, currentDirectory: String?) {
+      if (currentDirectory != null) {
+        listener(currentDirectory)
+      }
     }
   })
 }

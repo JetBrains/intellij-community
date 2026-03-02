@@ -1,11 +1,16 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.kotlinx.coroutines.guava"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.log"/>
     <module name="intellij.platform.vcs.log.graph.impl"/>
-    <module name="intellij.platform.vcs.impl.shared"/>
-    <module name="intellij.libraries.kotlinx.coroutines.guava"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>

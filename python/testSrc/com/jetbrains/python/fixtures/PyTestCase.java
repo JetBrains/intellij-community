@@ -660,4 +660,3 @@ public abstract class PyTestCase extends UsefulTestCase {
     fail("Test " + comment + " was previously failing and was suppressed, but now it passes");
   }
 }
-

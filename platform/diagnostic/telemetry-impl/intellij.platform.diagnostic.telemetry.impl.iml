@@ -30,7 +30,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />

@@ -101,7 +101,7 @@ When running tests, the `mainModule` parameter determines which module's classpa
 | Product | tests.cmd Location | Default mainModule |
 |---------|-------------------|-------------------|
 | IDEA Ultimate | `./tests.cmd` | `intellij.idea.ultimate.tests.main` |
-| Community | `./community/tests.cmd` | `intellij.idea.community.main` |
+| Community | `./community/tests.cmd` | `intellij.idea.community.main.tests` |
 
 ### Known Test Modules by Product
 
@@ -110,13 +110,13 @@ For complete list, see: `intellij-teamcity-config/.teamcity/src/ijplatform/Known
 | Product | Test Module |
 |---------|-------------|
 | IDEA Ultimate | `intellij.idea.ultimate.tests.main` |
-| IDEA Community | `intellij.idea.community.main` |
+| IDEA Community | `intellij.idea.community.main.tests` |
 | GoLand | `intellij.goland.tests` |
 | PyCharm | `intellij.python.tests` |
 | RubyMine | `intellij.rubymine.aggregator` |
-| CLion | `intellij.clion.main` |
-| PhpStorm | `intellij.phpstorm.main` |
-| RustRover | `intellij.rustrover.main` |
+| CLion | `intellij.clion.main.tests` |
+| PhpStorm | `intellij.phpstorm.main.tests` |
+| RustRover | `intellij.rustrover.main.tests` |
 | Kotlin K2/FIR | `kotlin.fir-all-tests` |
 
 ### Finding Tests in Other Modules

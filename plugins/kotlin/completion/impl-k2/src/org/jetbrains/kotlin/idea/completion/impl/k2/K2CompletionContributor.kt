@@ -82,6 +82,7 @@ internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
         // For extension properties, this will not be relevant and we can use anonymous keys.
         private val RUNTIME_TYPE_KEY: Key<Optional<KaType?>> = Key.create("RUNTIME_TYPE_KEY")
         private val EXTENSION_CHECKER_KEY: Key<Optional<KaCompletionExtensionCandidateChecker?>> = Key.create("EXTENSION_CHECKER_KEY")
+        private val RUNTIME_EXTENSION_CHECKER_KEY: Key<Optional<KaCompletionExtensionCandidateChecker?>> = Key.create("RUNTIME_EXTENSION_CHECKER_KEY")
     }
 
     val completionContext: K2CompletionContext<P> = commonData.completionContext
@@ -108,7 +109,25 @@ internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
         receiver?.evaluateRuntimeKaType()
     }
 
+    /**
+     * A checker that determines which extensions are applicable
+     * at the current completion position based on the static type of the receiver.
+     */
     val extensionChecker: KaCompletionExtensionCandidateChecker? by LazyCompletionSessionProperty(EXTENSION_CHECKER_KEY) {
+        val sectionContext = contextOf<K2CompletionSectionContext<P>>()
+
+        createExtensionChecker(sectionContext.positionContext, sectionContext.parameters.originalFile, null)
+    }
+
+    /**
+     * A checker that determines which extensions are applicable
+     * at the current completion position based on the runtime type of the receiver.
+     *
+     * [runtimeTypeExtensionChecker] is kept as another property to be able to compute
+     * runtime type completions separately, ensuring that the potentially slow runtime type evaluation
+     * does not block the display of other completion suggestions.
+     */
+    val runtimeTypeExtensionChecker: KaCompletionExtensionCandidateChecker? by LazyCompletionSessionProperty(RUNTIME_EXTENSION_CHECKER_KEY) {
         val sectionContext = contextOf<K2CompletionSectionContext<P>>()
 
         createExtensionChecker(sectionContext.positionContext, sectionContext.parameters.originalFile, sectionContext.runtimeType)

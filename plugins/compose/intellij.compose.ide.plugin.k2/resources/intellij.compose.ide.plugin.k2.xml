@@ -8,6 +8,7 @@
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <codeinsight.quickfix.registrar implementation="com.intellij.compose.ide.plugin.k2.intentions.K2CreateComposableQuickFixesRegistrar"/>
     <callHighlighterExtension implementation="com.intellij.compose.ide.plugin.k2.highlighting.ComposableFunctionCallHighlighterExtension"/>
     <extractFunctionDescriptorModifier implementation="com.intellij.compose.ide.plugin.k2.K2ComposableAnnotationToExtractedFunctionAdder"
                                        order="last"/>

@@ -44,7 +44,7 @@ class PyTestParametrizeInlayHintsProvider : InlayHintsProvider {
 
       val parameterNames = element.parameterNames ?: return
 
-      val valueSets = element.arguments.getOrNull(1) as? PySequenceExpression ?: return
+      val valueSets = element.arguments.getOrNull(1)?.let(PyPsiUtils::flattenParens) as? PySequenceExpression ?: return
 
       for (valueSet in valueSets.elements) {
         when (val valueSet = PyPsiUtils.flattenParens(valueSet)) {

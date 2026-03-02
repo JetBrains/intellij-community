@@ -507,7 +507,7 @@ public final class JavaDocUtil {
   }
 
   public static boolean isInsidePackageInfo(@Nullable PsiDocComment containingComment) {
-    return containingComment != null && containingComment.getOwner() == null && containingComment.getParent() instanceof PsiJavaFile;
+    return containingComment != null && "package-info.java".equals(containingComment.getContainingFile().getName());
   }
 
   public static boolean isDanglingDocComment(@NotNull PsiDocComment comment, boolean ignoreCopyright) {
@@ -515,8 +515,7 @@ public final class JavaDocUtil {
       return false;
     }
     if (isInsidePackageInfo(comment) &&
-        PsiTreeUtil.skipWhitespacesAndCommentsForward(comment) instanceof PsiPackageStatement &&
-        "package-info.java".equals(comment.getContainingFile().getName())) {
+        PsiTreeUtil.skipWhitespacesAndCommentsForward(comment) instanceof PsiPackageStatement) {
       return false;
     }
     if (ignoreCopyright && comment.getPrevSibling() == null && comment.getParent() instanceof PsiFile) {

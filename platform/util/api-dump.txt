@@ -236,6 +236,8 @@ com.intellij.openapi.util.text.CharFilter
 - sf:NOT_WHITESPACE_FILTER:com.intellij.openapi.util.text.CharFilter
 - sf:WHITESPACE_FILTER:com.intellij.openapi.util.text.CharFilter
 - a:accept(C):Z
+Fc:com.intellij.openapi.util.text.StringUtil
+- s:endsWithIgnoreWhitespaces(java.lang.CharSequence,java.lang.CharSequence):Z
 com.intellij.ui.IconManager
 - sf:Companion:com.intellij.ui.IconManager$Companion
 - colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color):javax.swing.Icon

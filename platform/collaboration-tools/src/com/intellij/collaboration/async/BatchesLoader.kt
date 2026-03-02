@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.transformWhile
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.Duration
 
 /**
  * A utility class for incremental batch loading from paginated APIs with lazy initialization.
@@ -41,9 +42,11 @@ import org.jetbrains.annotations.ApiStatus
  * @param T the type of items in each batch
  * @param cs the parent [CoroutineScope] for managing the loading lifecycle
  * @param batchesFlow a [Flow] that emits batches (lists) of items, typically from a paginated API
+ * @param stopTimeout a delay between the disappearance of the last subscriber and the stopping of the sharing coroutine
+ * and cleaning up the replay cache. If not specified, the sharing coroutine will never be stopped.
  */
 @ApiStatus.Internal
-class BatchesLoader<T>(private val cs: CoroutineScope, private val batchesFlow: Flow<List<T>>) {
+class BatchesLoader<T>(private val cs: CoroutineScope, private val batchesFlow: Flow<List<T>>, private val stopTimeout: Duration? = null) {
   private var flowAndScope: Pair<SharedFlow<BatchesLoadingState<T>>, CoroutineScope>? = null
 
   /**
@@ -75,6 +78,8 @@ class BatchesLoader<T>(private val cs: CoroutineScope, private val batchesFlow: 
     }
 
     val sharingScope = cs.childScope(javaClass.name)
+    val sharingStarted = if (stopTimeout == null) SharingStarted.Lazily else
+      SharingStarted.WhileSubscribed(stopTimeout.inWholeMilliseconds, 0)
     val sharedFlow = flow {
       val loadedBatches = mutableListOf<List<T>>()
       try {
@@ -92,7 +97,7 @@ class BatchesLoader<T>(private val cs: CoroutineScope, private val batchesFlow: 
       catch (e: Exception) {
         emit(BatchesLoadingState.Error(loadedBatches, e))
       }
-    }.shareIn(sharingScope, SharingStarted.Lazily, 1)
+    }.shareIn(sharingScope, sharingStarted, 1)
     flowAndScope = sharedFlow to sharingScope
     return sharedFlow
   }

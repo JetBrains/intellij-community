@@ -4,7 +4,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
@@ -58,7 +58,7 @@ internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: Virtual
 private data class AllFileSets(val recursive: List<WorkspaceFileSet>, val nonRecursive: List<WorkspaceFileSet>)
 
 private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileSets {
-  val indexableFileSets = runReadAction {
+  val indexableFileSets = runReadActionBlocking {
     findFileSets(root, true, true, false, true, true, false, true)
   }
   return indexableFileSets
@@ -67,7 +67,7 @@ private fun WorkspaceFileIndex.allIndexableFileSets(root: VirtualFile): AllFileS
 }
 
 private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile): Boolean {
-  val info = runReadAction {
+  val info = runReadActionBlocking {
     getFileInfo(file, true, true, true, true, true, true, true)
   }
   return when (info) {
@@ -94,7 +94,7 @@ private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
         return when {
           currentIndexableFileSets.recursive.isNotEmpty() -> SKIP_CHILDREN
           currentIndexableFileSets.nonRecursive.isNotEmpty() -> CONTINUE // skip only the current file, children can be non-indexable
-          !filter.accept(file) -> SKIP_CHILDREN
+          !runReadActionBlocking { filter.accept(file) } -> CONTINUE // skip only the current file, children can pass the filter
           !processor.processFile(file) -> skipTo(root) // terminate processing
           else -> CONTINUE
         }
@@ -120,10 +120,11 @@ interface FilesDeque {
      */
     @ApiStatus.Internal
     @JvmStatic
+    @JvmOverloads
     @RequiresReadLock
     @RequiresBackgroundThread
-    fun nonIndexableDequeue(project: Project): FilesDeque {
-      return NonIndexableFilesDequeImpl(project, WorkspaceFileIndexEx.getInstance(project).nonIndexableRoots())
+    fun nonIndexableDequeue(project: Project, filter: VirtualFileFilter = VirtualFileFilter.ALL): FilesDeque {
+      return NonIndexableFilesDequeImpl(project, WorkspaceFileIndexEx.getInstance(project).nonIndexableRoots(), filter)
     }
   }
 }
@@ -131,6 +132,7 @@ interface FilesDeque {
 private class NonIndexableFilesDequeImpl(
   private val project: Project,
   private val roots: Set<VirtualFile>,
+  private val filter: VirtualFileFilter,
 ) : FilesDeque {
   private val bfsQueue: ArrayDeque<VirtualFile> = ArrayDeque(roots)
   private val visitedRoots: MutableSet<VirtualFile> = mutableSetOf()
@@ -152,6 +154,7 @@ private class NonIndexableFilesDequeImpl(
         if (children != null) bfsQueue.addAll(children)
       }
       if (indexableFileSets.nonRecursive.isNotEmpty()) continue // skip only the current file, children can be non-indexable
+      if (!runReadActionBlocking { filter.accept(file) }) continue // skip only the current file, children can pass the filter
 
       return file
     }

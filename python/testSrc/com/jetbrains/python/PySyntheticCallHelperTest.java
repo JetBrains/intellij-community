@@ -248,7 +248,7 @@ public class PySyntheticCallHelperTest extends PyTestCase {
   }
 
   public void testGenericClassMethodWithOverloadsInExternalFile() {
-    doMultiFileTest("float | list", """
+    doMultiFileTest("float | int | list", """
       from lib import Clazz
       instance = Clazz[list]()
       """, () -> {

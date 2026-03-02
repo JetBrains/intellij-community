@@ -35,15 +35,19 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.ZipFile;
 
 public final class PackageAnnotator {
   private static final Logger LOG = Logger.getInstance(PackageAnnotator.class);
   private static final @NonNls String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
+  private static final @NonNls String JAR_ENTRY_SEPARATOR = "!/";
 
   private final CoverageSuitesBundle mySuite;
   private final Project myProject;
   private final ProjectData myProjectData;
   private final boolean myIgnoreImplicitConstructor;
+  private final Map<String, ZipFile> myArchiveZipCache = new ConcurrentHashMap<>();
   private ProjectData myUnloadedClassesProjectData;
 
   public PackageAnnotator(CoverageSuitesBundle suite,
@@ -64,6 +68,17 @@ public final class PackageAnnotator {
       IDEACoverageRunner.setExcludeAnnotations(myProject, myUnloadedClassesProjectData);
     }
     return myUnloadedClassesProjectData;
+  }
+
+  public void close() {
+    for (ZipFile zipFile : myArchiveZipCache.values()) {
+      try {
+        zipFile.close();
+      }
+      catch (IOException ignored) {
+      }
+    }
+    myArchiveZipCache.clear();
   }
 
   public static @NotNull File findRelativeFile(@NotNull String rootPackageVMName, File outputRoot) {
@@ -205,15 +220,70 @@ public final class PackageAnnotator {
   }
 
   private @Nullable ClassData collectNonCoveredClassInfo(final File classFile, String className, ProjectData projectData) {
-    final byte[] content;
-    try {
-      content = FileUtil.loadFileBytes(classFile);
-    }
-    catch (IOException e) {
-      return null;
-    }
+    byte[] content = loadClassBytes(classFile);
+    if (content == null) return null;
     UnloadedUtil.appendUnloadedClass(projectData, className, new ClassReader(content), mySuite.isBranchCoverage());
     return projectData.getClassData(className);
+  }
+
+  private byte @Nullable [] loadClassBytes(@NotNull File classFile) {
+    String path = classFile.getPath();
+    if (isArchiveEntryPath(path)) {
+      return loadClassBytesFromArchivePath(path);
+    }
+    try {
+      return FileUtil.loadFileBytes(classFile);
+    }
+    catch (IOException ignored) {
+      return null;
+    }
+  }
+
+  private byte @Nullable [] loadClassBytesFromArchivePath(@NotNull String path) {
+    int separator = path.indexOf(JAR_ENTRY_SEPARATOR);
+    if (separator <= 0) return null;
+    String archivePath = path.substring(0, separator);
+    String entryPath = path.substring(separator + JAR_ENTRY_SEPARATOR.length());
+    if (entryPath.isEmpty()) return null;
+
+    ZipFile zip = getOrCreateArchive(archivePath);
+    if (zip == null) return null;
+    try {
+      var entry = zip.getEntry(entryPath);
+      if (entry == null || entry.isDirectory()) return null;
+      try (var stream = zip.getInputStream(entry)) {
+        return FileUtil.loadBytes(stream);
+      }
+    }
+    catch (IOException ignored) {
+      return null;
+    }
+  }
+
+  private static boolean isArchiveEntryPath(@NotNull String path) {
+    return path.indexOf(JAR_ENTRY_SEPARATOR) > 0;
+  }
+
+  private @Nullable ZipFile getOrCreateArchive(@NotNull String archivePath) {
+    ZipFile cached = myArchiveZipCache.get(archivePath);
+    if (cached != null) return cached;
+
+    try {
+      ZipFile opened = new ZipFile(archivePath);
+      ZipFile existing = myArchiveZipCache.putIfAbsent(archivePath, opened);
+      if (existing != null) {
+        try {
+          opened.close();
+        }
+        catch (IOException ignored) {
+        }
+        return existing;
+      }
+      return opened;
+    }
+    catch (IOException ignored) {
+      return null;
+    }
   }
 
   public abstract static class SummaryCoverageInfo {

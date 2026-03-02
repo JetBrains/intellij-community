@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inlayHints
 
+import com.intellij.idea.TestFor
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor
@@ -91,6 +92,18 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
           pytest.param(/*<# x #>*/1, /*<# y #>*/2),
           pytest.param(/*<# x #>*/3, /*<# y #>*/4),
       ])
+      def test_function(x, y): ...
+    """)
+  }
+
+  @TestFor(issues = ["PY-87820"])
+  fun `test tuple`() {
+    doTest("""
+      import pytest
+      
+      @pytest.mark.parametrize("x, y", (
+          (/*<# x #>*/1, /*<# y #>*/2),
+      ))
       def test_function(x, y): ...
     """)
   }

@@ -49,6 +49,7 @@ import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
@@ -124,6 +125,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       leftToolbarActions,
       topToolbarActions,
       settingsActions,
+      processDescriptor = debugProcess.processDescriptor?.asDeferred(),
     )
   }
 
@@ -280,7 +282,7 @@ fun XDebugSessionImpl.getSessionEventsFlow(
 ): Flow<XDebuggerSessionEvent> = channelFlow {
   val currentSession = this@getSessionEventsFlow
   // Offload serialization from listener to background
-  val rawEvents = Channel<() -> XDebuggerSessionEvent>(Channel.UNLIMITED)
+  val rawEvents = Channel<suspend () -> XDebuggerSessionEvent>(Channel.UNLIMITED)
 
   val listener = object : XDebugSessionListener {
     override fun sessionPaused() {

@@ -169,11 +169,11 @@ class RepositoryTest {
     val filePath: Path
     if (loadFromCompact) {
       filePath = basePath.resolve("module-descriptors.dat")
-      RuntimeModuleRepositorySerialization.saveToCompactFile(descriptors.asList(), bootstrapModuleName, filePath, 0)
+      RuntimeModuleRepositorySerialization.saveToCompactFile(descriptors.asList(), emptyList(), bootstrapModuleName, filePath, 0)
     }
     else {
       filePath = basePath.resolve("module-descriptors.jar")
-      RuntimeModuleRepositorySerialization.saveToJar(descriptors.asList(), bootstrapModuleName, filePath, 0)
+      RuntimeModuleRepositorySerialization.saveToJar(descriptors.asList(), emptyList(), bootstrapModuleName, filePath, 0)
     }
     val repository = RuntimeModuleRepository.create(filePath)
     assertEquals(listOf(basePath.resolve("bar.jar"), basePath.resolve("foo.jar")), repository.getBootstrapClasspath("ij.bar"))
@@ -209,6 +209,6 @@ class RepositoryTest {
   }
 
   private fun createRawRepository(basePath: Path, vararg descriptors: RawRuntimeModuleDescriptor): RawRuntimeModuleRepositoryData {
-    return RawRuntimeModuleRepositoryData.create(descriptors.associateBy { it.moduleId }, basePath)
+    return RawRuntimeModuleRepositoryData.create(descriptors.associateBy { it.moduleId }, emptyList(), basePath)
   }
 }

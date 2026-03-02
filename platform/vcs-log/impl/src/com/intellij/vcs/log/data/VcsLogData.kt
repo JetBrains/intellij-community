@@ -192,7 +192,7 @@ class VcsLogData @ApiStatus.Internal constructor(
     commitDetailsGetter = CommitDetailsGetter(storage, logProviders, dataDisposable)
 
     val commitDataConsumer = VcsLogCommitDataConsumerImpl(userRegistry, index, topCommitsCache)
-    refresher = VcsLogRefresherImpl(cs, storage, logProviders, progress, commitDataConsumer,
+    refresher = VcsLogRefresherImpl(cs, project, storage, logProviders, progress, commitDataConsumer,
                                     Consumer { fireDataPackChangeEvent(it) },
                                     getRecentCommitsCount())
 

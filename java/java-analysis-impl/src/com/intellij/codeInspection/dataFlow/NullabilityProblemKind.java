@@ -4,6 +4,8 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaDfaAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -192,6 +194,18 @@ public final class NullabilityProblemKind<T extends PsiElement> {
   @Contract("null, _ -> null")
   public @Nullable NullabilityProblem<T> problem(@Nullable T anchor, @Nullable PsiExpression expression) {
     return anchor == null || this == noProblem ? null : new NullabilityProblem<>(this, anchor, expression, false);
+  }
+
+  /**
+   * Creates a new {@link NullabilityProblem} of this kind using the given anchor.
+   *
+   * @param dfaAnchor the place that actually violates nullability
+   * @param anchor    the anchor to bind the problem to
+   * @return a newly created problem, or null if anchor is null
+   */
+  @Contract("_, null -> null")
+  public @Nullable NullabilityProblem<T> problem(@NotNull JavaDfaAnchor dfaAnchor, @Nullable T anchor) {
+    return anchor == null || this == noProblem ? null : new NullabilityProblem<>(this, anchor, dfaAnchor, false);
   }
 
   /**
@@ -610,17 +624,25 @@ public final class NullabilityProblemKind<T extends PsiElement> {
    */
   public static final class NullabilityProblem<T extends PsiElement> extends JvmDfaProblem<T> {
     private final @NotNull NullabilityProblemKind<T> myKind;
-    private final @Nullable PsiExpression myDereferencedExpression;
+    private final @Nullable JavaDfaAnchor myDfaAnchor;
     private final boolean myFromUnknown;
+
+
+    NullabilityProblem(@NotNull NullabilityProblemKind<T> kind,
+                       @NotNull T anchor,
+                       @Nullable JavaDfaAnchor dfaAnchor,
+                       boolean unknown) {
+      super(anchor);
+      myKind = kind;
+      myFromUnknown = unknown;
+      myDfaAnchor = dfaAnchor;
+    }
 
     NullabilityProblem(@NotNull NullabilityProblemKind<T> kind,
                        @NotNull T anchor,
                        @Nullable PsiExpression dereferencedExpression,
                        boolean unknown) {
-      super(anchor);
-      myKind = kind;
-      myDereferencedExpression = dereferencedExpression;
-      myFromUnknown = unknown;
+      this(kind, anchor, dereferencedExpression == null ? null : new JavaExpressionAnchor(dereferencedExpression), unknown);
     }
 
     /**
@@ -635,7 +657,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
      * @return a minimal nullable expression which causes the problem
      */
     public @Nullable PsiExpression getDereferencedExpression() {
-      return myDereferencedExpression;
+      return myDfaAnchor instanceof JavaExpressionAnchor anchor ? anchor.getExpression() : null;
     }
 
     /**
@@ -647,6 +669,11 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     }
 
     public boolean isAlwaysNull(boolean ignoreAssertions) {
+      if (myDfaAnchor != null && !(myDfaAnchor instanceof JavaExpressionAnchor)) {
+        CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(getAnchor());
+        if (result == null) return false;
+        return (ignoreAssertions ? result.getDfTypeNoAssertions(myDfaAnchor) : result.getDfType(myDfaAnchor)) == DfTypes.NULL;
+      }
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(getDereferencedExpression());
       return expression != null &&
              (ExpressionUtils.isNullLiteral(expression) || CommonDataflow.getDfType(expression, ignoreAssertions) == DfTypes.NULL);
@@ -670,12 +697,12 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       if (this == o) return true;
       if (!(o instanceof NullabilityProblem<?> problem)) return false;
       return myKind.equals(problem.myKind) && getAnchor().equals(problem.getAnchor()) &&
-             Objects.equals(myDereferencedExpression, problem.myDereferencedExpression);
+             Objects.equals(myDfaAnchor, problem.myDfaAnchor);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myKind, getAnchor(), myDereferencedExpression);
+      return Objects.hash(myKind, getAnchor(), myDfaAnchor);
     }
 
     @Override
@@ -684,11 +711,11 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     }
 
     public NullabilityProblem<T> withExpression(PsiExpression expression) {
-      return expression == myDereferencedExpression ? this : new NullabilityProblem<>(myKind, getAnchor(), expression, false);
+      return expression == getDereferencedExpression() ? this : new NullabilityProblem<>(myKind, getAnchor(), expression, false);
     }
 
     public NullabilityProblem<T> makeUnknown() {
-      return new NullabilityProblem<>(myKind, getAnchor(), myDereferencedExpression, true);
+      return new NullabilityProblem<>(myKind, getAnchor(), myDfaAnchor, true);
     }
   }
 }

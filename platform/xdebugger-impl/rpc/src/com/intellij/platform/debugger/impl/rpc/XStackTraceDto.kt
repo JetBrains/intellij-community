@@ -2,11 +2,9 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.ui.colors.ColorId
-import com.intellij.ide.ui.colors.color
-import com.intellij.ide.ui.colors.rpcId
+import com.intellij.ide.ui.colors.SerializableSimpleTextAttributes
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ThreeState
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -16,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 sealed interface XStackFramesEvent {
   @ApiStatus.Internal
   @Serializable
-  data class XNewStackFrames(val frames: List<XStackFrameDto>, val last: Boolean) : XStackFramesEvent
+  data class XNewStackFrames(val frames: List<XStackFrameDto>, val frameToSelectId: XStackFrameId?, val last: Boolean) : XStackFramesEvent
 
   @Serializable
   data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XStackFramesEvent
@@ -71,31 +69,6 @@ data class XStackFramePresentationFragment(
   val text: String,
   val textAttributes: SerializableSimpleTextAttributes,
 )
-
-@ApiStatus.Internal
-@Serializable
-data class SerializableSimpleTextAttributes(
-  val bgColor: ColorId?,
-  val fgColor: ColorId?,
-  val waveColor: ColorId?,
-  val style: Int,
-)
-
-@ApiStatus.Internal
-fun SimpleTextAttributes.toRpc(): SerializableSimpleTextAttributes =
-  SerializableSimpleTextAttributes(bgColor?.rpcId(),
-                                   fgColor?.rpcId(),
-                                   waveColor?.rpcId(),
-                                   style)
-
-@ApiStatus.Internal
-fun SerializableSimpleTextAttributes.toSimpleTextAttributes(): SimpleTextAttributes {
-  val (bgColor, fgColor, waveColor, style) = this
-  return SimpleTextAttributes(bgColor?.color(),
-                              fgColor?.color(),
-                              waveColor?.color(),
-                              style)
-}
 
 @ApiStatus.Internal
 @Serializable

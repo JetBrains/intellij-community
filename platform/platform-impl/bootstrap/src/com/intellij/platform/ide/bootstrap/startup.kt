@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 package com.intellij.platform.ide.bootstrap
 
@@ -611,9 +611,14 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
   log.info("args: ${args.joinToString(separator = " ")}")
   log.info("library path: ${System.getProperty("java.library.path")}")
   log.info("boot library path: ${System.getProperty("sun.boot.library.path")}")
-  logEnvVar(log, "_JAVA_OPTIONS")
-  logEnvVar(log, "JDK_JAVA_OPTIONS")
-  logEnvVar(log, "JAVA_TOOL_OPTIONS")
+  if (System.getProperty("ide.native.launcher").toBoolean()) {
+    logEnvVar(log, "IJ_JAVA_OPTIONS")
+  }
+  else {
+    logEnvVar(log, "_JAVA_OPTIONS")
+    logEnvVar(log, "JDK_JAVA_OPTIONS")
+    logEnvVar(log, "JAVA_TOOL_OPTIONS")
+  }
   @Suppress("SystemGetProperty")
   log.info(
     """locale=${Locale.getDefault()} JNU=${System.getProperty("sun.jnu.encoding")} file.encoding=${System.getProperty("file.encoding")}

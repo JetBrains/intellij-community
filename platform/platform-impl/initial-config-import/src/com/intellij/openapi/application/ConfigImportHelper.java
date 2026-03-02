@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.configurationStore.StoreUtilKt;
@@ -16,13 +16,13 @@ import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.ide.plugins.ExpiredPluginsState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
-import com.intellij.ide.plugins.PluginDescriptorLoadingResult;
 import com.intellij.ide.plugins.PluginInitContextSelectPluginsToLoadKt;
 import com.intellij.ide.plugins.PluginInstaller;
 import com.intellij.ide.plugins.PluginMainDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.PluginVersionIsSuperseded;
+import com.intellij.ide.plugins.PluginsDiscoveryResult;
 import com.intellij.ide.plugins.ProductPluginInitContext;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.PluginUiModel;
@@ -32,9 +32,11 @@ import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.migrations.BigDataToolsMigration253;
+import com.intellij.openapi.application.migrations.CwmMigration261;
 import com.intellij.openapi.application.migrations.Localization242;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
 import com.intellij.openapi.application.migrations.SpaceMigration252;
+import com.intellij.openapi.application.migrations.VcsPluginsMigration261;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -1048,7 +1050,7 @@ public final class ConfigImportHelper {
     @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
     @NotNull List<IdeaPluginDescriptor> pluginsToDownload
   ) {
-    @Nullable PluginDescriptorLoadingResult oldIdePlugins = null;
+    @Nullable PluginsDiscoveryResult oldIdePlugins = null;
     try {
       /* FIXME
        * in production, bundledPluginPath from the options is always null, it is set only in tests.
@@ -1075,7 +1077,7 @@ public final class ConfigImportHelper {
       var nonLoadablePlugins = new HashMap<PluginId, PluginMainDescriptor>();
       var loadablePlugins = PluginInitContextSelectPluginsToLoadKt.selectPluginsToLoad(
         initContext,
-        oldIdePlugins.getDiscoveredPlugins(),
+        oldIdePlugins.getPluginLists(),
         (plugin, reason) -> {
           if (reason instanceof PluginVersionIsSuperseded) {
             return Unit.INSTANCE;
@@ -1122,6 +1124,8 @@ public final class ConfigImportHelper {
     new NotebooksMigration242().migratePlugins(options);
     new SpaceMigration252().migratePlugins(options);
     new BigDataToolsMigration253().migratePlugins(options);
+    new VcsPluginsMigration261().migratePlugins(options);
+    new CwmMigration261().migratePlugins(options);
   }
 
   private static void migrateGlobalPlugins(

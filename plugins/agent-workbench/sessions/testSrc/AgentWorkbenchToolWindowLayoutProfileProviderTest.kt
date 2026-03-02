@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
+import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_DEDICATED_LAYOUT_PROFILE_ID
+import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_LAYOUT_MIGRATION_VERSION
+import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchToolWindowLayoutProfileProvider
+import com.intellij.agent.workbench.sessions.frame.TERMINAL_TOOL_WINDOW_ID
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowId

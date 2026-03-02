@@ -232,7 +232,8 @@ open class LinuxDistributionCustomizer {
   var extraExecutables: PersistentList<String> = persistentListOf()
 
   open fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, targetLibcImpl: LibcImpl, context: BuildContext): Sequence<String> {
-    val basePatterns = sequenceOf(
+    val basePatterns = if (context.options.isLanguageServer) sequenceOf("bin/${context.productProperties.baseFileName}")
+    else sequenceOf(
       "bin/*.sh",
       "plugins/**/*.sh",
       "bin/fsnotifier",

@@ -3,11 +3,12 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
@@ -26,18 +27,21 @@ internal class InternalReadAction<T>(
   private val blocking: Boolean,
   private val action: () -> T
 ) {
-
   private val application: ApplicationEx = ApplicationManager.getApplication() as ApplicationEx
+
+  private fun <T, E : Throwable> executeRead(action: ThrowableComputable<T, E>): T {
+    return application.runReadAction(action)
+  }
 
   suspend fun runReadAction(): T {
     return if (undispatched) {
-      ApplicationManager.getApplication().assertIsNonDispatchThread()
+      ThreadingAssertions.assertBackgroundThread()
       if (application.isReadAccessAllowed) {
         val unsatisfiedConstraint = findUnsatisfiedConstraint()
         check(unsatisfiedConstraint == null) {
           "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
         }
-        return ReadAction.compute<T, Throwable>(action)
+        return executeRead<T, Throwable>(action)
       }
       coroutineScope {
         readLoop()
@@ -52,11 +56,11 @@ internal class InternalReadAction<T>(
         }
         return withContext(Dispatchers.Default) {
           // To copy permit from context to thread local
-          ReadAction.compute<T, Throwable>(action)
+          executeRead<T, Throwable>(action)
         }
       }
       withContext(Dispatchers.Default) {
-        application.assertReadAccessNotAllowed()
+        ThreadingAssertions.assertNoReadAccess()
         readLoop()
       }
     }
@@ -76,7 +80,7 @@ internal class InternalReadAction<T>(
     while (true) {
       loopJob.ensureActive()
       if (application.isWriteActionPending || application.isWriteActionInProgress) {
-        yieldToPendingWriteActions() // Write actions are executed on the write thread => wait until write action is processed.
+        yieldToPendingWriteActions() // Write actions are executed on the Write thread => wait until write action is processed.
       }
       when (val readResult = tryReadAction()) {
         is ReadResult.Successful -> return readResult.value
@@ -95,7 +99,7 @@ internal class InternalReadAction<T>(
     }
   }
 
-  private suspend fun tryReadBlocking(): ReadResult<T> {
+  private fun tryReadBlocking(): ReadResult<T> {
     var result: ReadResult<T>? = null
     application.tryRunReadAction {
       result = insideReadAction()
@@ -109,7 +113,7 @@ internal class InternalReadAction<T>(
       insideReadAction()
     }
   }
-  catch (readCe: CannotReadException) {
+  catch (@Suppress("IncorrectCancellationExceptionHandling") _: CannotReadException) {
     ReadResult.WritePending
   }
 
@@ -131,10 +135,10 @@ private sealed class ReadResult<out T> {
 }
 
 /**
- * Suspends the execution until the write thread queue is processed.
+ * Suspends the execution until the Write thread queue is processed.
  */
 private suspend fun yieldToPendingWriteActions() {
-  // the runnable is executed on the write thread _after_ the current or pending write action
+  // the runnable is executed on the Write thread _after_ the current or pending write action
   yieldUntilRun { runnable ->
     getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
       runnable.run()

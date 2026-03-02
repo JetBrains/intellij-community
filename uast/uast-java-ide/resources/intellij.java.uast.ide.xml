@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<idea-plugin>
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.java.psi"/>
     <module name="intellij.platform.core"/>

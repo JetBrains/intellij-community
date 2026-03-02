@@ -10,7 +10,10 @@
 - a:getResourceRootPaths():java.util.List
 - a:readFile(java.lang.String):java.io.InputStream
 *f:com.intellij.platform.runtime.repository.RuntimeModuleId
+- s:contentModule(java.lang.String,java.lang.String):com.intellij.platform.runtime.repository.RuntimeModuleId
 - equals(java.lang.Object):Z
+- getName():java.lang.String
+- getNamespace():java.lang.String
 - getPresentableName():java.lang.String
 - getStringId():java.lang.String
 - hashCode():I
@@ -35,12 +38,21 @@
 *:com.intellij.platform.runtime.repository.RuntimeModuleRepository$ResolveResult
 - a:getFailedDependencyPath():java.util.List
 - a:getResolvedModule():com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
+*e:com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+- java.lang.Enum
+- sf:INTERNAL:com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+- sf:PRIVATE:com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+- sf:PUBLIC:com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+- s:valueOf(java.lang.String):com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+- s:values():com.intellij.platform.runtime.repository.RuntimeModuleVisibility[]
 *f:com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule
 - getLoadingRule():com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 - getModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
+- getRequiredIfAvailableId():com.intellij.platform.runtime.repository.RuntimeModuleId
 - resolve(com.intellij.platform.runtime.repository.RuntimeModuleRepository):com.intellij.platform.runtime.repository.IncludedRuntimeModule
 *f:com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 - <init>(java.lang.String,java.util.List,java.util.List):V
+- s:create(com.intellij.platform.runtime.repository.RuntimeModuleId,com.intellij.platform.runtime.repository.RuntimeModuleVisibility,java.util.List,java.util.List):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 - s:create(com.intellij.platform.runtime.repository.RuntimeModuleId,java.util.List,java.util.List):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 - s:create(java.lang.String,java.util.List,java.util.List):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 - equals(java.lang.Object):Z
@@ -49,6 +61,7 @@
 - getId():java.lang.String
 - getModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
 - getResourcePaths():java.util.List
+- getVisibility():com.intellij.platform.runtime.repository.RuntimeModuleVisibility
 - hashCode():I
 *f:com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 - findDescriptor(com.intellij.platform.runtime.repository.RuntimeModuleId):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
@@ -57,12 +70,19 @@
 - getAllModuleIds():java.util.Set
 - getBasePath():java.nio.file.Path
 - getMainPluginModuleId():java.lang.String
+- getPluginHeaders():java.util.List
+*f:com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
+- s:create(java.lang.String,com.intellij.platform.runtime.repository.RuntimeModuleId,java.util.List):com.intellij.platform.runtime.repository.serialization.RawRuntimePluginHeader
+- getIncludedModules():java.util.List
+- getPluginDescriptorModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
+- getPluginId():java.lang.String
 *f:com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 - s:loadBootstrapClasspath(java.nio.file.Path,java.lang.String):java.lang.String[]
 - s:loadFromCompactFile(java.nio.file.Path):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 - s:loadFromJar(java.nio.file.Path):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 - s:loadFromRawData(java.nio.file.Path,com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData):com.intellij.platform.runtime.repository.RuntimeModuleRepository
-- s:saveToCompactFile(java.util.Collection,java.lang.String,java.nio.file.Path,I):V
 - s:saveToCompactFile(java.util.Collection,java.lang.String,java.nio.file.Path,java.lang.String,I):V
+- s:saveToCompactFile(java.util.Collection,java.util.Collection,java.lang.String,java.nio.file.Path,I):V
 - s:saveToJar(java.util.Collection,java.lang.String,java.nio.file.Path,I):V
 - s:saveToJar(java.util.Collection,java.lang.String,java.nio.file.Path,java.lang.String,I):V
+- s:saveToJar(java.util.Collection,java.util.Collection,java.lang.String,java.nio.file.Path,I):V

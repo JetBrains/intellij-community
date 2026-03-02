@@ -1,6 +1,6 @@
 ### auto-generated section `build fleet.util.network` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_network",
@@ -14,6 +14,12 @@ create_kotlinc_options(
   x_lambdas = "class"
 )
 
+resourcegroup(
+  name = "network_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
 jvm_provided_library(
   name = "fleet_util_multiplatform_provided",
   lib = "//fleet/util/multiplatform"
@@ -23,7 +29,8 @@ jvm_library(
   name = "network",
   module_name = "fleet.util.network",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
+  resources = [":network_resources"],
   kotlinc_opts = ":custom_network",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -55,7 +62,7 @@ jvm_library(
   name = "network_test_lib",
   module_name = "fleet.util.network",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_network",
   exports = [
     "@lib//:kotlin-stdlib",

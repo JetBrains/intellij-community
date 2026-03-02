@@ -4,9 +4,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyClassPattern;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -150,15 +149,13 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
   }
 
   public static @Nullable List<@NotNull String> getMatchArgs(@NotNull PyClassType type, @NotNull TypeEvalContext context) {
-    final PyClass cls = type.getPyClass();
-    // TODO: change to getMemberType, when PyLiteralType can be created without PyExpression
+    Ref<PyType> memberTypeRef = getMemberType(type, PyNames.MATCH_ARGS, context);
+    if (memberTypeRef != null) {
+      List<String> matchArgs = PyTypeUtil.extractStringLiteralsFromTupleType(memberTypeRef.get());
+      if (matchArgs != null) return matchArgs;
+    }
 
-    List<String> matchArgs = cls.getOwnMatchArgs();
-    if (matchArgs != null) return matchArgs;
-
-    matchArgs = PyNamedTupleTypeProvider.Companion.getGeneratedMatchArgs(type, context);
-    if (matchArgs != null) return matchArgs;
-    matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(type, context);
+    List<String> matchArgs = type.getPyClass().getOwnMatchArgs();
     if (matchArgs != null) return matchArgs;
 
     for (PyClassLikeType baseType : type.getSuperClassTypes(context)) {

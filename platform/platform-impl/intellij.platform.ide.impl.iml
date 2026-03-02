@@ -73,12 +73,13 @@
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.jr.objects" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.jr.objects" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />

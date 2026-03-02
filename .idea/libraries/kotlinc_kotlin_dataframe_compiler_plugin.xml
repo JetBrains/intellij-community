@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-dataframe-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dataframe-compiler-plugin-for-ide:2.4.0-dev-3554">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dataframe-compiler-plugin-for-ide:2.4.0-dev-4766">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.4.0-dev-3554/kotlin-dataframe-compiler-plugin-for-ide-2.4.0-dev-3554.jar">
-          <sha256sum>cb6968d1d5aadc54bd09464f6651b5924bf3a957c28e0f9ce811b377c75d4496</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.4.0-dev-4766/kotlin-dataframe-compiler-plugin-for-ide-2.4.0-dev-4766.jar">
+          <sha256sum>9932b68813d0ff28d66177ec604ddd8102cee724a0b92fcb6bcdfaed28bbe40a</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.4.0-dev-3554/kotlin-dataframe-compiler-plugin-for-ide-2.4.0-dev-3554.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.4.0-dev-4766/kotlin-dataframe-compiler-plugin-for-ide-2.4.0-dev-4766.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.4.0-dev-3554/kotlin-dataframe-compiler-plugin-for-ide-2.4.0-dev-3554-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.4.0-dev-4766/kotlin-dataframe-compiler-plugin-for-ide-2.4.0-dev-4766-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

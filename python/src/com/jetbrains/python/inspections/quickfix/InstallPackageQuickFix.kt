@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.components.service
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.python.externalIndex.PyExternalFilesIndexService
 import com.jetbrains.python.PyBundle
@@ -25,8 +26,9 @@ open class InstallPackageQuickFix(val packageName: String) : LocalQuickFix, High
     val sdk = PythonSdkUtil.findPythonSdk(descriptor.psiElement)
               ?: project.service<PyExternalFilesIndexService>().findSdkForExternallyIndexedFile(descriptor.psiElement.containingFile.virtualFile)
               ?: return
+    val module = ModuleUtilCore.findModuleForPsiElement(descriptor.psiElement)
     PyPackageCoroutine.launch(project) {
-      PythonPackageManagerUI.forSdk(project, sdk).installWithConfirmation(listOf(packageName)) ?: return@launch
+      PythonPackageManagerUI.forSdk(project, sdk).installWithConfirmation(listOf(packageName), module) ?: return@launch
       onSuccess(project, descriptor)
       PyPackagesUsageCollector.installSingleEvent.log()
     }

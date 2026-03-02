@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_kotlinUsedInJava_funRenamed-a.kotlin_module
+  test/FunKt.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/funRenamed/a/fun.kt
+End of files
+Cleaning output files:
+  WillBeUnresolved.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/funRenamed/a/WillBeUnresolved.java
+End of files
+------------------------------------------
+Exit code: ERROR

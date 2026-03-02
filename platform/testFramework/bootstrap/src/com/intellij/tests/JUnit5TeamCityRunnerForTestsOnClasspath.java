@@ -172,6 +172,12 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
     MethodHandle included = MethodHandles.publicLookup()
       .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
                   "isClassNameIncluded", MethodType.methodType(boolean.class, String.class));
+    try {
+      boolean ignored = (boolean)included.invokeExact(Object.class.getName() + "Test");  // force load test classes filter, *Test matches ClassFinder#isSuitableTestClassName
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(e);
+    }
     return new ClassNameFilter() {
       @Override
       public FilterResult apply(String className) {
@@ -194,6 +200,12 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
     MethodHandle included = MethodHandles.publicLookup()
       .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
                   "isClassIncluded", MethodType.methodType(boolean.class, Class.class));
+    try {
+      boolean ignored = (boolean)included.invokeExact(Object.class);  // force load bucketing scheme
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(e);
+    }
     return new PostDiscoveryFilter() {
       record LastCheckResult(String className, FilterResult result) {
       }

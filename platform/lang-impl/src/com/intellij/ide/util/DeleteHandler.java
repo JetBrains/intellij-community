@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -31,7 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +40,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -57,15 +58,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.io.TrashBin;
 import com.intellij.util.ui.IoErrorText;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.FileSystemException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -135,7 +135,7 @@ public final class DeleteHandler {
 
     final PsiElement[] elements = PsiTreeUtil.filterAncestors(elementsToDelete);
 
-    boolean safeDeleteApplicable = ContainerUtil.and(elements, SafeDeleteProcessor::validElement);
+    boolean safeDeleteApplicable = ContainerUtil.all(elements, SafeDeleteProcessor::validElement);
 
     final boolean dumb = DumbService.getInstance(project).isDumb();
     if (safeDeleteApplicable && !dumb) {
@@ -226,7 +226,7 @@ public final class DeleteHandler {
         CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       }
 
-      if (ContainerUtil.and(elements, DeleteHandler::isLocalFile)) {
+      if (ContainerUtil.all(elements, DeleteHandler::isLocalFile)) {
         doDeleteFiles(project, elements);
       }
       else {
@@ -299,11 +299,12 @@ public final class DeleteHandler {
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
-        element.delete();
+        deleteElementImpl(element);
       }
       catch (IncorrectOperationException e) {
         ApplicationManager.getApplication().invokeLater(
-          () -> Messages.showMessageDialog(project, e.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon()));
+          () -> Messages.showMessageDialog(project, e.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon())
+        );
       }
     });
   }
@@ -329,20 +330,6 @@ public final class DeleteHandler {
     }
     if (task.aborted != null) {
       VfsUtil.markDirtyAndRefresh(true, true, false, task.aborted);
-    }
-    if (!task.processed.isEmpty()) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        for (var fileElement : task.processed) {
-          try {
-            fileElement.delete();
-          }
-          catch (IncorrectOperationException e) {
-            ApplicationManager.getApplication().invokeLater(
-              () -> Messages.showMessageDialog(project, e.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon())
-            );
-          }
-        }
-      });
     }
   }
 
@@ -377,6 +364,29 @@ public final class DeleteHandler {
     return true;
   }
 
+  @ApiStatus.Internal
+  public static void deleteElementImpl(@NotNull PsiElement element) {
+    var virtualFile = (VirtualFile)null;
+    if (TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin()) {
+      try {
+        var psiFile = element.getContainingFile();
+        if (psiFile != null && psiFile.isPhysical()) {
+          virtualFile = psiFile.getVirtualFile();
+          if (TrashBin.canMoveToTrash(virtualFile)) {
+            LocalFileSystem.MOVE_TO_TRASH.set(virtualFile, Boolean.TRUE);
+          }
+        }
+      }
+      catch (PsiInvalidElementAccessException ignored) { }
+    }
+    try {
+      element.delete();
+    }
+    finally {
+      LocalFileSystem.MOVE_TO_TRASH.set(virtualFile, null);
+    }
+  }
+
   @TestOnly
   public static void overrideNeedsConfirmationInTests(boolean needsConfirmation, @NotNull Disposable disposable) {
     ourOverrideNeedsConfirmation = needsConfirmation;
@@ -386,7 +396,7 @@ public final class DeleteHandler {
   private static final class LocalFilesDeleteTask extends Task.Modal {
     private final PsiElement[] myFileElements;
 
-    private final List<PsiElement> processed = new ArrayList<>();
+    private int counter = 0;
     private VirtualFile aborted = null;
     private Throwable error = null;
 
@@ -396,64 +406,46 @@ public final class DeleteHandler {
     }
 
     @Override
+    @SuppressWarnings("DuplicatedCode")
     public void run(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(true);
+      var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
+      var app = ApplicationManager.getApplication();
+
       try {
-        indicator.setText(IdeBundle.message("progress.counting.files"));
-
-        var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
-
-        var curFileCount = new Ref<>(0);
         for (var element : myFileElements) {
-          var file = ((PsiFileSystemItem)element).getVirtualFile();
-          Files.walkFileTree(file.toNioPath(), new NioFiles.StatsCollectingVisitor() {
-            @Override
-            protected void countDirectory(Path dir, BasicFileAttributes attrs) {
-              count();
-            }
-
-            @Override
-            protected void countFile(Path file, BasicFileAttributes attrs) {
-              count();
-            }
-
-            private void count() {
-              indicator.checkCanceled();
-              curFileCount.set(curFileCount.get() + 1);
-            }
-          });
-        }
-
-        int totalFileCount = curFileCount.get();
-        curFileCount.set(0);
-        indicator.setIndeterminate(totalFileCount <= 1); // don't show progression when deleting single file
-        for (int i = 0; i < myFileElements.length; i++) {
-          var element = myFileElements[i];
-          if (indicator.isCanceled()) break;
-          indicator.setFraction((double) i / myFileElements.length);
+          indicator.checkCanceled();
+          indicator.setText(IdeBundle.message("progress.already.deleted", counter));
 
           var file = ((PsiFileSystemItem)element).getVirtualFile();
           aborted = file;
-          var path = file.toNioPath();
-          indicator.setText(path.toString());
 
-          if (toBin && TrashBin.canMoveToTrash(path)) {
-            TrashBin.moveToTrash(path);
+          if (toBin && TrashBin.canMoveToTrash(file)) {
+            LocalFileSystem.MOVE_TO_TRASH.set(file, Boolean.TRUE);
+            counter++;
           }
           else {
-            NioFiles.deleteRecursively(path, p -> {
+            LocalFileSystem.DELETE_CALLBACK.set(file, p -> {
               indicator.checkCanceled();
-              indicator.setFraction((double)curFileCount.get() / totalFileCount);
-              indicator.setText2(path.relativize(p).toString());
-              curFileCount.set(curFileCount.get() + 1);
+              indicator.setText(IdeBundle.message("progress.already.deleted", counter));
+              counter++;
             });
           }
-          processed.add(element);
+
+          try {
+            app.runWriteAction(() -> element.delete());
+          }
+          finally {
+            LocalFileSystem.MOVE_TO_TRASH.set(file, null);
+            LocalFileSystem.DELETE_CALLBACK.set(file, null);
+          }
+
           aborted = null;
         }
       }
-      catch (IOException e) {
+      catch (IncorrectOperationException e) {
         Logger.getInstance(getClass()).info(e);
-        error = e;
+        error = e.getCause();
       }
     }
   }

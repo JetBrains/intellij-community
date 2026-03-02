@@ -3,13 +3,17 @@ package git4idea.tests
 
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.commit.CommitToAmend
 import com.intellij.vcs.commit.commitToAmend
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsProjectLog
+import git4idea.checkin.GitAmendSpecificCommitSquasher
 import git4idea.log.refreshAndWait
+import git4idea.rebase.GitSquashedCommitsMessage.canAutosquash
+import git4idea.rebase.GitSquashedCommitsMessage.getSubject
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertCommitted
 import git4idea.test.assertMessage
@@ -35,7 +39,8 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
     }
 
     val newMessage = "new message\n"
-    amendSpecificCommit(targetHash, targetMessage, changes, newMessage)
+    val exceptions = amendSpecificCommit(targetHash, targetMessage, changes, newMessage)
+    assertEmpty(exceptions)
 
     assertNoChanges()
     assertMessage(newMessage, repo.message("HEAD~1"))
@@ -64,31 +69,46 @@ internal class GitCommitAmendSpecificTest : GitSingleRepoTest() {
       modified("a.txt")
     }
 
+    val oldHead = repo.last()
+
     val newMessage = "new message\n"
-    amendSpecificCommit(targetHash, targetMessage, changes, newMessage)
+    val exceptions = amendSpecificCommit(targetHash, targetMessage, changes, newMessage)
+    val conflictException = exceptions.single() as GitAmendSpecificCommitSquasher.AmendSpecificCommitConflictException
 
-    assertNoChanges()
-    val amendCommitMessage = """
-      amend! $targetMessage
-      
-      $newMessage
-    """.trimIndent()
-    assertMessage(amendCommitMessage, repo.lastMessage())
-
-    repo.assertCommitted {
-      modified("a.txt", commitedContent, updatedContent)
+    assertChangesWithRefresh {
+      modified("a.txt")
     }
-  }
 
-  private fun amendSpecificCommit(targetHash: Hash, targetMessage: String, changes: Collection<Change>, newMessage: String) {
-    commitContext.commitToAmend = CommitToAmend.Specific(targetHash, targetMessage)
+    assertEquals(oldHead, repo.last())
+    assertEquals(file("a.txt").read(), updatedContent)
 
     runBlocking {
+      conflictException.resetToAmendCommit()
+    }
+    refresh()
+    updateChangeListManager()
+
+    repo.assertCommitted {
+      modified("a.txt")
+    }
+    assertNoChanges()
+    assertTrue(canAutosquash(lastMessage(), setOf(getSubject(targetMessage))))
+  }
+
+  private fun amendSpecificCommit(
+    targetHash: Hash,
+    targetMessage: String,
+    changes: Collection<Change>,
+    newMessage: String,
+  ): List<VcsException> {
+    commitContext.commitToAmend = CommitToAmend.Specific(targetHash, targetMessage)
+
+    return runBlocking {
       coroutineToIndicator {
         val logData = runBlocking { VcsProjectLog.awaitLogIsReady(repo.project)?.dataManager }
         logData?.refreshAndWait(repo, true)
-        commit(changes, newMessage)
+        tryCommit(changes, newMessage)
       }
-    }
+    }.orEmpty()
   }
 }

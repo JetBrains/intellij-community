@@ -69,7 +69,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
-  override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = linkedMapOf()
 
   internal var hideableRowNestingLevel: Int = 0
 

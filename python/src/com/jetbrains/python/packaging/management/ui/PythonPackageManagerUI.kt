@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management.ui
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -54,18 +55,21 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     }
   }
 
-  suspend fun installWithConfirmation(packages: List<String>): List<PythonPackage>? {
+  suspend fun installWithConfirmation(packages: List<String>, module: Module? = null): List<PythonPackage>? {
     val requirements = packages.map { pyRequirement(it) }
-    return installPyRequirementsWithConfirmation(requirements)
+    return installPyRequirementsWithConfirmation(requirements, module)
   }
 
-  suspend fun installPyRequirementsWithConfirmation(packages: List<PyRequirement>): List<PythonPackage>? {
+  suspend fun installPyRequirementsWithConfirmation(
+    packages: List<PyRequirement>,
+    module: Module? = null,
+  ): List<PythonPackage>? {
     val confirmed = PyPackageManagerUiConfirmationHelpers.getConfirmedPackages(packages, project)
     if (confirmed.isEmpty())
       return null
 
     PyPackagesUsageCollector.installAllEvent.log(confirmed.size)
-    return installPyRequirementsBackground(confirmed)
+    return installPyRequirementsBackground(confirmed, module = module)
   }
 
   suspend fun installPyRequirementsDetachedWithConfirmation(packages: List<PyRequirement>): List<PythonPackage>? {
@@ -83,9 +87,10 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
   suspend fun installPackagesRequestBackground(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
+    module: Module? = null,
   ): List<PythonPackage>? {
     return executeCommand(getProgressTitle(installRequest)) {
-      manager.installPackage(installRequest, options)
+      manager.installPackage(installRequest, options, module)
     }
   }
 

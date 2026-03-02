@@ -2,8 +2,11 @@
 package com.intellij.ide.gdpr.ui.consents
 
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 interface AiDataCollectionExternalSettings {
@@ -13,8 +16,18 @@ interface AiDataCollectionExternalSettings {
 
     private const val AI_ASSISTANT_PLUGIN_ID = "com.intellij.ml.llm"
 
+    private var testOverride: AiDataCollectionExternalSettings? = null
+
+    @TestOnly
+    @JvmStatic
+    fun overrideForTest(settings: AiDataCollectionExternalSettings, parentDisposable: Disposable) {
+      testOverride = settings
+      Disposer.register(parentDisposable) { testOverride = null }
+    }
+
     @JvmStatic
     fun findSettingsImplementedByAiAssistant(): AiDataCollectionExternalSettings? {
+      testOverride?.let { return it }
       return EP_NAME.findFirstSafe {
         val pluginInfo = getPluginInfo(it.javaClass)
         pluginInfo.isDevelopedByJetBrains() && pluginInfo.id == AI_ASSISTANT_PLUGIN_ID

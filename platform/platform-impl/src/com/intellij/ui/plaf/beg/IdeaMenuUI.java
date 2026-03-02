@@ -3,12 +3,15 @@ package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ProjectWindowCustomizerService;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode;
+import com.intellij.platform.ide.menu.WinAltKeyProcessor;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.hover.HoverListener;
@@ -71,29 +74,23 @@ public class IdeaMenuUI extends BasicMenuUI {
 
   public static void paintRoundSelection(Graphics g, Component c, int width, int height) {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    int radius;
+    int diameter;
     JBInsets outerInsets;
     if (IdeaPopupMenuUI.isPartOfPopupMenu(c)) {
-      radius = JBUI.CurrentTheme.PopupMenu.Selection.ARC.get();
+      diameter = JBUI.CurrentTheme.PopupMenu.Selection.ARC.get();
       outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
-      if (ShowMode.Companion.isMergedMainMenu()) {
-        outerInsets = JBUI.insets(height / JBUIScale.scale(8), 0);
-        radius = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
-      }
-      else {
-        outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
-        radius = 0;
-      }
+      outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets(c);
+      diameter = DarculaMenuItemBorder.menuBarItemSelectionArc(c);
     }
     else {
-      radius = JBUI.CurrentTheme.Menu.Selection.ARC.get();
+      diameter = JBUI.CurrentTheme.Menu.Selection.ARC.get();
       outerInsets = JBUI.CurrentTheme.Menu.Selection.outerInsets();
     }
 
     g.fillRoundRect(outerInsets.left, outerInsets.top, width - outerInsets.width(),
-                    height - outerInsets.height(), radius, radius);
+                    height - outerInsets.height(), diameter, diameter);
     config.restore();
   }
 
@@ -115,7 +112,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    if (c instanceof JMenuItem && ShowMode.Companion.isMergedMainMenu()) {
+    if (isHeaderMenu()) {
       hoverListener.addTo(c);
     }
   }
@@ -311,6 +308,13 @@ public class IdeaMenuUI extends BasicMenuUI {
       g.setColor(jMenu.getBackground());
       g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
     }
+    if (WinAltKeyProcessor.isEnabled() && ExperimentalUI.isNewUI()) {
+      MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
+      if (IdeaPopupMenuUI.isMenuBarItem(comp) && buttonmodel.isSelected() && selectedPath.length == 2) {
+        paintFocusBorder(g, comp, jMenu.getWidth(), jMenu.getHeight());
+        return;
+      }
+    }
     if (buttonmodel.isArmed() || buttonmodel.isSelected()){
       paintHover(g, comp, jMenu, allowedIcon);
     }
@@ -327,6 +331,13 @@ public class IdeaMenuUI extends BasicMenuUI {
     else {
       g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
     }
+  }
+
+  private static void paintFocusBorder(Graphics g, JComponent comp, int width, int height) {
+    JBInsets outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets(comp);
+    float arc = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().getFloat();
+    Rectangle rect = new Rectangle(outerInsets.left, outerInsets.top, width - outerInsets.width(), height - outerInsets.height());
+    DarculaNewUIUtil.INSTANCE.drawRoundedRectangle(g, rect, JBUI.CurrentTheme.Focus.focusColor(), arc, DarculaUIUtil.BW.getFloat());
   }
 
   private boolean useCheckAndArrow() {

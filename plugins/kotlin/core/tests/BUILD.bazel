@@ -27,6 +27,7 @@ jvm_library(
     "//libraries/guava",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//plugins/kotlin/base/fe10/project-structure",
     "@lib//:kotlinc-kotlin-script-runtime",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/project-structure",
@@ -71,6 +72,8 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//plugins/kotlin/base/fe10/project-structure",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
     "@lib//:kotlinc-kotlin-script-runtime",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/plugin/k1:k1_test_lib",
@@ -113,6 +116,8 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl_test_lib",
     "//java/manifest",
     "//java/manifest:manifest_test_lib",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
   ],
   runtime_deps = [":tests"]
 )

@@ -38,8 +38,7 @@ jvm_library(
     "@lib//:junit5Launcher-provided",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
     "@lib//:opentelemetry",
-  ],
-  runtime_deps = ["//platform/testFramework/junit5"]
+  ]
 )
 
 jvm_library(
@@ -80,14 +79,15 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/util",
     "//platform/util:util_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
     "//images:images-tests",
     "//images:images-tests_test_lib",
     "//RegExpSupport:regexp-tests",
     "//RegExpSupport:regexp-tests_test_lib",
     "//platform/xdebugger-impl:debugger-impl-tests",
     "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
-  ],
-  runtime_deps = ["//platform/testFramework/junit5:junit5_test_lib"]
+  ]
 )
 ### auto-generated section `build intellij.tools.ide.starter.junit5` end
 

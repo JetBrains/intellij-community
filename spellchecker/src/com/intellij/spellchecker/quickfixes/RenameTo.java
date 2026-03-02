@@ -162,12 +162,13 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
     Segment rangeRelativeToFile = this.rangeRelativeToFile.getRange();
     if (rangeRelativeToFile == null) return null;
 
-    PsiElement nameIdentifier = namedElement instanceof PsiNameIdentifierOwner owner ? owner.getNameIdentifier() : null;
-    int nameStartOffset = nameIdentifier != null
-                          ? nameIdentifier.getTextRange().getStartOffset()
-                          : namedElement.getTextRange().getStartOffset();
+    return namedElement instanceof PsiNameIdentifierOwner owner ?
+           adjustRangeRelativeToElement(owner.getNameIdentifier(), rangeRelativeToFile) :
+           adjustRangeRelativeToElement(pointer.getElement(), rangeRelativeToFile);
+  }
 
-    return TextRange.create(rangeRelativeToFile).shiftLeft(nameStartOffset);
+  private static @Nullable TextRange adjustRangeRelativeToElement(PsiElement element, Segment rangeRelativeToFile) {
+    return element != null ? TextRange.create(rangeRelativeToFile).shiftLeft(element.getTextRange().getStartOffset()) : null;
   }
 
   private void runRenamer(PsiElement element, String suggestion) {

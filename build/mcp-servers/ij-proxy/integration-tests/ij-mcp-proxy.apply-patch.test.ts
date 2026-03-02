@@ -5,7 +5,7 @@ import {mkdir, readFile, writeFile} from 'node:fs/promises'
 import {dirname, join, resolve} from 'node:path'
 import {describe, it} from 'bun:test'
 import {runGitCommand} from '../proxy-tools/git-utils'
-import {SUITE_TIMEOUT_MS, withProxy} from '../test-utils'
+import {buildUpstreamTool, SUITE_TIMEOUT_MS, withProxy} from '../test-utils'
 
 function buildPatch(lines) {
   return `${lines.join('\n')}\n`
@@ -47,6 +47,44 @@ async function initGitRepo(root) {
 }
 
 describe('ij MCP proxy apply_patch', {timeout: SUITE_TIMEOUT_MS}, () => {
+  it('passes through apply_patch to upstream tool when available', async () => {
+    let delegatedInput = null
+
+    await withProxy(
+      {
+        tools: [
+          buildUpstreamTool('apply_patch', {input: {type: 'string'}}, ['input'])
+        ],
+        onToolCall: async ({name, args}) => {
+          if (name === 'apply_patch') {
+            delegatedInput = args.input
+            return {text: 'Applied patch to 1 file.'}
+          }
+          return {text: '{}'}
+        }
+      },
+      async ({proxyClient}) => {
+        await proxyClient.send('tools/list')
+
+        const patch = buildPatch([
+          '*** Begin Patch',
+          '*** Add File: delegated.txt',
+          '+alpha',
+          '*** End Patch'
+        ])
+
+        const response = await proxyClient.send('tools/call', {
+          name: 'apply_patch',
+          arguments: {input: patch}
+        })
+
+        strictEqual(response.result.isError, undefined)
+        strictEqual(response.result.content?.[0]?.text, 'Applied patch to 1 file.')
+        strictEqual(delegatedInput, patch)
+      }
+    )
+  })
+
   it('deletes files via git rm', async () => {
     await withProxy({onToolCall: createFsToolCallHandler()}, async ({proxyClient, testDir}) => {
       const filePath = join(testDir, 'to-delete.txt')

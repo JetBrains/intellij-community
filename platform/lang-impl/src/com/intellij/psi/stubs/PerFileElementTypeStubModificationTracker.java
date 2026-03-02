@@ -142,7 +142,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   @Override
   public synchronized void endUpdatesBatch() {
     myModificationsInCurrentBatch.clear();
-    ReadAction.run(() -> {
+    ReadAction.runBlocking(() -> {
       if (disposeTrace.get() != null) {
         throw new IllegalStateException("Cannot end updates batch because the tracker is disposed! Disposal trace is in the cause", disposeTrace.get());
       }

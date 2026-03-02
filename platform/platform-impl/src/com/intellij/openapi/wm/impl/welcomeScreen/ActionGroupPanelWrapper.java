@@ -61,6 +61,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
@@ -327,11 +328,17 @@ public final class ActionGroupPanelWrapper {
 
       private void initPanel(@NotNull AnActionEvent e, @NotNull List<AnAction> flatChildren) {
         String text = e.getPresentation().getText();
+        AtomicBoolean goingBack = new AtomicBoolean();
         Pair<JPanel, JBList<AnAction>> panel =
-          createActionGroupPanel(flatChildren, () -> goBack(actionPanel), parentDisposable);
+          createActionGroupPanel(flatChildren, () -> {
+            if (goingBack.compareAndSet(false, true)) {
+              goBack(actionPanel);
+            }
+          }, parentDisposable);
         panel.first.setName(action.getClass().getName());
         actionPanel = panel.first;
         onDone = () -> {
+          goingBack.set(false);
           if (text != null) setTitle(StringUtil.removeEllipsisSuffix(text));
           JBList<AnAction> list = panel.second;
           ScrollingUtil.ensureSelectionExists(list);

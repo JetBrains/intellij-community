@@ -1,6 +1,9 @@
 <idea-plugin visibility="public">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.vcs.core"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -2,10 +2,9 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
@@ -25,6 +24,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -337,7 +337,9 @@ public final class EditorEmbeddedComponentManager {
       if (myEditor.isDisposed()) return null;
 
 
-      MyRenderer renderer = fullWidth ? new FullEditorWidthRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener) : new MyRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener);
+      MyRenderer renderer = fullWidth
+                            ? new FullEditorWidthRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener)
+                            : new MyRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener);
       Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset,
                                                                          new InlayProperties()
                                                                            .relatesToPrecedingText(relatesToPrecedingText)
@@ -349,27 +351,29 @@ public final class EditorEmbeddedComponentManager {
       Disposer.register(this, inlay);
 
       renderer.addComponentListener(new ComponentAdapter() {
+        private Dimension currentSize = renderer.getSize();
+
         @Override
         public void componentResized(ComponentEvent e) {
-          if (e.getSource() instanceof MyRenderer renderer) {
-            revalidateComponents(renderer.getBounds().y);
+          if (!(e.getSource() instanceof MyRenderer renderer)) {
+            return;
           }
+          Dimension newSize = renderer.getSize();
+          if (currentSize.equals(newSize)) {
+            return;
+          }
+          revalidateComponents(renderer.getLocation().y);
+          currentSize = newSize;
         }
       });
 
-     // renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
-
       renderer.setInlay(inlay);
       myEditor.getContentComponent().add(renderer);
-      Disposer.register(inlay, () -> {
-        Runnable runnable = () -> {
-          renderer.setInlay(null);
-          myEditor.getContentComponent().remove(renderer);
-        };
-        Application application = ApplicationManager.getApplication();
-        if (application.isDispatchThread()) runnable.run();
-        else application.invokeLater(runnable);
-      });
+
+      Disposer.register(inlay, () -> UIUtil.invokeLaterIfNeeded(() -> {
+        renderer.setInlay(null);
+        myEditor.getContentComponent().remove(renderer);
+      }));
 
       // If validation is postponed, visual artifacts can appear while typing text.
       if (!myEditor.getInlayModel().isInBatchMode()) {
@@ -395,12 +399,24 @@ public final class EditorEmbeddedComponentManager {
 
     private void setup() {
       Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
+
+      // We need to recalculate inlays positions when
+      // 1 Folding model change
+      // 2 Editor lines changed (added or removed) this caused inlay bounds change.
+      // 2.1 EditorImpl property was changed (font size, scale) [questionable]
+      // 3 On soft wrap recalculation ends [questionable]
+      // 4 Inlay model change
+      // 5 Editor width changed
+
+      // 1 Folding model change
       myEditor.getFoldingModel().addListener(new FoldingListener() {
         @Override
         public void onFoldProcessingEnd() {
           revalidateComponents();
         }
       }, this);
+
+      // 2 Editor lines changed (added or removed) this caused inlay bounds change.
       myEditor.getDocument().addDocumentListener(new DocumentListener() {
         private int linesBefore;
 
@@ -422,34 +438,51 @@ public final class EditorEmbeddedComponentManager {
           revalidateComponents();
         }
       }, this);
+
+      // 4 Inlay model change.
       myEditor.getInlayModel().addListener(new InlayModel.SimpleAdapter() {
         @Override
         public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
-          if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0 && inlay.getRenderer() instanceof MyRenderer component) {
-            // This method can be called while validating the same component. Prevent resetting parent validation flags.
-            if (component.isValid()) {
-              component.revalidate();
-            }
+          if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0 ||
+              !(inlay.getRenderer() instanceof MyRenderer component) ||
+              // This method can be called while validating the same component. Prevent resetting parent validation flags.
+              !component.isValid()) {
+            return;
           }
+
+          revalidateComponents(component.getY());
         }
 
         @Override
         public void onRemoved(@NotNull Inlay<?> inlay) {
           Disposer.dispose(inlay);
         }
+
+        @Override
+        public void onBatchModeFinish(@NotNull Editor editor) {
+          revalidateComponents();
+        }
       }, this);
+
+      // 5 Editor width changed. Height is not valuable for us, because it does not affect inlay sizing.
+      JViewport viewport = myEditor.getScrollPane().getViewport();
       ComponentAdapter viewportListener = new ComponentAdapter() {
+        private int currentWidth = viewport.getWidth();
+
         @Override
         public void componentResized(ComponentEvent e) {
+          if (currentWidth == viewport.getWidth()) {
+            return;
+          }
+          currentWidth = viewport.getWidth();
           revalidateComponents();
         }
       };
-      JViewport viewport = myEditor.getScrollPane().getViewport();
       viewport.addComponentListener(viewportListener);
       Disposer.register(this, () -> viewport.removeComponentListener(viewportListener));
 
-      myEditor.addEditorMouseListener(myResizeListener);
-      myEditor.addEditorMouseMotionListener(myResizeListener);
+      myEditor.addEditorMouseListener(myResizeListener, this);
+      myEditor.addEditorMouseMotionListener(myResizeListener, this);
     }
 
     @Override

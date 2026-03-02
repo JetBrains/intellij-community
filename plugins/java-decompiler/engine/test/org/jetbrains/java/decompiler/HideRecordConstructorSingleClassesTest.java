@@ -2,20 +2,14 @@
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+@Timeout(value = 60, unit = TimeUnit.SECONDS)
 public class HideRecordConstructorSingleClassesTest extends SingleClassesTestBase {
-  /*
-   * Set individual test duration time limit to 60 seconds.
-   * This will help us to test bugs hanging decompiler.
-   */
-  @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
-
   @Override
   protected Map<String, Object> getDecompilerOptions() {
     return Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",

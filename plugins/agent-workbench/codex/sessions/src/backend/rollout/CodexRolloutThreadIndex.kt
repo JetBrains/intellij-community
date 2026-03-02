@@ -3,6 +3,7 @@
 
 package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
+import com.intellij.agent.workbench.codex.common.CodexSubAgent
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -165,68 +166,111 @@ internal class CodexRolloutThreadIndex(
 
   private fun rebuildThreadsByCwd() {
     state.threadsByCwd.clear()
+    val parsedThreadsByCwd = LinkedHashMap<String, MutableList<ParsedRolloutThread>>()
     for (entry in state.cachedFilesByPath.object2ObjectEntrySet()) {
       val parsedThread = entry.value.parsedThread ?: continue
-      var threads = state.threadsByCwd[parsedThread.normalizedCwd]
-      if (threads == null) {
-        threads = ObjectArrayList()
-        state.threadsByCwd[parsedThread.normalizedCwd] = threads
-      }
-      threads.add(parsedThread.thread)
+      parsedThreadsByCwd.getOrPut(parsedThread.normalizedCwd) { ArrayList() }.add(parsedThread)
     }
 
-    for (threads in state.threadsByCwd.values) {
-      threads.sortWith(Comparator { left, right ->
+    for ((cwd, parsedThreads) in parsedThreadsByCwd) {
+      val topLevelThreads = ArrayList<CodexBackendThread>(parsedThreads.size)
+      val subAgentsByParent = LinkedHashMap<String, LinkedHashMap<String, CodexSubAgent>>()
+      val subAgentThreads = ArrayList<ParsedRolloutThread>()
+
+      for (parsedThread in parsedThreads) {
+        val parentThreadId = parsedThread.parentThreadId
+        if (parentThreadId == null) {
+          topLevelThreads.add(parsedThread.thread)
+          continue
+        }
+
+        val subAgents = subAgentsByParent.getOrPut(parentThreadId) { LinkedHashMap() }
+        val subAgent = CodexSubAgent(id = parsedThread.thread.thread.id, name = parsedThread.thread.thread.title)
+        subAgents.putIfAbsent(subAgent.id, subAgent)
+        subAgentThreads.add(parsedThread)
+      }
+
+      val resolvedParentIds = HashSet<String>()
+      for (index in topLevelThreads.indices) {
+        val parentThread = topLevelThreads[index]
+        val childSubAgents = subAgentsByParent[parentThread.thread.id] ?: continue
+        if (childSubAgents.isEmpty()) continue
+
+        val mergedSubAgents = LinkedHashMap<String, CodexSubAgent>(
+          parentThread.thread.subAgents.size + childSubAgents.size
+        )
+        parentThread.thread.subAgents.forEach { subAgent ->
+          mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
+        }
+        childSubAgents.forEach { (_, subAgent) ->
+          mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
+        }
+
+        topLevelThreads[index] = parentThread.copy(thread = parentThread.thread.copy(subAgents = ArrayList(mergedSubAgents.values)))
+        resolvedParentIds.add(parentThread.thread.id)
+      }
+
+      // Preserve previous behavior when parent rollout is missing for a discovered sub-agent session.
+      for (parsedThread in subAgentThreads) {
+        val parentThreadId = parsedThread.parentThreadId ?: continue
+        if (resolvedParentIds.contains(parentThreadId)) continue
+        topLevelThreads.add(parsedThread.thread)
+      }
+
+      topLevelThreads.sortWith(Comparator { left, right ->
         right.thread.updatedAt.compareTo(left.thread.updatedAt)
       })
+
+      state.threadsByCwd[cwd] = ObjectArrayList(topLevelThreads)
     }
   }
 
-  private fun scanRolloutFiles(sessionsDir: Path): Object2ObjectOpenHashMap<String, RolloutFileStat> {
-    val scannedFiles = Object2ObjectOpenHashMap<String, RolloutFileStat>()
-    Files.walk(sessionsDir).use { stream ->
-      val iterator = stream.iterator()
-      while (iterator.hasNext()) {
-        val candidate = iterator.next()
-        if (!Files.isRegularFile(candidate)) continue
-        val fileName = candidate.fileName?.toString() ?: continue
-        if (!isRolloutFileName(fileName)) continue
-        val lastModifiedNs = try {
-          Files.getLastModifiedTime(candidate).to(TimeUnit.NANOSECONDS)
-        }
-        catch (_: Throwable) {
-          continue
-        }
-        val sizeBytes = try {
-          Files.size(candidate)
-        }
-        catch (_: Throwable) {
-          continue
-        }
+}
 
-        val pathKey = toPathKey(candidate)
-        scannedFiles[pathKey] = RolloutFileStat(
-          pathKey = pathKey,
-          path = candidate,
-          lastModifiedNs = lastModifiedNs,
-          sizeBytes = sizeBytes,
-        )
+private fun scanRolloutFiles(sessionsDir: Path): Object2ObjectOpenHashMap<String, RolloutFileStat> {
+  val scannedFiles = Object2ObjectOpenHashMap<String, RolloutFileStat>()
+  Files.walk(sessionsDir).use { stream ->
+    val iterator = stream.iterator()
+    while (iterator.hasNext()) {
+      val candidate = iterator.next()
+      if (!Files.isRegularFile(candidate)) continue
+      val fileName = candidate.fileName?.toString() ?: continue
+      if (!isRolloutFileName(fileName)) continue
+      val lastModifiedNs = try {
+        Files.getLastModifiedTime(candidate).to(TimeUnit.NANOSECONDS)
       }
-    }
+      catch (_: Throwable) {
+        continue
+      }
+      val sizeBytes = try {
+        Files.size(candidate)
+      }
+      catch (_: Throwable) {
+        continue
+      }
 
-    return scannedFiles
+      val pathKey = toPathKey(candidate)
+      scannedFiles[pathKey] = RolloutFileStat(
+        pathKey = pathKey,
+        path = candidate,
+        lastModifiedNs = lastModifiedNs,
+        sizeBytes = sizeBytes,
+      )
+    }
   }
 
-  private fun toPathKey(path: Path): String {
-    return normalizeRolloutPath(path).invariantSeparatorsPathString
-  }
+  return scannedFiles
+}
 
-  private fun normalizeRolloutPath(path: Path): Path {
-    return runCatching {
-      path.toAbsolutePath().normalize()
-    }.getOrElse {
-      path.normalize()
-    }
+private fun toPathKey(path: Path): String {
+  return normalizeRolloutPath(path).invariantSeparatorsPathString
+}
+
+private fun normalizeRolloutPath(path: Path): Path {
+  return runCatching {
+    path.toAbsolutePath().normalize()
+  }.getOrElse {
+    path.normalize()
   }
 }
 

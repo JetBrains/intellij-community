@@ -11,6 +11,7 @@ import com.intellij.util.ui.Animator
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.TimerUtil
 import com.intellij.util.ui.UIUtil
+import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
@@ -67,11 +68,13 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeJMenuBar) : IdeMenu
       updateFullScreenControls(fullScreenProperty)
     }
 
-    IdeEventQueue.getInstance().addDispatcher(dispatcher = { event ->
-      if (state != IdeMenuBarState.EXPANDED && event is MouseEvent) {
-        considerRestartingAnimator(event)
+    IdeEventQueue.getInstance().addDispatcher(dispatcher = object : IdeEventQueue.NonLockedEventDispatcher {
+      override fun dispatch(e: AWTEvent): Boolean {
+        if (state != IdeMenuBarState.EXPANDED && e is MouseEvent) {
+          considerRestartingAnimator(e)
+        }
+        return false
       }
-      false
     }, scope = menuBar.coroutineScope)
   }
 

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.UserDataProperty
 
 /**
  * [customSourceRootType] provides a custom [JpsModuleSourceRootType] for an Android light classes file. It must not be changed after the
- * first assignment because the calculation of the module info cached by [ModuleInfoProvider] might depend on this property.
+ * first assignment because the calculation of the module info cached by [org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider] might depend on this property.
  */
 @Suppress("DEPRECATION")
 var UserDataHolder.customSourceRootType: JpsModuleSourceRootType<*>? by UserDataProperty(MODULE_ROOT_TYPE_KEY)

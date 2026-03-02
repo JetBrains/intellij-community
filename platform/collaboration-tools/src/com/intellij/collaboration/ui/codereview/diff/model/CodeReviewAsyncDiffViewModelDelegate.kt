@@ -124,9 +124,8 @@ fun <C : Any, CVM : AsyncDiffViewModel> Flow<ChangesState<C>>.mapChangesToVms(
           vmsContainer.update(changesState.selectedChanges.list)
           lastList = changesState.selectedChanges.list
         }
-        val mappingState = vmsContainer.mappingState.value
-        val vms = mappingState.values.toList()
-        val selectedVmIdx = mappingState.keys.indexOf(changesState.selectedChanges.selectedItem)
+        val vms = vmsContainer.mappedState.value
+        val selectedVmIdx = changesState.selectedChanges.list.indexOf(changesState.selectedChanges.selectedItem)
         ViewModelsState(ListSelection.createAt(vms, selectedVmIdx), changesState.scrollRequests)
       }.let {
         send(it)

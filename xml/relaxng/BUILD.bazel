@@ -47,9 +47,55 @@ jvm_library(
 
 jvm_library(
   name = "relaxng_test_lib",
+  module_name = "intellij.relaxng",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":relaxng",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//xml/impl:impl_test_lib",
+    "//xml/dom-openapi:dom_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/util/nanoxml:nanoxml_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//xml/xml-analysis-api:analysis_test_lib",
+    "//platform/execution:execution_test_lib",
+  ]
+)
+### auto-generated section `build intellij.relaxng` end
+
+### auto-generated section `build intellij.relaxng.tests` start
+jvm_library(
+  name = "relaxng-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "relaxng-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":relaxng"],
+  associates = [
+    "//xml/relaxng",
+    "//xml/relaxng:relaxng_test_lib",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-api:analysis_test_lib",
@@ -78,10 +124,9 @@ jvm_library(
     "//platform/lang-impl:lang-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//xml/relaxng/lib:relaxng-rngom-20051226-patched",
-    "@lib//:relaxng-isorelax",
-    "//xml/relaxng/lib:relaxng-trang-core",
-    "@lib//:relaxng-jing",
+    "//xml/relaxng/lib:relaxng-tests-rngom-20051226-patched",
+    "//xml/relaxng/lib:relaxng-tests-trang-core",
+    "@lib//:relaxng-tests-jing",
     "//platform/util/nanoxml",
     "//platform/util/nanoxml:nanoxml_test_lib",
     "//libraries/fastutil",
@@ -104,17 +149,18 @@ jvm_library(
     "//platform/execution:execution_test_lib",
   ],
   runtime_deps = [
+    ":relaxng-tests",
     "//platform/backend:backend_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
   ]
 )
-### auto-generated section `build intellij.relaxng` end
+### auto-generated section `build intellij.relaxng.tests` end
 
-### auto-generated section `test intellij.relaxng` start
+### auto-generated section `test intellij.relaxng.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "relaxng_test",
-  runtime_deps = [":relaxng_test_lib"]
+  name = "relaxng-tests_test",
+  runtime_deps = [":relaxng-tests_test_lib"]
 )
-### auto-generated section `test intellij.relaxng` end
+### auto-generated section `test intellij.relaxng.tests` end

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.logsUploader;
 
-import com.fasterxml.jackson.jr.ob.JSON;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -10,6 +9,7 @@ import com.intellij.util.net.PlatformHttpClient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import tools.jackson.jr.ob.JSON;
 
 import java.io.IOException;
 import java.net.URI;

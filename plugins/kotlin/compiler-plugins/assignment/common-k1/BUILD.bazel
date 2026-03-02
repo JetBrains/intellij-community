@@ -44,6 +44,7 @@ jvm_library(
     "//plugins/kotlin/base/fe10/analysis",
     "//platform/lang-impl",
     "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/fe10/project-structure",
   ]
 )
 
@@ -69,6 +70,7 @@ jvm_library(
     "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
     "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.assignment.common.k1` end

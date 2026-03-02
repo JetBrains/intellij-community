@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diff.impl.DiffUtil
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.InterLineBreakpointProperties
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
@@ -57,8 +58,9 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
     val isAltClick = isFromGutterClick && inputEvent != null && inputEvent.isAltDown
     val isShiftClick = isFromGutterClick && inputEvent != null && inputEvent.isShiftDown
     val canRemove = !isFromGutterClick || (!isShiftClick && !`is`("debugger.click.disable.breakpoints"))
+    val isInterlineLogging = event.getData(InterLineBreakpointProperties.KEY)?.isLogging == true
     val isLoggingBreakpoint = isFromGutterClick && editor != null && inputEvent is MouseEvent
-                              && !isAltClick && isShiftClick
+                              && !isAltClick && (isShiftClick || isInterlineLogging)
     val selection = if (isLoggingBreakpoint) editor.getSelectionModel().selectedText else null
 
 
@@ -71,7 +73,7 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
           project, position, !isFromGutterClick, position.editor, isAltClick || myTemporary,
           !isFromGutterClick, canRemove, isLoggingBreakpoint, selection
         ).thenAccept { breakpoint ->
-          if (breakpoint != null && isLoggingBreakpoint) {
+          if (breakpoint != null && isLoggingBreakpoint && !isInterlineLogging) {
             runInEdt {
               // edit breakpoint
               val position = LogicalPosition(breakpoint.getLine() + 1, 0)

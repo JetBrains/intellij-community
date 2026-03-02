@@ -34,6 +34,9 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
     "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/util",
@@ -55,6 +58,8 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//plugins/kotlin/base/fe10/project-structure",
+    "//plugins/kotlin/base/platforms",
   ]
 )
 
@@ -71,6 +76,9 @@ jvm_library(
     "//platform/analysis-api:analysis_test_lib",
     "//platform/core-api:core_test_lib",
     "//platform/indexing-api:indexing_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
     "//jps/model-api:model_test_lib",
     "//platform/projectModel-api:projectModel_test_lib",
     "//plugins/kotlin/base/util:util_test_lib",
@@ -90,6 +98,8 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
     "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/platforms:platforms_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.base.fe10.analysis` end

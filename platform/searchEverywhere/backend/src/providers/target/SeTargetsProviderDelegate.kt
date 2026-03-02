@@ -68,17 +68,13 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     Disposer.register(parentDisposable, this)
   }
 
-  suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
+  suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector, operationDisposable: Disposable? = null) {
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
     scopeProviderDelegate?.let { scopeProviderDelegate ->
       SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-        val selectedScopeId = scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-          if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
-        } ?: return@let
-
-        scopeProviderDelegate.applyScope(selectedScopeId, false)
+        scopeProviderDelegate.applyScope(isEverywhere, false)
       } ?: run {
         val targetsFilter = SeTargetsFilter.from(params.filter)
         SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
@@ -94,7 +90,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
 
         return collector.put(SeTargetItem(legacyItem, matchers, weight, contributor, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
       }
-    })
+    }, operationDisposable)
   }
 
   suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {

@@ -8,10 +8,12 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.jetbrains.plugins.terminal.util.eelDescriptor
@@ -57,6 +59,7 @@ class TerminalSessionsManager {
       shellCommand = configuredOptions.shellCommand!!,
       workingDirectory = configuredOptions.workingDirectory!!,
       envVariables = configuredOptions.envVariables,
+      pid = getLocalPid(ttyConnector),
     )
     val stateAwareSession = StateAwareTerminalSession(project, jediTermSession, ttyConnector.eelDescriptor, options, scope)
 
@@ -80,6 +83,28 @@ class TerminalSessionsManager {
       sessionsMap.remove(sessionId)
     }
     return sessionId
+  }
+
+  /**
+   * Returns a process ID if this process is running in the same machine as the IDE.
+   */
+  private fun getLocalPid(ttyConnector: TtyConnector): Long? {
+    val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(ttyConnector) ?: run {
+      LOG.warn("Failed to get ProcessTtyConnector from $ttyConnector.")
+      return null
+    }
+
+    return try {
+      processTtyConnector.process.pid()
+    }
+    catch (_: UnsupportedOperationException) {
+      // IjentChildPtyProcessAdapter doesn't return a real PID of a remote process
+      null
+    }
+    catch (ex: Exception) {
+      LOG.warn("Failed to get pid of the started process: $ttyConnector", ex)
+      null
+    }
   }
 
   companion object {

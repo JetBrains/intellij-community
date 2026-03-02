@@ -94,3 +94,61 @@ describe('stream transport session recovery', () => {
     strictEqual(ensured, 0)
   })
 })
+
+describe('stream transport endpoint discovery diagnostics', () => {
+  it('reports probed ports and plugin setup guidance when no endpoint is reachable', async () => {
+    const warnings: string[] = []
+    const attemptedPorts = [64342, 64344, 65000, 65001]
+    const expectedMessage =
+      'Failed to locate MCP stream endpoint. Probed ports: 64342, 64344, 65000, 65001. Install the "MCP Server" plugin and ensure it is enabled in Settings | Tools | MCP Server.'
+
+    const transport = createStreamTransport({
+      explicitUrl: undefined,
+      preferredPorts: [64342, 64344],
+      portScanStart: 65000,
+      portScanLimit: 2,
+      connectTimeoutMs: 1,
+      scanTimeoutMs: 1,
+      queueLimit: 0,
+      queueWaitTimeoutMs: 0,
+      retryAttempts: 1,
+      retryBaseDelayMs: 1,
+      buildUrl: (port) => `http://127.0.0.1:${port}/stream`,
+      warn: (message) => warnings.push(message),
+      probeHost: '203.0.113.1'
+    })
+
+    await rejects(
+      () => transport.start(),
+      (error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error)
+        strictEqual(message, expectedMessage)
+        return true
+      }
+    )
+
+    strictEqual(
+      warnings.some((message) => message.includes('No reachable MCP stream ports found during scan. Probed ports: 64342, 64344, 65000, 65001')),
+      true
+    )
+  })
+
+  it('keeps the no-configured-ports error when scan candidates are empty', async () => {
+    const transport = createStreamTransport({
+      explicitUrl: undefined,
+      preferredPorts: [],
+      portScanStart: 0,
+      portScanLimit: 0,
+      connectTimeoutMs: 0,
+      scanTimeoutMs: 0,
+      queueLimit: 0,
+      queueWaitTimeoutMs: 0,
+      retryAttempts: 1,
+      retryBaseDelayMs: 1,
+      buildUrl: () => 'http://127.0.0.1:0/stream',
+      warn: () => {}
+    })
+
+    await rejects(() => transport.start(), /No MCP stream ports configured/)
+  })
+})

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -1027,7 +1027,9 @@ public final class CommonJavaRefactoringUtil {
           if (name.equals(variable.getName())) {
             found[0] = true;
             stopWalking();
+            return;
           }
+          super.visitVariable(variable);
         }
       });
       if (found[0]) {

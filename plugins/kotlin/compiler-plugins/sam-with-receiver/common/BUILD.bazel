@@ -33,6 +33,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//platform/core-api:core",
     "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/fe10/project-structure",
   ]
 )
 
@@ -50,6 +51,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
     "//platform/core-api:core_test_lib",
     "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.sam-with-receiver.common` end

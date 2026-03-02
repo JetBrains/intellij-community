@@ -51,7 +51,6 @@ class WindowButtonsConfiguration(scope: CoroutineScope) : PersistentStateCompone
     if (isSupported()) {
       scope.launch(CoroutineName("WindowButtonsConfiguration")) {
         val registryManager = RegistryManager.getInstanceAsync()
-        registryManager.awaitRegistryLoad()
 
         var state = loadStateFromRegistry(registryManager) ?: loadStateFromOs()
         mutableStateFlow.update { state }

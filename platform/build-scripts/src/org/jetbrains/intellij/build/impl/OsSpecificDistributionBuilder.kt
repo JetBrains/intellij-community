@@ -74,12 +74,15 @@ interface OsSpecificDistributionBuilder {
         .toSet()
       if (unmatchedPatterns.isNotEmpty()) {
         context.messages.warning(matchedFiles.joinToString(prefix = "Matched files ${distribution.name}:\n", separator = "\n"))
-        if (TeamCityHelper.isUnderTeamCity) {
-          context.messages.reportBuildProblem(
-            unmatchedPatterns.joinToString(prefix = "Unmatched executable permissions patterns in ${distribution.name}: ") {
-              patterns.getValue(it)
-            }
-          )
+        unmatchedPatterns.joinToString(prefix = "Unmatched executable permissions patterns in ${distribution.name}: ") {
+          patterns.getValue(it)
+        }.let { message ->
+          if (TeamCityHelper.isUnderTeamCity) {
+            context.messages.reportBuildProblem(message)
+          }
+          else {
+            context.messages.warning(message)
+          }
         }
       }
     }

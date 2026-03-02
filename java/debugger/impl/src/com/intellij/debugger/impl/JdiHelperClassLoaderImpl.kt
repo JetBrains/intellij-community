@@ -21,7 +21,7 @@ internal class JdiHelperClassLoaderImpl : JdiHelperClassLoader {
       HelperClassCache(evaluationContext.debugProcess, evaluationContext.managerThread)
     }
     val forceNewClassLoader = Registry.`is`("debugger.evaluate.load.helper.in.separate.classloader")
-    return cache.getHelperClass(evaluationContext.withAutoLoadClasses(true), forceNewClassLoader, cls.name, *additionalClassesToLoad)
+    return cache.getHelperClass(evaluationContext.withAutoLoadClasses(true), forceNewClassLoader, cls, *additionalClassesToLoad)
   }
 
   override fun isApplicable(evaluationContext: EvaluationContextImpl): Boolean {

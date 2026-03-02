@@ -9,14 +9,12 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.psi.PsiElement
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
-import com.jetbrains.python.psi.StringLiteralExpression
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyType
@@ -58,22 +56,19 @@ private class PyLiteralTypeCompletionProvider : CompletionProvider<CompletionPar
   }
 
   private fun addToResult(position: PyExpression, possibleTypes: List<PyType>, result: CompletionResultSet) {
-    val lookupString = if (position is PyStringLiteralExpression)
-      StringLiteralExpression::getStringValue
-    else
-      PsiElement::getText
+    val useStringValue = position is PyStringLiteralExpression
 
     possibleTypes.asSequence()
       .flatMap { it.toStream() }
       .filterIsInstance<PyLiteralType>()
-      .map { it.expression }
-      .filterIsInstance<PyStringLiteralExpression>()
-      .forEach {
+      .filter { it.stringValue != null } // Take only string literals
+      .mapNotNull { if (useStringValue) it.stringValue else it.expressionText }
+      .forEach { lookupString ->
         result.addElement(
           MLRankingIgnorable.wrap(
             PrioritizedLookupElement.withPriority(
               LookupElementBuilder
-                .create(lookupString(it))
+                .create(lookupString)
                 .withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Parameter)),
               PythonCompletionWeigher.PRIORITY_WEIGHT.toDouble()
             )

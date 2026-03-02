@@ -2294,6 +2294,7 @@ f:com.intellij.util.concurrency.SynchronizedClearableLazy
 - <init>(kotlin.jvm.functions.Function0):V
 - f:compareAndDrop(java.lang.Object):Z
 - f:drop():java.lang.Object
+- f:dropSynchronously():java.lang.Object
 - get():java.lang.Object
 - f:getValue():java.lang.Object
 - f:getValueIfInitialized():java.lang.Object

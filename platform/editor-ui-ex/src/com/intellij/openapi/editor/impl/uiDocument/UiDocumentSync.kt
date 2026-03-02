@@ -151,23 +151,20 @@ internal class UiDocumentSync(
     ) {
       val sourceModStamp = sourceDocument.modificationStamp
       startModification(sourceModStamp)
-      coroutineScope.launch(DISPATCHER) {
-        backgroundWriteAction {
-          ApplicationManager.getApplication().service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait {
-            try {
-              CommandProcessor.getInstance().executeCommand(
-                commandProject,
-                {
-                  applyDocumentChange(sourceEvent, targetDocument, sourceModStamp)
-                },
-                commandName,
-                commandGroupId,
-              )
-            } finally {
-              finishModification(sourceModStamp)
-            }
-          }
+      val documentChangeCommand = Runnable {
+        try {
+          applyDocumentChange(sourceEvent, targetDocument, sourceModStamp)
+        } finally {
+          finishModification(sourceModStamp)
         }
+      }
+      invokeLaterWithWriteAction {
+        UiDocumentManager.getInstance().executeCommand(
+          commandProject,
+          commandName,
+          commandGroupId,
+          documentChangeCommand,
+        )
       }
     }
 
@@ -200,6 +197,17 @@ internal class UiDocumentSync(
         sourceModStamp,
         false,
       )
+    }
+
+    private fun invokeLaterWithWriteAction(action: () -> Unit) {
+      coroutineScope.launch(DISPATCHER) {
+        backgroundWriteAction {
+          val application = ApplicationManager.getApplication()
+          application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait {
+            action()
+          }
+        }
+      }
     }
   }
 

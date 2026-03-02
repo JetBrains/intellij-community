@@ -1252,7 +1252,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     File dir = new File(tempDir.getRoot(), "dir");
     File file = new File(dir, "child.txt");
     assertFalse(file.exists());
-    assertEquals(tempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRoot()));
+    assertEquals(tempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRootPath()));
 
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file.getPath()), disposable, null);
     myVirtualFilePointerManager.assertConsistency();
@@ -1272,7 +1272,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
     assertTrue(vFile.isCaseSensitive());
-    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
+    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file.toPath()));
     myVirtualFilePointerManager.assertConsistency();
   }
 

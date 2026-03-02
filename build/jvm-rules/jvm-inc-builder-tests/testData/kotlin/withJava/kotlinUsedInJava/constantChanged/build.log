@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_kotlinUsedInJava_constantChanged-a.kotlin_module
+  test/Klass$Companion.class
+  test/Klass.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/constantChanged/a/const.kt
+End of files
+Cleaning output files:
+  Usage.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/constantChanged/a/Usage.java
+End of files
+------------------------------------------
+Exit code: OK

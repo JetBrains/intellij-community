@@ -10,7 +10,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-fir",
     "@lib//:kotlinc-kotlin-compiler-ir",
     "@lib//:kotlinc-kotlin-compiler-cli",

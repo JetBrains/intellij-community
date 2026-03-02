@@ -3,10 +3,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Consumer;
 
 /**
  * A wrapper for {@link ModCompletionItemProvider} to be used as a {@link CompletionContributor}.
@@ -24,7 +23,7 @@ final class CompletionItemContributor extends CompletionContributor implements R
     ModCompletionItemProvider.CompletionContext context = new ModCompletionItemProvider.CompletionContext(
       parameters.getOriginalFile(), parameters.getOffset(), parameters.getOriginalPosition(), parameters.getPosition(), 
       result.getPrefixMatcher(), parameters.getInvocationCount(), parameters.getCompletionType());
-    Consumer<ModCompletionItem> consumer = new Consumer<>() {
+    ModCompletionResult consumer = new ModCompletionResult() {
       CompletionResultSet myResultSet = null;
 
       @Override

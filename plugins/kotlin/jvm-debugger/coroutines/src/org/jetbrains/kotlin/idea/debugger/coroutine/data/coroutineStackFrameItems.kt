@@ -101,15 +101,14 @@ sealed class CoroutineStackFrameItem(val location: Location, val spilledVariable
             context: DefaultExecutionContext
         ): CoroutineStackFrameItem? {
             if (stackTraceElement == null) return null
-            val spilledVariables = fieldVariables.filterOutSyntheticLocalVariables().map { it.toJavaValue(continuation, context) }
             if (stackTraceElement.methodName == "invoke"
                 && stackTraceElement.className.contains($$"$main$")
                 && stackTraceElement.lineNumber <= 0
-                && spilledVariables.isEmpty()
             ) {
                 return null
             }
             val generatedLocation = findOrCreateLocation(context, stackTraceElement)
+            val spilledVariables = fieldVariables.filterOutSyntheticLocalVariables().map { it.toJavaValue(continuation, context) }
             return DefaultCoroutineStackFrameItem(generatedLocation, spilledVariables)
         }
 

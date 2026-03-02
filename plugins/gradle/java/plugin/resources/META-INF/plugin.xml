@@ -8,12 +8,6 @@
     Provides Java Gradle projects import, run configuration and profiler integrations.
   </description>
 
-  <dependencies>
-    <module name="intellij.java.indexing"/>
-    <module name="intellij.java.ui"/>
-    <module name="intellij.platform.jps.build"/>
-  </dependencies>
-
   <module value="com.intellij.modules.gradle.java"/>
   <module value="org.jetbrains.plugins.gradle.java"/>
 

@@ -153,6 +153,8 @@ jvm_library(
     "//platform/core-impl:core-impl_test_lib",
     "@lib//:app-cash-turbine-jvm",
     "@lib//:mockito-kotlin",
+    "//platform/vcs-impl:vcs-impl-tests",
+    "//platform/vcs-impl:vcs-impl-tests_test_lib",
   ],
   exports = [
     "//platform/vcs-tests:vcs-testFramework",

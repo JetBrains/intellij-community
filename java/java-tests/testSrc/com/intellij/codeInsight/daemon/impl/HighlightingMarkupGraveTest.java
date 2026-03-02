@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -132,7 +131,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
       CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
       LaterInvocator.purgeExpiredItems();
       LaterInvocator.dispatchPendingFlushes();
-      DaemonCodeAnalyzer.getInstance(getProject()).restart(this);
+      myDaemonCodeAnalyzer.restart(this);
     }
     try {
       GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile)).ensureCollected();

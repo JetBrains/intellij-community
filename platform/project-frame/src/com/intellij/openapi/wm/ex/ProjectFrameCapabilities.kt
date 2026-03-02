@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex
 
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -36,6 +37,26 @@ enum class ProjectFrameCapability {
    * Disables file colors for the frame.
    */
   FORCE_DISABLE_FILE_COLORS,
+
+  /**
+   * Suppresses non-essential background activities for the frame.
+   */
+  SUPPRESS_BACKGROUND_ACTIVITIES,
+
+  /**
+   * Suppresses scanning and indexing activities for the frame.
+   */
+  SUPPRESS_INDEXING_ACTIVITIES,
+
+  /**
+   * Excludes the frame from global window traversal order.
+   */
+  EXCLUDE_FROM_WINDOW_SWITCH_ORDER,
+
+  /**
+   * Excludes the frame from project-window traversal order and project-window list entries.
+   */
+  EXCLUDE_FROM_PROJECT_WINDOW_SWITCH_ORDER,
 }
 
 /**
@@ -166,6 +187,58 @@ class ProjectFrameCapabilitiesService {
     }
     return capabilitiesByProject.getValue(project)
   }
+}
+
+@Internal
+@Experimental
+fun isBackgroundActivitiesSuppressedSync(project: Project?): Boolean {
+  if (project == null) {
+    return false
+  }
+  if (project is LightEditCompatible) {
+    return true
+  }
+  return service<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
+}
+
+@Internal
+@Experimental
+suspend fun isBackgroundActivitiesSuppressed(project: Project?): Boolean {
+  if (project == null) {
+    return false
+  }
+  if (project is LightEditCompatible) {
+    return true
+  }
+  return serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
+}
+
+@Internal
+@Experimental
+fun isIndexingActivitiesSuppressedSync(project: Project?): Boolean {
+  if (project == null) {
+    return false
+  }
+  if (project is LightEditCompatible) {
+    return true
+  }
+  val capabilitiesService = service<ProjectFrameCapabilitiesService>()
+  return capabilitiesService.has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES) ||
+         capabilitiesService.has(project, ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES)
+}
+
+@Internal
+@Experimental
+suspend fun isIndexingActivitiesSuppressed(project: Project?): Boolean {
+  if (project == null) {
+    return false
+  }
+  if (project is LightEditCompatible) {
+    return true
+  }
+  val capabilitiesService = serviceAsync<ProjectFrameCapabilitiesService>()
+  return capabilitiesService.has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES) ||
+         capabilitiesService.has(project, ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES)
 }
 
 private fun computeProjectFrameCapabilities(project: Project): Set<ProjectFrameCapability> {

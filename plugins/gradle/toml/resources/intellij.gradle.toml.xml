@@ -1,9 +1,12 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.gradle" />
+    <module name="intellij.gradle"/>
     <module name="intellij.gradle.completion"/>
+    <module name="intellij.repository.search.common"/>
     <module name="intellij.toml.core"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="TOML"
                             id="KotlinGradleTomlCompletionContributor"

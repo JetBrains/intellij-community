@@ -13,12 +13,6 @@ resourcegroup(
   strip_prefix = "compatibilityResources"
 )
 
-resourcegroup(
-  name = "spellchecker_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "spellchecker",
   module_name = "intellij.spellchecker",
@@ -58,76 +52,33 @@ jvm_library(
 
 jvm_library(
   name = "spellchecker_test_lib",
+  module_name = "intellij.spellchecker",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  resources = [":spellchecker_test_resources"],
-  associates = [":spellchecker"],
-  deps = [
-    "//platform/analysis-api:analysis",
-    "//platform/analysis-api:analysis_test_lib",
-    "//platform/core-api:core",
-    "//platform/core-api:core_test_lib",
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/editor-ui-api:editor-ui_test_lib",
-    "//platform/lang-api:lang",
-    "//platform/lang-api:lang_test_lib",
-    "//platform/analysis-impl",
-    "//platform/analysis-impl:analysis-impl_test_lib",
-    "//platform/projectModel-impl",
-    "//platform/projectModel-impl:projectModel-impl_test_lib",
-    "//platform/lang-impl",
-    "//platform/lang-impl:lang-impl_test_lib",
-    "//platform/platform-api:ide",
-    "//platform/platform-api:ide_test_lib",
-    "//platform/platform-impl:ide-impl",
-    "//platform/editor-ui-ex:editor-ex",
-    "//platform/editor-ui-ex:editor-ex_test_lib",
-    "//platform/projectModel-api:projectModel",
-    "//platform/projectModel-api:projectModel_test_lib",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/refactoring",
-    "//platform/refactoring:refactoring_test_lib",
-    "//libraries/guava",
-    "//libraries/guava:guava_test_lib",
-    "//platform/statistics",
-    "//platform/statistics:statistics_test_lib",
-    "@lib//:spellchecker-java-string-similarity",
-    "//platform/core-ui",
-    "//platform/core-ui:core-ui_test_lib",
-    "//libraries/lucene.common",
-    "//libraries/lucene.common:lucene.common_test_lib",
-    "//platform/vcs-api:vcs",
-    "//platform/vcs-api:vcs_test_lib",
-    "//platform/vcs-impl",
-    "//platform/vcs-impl:vcs-impl_test_lib",
-    "//platform/util/jdom",
-    "//platform/util/jdom:jdom_test_lib",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlin/test:libraries-kotlinTest",
-    "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
-    "@lib//:kotlin-test-junit",
-    "//libraries/kotlinx/coroutines/core",
-    "//libraries/kotlinx/coroutines/core:core_test_lib",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//xml/relaxng",
-    "//xml/relaxng:relaxng_test_lib",
-    "//platform/core-impl",
-    "//platform/core-impl:core-impl_test_lib",
-  ],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
+    ":spellchecker",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/platform-api:ide_test_lib",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
     "//platform/backend:backend_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//libraries/lucene.common:lucene.common_test_lib",
+    "//platform/vcs-api:vcs_test_lib",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.spellchecker` end
-
-### auto-generated section `test intellij.spellchecker` start
-load("@community//build:tests-options.bzl", "jps_test")
-
-jps_test(
-  name = "spellchecker_test",
-  runtime_deps = [":spellchecker_test_lib"]
-)
-### auto-generated section `test intellij.spellchecker` end

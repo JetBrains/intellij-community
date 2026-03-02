@@ -20,7 +20,7 @@ jvm_library(
   name = "andel",
   module_name = "fleet.andel",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
   resources = [":andel_resources"],
   kotlinc_opts = ":custom_andel",
   deps = [
@@ -42,7 +42,7 @@ jvm_library(
   name = "andel_test_lib",
   module_name = "fleet.andel",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_andel",
   exports = [
     "//fleet/bifurcan",

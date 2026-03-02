@@ -10,8 +10,8 @@ import java.io.File
 
 abstract class AbstractKotlinFirFileStructureTest : AbstractKotlinFileStructureTest() {
 
-    override fun nodeProviderClass(): Class<out InheritedMembersNodeProvider<*>> {
-        return KotlinFirInheritedMembersNodeProvider::class.java
+    override fun nodeProvider(): InheritedMembersNodeProvider<*> {
+        return KotlinFirInheritedMembersNodeProvider()
     }
 
     override fun tearDown() {

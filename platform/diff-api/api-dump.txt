@@ -71,7 +71,7 @@ a:com.intellij.diff.DiffManager
 - a:showDiff(com.intellij.openapi.project.Project,com.intellij.diff.requests.DiffRequest):V
 - a:showDiff(com.intellij.openapi.project.Project,com.intellij.diff.requests.DiffRequest,com.intellij.diff.DiffDialogHints):V
 - a:showMerge(com.intellij.openapi.project.Project,com.intellij.diff.merge.MergeRequest):V
-a:com.intellij.diff.DiffManagerEx
+Fa:com.intellij.diff.DiffManagerEx
 - com.intellij.diff.DiffManager
 - <init>():V
 - a:getDiffTools():java.util.List

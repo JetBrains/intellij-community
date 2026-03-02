@@ -82,7 +82,7 @@ class GHPRDetailsTimelineViewModel internal constructor(
     data.state,
     data.title.convertToHtml(project),
     data.body,
-    data.body.convertToHtml(project),
+    data.body.convertToHtml(project, dataContext.repositoryDataService.repositoryMapping.repository.serverPath),
     data.headRefId,
     data.headRefName,
     data.viewerCanUpdate,

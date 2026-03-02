@@ -12,7 +12,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.NonExtendable
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
   private static final Logger LOG = Logger.getInstance(CachingChildrenTreeNode.class);
   private List<CachingChildrenTreeNode<?>> myChildren;
@@ -174,16 +177,16 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
         if (node == null) {
           LOG.error(group + " returned null child: " + children);
         }
-        CachingChildrenTreeNode child = createChildNode(node);
-        groupWrapper.addSubElement(child);
         AbstractTreeNode abstractTreeNode = ungroupedObjects.get(node);
+        CachingChildrenTreeNode child = createChildNode(node, abstractTreeNode instanceof TreeElementWrapper ? ((TreeElementWrapper)abstractTreeNode).getProvider() : null);
+        groupWrapper.addSubElement(child);
         abstractTreeNode.setParent(groupWrapper);
       }
     }
   }
 
-  protected @NotNull TreeElementWrapper createChildNode(@NotNull TreeElement child) {
-    return new TreeElementWrapper(getProject(), child, myTreeModel);
+  protected @NotNull TreeElementWrapper createChildNode(@NotNull TreeElement child, @Nullable NodeProvider<?> provider) {
+    return new TreeElementWrapper(getProject(), child, myTreeModel, provider);
   }
 
   private static @NotNull Map<TreeElement, AbstractTreeNode> collectValues(@NotNull List<? extends AbstractTreeNode<TreeElement>> ungrouped) {
@@ -213,6 +216,9 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
 
     synchronizeChildren();
 
+    for (int i = 0; i < myChildren.size(); i++) {
+      myChildren.get(i).setIndex(i);
+    }
   }
 
   void synchronizeChildren() {

@@ -118,6 +118,15 @@ class IjentNioPosixFileAttributes(
   }
 }
 
+class IjentNioWindowsFileAttributes(
+  internal val fileInfo: EelWindowsFileInfo,
+) : CaseSensitivityAttribute, BasicFileAttributes by IjentNioBasicFileAttributes(fileInfo) {
+  override fun getCaseSensitivity(): FileAttributes.CaseSensitivity = when (val type = fileInfo.type) {
+    is Directory -> EelPathUtils.getCaseSensitivity(type)
+    else -> throw IllegalStateException("Cannot ask for case sensitivity of $type")
+  }
+}
+
 class EelPosixUserPrincipal(val uid: Int) : UserPrincipal {
   override fun getName(): String {
     // TODO Here should be returned a user name

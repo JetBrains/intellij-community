@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.core.CoreBundle;
@@ -16,9 +16,11 @@ import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +34,7 @@ import java.util.function.Predicate;
  * Manages the saving of changes to disk.
  */
 public abstract class FileDocumentManager implements SavingRequestor {
+  @RequiresBlockingContext
   public static @NotNull FileDocumentManager getInstance() {
     return ApplicationManager.getApplication().getService(FileDocumentManager.class);
   }
@@ -54,7 +57,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
   @RequiresReadLock
   public abstract @Nullable Document getDocument(@NotNull VirtualFile file);
 
-  @ApiStatus.Internal
+  @Internal
   @ApiStatus.Experimental
   @RequiresReadLock
   public @Nullable Document getDocument(@NotNull VirtualFile file, @NotNull Project preferredProject) {
@@ -206,13 +209,13 @@ public abstract class FileDocumentManager implements SavingRequestor {
    */
   public abstract void reloadFiles(VirtualFile @NotNull ... files);
 
-  @ApiStatus.Internal
+  @Internal
   public void reloadBinaryFiles() { }
 
-  @ApiStatus.Internal
+  @Internal
   public void reloadFileTypes(@NotNull Set<FileType> fileTypes) { }
 
-  @ApiStatus.Internal
+  @Internal
   public @Nullable FileViewProvider findCachedPsiInAnyProject(@NotNull VirtualFile file) {
     return null;
   }
@@ -221,7 +224,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * Stores the write access status (true if the document has the write access; false otherwise)
    * and a message about the reason for the read-only status.
    */
-  public static class WriteAccessStatus {
+  public static final class WriteAccessStatus {
     public static final WriteAccessStatus NON_WRITABLE = new WriteAccessStatus(false);
     public static final WriteAccessStatus WRITABLE = new WriteAccessStatus(true);
 

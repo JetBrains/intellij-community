@@ -13,11 +13,6 @@ data class JvmFleetModule(val module: Module) : FleetModule {
   override val layer: FleetModuleLayer
     get() = JvmFleetModuleLayer(module.getLayer())
 
-  override fun getEntityTypeProvider(providerName: String): Any? {
-    val providerClass = module.classLoader.loadClass(providerName)
-    return providerClass.getField("INSTANCE").get(null)
-  }
-
   override fun getResource(path: String): ByteArray? {
     return module.getResourceAsStream(path)?.readBytes()
   }

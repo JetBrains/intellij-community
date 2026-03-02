@@ -38,7 +38,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.analysis" exported="" />
-    <orderEntry type="module" module-name="intellij.java.resources.en" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide" />

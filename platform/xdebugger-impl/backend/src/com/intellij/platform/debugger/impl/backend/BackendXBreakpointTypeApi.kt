@@ -228,7 +228,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
         breakpoint.setLogExpression(request.logExpression)
       }
       else {
-        breakpoint.setLogMessage(true)
+        breakpoint.isLogMessage = true
       }
     }
     return breakpoint as XBreakpointBase<*, *, *>
@@ -310,7 +310,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
 
   private fun XBreakpointType<*, *>.toRpc(project: Project): XBreakpointTypeDto {
     val lineTypeInfo = if (this is XLineBreakpointType<*>) {
-      XLineBreakpointTypeInfo(priority)
+      XLineBreakpointTypeInfo(priority, supportsInterLinePlacement())
     }
     else {
       null

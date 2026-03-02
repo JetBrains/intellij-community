@@ -52,6 +52,6 @@ private val isKmpPluginEnabled: Boolean
         return PluginManagerCore.isLoaded(pluginId) && !PluginManagerCore.isDisabled(pluginId)
     }
 
-private const val KotlinMultiplatformPluginId: String = "com.jetbrains.kmm"
+private const val KotlinMultiplatformPluginId: String = "Kotlin Multiplatform"
 
 private const val KotlinMultiplatformWizardPlaceId: String = "Kotlin Multiplatform"

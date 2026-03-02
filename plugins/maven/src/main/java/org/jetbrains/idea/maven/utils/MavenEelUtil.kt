@@ -160,13 +160,15 @@ object MavenEelUtil {
     overriddenRepository: String?,
     mavenHome: StaticResolvedMavenHomeType,
     overriddenUserSettingsFile: String?,
+    properties: Properties?,
   ): Path {
     if (overriddenRepository != null && !isEmptyOrSpaces(overriddenRepository)) {
       return Path.of(overriddenRepository)
     }
     return doResolveLocalRepository(
       this.resolveUserSettingsFile(overriddenUserSettingsFile),
-      this.resolveGlobalSettingsFile(mavenHome)
+      this.resolveGlobalSettingsFile(mavenHome),
+      properties
     ) ?: resolveM2Dir().resolve(REPOSITORY_DIR)
   }
 
@@ -222,9 +224,22 @@ object MavenEelUtil {
     if (mavenSettingsFile.isNullOrBlank()) {
       settingPath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_USER_SETTINGS) ?: ""
     }
-    return resolveUsingEel(project,
-                           { resolveLocalRepositoryAsync(project, overriddenLocalRepository, mavenHome, settingPath) },
-                           { if (it is LocalEelApi) null else it.resolveRepository(overriddenLocalRepository, mavenHome, settingPath) })
+    val path = resolveUsingEel(project,
+                               {
+                                 resolveLocalRepositoryAsync(project,
+                                                             overriddenLocalRepository,
+                                                             mavenHome,
+                                                             settingPath,
+                                                             mavenConfig?.toProperties())
+                               },
+                               {
+                                 if (it is LocalEelApi) null
+                                 else it.resolveRepository(overriddenLocalRepository,
+                                                           mavenHome,
+                                                           settingPath,
+                                                           mavenConfig?.toProperties())
+                               })
+    return mavenConfig?.getAbsolutePath(path) ?: path
   }
 
   @JvmStatic
@@ -238,7 +253,8 @@ object MavenEelUtil {
       resolveLocalRepositoryAsync(project,
                                   overriddenLocalRepository,
                                   mavenHomeType,
-                                  overriddenUserSettingsFile)
+                                  overriddenUserSettingsFile,
+                                  null)
     }
   }
 
@@ -260,6 +276,7 @@ object MavenEelUtil {
     overriddenLocalRepository: String?,
     mavenHomeType: StaticResolvedMavenHomeType,
     overriddenUserSettingsFile: String?,
+    properties: Properties?,
   ): Path {
     val forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME)
     if (forcedM2Home != null) {
@@ -281,7 +298,8 @@ object MavenEelUtil {
         val api = project.resolveM2DirAsync().getEelDescriptor().toEelApi()
         doResolveLocalRepository(
           resolveUserSettingsPathAsync(overriddenUserSettingsFile, project),
-          resolveGlobalSettingsFile(mavenHomeType)
+          resolveGlobalSettingsFile(mavenHomeType),
+          properties
         ) ?: project.resolveM2DirAsync().resolve(REPOSITORY_DIR)
       }
     }

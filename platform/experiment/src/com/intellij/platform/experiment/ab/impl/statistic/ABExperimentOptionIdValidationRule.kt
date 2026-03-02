@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.experiment.ab.impl.statistic
 
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.platform.experiment.ab.impl.ABExperimentOption

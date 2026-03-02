@@ -1,5 +1,13 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.libraries.assertj.core"/>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit5.jupiter"/>
+    <module name="intellij.libraries.junit5.launcher"/>
+    <module name="intellij.libraries.junit5.params"/>
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

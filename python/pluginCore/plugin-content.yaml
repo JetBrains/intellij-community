@@ -129,12 +129,15 @@
 - name: lib/modules/intellij.python.parser.jar
   contentModules:
   - name: intellij.python.parser
-- name: lib/modules/intellij.python.processOutput.impl.jar
+- name: lib/modules/intellij.python.processOutput.backend.jar
   contentModules:
-  - name: intellij.python.processOutput.impl
-- name: lib/modules/intellij.python.processOutput.jar
+  - name: intellij.python.processOutput.backend
+- name: lib/modules/intellij.python.processOutput.common.jar
   contentModules:
-  - name: intellij.python.processOutput
+  - name: intellij.python.processOutput.common
+- name: lib/modules/intellij.python.processOutput.frontend.jar
+  contentModules:
+  - name: intellij.python.processOutput.frontend
 - name: lib/modules/intellij.python.psi.impl.jar
   contentModules:
   - name: intellij.python.psi.impl

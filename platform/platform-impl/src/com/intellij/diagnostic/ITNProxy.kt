@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonToken
 import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.plugins.PluginManagerCore
@@ -33,6 +31,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JsonToken
+import tools.jackson.core.ObjectReadContext
+import tools.jackson.core.json.JsonFactory
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URI
@@ -118,13 +119,13 @@ object ITNProxy {
       var version = null as String?
       var buildNumber = null as String?
       var productCode = null as String?
-      JsonFactory().createParser(appDataFile.bufferedReader()).use { parser ->
+      JsonFactory().createParser(ObjectReadContext.empty(), appDataFile.bufferedReader()).use { parser ->
         if (parser.nextToken() == JsonToken.START_OBJECT) {
           while (true) {
-            if (parser.nextToken() != JsonToken.FIELD_NAME) break
+            if (parser.nextToken() != JsonToken.PROPERTY_NAME) break
             val name = parser.currentName()
             if (parser.nextToken() != JsonToken.VALUE_STRING) break
-            val value = parser.text
+            val value = parser.string
             when (name) {
               "name" -> appName = value
               "version" -> version = value

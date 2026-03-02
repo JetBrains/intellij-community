@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,7 +59,7 @@ import java.util.function.Supplier;
 public final class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance(FoldingUpdate.class);
 
-  private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY = Key.create("code folding");
+  private static final Key<CachedValue<Result>> CODE_FOLDING_KEY = Key.create("code folding");
 
   public static final Key<Boolean> INJECTED_CODE_FOLDING_ENABLED = Key.create("injected code folding is enabled");
 
@@ -68,7 +67,7 @@ public final class FoldingUpdate {
   }
 
   @RequiresReadLock
-  static @Nullable Runnable updateFoldRegions(@NotNull Editor editor, @NotNull PsiFile psiFile, boolean firstTime, boolean quick) {
+  static @Nullable Result updateFoldRegions(@NotNull Editor editor, @NotNull PsiFile psiFile, boolean firstTime, boolean quick) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Project project = psiFile.getProject();
@@ -79,34 +78,40 @@ public final class FoldingUpdate {
       return null;
     }
 
-    CachedValue<Runnable> value = editor.getUserData(CODE_FOLDING_KEY);
+    CachedValue<Result> value = editor.getUserData(CODE_FOLDING_KEY);
 
     if (value != null && !firstTime) {
-      Supplier<Runnable> cached = value.getUpToDateOrNull();
+      Supplier<Result> cached = value.getUpToDateOrNull();
       if (cached != null) {
         return cached.get();
       }
     }
     if (firstTime) {
-      return getUpdateResult(psiFile, document, project, editor, true, quick).getFirst();
+      return getUpdateResult(psiFile, document, project, editor, true, quick);
     }
 
     return CachedValuesManager.getManager(project).getCachedValue(
       editor, CODE_FOLDING_KEY, () -> {
         PsiFile psiFile1 = CodeFoldingManagerImpl.getPsiFileForFolding(project, document);
-        Pair<@NotNull Runnable, @NotNull Object @NotNull []> result = getUpdateResult(psiFile1, document, project, editor, false, quick);
-        Runnable runnable = result.getFirst();
-        Object[] dependencies = result.getSecond();
-        return CachedValueProvider.Result.create(runnable, dependencies);
+        if (psiFile1 == null) {
+          return null;
+        }
+        Result result = getUpdateResult(psiFile1, document, project, editor, false, quick);
+        return CachedValueProvider.Result.create(result, result.dependencies());
       }, false);
   }
 
-  private static @NotNull Pair<@NotNull Runnable, @NotNull Object @NotNull []> getUpdateResult(@NotNull PsiFile psiFile,
-                                                                                               @NotNull Document document,
-                                                                                               @NotNull Project project,
-                                                                                               @NotNull Editor editor,
-                                                                                               boolean applyDefaultState,
-                                                                                               boolean quick) {
+  record Result(@NotNull @Unmodifiable List<RegionInfo> foldings,
+                @NotNull UpdateFoldRegionsOperation foldBatchOperation,
+                @NotNull Object @NotNull [] dependencies,
+                @NotNull Runnable edtRunnable) {}
+
+  private static @NotNull Result getUpdateResult(@NotNull PsiFile psiFile,
+                                                 @NotNull Document document,
+                                                 @NotNull Project project,
+                                                 @NotNull Editor editor,
+                                                 boolean applyDefaultState,
+                                                 boolean quick) {
     PsiUtilCore.ensureValid(psiFile);
     List<RegionInfo> elementsToFold = getFoldingsFor(psiFile, quick);
     UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, psiFile, elementsToFold,
@@ -128,7 +133,7 @@ public final class FoldingUpdate {
     for (RegionInfo info : elementsToFold) {
       dependencies.addAll(info.descriptor.getDependencies());
     }
-    return Pair.create(runnable, ArrayUtil.toObjectArray(dependencies));
+    return new Result(elementsToFold, operation, ArrayUtil.toObjectArray(dependencies), runnable);
   }
 
   private static void reportUnexpectedDocumentChange(@NotNull PsiFile psiFile, @NotNull Document document, int prevLength) {

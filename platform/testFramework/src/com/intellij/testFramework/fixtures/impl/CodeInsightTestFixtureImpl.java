@@ -215,6 +215,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -254,6 +255,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -363,12 +365,30 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return instantiateAndRun(file, editor, toIgnore, canChangeDocument, false);
   }
 
+  private static final AtomicInteger disableInstantiateAndRun = new AtomicInteger();
+
+  /**
+   * Prohibits running {@link #instantiateAndRun}.
+   * Needed for avoiding accidentally ruining daemon state in production-only daemon tests, e.g. {@link com.intellij.codeInsight.daemon.ProductionDaemonAnalyzerTestCase}
+   */
+  public static <E extends Throwable> void disableInstantiateAndRunIn(@NotNull ThrowableRunnable<E> runnable) throws E {
+    disableInstantiateAndRun.incrementAndGet();
+    try {
+      runnable.run();
+    }
+    finally {
+      disableInstantiateAndRun.decrementAndGet();
+    }
+  }
   @TestOnly
   public static @NotNull @Unmodifiable List<HighlightInfo> instantiateAndRun(@NotNull PsiFile psiFile,
                                                                              @NotNull Editor editor,
                                                                              int @NotNull [] toIgnore,
                                                                              boolean canChangeDocument,
                                                                              boolean readEditorMarkupModel) {
+    if (disableInstantiateAndRun.get() != 0) {
+      throw new IllegalStateException("This test prohibited direct daemon call, because it checks the production daemon behaviour. use TestDaemonCodeAnalyzerImpl.wait* methods instead");
+    }
     SmartPsiElementPointer<PsiFile> filePointer = ReadAction.compute(() -> SmartPointerManager.createPointer(psiFile));
     Project project = psiFile.getProject();
     ensureIndexesUpToDate(project);
@@ -394,11 +414,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         EdtTestUtil.runInEdtAndWait(() -> {
           PsiFile file = filePointer.getElement();
           assertNotNull(file);
-          @NotNull Document document = editor.getDocument();
+          Document document = editor.getDocument();
           ThreadingAssertions.assertEventDispatchThread();
-          settings.forceUseZeroAutoReparseDelayIn(() -> {
-            testDaemonCodeAnalyzer.runPasses(file, document, textEditor, toIgnore, canChangeDocument, mustWaitForSmartMode, (Runnable)null);
-          });
+          TestDaemonCodeAnalyzerImpl.runWithReparseDelay(0, () ->
+            testDaemonCodeAnalyzer.runPasses(file, document, textEditor, toIgnore, canChangeDocument, mustWaitForSmartMode, null));
           IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
           if (policy != null) {
             policy.waitForHighlighting(project, editor);

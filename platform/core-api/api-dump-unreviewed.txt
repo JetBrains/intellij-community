@@ -1131,14 +1131,6 @@ a:com.intellij.openapi.fileEditor.FileDocumentManager
 - a:saveDocument(com.intellij.openapi.editor.Document):V
 - a:saveDocumentAsIs(com.intellij.openapi.editor.Document):V
 - a:saveDocuments(java.util.function.Predicate):V
-c:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
-- sf:NON_WRITABLE:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
-- sf:WRITABLE:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
-- <init>(java.lang.String):V
-- <init>(java.lang.String,javax.swing.event.HyperlinkListener):V
-- getHyperlinkListener():javax.swing.event.HyperlinkListener
-- getReadOnlyMessage():java.lang.String
-- hasWriteAccess():Z
 f:com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 - com.intellij.openapi.fileTypes.FileTypeExtension
 - s:getInstance():com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers

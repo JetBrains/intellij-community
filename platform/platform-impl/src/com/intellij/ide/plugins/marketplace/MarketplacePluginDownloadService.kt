@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.openapi.application.PathManager
@@ -12,6 +11,7 @@ import com.intellij.util.io.HttpRequests
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.databind.ObjectMapper
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream

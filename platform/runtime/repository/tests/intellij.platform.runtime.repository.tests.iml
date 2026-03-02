@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
   </component>
 </module>

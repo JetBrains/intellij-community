@@ -452,7 +452,7 @@ private fun CoroutineScope.loadThirdPartyBundledPluginDescriptors(loadingContext
 suspend fun loadDescriptors(
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
-): Pair<PluginDescriptorLoadingContext, PluginDescriptorLoadingResult> {
+): Pair<PluginDescriptorLoadingContext, PluginsDiscoveryResult> {
   val isUnitTestMode = PluginManagerCore.isUnitTestMode
   val isRunningFromSources = PluginManagerCore.isRunningFromSources()
   val isInDevServerMode = AppMode.isRunningFromDevBuild()
@@ -571,7 +571,7 @@ private suspend fun loadDescriptors(
   isRunningFromSources: Boolean,
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
-): PluginDescriptorLoadingResult {
+): PluginsDiscoveryResult {
   val zipPool = zipPoolDeferred.await()
   val mainClassLoader = mainClassLoaderDeferred?.await() ?: PluginManagerCore::class.java.classLoader
   val discoveredPlugins = coroutineScope {
@@ -590,7 +590,7 @@ private suspend fun loadDescriptors(
     val pluginsFromPropertyDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
     pluginsDeferred.await() + listOfNotNull(thirdPartyBundledPluginsDeferred.await(), pluginsFromPropertyDeferred.await())
   }
-  return PluginDescriptorLoadingResult.build(discoveredPlugins)
+  return PluginsDiscoveryResult.build(discoveredPlugins)
 }
 
 internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
@@ -1131,7 +1131,7 @@ fun loadDescriptorsFromOtherIde(
   customPluginDir: Path,
   bundledPluginDir: Path?,
   productBuildNumber: BuildNumber?,
-): PluginDescriptorLoadingResult {
+): PluginsDiscoveryResult {
   val classLoader = PluginDescriptorLoadingContext::class.java.classLoader
   val pool = NonShareableJavaZipFilePool()
   val loadingContext = PluginDescriptorLoadingContext(
@@ -1158,7 +1158,7 @@ fun loadDescriptorsFromOtherIde(
     loadingContext.close()
     pool.close()
   }
-  return PluginDescriptorLoadingResult.build(discoveredPlugins)
+  return PluginsDiscoveryResult.build(discoveredPlugins)
 }
 
 suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): DiscoveredPluginsList {

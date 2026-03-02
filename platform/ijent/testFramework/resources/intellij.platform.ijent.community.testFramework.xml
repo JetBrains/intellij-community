@@ -1,6 +1,9 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.platform.testFramework"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.ide.impl.wsl"/>
+    <module name="intellij.platform.testFramework"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

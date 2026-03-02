@@ -8,7 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.util.GradleDependencyUtil.buildSingleStringDependencyNotation
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
@@ -109,30 +109,6 @@ class GradleDependencyNamedArgumentsFix(
 
       val concat = buildSingleStringDependencyNotation(group, name, version, classifier, ext) ?: return null
       return GradleDependencyNamedArgumentsFix(concat, targetConfig)
-    }
-
-    @ApiStatus.Internal
-    fun buildSingleStringDependencyNotation(
-      group: String,
-      name: String,
-      version: String?,
-      classifier: String?,
-      ext: String?,
-    ): String? {
-      val base = "$group + \":\" + $name"
-
-      if (version == null) {
-        return if (classifier == null && ext == null) base else null
-      }
-
-      val withVersion = "$base + \":\" + $version"
-
-      return when {
-        classifier != null && ext != null -> "$withVersion + \":\" + $classifier + \"@\" + $ext"
-        classifier != null -> "$withVersion + \":\" + $classifier"
-        ext != null -> "$withVersion + \"@\" + $ext"
-        else -> withVersion
-      }
     }
   }
 }

@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_EXCLUDED_PARAMETERS
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.realName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -172,13 +173,13 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                     parameterSymbol to name
                 }
             } else {
-                valueParameters.map { it to it.name }
+                valueParameters.map { it to (it.realName ?: it.name) }
             }
         return valueParametersWithNames
     }
 
     @OptIn(KaExperimentalApi::class)
-    context(_: KaSession)
+    context(session: KaSession)
     private fun collectFromParameters(
         callElement: KtCallElement,
         functionCall: KaFunctionCall<*>,
@@ -217,7 +218,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 continue
             }
 
-            if (argument.isArgumentNamed(symbol)) {
+            if (argument.isArgumentNamed(symbol, session)) {
                 continue
             }
 
@@ -354,7 +355,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         text(symbolPsi, targetPsi?.asNavigatablePsiLoad())
     }
 
-    private fun KtValueArgument.isArgumentNamed(symbol: KaValueParameterSymbol): Boolean {
+    private fun KtValueArgument.isArgumentNamed(symbol: KaValueParameterSymbol, session: KaSession): Boolean {
         // avoid cases like "`value =` value"
         val argumentText = this.text
         val symbolName = symbol.name.asString()
@@ -367,7 +368,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         while (sibling != null) {
             when(sibling) {
                 is PsiComment -> {
-                    val argumentNameCommentInfo = ArgumentNameCommentInfo(symbol)
+                    val argumentNameCommentInfo = ArgumentNameCommentInfo(symbol, session)
                     return sibling.isExpectedArgumentNameComment(argumentNameCommentInfo)
                 }
                 !is PsiWhiteSpace -> break

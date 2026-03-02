@@ -1,0 +1,30 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.libraries.compose.foundation.desktop"/>
+    <module name="intellij.libraries.compose.runtime.desktop"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinTestAssertionsCoreJvm"/>
+    <module name="intellij.libraries.kotlinx.coroutines.debug"/>
+    <module name="intellij.libraries.kotlinx.coroutines.test"/>
+    <module name="intellij.libraries.skiko"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.jewel.foundation"/>
+    <module name="intellij.platform.jewel.ideLafBridge"/>
+    <module name="intellij.platform.jewel.intUi.standalone"/>
+    <module name="intellij.platform.jewel.ui"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.testFramework.common"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.processOutput.common"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinTest"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.python.test.env.junit5"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

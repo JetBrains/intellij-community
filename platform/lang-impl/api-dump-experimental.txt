@@ -749,6 +749,15 @@ com.intellij.ide.projectView.impl.ProjectViewListener
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - a:createNode(com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.openapi.project.Project,com.intellij.ide.projectView.ViewSettings):com.intellij.ide.util.treeView.AbstractTreeNode
 - a:getWorkspaceClass():java.lang.Class
+*:com.intellij.ide.structureView.newStructureView.StructurePopup
+- com.intellij.ide.structureView.newStructureView.TreeActionsOwner
+- com.intellij.openapi.Disposable
+- a:setTitle(java.lang.String):V
+- a:show():V
+*:com.intellij.ide.structureView.newStructureView.TreeActionsOwnerEx
+- com.intellij.ide.structureView.newStructureView.TreeActionsOwner
+- a:isActionActive(com.intellij.ide.util.treeView.smartTree.TreeAction):Z
+- a:setActionActive(com.intellij.ide.util.treeView.smartTree.TreeAction,Z):V
 c:com.intellij.ide.util.scopeChooser.ScopeDescriptor
 - com.intellij.openapi.util.ColoredItem
 - *:needsUserInputForScope():Z

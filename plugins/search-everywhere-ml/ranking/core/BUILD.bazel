@@ -49,6 +49,7 @@ jvm_library(
     "//plugins/search-everywhere-ml/ranking/ext",
     "//plugins/search-everywhere-ml",
     "//platform/execution",
+    "//platform/searchEverywhere/frontend",
   ],
   exports = ["//platform/statistics"]
 )
@@ -108,6 +109,8 @@ jvm_library(
     "//json/backend:backend_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:search_everywhere_ml-ranking-core-find-action-model",
     "@lib//:search_everywhere_ml-ranking-core-find-action-model-experimental",
     "@lib//:search_everywhere_ml-ranking-core-find-file-model",
@@ -126,6 +129,8 @@ jvm_library(
     "//platform/statistics/testFramework:testFramework_test_lib",
     "//platform/execution",
     "//platform/execution:execution_test_lib",
+    "//platform/searchEverywhere/frontend",
+    "//platform/searchEverywhere/frontend:frontend_test_lib",
   ],
   exports = [
     "//platform/statistics",

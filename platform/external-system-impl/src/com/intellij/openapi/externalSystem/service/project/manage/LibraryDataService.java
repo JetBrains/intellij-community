@@ -48,6 +48,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static kotlin.comparisons.ComparisonsKt.compareBy;
+
+
 @ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
@@ -139,8 +142,14 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
                             @NotNull Set<String> excludedPaths,
                             @NotNull Library.ModifiableModel model,
                             @NotNull String libraryName) {
-    for (Map.Entry<OrderRootType, Collection<File>> entry: libraryFiles.entrySet()) {
-      for (File file: entry.getValue()) {
+    // sort root types the same way as they are serialized into xml in JpsLibraryEntitiesSerializer.saveLibrary
+    List<Map.Entry<OrderRootType, Collection<File>>> sortedEntries = ContainerUtil.sorted(libraryFiles.entrySet(), compareBy(it -> it.getKey().name()));
+    for (Map.Entry<OrderRootType, Collection<File>> entry: sortedEntries) {
+      List<File> sortedRoots = ContainerUtil.sorted(entry.getValue(), (file1, file2) -> {
+        return String.CASE_INSENSITIVE_ORDER.compare(VfsUtil.getUrlForLibraryRoot(file1),
+                                                     VfsUtil.getUrlForLibraryRoot(file2));
+      });
+      for (File file : sortedRoots) {
         VirtualFile virtualFile = unresolved ? null : VirtualFileManager.getInstance().findFileByNioPath(file.toPath().toAbsolutePath());
         if (virtualFile == null) {
           if (!unresolved && ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {

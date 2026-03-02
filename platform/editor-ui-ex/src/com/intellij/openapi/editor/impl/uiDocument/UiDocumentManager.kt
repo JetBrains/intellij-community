@@ -2,19 +2,25 @@
 package com.intellij.openapi.editor.impl.uiDocument
 
 import com.intellij.openapi.application.isEditorLockFreeTypingEnabled
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 @Internal
 @Service(Level.APP)
 class UiDocumentManager(private val coroutineScope: CoroutineScope) {
+
+  private val isCommandInProgress = AtomicBoolean()
 
   fun bindUiDocument(realDocument: Document) {
     if (isLockFreeEnabled() && isLockFreeAllowed(realDocument)) {
@@ -31,12 +37,36 @@ class UiDocumentManager(private val coroutineScope: CoroutineScope) {
     }
   }
 
-  fun getRealDocument(uiDocument: Document): DocumentImpl? {
-    return uiDocument.getUserData(REAL_DOCUMENT_KEY)
+  fun isUiDocumentChangeInProgress(): Boolean {
+    return isCommandInProgress.get()
   }
 
   fun getUiDocument(realDocument: Document): DocumentImpl? {
     return realDocument.getUserData(UI_DOCUMENT_KEY)
+  }
+
+  internal fun getRealDocument(uiDocument: Document): DocumentImpl? {
+    return uiDocument.getUserData(REAL_DOCUMENT_KEY)
+  }
+
+  internal fun executeCommand(
+    commandProject: Project?,
+    commandName: @Nls String?,
+    commandGroupId: Any?,
+    command: Runnable,
+  ) {
+    val oldVal = isCommandInProgress.get()
+    isCommandInProgress.set(true)
+    try {
+      CommandProcessor.getInstance().executeCommand(
+        commandProject,
+        command,
+        commandName,
+        commandGroupId,
+      )
+    } finally {
+      isCommandInProgress.set(oldVal)
+    }
   }
 
   private fun createLockFreeDocument(document: DocumentImpl): DocumentImpl {

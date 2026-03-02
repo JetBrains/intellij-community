@@ -38,6 +38,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
 import java.awt.Point
+import java.util.concurrent.atomic.AtomicBoolean
 
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl,
@@ -46,7 +47,7 @@ class NotebookCellInlayManager private constructor(
 
   private val notebookCellLines = NotebookCellLines.get(editor)
 
-  private var initialized = false
+  val initialized: AtomicBoolean = AtomicBoolean(false)
 
   val cells: List<EditorCell>
     get() = notebook.cells
@@ -88,13 +89,13 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun updateAll() {
-    if (initialized) {
+    if (initialized.get()) {
       updateCells(cells, force = false)
     }
   }
 
   fun forceUpdateAll(): Unit = runInEdt {
-    if (initialized) {
+    if (initialized.get()) {
       updateCells(cells, force = true)
     }
   }
@@ -141,7 +142,6 @@ class NotebookCellInlayManager private constructor(
 
     addViewportChangeListener()
 
-    initialized = true
 
     setupFoldingListener()
     setupSelectionUI()
@@ -149,6 +149,7 @@ class NotebookCellInlayManager private constructor(
     notebook.addCellEventsListener(this) { events -> updateUI(events) }
 
     handleRefreshedDocument()
+    initialized.set(true)
   }
 
   fun getCellByPoint(point: Point): EditorCell? {
@@ -418,7 +419,7 @@ class NotebookCellInlayManager private constructor(
               val index = it.interval.ordinal
               removeCell(index)
               // Next cell becomes first and needs to update the AboveCellDelimiterPanel size.
-              if(index == 0) {
+              if (index == 0) {
                 getCellOrNull(0)?.checkAndRebuildInlays()
               }
             }

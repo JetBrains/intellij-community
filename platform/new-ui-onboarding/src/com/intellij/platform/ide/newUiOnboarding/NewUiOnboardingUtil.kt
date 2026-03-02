@@ -64,8 +64,8 @@ import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 object NewUiOnboardingUtil {
-  const val ONBOARDING_PROPOSED_VERSION = "experimental.ui.onboarding.proposed.version"
-  const val NEW_UI_ON_FIRST_STARTUP = "experimental.ui.on.first.startup"
+  const val ONBOARDING_PROPOSED_VERSION: String = "experimental.ui.onboarding.proposed.version"
+  const val NEW_UI_ON_FIRST_STARTUP: String = "experimental.ui.on.first.startup"
 
   internal const val MEET_ISLANDS_TOUR_COVER_IMAGE_PATH: String = "newUiOnboarding/meetIslandsTourCover.png"
   internal const val SHOW_TOOL_WINDOW_NAMES_IMAGE_PATH: String = "newUiOnboarding/showToolWindowNamesTour.png"
@@ -81,7 +81,6 @@ object NewUiOnboardingUtil {
             && NewUiOnboardingBean.isPresent
 
   enum class OnboardingType {
-    MEET_NEW_UI_TOOL_WINDOW,
     NEW_UI_ONBOARDING
   }
 
@@ -314,7 +313,7 @@ object NewUiOnboardingUtil {
     return try {
       classLoader.getResource(path)?.readText()
     }
-    catch (t: Throwable) {
+    catch (_: Throwable) {
       null
     }
   }

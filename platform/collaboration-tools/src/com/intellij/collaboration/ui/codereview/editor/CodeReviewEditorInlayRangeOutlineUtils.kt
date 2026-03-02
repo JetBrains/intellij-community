@@ -4,8 +4,8 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.comment.CommentedCodeFrameRenderer
-import com.intellij.diff.util.DiffUtil
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel.Ranged.Adjustable.AdjustmentDisabledReason
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.ide.IdeTooltip
@@ -332,6 +332,7 @@ private class ResizableOutlineHandler private constructor(
   private fun DragState.withLineUnderYIfCommentable(y: Int): DragState? {
     val lineUnderY = editor.xyToLogicalPosition(Point(0, y)).line.coerceIn(0, DiffUtil.getLineCount(editor.document)-1)
     val isCurrentBoundary = lineUnderY == line
+    if (ReviewInEditorUtil.isLastBlankLine(editor.document, lineUnderY)) return null
     if (!canCreateComment(lineUnderY) && !isCurrentBoundary) return null
 
     return when (edge) {

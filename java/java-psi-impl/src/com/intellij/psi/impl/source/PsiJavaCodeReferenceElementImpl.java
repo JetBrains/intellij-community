@@ -89,6 +89,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -902,27 +903,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @Override
   public Object @NotNull [] getVariants() {
-    ElementFilter filter;
-    switch (getKindEnum(getContainingFile())) {
-      case CLASS_OR_PACKAGE_NAME_KIND:
-        filter = new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
-        break;
-      case CLASS_NAME_KIND:
-      case CLASS_IN_QUALIFIED_NEW_KIND:
-        filter = ElementClassFilter.CLASS;
-        break;
-      case PACKAGE_NAME_KIND:
-        filter = ElementClassFilter.PACKAGE;
-        break;
-      case CLASS_FQ_NAME_KIND:
-      case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-        filter = isQualified() ? new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE) : ElementClassFilter.PACKAGE;
-        break;
-      default:
-        throw new RuntimeException("Unknown reference type");
-    }
-
-    return PsiImplUtil.getReferenceVariantsByFilter(this, filter);
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

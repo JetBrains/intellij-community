@@ -95,8 +95,8 @@ public final class ExpandStaticImportAction extends PsiBasedModCommandAction<Psi
             PsiJavaCodeReferenceElement refExprCopy = updater.getWritable(refExpr);
             PsiClass aClass = staticImportCopy.resolveTargetClass();
             if (aClass == null) return;
-            expand(refExprCopy, aClass);
             staticImportCopy.delete();
+            expand(refExprCopy, aClass);
           });
         }
         yield ModCommand.chooseAction(JavaBundle.message("multiple.usages.of.static.import.found"),

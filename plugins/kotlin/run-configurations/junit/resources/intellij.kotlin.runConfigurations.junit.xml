@@ -5,8 +5,8 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer" order="after kotlinMain"/>
-    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer" id="kotlinJUnit" order="after kotlinMain"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer" order="after kotlinJUnit"/>
 
     <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit3Framework"
                    order="before junit3"/>

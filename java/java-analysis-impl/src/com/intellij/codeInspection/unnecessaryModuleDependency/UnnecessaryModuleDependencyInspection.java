@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
 import com.intellij.analysis.AnalysisScope;
@@ -52,7 +52,7 @@ import java.util.Set;
 
 public final class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
   @Override
-  public RefGraphAnnotator getAnnotator(final @NotNull RefManager refManager) {
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
     return new UnnecessaryModuleDependencyAnnotator(refManager);
   }
 
@@ -78,7 +78,7 @@ public final class UnnecessaryModuleDependencyInspection extends GlobalInspectio
             QuickFix<?>[] fixes = description.getFixes();
             if (fixes != null) {
               Arrays.stream(fixes)
-                .map(fix -> fix instanceof RemoveModuleDependencyFix ? ((RemoveModuleDependencyFix)fix).myDependency : null)
+                .map(fix -> fix instanceof RemoveModuleDependencyFix f ? f.myDependency : null)
                 .filter(Objects::nonNull)
                 .forEach(targetName -> to2FromCandidatePairsToRemove.computeIfAbsent(targetName, k -> new HashSet<>()).add(sourceModuleName));
             }
@@ -107,8 +107,8 @@ public final class UnnecessaryModuleDependencyInspection extends GlobalInspectio
                     LinkedHashSet<CommonProblemDescriptor> problemDescriptors = new LinkedHashSet<>(Arrays.asList(descriptions));
                     boolean removed = problemDescriptors.removeIf(descriptor -> {
                       QuickFix<?>[] fixes = descriptor.getFixes();
-                      return fixes != null && ContainerUtil.exists(fixes, fix -> fix instanceof RemoveModuleDependencyFix && 
-                                                                                 toModuleName.equals(((RemoveModuleDependencyFix)fix).myDependency));
+                      return fixes != null && ContainerUtil.exists(fixes, fix -> fix instanceof RemoveModuleDependencyFix f &&
+                                                                                 toModuleName.equals(f.myDependency));
                     });
                     if (removed) {
                       problemDescriptionsProcessor.ignoreElement(fromModule);
@@ -129,7 +129,10 @@ public final class UnnecessaryModuleDependencyInspection extends GlobalInspectio
   }
 
   @Override
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager, final @NotNull GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
+                                                @NotNull AnalysisScope scope,
+                                                @NotNull InspectionManager manager,
+                                                @NotNull GlobalInspectionContext globalContext) {
     if (refEntity instanceof RefModule refModule){
       final Module module = refModule.getModule();
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -149,12 +152,9 @@ public final class UnnecessaryModuleDependencyInspection extends GlobalInspectio
       final List<CommonProblemDescriptor> descriptors = new ArrayList<>();
       final Set<Module> modules = refModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
       final List<Module> candidates = new ArrayList<>();
-      for (final OrderEntry entry : declaredDependencies) {
-        if (entry instanceof ModuleOrderEntry &&
-            ((ModuleOrderEntry)entry).getScope() != DependencyScope.RUNTIME &&
-            !((ModuleOrderEntry)entry).isExported()) {
-
-          final Module dependency = ((ModuleOrderEntry)entry).getModule();
+      for (OrderEntry entry : declaredDependencies) {
+        if (entry instanceof ModuleOrderEntry e && e.getScope() != DependencyScope.RUNTIME && !e.isExported()) {
+          final Module dependency = e.getModule();
           if (dependency == null || modules != null && modules.remove(dependency)) {
             continue;
           }
@@ -184,7 +184,7 @@ public final class UnnecessaryModuleDependencyInspection extends GlobalInspectio
   }
 
   @Override
-  public @Nullable RemoveModuleDependencyFix getQuickFix(String hint) {
+  public @NotNull RemoveModuleDependencyFix getQuickFix(String hint) {
     return new RemoveModuleDependencyFix(hint);
   }
 
@@ -200,7 +200,7 @@ public final class UnnecessaryModuleDependencyInspection extends GlobalInspectio
 
   @Override
   public @Nullable String getHint(@NotNull QuickFix fix) {
-    return fix instanceof RemoveModuleDependencyFix ? ((RemoveModuleDependencyFix)fix).myDependency : null;
+    return fix instanceof RemoveModuleDependencyFix f ? f.myDependency : null;
   }
 
   private static CommonProblemDescriptor createDescriptor(AnalysisScope scope,
@@ -236,12 +236,9 @@ public final class UnnecessaryModuleDependencyInspection extends GlobalInspectio
     public void applyFix(@NotNull Project project, @NotNull ModuleProblemDescriptor descriptor) {
       final ModifiableRootModel model = ModuleRootManager.getInstance(descriptor.getModule()).getModifiableModel();
       for (OrderEntry entry : model.getOrderEntries()) {
-        if (entry instanceof ModuleOrderEntry) {
-          final String mDependency = ((ModuleOrderEntry)entry).getModuleName();
-          if (Objects.equals(mDependency, myDependency)) {
-            model.removeOrderEntry(entry);
-            break;
-          }
+        if (entry instanceof ModuleOrderEntry e && Objects.equals(e.getModuleName(), myDependency)) {
+          model.removeOrderEntry(entry);
+          break;
         }
       }
       model.commit();

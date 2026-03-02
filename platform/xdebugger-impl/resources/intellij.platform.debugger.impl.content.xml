@@ -21,7 +21,7 @@
                         serviceImplementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl"/>
     <applicationSettings service="com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil" open="true"
+    <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
 
     <execution.inlineResumeCreator implementation="com.intellij.xdebugger.impl.runToolbar.XDebuggerInlineResumeCreator" order="first"/>

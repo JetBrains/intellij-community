@@ -4,6 +4,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.DebugLogLevel
@@ -46,6 +47,7 @@ import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.IdKind
@@ -350,6 +352,11 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           makeScreenshot(fileName)
         }
 
+
+        session.dumpThreads.setSuspend(sessionBgtDispatcher) { _, _ ->
+          dumpThreads()
+        }
+
         session.projectsAreInitialised.setSuspend(sessionBgtDispatcher) { _, _ ->
           ProjectManagerEx.getOpenProjects().map { it.isInitialized }.all { true }
         }
@@ -515,6 +522,23 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             }
             makeScreenshotOfComponent(screenshotFile, window)
           }
+          true
+        }
+        catch (e: Throwable) {
+          LOG.warn("Test action 'makeScreenshot' hasn't finished successfully", e)
+          false
+        }
+      }
+    }
+  }
+
+  private suspend fun dumpThreads(): Boolean {
+    return runLogged("Dumping threads") {
+      @Suppress("OPT_IN_USAGE")
+      withContext(blockingDispatcher + NonCancellable) { // even if there is a modal window opened
+        return@withContext try {
+          val dump = PerformanceWatcher.getInstance().dumpThreads("Test session", true, false) ?: return@withContext false
+          LOG.info("Thread dump is saved at: $dump")
           true
         }
         catch (e: Throwable) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -481,6 +481,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         }
         return matches;
       });
+      if (evictedInfos.isEmpty()) {
+        document.putUserData(EVICTED_PSI_ELEMENTS, null);
+      }
     }
   }
 
@@ -1442,9 +1445,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     for (int i = 0; i < sorted.size(); i++) {
       HighlightInfo info = sorted.get(i);
       assert toolId.equals(info.toolId) : info + "; " + toolId + "(" + toolId.getClass() + ")";
-      assert info.getHighlighter() != null : info;
-      assert info.getHighlighter().isValid() : info;
-      HighlightInfo assignedInfo = HighlightInfo.fromRangeHighlighter(info.getHighlighter());
+      RangeHighlighterEx infoHighlighter = info.getHighlighter();
+      assert infoHighlighter != null : info;
+      assert infoHighlighter.isValid() : info;
+      HighlightInfo assignedInfo = HighlightInfo.fromRangeHighlighter(infoHighlighter);
       assert assignedInfo == info : "from RH: " + assignedInfo + "(" + System.identityHashCode(assignedInfo)+ "); but expected: " + info+ "(" + System.identityHashCode(info)+ ")";
       if (i>0) {
         int compare = BY_OFFSETS_AND_HASH_ERRORS_FIRST.compare(sorted.get(i - 1), sorted.get(i));
@@ -1525,11 +1529,13 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     if (toReuse != null && toReuse.isValid()) {
       highlighter = toReuse;
       BackgroundUpdateHighlightersUtil.associateInfoAndHighlighter(info, highlighter);
+      CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, project, context);
     }
     else {
       highlighter = markupModel.addRangeHighlighterAndChangeAttributes(null, 0, document.getTextLength(), FILE_LEVEL_FAKE_LAYER,
                                                                        HighlighterTargetArea.EXACT_RANGE, false, ex -> {
           BackgroundUpdateHighlightersUtil.associateInfoAndHighlighter(info, ex);
+          CodeInsightContextHighlightingUtil.installCodeInsightContext(ex, project, context);
         });
     }
     highlighter.setGreedyToLeft(true);
@@ -1538,9 +1544,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     // create a fake whole-file highlighter which will track the document size changes
     // and which will make possible to calculate correct `info.getActualEndOffset()`
     info.setGroup(group);
-    if (context != null) {
-      CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, project, context);
-    }
     return highlighter;
   }
 }

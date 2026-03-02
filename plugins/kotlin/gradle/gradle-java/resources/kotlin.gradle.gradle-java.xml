@@ -1,17 +1,18 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradleJava">
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.kotlin.gradle.tooling"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.gradle"/>
     <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.kotlin.base.externalSystem"/>
     <module name="intellij.kotlin.gradle.codeInsight.common"/>
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.kotlin.runConfigurations.jvm"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint

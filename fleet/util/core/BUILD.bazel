@@ -25,7 +25,7 @@ jvm_library(
   name = "core",
   module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True),
   resources = [":core_resources"],
   kotlinc_opts = ":custom_core",
   deps = [
@@ -53,7 +53,7 @@ jvm_library(
   name = "core_test_lib",
   module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_core",
   exports = [
     "//fleet/util/logging/api",

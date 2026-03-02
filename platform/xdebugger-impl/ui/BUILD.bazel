@@ -70,10 +70,79 @@ jvm_library(
 
 jvm_library(
   name = "ui_test_lib",
+  module_name = "intellij.platform.debugger.impl.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_ui",
+  runtime_deps = [
+    ":ui",
+    "//fleet/rpc:rpc_test_lib",
+    "//fleet/util/core:core_test_lib",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/xdebugger-api:debugger_test_lib",
+    "//platform/xdebugger-impl/rpc:rpc_test_lib",
+    "//platform/xdebugger-impl/shared:shared_test_lib",
+    "//platform/diff-api:diff_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/execution:execution_test_lib",
+    "//platform/execution-impl:execution-impl_test_lib",
+    "//platform/foldings:foldings_test_lib",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/platform-impl/ui:ui_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/kernel/rpc:rpc_test_lib",
+    "//platform/remote-topics/shared:rpc-topics_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/forms_rt:java-guiForms-rt_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.debugger.impl.ui` end
+
+### auto-generated section `build intellij.platform.debugger.impl.ui.tests` start
+create_kotlinc_options(
+  name = "custom_debugger-impl-ui-tests",
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "debugger-impl-ui-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "debugger-impl-ui-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_ui",
-  associates = [":ui"],
+  kotlinc_opts = ":custom_debugger-impl-ui-tests",
+  associates = [
+    "//platform/xdebugger-impl/ui",
+    "//platform/xdebugger-impl/ui:ui_test_lib",
+  ],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -159,6 +228,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
   ],
   runtime_deps = [
+    ":debugger-impl-ui-tests",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_test_lib",
     "//platform/ide-core:ide-core_test_lib",
     "//platform/ide-core-impl:ide-core-impl_test_lib",
@@ -167,13 +237,13 @@ jvm_library(
     "//platform/platform-impl/ui:ui_test_lib",
   ]
 )
-### auto-generated section `build intellij.platform.debugger.impl.ui` end
+### auto-generated section `build intellij.platform.debugger.impl.ui.tests` end
 
-### auto-generated section `test intellij.platform.debugger.impl.ui` start
+### auto-generated section `test intellij.platform.debugger.impl.ui.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "ui_test",
-  runtime_deps = [":ui_test_lib"]
+  name = "debugger-impl-ui-tests_test",
+  runtime_deps = [":debugger-impl-ui-tests_test_lib"]
 )
-### auto-generated section `test intellij.platform.debugger.impl.ui` end
+### auto-generated section `test intellij.platform.debugger.impl.ui.tests` end

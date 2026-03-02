@@ -2210,10 +2210,6 @@ f:git4idea.diff.GitSubmoduleDiffRequestProvider
 - canCreate(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change):Z
 - isEquals(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.Change):com.intellij.util.ThreeState
 - process(com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer,com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
-f:git4idea.fetch.GitFetchErrorFormatter
-- sf:INSTANCE:git4idea.fetch.GitFetchErrorFormatter
-- f:format(java.lang.String):java.lang.String
-- f:isCheckedOutBranchError(java.lang.String):Z
 git4idea.fetch.GitFetchHandler
 - sf:Companion:git4idea.fetch.GitFetchHandler$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

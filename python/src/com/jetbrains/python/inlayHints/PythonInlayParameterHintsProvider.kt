@@ -32,7 +32,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
 
-  companion object {
+  object Helper {
     val showForClassConstructorCalls: Option = Option("python.show.class.constructor.call.parameter.names",
                                                       PyBundle.messagePointer(
                                                         "inlay.parameters.python.show.class.constructor.call.parameter.names"),
@@ -58,7 +58,7 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
 
     val callable = mapping.callableType?.callable
 
-    if (callable == null || (PyUtil.isInitOrNewMethod(callable) && !showForClassConstructorCalls.isEnabled())) {
+    if (callable == null || (PyUtil.isInitOrNewMethod(callable) && !Helper.showForClassConstructorCalls.isEnabled())) {
       return emptyList()
     }
 
@@ -75,7 +75,7 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
           return info
         }
         if (argument !is PyKeywordArgument) {
-          if (argument.isLiteralArgument() || showForNonLiteralArguments.isEnabled()) {
+          if (argument.isLiteralArgument() || Helper.showForNonLiteralArguments.isEnabled()) {
             info.add(InlayInfo("${parameter.name}", argument.textOffset))
           }
         }
@@ -168,8 +168,8 @@ class PythonInlayParameterHintsProvider : InlayParameterHintsProvider {
   }
 
   override fun getSupportedOptions() =
-    listOf(showForClassConstructorCalls,
-           showForNonLiteralArguments)
+    listOf(Helper.showForClassConstructorCalls,
+           Helper.showForNonLiteralArguments)
 
   override fun isBlackListSupported(): Boolean = true
 }

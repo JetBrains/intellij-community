@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DecompilerTestFixture {
   private Path testDataDir;
@@ -44,7 +44,7 @@ public class DecompilerTestFixture {
     if (!isTestDataDir(testDataDir)) testDataDir = Path.of("plugins/java-decompiler/engine/testData");
     if (!isTestDataDir(testDataDir)) testDataDir = Path.of("../community/plugins/java-decompiler/engine/testData");
     if (!isTestDataDir(testDataDir)) testDataDir = Path.of("../plugins/java-decompiler/engine/testData");
-    assertTrue("cannot find the 'testData' directory relative to " + Path.of("").toAbsolutePath(), isTestDataDir(testDataDir));
+    assertTrue(isTestDataDir(testDataDir), "cannot find the 'testData' directory relative to " + Path.of("").toAbsolutePath());
     testDataDir = testDataDir.toAbsolutePath();
 
     tempDir = Files.createTempDirectory("decompiler_test_dir_");
@@ -58,6 +58,7 @@ public class DecompilerTestFixture {
     options.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
     options.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
     options.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
+    options.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "1");
     options.putAll(customOptions);
 
     if (cancellationManager == null) {
@@ -128,9 +129,9 @@ public class DecompilerTestFixture {
       try {
         Files.walkFileTree(expected, new SimpleFileVisitor<>() {
           @Override
-          public FileVisitResult visitFile(Path expectedFile, BasicFileAttributes attrs) {
+          public FileVisitResult visitFile(Path expectedFile, BasicFileAttributes attrs) throws IOException {
             Path actualFile = actual.resolve(expected.relativize(expectedFile));
-            assertThat(actualFile).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expectedFile, StandardCharsets.UTF_8);
+            assertEquals(Files.readString(expectedFile, StandardCharsets.UTF_8).replace("\r\n", "\n").stripTrailing(), Files.readString(actualFile, StandardCharsets.UTF_8).replace("\r\n", "\n").stripTrailing());
             return FileVisitResult.CONTINUE;
           }
         });
@@ -140,7 +141,12 @@ public class DecompilerTestFixture {
       }
     }
     else {
-      assertThat(actual).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expected, StandardCharsets.UTF_8);
+      try {
+        assertEquals(Files.readString(expected, StandardCharsets.UTF_8).replace("\r\n", "\n").stripTrailing(), Files.readString(actual, StandardCharsets.UTF_8).replace("\r\n", "\n").stripTrailing());
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
     }
   }
 

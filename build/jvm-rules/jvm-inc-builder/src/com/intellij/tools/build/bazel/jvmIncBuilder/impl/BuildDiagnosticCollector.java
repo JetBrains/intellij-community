@@ -77,7 +77,7 @@ public class BuildDiagnosticCollector {
     myRounds.add(new CompileRoundData(compiledSources, differentiateLog));
   }
 
-  public void writeData() {
+  public void writeData(@Nullable ConfigurationState pastState, @Nullable ConfigurationState presentState) {
     try {
       Path readPath = DataPaths.getDiagnosticDataPath(myContext);
       Path writePath;
@@ -103,10 +103,7 @@ public class BuildDiagnosticCollector {
       try (var zos = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(writePath)))) {
         zos.setMethod(ZipOutputStream.DEFLATED);
         zos.setLevel(Deflater.BEST_SPEED);
-
-        ConfigurationState pastState = ConfigurationState.loadSavedState(myContext);
         NodeSourcePathMapper pathMapper = myContext.getPathMapper();
-        ConfigurationState presentState = new ConfigurationState(pathMapper, myContext.getSources(), myContext.getResources(), myContext.getBinaryDependencies(), myContext.getFlags(), myContext.getUntrackedInputsDigest());
 
         zos.putNextEntry(createZipEntry(dataDir, "description.txt"));
         //noinspection IOResourceOpenedButNotSafelyClosed
@@ -124,30 +121,38 @@ public class BuildDiagnosticCollector {
 
         readme.println();
 
-        var digestRenderer = new Object() {
-          void formatDigest(String label, ConfigurationState past, ConfigurationState present, Function<? super ConfigurationState, Long> dataAccessor) {
-            long pastValue = dataAccessor.apply(past);
-            long presentValue = dataAccessor.apply(present);
-            readme.format("%n%-20s digest %s => %s %s", label, Long.toHexString(pastValue), Long.toHexString(presentValue), (pastValue == presentValue ? "(unchanged)" : "(modified)"));
-          }
-        };
-        digestRenderer.formatDigest("Worker Flags", pastState, presentState, ConfigurationState::getFlagsDigest);
-        digestRenderer.formatDigest("Classpath Structure", pastState, presentState, ConfigurationState::getClasspathStructureDigest);
-        digestRenderer.formatDigest("Runners", pastState, presentState, ConfigurationState::getRunnersDigest);
-        digestRenderer.formatDigest("Untracked Inputs", pastState, presentState, ConfigurationState::getUntrackedInputsDigest);
-        readme.println();
-        readme.format("Whole target rebuild from the beginning? %s", myIsWholeTargetRebuild? "Yes" : "No");
+        NodeSourceSnapshotDelta srcDelta;
+        if (pastState != null && presentState != null) {
+          var digestRenderer = new Object() {
+            void formatDigest(String label, ConfigurationState past, ConfigurationState present, Function<? super ConfigurationState, Long> dataAccessor) {
+              long pastValue = dataAccessor.apply(past);
+              long presentValue = dataAccessor.apply(present);
+              readme.format("%n%-20s digest %s => %s %s", label, Long.toHexString(pastValue), Long.toHexString(presentValue), (pastValue == presentValue ? "(unchanged)" : "(modified)"));
+            }
+          };
+          digestRenderer.formatDigest("Worker Flags", pastState, presentState, ConfigurationState::getFlagsDigest);
+          digestRenderer.formatDigest("Classpath Structure", pastState, presentState, ConfigurationState::getClasspathStructureDigest);
+          digestRenderer.formatDigest("Runners", pastState, presentState, ConfigurationState::getRunnersDigest);
+          digestRenderer.formatDigest("Untracked Inputs", pastState, presentState, ConfigurationState::getUntrackedInputsDigest);
+          readme.println();
+          readme.format("Whole target rebuild from the beginning? %s", myIsWholeTargetRebuild? "Yes" : "No");
 
-        NodeSourceSnapshotDelta srcDelta = new SnapshotDeltaImpl(pastState.getSources(), presentState.getSources());
-        writeSources(readme, "Deleted Sources:", srcDelta.getDeleted());
-        writeSources(readme, "Changed Sources:", srcDelta.getChanged());
-        writeSources(readme, "Added Sources:", filter(srcDelta.getModified(), s -> !contains(srcDelta.getChanged(), s)));
+          srcDelta = new SnapshotDeltaImpl(pastState.getSources(), presentState.getSources());
+          writeSources(readme, "Deleted Sources:", srcDelta.getDeleted());
+          writeSources(readme, "Changed Sources:", srcDelta.getChanged());
+          writeSources(readme, "Added Sources:", filter(srcDelta.getModified(), s -> !contains(srcDelta.getChanged(), s)));
 
-        NodeSourceSnapshotDelta libDelta = new SnapshotDeltaImpl(pastState.getLibraries(), presentState.getLibraries());
-        writeSources(readme, "Deleted Binary Dependencies:", libDelta.getDeleted());
-        writeSources(readme, "Changed Binary Dependencies:", libDelta.getChanged());
-        writeSources(readme, "Added Binary Dependencies:", filter(libDelta.getModified(), s -> !contains(libDelta.getChanged(), s)));
-        
+          NodeSourceSnapshotDelta libDelta = new SnapshotDeltaImpl(pastState.getLibraries(), presentState.getLibraries());
+          writeSources(readme, "Deleted Binary Dependencies:", libDelta.getDeleted());
+          writeSources(readme, "Changed Binary Dependencies:", libDelta.getChanged());
+          writeSources(readme, "Added Binary Dependencies:", filter(libDelta.getModified(), s -> !contains(libDelta.getChanged(), s)));
+        }
+        else {
+          srcDelta = null;
+          readme.print("Past and/or present configuration state are not available");
+          readme.format("Whole target rebuild from the beginning? %s", myIsWholeTargetRebuild? "Yes" : "No");
+        }
+
         if (myLibrariesDifferentiateBegin > 0L && myLibrariesDifferentiateEnd > myLibrariesDifferentiateBegin) {
           readme.println();
           readme.format("Binary dependencies differentiate time: %s", Duration.ofNanos(myLibrariesDifferentiateEnd - myLibrariesDifferentiateBegin));
@@ -178,7 +183,7 @@ public class BuildDiagnosticCollector {
           }
         }
 
-        if (!myIsWholeTargetRebuild) {
+        if (!myIsWholeTargetRebuild && srcDelta != null) {
           // save contents of files compiled in this build session
           for (NodeSource src : unique(flat(srcDelta.getModified(), flat(map(myRounds, r -> r.sources))))) {
             try (InputStream in = Files.newInputStream(pathMapper.toPath(src))) {

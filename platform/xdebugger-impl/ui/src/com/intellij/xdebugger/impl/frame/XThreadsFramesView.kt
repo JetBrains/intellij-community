@@ -14,6 +14,7 @@ import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SpeedSearchComparator
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TextTransferable
@@ -28,6 +29,7 @@ import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
@@ -223,7 +225,7 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
     myFramesList.addListSelectionListener {
       if (it.valueIsAdjusting || !myListenersEnabled) return@addListSelectionListener
 
-      val session = getSession(it) ?: return@addListSelectionListener
+      val session = getSessionProxy(it) ?: return@addListSelectionListener
       val stack = myThreadsList.selectedValue?.stack ?: return@addListSelectionListener
       val frame = myFramesList.selectedValue as? XStackFrame ?: return@addListSelectionListener
 
@@ -267,12 +269,12 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
       return
     }
 
-    if (!session.hasSuspendContext()) {
-      requestClear()
-      return
-    }
-
     UIUtil.invokeLaterIfNeeded {
+      if (!session.hasSuspendContext()) {
+        requestClear()
+        return@invokeLaterIfNeeded
+      }
+
       if (event == SessionEvent.PAUSED || event == SessionEvent.SETTINGS_CHANGED && session.isSuspended) {
         // clear immediately
         cancelClear()
@@ -310,6 +312,7 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
     }
   }
 
+  @RequiresEdt
   fun start(sessionProxy: XDebugSessionProxy) {
     if (!(sessionProxy.hasSuspendContext())) return
     val disposable = nextDisposable()
@@ -322,6 +325,7 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
     myThreadsContainer.start(sessionProxy)
   }
 
+  @RequiresEdt
   private fun XExecutionStack.setActive(sessionProxy: XDebugSessionProxy) {
     myFramesManager.setActive(this)
 
@@ -384,19 +388,26 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
       }
     }
 
+    @RequiresEdt
     fun setActive(activeDisposable: Disposable) {
       startIfNeeded()
 
       isActive = true
       activeDisposable.onTermination {
-        isActive = false
-        myVisibleRectangle = myFramesList.visibleRect
-        mySelectedValue = if (myFramesList.isSelectionEmpty) null else myFramesList.selectedValue
+        deactivate()
       }
 
       updateView()
     }
 
+    @RequiresEdt
+    private fun deactivate() {
+      isActive = false
+      myVisibleRectangle = myFramesList.visibleRect
+      mySelectedValue = if (myFramesList.isSelectionEmpty) null else myFramesList.selectedValue
+    }
+
+    @RequiresEdt
     private fun updateView() {
       if (!isActive) return
 
@@ -480,12 +491,14 @@ class XThreadsFramesView(tabDisposable: Disposable, private val sessionProxy: XD
       }
     }
 
+    @RequiresEdt
     fun setActive(stack: XExecutionStack) {
       val disposable = myActiveStackDisposables.next()
       myActiveStack = stack
       stack.getContainer().setActive(disposable)
     }
 
+    @RequiresEdt
     fun tryGetCurrentFrame(stack: XExecutionStack): XStackFrame? {
       return stack.getContainer().currentFrame
     }

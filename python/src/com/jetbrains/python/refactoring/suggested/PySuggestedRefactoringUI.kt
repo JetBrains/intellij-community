@@ -13,7 +13,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.refactoring.changeSignature.PyExpressionCodeFragment
-import com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport.Companion.defaultValue
+import com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport.Helper.defaultValue
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 

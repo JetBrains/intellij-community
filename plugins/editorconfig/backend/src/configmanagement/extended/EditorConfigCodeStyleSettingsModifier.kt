@@ -173,7 +173,7 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
 private var ourEnabledInTestOnly = false
 
 private fun processOptions(
-  properties: ResourceProperties,
+  properties: Map<String, String>,
   settings: CodeStyleSettings,
   fileType: FileType,
   mapper: AbstractCodeStylePropertyMapper,
@@ -182,8 +182,7 @@ private fun processOptions(
 ): Boolean {
   val langPrefix = if (languageSpecific) mapper.languageDomainId + "_" else null
   var isModified = false
-  for (prop in properties.properties.values) {
-    val optionKey = prop.name
+  for ((optionKey, sourceValue) in properties) {
     val intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey)
     val accessor = findAccessor(mapper, intellijName, langPrefix)
     if (accessor != null) {
@@ -192,7 +191,7 @@ private fun processOptions(
                                   settings = settings,
                                   fileType = fileType,
                                   optionKey = optionKey,
-                                  rawValue = prop.sourceValue)
+                                  rawValue = sourceValue)
       for (dependency in getDependentProperties(optionKey, langPrefix)) {
         if (!processed.contains(dependency)) {
           val dependencyAccessor = findAccessor(mapper, dependency, null)
@@ -221,7 +220,7 @@ private fun getDependentProperties(property: String, langPrefix: String?): List<
 
 private fun preprocessValue(
   accessor: CodeStylePropertyAccessor<*>,
-  properties: ResourceProperties,
+  properties: Map<String, String>,
   settings: CodeStyleSettings,
   fileType: FileType,
   optionKey: String,
@@ -271,21 +270,19 @@ private fun findAccessor(
   return null
 }
 
-private fun getExplicitTabSize(properties: ResourceProperties): String? = properties.properties.get("tab_width")?.sourceValue
+private fun getExplicitTabSize(properties: Map<String, String>): String? = properties.get("tab_width")
 
 private fun getDefaultTabSize(settings: CodeStyleSettings, fileType: FileType): String {
   return settings.getIndentOptions(fileType).TAB_SIZE.toString()
 }
 
-private fun isTabIndent(properties: ResourceProperties): Boolean {
-  return properties.properties.get("indent_style").let { prop ->
-    prop != null && prop.sourceValue == "tab"
-  }
+private fun isTabIndent(properties: Map<String, String>): Boolean {
+  return properties.get("indent_style") == "tab"
 }
 
 private fun getMappers(
   settings: TransientCodeStyleSettings,
-  properties: ResourceProperties,
+  properties: Map<String, String>,
   fileBaseLanguage: Language,
 ): Collection<AbstractCodeStylePropertyMapper> {
   return buildSet {
@@ -295,7 +292,7 @@ private fun getMappers(
 }
 
 private fun getLanguageCodeStyleProviders(
-  properties: ResourceProperties,
+  properties: Map<String, String>,
   fileBaseLanguage: Language,
 ): Collection<LanguageCodeStyleSettingsProvider> {
   val providers = LinkedHashSet<LanguageCodeStyleSettingsProvider>()
@@ -318,9 +315,9 @@ private fun getLanguageCodeStyleProviders(
   return providers
 }
 
-private fun getLanguageIds(properties: ResourceProperties): Collection<String> {
+private fun getLanguageIds(properties: Map<String, String>): Collection<String> {
   val langIds = LinkedHashSet<String>()
-  for (key in properties.properties.keys) {
+  for (key in properties.keys) {
     if (EditorConfigIntellijNameUtil.isIndentProperty(key)) {
       langIds.add("any")
     }
@@ -334,7 +331,7 @@ private fun getLanguageIds(properties: ResourceProperties): Collection<String> {
 
 private fun applyCodeStyleSettings(
   settings: TransientCodeStyleSettings,
-  properties: ResourceProperties,
+  properties: Map<String, String>,
   file: PsiFile,
   isAllowedToReport: Boolean
 ): Boolean {

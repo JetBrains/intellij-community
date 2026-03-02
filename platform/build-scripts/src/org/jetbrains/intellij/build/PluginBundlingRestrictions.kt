@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.dynatrace.hash4j.hashing.HashFunnel
+import com.dynatrace.hash4j.hashing.HashSink
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.PluginBundlingRestrictions.Companion.NONE
@@ -84,6 +86,12 @@ class PluginBundlingRestrictions(
     }
   }
 
+  fun updateDigest(digest: HashSink) {
+    digest.putOrderedIterable(supportedOs, EnumHashFunnel)
+    digest.putOrderedIterable(supportedArch, EnumHashFunnel)
+    digest.put(includeInDistribution, EnumHashFunnel)
+  }
+
   override fun toString(): String =
     if (this === MARKETPLACE) "marketplace"
     else if (this == NONE) "unrestricted"
@@ -105,5 +113,11 @@ class PluginBundlingRestrictions(
     if (supportedArch != other.supportedArch) return false
     if (includeInDistribution != other.includeInDistribution) return false
     return true
+  }
+}
+
+private object EnumHashFunnel : HashFunnel<Enum<*>> {
+  override fun put(obj: Enum<*>, sink: HashSink) {
+    sink.putString(obj.name)
   }
 }

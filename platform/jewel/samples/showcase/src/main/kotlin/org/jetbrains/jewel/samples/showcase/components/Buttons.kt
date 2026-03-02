@@ -28,6 +28,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.ActionButton
 import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.DefaultSlimButton
 import org.jetbrains.jewel.ui.component.DefaultSplitButton
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.Icon
@@ -36,6 +37,7 @@ import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.InfoText
 import org.jetbrains.jewel.ui.component.MenuScope
 import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.OutlinedSlimButton
 import org.jetbrains.jewel.ui.component.OutlinedSplitButton
 import org.jetbrains.jewel.ui.component.SelectableIconActionButton
 import org.jetbrains.jewel.ui.component.SelectableIconButton
@@ -90,6 +92,23 @@ private fun NormalButtons() {
             DefaultButton(onClick = {}) { SingleLineText("Default") }
 
             DefaultButton(onClick = {}, enabled = false) { SingleLineText("Default disabled") }
+        }
+
+        GroupHeader("Slim buttons")
+
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedSlimButton(onClick = {}) { SingleLineText("Outlined") }
+
+            OutlinedSlimButton(onClick = {}, enabled = false) { SingleLineText("Outlined Disabled") }
+
+            DefaultSlimButton(onClick = {}) { SingleLineText("Default") }
+
+            DefaultSlimButton(onClick = {}, enabled = false) { SingleLineText("Default Disabled") }
         }
     }
 }

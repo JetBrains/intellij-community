@@ -2,14 +2,17 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.junit.testFramework.JUnitLibrary;
 import com.intellij.junit.testFramework.JUnitProjectDescriptor;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.junit.testFramework.MavenTestLib.JUNIT4;
+import static com.intellij.junit.testFramework.MavenTestLib.JUNIT5;
+import static com.intellij.pom.java.LanguageLevel.HIGHEST;
+
 public class JUnitUnusedMethodsTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final JUnitProjectDescriptor descriptor = new JUnitProjectDescriptor(HIGHEST, JUNIT4, JUNIT5);
 
   @Override
   protected void setUp() throws Exception {
@@ -19,9 +22,8 @@ public class JUnitUnusedMethodsTest extends LightJavaCodeInsightFixtureTestCase 
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new JUnitProjectDescriptor(LanguageLevel.HIGHEST, JUnitLibrary.JUNIT4, JUnitLibrary.JUNIT5);
+    return descriptor;
   }
-
 
   public void testRecognizeNestedAbstractClass() {
     myFixture.configureByText("ExampleTest.java", """

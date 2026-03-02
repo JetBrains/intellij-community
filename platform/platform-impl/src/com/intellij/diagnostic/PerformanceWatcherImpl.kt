@@ -542,6 +542,7 @@ private class CoroutineDispatcherWatcher(
   private val coroutineScope: CoroutineScope,
   private val getUnresponsiveIntervalMs: () -> Int,
 ) {
+  @Volatile
   private var lastSampleNs = System.nanoTime()
 
   fun watchDispatcher() {
@@ -569,7 +570,7 @@ private class CoroutineDispatcherWatcher(
     @Suppress("OPT_IN_USAGE")
     coroutineScope.launch(CoroutineName("$dispatcher watcher") + blockingDispatcher) {
       try {
-        var lastReportedNs = 0L
+        var lastReportedNs = System.nanoTime()
 
         while (true) {
           delay(pooledSamplingInterval)

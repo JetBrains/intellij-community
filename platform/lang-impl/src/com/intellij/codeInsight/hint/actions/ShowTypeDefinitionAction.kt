@@ -95,7 +95,7 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
         val search = ThrowableComputable<List<PsiImplementationViewElement>, Exception> {
           TypeDeclarationProvider.EP_NAME.extensionList.asSequence()
             .mapNotNull { provider ->
-              ReadAction.compute<List<PsiImplementationViewElement>?, Throwable> {
+              ReadAction.computeBlocking<List<PsiImplementationViewElement>?, Throwable> {
                 provider.getSymbolTypeDeclarations(element)?.mapNotNull { it?.navigationElement }?.map(::PsiImplementationViewElement)
               }
             }

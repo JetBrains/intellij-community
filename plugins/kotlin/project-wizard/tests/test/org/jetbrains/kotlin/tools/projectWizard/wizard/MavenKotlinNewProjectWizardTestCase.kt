@@ -5,17 +5,20 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.useProject
+import com.intellij.util.application
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardTestCase
 import org.jetbrains.idea.maven.wizards.sdk
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore
 import org.jetbrains.kotlin.tools.projectWizard.maven.MavenKotlinNewProjectWizardData.Companion.kotlinMavenData
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.junit.Assert
@@ -195,5 +198,15 @@ abstract class MavenKotlinNewProjectWizardTestCase : MavenNewProjectWizardTestCa
             additionalAssertions(project)
         }
         return@runBlocking
+    }
+
+    protected fun overrideKotlinPluginVersion(version: String) {
+        val versionStore = application.service<KotlinWizardVersionStore>()
+        val newState = versionStore.state?.apply {
+            kotlinPluginVersion = version
+            isDefault = false
+        } ?: return
+
+        versionStore.loadState(newState)
     }
 }

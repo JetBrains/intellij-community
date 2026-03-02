@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/base/fe10/project-structure",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//platform/core-api:core",
     "//plugins/kotlin/base/project-structure",
@@ -52,6 +53,7 @@ jvm_library(
   kotlinc_opts = ":custom_analysis-api-platform",
   runtime_deps = [
     ":analysis-api-platform",
+    "//plugins/kotlin/base/fe10/project-structure:project-structure_test_lib",
     "//platform/core-api:core_test_lib",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//plugins/kotlin/base/analysis:analysis_test_lib",

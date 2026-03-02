@@ -24,7 +24,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo;
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent;
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
@@ -133,6 +132,7 @@ import com.intellij.usages.UsageSearchPresentation;
 import com.intellij.usages.UsageSearcher;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewProjectProperties;
 import com.intellij.usages.impl.CodeNavigateSource;
 import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.NullUsage;
@@ -229,7 +229,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
-  private static final String PREVIEW_PROPERTY_KEY = "ShowUsagesActions.previewPropertyKey";
 
   private static final IJTracer myFindUsagesTracer = TelemetryManager.getInstance().getTracer(FindUsagesScope);
 
@@ -669,9 +668,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     Consumer<AbstractPopup> tableResizer = popup -> {
       if (popup != null && popup.isVisible() && !manuallyResized.get()) {
-        PropertiesComponent properties = PropertiesComponent.getInstance(project);
+        var properties = UsageViewProjectProperties.getInstance(project);
         int dataSize = table.getModel().getRowCount();
-        setPopupSize(table, popup, parameters.popupPosition, parameters.minWidth, properties.isValueSet(PREVIEW_PROPERTY_KEY), dataSize);
+        setPopupSize(table, popup, parameters.popupPosition, parameters.minWidth, properties.isPreviewSource(), dataSize);
       }
     };
 
@@ -1009,8 +1008,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       setCancelKeyEnabled(true).
       setDimensionServiceKey(DIMENSION_SERVICE_KEY);
 
-    PropertiesComponent properties = PropertiesComponent.getInstance(project);
-    boolean addCodePreview = properties.isValueSet(PREVIEW_PROPERTY_KEY);
+    var properties = UsageViewProjectProperties.getInstance(project);
+    boolean addCodePreview = properties.isPreviewSource();
     OnePixelSplitter contentSplitter = null;
     if (addCodePreview) {
       contentSplitter = new OnePixelSplitter(true, .6f);
@@ -1051,14 +1050,14 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     usageView.addFilteringActions(filteringGroup);
     ActionManager actionManager = ActionManager.getInstance();
 
-    DefaultActionGroup showOptionsActionGroup = createShowOptionsActionGroup(properties, extendedInfoPanel);
+    DefaultActionGroup showOptionsActionGroup = createShowOptionsActionGroup();
     filteringGroup.add(showOptionsActionGroup);
     filteringGroup.add(Separator.getInstance());
 
     filteringGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), null, AllIcons.Actions.PreviewDetailsVertically) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
-        return properties.isValueSet(PREVIEW_PROPERTY_KEY);
+        return properties.isPreviewSource();
       }
 
       @Override
@@ -1069,7 +1068,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         if (e.getDataContext() != DataContext.EMPTY_CONTEXT) { // Avoid fake events
-          properties.setValue(PREVIEW_PROPERTY_KEY, state);
+          properties.setPreviewSource(state);
           cancel(popupRef.get(), actionHandler, CLOSE_REASON_PREVIEW);
 
           WindowStateService.getInstance().putSize(DIMENSION_SERVICE_KEY, null);
@@ -1277,7 +1276,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return popup;
   }
 
-  private static DefaultActionGroup createShowOptionsActionGroup(PropertiesComponent properties, JPanel extendedInfoPanel) {
+  private static DefaultActionGroup createShowOptionsActionGroup() {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup showOptionsGroup = new DefaultActionGroup(UsageViewBundle.message("show.options.action.group.description"), null, AllIcons.Actions.Show);
     showOptionsGroup.setPopup(true);
@@ -1504,8 +1503,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         calcMaxWidth(table); // compute column widths
       }
       else {
-        PropertiesComponent properties = PropertiesComponent.getInstance(project);
-        setPopupSize(table, popup, popupPosition, minWidth, properties.isValueSet(PREVIEW_PROPERTY_KEY), data.size());
+        var properties = UsageViewProjectProperties.getInstance(project);
+        setPopupSize(table, popup, popupPosition, minWidth, properties.isPreviewSource(), data.size());
       }
     }
   }

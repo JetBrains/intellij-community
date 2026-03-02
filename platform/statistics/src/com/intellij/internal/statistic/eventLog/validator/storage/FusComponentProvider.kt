@@ -2,14 +2,6 @@
 package com.intellij.internal.statistic.eventLog.validator.storage
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsListener
 import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
@@ -21,10 +13,6 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMeta
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUpdateError
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUpdateStage
-import com.jetbrains.fus.reporting.api.IEventGroupRules
-import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
-import com.jetbrains.fus.reporting.api.IGroupValidators
-import com.jetbrains.fus.reporting.api.RecorderDataValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
@@ -54,6 +42,10 @@ import com.jetbrains.fus.reporting.MetadataStorage
 import com.jetbrains.fus.reporting.REMOTE_CONFIG_OPTIONS_UPDATED
 import com.jetbrains.fus.reporting.RegionCode
 import com.jetbrains.fus.reporting.RemoteConfig
+import com.jetbrains.fus.reporting.api.IEventGroupRules
+import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
+import com.jetbrains.fus.reporting.api.IGroupValidators
+import com.jetbrains.fus.reporting.api.RecorderDataValidationRule
 import com.jetbrains.fus.reporting.defaults.DefaultMetadataStorage
 import com.jetbrains.fus.reporting.defaults.DefaultRemoteConfig
 import com.jetbrains.fus.reporting.defaults.MetadataUpdateDelay
@@ -66,6 +58,15 @@ import com.jetbrains.fus.reporting.model.serialization.SerializationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.StreamReadFeature
+import tools.jackson.core.util.DefaultIndenter
+import tools.jackson.core.util.DefaultPrettyPrinter
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.MapperFeature
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.kotlinModule
 import java.io.IOException
 import java.nio.file.Path
 
@@ -318,9 +319,10 @@ object FusComponentProvider {
     private val SERIALIZATION_MAPPER: JsonMapper by lazy {
       JsonMapper
         .builder()
+        .addModule(kotlinModule())
         .enable(MapperFeature.REQUIRE_SETTERS_FOR_GETTERS)
         .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-        .serializationInclusion(JsonInclude.Include.NON_NULL)
+        .changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_NULL) }
         .defaultPrettyPrinter(CustomPrettyPrinter())
         .build()
     }
@@ -328,8 +330,9 @@ object FusComponentProvider {
     private val DESERIALIZATION_MAPPER: JsonMapper by lazy {
       JsonMapper
         .builder()
+        .addModule(kotlinModule())
         .enable(DeserializationFeature.USE_LONG_FOR_INTS)
-        .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+        .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .build()
     }
@@ -359,8 +362,8 @@ object FusComponentProvider {
     constructor() : super()
     constructor(base: DefaultPrettyPrinter?) : super(base)
 
-    override fun writeObjectFieldValueSeparator(g: JsonGenerator) {
-      g.writeRaw(": ")
+    override fun writeObjectNameValueSeparator(g: JsonGenerator?) {
+      g?.writeRaw(": ")
     }
 
     override fun writeEndArray(g: JsonGenerator, nrOfValues: Int) {

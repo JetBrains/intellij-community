@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.Nullable;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 
 import java.io.IOException;
 import java.io.InputStream;

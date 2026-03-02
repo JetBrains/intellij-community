@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.fold
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import org.jetbrains.plugins.github.api.GHGQLRequests
@@ -83,7 +84,7 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
       .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
   }
 
-  override suspend fun loadIssuesAssignees(): List<GHUser> = assigneesRequest.awaitCompleted()
+  override suspend fun loadPotentialIssuesAssignees(): List<GHUser> = assigneesRequest.awaitCompleted()
 
   private val labelsRequest: MutableStateFlow<Deferred<List<GHLabel>>> by lazy {
     MutableStateFlow(doLoadLabelsAsync())
@@ -110,6 +111,10 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
       acc
     }
   }
+
+  override fun mentionableUsersBatchesFlow(): Flow<List<GHUser>> = ApiPageUtil.createGQLPagesFlow {
+    requestExecutor.executeSuspend(GHGQLRequests.Repo.findMentionableUsers(repositoryCoordinates, serverPath, it))
+  }.map { it.nodes }
 
   private val potentialReviewersRequest: Flow<Deferred<List<GHPullRequestRequestedReviewer>>> by lazy {
     combine(teamsRequest, collaboratorsRequest) { teamsReq, collaboratorsReq ->

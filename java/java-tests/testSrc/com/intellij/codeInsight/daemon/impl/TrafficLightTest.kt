@@ -1,11 +1,19 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.lang.LanguageAnnotators
+import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.ex.EditorMarkupModel
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.util.application
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 
@@ -41,17 +49,55 @@ class TrafficLightTest : DaemonAnalyzerTestCase() {
     )
   }
 
+  fun `test error counter after adding and removing file level annotation`() {
+    class AnnotatorRegisteringFileLevelErrorIfEmptyFile : Annotator {
+      override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+        if (element is PsiFile && element.textLength == 0) {
+          holder.newAnnotation(HighlightSeverity.ERROR, "Empty file").fileLevel().create()
+        }
+      }
+    }
+    val annotator = AnnotatorRegisteringFileLevelErrorIfEmptyFile()
+    val keyedLazyInstance = LanguageExtensionPoint<Annotator>("JAVA", annotator.javaClass.name, PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!)
+    LanguageAnnotators.EP_NAME.point.registerExtension(keyedLazyInstance, testRootDisposable)
+
+    doTrafficRendererTest(
+      listOf(
+        "class Main {}", // no error
+        "",              // file level error is added by AnnotatorRegisteringFileLevelErrorIfEmptyFile
+        "class Main {}"  // no error again
+        ),
+      listOf(HighlightSeverity.ERROR to 0),
+    )
+  }
+
   private fun doTrafficRendererTest(
     @Language("JAVA") text: String,
     vararg expectedSeverities: SeverityValue,
   ) {
-    configureByText(JavaFileType.INSTANCE, text)
+    doTrafficRendererTest(listOf(text), listOf(*expectedSeverities))
+  }
+
+  private fun doTrafficRendererTest(
+    fileTextSnapshots: List<String>,
+    expectedSeverities: List<SeverityValue>,
+  ) {
+    require(fileTextSnapshots.isNotEmpty())
+
+    configureByText(JavaFileType.INSTANCE, fileTextSnapshots.first())
 
     val editorMarkupModel = editor.markupModel as EditorMarkupModel
 
     editorMarkupModel.isErrorStripeVisible = true
 
     doHighlighting()
+
+    fileTextSnapshots.drop(1).forEach {
+      application.runWriteAction {
+        editor.document.setText(it)
+      }
+      doHighlighting()
+    }
 
     val trafficLightRenderer = editorMarkupModel.errorStripeRenderer as TrafficLightRenderer
     val status = runBlocking {

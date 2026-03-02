@@ -1,0 +1,13 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_conflictingPlatformDeclarations-a.kotlin_module
+  test/Utils.class
+  test/Utils__Fun1Kt.class
+  test/Utils__Fun2Kt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/conflictingPlatformDeclarations/a/fun1.kt
+  kotlin/withJava/other/conflictingPlatformDeclarations/a/fun2.kt
+End of files
+------------------------------------------
+Exit code: ERROR

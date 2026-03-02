@@ -81,7 +81,12 @@ export function resolveReadCapabilities(
     if (name) names.add(name)
   }
 
-  return {capabilities: {hasReadFile: names.has('read_file')}}
+  return {
+    capabilities: {
+      hasReadFile: names.has('read_file'),
+      hasApplyPatch: names.has('apply_patch')
+    }
+  }
 }
 
 export function createProxyTooling({

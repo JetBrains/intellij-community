@@ -4,13 +4,14 @@ package com.intellij.agent.workbench.codex.sessions
 import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
 import com.intellij.agent.workbench.codex.common.CodexCliUtils
 import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodexAppServerService
-import com.intellij.agent.workbench.sessions.AgentSessionLaunchMode
-import com.intellij.agent.workbench.sessions.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.AgentSessionProviderIconIds
-import com.intellij.agent.workbench.sessions.providers.AgentSessionLaunchSpec
-import com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge
-import com.intellij.agent.workbench.sessions.providers.AgentSessionSource
-import com.intellij.openapi.components.service
+import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.openapi.components.serviceAsync
+import javax.swing.Icon
 
 internal class CodexAgentSessionProviderBridge(
   override val sessionSource: AgentSessionSource = CodexSessionSource(),
@@ -27,8 +28,8 @@ internal class CodexAgentSessionProviderBridge(
   override val yoloSessionLabelKey: String
     get() = "toolwindow.action.new.session.codex.yolo"
 
-  override val iconId: String
-    get() = AgentSessionProviderIconIds.CODEX
+  override val icon: Icon
+    get() = AgentWorkbenchCommonIcons.Codex_14x14
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
@@ -39,26 +40,43 @@ internal class CodexAgentSessionProviderBridge(
   override val supportsArchiveThread: Boolean
     get() = true
 
-  override fun isCliAvailable(): Boolean = CodexCliUtils.isAvailable()
+  override val supportsUnarchiveThread: Boolean
+    get() = true
+
+  override fun isCliAvailable(): Boolean = CodexCliUtils.findExecutable() != null
 
   override fun buildResumeCommand(sessionId: String): List<String> = listOf(CodexCliUtils.CODEX_COMMAND, "resume", sessionId)
 
   override fun buildNewSessionCommand(mode: AgentSessionLaunchMode): List<String> {
-    error("Codex new sessions use thread/start + resume, not direct CLI")
+    return if (mode == AgentSessionLaunchMode.YOLO) {
+      listOf(CodexCliUtils.CODEX_COMMAND, "--full-auto")
+    }
+    else {
+      listOf(CodexCliUtils.CODEX_COMMAND)
+    }
   }
 
   override fun buildNewEntryCommand(): List<String> = listOf(CodexCliUtils.CODEX_COMMAND)
 
+  override fun buildCommandWithInitialPrompt(baseCommand: List<String>, prompt: String): List<String> {
+    return baseCommand + listOf("--", prompt)
+  }
+
+  @Suppress("UNUSED_PARAMETER")
   override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
-    val thread = service<SharedCodexAppServerService>().createThread(cwd = path, yolo = mode == AgentSessionLaunchMode.YOLO)
     return AgentSessionLaunchSpec(
-      sessionId = thread.id,
-      command = buildResumeCommand(thread.id),
+      sessionId = null,
+      command = buildNewSessionCommand(mode),
     )
   }
 
   override suspend fun archiveThread(path: String, threadId: String): Boolean {
-    service<SharedCodexAppServerService>().archiveThread(threadId)
+    serviceAsync<SharedCodexAppServerService>().archiveThread(threadId)
+    return true
+  }
+
+  override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
+    serviceAsync<SharedCodexAppServerService>().unarchiveThread(threadId)
     return true
   }
 

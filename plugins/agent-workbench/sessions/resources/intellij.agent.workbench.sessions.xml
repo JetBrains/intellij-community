@@ -1,65 +1,136 @@
 <idea-plugin>
   <resource-bundle>messages.AgentSessionsBundle</resource-bundle>
 
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.agent.workbench.chat"/>
-    <module name="intellij.platform.compose"/>
-    <!-- endregion -->
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
   </dependencies>
-
-  <extensionPoints>
-    <extensionPoint
-      qualifiedName="com.intellij.agent.workbench.sessionProviderBridge"
-      interface="com.intellij.agent.workbench.sessions.providers.AgentSessionProviderBridge"
-      dynamic="true"/>
-  </extensionPoints>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionsPromptLauncherBridge"/>
     <toolWindow
       id="agent.workbench.sessions"
       anchor="right"
       icon="AllIcons.Toolwindows.ToolWindowMessages"
       canCloseContents="false"
-      factoryClass="com.intellij.agent.workbench.sessions.AgentSessionsToolWindowFactory"/>
+      factoryClass="com.intellij.agent.workbench.sessions.ui.AgentSessionsToolWindowFactory"/>
+    <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"
+                       key="notification.group.agent.workbench.sessions"/>
     <advancedSetting
       id="agent.workbench.chat.open.in.dedicated.frame"
       default="true"
       bundle="messages.AgentSessionsBundle"
       groupKey="advanced.settings.agent.workbench"/>
-    <projectFrameCapabilitiesProvider implementation="com.intellij.agent.workbench.sessions.AgentWorkbenchProjectFrameCapabilitiesProvider"/>
-    <toolWindowLayoutProfileProvider implementation="com.intellij.agent.workbench.sessions.AgentWorkbenchToolWindowLayoutProfileProvider"/>
+    <projectFrameCapabilitiesProvider implementation="com.intellij.agent.workbench.sessions.frame.AgentWorkbenchProjectFrameCapabilitiesProvider"/>
+    <toolWindowLayoutProfileProvider implementation="com.intellij.agent.workbench.sessions.frame.AgentWorkbenchToolWindowLayoutProfileProvider"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="MainToolbarVCSGroup"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ExecutionTargetsToolbarGroup"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="NewUiRunWidget"/>
+    <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="AIAssistantHubPopupAction"/>
     <statusBarWidgetFactory
       id="claude.quota"
       implementation="com.intellij.agent.workbench.sessions.claude.ClaudeQuotaStatusBarWidgetFactory"/>
   </extensions>
 
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <hyperlinkNavigationInterceptor implementation="com.intellij.agent.workbench.sessions.service.AgentWorkbenchTerminalHyperlinkNavigationInterceptor"/>
+  </extensions>
+
   <actions resource-bundle="messages.AgentSessionsBundle">
+    <action
+      id="AgentWorkbenchSessions.OpenDedicatedFrame"
+      icon="AllIcons.Actions.MoveToWindow"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsOpenDedicatedFrameAction">
+      <add-to-group group-id="OpenProjectWindows" anchor="after" relative-to-action="PreviousProjectWindow"/>
+    </action>
+    <action
+      id="AgentWorkbenchSessions.GoToSourceProjectFromToolbar"
+      icon="AllIcons.Nodes.Project"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromToolbarAction">
+      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
+    </action>
     <group id="AgentWorkbenchSessions.ToolWindow.GearActions">
       <reference ref="OpenFile"/>
       <separator/>
-      <action id="AgentWorkbenchSessions.ToggleDedicatedFrame" class="com.intellij.agent.workbench.sessions.AgentSessionsDedicatedFrameToggleAction"/>
-      <action id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget" class="com.intellij.agent.workbench.sessions.AgentSessionsToggleClaudeQuotaWidgetAction"/>
-      <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.AgentSessionsRefreshAction"/>
+      <action id="AgentWorkbenchSessions.ToggleDedicatedFrame" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsDedicatedFrameToggleAction"/>
+      <action id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsToggleClaudeQuotaWidgetAction"/>
+      <action id="AgentWorkbenchSessions.Refresh" class="com.intellij.agent.workbench.sessions.actions.AgentSessionsRefreshAction"/>
     </group>
     <action
-      id="AgentWorkbenchSessions.OpenThreadInAgentThreads"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsOpenThreadInToolWindowAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
-    </action>
+      id="AgentWorkbenchSessions.TreePopup.Open"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupOpenAction"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.More"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupMoreAction"/>
+    <group
+      id="AgentWorkbenchSessions.TreePopup.NewThread"
+      popup="true"
+      icon="AllIcons.General.Add"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupNewThreadGroup"/>
+    <action
+      id="AgentWorkbenchSessions.EditorTab.NewThreadQuick"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadQuickAction"/>
+    <group
+      id="AgentWorkbenchSessions.EditorTab.NewThreadPopup"
+      popup="true"
+      icon="AllIcons.General.Add"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadPopupGroup"/>
+    <action
+      id="AgentWorkbenchSessions.TreePopup.Archive"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupArchiveThreadAction"/>
+    <group id="AgentWorkbenchSessions.TreePopup">
+      <reference ref="AgentWorkbenchSessions.TreePopup.Open"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.More"/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.NewThread"/>
+      <separator/>
+      <reference ref="AgentWorkbenchSessions.TreePopup.Archive"/>
+      <separator/>
+      <reference ref="CopyReferencePopupGroup"/>
+    </group>
     <action
       id="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsArchiveThreadFromEditorTabAction">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.OpenThreadInAgentThreads"/>
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabArchiveThreadAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CloseEditorsGroup"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt DELETE"/>
+      <keyboard-shortcut keymap="Default for XWin" first-keystroke="control alt DELETE" remove="true"/>
+      <keyboard-shortcut keymap="Default for XWin" first-keystroke="alt shift F4"/>
+      <keyboard-shortcut keymap="Default for GNOME" first-keystroke="control alt DELETE" remove="true"/>
+      <keyboard-shortcut keymap="Default for GNOME" first-keystroke="alt shift F4"/>
+      <keyboard-shortcut keymap="Default for KDE" first-keystroke="control alt DELETE" remove="true"/>
+      <keyboard-shortcut keymap="Default for KDE" first-keystroke="alt shift F4"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt DELETE"/>
     </action>
     <action
-      id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsCopyThreadIdFromEditorTabAction">
+      id="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsGoToSourceProjectFromEditorTabAction">
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.ArchiveThreadFromEditorTab"/>
     </action>
     <action
+      id="AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsBindPendingCodexThreadFromEditorTabAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.GoToSourceProjectFromEditorTab"/>
+    </action>
+    <group id="AgentWorkbenchSessions.EditorTabPopup.SeparatorBeforeCloseActions">
+      <separator/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.BindPendingCodexThreadFromEditorTab"/>
+    </group>
+    <action
+      id="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsCopyThreadIdFromEditorTabAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="CopyPaths"/>
+    </action>
+    <action
+      id="AgentWorkbenchSessions.SelectThreadInAgentThreads"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadInToolWindowAction">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="AgentWorkbenchSessions.CopyThreadIdFromEditorTab"/>
+    </action>
+    <action
       id="AgentWorkbenchSessions.ActivateWithProjectShortcut"
-      class="com.intellij.agent.workbench.sessions.AgentSessionsActivateWithProjectShortcutAction"
+      class="com.intellij.agent.workbench.sessions.actions.AgentSessionsActivateWithProjectShortcutAction"
       use-shortcut-of="ActivateProjectToolWindow"/>
   </actions>
 </idea-plugin>

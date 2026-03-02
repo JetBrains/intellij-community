@@ -21,8 +21,6 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//platform/remote-driver/model",
     "//platform/util",
-    "//platform/ui.jcef",
-    "//platform/core-api:core",
   ],
   exports = [
     "//platform/remote-driver/client",
@@ -49,8 +47,6 @@ jvm_library(
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/remote-driver/model:model_test_lib",
     "//platform/util:util_test_lib",
-    "//platform/ui.jcef:ui.jcef_test_lib",
-    "//platform/core-api:core_test_lib",
   ]
 )
 ### auto-generated section `build intellij.driver.sdk` end

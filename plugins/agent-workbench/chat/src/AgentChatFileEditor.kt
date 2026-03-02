@@ -3,35 +3,65 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
+import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
+import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class AgentChatFileEditor(
   private val project: Project,
   private val file: AgentChatVirtualFile,
+  private val terminalTabs: AgentChatTerminalTabs = ToolWindowAgentChatTerminalTabs,
 ) : UserDataHolderBase(), FileEditor {
   private val component = JPanel(BorderLayout())
-  private var tab: TerminalToolWindowTab? = null
+  private val editorTabActions: ActionGroup? by lazy {
+    val actionManager = ActionManager.getInstance()
+    val actions = listOfNotNull(
+      actionManager.getAction(NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID),
+      actionManager.getAction(NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID),
+      actionManager.getAction(BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID),
+    )
+    if (actions.isEmpty()) {
+      return@lazy null
+    }
+    if (actions.size == 1) {
+      val singleAction = actions.single()
+      return@lazy singleAction as? ActionGroup ?: DefaultActionGroup(singleAction)
+    }
+    DefaultActionGroup(actions)
+  }
+  private var tab: AgentChatTerminalTab? = null
   private var initializationStarted: Boolean = false
   private var disposed: Boolean = false
 
   override fun getComponent(): JComponent = component
 
   override fun getPreferredFocusedComponent(): JComponent {
-    ensureInitialized()
-    return tab?.view?.preferredFocusableComponent ?: component
+    return tab?.preferredFocusableComponent ?: component
   }
 
   override fun getName(): String = file.threadTitle
+
+  override fun getTabActions(): ActionGroup? = editorTabActions
 
   override fun setState(state: FileEditorState) = Unit
 
@@ -51,8 +81,11 @@ internal class AgentChatFileEditor(
 
   override fun dispose() {
     disposed = true
-    tab?.let { Disposer.dispose(it.content) }
+    tab?.let { terminalTab ->
+      terminalTabs.closeTab(project, terminalTab)
+    }
     tab = null
+    component.removeAll()
   }
 
   private fun ensureInitialized() {
@@ -61,21 +94,135 @@ internal class AgentChatFileEditor(
     }
     initializationStarted = true
     try {
-      val terminalManager = TerminalToolWindowTabsManager.getInstance(project)
-      val createdTab = terminalManager.createTabBuilder()
-        .shouldAddToToolWindow(false)
-        .workingDirectory(file.projectPath)
-        .tabName(file.threadTitle)
-        .shellCommand(file.shellCommand)
-        .createTab()
+      val createdTab = terminalTabs.createTab(project, file)
       tab = createdTab
+      subscribePendingFirstInput(createdTab)
+      sendInitialMessageIfNeeded(createdTab)
       component.removeAll()
-      component.add(createdTab.content.component, BorderLayout.CENTER)
+      component.add(createdTab.component, BorderLayout.CENTER)
       component.revalidate()
       component.repaint()
     }
-    catch (t: Throwable) {
-      AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, t)
+    catch (e: CancellationException) {
+      throw e
     }
+    catch (e: Throwable) {
+      AgentChatRestoreNotificationService.reportTerminalInitializationFailure(project, file, e)
+    }
+  }
+
+  internal fun flushPendingInitialMessageIfInitialized(): Boolean {
+    val initializedTab = tab ?: return false
+    return sendInitialMessageIfNeeded(initializedTab)
+  }
+
+  private fun subscribePendingFirstInput(createdTab: AgentChatTerminalTab) {
+    if (!file.isPendingThread || file.provider != AgentSessionProvider.CODEX) {
+      return
+    }
+    createdTab.coroutineScope.launch {
+      val tabsService = serviceAsync<AgentChatTabsService>()
+      createdTab.keyEventsFlow.collectLatest {
+        if (!file.markPendingFirstInputAtMsIfAbsent(System.currentTimeMillis())) {
+          return@collectLatest
+        }
+        tabsService.upsert(file.toSnapshot())
+      }
+    }
+  }
+
+  private fun sendInitialMessageIfNeeded(createdTab: AgentChatTerminalTab): Boolean {
+    val initialMessage = file.initialComposedMessage?.trim().orEmpty()
+    if (initialMessage.isEmpty() || file.initialMessageSent) {
+      return false
+    }
+    createdTab.sendText(initialMessage, shouldExecute = true)
+    if (!file.markInitialMessageSent()) {
+      return false
+    }
+    serviceIfCreated<AgentChatTabsService>()?.upsert(file.toSnapshot())
+    return true
+  }
+}
+
+private const val NEW_THREAD_QUICK_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_QUICK
+private const val NEW_THREAD_POPUP_FROM_EDITOR_TAB_ACTION_ID: String = AgentWorkbenchActionIds.Sessions.EditorTab.NEW_THREAD_POPUP
+private const val BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB_ACTION_ID: String =
+  AgentWorkbenchActionIds.Sessions.BIND_PENDING_CODEX_THREAD_FROM_EDITOR_TAB
+
+internal interface AgentChatTerminalTab {
+  val component: JComponent
+  val preferredFocusableComponent: JComponent
+  val coroutineScope: CoroutineScope
+  val keyEventsFlow: Flow<*>
+
+  fun sendText(text: String, shouldExecute: Boolean)
+}
+
+internal interface AgentChatTerminalTabs {
+  fun createTab(project: Project, file: AgentChatVirtualFile): AgentChatTerminalTab
+
+  fun closeTab(project: Project, tab: AgentChatTerminalTab)
+}
+
+private object ToolWindowAgentChatTerminalTabs : AgentChatTerminalTabs {
+  override fun createTab(project: Project, file: AgentChatVirtualFile): AgentChatTerminalTab {
+    val terminalTab = TerminalToolWindowTabsManager.getInstance(project)
+      .createTabBuilder()
+      .shouldAddToToolWindow(false)
+      .deferSessionStartUntilUiShown(true)
+      .workingDirectory(file.projectPath)
+      .processType(TerminalProcessType.NON_SHELL)
+      .tabName(file.threadTitle)
+      .shellCommand(file.consumeStartupShellCommand())
+      .createTab()
+    return ToolWindowAgentChatTerminalTab(terminalTab)
+  }
+
+  override fun closeTab(project: Project, tab: AgentChatTerminalTab) {
+    val toolWindowTab = (tab as? ToolWindowAgentChatTerminalTab)?.delegate ?: return
+    closeTerminalToolWindowTab(project, toolWindowTab)
+  }
+}
+
+internal fun closeTerminalToolWindowTab(
+  project: Project,
+  tab: TerminalToolWindowTab,
+  managerProvider: (Project) -> TerminalToolWindowTabsManager = TerminalToolWindowTabsManager::getInstance,
+) {
+  val content = tab.content
+  if (content.manager != null) {
+    managerProvider(project).closeTab(tab)
+  }
+  else {
+    content.release()
+  }
+}
+
+private class ToolWindowAgentChatTerminalTab(
+  val delegate: TerminalToolWindowTab,
+) : AgentChatTerminalTab {
+  override val component: JComponent
+    get() = delegate.content.component
+
+  override val preferredFocusableComponent: JComponent
+    get() = delegate.view.preferredFocusableComponent
+
+  override val coroutineScope: CoroutineScope
+    get() = delegate.view.coroutineScope
+
+  override val keyEventsFlow: Flow<*>
+    get() = delegate.view.keyEventsFlow
+
+  override fun sendText(text: String, shouldExecute: Boolean) {
+    val normalizedText = text.trim()
+    if (normalizedText.isEmpty()) {
+      return
+    }
+    val sendTextBuilder = delegate.view.createSendTextBuilder().useBracketedPasteMode()
+    if (shouldExecute) {
+      sendTextBuilder.shouldExecute()
+    }
+    sendTextBuilder.send(normalizedText)
   }
 }

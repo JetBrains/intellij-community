@@ -31,12 +31,10 @@
     <module name="intellij.java.compiler" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.analysis" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.java.resources" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.execution" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.remoteServers" loading="optional"/>
     <module name="intellij.jvm.analysis" required-if-available="intellij.platform.backend"/>
     <module name="intellij.jsp" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.java.resources.en" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.debugger" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.codeserver.core" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.codeserver.highlighting" required-if-available="intellij.platform.backend"/>
@@ -98,6 +96,7 @@
     <module name="intellij.java.jam"/>
     <module name="intellij.profiler.ultimate"/>
     <module name="intellij.debugger.jvm.advanced.java"/>
+    <module name="intellij.debugger.logpoints"/>
     <module name="intellij.jvm.dfa.analysis.ui"/>
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.promo"/>

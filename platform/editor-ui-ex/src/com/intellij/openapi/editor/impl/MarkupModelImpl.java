@@ -116,7 +116,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
     PersistentRangeHighlighterImpl highlighter = PersistentRangeHighlighterImpl.create(
       this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false);
-    addRangeHighlighter(highlighter, changeAction);
+    changeAttributes(highlighter, changeAction);
     return highlighter;
   }
 
@@ -150,11 +150,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     RangeHighlighterImpl highlighter = isPersistent ?
       PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea, textAttributesKey, true)
       : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributesKey, false, false);
-    addRangeHighlighter(highlighter, changeAttributesAction);
+    changeAttributes(highlighter, changeAttributesAction);
     return highlighter;
   }
 
-  private void addRangeHighlighter(@NotNull RangeHighlighterImpl highlighter, @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+  private void changeAttributes(@NotNull RangeHighlighterImpl highlighter, @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     myCachedHighlighters = null;
     if (changeAttributesAction != null) {
       highlighter.changeAttributesNoEvents(changeAttributesAction);
@@ -211,7 +211,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   public void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     myCachedHighlighters = null;
-    treeFor(highlighter).removeInterval((RangeHighlighterEx)highlighter);
+    boolean removed = treeFor(highlighter).removeInterval((RangeHighlighterEx)highlighter);
+    if (!removed && LOG.isDebugEnabled()) {
+      LOG.debug("MMI.removeInterval=false: "+highlighter);
+    }
+    myCachedHighlighters = null;
   }
 
   @Override

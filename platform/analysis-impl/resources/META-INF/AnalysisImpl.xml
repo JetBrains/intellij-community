@@ -49,6 +49,8 @@
                     serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy"
                             order="last"/>
+    <modcompletion.completionItemProvider language="any" implementationClass="com.intellij.codeInsight.completion.PsiReferenceCompletionItemProvider"
+                            order="last"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManagerEx"
                         serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
 

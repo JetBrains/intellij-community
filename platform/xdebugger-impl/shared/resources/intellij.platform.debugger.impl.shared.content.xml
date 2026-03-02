@@ -17,6 +17,9 @@
     <extensionPoint qualifiedName="com.intellij.xdebugger.monolithAccessPoint"
                     interface="com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.breakpointInterLinePlacementDetector"
+                    interface="com.intellij.platform.debugger.impl.shared.XBreakpointInterLinePlacementDetector"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -54,5 +54,6 @@
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.maven" scope="TEST" />
   </component>
 </module>

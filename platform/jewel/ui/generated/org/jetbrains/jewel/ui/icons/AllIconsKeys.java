@@ -140,12 +140,6 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey EditSource = new IntelliJIconKey("actions/editSource.svg", "expui/general/edit.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey EnableNewUi = new IntelliJIconKey("actions/enableNewUi.svg", "actions/enableNewUi.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey EnableNewUiSelected = new IntelliJIconKey("actions/enableNewUiSelected.svg", "actions/enableNewUiSelected.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Execute = new IntelliJIconKey("actions/execute.svg", "expui/run/run.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
@@ -666,6 +660,14 @@ public final class AllIconsKeys {
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey WordsSelected = new IntelliJIconKey("actions/wordsSelected.svg", "expui/inline/exactWords.svg", AllIconsKeys.class);
 
+    /** @deprecated to be removed without replacement */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey EnableNewUi = new IntelliJIconKey("actions/enableNewUi.svg", "actions/enableNewUi.svg", AllIconsKeys.class);
+
     /** @deprecated to be removed (use expandable text field instead, see https://plugins.jetbrains.com/docs/intellij/built-in-button.html) */
     @SuppressWarnings("unused")
     @Deprecated
@@ -686,6 +688,12 @@ public final class AllIconsKeys {
     /** 14x14 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey BreakpointUnsuspendentDisabled = new IntelliJIconKey("expui/breakpoints/breakpointUnsuspendentDisabled.svg", "expui/breakpoints/breakpointUnsuspendentDisabled.svg", AllIconsKeys.class);
+    /** 14x14 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey ConditionalInstrumentation = new IntelliJIconKey("expui/breakpoints/conditionalInstrumentation.svg", "expui/breakpoints/conditionalInstrumentation.svg", AllIconsKeys.class);
+    /** 14x14 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey LoggingInstrumentation = new IntelliJIconKey("expui/breakpoints/loggingInstrumentation.svg", "expui/breakpoints/loggingInstrumentation.svg", AllIconsKeys.class);
     /** 14x14 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MultipleBreakpointsDisabled = new IntelliJIconKey("expui/breakpoints/multipleBreakpointsDisabled.svg", "expui/breakpoints/multipleBreakpointsDisabled.svg", AllIconsKeys.class);
@@ -2465,25 +2473,7 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey DarkTheme = new IntelliJIconKey("expui/meetNewUi/darkTheme.svg", "expui/meetNewUi/darkTheme.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey DarkThemeSelected = new IntelliJIconKey("expui/meetNewUi/darkThemeSelected.svg", "expui/meetNewUi/darkThemeSelected.svg", AllIconsKeys.class);
-    /** 88x48 */ 
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey DensityCompact = new IntelliJIconKey("expui/meetNewUi/densityCompact.svg", "expui/meetNewUi/densityCompact.svg", AllIconsKeys.class);
-    /** 88x48 */ 
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey DensityDefault = new IntelliJIconKey("expui/meetNewUi/densityDefault.svg", "expui/meetNewUi/densityDefault.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey LightTheme = new IntelliJIconKey("expui/meetNewUi/lightTheme.svg", "expui/meetNewUi/lightTheme.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey LightThemeSelected = new IntelliJIconKey("expui/meetNewUi/lightThemeSelected.svg", "expui/meetNewUi/lightThemeSelected.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey SystemTheme = new IntelliJIconKey("expui/meetNewUi/systemTheme.svg", "expui/meetNewUi/systemTheme.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey SystemThemeSelected = new IntelliJIconKey("expui/meetNewUi/systemThemeSelected.svg", "expui/meetNewUi/systemThemeSelected.svg", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources
@@ -3795,9 +3785,6 @@ public final class AllIconsKeys {
     /** 13x13 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Learn = new IntelliJIconKey("toolwindows/learn.svg", "expui/toolwindows/learn.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey MeetNewUi = new IntelliJIconKey("expui/toolwindows/meetNewUi.svg", "expui/toolwindows/meetNewUi.svg", AllIconsKeys.class);
     /** 13x13 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey NoEvents = new IntelliJIconKey("toolwindows/noEvents.svg", "toolwindows/noEvents.svg", AllIconsKeys.class);
@@ -3936,6 +3923,14 @@ public final class AllIconsKeys {
     /** 13x13 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey WebToolWindow = new IntelliJIconKey("toolwindows/webToolWindow.svg", "expui/toolwindows/web.svg", AllIconsKeys.class);
+
+    /** @deprecated to be removed without replacement */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey MeetNewUi = new IntelliJIconKey("expui/toolwindows/meetNewUi.svg", "expui/toolwindows/meetNewUi.svg", AllIconsKeys.class);
 
     /** @deprecated to be removed without replacement */
     @SuppressWarnings("unused")

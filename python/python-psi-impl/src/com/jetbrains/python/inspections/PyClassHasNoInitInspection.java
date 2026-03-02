@@ -61,7 +61,7 @@ public final class PyClassHasNoInitInspection extends PyInspection {
         return;
       }
       final List<PyClassLikeType> types = node.getAncestorTypes(myTypeEvalContext);
-      if (PyTypedDictTypeProvider.Companion.isTypingTypedDictInheritor(node, myTypeEvalContext)) return;
+      if (PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor(node, myTypeEvalContext)) return;
       for (PyClassLikeType type : types) {
         if (type == null) return;
         final String qName = type.getClassQName();

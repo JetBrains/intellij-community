@@ -107,59 +107,6 @@ class ClaudeSessionsStore(
     }
   }
 
-  private fun parseIndexEntries(parser: JsonParser, entries: MutableList<ClaudeSessionsIndexEntry>) {
-    while (true) {
-      val token = parser.nextToken() ?: return
-      if (token == JsonToken.END_ARRAY) return
-      if (token != JsonToken.START_OBJECT) {
-        parser.skipChildren()
-        continue
-      }
-      parseIndexEntry(parser)?.let(entries::add)
-    }
-  }
-
-  private fun parseIndexEntry(parser: JsonParser): ClaudeSessionsIndexEntry? {
-    var sessionId: String? = null
-    var summary: String? = null
-    var firstPrompt: String? = null
-    var modified: String? = null
-    var fileMtime: Long? = null
-    var fullPath: String? = null
-    var projectPath: String? = null
-    var isSidechain = false
-    var gitBranch: String? = null
-
-    forEachJsonObjectField(parser) { fieldName ->
-      when (fieldName) {
-        "sessionId" -> sessionId = readJsonStringOrNull(parser)
-        "summary" -> summary = readJsonStringOrNull(parser)
-        "firstPrompt" -> firstPrompt = readJsonStringOrNull(parser)
-        "modified" -> modified = readJsonStringOrNull(parser)
-        "fileMtime" -> fileMtime = readJsonLongOrNull(parser)
-        "fullPath" -> fullPath = readJsonStringOrNull(parser)
-        "projectPath" -> projectPath = readJsonStringOrNull(parser)
-        "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
-        "gitBranch" -> gitBranch = readJsonStringOrNull(parser)
-        else -> parser.skipChildren()
-      }
-      true
-    }
-
-    val normalizedSessionId = sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    return ClaudeSessionsIndexEntry(
-      sessionId = normalizedSessionId,
-      summary = summary,
-      firstPrompt = firstPrompt,
-      modified = modified,
-      fileMtime = fileMtime,
-      fullPath = fullPath,
-      projectPath = projectPath,
-      isSidechain = isSidechain,
-      gitBranch = gitBranch,
-    )
-  }
-
   private fun parseJsonlFallback(path: Path, targetProjectPath: String): ClaudeSessionThread? {
     val parsed = parseJsonlMetadata(path, targetProjectPath) ?: return null
     if (parsed.isSidechain) return null
@@ -225,185 +172,239 @@ class ClaudeSessionsStore(
     )
   }
 
-  private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
-    return try {
-      if (parser.currentToken != JsonToken.START_OBJECT) return null
-      var sessionId: String? = null
-      var cwd: String? = null
-      var isSidechain = false
-      var timestampMillis: Long? = null
-      var firstPrompt: String? = null
-      var type: String? = null
-      var messageRole: String? = null
-      var messageContent: String? = null
+}
 
-      forEachJsonObjectField(parser) { fieldName ->
-        when (fieldName) {
-          "sessionId" -> sessionId = readJsonStringOrNull(parser)
-          "cwd" -> cwd = readJsonStringOrNull(parser)
-          "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
-          "timestamp" -> timestampMillis = parseIsoTimestamp(readJsonStringOrNull(parser))
-          "type" -> type = readJsonStringOrNull(parser)
-          "message" -> {
-            if (parser.currentToken == JsonToken.START_OBJECT) {
-              val parsedMessage = readMessageObject(parser)
-              messageRole = parsedMessage.role
-              messageContent = parsedMessage.contentPreview
-            }
-            else {
-              parser.skipChildren()
-            }
-          }
-          else -> parser.skipChildren()
-        }
-        true
-      }
-      if (type == "user" && messageRole == "user") {
-        firstPrompt = sanitizeTitle(messageContent)
-      }
-      val hasConversationSignal = type == "user" || type == "assistant"
-      return ParsedJsonlLine(
-        sessionId = sessionId,
-        cwd = cwd,
-        isSidechain = isSidechain,
-        timestampMillis = timestampMillis,
-        firstPrompt = firstPrompt,
-        hasConversationSignal = hasConversationSignal,
-      )
+private fun parseIndexEntries(parser: JsonParser, entries: MutableList<ClaudeSessionsIndexEntry>) {
+  while (true) {
+    val token = parser.nextToken() ?: return
+    if (token == JsonToken.END_ARRAY) return
+    if (token != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      continue
     }
-    catch (_: Throwable) {
-      null
+    parseIndexEntry(parser)?.let(entries::add)
+  }
+}
+
+private fun parseIndexEntry(parser: JsonParser): ClaudeSessionsIndexEntry? {
+  var sessionId: String? = null
+  var summary: String? = null
+  var firstPrompt: String? = null
+  var modified: String? = null
+  var fileMtime: Long? = null
+  var fullPath: String? = null
+  var projectPath: String? = null
+  var isSidechain = false
+  var gitBranch: String? = null
+
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "sessionId" -> sessionId = readJsonStringOrNull(parser)
+      "summary" -> summary = readJsonStringOrNull(parser)
+      "firstPrompt" -> firstPrompt = readJsonStringOrNull(parser)
+      "modified" -> modified = readJsonStringOrNull(parser)
+      "fileMtime" -> fileMtime = readJsonLongOrNull(parser)
+      "fullPath" -> fullPath = readJsonStringOrNull(parser)
+      "projectPath" -> projectPath = readJsonStringOrNull(parser)
+      "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
+      "gitBranch" -> gitBranch = readJsonStringOrNull(parser)
+      else -> parser.skipChildren()
     }
+    true
   }
 
-  private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
-    var role: String? = null
-    var contentPreview: String? = null
+  val normalizedSessionId = sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  return ClaudeSessionsIndexEntry(
+    sessionId = normalizedSessionId,
+    summary = summary,
+    firstPrompt = firstPrompt,
+    modified = modified,
+    fileMtime = fileMtime,
+    fullPath = fullPath,
+    projectPath = projectPath,
+    isSidechain = isSidechain,
+    gitBranch = gitBranch,
+  )
+}
+
+private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
+  return try {
+    if (parser.currentToken != JsonToken.START_OBJECT) return null
+    var sessionId: String? = null
+    var cwd: String? = null
+    var isSidechain = false
+    var timestampMillis: Long? = null
+    var firstPrompt: String? = null
+    var type: String? = null
+    var messageRole: String? = null
+    var messageContent: String? = null
+
     forEachJsonObjectField(parser) { fieldName ->
       when (fieldName) {
-        "role" -> role = readJsonStringOrNull(parser)
-        "content" -> contentPreview = readContentPreview(parser)
+        "sessionId" -> sessionId = readJsonStringOrNull(parser)
+        "cwd" -> cwd = readJsonStringOrNull(parser)
+        "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
+        "timestamp" -> timestampMillis = parseIsoTimestamp(readJsonStringOrNull(parser))
+        "type" -> type = readJsonStringOrNull(parser)
+        "message" -> {
+          if (parser.currentToken == JsonToken.START_OBJECT) {
+            val parsedMessage = readMessageObject(parser)
+            messageRole = parsedMessage.role
+            messageContent = parsedMessage.contentPreview
+          }
+          else {
+            parser.skipChildren()
+          }
+        }
         else -> parser.skipChildren()
       }
       true
     }
-    return ParsedMessageObject(role = role, contentPreview = contentPreview)
-  }
-
-  private fun readContentPreview(parser: JsonParser): String? {
-    return when (parser.currentToken) {
-      JsonToken.VALUE_STRING -> readJsonStringOrNull(parser)
-      JsonToken.START_ARRAY -> readFirstTextFromArray(parser)
-      else -> {
-        parser.skipChildren()
-        null
-      }
+    if (type == "user" && messageRole == "user") {
+      firstPrompt = sanitizeTitle(messageContent)
     }
-  }
-
-  private fun readFirstTextFromArray(parser: JsonParser): String? {
-    while (true) {
-      val token = parser.nextToken() ?: return null
-      if (token == JsonToken.END_ARRAY) return null
-      if (token != JsonToken.START_OBJECT) {
-        parser.skipChildren()
-        continue
-      }
-      var itemType: String? = null
-      var itemText: String? = null
-      forEachJsonObjectField(parser) { fieldName ->
-        when (fieldName) {
-          "type" -> itemType = readJsonStringOrNull(parser)
-          "text" -> itemText = readJsonStringOrNull(parser)
-          else -> parser.skipChildren()
-        }
-        true
-      }
-      if (itemType == "text" && !itemText.isNullOrBlank()) {
-        return itemText
-      }
-    }
-  }
-
-  private fun ClaudeSessionsIndexEntry.toThread(): ClaudeSessionThread? {
-    val sessionId = sessionId.trim().takeIf { it.isNotEmpty() } ?: return null
-    val updatedAt = resolveUpdatedAt()
-    return ClaudeSessionThread(
-      id = sessionId,
-      title = resolveThreadTitle(summary = summary, firstPrompt = firstPrompt, sessionId = sessionId),
-      updatedAt = updatedAt,
-      gitBranch = gitBranch,
+    val hasConversationSignal = type == "user" || type == "assistant"
+    return ParsedJsonlLine(
+      sessionId = sessionId,
+      cwd = cwd,
+      isSidechain = isSidechain,
+      timestampMillis = timestampMillis,
+      firstPrompt = firstPrompt,
+      hasConversationSignal = hasConversationSignal,
     )
   }
-
-  private fun ClaudeSessionsIndexEntry.resolveUpdatedAt(): Long {
-    return parseIsoTimestamp(modified)
-      ?: fileMtime
-      ?: fullPath
-        ?.let(::parsePath)
-        ?.takeIf { Files.isRegularFile(it) }
-        ?.let { Files.getLastModifiedTime(it).toMillis() }
-      ?: 0L
+  catch (_: Throwable) {
+    null
   }
+}
 
-  private fun resolveThreadTitle(summary: String?, firstPrompt: String?, sessionId: String): String {
-    val summaryTitle = sanitizeTitle(summary)
-    if (!summaryTitle.isNullOrBlank()) return summaryTitle
-    val promptTitle = sanitizeTitle(firstPrompt).takeUnless { it.equals("No prompt", ignoreCase = true) }
-    if (!promptTitle.isNullOrBlank()) return promptTitle
-    return "Session ${sessionId.take(8)}"
-  }
-
-  private fun matchesProjectPath(entryProjectPath: String?, originalPath: String?, targetPath: String): Boolean {
-    val entryPath = normalizePath(entryProjectPath)
-    if (entryPath != null) return entryPath == targetPath
-    val indexPath = normalizePath(originalPath)
-    if (indexPath != null) return indexPath == targetPath
-    return false
-  }
-
-  private fun sanitizeTitle(value: String?): String? {
-    val normalized = value
-      ?.replace('\n', ' ')
-      ?.replace('\r', ' ')
-      ?.replace(Regex("\\s+"), " ")
-      ?.trim()
-      ?: return null
-    if (normalized.isEmpty()) return null
-    return if (normalized.length <= MAX_TITLE_LENGTH) normalized else normalized.take(MAX_TITLE_LENGTH - 3).trimEnd() + "..."
-  }
-
-  private fun parseIsoTimestamp(value: String?): Long? {
-    val text = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    return try {
-      Instant.parse(text).toEpochMilli()
+private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
+  var role: String? = null
+  var contentPreview: String? = null
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "role" -> role = readJsonStringOrNull(parser)
+      "content" -> contentPreview = readContentPreview(parser)
+      else -> parser.skipChildren()
     }
-    catch (_: Throwable) {
+    true
+  }
+  return ParsedMessageObject(role = role, contentPreview = contentPreview)
+}
+
+private fun readContentPreview(parser: JsonParser): String? {
+  return when (parser.currentToken) {
+    JsonToken.VALUE_STRING -> readJsonStringOrNull(parser)
+    JsonToken.START_ARRAY -> readFirstTextFromArray(parser)
+    else -> {
+      parser.skipChildren()
       null
     }
   }
+}
 
-  private fun encodeProjectPath(projectPath: String): String {
-    return projectPath.replace('/', '-')
+private fun readFirstTextFromArray(parser: JsonParser): String? {
+  while (true) {
+    val token = parser.nextToken() ?: return null
+    if (token == JsonToken.END_ARRAY) return null
+    if (token != JsonToken.START_OBJECT) {
+      parser.skipChildren()
+      continue
+    }
+    var itemType: String? = null
+    var itemText: String? = null
+    forEachJsonObjectField(parser) { fieldName ->
+      when (fieldName) {
+        "type" -> itemType = readJsonStringOrNull(parser)
+        "text" -> itemText = readJsonStringOrNull(parser)
+        else -> parser.skipChildren()
+      }
+      true
+    }
+    if (itemType == "text" && !itemText.isNullOrBlank()) {
+      return itemText
+    }
   }
+}
 
-  private fun normalizePath(path: String?): String? {
-    val raw = path?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    return try {
-      Path.of(raw).invariantSeparatorsPathString
-    }
-    catch (_: Throwable) {
-      raw.replace('\\', '/')
-    }
+private fun ClaudeSessionsIndexEntry.toThread(): ClaudeSessionThread? {
+  val sessionId = sessionId.trim().takeIf { it.isNotEmpty() } ?: return null
+  val updatedAt = resolveUpdatedAt()
+  return ClaudeSessionThread(
+    id = sessionId,
+    title = resolveThreadTitle(summary = summary, firstPrompt = firstPrompt, sessionId = sessionId),
+    updatedAt = updatedAt,
+    gitBranch = gitBranch,
+  )
+}
+
+private fun ClaudeSessionsIndexEntry.resolveUpdatedAt(): Long {
+  return parseIsoTimestamp(modified)
+    ?: fileMtime
+    ?: fullPath
+      ?.let(::parsePath)
+      ?.takeIf { Files.isRegularFile(it) }
+      ?.let { Files.getLastModifiedTime(it).toMillis() }
+    ?: 0L
+}
+
+private fun resolveThreadTitle(summary: String?, firstPrompt: String?, sessionId: String): String {
+  val summaryTitle = sanitizeTitle(summary)
+  if (!summaryTitle.isNullOrBlank()) return summaryTitle
+  val promptTitle = sanitizeTitle(firstPrompt).takeUnless { it.equals("No prompt", ignoreCase = true) }
+  if (!promptTitle.isNullOrBlank()) return promptTitle
+  return "Session ${sessionId.take(8)}"
+}
+
+private fun matchesProjectPath(entryProjectPath: String?, originalPath: String?, targetPath: String): Boolean {
+  val entryPath = normalizePath(entryProjectPath)
+  if (entryPath != null) return entryPath == targetPath
+  val indexPath = normalizePath(originalPath)
+  if (indexPath != null) return indexPath == targetPath
+  return false
+}
+
+private fun sanitizeTitle(value: String?): String? {
+  val normalized = value
+    ?.replace('\n', ' ')
+    ?.replace('\r', ' ')
+    ?.replace(Regex("\\s+"), " ")
+    ?.trim()
+    ?: return null
+  if (normalized.isEmpty()) return null
+  return if (normalized.length <= MAX_TITLE_LENGTH) normalized else normalized.take(MAX_TITLE_LENGTH - 3).trimEnd() + "..."
+}
+
+private fun parseIsoTimestamp(value: String?): Long? {
+  val text = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  return try {
+    Instant.parse(text).toEpochMilli()
   }
+  catch (_: Throwable) {
+    null
+  }
+}
 
-  private fun parsePath(path: String): Path? {
-    return try {
-      Path.of(path)
-    }
-    catch (_: Throwable) {
-      null
-    }
+private fun encodeProjectPath(projectPath: String): String {
+  return projectPath.replace('/', '-')
+}
+
+private fun normalizePath(path: String?): String? {
+  val raw = path?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  return try {
+    Path.of(raw).invariantSeparatorsPathString
+  }
+  catch (_: Throwable) {
+    raw.replace('\\', '/')
+  }
+}
+
+private fun parsePath(path: String): Path? {
+  return try {
+    Path.of(path)
+  }
+  catch (_: Throwable) {
+    null
   }
 }
 

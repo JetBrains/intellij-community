@@ -6,19 +6,23 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.python.community.execService.ConcurrentProcessWeight
+import com.intellij.python.processOutput.common.ExecutableDto
+import com.intellij.python.processOutput.common.LoggedProcessDto
+import com.intellij.python.processOutput.common.OutputKindDto
+import com.intellij.python.processOutput.common.OutputLineDto
+import com.intellij.python.processOutput.common.ProcessOutputEventDto
+import com.intellij.python.processOutput.common.ProcessWeightDto
+import com.intellij.python.processOutput.common.TraceContextDto
+import com.intellij.python.processOutput.common.TraceContextKind
+import com.intellij.python.processOutput.common.TraceContextUuid
+import com.intellij.python.processOutput.common.sendProcessOutputTopicEvent
 import com.intellij.util.io.awaitExit
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.Exe
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
@@ -33,72 +37,6 @@ object LoggingLimits {
    * The maximum buffer size of a LoggingProcess
    */
   const val MAX_OUTPUT_SIZE = 100_000
-  const val MAX_LINES = 1024
-}
-
-@ApiStatus.Internal
-data class LoggedProcess(
-  val weight: ConcurrentProcessWeight?,
-  val traceContext: TraceContext?,
-  val pid: Long?,
-  val startedAt: Instant,
-  val cwd: String?,
-  val exe: LoggedProcessExe,
-  val args: List<String>,
-  val env: Map<String, String>,
-  val target: String,
-  val lines: SharedFlow<LoggedProcessLine>,
-  val exitInfo: MutableStateFlow<LoggedProcessExitInfo?>,
-) {
-  val id: Int = nextId.getAndAdd(1)
-
-  val commandString: String
-    get() = commandFromSegments(listOf(exe.path) + args)
-
-  /**
-   * Command string with the full path of the exe trimmed only to the latest segments. E.g., `/usr/bin/uv` -> `uv`.
-   */
-  val shortenedCommandString: String
-    get() = commandFromSegments(listOf(exe.parts.last()) + args)
-
-  companion object {
-    private val nextId: AtomicInteger = AtomicInteger(0)
-
-    private fun commandFromSegments(segments: List<String>) =
-      segments.joinToString(" ")
-  }
-}
-
-@ApiStatus.Internal
-data class LoggedProcessExe(
-  val path: String,
-  val parts: List<String>,
-)
-
-@ApiStatus.Internal
-data class LoggedProcessExitInfo(
-  val exitedAt: Instant,
-  val exitValue: Int,
-  val additionalMessageToUser: @Nls String? = null,
-  val isCritical: Boolean = false,
-)
-
-@ApiStatus.Internal
-data class LoggedProcessLine(
-  val text: String,
-  val kind: Kind,
-) {
-  enum class Kind {
-    OUT,
-    ERR
-  }
-}
-
-@ApiStatus.Internal
-@Service
-class ExecLoggerService(val scope: CoroutineScope) {
-  internal val processesInternal = MutableSharedFlow<LoggedProcess>()
-  val processes: Flow<LoggedProcess> = processesInternal.asSharedFlow()
 }
 
 @ApiStatus.Internal
@@ -113,51 +51,65 @@ class LoggingProcess(
   env: Map<String, String>,
   target: String,
 ) : Process() {
-  val loggedProcess: LoggedProcess
-
-  private val linesFlow = MutableSharedFlow<LoggedProcessLine>(
-    replay = LoggingLimits.MAX_LINES,
-    onBufferOverflow = BufferOverflow.DROP_OLDEST,
-  )
-
-  private val stdoutStream = LoggingInputStream(backingProcess.inputStream, linesFlow, LoggedProcessLine.Kind.OUT)
-  private val stderrStream = LoggingInputStream(backingProcess.errorStream, linesFlow, LoggedProcessLine.Kind.ERR)
-
-  init {
-    val service = ApplicationManager.getApplication().service<ExecLoggerService>()
-    val exitInfoFlow = MutableStateFlow<LoggedProcessExitInfo?>(null)
-
-    loggedProcess =
-      LoggedProcess(
-        weight,
-        traceContext,
+  val loggedProcess: LoggedProcessDto =
+    LoggedProcessDto(
+      weight =
+        when (weight) {
+          ConcurrentProcessWeight.LIGHT -> ProcessWeightDto.LIGHT
+          ConcurrentProcessWeight.MEDIUM -> ProcessWeightDto.MEDIUM
+          ConcurrentProcessWeight.HEAVY -> ProcessWeightDto.HEAVY
+          null -> null
+        },
+      traceContextUuid =
+        traceContext?.let {
+          TraceContextUuid(it.uuid.toString())
+        },
+      pid =
         try {
           backingProcess.pid()
         }
         catch (_: UnsupportedOperationException) {
           null
         },
-        startedAt,
-        cwd,
-        LoggedProcessExe(
+      startedAt = startedAt,
+      cwd = cwd,
+      exe =
+        ExecutableDto(
           path = exe.toString(),
           parts = exe.pathParts(),
         ),
-        args,
-        env,
-        target,
-        linesFlow,
-        exitInfoFlow,
-      )
+      args = args,
+      env = env,
+      target = target,
+      id = nextId.getAndAdd(1),
+    )
+  private val lineCounter = AtomicInteger(0)
 
-    service.scope.launch {
-      service.processesInternal.emit(loggedProcess)
+  private val stdoutStream = LoggingInputStream(loggedProcess.id, backingProcess.inputStream, OutputKindDto.OUT, lineCounter)
+  private val stderrStream = LoggingInputStream(loggedProcess.id, backingProcess.errorStream, OutputKindDto.ERR, lineCounter)
+
+  init {
+    ApplicationManager.getApplication().service<LoggingService>().scope.launch {
+      val traceHierarchy = mutableListOf<TraceContextDto>()
+      var currentTraceContext = traceContext
+
+      while (currentTraceContext != null) {
+        traceHierarchy += currentTraceContext.toDto()
+        currentTraceContext = currentTraceContext.parentTraceContext
+      }
+
+      sendProcessOutputTopicEvent(
+        ProcessOutputEventDto.NewProcess(loggedProcess, traceHierarchy)
+      )
 
       awaitExit()
 
-      exitInfoFlow.value = LoggedProcessExitInfo(
-        exitedAt = Clock.System.now(),
-        exitValue = exitValue(),
+      sendProcessOutputTopicEvent(
+        ProcessOutputEventDto.ProcessExit(
+          processId = loggedProcess.id,
+          exitedAt = Clock.System.now(),
+          exitValue = exitValue(),
+        )
       )
     }
   }
@@ -193,12 +145,17 @@ class LoggingProcess(
 
   override fun supportsNormalTermination(): Boolean =
     backingProcess.supportsNormalTermination()
+
+  companion object {
+    private val nextId: AtomicInteger = AtomicInteger(0)
+  }
 }
 
 private class LoggingInputStream(
+  private val processId: Int,
   private val backingInputStream: InputStream,
-  private val linesFlow: MutableSharedFlow<LoggedProcessLine>,
-  private val kind: LoggedProcessLine.Kind,
+  private val kind: OutputKindDto,
+  private val lineCounter: AtomicInteger,
 ) : InputStream() {
   private var closed = AtomicBoolean(false)
   private var outputSize = 0
@@ -286,10 +243,14 @@ private class LoggingInputStream(
   private fun finalizeLine(bytes: ByteArray) {
     val line = String(bytes)
 
-    linesFlow.tryEmit(
-      LoggedProcessLine(
-        line,
-        kind,
+    sendProcessOutputTopicEvent(
+      ProcessOutputEventDto.NewOutputLine(
+        processId = processId,
+        OutputLineDto(
+          kind = kind,
+          text = line,
+          lineNo = lineCounter.getAndAdd(1),
+        )
       )
     )
 
@@ -304,3 +265,22 @@ private class LoggingInputStream(
     }
   }
 }
+
+private fun TraceContext.toDto(): TraceContextDto =
+  TraceContextDto(
+    title = title,
+    timestamp = timestamp,
+    uuid = TraceContextUuid(uuid.toString()),
+    kind =
+      when (this) {
+        NON_INTERACTIVE_ROOT_TRACE_CONTEXT -> TraceContextKind.NON_INTERACTIVE
+        else -> TraceContextKind.INTERACTIVE
+      },
+    parentUuid =
+      parentTraceContext?.let {
+        TraceContextUuid(it.uuid.toString())
+      }
+  )
+
+@Service
+private class LoggingService(val scope: CoroutineScope)

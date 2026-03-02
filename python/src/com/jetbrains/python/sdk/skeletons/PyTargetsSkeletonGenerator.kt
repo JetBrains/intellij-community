@@ -6,7 +6,6 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.VolumeCopyingRequest
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.getTargetDownloadPath
@@ -75,7 +74,6 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
         targetRootPath = TargetEnvironment.TargetPath.Temporary()
       )
       targetEnvRequest.downloadVolumes += skeletonsDownloadRoot
-      (targetEnvRequest as? VolumeCopyingRequest)?.shouldCopyVolumes = true
       generatorScriptExecution.addParameter(skeletonsDownloadRoot.getTargetDownloadPath())
       if (myExtraSysPath.isNotEmpty()) {
         generatorScriptExecution.addParameter("-s")

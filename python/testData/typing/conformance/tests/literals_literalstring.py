@@ -43,14 +43,14 @@ def func1(a: Literal["one"], b: Literal["two"]):
     x2: Literal[""] = b  # E
 
 
-def func2(a: LiteralString, b: LiteralString):
+def func2(a: LiteralString, b: LiteralString, non_literal: str):
     # > Addition: x + y is of type LiteralString if both x and y are compatible with LiteralString.
     assert_type(a + b, LiteralString)
 
     # > Joining: sep.join(xs) is of type LiteralString if sep’s type is
     # > compatible with LiteralString and xs’s type is compatible with Iterable[LiteralString].
     assert_type(",".join((a, b)), LiteralString)
-    assert_type(",".join((a, str(b))), str)
+    assert_type(",".join((a, non_literal)), str)
 
     # > In-place addition: If s has type LiteralString and x has type compatible with
     # > LiteralString, then s += x preserves s’s type as LiteralString.
@@ -62,10 +62,9 @@ def func2(a: LiteralString, b: LiteralString):
     # > s and the arguments have types compatible with LiteralString.
     assert_type(f"{a} {b}", LiteralString)
 
-    variable = 3
-    x1: LiteralString = f"{a} {str(variable)}"  # E
+    x1: LiteralString = f"{a} {non_literal}"  # E
 
-    assert_type(a + str(1), str)
+    assert_type(a + non_literal, str)
 
     # > LiteralString is compatible with the type str
     x2: str = a
@@ -164,7 +163,7 @@ def func8(x: Any) -> Any:
 
 assert_type(func8("foo"), C)  # First overload
 assert_type(func8("bar"), B)  # Second overload
-assert_type(func8(str(1)), A)  # Third overload
+assert_type(func8(input()), A)  # Third overload
 
 
 def func9(val: list[LiteralString]):

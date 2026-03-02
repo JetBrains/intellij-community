@@ -129,7 +129,7 @@ f:com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter
 - s:write(com.intellij.openapi.project.Project,java.nio.file.Path,java.util.Collection,java.io.Writer,java.lang.String,com.intellij.openapi.vcs.changes.CommitContext,java.util.List):V
 - s:write(com.intellij.openapi.project.Project,java.util.Collection,java.io.Writer,java.lang.String,com.intellij.openapi.vcs.changes.CommitContext):V
 - s:writeCommitMessageHeader(com.intellij.openapi.project.Project,java.io.Writer,java.lang.String,java.lang.String):V
-c:com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
+f:com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 - <init>(java.lang.CharSequence,java.util.List):V
 - s:apply(java.lang.CharSequence,java.util.List):com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier$AppliedPatch
 - s:applySomehow(java.lang.CharSequence,java.util.List):com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier$AppliedSomehowPatch
@@ -160,14 +160,14 @@ c:com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier$LongTryMismatch
 - <init>(com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier$SplitHunk):V
 - getStartLineVariationsIterator():java.util.Iterator
 - isAllowMismatch():Z
-c:com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier$MyAppliedData
+f:com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier$MyAppliedData
 - <init>(java.util.List,Z,Z,Z,com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier$ChangeType):V
 - cutToSize(I):V
 - getList():java.util.List
 - isChangedCoincide():Z
 - isHaveAlreadyApplied():Z
 - isPlaceCoincide():Z
-c:com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier$SplitHunk
+f:com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier$SplitHunk
 - <init>(I,I,java.util.List,java.util.List,java.util.List):V
 - cutSameTail():V
 - getAfterAll():java.util.List
@@ -3994,7 +3994,8 @@ f:com.intellij.vcs.commit.CommitCheckFailure$WithDetails
 - f:getViewDetailsActionText():java.lang.String
 - f:getViewDetailsLinkText():java.lang.String
 com.intellij.vcs.commit.CommitExceptionWithActions
-- a:getActions():java.util.List
+- a:getActions(com.intellij.notification.Notification):java.util.List
+- getShouldAddShowDetailsAction():Z
 f:com.intellij.vcs.commit.CommitModeManager
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.vcs.commit.CommitModeManager$Companion

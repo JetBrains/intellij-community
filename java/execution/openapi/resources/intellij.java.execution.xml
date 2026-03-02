@@ -4,7 +4,6 @@
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java"/>
     <module name="intellij.java.indexing"/>
-    <module name="intellij.java.resources"/>
     <module name="intellij.platform.backend"/>
     <!-- endregion -->
   </dependencies>

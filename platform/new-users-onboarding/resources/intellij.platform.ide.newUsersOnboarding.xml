@@ -1,6 +1,9 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.ide.newUsersOnboarding">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.ide.newUiOnboarding"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.ide.newUiOnboarding">

@@ -24,9 +24,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.SELECTED_DASHBOARD_SERVICE_ID;
-import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.findValue;
-
 @Internal
 @Deprecated(forRemoval = true)
 public final class RunDashboardActionUtils {

@@ -26,9 +26,9 @@
     <orderEntry type="library" name="xml-resolver" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />

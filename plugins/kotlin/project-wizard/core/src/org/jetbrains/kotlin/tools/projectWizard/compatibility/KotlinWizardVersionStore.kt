@@ -5,10 +5,7 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.registry.Registry
 import org.apache.velocity.VelocityContext
-import org.jetbrains.kotlin.daemon.common.trimQuotes
-import org.jetbrains.kotlin.idea.REGISTRY_KEY_FOR_TESTING_KOTLIN_VERSION
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataStorage
@@ -46,7 +43,7 @@ class KotlinWizardVersionState() : IdeVersionedDataState() {
         gradleAndroidVersion: String,
         codehausMojoExecVersion: String
     ) : this() {
-        this.kotlinPluginVersion = getKotlinPluginVersion(kotlinPluginVersion)
+        this.kotlinPluginVersion = kotlinPluginVersion
         this.kotlinForComposeVersion = kotlinForComposeVersion
         this.composeCompilerExtension = composeCompilerExtension
         this.minKotlinFoojayVersion = minKotlinFoojayVersion
@@ -65,13 +62,6 @@ class KotlinWizardVersionState() : IdeVersionedDataState() {
     var surefireVersion by string()
     var gradleAndroidVersion by string()
     var codehausMojoExecVersion by string()
-
-    private fun getKotlinPluginVersion(kotlinPluginVersion: String): String {
-        val kotlinVersionForTesting = Registry.get(REGISTRY_KEY_FOR_TESTING_KOTLIN_VERSION).asString()
-        return kotlinVersionForTesting.trimQuotes().ifEmpty {
-            kotlinPluginVersion
-        }
-    }
 }
 
 @State(name = "KotlinWizardVersionStore", storages = [Storage("kotlin-wizard-data.xml")])

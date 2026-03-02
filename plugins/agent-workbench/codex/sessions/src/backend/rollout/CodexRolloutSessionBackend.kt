@@ -6,6 +6,7 @@ package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions-codex-rollout-source.spec.md
 
+import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath

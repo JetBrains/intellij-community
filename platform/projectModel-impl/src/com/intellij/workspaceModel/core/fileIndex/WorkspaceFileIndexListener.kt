@@ -32,9 +32,7 @@ interface WorkspaceFileIndexListener : EventListener {
 
 @ApiStatus.Internal
 class WorkspaceFileIndexChangedEvent(
-  val removedFileSets: Collection<WorkspaceFileSet>,
   val registeredFileSets: Collection<WorkspaceFileSet>,
   val removedExclusions: Collection<VirtualFile>,
-  val storageBefore: EntityStorage,
   val storageAfter: EntityStorage,
 )

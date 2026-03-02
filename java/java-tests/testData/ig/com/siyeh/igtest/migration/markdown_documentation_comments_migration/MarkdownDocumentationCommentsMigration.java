@@ -8,6 +8,9 @@ import java.util.HashMap;
  * {@link java.util.ArrayList}
  * {@link java.util.HashMap description}
  * @author Bas
+ *
+ * @see <a href="https://jetbrains.com">Check out our cool website !</a>
+ * and our even better <a href="https://www.jetbrainsmerchandise.com">merch</a> !
  */
 public class MarkdownDocumentationCommentsMigration {
   <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>

@@ -34,6 +34,10 @@ import com.intellij.util.io.fileSizeSafe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
+import tools.jackson.core.JsonToken
+import tools.jackson.core.ObjectReadContext
+import tools.jackson.core.json.JsonFactory
+import tools.jackson.databind.DeserializationFeature
 import java.io.Reader
 import java.nio.file.Files
 import java.nio.file.Path
@@ -186,12 +190,21 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
     private fun <T> fastReadJsonField(bufferedReader: Reader, propertyName: String, type: Class<T>): T? {
       try {
         bufferedReader.use { reader ->
-          jacksonMapper.factory.createParser(reader).use { parser ->
-            while (parser.nextToken() != null) {
-              val property = parser.currentName()
-              if (property == propertyName) {
-                parser.nextToken()
-                return jacksonMapper.readValue(parser, type)
+          JsonFactory().createParser(ObjectReadContext.empty(), reader).use { parser ->
+            if (parser.nextToken() == JsonToken.START_OBJECT) {
+              while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
+                val property = parser.currentName()
+                val token = parser.nextToken()
+                if (property == propertyName) {
+                  return jacksonMapper
+                    .readerFor(type)
+                    .without(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+                    .readValue(parser)
+                }
+
+                if (token == JsonToken.START_OBJECT || token == JsonToken.START_ARRAY) {
+                  parser.skipChildren()
+                }
               }
             }
           }

@@ -23,7 +23,7 @@ class ThrottledLoggerTest {
    */
   @Test
   fun testConcurrentLoggingNoDuplicates() = timeoutRunBlocking(context = Dispatchers.Default) {
-    val testLogger = TestLogger()
+    val testLogger = CountingTestLogger()
     val throttledLogger = ThrottledLogger(testLogger, 1000)
 
     // Launch 10 coroutines that will all try to log simultaneously
@@ -47,7 +47,7 @@ class ThrottledLoggerTest {
    */
   @Test
   fun testSupplierNotEvaluatedWhenThrottled() {
-    val testLogger = TestLogger()
+    val testLogger = CountingTestLogger()
     val throttledLogger = ThrottledLogger(testLogger, 100)
 
     val supplierCallCount = AtomicInteger(0)
@@ -75,7 +75,7 @@ class ThrottledLoggerTest {
    */
   @Test
   fun testBasicThrottlingBehavior() = timeoutRunBlocking(context = Dispatchers.Default) {
-    val testLogger = TestLogger()
+    val testLogger = CountingTestLogger()
     val throttledLogger = ThrottledLogger(testLogger, 50)  // 50ms throttle
 
     // First call: should log
@@ -100,7 +100,7 @@ class ThrottledLoggerTest {
    */
   @Test
   fun testHighContentionStress() = timeoutRunBlocking(context = Dispatchers.Default) {
-    val testLogger = TestLogger()
+    val testLogger = CountingTestLogger()
     val throttledLogger = ThrottledLogger(testLogger, 100)
 
     val coroutineCount = 50
@@ -128,7 +128,7 @@ class ThrottledLoggerTest {
    */
   @Test
   fun testAllLogLevels() = timeoutRunBlocking(context = Dispatchers.Default) {
-    val testLogger = TestLogger()
+    val testLogger = CountingTestLogger()
     val throttledLogger = ThrottledLogger(testLogger, 50)
 
     // Test debug level
@@ -163,7 +163,7 @@ class ThrottledLoggerTest {
    */
   @Test
   fun testThrottlingWithThrowable() {
-    val testLogger = TestLogger()
+    val testLogger = CountingTestLogger()
     val throttledLogger = ThrottledLogger(testLogger, 100)
 
     val ex = Exception("test exception")
@@ -180,7 +180,7 @@ class ThrottledLoggerTest {
    */
   @Test
   fun testWrappedLogger() {
-    val testLogger = TestLogger()
+    val testLogger = CountingTestLogger()
     val throttledLogger = ThrottledLogger(testLogger, 100)
 
     assertSame(testLogger, throttledLogger.wrappedLogger())
@@ -191,7 +191,7 @@ class ThrottledLoggerTest {
    */
   @Test
   fun testConstructorValidation() {
-    val testLogger = TestLogger()
+    val testLogger = CountingTestLogger()
 
     // Negative throttle should throw
     assertThrows(IllegalArgumentException::class.java) {
@@ -214,7 +214,7 @@ class ThrottledLoggerTest {
    */
   @Test
   fun testDebugEnabledCheck() {
-    val testLogger = TestLogger(debugEnabled = false)
+    val testLogger = CountingTestLogger(debugEnabled = false)
     val throttledLogger = ThrottledLogger(testLogger, 100)
 
     throttledLogger.debug("should not log")
@@ -228,7 +228,7 @@ class ThrottledLoggerTest {
   /**
    * Test logger that counts calls to each log level.
    */
-  private class TestLogger(var debugEnabled: Boolean = true) : Logger() {
+  private class CountingTestLogger(var debugEnabled: Boolean = true) : Logger() {
     val debugCount = AtomicInteger(0)
     val infoCount = AtomicInteger(0)
     val warnCount = AtomicInteger(0)

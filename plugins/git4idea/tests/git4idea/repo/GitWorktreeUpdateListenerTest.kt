@@ -11,6 +11,7 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitWorkingTree
 import git4idea.ignore.findOrCreateDir
 import git4idea.test.MockGitRepository
+import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.util.concurrent.atomic.AtomicReference
@@ -28,17 +29,17 @@ internal class GitWorktreeUpdateListenerTest : LightPlatformTestCase() {
       false
     )
 
-    mockGitRepositoryManager(mockRepository)
+    mockGitRepositoryManager(mockRepository) {
+      val updatedRepository = AtomicReference<GitRepository?>(null)
+      val listener = GitWorktreeUpdateListener(project) { repo ->
+        updatedRepository.set(repo)
+      }
 
-    val updatedRepository = AtomicReference<GitRepository?>(null)
-    val listener = GitWorktreeUpdateListener(project) { repo ->
-      updatedRepository.set(repo)
+      val differentProject = mock<Project>()
+      listener.repositoryUpdated(differentProject, secondWorktreeRoot)
+
+      assertEquals(mockRepository, updatedRepository.get())
     }
-
-    val differentProject = mock<Project>()
-    listener.repositoryUpdated(differentProject, secondWorktreeRoot)
-
-    assertEquals(mockRepository, updatedRepository.get())
   }
 
   fun `test repositoryUpdated does not trigger for same project`() {
@@ -51,33 +52,33 @@ internal class GitWorktreeUpdateListenerTest : LightPlatformTestCase() {
       false
     )
 
-    mockGitRepositoryManager(mockRepository)
+    mockGitRepositoryManager(mockRepository) {
+      val updatedRepository = AtomicReference<GitRepository?>(null)
+      val listener = GitWorktreeUpdateListener(project) { repo ->
+        updatedRepository.set(repo)
+      }
 
-    val updatedRepository = AtomicReference<GitRepository?>(null)
-    val listener = GitWorktreeUpdateListener(project) { repo ->
-      updatedRepository.set(repo)
+      listener.repositoryUpdated(project, root)
+
+      assertNull("Repository should NOT have been updated for same project", updatedRepository.get())
     }
-
-    listener.repositoryUpdated(project, root)
-
-    assertNull("Repository should NOT have been updated for same project", updatedRepository.get())
   }
 
   fun `test repositoryUpdated does not trigger for single worktree`() {
     val root = createDir("root")
     val mockRepository = MockGitRepository(project, root)
 
-    mockGitRepositoryManager(mockRepository)
+    mockGitRepositoryManager(mockRepository) {
+      val updatedRepository = AtomicReference<GitRepository?>(null)
+      val listener = GitWorktreeUpdateListener(project) { repo ->
+        updatedRepository.set(repo)
+      }
 
-    val updatedRepository = AtomicReference<GitRepository?>(null)
-    val listener = GitWorktreeUpdateListener(project) { repo ->
-      updatedRepository.set(repo)
+      val differentProject = mock<Project>()
+      listener.repositoryUpdated(differentProject, root)
+
+      assertNull(updatedRepository.get())
     }
-
-    val differentProject = mock<Project>()
-    listener.repositoryUpdated(differentProject, root)
-
-    assertNull(updatedRepository.get())
   }
 
   fun `test repositoryUpdated does not trigger for non-matching root`() {
@@ -91,18 +92,18 @@ internal class GitWorktreeUpdateListenerTest : LightPlatformTestCase() {
       false
     )
 
-    mockGitRepositoryManager(mockRepository)
+    mockGitRepositoryManager(mockRepository) {
+      val updatedRepository = AtomicReference<GitRepository?>(null)
+      val listener = GitWorktreeUpdateListener(project) { repo ->
+        updatedRepository.set(repo)
+      }
 
-    val updatedRepository = AtomicReference<GitRepository?>(null)
-    val listener = GitWorktreeUpdateListener(project) { repo ->
-      updatedRepository.set(repo)
+      val differentProject = mock<Project>()
+      val nonMatchingRoot = createDir("nonMatchingRoot")
+      listener.repositoryUpdated(differentProject, nonMatchingRoot)
+
+      assertNull(updatedRepository.get())
     }
-
-    val differentProject = mock<Project>()
-    val nonMatchingRoot = createDir("nonMatchingRoot")
-    listener.repositoryUpdated(differentProject, nonMatchingRoot)
-
-    assertNull(updatedRepository.get())
   }
 
   fun `test repositoryUpdated triggers for matching worktree when first repository has single worktree`() {
@@ -120,25 +121,27 @@ internal class GitWorktreeUpdateListenerTest : LightPlatformTestCase() {
       false
     )
 
-    mockGitRepositoryManager(repoA, repoB)
+    mockGitRepositoryManager(repoA, repoB) {
+      val updatedRepositories = mutableListOf<GitRepository>()
+      val listener = GitWorktreeUpdateListener(project) { repo ->
+        updatedRepositories.add(repo)
+      }
 
-    val updatedRepositories = mutableListOf<GitRepository>()
-    val listener = GitWorktreeUpdateListener(project) { repo ->
-      updatedRepositories.add(repo)
+      val differentProject = mock<Project>()
+      listener.repositoryUpdated(differentProject, secondWorktreeRootB)
+
+      assertContainsElements(updatedRepositories, repoB)
+      assertDoesntContain(updatedRepositories, repoA)
     }
-
-    val differentProject = mock<Project>()
-    listener.repositoryUpdated(differentProject, secondWorktreeRootB)
-
-    assertContainsElements(updatedRepositories, repoB)
-    assertDoesntContain(updatedRepositories, repoA)
   }
 
   private fun createDir(name: String): VirtualFile = application.runWriteAction(Computable { project.baseDir.findOrCreateDir(name) })
 
-  private fun mockGitRepositoryManager(vararg repositories: GitRepository) {
+  private fun mockGitRepositoryManager(vararg repositories: GitRepository, action: () -> Unit) {
     val mockRepositoryManager = mock<GitRepositoryManager>()
     `when`(mockRepositoryManager.repositories).thenReturn(repositories.toList())
     project.replaceService(GitRepositoryManager::class.java, mockRepositoryManager, testRootDisposable)
+    action()
+    Mockito.reset(mockRepositoryManager)
   }
 }

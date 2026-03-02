@@ -3,7 +3,6 @@
 
 package com.jetbrains.builtInHelp.search
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.io.safeOutputStream
 import com.jetbrains.builtInHelp.Utils
@@ -18,6 +17,7 @@ import org.apache.lucene.search.highlight.Scorer
 import org.apache.lucene.store.NIOFSDirectory
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader

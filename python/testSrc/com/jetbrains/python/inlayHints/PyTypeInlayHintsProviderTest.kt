@@ -47,11 +47,11 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     doTest("""    
     from typing import reveal_type
     
-    def example(x: int, y: float)/*<# -> float #>*/:
-        reveal_type(x + y)/*<# float #>*/
+    def example(x: int, y: float)/*<# -> float | int #>*/:
+        reveal_type(x + y)/*<# float | int #>*/
         return x + y
     
-    reveal_type(example(1, 2.5))/*<# float #>*/
+    reveal_type(example(1, 2.5))/*<# float | int #>*/
     """)
   }
 
@@ -168,6 +168,36 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
       def f(a: int): # no hint when already annotated
           pass
     """, false, PARAMETER_TYPE_ANNOTATION)
+  }
+
+  @TestFor(issues = ["PY-87813"])
+  fun `test parameter type hint skips self cls`() {
+    doTest("""
+      class A:
+          def __new__(cls, a/*<# : int #>*/=1):
+              cls[0]
+          
+          def f(self, a/*<# : int #>*/=1):
+              self[0]
+          
+          @classmethod
+          def c(cls, a/*<# : int #>*/=1):
+              cls[0]
+
+        
+      def f(self/*<# : {__getitem__} #>*/, a/*<# : int #>*/=1):
+          self[0]
+    """, PARAMETER_TYPE_ANNOTATION)
+  }
+
+  fun `test parameter type hint variadic`() {
+    doTest("""
+      def f(*args/*<# : int #>*/, **kwargs/*<# : str #>*/):
+          '''
+          :type args: int
+          :type kwargs: str
+          '''
+    """, PARAMETER_TYPE_ANNOTATION)
   }
 
   private val allOptions = mapOf(

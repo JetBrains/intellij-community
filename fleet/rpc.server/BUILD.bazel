@@ -20,7 +20,7 @@ jvm_library(
   name = "rpc.server",
   module_name = "fleet.rpc.server",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
   resources = [":rpc.server_resources"],
   kotlinc_opts = ":custom_rpc.server",
   deps = [
@@ -40,7 +40,7 @@ jvm_library(
   name = "rpc.server_test_lib",
   module_name = "fleet.rpc.server",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob([], allow_empty = True),
   kotlinc_opts = ":custom_rpc.server",
   runtime_deps = [
     ":rpc.server",

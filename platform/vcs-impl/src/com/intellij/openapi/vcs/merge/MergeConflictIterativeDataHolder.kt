@@ -1,9 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.merge
 
+import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.merge.IterativeResolveSupport
 import com.intellij.diff.merge.LangSpecificMergeConflictResolverWrapper
 import com.intellij.diff.merge.MergeConflictModel
+import com.intellij.diff.merge.MergeRequest
+import com.intellij.diff.merge.MergeRequestHandler
 import com.intellij.diff.merge.TextMergeRequest
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.util.DiffPlaces
@@ -28,6 +31,9 @@ internal class MergeConflictIterativeDataHolder(
   }
 
   @RequiresEdt
+  fun getMergeConflictModel(file: VirtualFile): MergeConflictModel? = mergeConflictModels[file]
+
+  @RequiresEdt
   fun isFileResolved(file: VirtualFile): Boolean {
     val mergeConflictModel = mergeConflictModels[file] ?: return false
     return mergeConflictModel.getAllChanges().all { change -> change.isResolved }
@@ -38,8 +44,9 @@ internal class MergeConflictIterativeDataHolder(
     return mergeConflictModels.filter { it.value.getUnresolvedChanges().isEmpty() }.keys
   }
 
-  suspend fun prepareModel(file: VirtualFile, request: TextMergeRequest): MergeConflictModel =
+  suspend fun prepareModelIfSupported(file: VirtualFile, request: MergeRequest): MergeConflictModel? =
     withContext(Dispatchers.EDT) {
+      if (request !is TextMergeRequest || !isMergeRequestSupported(request)) return@withContext null
       val model = mergeConflictModels.getOrPut(file) {
         val conflictResolver = LangSpecificMergeConflictResolverWrapper(project, request.contents)
         val settings = service<TextDiffSettingsHolder>().getSettings(DiffPlaces.MERGE)
@@ -57,5 +64,12 @@ internal class MergeConflictIterativeDataHolder(
       Disposer.dispose(it)
     }
     mergeConflictModels.clear()
+  }
+
+  private fun isMergeRequestSupported(mergeRequest: TextMergeRequest): Boolean {
+    return when (DiffManagerEx.getInstance().getHandler(project, mergeRequest)) {
+      is MergeRequestHandler.BuiltInHandler -> true
+      is MergeRequestHandler.UserConfiguredExternalToolHandler, is MergeRequestHandler.ExtensionBasedHandler -> false
+    }
   }
 }

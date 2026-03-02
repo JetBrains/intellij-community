@@ -1,0 +1,14 @@
+// FILE: before.kt
+// IGNORE_K1
+fun outer() {
+    fun inner(): String {
+        <caret>return "hello"
+    }
+}
+// FILE: after.kt
+// IGNORE_K1
+fun outer() {
+    fun <caret>inner(): String {
+        return "hello"
+    }
+}

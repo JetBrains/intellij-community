@@ -2,9 +2,9 @@
 package com.intellij.devkit.workspaceModel.k1
 
 import com.intellij.devkit.workspaceModel.AbstractEntityCodeGenTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.kotlin.idea.test.UseK1PluginMode
 
-class EntityCodeGenTest : AbstractEntityCodeGenTest() {
-  override val pluginMode: KotlinPluginMode
-    get() = KotlinPluginMode.K1
-}
+@UseK1PluginMode
+@TestApplication
+class EntityCodeGenTest : AbstractEntityCodeGenTest()

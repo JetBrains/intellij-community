@@ -37,7 +37,9 @@ import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentBitSet
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexChangedEvent
@@ -190,7 +192,7 @@ internal class WorkspaceFileIndexDataImpl(
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
     includeExternalNonIndexableSets: Boolean,
-    includeCustomKindSets: Boolean
+    includeCustomKindSets: Boolean,
   ): WorkspaceFileInternalInfo = WorkspaceFileIndexDataMetrics.getFileInfoTimeNanosec.addMeasuredTime {
     if (!file.isValid) return@addMeasuredTime WorkspaceFileInternalInfo.NonWorkspace.INVALID
     if (file.fileSystem is NonPhysicalFileSystem && file.parent == null) {
@@ -244,7 +246,12 @@ internal class WorkspaceFileIndexDataImpl(
           fileIdWithoutFileSets.set(fileId)
         }
       }
-      current = current.parent
+      val parent = current.parent
+      current = if (parent != current) {
+        parent
+      } else {
+        null // thin-client files may return the directory itself as a parent
+      }
     }
     if (originalAcceptedKindMask != acceptedKindsMask) {
       return@addMeasuredTime WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
@@ -288,10 +295,12 @@ internal class WorkspaceFileIndexDataImpl(
     fileSets[virtualFile]?.forEach(action)
   }
 
-  private fun <E : WorkspaceEntity> processChangesByContributor(contributor: WorkspaceFileIndexContributor<E>,
-                                                                event: VersionedStorageChange,
-                                                                storeRegistrar: StoreFileSetsRegistrarImpl,
-                                                                removeRegistrar: RemoveFileSetsRegistrarImpl) {
+  private fun <E : WorkspaceEntity> processChangesByContributor(
+    contributor: WorkspaceFileIndexContributor<E>,
+    event: VersionedStorageChange,
+    storeRegistrar: StoreFileSetsRegistrarImpl,
+    removeRegistrar: RemoveFileSetsRegistrarImpl,
+  ) {
     val removedEntities = LinkedHashSet<E>()
     val addedEntities = LinkedHashSet<E>()
     for (change in event.getChanges(contributor.entityClass)) {
@@ -305,16 +314,20 @@ internal class WorkspaceFileIndexDataImpl(
                                                                                     event, removedEntities, addedEntities)
         is DependencyDescription.OnChild<*, *> -> collectEntitiesWithChangedChild(dependency as DependencyDescription.OnChild<E, *>,
                                                                                   event, removedEntities, addedEntities)
-        is DependencyDescription.OnArbitraryEntity<*, *> -> processOnArbitraryEntityDependency(dependency as DependencyDescription.OnArbitraryEntity<E, *>,
-                                                                                               event,
-                                                                                               removedEntities,
-                                                                                               addedEntities,
-                                                                                               contributor.entityClass,)
-        is DependencyDescription.OnReference<*> -> processOnReference(dependency,
-                                                                         event,
-                                                                         removedEntities as MutableSet<WorkspaceEntity>,
-                                                                         addedEntities as MutableSet<WorkspaceEntity>,
-                                                                         contributor.entityClass as Class<WorkspaceEntity>,)
+        is DependencyDescription.OnArbitraryEntity<*, *> -> processOnArbitraryEntityDependency(
+          dependency as DependencyDescription.OnArbitraryEntity<E, *>,
+          event,
+          removedEntities,
+          addedEntities,
+          contributor.entityClass,
+        )
+        is DependencyDescription.OnReference<*> -> processOnReference(
+          dependency,
+          event,
+          removedEntities as MutableSet<WorkspaceEntity>,
+          addedEntities as MutableSet<WorkspaceEntity>,
+          contributor.entityClass as Class<WorkspaceEntity>,
+        )
       }
     }
 
@@ -367,11 +380,13 @@ internal class WorkspaceFileIndexDataImpl(
     }
   }
 
-  private fun <R: WorkspaceEntity, E: WorkspaceEntity> processOnArbitraryEntityDependency(dependency: DependencyDescription.OnArbitraryEntity<R, E>,
-                                                                                          event: VersionedStorageChange,
-                                                                                          removedEntities: MutableSet<R>,
-                                                                                          addedEntities: MutableSet<R>,
-                                                                                          dependantClass: Class<R>,) {
+  private fun <R: WorkspaceEntity, E: WorkspaceEntity> processOnArbitraryEntityDependency(
+    dependency: DependencyDescription.OnArbitraryEntity<R, E>,
+    event: VersionedStorageChange,
+    removedEntities: MutableSet<R>,
+    addedEntities: MutableSet<R>,
+    dependantClass: Class<R>,
+  ) {
 
     val dependantEntitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(dependantClass).toSet() }
     val dependantEntitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(dependantClass).toSet() }
@@ -402,20 +417,24 @@ internal class WorkspaceFileIndexDataImpl(
     }
   }
 
-  private fun <E : WorkspaceEntity, P : WorkspaceEntity> collectEntitiesWithChangedParent(dependency: DependencyDescription.OnParent<E, P>,
-                                                                                          event: VersionedStorageChange,
-                                                                                          removedEntities: MutableSet<E>,
-                                                                                          addedEntities: MutableSet<E>) {
+  private fun <E : WorkspaceEntity, P : WorkspaceEntity> collectEntitiesWithChangedParent(
+    dependency: DependencyDescription.OnParent<E, P>,
+    event: VersionedStorageChange,
+    removedEntities: MutableSet<E>,
+    addedEntities: MutableSet<E>,
+  ) {
     event.getChanges(dependency.parentClass).asSequence().filterIsInstance<EntityChange.Replaced<P>>().forEach { change ->
       dependency.childrenGetter(change.oldEntity).toCollection(removedEntities)
       dependency.childrenGetter(change.newEntity).toCollection(addedEntities)
     }
   }
 
-  private fun <E : WorkspaceEntity, C : WorkspaceEntity> collectEntitiesWithChangedChild(dependency: DependencyDescription.OnChild<E, C>,
-                                                                                         event: VersionedStorageChange,
-                                                                                         removedEntities: LinkedHashSet<E>,
-                                                                                         addedEntities: LinkedHashSet<E>) {
+  private fun <E : WorkspaceEntity, C : WorkspaceEntity> collectEntitiesWithChangedChild(
+    dependency: DependencyDescription.OnChild<E, C>,
+    event: VersionedStorageChange,
+    removedEntities: LinkedHashSet<E>,
+    addedEntities: LinkedHashSet<E>,
+  ) {
     event.getChanges(dependency.childClass).asSequence().forEach { change ->
       change.oldEntity?.let {
         removedEntities.add(dependency.parentGetter(it))
@@ -432,35 +451,33 @@ internal class WorkspaceFileIndexDataImpl(
     resetFileCache()
   }
 
-  override fun markDirty(entityPointers: Collection<EntityPointer<WorkspaceEntity>>,
-                         filesToInvalidate: Collection<VirtualFile>) = WorkspaceFileIndexDataMetrics.markDirtyTimeNanosec.addMeasuredTime {
+  override fun markDirty(
+    entityPointers: Collection<EntityPointer<WorkspaceEntity>>,
+    filesToInvalidate: Collection<VirtualFile>,
+  ) = WorkspaceFileIndexDataMetrics.markDirtyTimeNanosec.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
     dirtyEntities.addAll(entityPointers)
     dirtyFiles.addAll(filesToInvalidate)
     hasDirtyEntities = dirtyEntities.isNotEmpty()
   }
 
-  override fun onEntitiesChanged(event: VersionedStorageChange,
-                                 storageKind: EntityStorageKind) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeNanosec.addMeasuredTime {
+  override fun onEntitiesChanged(
+    event: VersionedStorageChange,
+    storageKind: EntityStorageKind,
+  ) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeNanosec.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
-    val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix, event.storageBefore)
+    val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     contributorList.filter { it.storageKind == storageKind }.forEach { 
       processChangesByContributor(it, event, storeRegistrar, removeRegistrar)
     }
     resetFileCache()
-    val removedExclusions = removeRegistrar.removedExclusions
     val registeredFileSets = storeRegistrar.registeredFileSets
     val removedFileSets = removeRegistrar.removedFileSets
-    if (registeredFileSets.isNotEmpty() || removedFileSets.isNotEmpty() || removedExclusions.isNotEmpty()) {
-      val changeLog =
-        WorkspaceFileIndexChangedEvent(removedFileSets = removedFileSets.values.flatMapTo(HashSet()) { it.map { it.second } },
-                                       registeredFileSets = registeredFileSets.values.flatMapTo(HashSet()) { it.map { it.second } },
-                                       storageBefore = event.storageBefore,
-                                       storageAfter = event.storageAfter,
-                                       removedExclusions = removedExclusions.keys)
-      project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
-    }
+    deduplicateFileSetsAndPublishChangeEvent(registeredFileSets,
+                                             removedFileSets,
+                                             event.storageAfter
+    )
   }
 
   /**
@@ -472,62 +489,30 @@ internal class WorkspaceFileIndexDataImpl(
    * unnecessary scanning events.
    */
   private fun deduplicateFileSetsAndPublishChangeEvent(
-    registeredFileSets: MutableMap<VirtualFile, MutableSet<Pair<WorkspaceEntity, WorkspaceFileSet>>>,
-    removedFileSets: MutableMap<VirtualFile, MutableSet<Pair<WorkspaceEntity, WorkspaceFileSet>>>,
-    removedExclusions: MutableMap<VirtualFile, MutableSet<WorkspaceEntity>>,
-    storageBefore: ImmutableEntityStorage,
+    registeredFileSets: MutableSet<StoredFileSet>,
+    removedFileSets: MutableSet<StoredFileSet>,
     storageAfter: ImmutableEntityStorage,
   ) {
-    val registeredFileSetsIterator = registeredFileSets.iterator()
-    while (registeredFileSetsIterator.hasNext()) {
-      val (file, registeredFileSetsForTheFile) = registeredFileSetsIterator.next()
-      val removedFileSetsForTheFile = removedFileSets[file] ?: continue
-      val intersection = registeredFileSetsForTheFile
-        .intersectWithCustomContains(removedFileSetsForTheFile) { collection, (entity1, fileSet1) ->
-          collection.find { (entity2, fileSet2) ->
-            when {
-              fileSet1.kind != fileSet2.kind || entity1.getEntityInterface() != entity2.getEntityInterface() -> false
-              fileSet1 is WorkspaceFileSetWithCustomData<*> && fileSet2 is WorkspaceFileSetWithCustomData<*> -> {
-                fileSet1.data == fileSet2.data && fileSet1.recursive == fileSet2.recursive
-              }
-              fileSet1 !is WorkspaceFileSetWithCustomData<*> && fileSet2 !is WorkspaceFileSetWithCustomData<*> -> {
-                true
-              }
-              else -> false
-            }
-          }
-        }
-      for (duplicateFileSet in intersection) {
-        registeredFileSetsForTheFile.remove(duplicateFileSet.first)
-        removedFileSetsForTheFile.remove(duplicateFileSet.second)
-      }
-      if (registeredFileSetsForTheFile.isEmpty()) {
-        registeredFileSetsIterator.remove()
-      }
-      if (removedFileSetsForTheFile.isEmpty()) {
-        removedFileSets.remove(file)
+    val iterator = registeredFileSets.iterator()
+    while (iterator.hasNext()) {
+      val registeredSet = iterator.next()
+      if (removedFileSets.remove(registeredSet)) {
+        iterator.remove()
       }
     }
-    if (registeredFileSets.isNotEmpty() || removedFileSets.isNotEmpty() || removedExclusions.isNotEmpty()) {
+
+    val removedExclusions = removedFileSets.filterIsInstance<ExcludedFileSet>().map { it.root }
+    val registeredFileSets = registeredFileSets.filterIsInstance<WorkspaceFileSet>()
+
+    if (registeredFileSets.isNotEmpty() || removedExclusions.isNotEmpty()) {
       val changeLog =
-        WorkspaceFileIndexChangedEvent(removedFileSets = removedFileSets.values.flatMapTo(HashSet()) { it.map { it.second } },
-                                       registeredFileSets = registeredFileSets.values.flatMapTo(HashSet()) { it.map { it.second } },
-                                       storageBefore = storageBefore,
-                                       storageAfter = storageAfter,
-                                       removedExclusions = removedExclusions.keys)
+        WorkspaceFileIndexChangedEvent(
+          registeredFileSets = registeredFileSets,
+          removedExclusions = removedExclusions,
+          storageAfter = storageAfter,
+        )
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
     }
-  }
-
-  private fun <T> Iterable<T>.intersectWithCustomContains(other: Collection<T>, find: (Collection<T>, T) -> T?): Set<Pair<T, T>> {
-    val set = mutableSetOf<Pair<T, T>>()
-    for (e in this) {
-      val otherElement = find(other, e)
-      if (otherElement != null) {
-        set.add(Pair(e, otherElement))
-      }
-    }
-    return set
   }
 
   override fun updateDirtyEntities() {
@@ -541,7 +526,7 @@ internal class WorkspaceFileIndexDataImpl(
       }
     }
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
-    val removeRegistrar = RemoveFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix, storage)
+    val removeRegistrar = RemoveFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     val storeRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     for (reference in dirtyEntities) {
       val entity = reference.resolve(storage) ?: continue
@@ -559,11 +544,9 @@ internal class WorkspaceFileIndexDataImpl(
 
     WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeNanosec.addElapsedTime(start)
     deduplicateFileSetsAndPublishChangeEvent(
-      storeRegistrar.registeredFileSets,
-      removeRegistrar.removedFileSets,
-      removeRegistrar.removedExclusions,
-      storage,
-      storage
+      registeredFileSets = storeRegistrar.registeredFileSets,
+      removedFileSets = removeRegistrar.removedFileSets,
+      storageAfter = storage
     )
   }
 
@@ -640,8 +623,10 @@ internal class WorkspaceFileIndexDataImpl(
     }
   }
 
-  override fun getDirectoriesByPackageName(packageName: String,
-                                           includeLibrarySources: Boolean): Query<VirtualFile> = WorkspaceFileIndexDataMetrics.getDirectoriesByPackageNameTimeNanosec.addMeasuredTime {
+  override fun getDirectoriesByPackageName(
+    packageName: String,
+    includeLibrarySources: Boolean,
+  ): Query<VirtualFile> = WorkspaceFileIndexDataMetrics.getDirectoriesByPackageNameTimeNanosec.addMeasuredTime {
     val query = CollectionQuery(packageDirectoryCache.getDirectoriesByPackageName(packageName))
     return@addMeasuredTime if (includeLibrarySources) query
     else query.filtering {
@@ -702,11 +687,9 @@ private class RemoveFileSetsRegistrarImpl(
   private val nonExistingFilesRegistry: NonExistingWorkspaceRootsRegistry,
   private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
   private val fileSetsByPackagePrefix: PackagePrefixStorage,
-  private val storageBefore: ImmutableEntityStorage,
 ) : WorkspaceFileSetRegistrar {
 
-  val removedFileSets = mutableMapOf<VirtualFile, MutableSet<Pair<WorkspaceEntity, WorkspaceFileSet>>>()
-  val removedExclusions = mutableMapOf<VirtualFile, MutableSet<WorkspaceEntity>>()
+  val removedFileSets = CollectionFactory.createCustomHashingStrategySet(StoredFileSetHashingStrategy)
 
   override fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
     val rootFile = root.virtualFile
@@ -722,16 +705,11 @@ private class RemoveFileSetsRegistrarImpl(
     val removeCondition = { fileSet: StoredFileSet -> fileSet is WorkspaceFileSetImpl && isOriginatedFrom(fileSet, entity) }
 
     val fileSetToRemove = fileSets[root]
-    val removed = mutableSetOf<Pair<WorkspaceEntity, WorkspaceFileSet>>()
     fileSetToRemove?.forEach { fileSet ->
       if (removeCondition(fileSet)) {
-        removed.add(Pair((fileSet as WorkspaceFileSetImpl).entityPointer.resolve(storageBefore)!!, fileSet as WorkspaceFileSetImpl))
+        removedFileSets.add(fileSet)
       }
     }
-    removedFileSets.merge(root, removed, { old, new ->
-      old.addAll(new)
-      old
-    })
 
     fileSets.removeValueIf(root, removeCondition)
     if (customData is JvmPackageRootDataInternal) {
@@ -796,18 +774,12 @@ private class RemoveFileSetsRegistrarImpl(
 
   private fun removeAndTrackValue(rootFile: VirtualFile, valuePredicate: (StoredFileSet) -> Boolean) {
     val fileSetToRemove = fileSets[rootFile]
-    val removed = mutableSetOf<WorkspaceEntity>()
     fileSetToRemove?.forEach { fileSet ->
       if (valuePredicate(fileSet)) {
-        removed.add(fileSet.entityPointer.resolve(storageBefore)!!)
+        removedFileSets.add(fileSet)
       }
     }
-    if (removed.isNotEmpty()) {
-      removedExclusions.merge(rootFile, removed, { old, new ->
-        old.addAll(new)
-        old
-      })
-    }
+
     fileSets.removeValueIf(rootFile, valuePredicate)
   }
 }
@@ -831,7 +803,7 @@ private class StoreFileSetsRegistrarImpl(
   private val fileSetsByPackagePrefix: PackagePrefixStorage,
 ) : WorkspaceFileSetRegistrar {
 
-  val registeredFileSets = mutableMapOf<VirtualFile, MutableSet<Pair<WorkspaceEntity, WorkspaceFileSet>>>()
+  val registeredFileSets = CollectionFactory.createCustomHashingStrategySet(StoredFileSetHashingStrategy)
 
   override fun registerFileSet(
     root: VirtualFileUrl,
@@ -883,10 +855,7 @@ private class StoreFileSetsRegistrarImpl(
       recursive = recursive,
     )
     fileSets.putValue(root, fileSet)
-    registeredFileSets.merge(root, mutableSetOf(Pair(entity, fileSet))) { old, new ->
-      old.addAll(new)
-      old
-    }
+    registeredFileSets.add(fileSet)
     if (customData is JvmPackageRootDataInternal) {
       fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
     }
@@ -907,7 +876,9 @@ private class StoreFileSetsRegistrarImpl(
       nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind, NonExistingFileSetKind.EXCLUDED_FROM_CONTENT)
     }
     else {
-      fileSets.putValue(excludedRootFile, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.ALL, entity.createPointer(), storageKind))
+      val fileSet = ExcludedFileSet.ByFileKind(excludedRootFile, WorkspaceFileKindMask.ALL, entity.createPointer(), storageKind)
+      fileSets.putValue(excludedRootFile, fileSet)
+      registeredFileSets.add(fileSet)
     }
   }
 
@@ -927,8 +898,9 @@ private class StoreFileSetsRegistrarImpl(
         WorkspaceFileKind.CONTENT ->  WorkspaceFileKindMask.CONTENT or WorkspaceFileKindMask.CONTENT_NON_INDEXABLE
         else -> excludedFrom.toMask()
       }
-
-      fileSets.putValue(file, ExcludedFileSet.ByFileKind(mask, entity.createPointer(), storageKind))
+      val fileSet = ExcludedFileSet.ByFileKind(file, mask, entity.createPointer(), storageKind)
+      fileSets.putValue(file, fileSet)
+      registeredFileSets.add(fileSet)
     }
   }
 
@@ -939,7 +911,9 @@ private class StoreFileSetsRegistrarImpl(
         nonExistingFilesRegistry.registerUrl(root, entity, storageKind, NonExistingFileSetKind.EXCLUDED_OTHER)
       }
       else {
-        fileSets.putValue(rootFile, ExcludedFileSet.ByPattern(rootFile, patterns, entity.createPointer(), storageKind))
+        val fileSet = ExcludedFileSet.ByPattern(rootFile, patterns, entity.createPointer(), storageKind)
+        fileSets.putValue(rootFile, fileSet)
+        registeredFileSets.add(fileSet)
       }
     }
   }
@@ -950,7 +924,22 @@ private class StoreFileSetsRegistrarImpl(
       nonExistingFilesRegistry.registerUrl(root, entity, storageKind, NonExistingFileSetKind.EXCLUDED_OTHER)
     }
     else {
-      fileSets.putValue(rootFile, ExcludedFileSet.ByCondition(rootFile, condition, entity.createPointer(), storageKind))
+      val fileSet = ExcludedFileSet.ByCondition(rootFile, condition, entity.createPointer(), storageKind)
+      fileSets.putValue(rootFile, fileSet)
+      registeredFileSets.add(fileSet)
     }
+  }
+}
+
+private object StoredFileSetHashingStrategy: HashingStrategy<StoredFileSet> {
+
+  override fun hashCode(set: StoredFileSet?): Int {
+    return set?.hashcodeOfProperties() ?: 0
+  }
+
+  override fun equals(set1: StoredFileSet?, set2: StoredFileSet?): Boolean {
+    if (set1 === set2) return true
+    if (set1 == null || set2 == null) return false
+    return set1.hasSameProperties(set2)
   }
 }

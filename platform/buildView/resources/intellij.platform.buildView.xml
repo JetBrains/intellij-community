@@ -1,4 +1,14 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+  </dependencies>
+  <!-- endregion -->
   <actions>
     <group id="BuildTree" class="com.intellij.platform.buildView.BuildTreeContextMenuActionGroup"/>
     <group id="BuildView" class="com.intellij.platform.buildView.BuildViewToolbarActionGroup"/>

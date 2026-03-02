@@ -45,12 +45,21 @@ a:com.intellij.ide.fileTemplates.FileTemplateManager
 - psf:PROJECT_CONTEXT_VARIABLE:java.lang.String
 - getDefaultContextMap():java.util.Map
 f:com.intellij.ide.impl.OpenProjectTask
-- f:component24():java.nio.file.Path
-- f:component25():Z
-- f:copy(Z,Z,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.projectImport.ProjectOpenedCallback,I,I,Z,Z,Z,java.lang.String,Z,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,Z,kotlin.jvm.functions.Function1,java.lang.Object,java.nio.file.Path,Z):com.intellij.ide.impl.OpenProjectTask
-- bs:copy$default(com.intellij.ide.impl.OpenProjectTask,Z,Z,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.projectImport.ProjectOpenedCallback,I,I,Z,Z,Z,java.lang.String,Z,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,Z,kotlin.jvm.functions.Function1,java.lang.Object,java.nio.file.Path,Z,I,java.lang.Object):com.intellij.ide.impl.OpenProjectTask
+- f:component16():java.lang.String
+- f:component18():Z
+- f:component19():kotlin.jvm.functions.Function1
+- f:component21():kotlin.jvm.functions.Function2
+- f:component22():Z
+- f:component23():kotlin.jvm.functions.Function1
+- f:component24():java.lang.Object
+- f:component25():java.nio.file.Path
+- f:component26():Z
+- f:copy(Z,Z,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.projectImport.ProjectOpenedCallback,I,I,Z,Z,Z,java.lang.String,java.lang.String,Z,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,Z,kotlin.jvm.functions.Function1,java.lang.Object,java.nio.file.Path,Z):com.intellij.ide.impl.OpenProjectTask
+- bs:copy$default(com.intellij.ide.impl.OpenProjectTask,Z,Z,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.projectImport.ProjectOpenedCallback,I,I,Z,Z,Z,java.lang.String,java.lang.String,Z,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,Z,kotlin.jvm.functions.Function1,java.lang.Object,java.nio.file.Path,Z,I,java.lang.Object):com.intellij.ide.impl.OpenProjectTask
 f:com.intellij.ide.impl.OpenProjectTaskBuilder
+- f:getProjectFrameTypeId():java.lang.String
 - f:getProjectRootDir():java.nio.file.Path
+- f:setProjectFrameTypeId(java.lang.String):V
 - f:setProjectRootDir(java.nio.file.Path):V
 com.intellij.ide.impl.dataRules.GetDataRule
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

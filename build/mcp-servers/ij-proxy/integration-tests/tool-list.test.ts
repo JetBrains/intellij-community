@@ -38,6 +38,9 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
   const upstreamToolsWithReadFile = [
     buildUpstreamTool('read_file', {path: {type: 'string'}}, ['path'])
   ]
+  const upstreamToolsWithApplyPatch = [
+    buildUpstreamTool('apply_patch', {patch: {type: 'string'}}, ['patch'])
+  ]
 
   it('exposes proxy tools and hides replaced/blocked upstream tools', async () => {
     await withProxy({}, async ({proxyClient}) => {
@@ -97,6 +100,17 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       const properties = readTool.inputSchema?.properties ?? {}
       ok('path' in properties)
       ok(!('file_path' in properties))
+    })
+  })
+
+  it('passes through upstream apply_patch schema when apply_patch is available', async () => {
+    await withProxy({tools: upstreamToolsWithApplyPatch}, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const applyPatchTool = listResponse.result.tools.find((tool) => tool.name === 'apply_patch')
+      ok(applyPatchTool)
+      const properties = applyPatchTool.inputSchema?.properties ?? {}
+      ok('patch' in properties)
+      ok(!('input' in properties))
     })
   })
 

@@ -30,6 +30,7 @@ class ClientSystemInfo private constructor() {
     }
 
     @ApiStatus.Internal
+    @JvmStatic
     fun getInstance(): ClientSystemInfo? {
       return ApplicationManager.getApplication()?.currentSessionOrNull?.takeIf { it.isRemote }?.getUserData(CLIENT_INFO_KEY)
     }
@@ -45,4 +46,7 @@ class ClientSystemInfo private constructor() {
 
   @ApiStatus.Internal
   var waylandToolkitClient: Boolean? = null
+
+  @ApiStatus.Internal
+  var windowRoundedCornersManagerAvailable: Boolean? = null
 }

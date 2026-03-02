@@ -665,8 +665,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testInitializingDataclass() {
     final Map<String, PsiElement> marks = loadMultiFileTest(11);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float = 0.0", new String[]{"x: int, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float = 0.0", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float | int = 0.0", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float | int = 0.0", new String[]{"x: int, "});
 
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("self: Self@object", ArrayUtilRt.EMPTY_STRING_ARRAY,
                                                           new String[]{"self: Self@object"});
@@ -678,7 +678,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     feignCtrlP(marks.get("<arg8>").getTextOffset()).check("a: int, b: int, d: int = ..., e: int = ...", new String[]{"a: int, "});
 
-    feignCtrlP(marks.get("<arg9>").getTextOffset()).check("x: int, y: str, z: float = 0.0", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg9>").getTextOffset()).check("x: int, y: str, z: float | int = 0.0", new String[]{"x: int, "});
     feignCtrlP(marks.get("<arg10>").getTextOffset()).check(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
     feignCtrlP(marks.get("<arg11>").getTextOffset()).check("baz: str", new String[]{"baz: str"});
   }
@@ -721,8 +721,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       () -> {
         final Map<String, PsiElement> marks = loadTest(9);
 
-        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float = 0.0", new String[]{"x: int, "});
-        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float = 0.0", new String[]{"x: int, "});
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float | int = 0.0", new String[]{"x: int, "});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float | int = 0.0", new String[]{"x: int, "});
 
         feignCtrlP(marks.get("<arg3>").getTextOffset()).check("self: Self@object", ArrayUtilRt.EMPTY_STRING_ARRAY,
                                                               new String[]{"self: Self@object"});
@@ -1048,7 +1048,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(test.get("<arg1>").getTextOffset()).check("*, name: str, year: int, based_on: str = ...",
                                                          ArrayUtilRt.EMPTY_STRING_ARRAY,
                                                          ArrayUtilRt.EMPTY_STRING_ARRAY);
-    feignCtrlP(test.get("<arg2>").getTextOffset()).check("*, name: str, year: int, based_on: str = ..., rating: float",
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check("*, name: str, year: int, based_on: str = ..., rating: float | int",
                                                          ArrayUtilRt.EMPTY_STRING_ARRAY,
                                                          ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
@@ -1096,7 +1096,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testNotAnnotatedDecoratorPreservesParametersOfOriginalFunction() {
     final Map<String, PsiElement> marks = loadTest(1);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float | int",
                                                           new String[]{"input_a: int, "},
                                                           new String[]{""});
   }
@@ -1105,7 +1105,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testNotAnnotatedDecoratorRetainsParametersOfOriginalFunctionEvenIfItChangesItsSignature() {
     final Map<String, PsiElement> marks = loadTest(1);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float | int",
                                                           new String[]{"input_a: int, "},
                                                           new String[]{""});
   }
@@ -1114,7 +1114,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testAnnotatedDecoratorPreservesParametersOfOriginalFunctionWithParamSpec() {
     final Map<String, PsiElement> marks = loadTest(1);
 
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float | int",
                                                           new String[]{"input_a: int, "},
                                                           new String[]{""});
   }
@@ -1122,7 +1122,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   // PY-48338
   public void testAnnotatedDecoratorAddsParametersToOriginalFunctionWithConcatenate() {
     final Map<String, PsiElement> marks = loadTest(1);
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("...: str, input_a: int, input_b: float",
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("...: str, input_a: int, input_b: float | int",
                                                           new String[]{"...: str, "},
                                                           new String[]{""});
   }

@@ -161,6 +161,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     val eventMulticaster = EditorFactory.getInstance().getEventMulticaster()
     val bpPromoter = BreakpointPromoterEditorListener(project, cs)
     eventMulticaster.addEditorMouseMotionListener(bpPromoter, cs.asDisposable())
+    eventMulticaster.addEditorMouseListener(bpPromoter, cs.asDisposable())
   }
 
   private fun getSessionIdByContentDescriptor(descriptor: RunContentDescriptor): XDebugSessionId? {

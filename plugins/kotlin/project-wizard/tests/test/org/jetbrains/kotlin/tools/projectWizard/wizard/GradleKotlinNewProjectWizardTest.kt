@@ -1,14 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.withProjectAsync
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.tools.projectWizard.gradle.isLessOrEqualToMaxJvmTarget
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.annotations.CsvCrossProductSource
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -244,7 +247,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     @ParameterizedTest
     @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
     fun testNewModuleWithVersionCatalog(gradleDsl: GradleDsl, addBuildSrcVersionCatalogDependency: Boolean): Unit = runBlocking {
-        val kotlinJvmPluginVersion = "2.2.21"
+        val kotlinJvmPluginVersion = if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.4.0")) "2.3.0" else "2.2.21"
         val versionTomlContent = """
             |[versions]
             |kotlin = "$kotlinJvmPluginVersion"
@@ -316,5 +319,15 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
                 }
             })
         }.closeProjectAsync()
+    }
+
+    @Test
+    fun testSdkFilterForMaxSupportedVersion() {
+        Assertions.assertTrue(JavaSdkVersion.JDK_25.isLessOrEqualToMaxJvmTarget())
+    }
+
+    @Test
+    fun testSdkFilterForUnsupportedVersion() {
+        Assertions.assertFalse(JavaSdkVersion.JDK_26.isLessOrEqualToMaxJvmTarget())
     }
 }

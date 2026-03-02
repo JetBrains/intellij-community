@@ -70,7 +70,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Jeka
@@ -250,11 +249,11 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
       if (showVirtualThreadContainers && !showOnlyPlatformThreads) {
         // Build map from parent item name to the list of it's child items
         var rootItems = new ArrayList<DumpItem>();
-        var parentItemToChildren = new HashMap<Long, List<DumpItem>>();
+        var parentIdToChildren = new HashMap<Long, List<DumpItem>>();
         for (var item : threadStates) {
-          var parentId = item.getParentId();
+          var parentId = item.getParentTreeId();
           if (parentId != null) {
-            parentItemToChildren.computeIfAbsent(parentId, k -> new ArrayList<>()).add(item);
+            parentIdToChildren.computeIfAbsent(parentId, k -> new ArrayList<>()).add(item);
           } else {
             rootItems.add(item);
           }
@@ -264,8 +263,8 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
         for (var rootItem : rootItems) {
           var rootNode = new DefaultMutableTreeNode(rootItem);
           treeRoot.add(rootNode);
-          if (!parentItemToChildren.isEmpty()) {
-            buildDumpItemsTree(rootNode, parentItemToChildren);
+          if (!parentIdToChildren.isEmpty()) {
+            buildDumpItemsTree(rootNode, parentIdToChildren);
           }
         }
       } else {
@@ -304,9 +303,9 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     myThreadTree.repaint();
   }
 
-  private static void buildDumpItemsTree(DefaultMutableTreeNode currentNode, HashMap<Long, List<DumpItem>> parentToChildrenMap) {
+  private static void buildDumpItemsTree(DefaultMutableTreeNode currentNode, HashMap<Long, List<DumpItem>> parentIdToChildren) {
     var currentDumpItem = (DumpItem)currentNode.getUserObject();
-    var childItems = parentToChildrenMap.get(currentDumpItem.getId());
+    var childItems = parentIdToChildren.get(currentDumpItem.getTreeId());
     if (childItems == null) {
       if (currentDumpItem.isContainer()) currentNode.removeFromParent(); // do not add empty containers to the tree
       return;
@@ -314,7 +313,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     for (var item : childItems) {
       var childNode = new DefaultMutableTreeNode(item);
       currentNode.add(childNode);
-      buildDumpItemsTree(childNode, parentToChildrenMap);
+      buildDumpItemsTree(childNode, parentIdToChildren);
     }
   }
 

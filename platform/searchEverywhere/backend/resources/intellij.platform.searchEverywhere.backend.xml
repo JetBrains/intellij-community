@@ -1,8 +1,11 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.searchEverywhere.backend">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.searchEverywhere"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

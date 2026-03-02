@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 /**
  * Represents search parameters for Search Everywhere requests.
@@ -13,6 +14,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @Serializable
 class SeParams(
-  val inputQuery: String,
+  @field:Nls val inputQuery: String,
   val filter: SeFilterState,
 )

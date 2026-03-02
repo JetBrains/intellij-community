@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.api
 
 object GHGQLQueries {
   const val findOrganizationTeams = "graphql/query/findOrganizationTeams.graphql"
+  const val getMentionableUsers = "graphql/query/findMentionableUsers.graphql"
+  const val getPullRequestParticipants = "graphql/query/pullRequestParticipants.graphql"
   const val findUser = "graphql/query/findUser.graphql"
   const val findRepository = "graphql/query/findRepository.graphql"
   const val getPullRequestTemplates = "graphql/query/getPullRequestTemplates.graphql"

@@ -12,6 +12,8 @@ import com.intellij.driver.sdk.remoteDev.validateBeControlElement
 import org.intellij.lang.annotations.Language
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
+import javax.xml.XMLConstants
+import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
@@ -66,10 +68,36 @@ class SearchService(
   private fun getSwingHierarchyDOMAndFindMatchingElements(xpath: String, component: Component? = null, onlyFrontend: Boolean = false): List<Element> {
     val html = swingHierarchyService.getSwingHierarchyAsDOM(component, onlyFrontend)
 
-    val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+    val builder = createSecureDocumentBuilder()
     val model = builder.parse(html.byteInputStream())
     val result = xPath.compile(xpath).evaluate(model, XPathConstants.NODESET) as NodeList
 
     return (0 until result.length).mapNotNull { result.item(it) }.filterIsInstance<Element>()
+  }
+
+  @Suppress("HttpUrlsUsage")
+  private fun createSecureDocumentBuilder(): DocumentBuilder {
+    val factory = DocumentBuilderFactory.newDefaultInstance()
+    factory.isValidating = false
+    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+    factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+    factory.setFeature("http://xml.org/sax/features/external-general-entities", false)
+    factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+    factory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false)
+    factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+    setAttributeIfSupported(factory, XMLConstants.ACCESS_EXTERNAL_DTD)
+    setAttributeIfSupported(factory, XMLConstants.ACCESS_EXTERNAL_SCHEMA)
+    factory.isXIncludeAware = false
+    factory.isExpandEntityReferences = false
+    return factory.newDocumentBuilder()
+  }
+
+  private fun setAttributeIfSupported(factory: DocumentBuilderFactory, attributeName: String) {
+    try {
+      factory.setAttribute(attributeName, "")
+    }
+    catch (_: IllegalArgumentException) {
+      // Some XML parser implementations do not support JAXP accessExternal* attributes.
+    }
   }
 }

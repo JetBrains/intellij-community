@@ -12,3 +12,14 @@ f:git4idea.checkin.GitCommitOptions
 f:git4idea.rebase.GitSquashedCommitsMessage
 - f:canAutosquash(java.lang.String,java.util.Set):Z
 - f:formatAmendSpecificCommitMessage(java.lang.String,java.lang.String):java.lang.String
+- f:getSubject(java.lang.String):java.lang.String
+c:git4idea.reset.GitResetOperation
+- <init>(com.intellij.openapi.project.Project,java.util.Map,git4idea.reset.GitResetMode,com.intellij.openapi.progress.ProgressIndicator,git4idea.reset.GitResetOperation$OperationPresentation,git4idea.reset.GitResetOperation$SmartResetPolicy):V
+- <init>(com.intellij.openapi.project.Project,java.util.Map,git4idea.reset.GitResetMode,com.intellij.openapi.progress.ProgressIndicator,git4idea.reset.GitResetOperation$SmartResetPolicy):V
+- execute(Z):Z
+e:git4idea.reset.GitResetOperation$SmartResetPolicy
+- java.lang.Enum
+- sf:FAIL:git4idea.reset.GitResetOperation$SmartResetPolicy
+- sf:PROPOSE:git4idea.reset.GitResetOperation$SmartResetPolicy
+- s:valueOf(java.lang.String):git4idea.reset.GitResetOperation$SmartResetPolicy
+- s:values():git4idea.reset.GitResetOperation$SmartResetPolicy[]

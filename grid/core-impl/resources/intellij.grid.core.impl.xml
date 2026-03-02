@@ -1,6 +1,6 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.grid"/>
     <module name="intellij.grid.csv.core.impl"/>
     <module name="intellij.grid.types"/>
@@ -11,8 +11,9 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.projectModel"/>
-    <!-- endregion -->
+    <module name="intellij.platform.util.coroutines"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.database.datagrid.objectNormalizerProvider" interface="com.intellij.database.datagrid.ObjectNormalizerProvider" dynamic="true"/>

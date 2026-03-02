@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL
@@ -23,24 +23,25 @@ object NativeBinaryDownloader {
    *
    * Otherwise, Downloads and unpacks the launcher tarball.
    *
-   * Returns a pair of paths `(executable, license)` for the given platform.
+   * Returns a tuple of paths `(executable, license, GCompat-ext?)` for the given platform.
    */
-  suspend fun getLauncher(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Pair<Path, Path> {
+  suspend fun getLauncher(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Triple<Path, Path, Path?> {
     if (context.options.isInDevelopmentMode && context.options.useLocalLauncher) {
       val localLauncher = findLocalLauncher(context, os)
-      if (localLauncher != null) return localLauncher
+      if (localLauncher != null) return Triple(localLauncher.first, localLauncher.second, null)
     }
 
     val (archiveFile, unpackedDir) = downloadAndUnpack(context, "launcherBuild", LAUNCHER_ID)
-    val executableFile = findExecutable(archiveFile, unpackedDir, os, arch, "xplat-launcher")
+    val executableFile = findFile(archiveFile, unpackedDir, binName(os, arch, "xplat-launcher"))
     val licenseFile = findFile(archiveFile, unpackedDir, "license/${LICENSE_FILE_NAME}")
-    return executableFile to licenseFile
+    val gcExtLib = unpackedDir.resolve(libName(os, arch, "gcompat-ext")).takeIf { it.isRegularFile() }
+    return Triple(executableFile, licenseFile, gcExtLib)
   }
 
   private fun findLocalLauncher(context: BuildContext, os: OsFamily): Pair<Path, Path>? {
     val targetDir = context.paths.communityHomeDirRoot.communityRoot.resolve("native/XPlatLauncher/target/debug")
     if (targetDir.isDirectory()) {
-      val executableName = "xplat-launcher${os.binaryExt}"
+      val executableName = os.binaryName("xplat-launcher")
       val executableFile = targetDir.resolve(executableName)
       if (executableFile.isRegularFile()) {
         val licenseFile = targetDir.resolve(LICENSE_FILE_NAME)
@@ -59,7 +60,7 @@ object NativeBinaryDownloader {
    */
   suspend fun getRestarter(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
     val (archiveFile, unpackedDir) = downloadAndUnpack(context, "restarterBuild", RESTARTER_ID)
-    return findExecutable(archiveFile, unpackedDir, os, arch, "restarter")
+    return findFile(archiveFile, unpackedDir, binName(os, arch, "restarter"))
   }
 
   private suspend fun downloadAndUnpack(context: BuildContext, propertyName: String, artifactId: String): Pair<Path, Path> {
@@ -71,8 +72,10 @@ object NativeBinaryDownloader {
     return archiveFile to unpackedDir
   }
 
-  private fun findExecutable(archiveFile: Path, unpackedDir: Path, os: OsFamily, arch: JvmArchitecture, baseName: String): Path =
-    findFile(archiveFile, unpackedDir, "${os.osName}-${arch.archName}/${baseName}${os.binaryExt}")
+  private fun binName(os: OsFamily, arch: JvmArchitecture, baseName: String): String = "${os.osName}-${arch.archName}/${os.binaryName(baseName)}"
+
+  @Suppress("SameParameterValue")
+  private fun libName(os: OsFamily, arch: JvmArchitecture, baseName: String): String = "${os.osName}-${arch.archName}/${os.libraryName(baseName)}"
 
   private fun findFile(archiveFile: Path, unpackedDir: Path, relativePath: String): Path {
     val file = unpackedDir.resolve(relativePath)

@@ -15,6 +15,7 @@ import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.ThrowsChecked
@@ -23,9 +24,7 @@ import com.intellij.platform.util.coroutines.mapNotNullConcurrent
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.io.IOException
 import java.nio.file.Path
 
 @ApiStatus.Experimental
@@ -33,33 +32,6 @@ interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
 
 @ApiStatus.Experimental
 interface LocalPosixEelApi : LocalEelApi, EelPosixApi
-
-/**
- * Thrown when an EEL cannot be accessed or initialized.
- *
- * This exception indicates that the target execution environment (such as a remote machine,
- * Docker container, or WSL instance) is temporarily or permanently unavailable.
- *
- * Common scenarios include:
- * - Docker daemon connection failures
- * - Container not found or stopped
- * - Remote SSH connection issues
- * - Environment-specific setup errors
- *
- * This exception is typically thrown during:
- * - [EelProvider.tryInitialize] when initializing EEL for a project
- * - Project opening when the remote environment is unavailable
- *
- * The exception should contain a localized user-facing message explaining the specific
- * reason for unavailability, and optionally wrap the underlying cause.
- *
- * @param message Localized user-facing error message explaining why the EEL is unavailable
- * @param cause Optional underlying exception that caused the unavailability
- *
- * @see EelProvider.tryInitialize
- */
-@ApiStatus.Internal
-class EelUnavailableException(override val message: @Nls String, cause: Throwable? = null) : IOException(message, cause)
 
 private val EEL_MACHINE_KEY: Key<EelMachine> = Key.create("com.intellij.platform.eel.machine")
 

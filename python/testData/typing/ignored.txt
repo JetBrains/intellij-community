@@ -19,7 +19,6 @@ directives_version_platform.py
 generics_base_class.py
 generics_paramspec_components.py
 generics_paramspec_semantics.py
-generics_self_attributes.py
 generics_syntax_infer_variance.py
 generics_typevartuple_basic.py
 generics_typevartuple_overloads.py
@@ -37,8 +36,6 @@ protocols_definition.py
 protocols_explicit.py
 protocols_generic.py
 protocols_recursive.py
-protocols_runtime_checkable.py
-protocols_subtyping.py
 protocols_variance.py
 qualifiers_annotated.py
 specialtypes_any.py

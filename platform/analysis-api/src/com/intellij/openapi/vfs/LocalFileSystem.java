@@ -1,16 +1,19 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static java.util.Collections.singleton;
 
@@ -26,10 +29,17 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;
   public static final String PROTOCOL_PREFIX = StandardFileSystems.FILE_PROTOCOL_PREFIX;
 
+  /** NB: verify with {@link com.intellij.util.io.TrashBin#canMoveToTrash(VirtualFile)} before setting */
+  @ApiStatus.Internal
+  public static final Key<Boolean> MOVE_TO_TRASH = Key.create("vfs.local.move-to-trash");
+
+  @ApiStatus.Internal
+  public static final Key<Consumer<Path>> DELETE_CALLBACK = Key.create("vfs.local.delete-callback");
+
   private static LocalFileSystem ourInstance;
 
   public static @NotNull LocalFileSystem getInstance() {
-    LocalFileSystem instance = ourInstance;
+    var instance = ourInstance;
     if (instance == null) {
       instance = (LocalFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
       ourInstance = instance;
@@ -37,11 +47,17 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return instance;
   }
 
-  public @Nullable VirtualFile findFileByIoFile(@NotNull File file) {
+  /** Prefer {@link #findFileByNioFile(Path)}. */
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public @Nullable VirtualFile findFileByIoFile(@NotNull java.io.File file) {
     return findFileByPath(file.getAbsolutePath());
   }
 
-  public @Nullable VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
+  /** Prefer {@link #refreshAndFindFileByNioFile(Path)}. */
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public @Nullable VirtualFile refreshAndFindFileByIoFile(@NotNull java.io.File file) {
     return refreshAndFindFileByPath(file.getAbsolutePath());
   }
 
@@ -56,10 +72,10 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return refreshAndFindFileByPath(file.toAbsolutePath().toString());
   }
 
-  /**
-   * See {@link #refreshIoFiles(Iterable, boolean, boolean, Runnable)}.
-   */
-  public void refreshIoFiles(@NotNull Iterable<? extends File> files) {
+  /** Prefer {@link #refreshNioFiles(Iterable)} */
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public void refreshIoFiles(@NotNull Iterable<? extends java.io.File> files) {
     refreshIoFiles(files, false, false, null);
   }
 
@@ -70,13 +86,18 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     refreshNioFiles(files, false, false, null);
   }
 
-  /**
-   * Performs the refresh of the specified files based on filesystem events that have already been received. To perform refresh reliably
-   * for file operations that have just finished (so that related events might not have been generated),
-   * use {@link VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, File...)} instead.
-   */
-  public abstract void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
+  /** Prefer {@link #refreshNioFiles(Iterable, boolean, boolean, Runnable)} */
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public void refreshIoFiles(@NotNull Iterable<? extends java.io.File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+    refreshNioFiles(ContainerUtil.map(files, java.io.File::toPath), async, recursive, onFinish);
+  }
 
+  /**
+   * Performs the refresh of the specified files based on filesystem events that have already been received.
+   * To perform refresh reliably for file operations that have just finished (so that related events might not have been generated),
+   * use {@link VfsUtil#markDirtyAndRefresh} instead.
+   */
   public abstract void refreshNioFiles(@NotNull Iterable<? extends Path> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   /**
@@ -95,7 +116,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   public @Nullable WatchRequest addRootToWatch(@NotNull String rootPath, boolean watchRecursively) {
-    Set<WatchRequest> result = addRootsToWatch(singleton(rootPath), watchRecursively);
+    var result = addRootsToWatch(singleton(rootPath), watchRecursively);
     return result.size() == 1 ? result.iterator().next() : null;
   }
 
@@ -126,9 +147,9 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   public @Nullable WatchRequest replaceWatchedRoot(@Nullable WatchRequest watchRequest, @NotNull String rootPath, boolean watchRecursively) {
-    Set<WatchRequest> requests = watchRequest != null ? singleton(watchRequest) : Collections.emptySet();
-    Set<String> roots = singleton(rootPath);
-    Set<WatchRequest> result = watchRecursively ? replaceWatchedRoots(requests, roots, null) : replaceWatchedRoots(requests, null, roots);
+    var requests = watchRequest != null ? singleton(watchRequest) : Set.<WatchRequest>of();
+    var roots = singleton(rootPath);
+    var result = watchRecursively ? replaceWatchedRoots(requests, roots, null) : replaceWatchedRoots(requests, null, roots);
     return result.size() == 1 ? result.iterator().next() : null;
   }
 
@@ -136,9 +157,11 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * Stops watching given watch requests and starts watching new paths.
    * May do nothing and return the same set of requests when it contains exactly the same paths.
    */
-  public abstract @NotNull Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
-                                                                 @Nullable Collection<String> recursiveRoots,
-                                                                 @Nullable Collection<String> flatRoots);
+  public abstract @NotNull Set<WatchRequest> replaceWatchedRoots(
+    @NotNull Collection<WatchRequest> watchRequests,
+    @Nullable Collection<String> recursiveRoots,
+    @Nullable Collection<String> flatRoots
+  );
 
   /**
    * Registers a handler that allows a version control system plugin to intercept file operations in the local file system

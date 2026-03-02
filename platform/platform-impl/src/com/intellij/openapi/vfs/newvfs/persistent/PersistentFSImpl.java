@@ -73,7 +73,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.FileDeletedException;
+import com.intellij.openapi.vfs.newvfs.FileDeletedException;
 import com.intellij.openapi.vfs.newvfs.impl.FsRoot;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsData;
@@ -122,6 +122,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1905,9 +1906,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                        String rootUrl) {
     // avoid creating gazillions of roots which are not actual roots
     if (fs instanceof LocalFileSystem) {
-      String parentPath = PathUtil.getParentPath(rootPath);
-      if (!parentPath.isEmpty()) {
-        FileAttributes parentAttributes = loadAttributes(fs, parentPath);
+      Path parentPath = Path.of(rootPath).getParent();
+      if (parentPath != null) {
+        FileAttributes parentAttributes = loadAttributes(fs, parentPath.toString());
         if (parentAttributes != null) {
           throw new IllegalArgumentException(
             "Must pass FS root path, but got: '" + path + "' (url: '" + rootUrl + "'), " +

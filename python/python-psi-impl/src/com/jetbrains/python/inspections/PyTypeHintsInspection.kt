@@ -38,6 +38,7 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.PyTypeHintsInspection.Helper.isValidTypeHint
 import com.jetbrains.python.inspections.quickfix.PyUnpackTypeVarTupleQuickFix
 import com.jetbrains.python.psi.FutureFeature
 import com.jetbrains.python.psi.LanguageLevel
@@ -216,7 +217,8 @@ class PyTypeHintsInspection : PyInspection() {
       val defaultExpression = typeParameter.defaultExpression ?: return
       when (typeParameter.kind) {
         PyAstTypeParameter.Kind.TypeVar -> {
-          val typeVarType = PyTypingTypeProvider.getTypeParameterTypeFromTypeParameter(typeParameter, myTypeEvalContext) as? PyTypeVarType
+          val typeVarType =
+            PyTypingTypeProvider.getTypeParameterTypeFromTypeParameter(typeParameter, myTypeEvalContext) as? PyTypeVarType
                             ?: return
           checkTypeVarDefaultType(defaultExpression, typeVarType)
         }
@@ -891,7 +893,8 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkParenthesesOnGenerics(call: PyCallExpression) {
       val callee = call.callee
       if (callee is PyReferenceExpression) {
-        if (PyResolveUtil.resolveImportedElementQNameLocally(callee).any { PyTypingTypeProvider.GENERIC_CLASSES.contains(it.toString()) }) {
+        if (PyResolveUtil.resolveImportedElementQNameLocally(callee)
+            .any { PyTypingTypeProvider.GENERIC_CLASSES.contains(it.toString()) }) {
           registerProblem(call,
                           PyPsiBundle.message("INSP.type.hints.generics.should.be.specified.through.square.brackets"),
                           ProblemHighlightType.GENERIC_ERROR,
@@ -1248,7 +1251,7 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkTypeAliasStatementParameterization(node: PySubscriptionExpression, declaration: PyTypeAliasStatement) {
       val generics = declaration.typeParameterList?.typeParameters?.mapNotNull {
         PyTypingTypeProvider.getTypeParameterTypeFromTypeParameter(it,
-                                                                   myTypeEvalContext)
+                                                                          myTypeEvalContext)
       }
                      ?: emptyList()
       if (generics.isEmpty()) {
@@ -1719,177 +1722,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
   }
 
-  companion object {
-    private class ReplaceWithTypeNameQuickFix(private val typeName: String) : PsiUpdateModCommandQuickFix() {
-
-      override fun getFamilyName() = PyPsiBundle.message("QFIX.replace.with.type.name")
-
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        if (element !is PyReferenceExpression) return
-        element.reference.handleElementRename(typeName)
-      }
-    }
-
-    private class RemoveElementQuickFix(@IntentionFamilyName private val description: String) : PsiUpdateModCommandQuickFix() {
-
-      override fun getFamilyName() = description
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) = element.delete()
-    }
-
-    private class RemoveFunctionAnnotations : PsiUpdateModCommandQuickFix() {
-
-      override fun getFamilyName() = PyPsiBundle.message("QFIX.remove.function.annotations")
-
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        val function = (element.parent as? PyFunction) ?: return
-
-        function.annotation?.delete()
-
-        function.parameterList.parameters
-          .asSequence()
-          .filterIsInstance<PyNamedParameter>()
-          .mapNotNull { it.annotation }
-          .forEach { it.delete() }
-      }
-    }
-
-    private class ReplaceWithTargetNameQuickFix(private val targetName: String) : PsiUpdateModCommandQuickFix() {
-
-      override fun getFamilyName() = PyPsiBundle.message("QFIX.replace.with.target.name")
-
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        if (element !is PyStringLiteralExpression) return
-        val new = PyElementGenerator.getInstance(project).createStringLiteral(element, targetName) ?: return
-
-        element.replace(new)
-      }
-    }
-
-    private class RemoveGenericParametersQuickFix : PsiUpdateModCommandQuickFix() {
-
-      override fun getFamilyName() = PyPsiBundle.message("QFIX.remove.generic.parameters")
-
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        if (element !is PySubscriptionExpression) return
-
-        element.replace(element.operand)
-      }
-    }
-
-    private class ReplaceWithSubscriptionQuickFix : PsiUpdateModCommandQuickFix() {
-
-      override fun getFamilyName() = PyPsiBundle.message("QFIX.replace.with.square.brackets")
-
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        if (element !is PyCallExpression) return
-
-        val callee = element.callee?.text ?: return
-        val argumentList = element.argumentList ?: return
-        val index = argumentList.text.let { it.substring(1, it.length - 1) }
-
-        val language = element.containingFile.language
-        val text = if (language == PyFunctionTypeAnnotationDialect.INSTANCE) "() -> $callee[$index]" else "$callee[$index]"
-
-        PsiFileFactory
-          .getInstance(project)
-          // it's important to create file with same language as element's file to have correct behaviour in injections
-          .createFileFromText("x.py", language, text, false, true)
-          ?.let { it.firstChild.lastChild as? PySubscriptionExpression }
-          ?.let { element.replace(it) }
-      }
-    }
-
-    private class SurroundElementsWithSquareBracketsQuickFix : PsiUpdateModCommandQuickFix() {
-
-      override fun getFamilyName() = PyPsiBundle.message("QFIX.surround.with.square.brackets")
-
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        if (element !is PyTupleExpression) return
-        val list = PyElementGenerator.getInstance(project).createListLiteral()
-
-        val originalElements = element.elements
-        originalElements.dropLast(1).forEach { list.add(it) }
-        originalElements.dropLast(2).forEach { it.delete() }
-
-        element.elements.first().replace(list)
-      }
-    }
-
-    private class SurroundElementWithSquareBracketsQuickFix : PsiUpdateModCommandQuickFix() {
-
-      override fun getFamilyName() = PyPsiBundle.message("QFIX.surround.with.square.brackets")
-
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        val list = PyElementGenerator.getInstance(project).createListLiteral()
-
-        list.add(element)
-
-        element.replace(list)
-      }
-    }
-
-    private class ReplaceWithListQuickFix : PsiUpdateModCommandQuickFix() {
-
-      override fun getFamilyName() = PyPsiBundle.message("QFIX.replace.with.square.brackets")
-
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        val expression = (element as? PyParenthesizedExpression)?.containedExpression ?: return
-        val elements = expression.let { if (it is PyTupleExpression) it.elements else arrayOf(it) }
-
-        val list = PyElementGenerator.getInstance(project).createListLiteral()
-        elements.forEach { list.add(it) }
-        element.replace(list)
-      }
-    }
-
-    private class RemoveSquareBracketsQuickFix : PsiUpdateModCommandQuickFix() {
-
-      override fun getFamilyName() = PyPsiBundle.message("QFIX.remove.square.brackets")
-
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        if (element !is PyListLiteralExpression) return
-
-        val subscription = PsiTreeUtil.getParentOfType(element, PySubscriptionExpression::class.java, true, ScopeOwner::class.java)
-        val index = subscription?.indexExpression ?: return
-
-        val newIndexElements = if (index is PyTupleExpression) {
-          index.elements.flatMap { if (it == element) element.elements.asList() else listOf(it) }
-        }
-        else {
-          element.elements.asList()
-        }
-
-        if (newIndexElements.size == 1) {
-          index.replace(newIndexElements.first())
-        }
-        else {
-          val newIndexText = newIndexElements.joinToString(prefix = "(", postfix = ")") { it.text }
-
-          val expression = PyElementGenerator.getInstance(project)
-            .createExpressionFromText(LanguageLevel.forElement(element), newIndexText)
-          val newIndex = (expression as? PyParenthesizedExpression)?.containedExpression as? PyTupleExpression ?: return
-
-          index.replace(newIndex)
-        }
-      }
-    }
-
-    private class ReplaceWithTypingGenericAliasQuickFix : PsiUpdateModCommandQuickFix() {
-      override fun getFamilyName(): String = PyPsiBundle.message("QFIX.replace.with.typing.alias")
-
-      override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-        if (element !is PySubscriptionExpression) return
-        val refExpr = element.operand as? PyReferenceExpression ?: return
-        val alias = PyTypingTypeProvider.TYPING_BUILTINS_GENERIC_ALIASES[refExpr.name] ?: return
-
-        val languageLevel = LanguageLevel.forElement(element)
-        val priority = if (languageLevel.isAtLeast(LanguageLevel.PYTHON35)) ImportPriority.THIRD_PARTY else ImportPriority.BUILTIN
-        AddImportHelper.addOrUpdateFromImportStatement(element.containingFile, "typing", alias, null, priority, element)
-        val newRefExpr = PyElementGenerator.getInstance(project).createExpressionFromText(languageLevel, alias)
-        refExpr.replace(newRefExpr)
-      }
-    }
-
+  object Helper {
     fun isValidTypeHint(expression: PyExpression, context: TypeEvalContext): Boolean {
       return when (expression) {
         is PyListLiteralExpression -> false
@@ -1898,48 +1731,6 @@ class PyTypeHintsInspection : PyInspection() {
         is PyStringLiteralExpression -> stringLiteralIsCorrectTypeHint(expression, context)
         is PyReferenceExpression -> referenceIsCorrectTypeHint(expression, context)
         else -> PyTypingTypeProvider.getType(expression, context) != null
-      }
-    }
-
-    private fun stringLiteralIsCorrectTypeHint(stringLiteral: PyStringLiteralExpression, context: TypeEvalContext): Boolean {
-      val embeddedString = stringLiteral.firstChild as? PyPlainStringElement ?: return false // f-strings are not allowed
-      if (embeddedString.prefix.isNotEmpty()) return false // prefixed strings are not allowed
-      if (stringLiteral.stringElements.size > 1) return false
-      val expressionText = if (embeddedString.isTripleQuoted) {
-        "(${embeddedString.content.trimIndent()})"
-      }
-      else {
-        embeddedString.content
-      }
-      val embeddedExpression = PyUtil.createExpressionFromFragment(expressionText, stringLiteral.containingFile) ?: return false
-      return isValidTypeHint(embeddedExpression, context)
-    }
-
-    private fun referenceIsCorrectTypeHint(referenceExpression: PyReferenceExpression, context: TypeEvalContext): Boolean {
-      val resolveContext = PyResolveContext.defaultContext(context)
-      val resolvedElement = PyResolveUtil.resolveDeclaration(referenceExpression.reference, resolveContext)
-      if (resolvedElement == null) return true // We cannot be sure, let it better be false-negative
-      when (resolvedElement) {
-        is PyTargetExpression -> {
-          val qName = resolvedElement.qualifiedName ?: return true
-          if (PyTypingTypeProvider.OPAQUE_NAMES.contains(qName)) return true
-          val assignedTypeAliasValue = PyTypingAliasStubType.getAssignedValueStubLike(resolvedElement)
-          if (assignedTypeAliasValue != null) {
-            return isValidTypeHint(assignedTypeAliasValue, context)
-          }
-          else {
-            val type = Ref.deref(PyTypingTypeProvider.getType(referenceExpression, context))
-            return type is PyClassLikeType
-          }
-        }
-        is PyTypeParameter, is PyClass, is PyTypeAliasStatement -> return true
-        is PyFunction -> {
-          if (PyTypingTypeProvider.OPAQUE_NAMES.contains(resolvedElement.qualifiedName)) return true
-          return resolvedElement.qualifiedName?.let {
-            it.endsWith("ParamSpec.args") || it.endsWith("ParamSpec.kwargs")
-          } == true
-        }
-        else -> return false
       }
     }
   }
@@ -1983,4 +1774,215 @@ private fun PySubscriptionExpression.isParamSpecArgument(argIndex: Int, context:
   }
 
   return false
+}
+private class ReplaceWithTypeNameQuickFix(private val typeName: String) : PsiUpdateModCommandQuickFix() {
+
+  override fun getFamilyName() = PyPsiBundle.message("QFIX.replace.with.type.name")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    if (element !is PyReferenceExpression) return
+    element.reference.handleElementRename(typeName)
+  }
+}
+
+private class RemoveElementQuickFix(@IntentionFamilyName private val description: String) : PsiUpdateModCommandQuickFix() {
+
+  override fun getFamilyName() = description
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) = element.delete()
+}
+
+private class RemoveFunctionAnnotations : PsiUpdateModCommandQuickFix() {
+
+  override fun getFamilyName() = PyPsiBundle.message("QFIX.remove.function.annotations")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    val function = (element.parent as? PyFunction) ?: return
+
+    function.annotation?.delete()
+
+    function.parameterList.parameters
+      .asSequence()
+      .filterIsInstance<PyNamedParameter>()
+      .mapNotNull { it.annotation }
+      .forEach { it.delete() }
+  }
+}
+
+private class ReplaceWithTargetNameQuickFix(private val targetName: String) : PsiUpdateModCommandQuickFix() {
+
+  override fun getFamilyName() = PyPsiBundle.message("QFIX.replace.with.target.name")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    if (element !is PyStringLiteralExpression) return
+    val new = PyElementGenerator.getInstance(project).createStringLiteral(element, targetName) ?: return
+
+    element.replace(new)
+  }
+}
+
+private class RemoveGenericParametersQuickFix : PsiUpdateModCommandQuickFix() {
+
+  override fun getFamilyName() = PyPsiBundle.message("QFIX.remove.generic.parameters")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    if (element !is PySubscriptionExpression) return
+
+    element.replace(element.operand)
+  }
+}
+
+private class ReplaceWithSubscriptionQuickFix : PsiUpdateModCommandQuickFix() {
+
+  override fun getFamilyName() = PyPsiBundle.message("QFIX.replace.with.square.brackets")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    if (element !is PyCallExpression) return
+
+    val callee = element.callee?.text ?: return
+    val argumentList = element.argumentList ?: return
+    val index = argumentList.text.let { it.substring(1, it.length - 1) }
+
+    val language = element.containingFile.language
+    val text = if (language == PyFunctionTypeAnnotationDialect.INSTANCE) "() -> $callee[$index]" else "$callee[$index]"
+
+    PsiFileFactory
+      .getInstance(project)
+      // it's important to create file with same language as element's file to have correct behaviour in injections
+      .createFileFromText("x.py", language, text, false, true)
+      ?.let { it.firstChild.lastChild as? PySubscriptionExpression }
+      ?.let { element.replace(it) }
+  }
+}
+
+private class SurroundElementsWithSquareBracketsQuickFix : PsiUpdateModCommandQuickFix() {
+
+  override fun getFamilyName() = PyPsiBundle.message("QFIX.surround.with.square.brackets")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    if (element !is PyTupleExpression) return
+    val list = PyElementGenerator.getInstance(project).createListLiteral()
+
+    val originalElements = element.elements
+    originalElements.dropLast(1).forEach { list.add(it) }
+    originalElements.dropLast(2).forEach { it.delete() }
+
+    element.elements.first().replace(list)
+  }
+}
+
+private class SurroundElementWithSquareBracketsQuickFix : PsiUpdateModCommandQuickFix() {
+
+  override fun getFamilyName() = PyPsiBundle.message("QFIX.surround.with.square.brackets")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    val list = PyElementGenerator.getInstance(project).createListLiteral()
+
+    list.add(element)
+
+    element.replace(list)
+  }
+}
+
+private class ReplaceWithListQuickFix : PsiUpdateModCommandQuickFix() {
+
+  override fun getFamilyName() = PyPsiBundle.message("QFIX.replace.with.square.brackets")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    val expression = (element as? PyParenthesizedExpression)?.containedExpression ?: return
+    val elements = expression.let { if (it is PyTupleExpression) it.elements else arrayOf(it) }
+
+    val list = PyElementGenerator.getInstance(project).createListLiteral()
+    elements.forEach { list.add(it) }
+    element.replace(list)
+  }
+}
+
+private class RemoveSquareBracketsQuickFix : PsiUpdateModCommandQuickFix() {
+
+  override fun getFamilyName() = PyPsiBundle.message("QFIX.remove.square.brackets")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    if (element !is PyListLiteralExpression) return
+
+    val subscription = PsiTreeUtil.getParentOfType(element, PySubscriptionExpression::class.java, true, ScopeOwner::class.java)
+    val index = subscription?.indexExpression ?: return
+
+    val newIndexElements = if (index is PyTupleExpression) {
+      index.elements.flatMap { if (it == element) element.elements.asList() else listOf(it) }
+    }
+    else {
+      element.elements.asList()
+    }
+
+    if (newIndexElements.size == 1) {
+      index.replace(newIndexElements.first())
+    }
+    else {
+      val newIndexText = newIndexElements.joinToString(prefix = "(", postfix = ")") { it.text }
+
+      val expression = PyElementGenerator.getInstance(project)
+        .createExpressionFromText(LanguageLevel.forElement(element), newIndexText)
+      val newIndex = (expression as? PyParenthesizedExpression)?.containedExpression as? PyTupleExpression ?: return
+
+      index.replace(newIndex)
+    }
+  }
+}
+
+private class ReplaceWithTypingGenericAliasQuickFix : PsiUpdateModCommandQuickFix() {
+  override fun getFamilyName(): String = PyPsiBundle.message("QFIX.replace.with.typing.alias")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    if (element !is PySubscriptionExpression) return
+    val refExpr = element.operand as? PyReferenceExpression ?: return
+    val alias = PyTypingTypeProvider.TYPING_BUILTINS_GENERIC_ALIASES[refExpr.name] ?: return
+
+    val languageLevel = LanguageLevel.forElement(element)
+    val priority = if (languageLevel.isAtLeast(LanguageLevel.PYTHON35)) ImportPriority.THIRD_PARTY else ImportPriority.BUILTIN
+    AddImportHelper.addOrUpdateFromImportStatement(element.containingFile, "typing", alias, null, priority, element)
+    val newRefExpr = PyElementGenerator.getInstance(project).createExpressionFromText(languageLevel, alias)
+    refExpr.replace(newRefExpr)
+  }
+}
+
+private fun stringLiteralIsCorrectTypeHint(stringLiteral: PyStringLiteralExpression, context: TypeEvalContext): Boolean {
+  val embeddedString = stringLiteral.firstChild as? PyPlainStringElement ?: return false // f-strings are not allowed
+  if (embeddedString.prefix.isNotEmpty()) return false // prefixed strings are not allowed
+  if (stringLiteral.stringElements.size > 1) return false
+  val expressionText = if (embeddedString.isTripleQuoted) {
+    "(${embeddedString.content.trimIndent()})"
+  }
+  else {
+    embeddedString.content
+  }
+  val embeddedExpression = PyUtil.createExpressionFromFragment(expressionText, stringLiteral.containingFile) ?: return false
+  return isValidTypeHint(embeddedExpression, context)
+}
+
+private fun referenceIsCorrectTypeHint(referenceExpression: PyReferenceExpression, context: TypeEvalContext): Boolean {
+  val resolveContext = PyResolveContext.defaultContext(context)
+  val resolvedElement = PyResolveUtil.resolveDeclaration(referenceExpression.reference, resolveContext)
+  if (resolvedElement == null) return true // We cannot be sure, let it better be false-negative
+  when (resolvedElement) {
+    is PyTargetExpression -> {
+      val qName = resolvedElement.qualifiedName ?: return true
+      if (PyTypingTypeProvider.OPAQUE_NAMES.contains(qName)) return true
+      val assignedTypeAliasValue = PyTypingAliasStubType.getAssignedValueStubLike(resolvedElement)
+      if (assignedTypeAliasValue != null) {
+        return isValidTypeHint(assignedTypeAliasValue, context)
+      }
+      else {
+        val type = Ref.deref(PyTypingTypeProvider.getType(referenceExpression, context))
+        return type is PyClassLikeType
+      }
+    }
+    is PyTypeParameter, is PyClass, is PyTypeAliasStatement -> return true
+    is PyFunction -> {
+      if (PyTypingTypeProvider.OPAQUE_NAMES.contains(resolvedElement.qualifiedName)) return true
+      return resolvedElement.qualifiedName?.let {
+        it.endsWith("ParamSpec.args") || it.endsWith("ParamSpec.kwargs")
+      } == true
+    }
+    else -> return false
+  }
 }

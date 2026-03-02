@@ -3,6 +3,7 @@ package com.intellij.platform.runtime.repository.serialization;
 
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import org.jetbrains.annotations.NotNull;
+import com.intellij.platform.runtime.repository.RuntimeModuleVisibility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
  */
 public final class RawRuntimeModuleDescriptor {
   private final RuntimeModuleId myId;
+  private final RuntimeModuleVisibility myVisibility;
   private final List<String> myResourcePaths;
   private final List<RuntimeModuleId> myDependencies;
 
@@ -23,6 +25,7 @@ public final class RawRuntimeModuleDescriptor {
   @Deprecated(forRemoval = true)
   public RawRuntimeModuleDescriptor(@NotNull String id, @NotNull List<String> resourcePaths, @NotNull List<String> dependencies) {
     myId = RuntimeModuleId.raw(id);
+    myVisibility = RuntimeModuleVisibility.PUBLIC;
     myResourcePaths = resourcePaths;
     myDependencies = new ArrayList<>(dependencies.size());
     for (String dependency : dependencies) {
@@ -30,8 +33,10 @@ public final class RawRuntimeModuleDescriptor {
     }
   }
 
-  private RawRuntimeModuleDescriptor(@NotNull RuntimeModuleId id, @NotNull List<String> resourcePaths, @NotNull List<RuntimeModuleId> dependencies) {
+  private RawRuntimeModuleDescriptor(@NotNull RuntimeModuleId id, @NotNull RuntimeModuleVisibility visibility,
+                                     @NotNull List<String> resourcePaths, @NotNull List<RuntimeModuleId> dependencies) {
     myId = id;
+    myVisibility = visibility;
     myResourcePaths = resourcePaths;
     myDependencies = dependencies;
   }
@@ -52,6 +57,10 @@ public final class RawRuntimeModuleDescriptor {
     return myResourcePaths;
   }
 
+  public @NotNull RuntimeModuleVisibility getVisibility() {
+    return myVisibility;
+  }
+
   /**
    * @deprecated use {@link #getDependencyIds()} instead
    */
@@ -69,6 +78,7 @@ public final class RawRuntimeModuleDescriptor {
   public String toString() {
     return "RawRuntimeModuleDescriptor{" +
            "id='" + myId.getPresentableName() + '\'' +
+           ", visibility=" + myVisibility.name() +
            ", resourcePaths=" + myResourcePaths +
            ", dependencies=" + myDependencies +
            '}';
@@ -82,6 +92,7 @@ public final class RawRuntimeModuleDescriptor {
     RawRuntimeModuleDescriptor that = (RawRuntimeModuleDescriptor)o;
 
     if (!myId.equals(that.myId)) return false;
+    if (myVisibility != that.myVisibility) return false;
     if (!myResourcePaths.equals(that.myResourcePaths)) return false;
     if (!myDependencies.equals(that.myDependencies)) return false;
 
@@ -91,13 +102,18 @@ public final class RawRuntimeModuleDescriptor {
   @Override
   public int hashCode() {
     int result = myId.hashCode();
+    result = 31 * result + myVisibility.hashCode();
     result = 31 * result + myResourcePaths.hashCode();
     result = 31 * result + myDependencies.hashCode();
     return result;
   }
 
   public static @NotNull RawRuntimeModuleDescriptor create(@NotNull RuntimeModuleId id, @NotNull List<String> resourcePaths, @NotNull List<RuntimeModuleId> dependencies) {
-    return new RawRuntimeModuleDescriptor(id, resourcePaths, dependencies);
+    return new RawRuntimeModuleDescriptor(id, RuntimeModuleVisibility.PUBLIC, resourcePaths, dependencies);
+  }
+
+  public static @NotNull RawRuntimeModuleDescriptor create(@NotNull RuntimeModuleId id, @NotNull RuntimeModuleVisibility visibility, @NotNull List<String> resourcePaths, @NotNull List<RuntimeModuleId> dependencies) {
+    return new RawRuntimeModuleDescriptor(id, visibility, resourcePaths, dependencies);
   }
 
   /**

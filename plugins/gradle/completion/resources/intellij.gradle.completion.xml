@@ -1,9 +1,9 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.gradle" />
-    <module name="intellij.libraries.ktor.client"/>
-    <module name="intellij.libraries.kotlinx.io"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.gradle"/>
     <module name="intellij.repository.search.common"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService

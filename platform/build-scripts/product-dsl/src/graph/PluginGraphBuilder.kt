@@ -46,6 +46,7 @@ import com.intellij.platform.pluginGraph.packTargetDependencyEntry
 import com.intellij.platform.pluginGraph.storesReverseEdges
 import com.intellij.platform.pluginGraph.unpackNodeId
 import com.intellij.platform.pluginGraph.unpackPluginDepFormats
+import com.intellij.platform.pluginGraph.unpackPluginDepHasConfigFile
 import com.intellij.platform.pluginGraph.unpackPluginDepOptional
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.async
@@ -398,11 +399,25 @@ internal class PluginGraphBuilder(
       }
 
       for (depId in content.pluginDependencies) {
-        addPluginDependencyEdge(sourceId = sourceId, depId = depId, isOptional = false, formatMask = PLUGIN_DEP_MODERN_MASK, index = idIndex)
+        addPluginDependencyEdge(
+          sourceId = sourceId,
+          depId = depId,
+          isOptional = false,
+          formatMask = PLUGIN_DEP_MODERN_MASK,
+          hasConfigFile = false,
+          index = idIndex,
+        )
       }
       for (legacy in content.legacyDepends) {
         val isOptional = legacy.optional || legacy.configFile != null
-        addPluginDependencyEdge(sourceId = sourceId, depId = legacy.pluginId, isOptional = isOptional, formatMask = PLUGIN_DEP_LEGACY_MASK, index = idIndex)
+        addPluginDependencyEdge(
+          sourceId = sourceId,
+          depId = legacy.pluginId,
+          isOptional = isOptional,
+          formatMask = PLUGIN_DEP_LEGACY_MASK,
+          hasConfigFile = legacy.configFile != null,
+          index = idIndex,
+        )
       }
       for (moduleDep in content.moduleDependencies) {
         addPluginModuleDependencyEdge(sourceId, moduleDep)
@@ -415,8 +430,16 @@ internal class PluginGraphBuilder(
     depId: PluginId,
     isOptional: Boolean,
     formatMask: Int,
+    hasConfigFile: Boolean = false,
   ) {
-    addPluginDependencyEdge(sourceId = sourcePluginId, depId = depId, isOptional = isOptional, formatMask = formatMask, index = buildPluginIdIndex())
+    addPluginDependencyEdge(
+      sourceId = sourcePluginId,
+      depId = depId,
+      isOptional = isOptional,
+      formatMask = formatMask,
+      hasConfigFile = hasConfigFile,
+      index = buildPluginIdIndex(),
+    )
   }
 
   private fun buildPluginIdIndex(): MutableMap<String, MutableList<Int>> {
@@ -442,13 +465,14 @@ internal class PluginGraphBuilder(
     depId: PluginId,
     isOptional: Boolean,
     formatMask: Int,
+    hasConfigFile: Boolean,
     index: MutableMap<String, MutableList<Int>>,
   ) {
     val targets = index[depId.value]
     if (!targets.isNullOrEmpty()) {
       for (targetId in targets) {
         if (targetId != sourceId) {
-          addPluginDependencyEdge(sourceId, targetId, isOptional, formatMask)
+          addPluginDependencyEdge(sourceId, targetId, isOptional, formatMask, hasConfigFile)
         }
       }
       return
@@ -461,17 +485,17 @@ internal class PluginGraphBuilder(
     )
     recordPluginId(index, depId.value, placeholderId)
     if (placeholderId != sourceId) {
-      addPluginDependencyEdge(sourceId, placeholderId, isOptional, formatMask)
+      addPluginDependencyEdge(sourceId, placeholderId, isOptional, formatMask, hasConfigFile)
     }
   }
 
-  private fun addPluginDependencyEdge(sourceId: Int, targetId: Int, isOptional: Boolean, formatMask: Int) {
+  private fun addPluginDependencyEdge(sourceId: Int, targetId: Int, isOptional: Boolean, formatMask: Int, hasConfigFile: Boolean) {
     val targets = store.getOrCreateSuccessors(EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, sourceId)
-    upsertPluginDepEntry(targets, targetId, isOptional, formatMask)
+    upsertPluginDepEntry(targets, targetId, isOptional, formatMask, hasConfigFile)
 
     if (storesReverseEdges(EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN)) {
       val sources = store.getOrCreatePredecessors(EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, targetId)
-      upsertPluginDepEntry(sources, sourceId, isOptional, formatMask)
+      upsertPluginDepEntry(sources, sourceId, isOptional, formatMask, hasConfigFile)
     }
   }
 
@@ -480,21 +504,23 @@ internal class PluginGraphBuilder(
     addEdge(sourceId, targetId, EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE)
   }
 
-  private fun upsertPluginDepEntry(entries: MutableIntList, nodeId: Int, isOptional: Boolean, formatMask: Int) {
+  private fun upsertPluginDepEntry(entries: MutableIntList, nodeId: Int, isOptional: Boolean, formatMask: Int, hasConfigFile: Boolean) {
     for (i in 0 until entries.size) {
       val entry = entries[i]
       if (unpackNodeId(entry) == nodeId) {
         val existingOptional = unpackPluginDepOptional(entry)
         val existingFormats = unpackPluginDepFormats(entry)
+        val existingConfigFile = unpackPluginDepHasConfigFile(entry)
         val mergedOptional = existingOptional && isOptional
         val mergedFormats = existingFormats or formatMask
-        if (mergedOptional != existingOptional || mergedFormats != existingFormats) {
-          entries[i] = packPluginDepEntry(nodeId, mergedOptional, mergedFormats)
+        val mergedConfigFile = existingConfigFile || hasConfigFile
+        if (mergedOptional != existingOptional || mergedFormats != existingFormats || mergedConfigFile != existingConfigFile) {
+          entries[i] = packPluginDepEntry(nodeId, mergedOptional, mergedFormats, mergedConfigFile)
         }
         return
       }
     }
-    entries.add(packPluginDepEntry(nodeId, isOptional, formatMask))
+    entries.add(packPluginDepEntry(nodeId, isOptional, formatMask, hasConfigFile))
   }
 
   internal fun addEdge(source: Int, target: Int, edgeType: Int) {

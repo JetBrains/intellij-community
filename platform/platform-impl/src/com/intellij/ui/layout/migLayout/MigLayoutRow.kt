@@ -13,7 +13,6 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.CellBuilder
-import com.intellij.ui.layout.GrowPolicy
 import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.SpacingConfiguration
 import com.intellij.ui.layout.ValidationInfoBuilder
@@ -196,36 +195,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return subRows
   }
 
-  // cell mode not tested with "gear" button, wait first user request
-  override fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean) {
-    if (value) {
-      assert(componentIndexWhenCellModeWasEnabled == -1)
-      componentIndexWhenCellModeWasEnabled = components.size
-    }
-    else {
-      val firstComponentIndex = componentIndexWhenCellModeWasEnabled
-      componentIndexWhenCellModeWasEnabled = -1
-
-      val componentCount = components.size - firstComponentIndex
-      if (componentCount == 0) return
-      val component = components.get(firstComponentIndex)
-      val cc = component.constraints
-
-      // do not add split if cell empty or contains the only component
-      if (componentCount > 1) {
-        cc.split(componentCount)
-      }
-      if (fullWidth) {
-        cc.spanX(LayoutUtil.INF)
-      }
-      if (isVerticalFlow) {
-        cc.flowY()
-        // because when vertical buttons placed near scroll pane, it wil be centered by baseline (and baseline not applicable for grow elements, so, will be centered)
-        cc.alignY("top")
-      }
-    }
-  }
-
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     addComponent(component)
     return CellBuilderImpl(builder, this, component)
@@ -317,21 +286,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   private val labeledComponents = listOf(JTextComponent::class, JComboBox::class, JSpinner::class, JSlider::class)
 
-  /**
-   * Assigns next to label REASONABLE component with the label
-   */
-  override fun row(label: JLabel?, separated: Boolean, init: Row.() -> Unit): Row {
-    val result = super.rowInternal(label, separated, init)
-
-    if (label != null && result is MigLayoutRow && result.components.size > 1) {
-      val component = result.components[1]
-
-      if (labeledComponents.any { clazz -> clazz.isInstance(component) }) {
-          label.labelFor = component
-      }
-    }
-    return result
-  }
 }
 
 @ApiStatus.ScheduledForRemoval
@@ -350,19 +304,6 @@ private class CellBuilderImpl<T : JComponent>(
 
   override fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
     builder.validateCallbacks.add { callback(ValidationInfoBuilder(component.origin), component) }
-    return this
-  }
-
-  override fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
-    builder.componentValidateCallbacks[component.origin] = { callback(ValidationInfoBuilder(component.origin), component) }
-    return this
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      builder.defaultComponentConstraintCreator.applyGrowPolicy(this, growPolicy)
-    }
     return this
   }
 

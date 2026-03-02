@@ -131,10 +131,6 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
     return false;
   }
 
-  @Deprecated
-  @Override
-  public void setEnabled(boolean enabled) { }
-
   @Override
   public String toString() {
     return "Default plugin descriptor for " + myPluginId;

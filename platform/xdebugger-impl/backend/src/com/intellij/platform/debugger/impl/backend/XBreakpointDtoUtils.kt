@@ -46,6 +46,8 @@ internal suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
     editorsProviderDto = editorsProvider?.toRpc(coroutineScope),
     state = channelFlow {
       val currentSessionFlow = xDebuggerManager.currentSessionFlow
+      // XBreakpointBase#getDescription depends on the current session
+      // BreakpointWithHighlighter#getPropertyXMLDescriptions
       breakpointChangedFlow().combine(currentSessionFlow) { _, _ -> }.collectLatest {
         send(getDtoState())
       }

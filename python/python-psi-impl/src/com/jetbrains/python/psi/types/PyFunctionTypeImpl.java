@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -113,12 +114,10 @@ public class PyFunctionTypeImpl implements PyFunctionType {
 
   @Override
   public @NotNull PyFunctionType dropSelf(@NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> parameters = getParameters(context);
+    final List<PyCallableParameter> parameters = ContainerUtil.notNullize(getParameters(context));
 
-    if (!ContainerUtil.isEmpty(parameters) && parameters.get(0).isSelf()) {
-      return new PyFunctionTypeImpl(myCallable, ContainerUtil.subList(parameters, 1));
-    }
-    return this;
+    List<PyCallableParameter> newParams = ParamHelper.dropSelf(parameters);
+    return newParams.size() < parameters.size() ? new PyFunctionTypeImpl(myCallable, newParams) : this;
   }
 
   @Override

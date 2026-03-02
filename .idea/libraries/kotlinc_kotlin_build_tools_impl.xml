@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-build-tools-impl" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-tools-impl:2.4.0-dev-4766">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-impl/2.4.0-dev-4766/kotlin-build-tools-impl-2.4.0-dev-4766.jar">
+          <sha256sum>2371c5b4849f6f02dbc3341f12576b07d8018ecff86e092cb0ce8ed50fd792c5</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-impl/2.4.0-dev-4766/kotlin-build-tools-impl-2.4.0-dev-4766.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-impl/2.4.0-dev-4766/kotlin-build-tools-impl-2.4.0-dev-4766-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -69,7 +69,8 @@ internal class TerminalCompletionUnixShellsEscapingTest : BasePlatformTestCase()
     val startupOptions = TerminalStartupOptionsImpl(
       shellCommand = listOf("/bin/zsh", "--login", "-i"),
       workingDirectory = System.getProperty("user.home"),
-      envVariables = emptyMap()
+      envVariables = emptyMap(),
+      pid = null,
     )
     val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
     doWithCompletionFixture(project, session, fixtureScope) { fixture ->

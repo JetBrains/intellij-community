@@ -23,12 +23,6 @@ interface RowBuilder : BaseBuilder {
   fun createChildRow(label: JLabel? = null, isSeparated: Boolean = false): Row
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
-    return rowInternal(label, separated, init)
-  }
-
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   @ApiStatus.Internal
   fun rowInternal(label: JLabel?, separated: Boolean, init: Row.() -> Unit): Row {
@@ -45,21 +39,4 @@ interface RowBuilder : BaseBuilder {
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
-abstract class Row : Cell(), RowBuilder {
-
-  @PublishedApi
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
-  internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean, fullWidth: Boolean)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
-enum class GrowPolicy {
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  SHORT_TEXT,
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  MEDIUM_TEXT
-}
+abstract class Row : Cell(), RowBuilder

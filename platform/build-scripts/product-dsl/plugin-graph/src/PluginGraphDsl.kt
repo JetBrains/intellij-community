@@ -562,7 +562,8 @@ value class GraphScope @PublishedApi internal constructor(
   /**
    * Invoke operator for PluginDependencyInvoker.
    * Passes [PluginDependency] to callback - use [PluginDependency.isOptional],
-   * [PluginDependency.hasLegacyFormat], and [PluginDependency.hasModernFormat] for flags.
+   * [PluginDependency.hasLegacyFormat], [PluginDependency.hasModernFormat],
+   * and [PluginDependency.hasConfigFile] for flags.
    */
   inline operator fun PluginDependencyInvoker.invoke(action: (PluginDependency) -> Unit) {
     store.forEachSuccessor(EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, sourceId) { packedEntry ->

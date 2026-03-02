@@ -1,14 +1,14 @@
 package com.intellij.remoteDev.tests
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Disposer
-import com.intellij.remoteDev.tests.impl.utils.runLoggedBlocking
+import com.intellij.remoteDev.tests.impl.utils.runLogged
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.function.IntFunction
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Provides access to all essential entities on this agent required to perform test operations
@@ -19,7 +19,6 @@ interface LambdaIdeContext : CoroutineScope {
   val testFixtures: TestFixtures
   val globalDisposable: Disposable
   fun addAfterEachCleanup(action: () -> Unit)
-  fun addAfterAllCleanup(action: () -> Unit)
 }
 
 @ApiStatus.Internal
@@ -49,8 +48,6 @@ abstract class LambdaIdeContextClass(
 ) : LambdaIdeContext {
   private val actionsAfterEach: MutableList<() -> Unit> = mutableListOf()
 
-  private val actionsAfterAll: MutableList<() -> Unit> = mutableListOf()
-
   /**
    * Added action will be executed after the current test finishes
    */
@@ -58,47 +55,21 @@ abstract class LambdaIdeContextClass(
     actionsAfterEach.add(action)
   }
 
-  /**
-   * Added action will be executed after the current test class finishes
-   */
-  override fun addAfterAllCleanup(action: () -> Unit) {
-    actionsAfterAll.add(action)
-  }
-
   @TestOnly
-  internal fun runAfterEachCleanup() {
+  internal suspend fun runAfterEachCleanup() {
     if (actionsAfterEach.isNotEmpty()) {
       actionsAfterEach.reversed().forEachIndexed { index, function ->
-        runCatching {
-          runLoggedBlocking("After each cleanup action [#$index/${actionsAfterEach.size}]") {
-            function.invoke()
-          }
-        }.onFailure {
-          thisLogger().error(it)
+        runLogged("After each cleanup action [#$index/${actionsAfterEach.size}]") {
+          function.invoke()
         }
       }
     }
 
-    runCatching {
-      runLoggedBlocking("Disposing global disposable") {
-        Disposer.dispose(globalDisposable)
-      }
-    }.onFailure {
-      thisLogger().error(it)
+    runLogged("Disposing global disposable", 10.seconds) {
+      Disposer.dispose(globalDisposable)
     }
 
     testFixtures.clear()
-  }
-
-  @TestOnly
-  internal fun runAfterAllCleanup() {
-    runLoggedBlocking("After all cleanup actions") {
-      runCatching {
-        actionsAfterAll.reversed().forEach { it.invoke() }
-      }.onFailure {
-        thisLogger().error(it)
-      }
-    }
   }
 }
 

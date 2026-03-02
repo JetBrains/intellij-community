@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.ConcurrencyUtil
@@ -778,9 +779,23 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
         LOG.infoWithDebug("Processing dumb queue under modal progress (start)", startTrace)
         (ApplicationManager.getApplication() as ApplicationImpl).executeSuspendingWriteAction(myProject, IndexingBundle.message(
           "progress.indexing.title")) {
+          val indicator = ProgressManager.getInstance().progressIndicator
           processTask.use {
-            processTask.run(
-              ProgressManager.getInstance().progressIndicator)
+            processTask(object : RawProgressReporter {
+              override fun text(text: @NlsContexts.ProgressText String?) {
+                indicator?.text = text
+              }
+
+              override fun details(details: @NlsContexts.ProgressDetails String?) {
+                indicator?.text2 = details
+              }
+
+              override fun fraction(fraction: Double?) {
+                if (fraction != null) {
+                  indicator?.fraction = fraction
+                }
+              }
+            })
           }
         }
       }
@@ -847,7 +862,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   fun hasScheduledTasks(): Boolean {
     // when queued on EDT, dumb mode starts immediately, but executor does not start immediately - it schedules start to the end of the EDT
     // queue to give a chance to invoke completeJustSubmittedTasks and index files under modal progress.
-    return scheduledTasksScope.coroutineContext.job.children.firstOrNull() != null
+    return scheduledTasksScope.coroutineContext.job.children.firstOrNull() != null || guiDumbTaskRunner.hasScheduledTasks()
   }
 
   companion object {

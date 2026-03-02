@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
+import com.intellij.dvcs.repo.isHead
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.components.service
 import com.intellij.vcs.commit.CommitNotification
@@ -20,7 +21,8 @@ internal class GitCommitSuccessNotificationRewordProvider : CommitSuccessNotific
     val connection = project.messageBus.connect()
     notification.whenExpired { connection.disconnect() }
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repo ->
-      if (repo.currentRevision != repoWithCommitHash[repo]?.asString()) {
+      val commitHash = repoWithCommitHash[repo]
+      if (commitHash == null || !repo.isHead(commitHash)) {
         notification.expire()
       }
     })

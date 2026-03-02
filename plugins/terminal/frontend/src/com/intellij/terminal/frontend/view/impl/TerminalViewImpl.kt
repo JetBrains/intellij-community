@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.MockDocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.Disposer
@@ -24,6 +25,7 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
+import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
@@ -40,11 +42,14 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
@@ -153,6 +158,13 @@ class TerminalViewImpl(
   private val mutableSessionState: MutableStateFlow<TerminalViewSessionState> = MutableStateFlow(TerminalViewSessionState.NotStarted)
   override val sessionState: StateFlow<TerminalViewSessionState> = mutableSessionState.asStateFlow()
 
+  private val mutableKeyEventsFlow = MutableSharedFlow<TerminalKeyEvent>(
+    replay = 0,                 // Do not use replay cache because we don't need to send the last event to the new collector
+    extraBufferCapacity = 100,  // Add some meaningful buffer for slow collectors.
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
+  override val keyEventsFlow: Flow<TerminalKeyEvent> = mutableKeyEventsFlow.asSharedFlow()
+
   override val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration> = CompletableDeferred(coroutineScope.coroutineContext.job)
   override val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions> = CompletableDeferred(coroutineScope.coroutineContext.job)
 
@@ -185,6 +197,7 @@ class TerminalViewImpl(
     val alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     val alternateBufferModelController = TerminalOutputModelControllerImpl(alternateBufferModel)
     val alternateBufferEventsHandler = TerminalEventsHandlerImpl(
+      mutableKeyEventsFlow,
       terminalView = this,
       sessionModel,
       alternateBufferEditor,
@@ -234,6 +247,7 @@ class TerminalViewImpl(
     outputEditor.putUserData(TerminalTypeAhead.KEY, outputModelController)
 
     outputEditorEventsHandler = TerminalEventsHandlerImpl(
+      mutableKeyEventsFlow,
       terminalView = this,
       sessionModel,
       outputEditor,
@@ -310,6 +324,7 @@ class TerminalViewImpl(
     listenSearchController()
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
+    listenApplicationTitleChanges()
 
     val synchronizer = TerminalVfsSynchronizer(
       shellIntegrationDeferred,
@@ -444,6 +459,19 @@ class TerminalViewImpl(
 
           if (terminalWasFocused) {
             IdeFocusManager.getInstance(project).requestFocus(terminalPanel.preferredFocusableComponent, true)
+          }
+        }
+      }
+    }
+  }
+
+  private fun listenApplicationTitleChanges() {
+    coroutineScope.launch {
+      sessionModel.terminalState.collect { state ->
+        if (state.windowTitle.isNotBlank() && AdvancedSettings.getBoolean("terminal.show.application.title")) {
+          title.change {
+            @Suppress("HardCodedStringLiteral")
+            applicationTitle = state.windowTitle
           }
         }
       }

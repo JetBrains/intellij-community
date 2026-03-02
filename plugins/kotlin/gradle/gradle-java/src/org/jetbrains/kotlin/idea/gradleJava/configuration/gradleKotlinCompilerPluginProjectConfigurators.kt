@@ -36,6 +36,7 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator : KotlinCom
         project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", topLevelFile.name), null) {
             topLevelFile.add(addVersion = true, sourceModule = module, changedFiles = configurationResultBuilder.changedFiles)
             moduleFile?.add(addVersion = false, sourceModule = module, changedFiles = configurationResultBuilder.changedFiles)
+            configurationResultBuilder.configuredModule(module)
         }
     }
 

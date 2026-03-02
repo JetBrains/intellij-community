@@ -10,8 +10,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util",
     "//platform/platform-impl:ide-impl",
-    "//libraries/jackson/jackson",
-    "//libraries/jackson/databind",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/databind",
   ]
 )
 
@@ -29,10 +29,10 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//libraries/jackson/jackson",
-    "//libraries/jackson/jackson:jackson_test_lib",
-    "//libraries/jackson/databind",
-    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson3/jackson:libraries-jackson3",
+    "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+    "//libraries/jackson3/databind",
+    "//libraries/jackson3/databind:databind_test_lib",
     "@lib//:junit4",
   ],
   runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]

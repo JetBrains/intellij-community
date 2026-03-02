@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.pipenv
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.python.community.impl.pipenv.PIPENV_ICON
-import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.pipenv.quickFixes.PipEnvAssociationQuickFix
@@ -29,12 +29,12 @@ internal class PyPipEnvSdkProvider : PySdkProvider {
     if (sdk.isPipEnv) {
       val message = when {
         associatedModulePath != null -> when {
-          isPyCharm -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.associated.with.another.project", associatedModulePath)
-          else -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.associated.with.another.module", associatedModulePath)
+          isPyCharm -> PyBundle.message("python.sdk.pipenv.associated.with.another.project", associatedModulePath)
+          else -> PyBundle.message("python.sdk.pipenv.associated.with.another.module", associatedModulePath)
         }
         else -> when {
-          isPyCharm -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.not.associated.with.any.project")
-          else -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.not.associated.with.any.module")
+          isPyCharm -> PyBundle.message("python.sdk.pipenv.not.associated.with.any.project")
+          else -> PyBundle.message("python.sdk.pipenv.not.associated.with.any.module")
         }
       }
       return PyInterpreterInspectionQuickFixData(PipEnvAssociationQuickFix(), message)

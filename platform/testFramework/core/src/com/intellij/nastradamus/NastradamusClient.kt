@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.nastradamus
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.TestCaseLoader
 import com.intellij.nastradamus.model.BuildInfo
 import com.intellij.nastradamus.model.ChangeEntity
@@ -23,6 +20,9 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.utils.URIBuilder
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.net.URI
 
 class NastradamusClient(
@@ -43,19 +43,19 @@ class NastradamusClient(
     val build = teamCityClient.getBuildInfo()
     val buildProperties: List<JsonNode> = build.findValue("properties")
                                             ?.findValue("property")
-                                            ?.elements()?.asSequence()?.toList() ?: listOf()
+                                            ?.values()?.toList() ?: listOf()
 
-    val bucketId: Int = buildProperties.firstOrNull { it.findValue("name")?.asText() == "system.pass.idea.test.runner.index" }
+    val bucketId: Int = buildProperties.firstOrNull { it.findValue("name")?.asString() == "system.pass.idea.test.runner.index" }
                           ?.findValue("value")?.asInt() ?: 0
-    val bucketsNumber: Int = buildProperties.firstOrNull { it.findValue("name")?.asText() == "system.pass.idea.test.runners.count" }
+    val bucketsNumber: Int = buildProperties.firstOrNull { it.findValue("name")?.asString() == "system.pass.idea.test.runners.count" }
                                ?.findValue("value")?.asInt() ?: 0
 
     val testResultEntities = mutableMapOf<String, TestClassResultEntity>()
 
-    tests.map { json ->
+    tests.forEach { json ->
       val testResult = TestResultEntity(
-        name = json.findValue("name").asText(),
-        status = TestStatus.fromString(json.findValue("status").asText()),
+        name = json.findValue("name").asString(),
+        status = TestStatus.fromString(json.findValue("status").asString()),
         runOrder = json.findValue("runOrder").asInt(),
         durationMs = json.findValue("duration")?.asLong() ?: 0,
         currentlyInvestigated = json.findValue("currentlyInvestigated")?.asBoolean() ?: false,
@@ -63,8 +63,8 @@ class NastradamusClient(
       )
 
       val parsedTestName = json.findValue("test").findValue("parsedTestName")
-      val packageName = parsedTestName.findValue("testPackage").asText()
-      val shortClassName = parsedTestName.findValue("testClass").asText()
+      val packageName = parsedTestName.findValue("testPackage").asString()
+      val shortClassName = parsedTestName.findValue("testClass").asString()
       val fullClassName = "$packageName.$shortClassName"
 
       testResultEntities.computeIfPresent(fullClassName) { _, oldClassResult ->
@@ -173,9 +173,9 @@ class NastradamusClient(
           jsonTree.properties()
             .single { it.key == "sorted_tests" }.value
             .get(currentBucketIndex.toString())
-            .map {
-              TestCaseEntity(it.findValue("name").asText())
-            }
+            .values()
+            .map { TestCaseEntity(it.findValue("name").asString()) }
+            .toList()
         }
         catch (e: Throwable) {
           throw RuntimeException("Response from $uri with failure: $jsonTree", e)
@@ -193,7 +193,7 @@ class NastradamusClient(
     val changeDetails = runBlocking {
       val changes = teamCityClient.getChanges()
       changes.mapConcurrently(maxConcurrency = 5) { change ->
-        teamCityClient.getChangeDetails(change.findValue("id").asText())
+        teamCityClient.getChangeDetails(change.findValue("id").asString())
       }.flatten()
     }
 
@@ -207,18 +207,18 @@ class NastradamusClient(
 
     val triggeredByBuild = triggeredByInfo.findValue("build")
     val aggregatorBuildId: String = if (triggeredByBuild == null) teamCityClient.buildId
-    else triggeredByBuild.findValue("id").asText(teamCityClient.buildId)
+    else triggeredByBuild.findValue("id").asString(teamCityClient.buildId)
 
     val buildInfo = teamCityClient.getBuildInfo()
-    val branchName = buildInfo.findValue("branchName")?.asText("") ?: ""
+    val branchName = buildInfo.findValue("branchName")?.asString("") ?: ""
 
     return BuildInfo(buildId = teamCityClient.buildId,
                      aggregatorBuildId = aggregatorBuildId,
                      branchName = branchName,
                      os = teamCityClient.os,
                      buildType = teamCityClient.buildTypeId,
-                     status = buildInfo.findValue("status")?.asText("") ?: "",
-                     buildStatusMessage = buildInfo.findValue("statusText")?.asText("") ?: ""
+                     status = buildInfo.findValue("status")?.asString("") ?: "",
+                     buildStatusMessage = buildInfo.findValue("statusText")?.asString("") ?: ""
     )
   }
 

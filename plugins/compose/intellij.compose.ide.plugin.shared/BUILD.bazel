@@ -42,6 +42,8 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//plugins/kotlin/code-insight/api",
     "//platform/lang-impl",
+    "//plugins/kotlin/code-insight/utils",
+    "//plugins/kotlin/base/psi",
   ]
 )
 
@@ -74,6 +76,8 @@ jvm_library(
     "//java/java-psi-api:psi_test_lib",
     "//plugins/kotlin/code-insight/api:api_test_lib",
     "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/kotlin/code-insight/utils:utils_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
   ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared` end
@@ -148,6 +152,8 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
   ],
   runtime_deps = [":ide-plugin-shared-tests"]
 )

@@ -44,7 +44,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.aalto.xml" />
     <orderEntry type="module" module-name="intellij.libraries.androidx.collections" />

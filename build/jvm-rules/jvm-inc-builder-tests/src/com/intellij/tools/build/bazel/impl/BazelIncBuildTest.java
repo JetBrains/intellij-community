@@ -7,6 +7,7 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
 import kotlin.metadata.jvm.KmModule;
 import kotlin.metadata.jvm.KmPackageParts;
+import kotlin.metadata.jvm.KotlinClassMetadata;
 import kotlin.metadata.jvm.KotlinModuleMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -339,10 +340,18 @@ public abstract class BazelIncBuildTest {
               Iterator<KotlinMeta> metadata = clsNode.getMetadata(KotlinMeta.class).iterator();
               if (metadata.hasNext()) {
                 hasKotlinBytecode = true;
-                if (metadata.next().isTopLevelDeclarationContainer()) {
-                  graphFacadeClassNames.add(clsNode.getName());
+                String facadeClassName = null;
+                KotlinClassMetadata classMeta = metadata.next().getClassMetadata();
+                if (classMeta instanceof KotlinClassMetadata.FileFacade) {
+                  facadeClassName = clsNode.getName();
+                }
+                else if (classMeta instanceof KotlinClassMetadata.MultiFileClassPart multiPart) {
+                  facadeClassName = multiPart.getFacadeClassName().replace('.', '/');
+                }
+                if (facadeClassName != null) {
+                  graphFacadeClassNames.add(facadeClassName);
                   if (isSourceDirty) {
-                    graphDirtyFacadeClassNames.add(clsNode.getName());
+                    graphDirtyFacadeClassNames.add(facadeClassName);
                   }
                 }
               }

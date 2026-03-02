@@ -59,7 +59,7 @@ class PluginDependencyAnalysisTest {
 
   private fun discoverPlugins(): List<PluginMainDescriptor> {
     val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-    return discoveryResult.discoveredPlugins.flatMap { it.plugins }
+    return discoveryResult.pluginLists.flatMap { it.plugins }
   }
 
   @Nested

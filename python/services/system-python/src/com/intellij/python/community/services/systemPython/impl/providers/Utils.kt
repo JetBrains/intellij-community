@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.FileSystemNotFoundException
+import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -30,6 +31,9 @@ internal suspend fun collectPythonsInPaths(paths: List<Directory>, names: List<P
           it.listDirectoryEntries()
         }
         catch (_: NotDirectoryException) {
+          emptyList()
+        }
+        catch (_: NoSuchFileException) { // Directory can't be read or doesn't exist
           emptyList()
         }
         catch (e: FileSystemNotFoundException) {

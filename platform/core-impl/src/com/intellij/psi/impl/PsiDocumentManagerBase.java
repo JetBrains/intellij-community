@@ -142,7 +142,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     project.getMessageBus().connect(this).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
-        PsiFile psiFile = ReadAction.compute(() -> {
+        PsiFile psiFile = ReadAction.computeBlocking(() -> {
           // todo IJPL-339 figure out which psi file to pass here or get rid of psi file at all
           return myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile, CodeInsightContexts.anyContext());
         });
@@ -482,7 +482,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   @ApiStatus.Internal
   @Override
   public boolean isEventSystemEnabled(@NotNull Document document) {
-    return ReadAction.compute(() -> {
+    return ReadAction.computeBlocking(() -> {
       List<FileViewProvider> viewProviders = getCachedViewProviders(document);
       return CodeInsightContextUtil.isEventSystemEnabled(viewProviders);
     });

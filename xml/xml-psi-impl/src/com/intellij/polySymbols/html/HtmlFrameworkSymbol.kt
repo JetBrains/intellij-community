@@ -2,11 +2,10 @@
 package com.intellij.polySymbols.html
 
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.framework.FrameworkId
 import com.intellij.polySymbols.framework.framework
-import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport.Companion.PROP_HTML_FRAMEWORK_ID
+import com.intellij.polySymbols.html.HtmlFrameworkSymbolsSupport.HtmlFrameworkIdProperty
 import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
 
@@ -15,18 +14,13 @@ val PolySymbol.framework: FrameworkId?
     when (this) {
       is HtmlFrameworkSymbol -> this.framework
       else -> unwrapMatchedSymbols().firstNotNullOfOrNull { (it as? WebTypesSymbol)?.origin?.framework }
-              ?: this[PROP_HTML_FRAMEWORK_ID]
+              ?: this[HtmlFrameworkIdProperty]
     }
 
 interface HtmlFrameworkSymbol : PolySymbol {
 
+  @PolySymbol.Property(HtmlFrameworkIdProperty::class)
   val framework: FrameworkId?
-
-  override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
-    when (property) {
-      PROP_HTML_FRAMEWORK_ID -> property.tryCast(framework)
-      else -> super.get(property)
-    }
 
   override fun matchContext(context: PolyContext): Boolean =
     super.matchContext(context)

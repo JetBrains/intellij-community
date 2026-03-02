@@ -3,6 +3,7 @@ package com.intellij.database.run.actions;
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridHelper;
 import com.intellij.database.datagrid.GridMutator;
 import com.intellij.database.datagrid.GridRequestSource;
 import com.intellij.database.datagrid.GridRow;
@@ -28,7 +29,7 @@ public class DeleteRowsAction extends DeleteActionBase {
   @Override
   protected boolean isEnabled(@NotNull DataGrid grid) {
     GridDataSupport support = grid.getDataSupport();
-    return !support.isDeletedRows(grid.getSelectionModel().getSelectedRows()) && grid.isEditable() && grid.getDataHookup().isForSingleSource();
+    return grid.isReady() && !support.isDeletedRows(grid.getSelectionModel().getSelectedRows()) && grid.isEditable() && grid.getDataHookup().isForSingleSource();
   }
 
   @Override
@@ -79,6 +80,6 @@ public class DeleteRowsAction extends DeleteActionBase {
 
   @Override
   protected boolean isVisible(@Nullable DataGrid grid) {
-    return grid != null && grid.isEditable() && grid.isReady();
+    return grid != null && (grid.isEditable() || GridHelper.get(grid).hasTargetForEditing(grid));
   }
 }

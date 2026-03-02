@@ -296,6 +296,8 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/testFramework/junit5/eel",
     "//platform/testFramework/junit5/eel:eel_test_lib",
+    "//platform/vcs-impl:vcs-impl-tests",
+    "//platform/vcs-impl:vcs-impl-tests_test_lib",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",

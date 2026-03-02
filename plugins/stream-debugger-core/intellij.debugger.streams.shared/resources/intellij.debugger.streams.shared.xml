@@ -1,11 +1,15 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.debugger"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
     <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.debugger.impl.ui"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <actions resource-bundle="messages.SharedStreamDebuggerBundle">
     <action id="StreamTracerAction"
             class="com.intellij.debugger.streams.shared.TraceStreamAction"

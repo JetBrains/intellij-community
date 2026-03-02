@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
+import org.jetbrains.kotlin.idea.util.createRealNameRenderer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -401,6 +402,8 @@ abstract class KtGenerateMembersHandler(
             }
 
             propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
+
+            nameRenderer = createRealNameRenderer(nameRenderer)
         }
     }
 

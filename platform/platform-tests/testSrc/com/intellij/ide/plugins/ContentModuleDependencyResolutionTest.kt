@@ -91,7 +91,7 @@ internal class ContentModuleDependencyResolutionTest {
       }
     }
     // namespaces are not active yet: (com.intellij.ide.plugins.PluginModuleId.useNamespaceInId)
-    if (System.getProperty("revert.IJPL220159") == "true") {
+    if (System.getProperty("intellij.platform.plugin.modules.use.namespace.in.id") == "true") {
       val foo = pluginSet.getEnabledModule("foo")
       val dependency = foo.moduleDependencies.modules.single()
       assertThat(dependency.name).isEqualTo("platform")
@@ -130,7 +130,7 @@ internal class ContentModuleDependencyResolutionTest {
       }
     }
     // namespaces are not active yet: (com.intellij.ide.plugins.PluginModuleId.useNamespaceInId)
-    if (System.getProperty("revert.IJPL220159") == "true") {
+    if (System.getProperty("intellij.platform.plugin.modules.use.namespace.in.id") == "true") {
       val bar = pluginSet.getEnabledModule("bar")
       val dependency = bar.moduleDependencies.modules.single()
       assertThat(dependency.name).isEqualTo("foo")

@@ -649,6 +649,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "receiverShadowedByContextParameter",
                     "destructingNameMismatch", // K2-only
                     "removeRedundantCallsOfConversionMethods", // K2 compiler diagnostic
+                    "destructingShortForm", // K2-only
                 )
             )
         }
