@@ -12,6 +12,7 @@ import com.intellij.platform.debugger.impl.rpc.XStackFrameId
 import com.intellij.platform.debugger.impl.rpc.XStackFramePresentation
 import com.intellij.platform.debugger.impl.rpc.XStackFramePresentationFragment
 import com.intellij.platform.debugger.impl.rpc.XStackFramesEvent
+import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.impl.rpc.models.findValue
