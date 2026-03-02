@@ -1,0 +1,7 @@
+enum class EnumClass {
+    AEntry, BEntry;
+
+    constructor() {
+
+    }
+}
