@@ -57,6 +57,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,24 +108,9 @@ public class EditorTestFixture {
           c == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ?
           (KeyboardShortcut)Objects.requireNonNull(KeymapUtil.getPrimaryShortcut("EditorCompleteStatement")) :
           new KeyboardShortcut(KeyStroke.getKeyStroke(keyCode, 0), null);
-        IdeKeyEventDispatcher keyEventDispatcher = IdeEventQueue.getInstance().getKeyEventDispatcher();
-        keyEventDispatcher.updateCurrentContext(getEditor().getContentComponent(), shortcut);
-        keyEventDispatcher.getContext().setProject(myProject);
-        keyEventDispatcher.getContext().setDataContext(getEditorDataContext());
-        keyEventDispatcher.getContext().setShortcut(shortcut);
-        try {
-          if (keyEventDispatcher.processAction(keyEvent, new ActionProcessor() {
-            @Override
-            public void performAction(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
-              super.performAction(inputEvent, action, event);
-              LOG.info("type(): performing action '" + event.getActionManager().getId(action) + "'");
-            }
-          })) {
-            return;
-          }
-        }
-        finally {
-          keyEventDispatcher.getContext().clear();
+
+        if (performEditorShortcut(myEditor, myProject, shortcut, keyEvent, "type")) {
+          return;
         }
       }
       ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
@@ -157,6 +143,31 @@ public class EditorTestFixture {
       return true;
     }
     return false;
+  }
+
+  @RequiresEdt
+  public static boolean performEditorShortcut(@NotNull Editor editor,
+                                              @NotNull Project project,
+                                              @NotNull KeyboardShortcut shortcut,
+                                              @NotNull KeyEvent keyEvent,
+                                              @NotNull String caller) {
+    IdeKeyEventDispatcher keyEventDispatcher = IdeEventQueue.getInstance().getKeyEventDispatcher();
+    keyEventDispatcher.updateCurrentContext(editor.getContentComponent(), shortcut);
+    keyEventDispatcher.getContext().setProject(project);
+    keyEventDispatcher.getContext().setDataContext(EditorUtil.getEditorDataContext(editor));
+    keyEventDispatcher.getContext().setShortcut(shortcut);
+    try {
+      return keyEventDispatcher.processAction(keyEvent, new ActionProcessor() {
+        @Override
+        public void performAction(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
+          super.performAction(inputEvent, action, event);
+          LOG.info(caller + ": performing action '" + event.getActionManager().getId(action) + "'");
+        }
+      });
+    }
+    finally {
+      keyEventDispatcher.getContext().clear();
+    }
   }
 
   private @NotNull DataContext getEditorDataContext() {

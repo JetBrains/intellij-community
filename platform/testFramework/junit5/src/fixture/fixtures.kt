@@ -139,6 +139,21 @@ fun TestFixture<Project>.fileOrDirInProjectFixture(relativePath: String): TestFi
   initialized(file) {}
 }
 
+/**
+ * Finds an existing [PsiFile] in the project by [relativePath].
+ * Unlike [psiFileFixture], this does not create a new file but locates one that already exists in the project.
+ */
+@TestOnly
+fun TestFixture<Project>.existingPsiFileFixture(relativePath: String): TestFixture<PsiFile> = testFixture {
+  val project = this@existingPsiFileFixture.init()
+  val virtualFile = fileOrDirInProjectFixture(relativePath).init()
+  val psiFile = readAction {
+    PsiManager.getInstance(project).findFile(virtualFile)
+    ?: error("Cannot find PsiFile for $virtualFile")
+  }
+  initialized(psiFile) {}
+}
+
 @TestOnly
 fun TestFixture<Project>.moduleInProjectFixture(name: String): TestFixture<Module> = testFixture {
   val project = init()
