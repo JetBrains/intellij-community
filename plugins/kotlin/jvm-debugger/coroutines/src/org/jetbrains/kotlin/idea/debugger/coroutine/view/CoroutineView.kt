@@ -287,7 +287,7 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
         override fun computeChildren(node: XCompositeNode) {
             invokeInSuspendContext(suspendContext) { suspendContext ->
                 val children = XValueChildrenList()
-                children.add(FramesContainer(info, suspendContext))
+                children.addTopValue(FramesContainer(info, suspendContext))
                 val job = info.job ?: return@invokeInSuspendContext
                 val childCoroutines = parentJobToChildCoroutines[job] ?: emptyList()
                 children.addChildCoroutineContainers(suspendContext, childCoroutines, parentJobToChildCoroutines, pinnedJobs)
