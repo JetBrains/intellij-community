@@ -4,8 +4,9 @@ package com.intellij.util.indexing
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ReadWriteActionSupport
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
@@ -45,7 +46,6 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.AfterClass
@@ -151,20 +151,23 @@ class UnindexedFilesScannerTest {
     runBlocking {
       assertThat(application.isWriteIntentLockAcquired).isFalse
 
-      val latch = CountDownLatch(1)
-      async {
-        edtWriteAction {
-          latch.await()
+      val scannerQueuedLatch = CountDownLatch(1)
+      val writeActionStartedLatch = CountDownLatch(1)
+      runInEdt {
+        runWriteAction {
+          writeActionStartedLatch.countDown()
+          scannerQueuedLatch.await()
         }
       }
 
       try {
+        writeActionStartedLatch.await()
         assertThat(UnindexedFilesScannerExecutorImpl.getInstance(project).isRunning.value).isFalse
         UnindexedFilesScanner(project).queue()
         assertThat(UnindexedFilesScannerExecutorImpl.getInstance(project).isRunning.value).isFalse
       }
       finally {
-        latch.countDown()
+        scannerQueuedLatch.countDown()
       }
     }
   }
