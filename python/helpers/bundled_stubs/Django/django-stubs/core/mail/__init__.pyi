@@ -50,7 +50,7 @@ def mail_managers(
     html_message: str | None = None,
 ) -> None: ...
 
-outbox: list[EmailMessage]
+outbox: list[EmailMessage | EmailMultiAlternatives]
 
 __all__ = [
     "DEFAULT_ATTACHMENT_MIME_TYPE",

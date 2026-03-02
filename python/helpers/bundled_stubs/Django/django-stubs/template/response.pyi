@@ -9,9 +9,10 @@ from django.http.request import HttpRequest
 from django.template.base import Template
 from django.template.context import RequestContext
 from django.test.client import Client
-from django.utils.datastructures import _ListOrTuple
 
-_TemplateForResponseT: TypeAlias = _ListOrTuple[str] | Template | str
+from .backends.base import _EngineTemplate
+
+_TemplateForResponseT: TypeAlias = Sequence[str] | _EngineTemplate | str
 
 class ContentNotRenderedError(Exception): ...
 
@@ -34,7 +35,7 @@ class SimpleTemplateResponse(HttpResponse):
         using: str | None = ...,
         headers: dict[str, Any] | None = ...,
     ) -> None: ...
-    def resolve_template(self, template: Sequence[str] | Template | str) -> Template: ...
+    def resolve_template(self, template: _TemplateForResponseT) -> _EngineTemplate: ...
     def resolve_context(self, context: dict[str, Any] | None) -> dict[str, Any] | None: ...
     @property
     def rendered_content(self) -> str: ...

@@ -2,6 +2,7 @@ import datetime
 from collections.abc import AsyncIterator, Collection, Iterable, Iterator, Mapping, Sequence
 from typing import Any, Generic, Literal, NoReturn, TypeVar, overload
 
+from django.core.checks.messages import CheckMessage
 from django.db.models.base import Model
 from django.db.models.expressions import Combinable, OrderBy
 from django.db.models.query import Prefetch, QuerySet, RawQuerySet, _LookupT, _PrefetchedQuerySetT, _ToAttrT
@@ -22,7 +23,7 @@ class BaseManager(Generic[_T]):
     def deconstruct(
         self,
     ) -> tuple[bool, str | None, str | None, Sequence[Any] | None, dict[str, Any] | None]: ...
-    def check(self, **kwargs: Any) -> list[Any]: ...
+    def check(self, **kwargs: Any) -> list[CheckMessage]: ...
     @classmethod
     def from_queryset(cls, queryset_class: type[QuerySet[_T]], class_name: str | None = None) -> type[Self]: ...
     @classmethod

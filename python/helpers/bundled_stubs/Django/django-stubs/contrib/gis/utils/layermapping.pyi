@@ -65,9 +65,9 @@ class LayerMapping:
     def save(
         self,
         verbose: bool = ...,
-        fid_range: bool = ...,
-        step: bool = ...,
-        progress: bool = ...,
+        fid_range: bool | tuple[int, int] | list[int] | slice = ...,
+        step: bool | int = ...,
+        progress: bool | int = ...,
         silent: bool = ...,
         stream: _Writer = ...,
         strict: bool = ...,

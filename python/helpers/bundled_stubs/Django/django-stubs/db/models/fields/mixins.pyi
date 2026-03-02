@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.core.checks.messages import CheckMessage
 from django.db.models.base import Model
 from django.utils.functional import cached_property
 from typing_extensions import deprecated
@@ -17,4 +18,4 @@ class FieldCacheMixin:
     def delete_cached_value(self, instance: Model) -> None: ...
 
 class CheckFieldDefaultMixin:
-    def check(self, **kwargs: Any) -> Any: ...
+    def check(self, **kwargs: Any) -> list[CheckMessage]: ...
