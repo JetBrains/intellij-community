@@ -71,13 +71,6 @@ class SeAdaptedTabFilter: SeFilter {
                              // Generate a random value so that the filter change would restart the search
                              RANDOM_VALUE to listOf(UUID.randomUUID().toString())))
 
-  override fun isEqualTo(other: SeFilter): Boolean {
-    if (this === other) return true
-    if (other !is SeAdaptedTabFilter) return false
-
-    return true
-  }
-
   companion object {
     private const val IS_ADAPTED_FILTER = "IS_ADAPTED_FILTER"
     private const val RANDOM_VALUE = "RANDOM_VALUE"
