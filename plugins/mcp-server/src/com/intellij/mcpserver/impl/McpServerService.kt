@@ -428,7 +428,7 @@ class McpServerService(val cs: CoroutineScope) {
           var previousTools: List<McpTool>? = null
           mcpTools.collectLatest { updatedTools ->
             // Apply session-specific filter
-            val filteredTools = updatedTools.filter { sessionOptions.toolFilter.shouldInclude(it.descriptor.name) }
+            val filteredTools = updatedTools.filter { sessionOptions.toolFilter.shouldInclude(it.descriptor.fullyQualifiedName) }
 
             previousTools = updateMcpServerTools(
               mcpServer = mcpServer,
@@ -550,7 +550,7 @@ class McpServerService(val cs: CoroutineScope) {
         emptyList()
       }
     }
-    val filteredByName = allTools.filter { filter.shouldInclude(it.descriptor.name) }
+    val filteredByName = allTools.filter { filter.shouldInclude(it.descriptor.fullyQualifiedName) }
     if (!useFiltersFromEP) {
       return filteredByName
     }
