@@ -12,5 +12,6 @@
     <searchEverywhere.tabFactory implementation="com.intellij.searchEverywhereLucene.frontend.tabs.SearchEverywhereLuceneFilesTabFactory"/>
   </extensions>
 
+  <resource-bundle>messages.searchEverywhereLuceneFrontendBundle</resource-bundle>
 
 </idea-plugin>

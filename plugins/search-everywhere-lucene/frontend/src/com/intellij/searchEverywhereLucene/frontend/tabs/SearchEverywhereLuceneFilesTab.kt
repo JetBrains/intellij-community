@@ -11,12 +11,12 @@ import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.SeDefaultTabBase
 import com.intellij.searchEverywhereLucene.common.SearchEverywhereLuceneProviderIdUtils
+import com.intellij.searchEverywhereLucene.frontend.SearchEverywhereLuceneFrontendBundle
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.Nls
 
-@Suppress("HardCodedStringLiteral")
 class SearchEverywhereLuceneFilesTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
-  override val name: @Nls String get() = "Lucene Files"
+  override val name: @Nls String get() = SearchEverywhereLuceneFrontendBundle.message("searchEverywhereLucene.files.tab.name")
   override val id: String get() = SearchEverywhereLuceneProviderIdUtils.LUCENE_FILES
   override val priority: Int
     get() = 10
