@@ -1668,9 +1668,12 @@ final class ExpressionChecker {
     PsiClass parentClass = constructor.getContainingClass();
     if (parentClass == null) return;
 
-    // references to private methods from the outer class are not calls to super methods
+    // references to private methods and fields from the outer class are not calls to super methods
     // even if the outer class is the superclass
-    if (resolved instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE) && referencedClass != parentClass) return;
+    if (resolved instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE) && 
+        referencedClass != parentClass && !(member instanceof PsiClass)) {
+      return;
+    }
     // field or method should be declared in this class or super
     if (!InheritanceUtil.isInheritorOrSelf(parentClass, referencedClass, true)) return;
     // and point to our instance
