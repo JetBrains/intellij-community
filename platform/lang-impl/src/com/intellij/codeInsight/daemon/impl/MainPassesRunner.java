@@ -122,7 +122,7 @@ public final class MainPassesRunner {
       @Override
       public void cancel() {
         super.cancel();
-        daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel());
+        daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel("main indicator was canceled: "+progress));
       }
     });
     while (true) {
@@ -136,7 +136,7 @@ public final class MainPassesRunner {
             @Override
             public void beforeWriteActionStart(@NotNull Object action) {
               wrapper.cancel();
-              daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel());
+              daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel("beforeWriteActionStart: "+action));
             }
           }, disposable);
           // there is a chance we are racing with the write action, in which case just registered listener might not be called, retry.

@@ -226,7 +226,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   synchronized void clearReferences() {
-    processIndicators(indicator -> {indicator.cancel(); return true;});
+    processIndicators(indicator -> {indicator.cancel("DCA.clearReferences"); return true;});
     // avoid leak of highlight session via user data
     myUpdateProgress.clear();
     myUpdateRunnableFuture.cancel(true);

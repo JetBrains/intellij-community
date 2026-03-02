@@ -484,7 +484,7 @@ public final class PassExecutorService implements Disposable {
         });
 
         if (!success) {
-          myUpdateProgress.cancel();
+          myUpdateProgress.cancel("tryReadAction() returned false");
         }
       }, myUpdateProgress);
 
@@ -527,7 +527,7 @@ public final class PassExecutorService implements Disposable {
     try {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (isDisposed() || !fileEditor.isValid()) {
-          updateProgress.cancel();
+          updateProgress.cancel("isDisposed()="+isDisposed()+"; fileEditor.isValid()="+fileEditor.isValid());
         }
         if (updateProgress.isCanceled()) {
           log(updateProgress, pass, " is canceled during apply, sorry");
