@@ -55,7 +55,7 @@ data class DependencyVersionCompletionRequest(val group: String, val artifact: S
 
 
 enum class DependencyCompletionContributionSource {
-  LOCAL, SERVER, SERVER_CACHE
+  LOCAL, SERVER
 }
 
 interface BaseDependencyCompletionResult {
