@@ -30,7 +30,7 @@ class ClaudeSessionSourceTest {
   }
 
   @Test
-  fun threadBecomesUnreadWhenUpdatedAtIncreases() {
+  fun neverOpenedThreadStaysReadyEvenWhenUpdatedAtIncreases() {
     var currentThreads = listOf(
       ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
     )
@@ -40,11 +40,37 @@ class ClaudeSessionSourceTest {
     val source = ClaudeSessionSource(backend = backend)
 
     runBlocking(Dispatchers.Default) {
-      // First load: seeds the read tracker.
       val initial = source.listThreadsFromClosedProject(path = "/any")
       assertThat(initial.single().activity).isEqualTo(AgentThreadActivity.READY)
 
-      // Simulate new content: updatedAt increases.
+      // updatedAt increases but thread was never opened → stays READY.
+      currentThreads = listOf(
+        ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L),
+      )
+      val refreshed = source.listThreadsFromClosedProject(path = "/any")
+      assertThat(refreshed.single().activity).isEqualTo(AgentThreadActivity.READY)
+    }
+  }
+
+  @Test
+  fun threadBecomesUnreadWhenUpdatedAfterBeingOpened() {
+    var currentThreads = listOf(
+      ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 1000L),
+    )
+    val backend = object : ClaudeSessionBackend {
+      override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = currentThreads
+    }
+    val source = ClaudeSessionSource(backend = backend)
+
+    runBlocking(Dispatchers.Default) {
+      source.listThreadsFromClosedProject(path = "/any")
+
+      // User opens the thread → starts tracking.
+      source.markThreadAsRead("s1", 1000L)
+      val afterOpen = source.listThreadsFromClosedProject(path = "/any")
+      assertThat(afterOpen.single().activity).isEqualTo(AgentThreadActivity.READY)
+
+      // Thread updates while user is elsewhere → UNREAD.
       currentThreads = listOf(
         ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L),
       )
@@ -66,14 +92,19 @@ class ClaudeSessionSourceTest {
     runBlocking(Dispatchers.Default) {
       source.listThreadsFromClosedProject(path = "/any")
 
-      // Bump updatedAt → UNREAD.
+      // Open → track. Refresh consumes the sentinel at updatedAt=1000.
+      source.markThreadAsRead("s1", 1000L)
+      val afterRead = source.listThreadsFromClosedProject(path = "/any")
+      assertThat(afterRead.single().activity).isEqualTo(AgentThreadActivity.READY)
+
+      // Backend updates while user is elsewhere → UNREAD.
       currentThreads = listOf(
         ClaudeBackendThread(id = "s1", title = "Session 1", updatedAt = 2000L),
       )
       val unread = source.listThreadsFromClosedProject(path = "/any")
       assertThat(unread.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
 
-      // Mark as read.
+      // Mark as read again → READY.
       source.markThreadAsRead("s1", 2000L)
       val readAgain = source.listThreadsFromClosedProject(path = "/any")
       assertThat(readAgain.single().activity).isEqualTo(AgentThreadActivity.READY)
@@ -92,6 +123,7 @@ class ClaudeSessionSourceTest {
 
     runBlocking(Dispatchers.Default) {
       source.listThreadsFromClosedProject(path = "/any")
+      source.markThreadAsRead("s1", 1000L)
 
       // Even with increased updatedAt, PROCESSING wins.
       currentThreads = listOf(
@@ -149,6 +181,7 @@ class ClaudeSessionSourceTest {
       assertThat(result).isNotNull()
     }
   }
+
   @Test
   fun activeThreadIsAutoAdvancedDuringRefresh() {
     var currentThreads = listOf(
@@ -160,7 +193,6 @@ class ClaudeSessionSourceTest {
     val source = ClaudeSessionSource(backend = backend)
 
     runBlocking(Dispatchers.Default) {
-      // First load seeds the read tracker.
       source.listThreadsFromClosedProject(path = "/any")
       source.markThreadAsRead("s1", 1000L)
 
@@ -179,6 +211,7 @@ class ClaudeSessionSourceTest {
       assertThat(afterSwitch.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
     }
   }
+
   @Test
   fun setActiveBeforeMarkReadPreventsStaleUnread() {
     var currentThreads = listOf(
@@ -190,7 +223,6 @@ class ClaudeSessionSourceTest {
     val source = ClaudeSessionSource(backend = backend)
 
     runBlocking(Dispatchers.Default) {
-      // First load seeds the read tracker at updatedAt=1000.
       source.listThreadsFromClosedProject(path = "/any")
 
       // Simulate openChatThread: setActive then markAsRead with the snapshot's updatedAt (1000).
@@ -219,7 +251,6 @@ class ClaudeSessionSourceTest {
     val source = ClaudeSessionSource(backend = backend)
 
     runBlocking(Dispatchers.Default) {
-      // First load seeds the read tracker at updatedAt=1000.
       source.listThreadsFromClosedProject(path = "/any")
 
       // Simulate openChatThread: set active + mark as read.

@@ -34,9 +34,6 @@ class ClaudeSessionSource(
       if (thread.id == currentActiveId || readTracker[thread.id] == MARKED_AS_READ) {
         readTracker[thread.id] = thread.updatedAt
       }
-      else {
-        readTracker.putIfAbsent(thread.id, thread.updatedAt)
-      }
     }
     return backendThreads.map { it.toAgentSessionThread(readTracker) }
   }
@@ -63,7 +60,7 @@ private fun ClaudeBackendThread.toAgentSessionThread(readTracker: Map<String, Lo
 
 private fun ClaudeBackendThread.effectiveActivity(readTracker: Map<String, Long>): AgentThreadActivity {
   if (activity == ClaudeSessionActivity.PROCESSING) return AgentThreadActivity.PROCESSING
-  val lastSeenAt = readTracker[id]
-  if (lastSeenAt == null || updatedAt > lastSeenAt) return AgentThreadActivity.UNREAD
+  val lastSeenAt = readTracker[id] ?: return AgentThreadActivity.READY
+  if (updatedAt > lastSeenAt) return AgentThreadActivity.UNREAD
   return AgentThreadActivity.READY
 }
