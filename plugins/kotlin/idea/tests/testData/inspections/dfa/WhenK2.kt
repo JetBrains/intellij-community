@@ -47,7 +47,7 @@ fun whenIs(obj : Any?) {
     }
     if (obj is X) {
         when(obj) {
-            <warning descr="[USELESS_IS_CHECK] Check for instance is always 'false'.">is Y</warning> -> {}
+            <warning descr="[IMPOSSIBLE_IS_CHECK_WARNING] Check for instance is always 'false'. This will become an error in language version 2.4. See https://youtrack.jetbrains.com/issue/KTLC-365.">is Y</warning> -> {}
         }
     }
 }

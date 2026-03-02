@@ -13,7 +13,7 @@ inline fun <reified T: Number> number(t: T) {
     // Cannot say anything
     if (x is T) {}
     x = "hello"
-    if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'false'.">x is T</warning>) {}
+    if (<warning descr="[IMPOSSIBLE_IS_CHECK_WARNING] Check for instance is always 'false'. This will become an error in language version 2.4. See https://youtrack.jetbrains.com/issue/KTLC-365.">x is T</warning>) {}
 }
 
 // Non-reified
