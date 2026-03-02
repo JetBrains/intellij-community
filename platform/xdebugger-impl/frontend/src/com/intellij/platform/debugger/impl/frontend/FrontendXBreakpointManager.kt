@@ -196,6 +196,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     }
     val type = FrontendXBreakpointTypesManager.getInstance(project).getTypeById(breakpointDto.typeId) ?: return null
     val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this)
+    (newBreakpoint as? FrontendXLineBreakpointProxy)?.registerInManager(updateUI)
     newBreakpoint.installListener {
       breakpointsChanged.tryEmit(Unit)
       if (newBreakpoint is XLineBreakpointProxy) {
@@ -207,11 +208,11 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     }
     val previousBreakpoint = breakpoints.putIfAbsent(breakpointDto.id, newBreakpoint)
     if (previousBreakpoint != null) {
+      (newBreakpoint as? FrontendXLineBreakpointProxy)?.unregisterInManager()
       newBreakpoint.dispose()
       log.debug { "Breakpoint creation skipped for ${breakpointDto.id}, because it is already created" }
       return previousBreakpoint
     }
-    (newBreakpoint as? FrontendXLineBreakpointProxy)?.registerInManager(updateUI)
     log.debug { "Breakpoint created for ${breakpointDto.id}" }
     breakpointsChanged.tryEmit(Unit)
     return newBreakpoint
