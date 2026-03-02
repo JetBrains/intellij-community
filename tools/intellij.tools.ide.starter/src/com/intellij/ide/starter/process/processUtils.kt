@@ -145,6 +145,11 @@ suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo, runContext:
     return parentProcessInfo.pid
   }
 
+  if (parentProcessInfo.isIde(runContext)) {
+    logOutput("Parent process is an IDE process itself (was launched without wrapper)")
+    return parentProcessInfo.pid
+  }
+
   logOutput("Guessing IDE process ID on Linux: \n${parentProcessInfo.description}")
   val attemptsResult = withRetry(retries = 100,
                                  delay = 3.seconds,
@@ -170,11 +175,6 @@ private fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: IDERunCo
     throw NoRetryException("Couldn't guess IDE process: parent process is not alive", null)
   }
   logOutput("Guessing IDE process ID on Linux (pid of the IDE process wrapper ${parentProcessInfo.pid})")
-
-  if (parentProcessInfo.isIde(runContext)) {
-    logOutput("Parent process is an IDE process itself (was launched without wrapper)")
-    return parentProcessInfo.pid
-  }
 
   val suitableChildren = SystemInfo().operatingSystem.getChildProcesses(
     parentProcessInfo.pid.toInt(),
