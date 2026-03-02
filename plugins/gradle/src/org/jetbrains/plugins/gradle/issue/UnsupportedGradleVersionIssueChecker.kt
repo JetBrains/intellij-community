@@ -88,11 +88,12 @@ private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, proje
     }
     else {
       addDescription(GradleBundle.message("gradle.build.issue.gradle.unsupported.description", gradleVersion.version))
-      addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
-      addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
-      if (oldestSupportedGradleVersion < recommendedGradleVersion) {
+      if (gradleVersion < oldestSupportedGradleVersion) {
         addDescription(GradleBundle.message("gradle.build.issue.gradle.supported.description", oldestSupportedGradleVersion.version))
         addGradleVersionQuickFix(projectPath, oldestSupportedGradleVersion)
+      } else if (gradleVersion < recommendedGradleVersion) {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
+        addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
       }
     }
   }
