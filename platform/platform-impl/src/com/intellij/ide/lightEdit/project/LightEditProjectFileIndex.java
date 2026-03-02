@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.impl.RootDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
@@ -179,4 +180,14 @@ final class LightEditProjectFileIndex implements ProjectFileIndex {
 
   @Override
   public @Nullable VirtualFile getWorkspaceContentFileSetRoot(@NotNull VirtualFile fileOrDir) { return null; }
+
+  @Override
+  public @Nullable VirtualFile getModuleSourceOrLibraryClassesRoot(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @Override
+  public @NotNull Collection<RootDescriptor> getModuleSourceOrLibraryClassesRoots(@NotNull VirtualFile file) {
+    return List.of();
+  }
 }

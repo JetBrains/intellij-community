@@ -4,6 +4,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.RootDescriptor;
 import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
@@ -233,4 +234,10 @@ public interface ProjectFileIndex extends FileIndex {
   @ApiStatus.Internal
   @IntellijInternalApi
   @Nullable VirtualFile getWorkspaceContentFileSetRoot(@NotNull VirtualFile fileOrDir);
+
+  @ApiStatus.Internal
+  @Nullable VirtualFile getModuleSourceOrLibraryClassesRoot(@NotNull VirtualFile file);
+
+  @ApiStatus.Internal
+  @NotNull Collection<RootDescriptor> getModuleSourceOrLibraryClassesRoots(@NotNull VirtualFile file);
 }

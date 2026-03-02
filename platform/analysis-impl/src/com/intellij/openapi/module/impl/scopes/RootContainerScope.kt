@@ -13,11 +13,11 @@ import com.intellij.openapi.projectRoots.SdkContext
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.roots.impl.LibraryRootDescriptor
 import com.intellij.openapi.roots.impl.ModuleRootDescriptor
-import com.intellij.openapi.roots.impl.ProjectFileIndexImpl
 import com.intellij.openapi.roots.impl.RootDescriptor
 import com.intellij.openapi.roots.impl.SdkRootDescriptor
 import com.intellij.openapi.roots.libraries.LibraryContext
@@ -47,7 +47,7 @@ abstract class RootContainerScope internal constructor(
 
   private val mySingleFileSourcesTracker: SingleFileSourcesTracker = SingleFileSourcesTracker.getInstance(project)
 
-  protected val myProjectFileIndex: ProjectFileIndexImpl = ProjectRootManager.getInstance(project).getFileIndex() as ProjectFileIndexImpl
+  protected val myProjectFileIndex: ProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex()
 
   internal abstract val mainModules: Collection<Module>
 
