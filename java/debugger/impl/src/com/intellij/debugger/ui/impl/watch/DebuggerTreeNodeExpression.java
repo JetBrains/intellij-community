@@ -114,7 +114,7 @@ public final class DebuggerTreeNodeExpression {
     String typeName = type.getCanonicalText();
     try {
       PsiParenthesizedExpression parenthExpression = (PsiParenthesizedExpression)elementFactory.createExpressionFromText(
-        "((" + typeName + ")expression)", null); // todo we cannot create a Psi Expression right here, as it will; be an incorrect opration exception
+        "((" + typeName + ")expression)", null);
       //noinspection ConstantConditions
       ((PsiTypeCastExpression)parenthExpression.getExpression()).getOperand().replace(expression);
       Set<String> imports = expression.getUserData(ADDITIONAL_IMPORTS_KEY);
