@@ -298,9 +298,9 @@ private class ContextRulesConfigInDir(
 
 private fun loadContextFilesConfiguration(directory: VirtualFile): ContextFileConfigInDir {
   val dependencies = mutableListOf<Any>(VFS_STRUCTURE_MODIFICATIONS)
-  val contexts = generateSequence(Pair(directory, 0)) { (dir, proximity) -> dir.parent?.let { Pair(it, proximity - 1) } }
+  val contexts = generateSequence(Pair(directory, 0)) { (dir, proximity) -> dir.parent?.takeIf { it.isValid }?.let { Pair(it, proximity - 1) } }
     .flatMap { (dir, proximity) ->
-      dir.findFile(PolyContext.POLY_SYMBOLS_CONTEXT_FILE)
+      dir.takeIf { it.isValid }?.findFile(PolyContext.POLY_SYMBOLS_CONTEXT_FILE)
         ?.let {
           dependencies.add(it)
           PolyContextFileData.getOrCreate(it)
