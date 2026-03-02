@@ -1030,10 +1030,29 @@ public class JavaDocInfoGenerator {
       generateRefList(buffer, aClass, generateLink, refs, "implements");
       buffer.append('\n');
     }
+
+    refs = getPermitsListTypesSafe(aClass);
+    if (refs.length > 0) {
+      generateRefList(buffer, aClass, generateLink, refs, "permits");
+      buffer.append('\n');
+    }
+
     if (buffer.charAt(buffer.length() - 1) == '\n') {
       buffer.setLength(buffer.length() - 1);
     }
     return false;
+  }
+
+  /// FIXME (mbo): Kotlin ULC should not throw an UnsupportedException
+  ///
+  /// @see <a href="https://youtrack.jetbrains.com/issue/KTIJ-34752/">KTIJ-34752</a>
+  private static PsiClassType @NotNull [] getPermitsListTypesSafe(PsiClass aClass) {
+    try {
+      return aClass.getPermitsListTypes();
+    }
+    catch (UnsupportedOperationException e) {
+      return PsiClassType.EMPTY_ARRAY;
+    }
   }
 
   private void generateTypeParameterSignature(StringBuilder buffer, PsiTypeParameter parameter, SignaturePlace place) {

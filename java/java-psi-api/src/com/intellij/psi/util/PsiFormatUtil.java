@@ -356,6 +356,14 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
          ? list.hasExplicitModifier(PsiModifier.ABSTRACT)
          : list.hasModifierProperty(PsiModifier.ABSTRACT))) appendModifier(buffer, PsiModifier.ABSTRACT);
 
+    if (list.hasExplicitModifier(PsiModifier.SEALED)) {
+      appendModifier(buffer, PsiModifier.SEALED);
+    }
+
+    if (list.hasExplicitModifier(PsiModifier.NON_SEALED)) {
+      appendModifier(buffer, PsiModifier.NON_SEALED);
+    }
+
     if (!BitUtil.isSet(options, SHOW_REDUNDANT_MODIFIERS)
         ? list.hasExplicitModifier(PsiModifier.FINAL)
         : list.hasModifierProperty(PsiModifier.FINAL)) {
