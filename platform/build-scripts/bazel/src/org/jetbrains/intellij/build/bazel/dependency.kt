@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
@@ -278,7 +278,12 @@ internal fun generateDeps(
           }
           val targetName = camelToSnakeCase(escapeBazelLabel(name = rawTargetName.removeSuffix("-final").removeSuffix(".Final")))
 
-          var libraryContainer = context.getLibraryContainer(module.isCommunity)
+          // always use kotlinc libraries from community to reduce the noise on `kt-master` merge
+          // `kotlin.util.compiler-dependencies` module guaranties that all kotlinc libraries are used in the community part
+          val isKotlincLib = jpsLibrary.name.startsWith("kotlinc.")
+          val isCommunityOrKotlinc = module.isCommunity || isKotlincLib
+
+          var libraryContainer = context.getLibraryContainer(isCommunityOrKotlinc)
 
           // we process community modules first, so, `addOrGet` (library equality ignores `isCommunity` flag)
           libraryContainer = context.addMavenLibrary(
@@ -293,9 +298,9 @@ internal fun generateDeps(
           ).target.container
 
           val containerForLabel = if (isProvided) {
-            // provided libraries for ultimate are defined in ultimate
+            // provided libraries for ultimate are defined in ultimate, but not kotlinc.* as per ^^
             // provided libraries for community are defined in community
-            context.getLibraryContainer(module.isCommunity)
+            context.getLibraryContainer(isCommunityOrKotlinc)
           }
           else {
             // libraries (not provided) used both in ultimate & community are defined in community
