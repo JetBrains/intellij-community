@@ -37,6 +37,8 @@ class StandardLibrarySupport : JvmLibrarySupportBase() {
                                      BreakpointBasedFilterOperation("skip"),
                                      BreakpointBasedFilterOperation("peek"),
                                      BreakpointBasedFilterOperation("onClose"),
+                                     BreakpointBasedFilterOperation("takeWhile"),
+                                     BreakpointBasedFilterOperation("dropWhile"),
                                      BreakpointBasedMappingOperation("map"),
                                      BreakpointBasedMappingOperation("mapToInt"),
                                      BreakpointBasedMappingOperation("mapToLong"),
