@@ -24,6 +24,7 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.net.URI
+import java.net.UnknownHostException
 import java.net.http.HttpResponse
 import java.util.concurrent.atomic.AtomicReference
 
@@ -103,7 +104,20 @@ open class CloudConfigServerCommunicator(private val serverUrl: String?, private
     else {
       LOG.error(e)
     }
-    return e.message ?: defaultMessage
+    return customizeErrorMessage(e) ?: defaultMessage
+  }
+
+  private fun customizeErrorMessage(e: Throwable): String? {
+    if (e is UnknownHostException) {
+      val message = e.message
+      if (message != null) {
+        return SettingsSyncJbaBundle.message("unknown.host.error.message.with.additional.message", message)
+      }
+
+      return SettingsSyncJbaBundle.message("unknown.host.error.message")
+    }
+
+    return e.message
   }
 
   fun downloadSnapshot(filePath: String, version: FileVersionInfo): InputStream? {
