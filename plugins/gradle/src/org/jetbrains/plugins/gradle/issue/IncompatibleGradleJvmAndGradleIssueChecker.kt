@@ -146,7 +146,6 @@ private class IncompatibleGradleJvmAndGradleBuildIssue(
     val latestCompatibleJavaVersion = gradleVersion?.let { GradleJvmSupportMatrix.suggestLatestSupportedJavaVersion(it) }
     val oldestCompatibleGradleVersion = javaVersion?.let { GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(it) }
     val latestCompatibleGradleVersion = javaVersion?.let { GradleJvmSupportMatrix.suggestLatestSupportedGradleVersion(it) }
-    val recommendedGradleVersion = GradleJvmSupportMatrix.getRecommendedGradleVersionByIdea()
     setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.incompatible.title"))
     when {
       javaVersion == null -> {
@@ -160,22 +159,6 @@ private class IncompatibleGradleJvmAndGradleBuildIssue(
       }
     }
     when {
-      gradleVersion != null && oldestCompatibleGradleVersion != null && gradleVersion < oldestCompatibleGradleVersion -> {
-        if (gradleVersion < recommendedGradleVersion && GradleJvmSupportMatrix.isSupported(recommendedGradleVersion, javaVersion)) {
-          addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
-          addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
-        }
-        if (oldestCompatibleGradleVersion < recommendedGradleVersion) {
-          addDescription(GradleBundle.message("gradle.build.issue.gradle.compatible.minimum.description", oldestCompatibleGradleVersion.version))
-          addGradleVersionQuickFix(projectPath, oldestCompatibleGradleVersion)
-        }
-      }
-      gradleVersion != null && latestCompatibleGradleVersion != null && gradleVersion > latestCompatibleGradleVersion -> {
-        addDescription(GradleBundle.message("gradle.build.issue.gradle.compatible.maximum.description", latestCompatibleGradleVersion.version))
-        addGradleVersionQuickFix(projectPath, latestCompatibleGradleVersion)
-      }
-    }
-    when {
       javaVersion != null && oldestCompatibleJavaVersion != null && javaVersion < oldestCompatibleJavaVersion -> {
         addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.compatible.minimum.description", oldestCompatibleJavaVersion))
         addGradleJvmQuickFix(projectPath, oldestCompatibleJavaVersion)
@@ -183,6 +166,16 @@ private class IncompatibleGradleJvmAndGradleBuildIssue(
       javaVersion != null && latestCompatibleJavaVersion != null && javaVersion > latestCompatibleJavaVersion -> {
         addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.compatible.maximum.description", latestCompatibleJavaVersion))
         addGradleJvmQuickFix(projectPath, latestCompatibleJavaVersion)
+      }
+    }
+    when {
+      gradleVersion != null && oldestCompatibleGradleVersion != null && gradleVersion < oldestCompatibleGradleVersion -> {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.compatible.minimum.description", oldestCompatibleGradleVersion.version))
+        addGradleVersionQuickFix(projectPath, oldestCompatibleGradleVersion)
+      }
+      gradleVersion != null && latestCompatibleGradleVersion != null && gradleVersion > latestCompatibleGradleVersion -> {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.compatible.maximum.description", latestCompatibleGradleVersion.version))
+        addGradleVersionQuickFix(projectPath, latestCompatibleGradleVersion)
       }
     }
   }
