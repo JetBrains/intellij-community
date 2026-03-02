@@ -24,5 +24,7 @@
                     dynamic="false"/>
     <extensionPoint qualifiedName="com.intellij.xdebugger.xTextValueModificationPreparatorProvider" interface="com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.breakpointBehaviorPolicy" interface="com.intellij.xdebugger.XBreakpointBehaviorPolicy"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
