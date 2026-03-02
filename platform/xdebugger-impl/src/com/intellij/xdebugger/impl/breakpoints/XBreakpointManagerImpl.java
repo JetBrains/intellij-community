@@ -31,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.BreakpointErrorData;
 import com.intellij.xdebugger.SplitDebuggerMode;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -291,6 +292,22 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   public void fireBreakpointPresentationUpdated(XBreakpoint<?> breakpoint, @Nullable XDebugSession session) {
     if (isRegistered(breakpoint)) {
       sendBreakpointEvent(breakpoint.getType(), listener -> listener.breakpointPresentationUpdated(breakpoint, session));
+    }
+  }
+
+  public void fireBreakpointError(@NotNull XBreakpoint<?> breakpoint,
+                                  @NotNull XDebugSession session,
+                                  @NotNull BreakpointErrorData error) {
+    if (isRegistered(breakpoint)) {
+      sendBreakpointEvent(breakpoint.getType(), listener -> listener.breakpointError(breakpoint, session, error));
+    }
+  }
+
+  public void fireBreakpointLogMessage(@NotNull XBreakpoint<?> breakpoint,
+                                       @NotNull XDebugSession session,
+                                       @NotNull String message) {
+    if (isRegistered(breakpoint)) {
+      sendBreakpointEvent(breakpoint.getType(), listener -> listener.breakpointLogMessage(breakpoint, session, message));
     }
   }
 

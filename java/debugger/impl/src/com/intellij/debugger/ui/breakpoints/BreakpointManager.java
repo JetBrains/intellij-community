@@ -47,6 +47,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -694,5 +695,10 @@ public class BreakpointManager {
 
   void multicastLogMessage(Breakpoint<?> breakpoint, String message, DebugProcessImpl debugProcess) {
     myLogMessageDispatcher.getMulticaster().onLogMessage(breakpoint, message, debugProcess);
+    XDebugSession session = debugProcess.getSession().getXDebugSession();
+    XBreakpointManagerImpl manager = XDebuggerManager.getInstance(myProject).getBreakpointManager() instanceof XBreakpointManagerImpl managerImpl ? managerImpl : null;
+    if (session != null && manager != null) {
+      manager.fireBreakpointLogMessage(breakpoint.getXBreakpoint(), session, message);
+    }
   }
 }
