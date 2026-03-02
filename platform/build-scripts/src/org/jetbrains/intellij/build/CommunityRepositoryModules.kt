@@ -235,11 +235,6 @@ object CommunityRepositoryModules {
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
     pluginAuto(listOf("intellij.lombok", "intellij.lombok.generated")),
-    plugin("intellij.platform.testFramework.ui") { spec ->
-      spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
-      spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
-      spec.withProjectLibrary("okhttp")
-    },
     pluginAuto(listOf("intellij.performanceTesting")),
     pluginAuto(listOf("intellij.performanceTesting.ui")),
     pluginAuto(listOf("intellij.vcs.github")),
