@@ -734,6 +734,8 @@ jvm_library(
     "//xml/relaxng:relaxng-tests_test_lib",
     "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage",
     "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage_test_lib",
+    "//plugins/rareJavaRefactorings:java-rareRefactorings",
+    "//plugins/rareJavaRefactorings:java-rareRefactorings_test_lib",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main.tests` end
