@@ -8,6 +8,7 @@ import com.intellij.util.io.delete
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.io.InputStream
+import java.net.UnknownHostException
 import java.util.UUID
 import kotlin.io.path.inputStream
 
@@ -148,8 +149,21 @@ abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disp
       return SettingsSyncPushResult.Rejected
     }
     catch (e: Throwable) {
-      return SettingsSyncPushResult.Error(e.message ?: defaultMessage)
+      return SettingsSyncPushResult.Error(customizeErrorMessage(e) ?: defaultMessage)
     }
+  }
+
+  protected fun customizeErrorMessage(e: Throwable): String? {
+    if (e is UnknownHostException) {
+      val message = e.message
+      if (message != null) {
+        return SettingsSyncBundle.message("unknown.host.error.message.with.additional.message", message)
+      }
+
+      return SettingsSyncBundle.message("unknown.host.error.message")
+    }
+
+    return e.message
   }
 
   override fun checkServerState(): ServerState {
