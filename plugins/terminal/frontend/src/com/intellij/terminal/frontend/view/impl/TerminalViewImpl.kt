@@ -378,7 +378,7 @@ class TerminalViewImpl(
 
   override suspend fun hasChildProcesses(): Boolean {
     val session = sessionFuture.getNow(null) ?: return false
-    return withContext(Dispatchers.IO) {
+    return withContext(Dispatchers.Default) {
       session.hasRunningCommands()
     }
   }

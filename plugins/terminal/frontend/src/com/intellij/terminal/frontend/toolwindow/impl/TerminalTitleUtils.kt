@@ -48,15 +48,13 @@ internal fun updateBackendTabNameOnTitleChange(
   scope: CoroutineScope,
 ) {
   title.addListener(scope) {
-    withContext(Dispatchers.IO) {
-      durable {
-        TerminalTabsManagerApi.getInstance().renameTerminalTab(
-          project.projectId(),
-          backendTabId,
-          it.text,
-          it.isUserDefined
-        )
-      }
+    durable {
+      TerminalTabsManagerApi.getInstance().renameTerminalTab(
+        project.projectId(),
+        backendTabId,
+        it.text,
+        it.isUserDefined
+      )
     }
   }
 }

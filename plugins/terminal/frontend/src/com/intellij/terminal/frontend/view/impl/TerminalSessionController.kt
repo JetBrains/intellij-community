@@ -52,7 +52,7 @@ internal class TerminalSessionController(
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
 
   fun handleEvents(session: TerminalSession) {
-    coroutineScope.launch(Dispatchers.IO + CoroutineName("Output flow collection")) {
+    coroutineScope.launch(CoroutineName("Output flow collection")) {
       // Get output flow again even if it was terminated.
       // It can happen in case of RemDev if there were any connection problems and backend decided to terminate the flow.
       while (!session.isClosed) {
