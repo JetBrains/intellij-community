@@ -155,10 +155,6 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
   private fun emptyConstraints(method: PsiMethod) = StandardMethodContract.createConstraintArray(
     method.parameterList.parametersCount)
 
-  private fun returnNotNull(mc: StandardMethodContract): StandardMethodContract {
-    return if (mc.returnValue.isFail) mc else mc.withReturnValue(ContractReturnValue.returnNotNull())
-  }
-
   private fun getLiteralConstraint(argument: PsiExpression) = when (argument) {
     is PsiLiteralExpression -> ContractInferenceInterpreter.getLiteralConstraint(
       argument.getFirstChild().node.elementType)
