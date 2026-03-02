@@ -1,0 +1,18 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.assertj.core"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.module.kotlin"/>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.kotlinTestAssertionsCoreJvm"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.tools.ide.util.common"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>
