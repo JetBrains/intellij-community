@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -49,7 +49,7 @@ record CommandMergerFlushReason(
       new Command(
         nextCommandId,
         nextCommandName,
-        nextGroupId,
+        nextGroupId == null ? null : new WeakReference<>(nextGroupId),
         isNextTransparent,
         isNextGlobal
       )
@@ -81,7 +81,7 @@ record CommandMergerFlushReason(
     @Override
     public String toString() {
       var str = new ArrayList<@Nullable Object>(3);
-      str.add((commandName == null) ? null : ("'" + commandName + "''"));
+      str.add((commandName == null) ? null : ("'" + commandName + "'"));
       str.add((groupId instanceof Reference<?> ref) ? SoftReference.dereference(ref) : groupId);
       if (commandId != null) {
         str.add(commandId);
