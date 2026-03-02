@@ -74,6 +74,10 @@ interface TerminalView {
    * Events consumed by the action system are not included here.
    *
    * Each key event is emitted after sending input to the shell process.
+   * Your collector will receive the event asynchronously with the rest of Swing key events handling logic,
+   * so the state of [java.awt.event.KeyEvent.isConsumed] is undefined and shouldn't be taken into account.
+   * Also, [java.awt.event.KeyEvent.consume] shouldn't be called.
+   *
    * Note that [TerminalOutputModel] is updated asynchronously after shell receives the input and updates the screen text.
    * So, when collecting this flow, the result of typing may not be reflected in the [TerminalOutputModel] yet.
    *
