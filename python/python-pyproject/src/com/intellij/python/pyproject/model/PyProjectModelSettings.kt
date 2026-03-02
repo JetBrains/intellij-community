@@ -15,6 +15,7 @@ import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.A
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.OFF
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ON
 import com.intellij.python.pyproject.model.internal.autoImportBridge.PyProjectAutoImportService
+import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 
 
 @Service(Service.Level.PROJECT)
@@ -44,6 +45,7 @@ class PyProjectModelSettings(private val project: Project) :
           }
           else {
             stop()
+            PyProjectTomlCollector.pyProjectBasedModelUnchecked()
           }
         }
       }

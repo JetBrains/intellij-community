@@ -16,6 +16,7 @@ import com.intellij.python.pyproject.model.PyProjectModelSettings
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ASK
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.OFF
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ON
+import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import org.jetbrains.annotations.Nls
 
 private const val NOTIFICATION_GROUP_ID = "PyProject.toml"
@@ -80,11 +81,14 @@ private fun showNotification(project: Project, settings: PyProjectModelSettings)
     .addAction(NotificationAction.createSimpleExpiring(PyProjectTomlBundle.message("pyproject.notification.configure")) {
       settings.usePyprojectToml = true
       settings.showConfigurationNotification = false
+      PyProjectTomlCollector.setupNotificationConfigureClicked()
     })
     .addAction(NotificationAction.createSimpleExpiring(PyProjectTomlBundle.message("pyproject.notification.dont.show.again")) {
       settings.showConfigurationNotification = false
+      PyProjectTomlCollector.setupNotificationDismissClicked()
     })
     .notify(project)
+  PyProjectTomlCollector.setupNotificationShown()
 }
 
 private class FullContentNotification(groupId: String, @Nls title: String, @Nls content: String, type: NotificationType) :

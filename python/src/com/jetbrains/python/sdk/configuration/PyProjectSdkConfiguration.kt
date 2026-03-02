@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.intellij.ui.EditorNotifications
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonPluginDisposable
@@ -84,6 +85,8 @@ object PyProjectSdkConfiguration {
       ShowingMessageErrorSync.emit(it.error, module.project)
       return@withContext true
     }
+
+    PyProjectTomlCollector.sdkCreatedFromNotification(sdk, createSdkInfoWithTool.toolId)
 
     setReadyToUseSdk(module.project, module, sdk)
     thisLogger().debug("Successfully configured sdk using ${createSdkInfoWithTool.toolId}")

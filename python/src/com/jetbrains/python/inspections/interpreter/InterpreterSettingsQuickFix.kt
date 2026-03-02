@@ -19,6 +19,7 @@ import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.model.api.ModuleCreateInfo
 import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.intellij.psi.PsiFile
+import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
@@ -146,6 +147,7 @@ private suspend fun Module.getQuickFixBySdkSuggestion(i: ModuleCreateInfo?): Fin
             pythonSdk = sdk // SDK can't be null
             project.pySdkService.persistSdk(sdk)
             sdk.setAssociationToModule(this)
+            PyProjectTomlCollector.sdkCreatedAutomatically(sdk, i.toolId)
             FindQuickFixResult.SdkAppliedAutomatically(sdk)
           }
         }
