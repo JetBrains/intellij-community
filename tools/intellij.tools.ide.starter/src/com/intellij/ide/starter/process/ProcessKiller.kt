@@ -8,6 +8,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -26,24 +29,26 @@ object ProcessKiller {
     processInfosToKill: List<ProcessInfo>,
     workDir: Path? = null,
     timeout: Duration = 1.minutes,
-  ): Boolean {
+  ): Boolean = coroutineScope {
     check(processInfosToKill.isNotEmpty())
     val results = processInfosToKill.map { processInfo ->
-      if (processInfo.processHandle != null) {
-        if (!killProcessUsingHandle(processInfo.processHandle, timeout)) {
-          killProcessUsingCommandLine(processInfo.pid, workDir, timeout)
+      async {
+        if (processInfo.processHandle != null) {
+          if (!killProcessUsingHandle(processInfo.processHandle, timeout)) {
+            killProcessUsingCommandLine(processInfo.pid, workDir, timeout)
+          }
+          else {
+            true
+          }
         }
         else {
+          // According to the Doc, a process handle is null only for the non-existing processes
           true
         }
       }
-      else {
-        // According to the Doc, a process handle is null only for the non-existing processes
-        true
-      }
     }
 
-    return results.all { it }
+    results.awaitAll().all { it }
   }
 
   /**

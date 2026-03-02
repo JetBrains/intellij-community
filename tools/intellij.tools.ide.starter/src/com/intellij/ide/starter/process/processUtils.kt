@@ -13,11 +13,13 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetry
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import oshi.SystemInfo
 import oshi.software.os.OSProcess
-import oshi.software.os.OperatingSystem
 import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -29,17 +31,23 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTimedValue
 
+suspend fun getProcessList(): List<ProcessInfo> =
+  coroutineScope {
+    val processes = withContext(Dispatchers.IO) {
+      SystemInfo().operatingSystem.getProcesses({ p -> p.state != OSProcess.State.INVALID }, null, 0)
+    }
+    processes
+      .map { async { it.toProcessInfo() } }
+      .awaitAll()
+  }
+
 suspend fun getProcessList(vararg substringToSearch: String): List<ProcessInfo> =
-  getProcessList { p ->
+  getProcessList().filter { p ->
     substringToSearch.isEmpty() || p.arguments.any { arg -> substringToSearch.any { arg.contains(it) } }
   }
 
-suspend fun getProcessList(filter: Predicate<ProcessInfo>): List<ProcessInfo> = withContext(Dispatchers.IO) {
-  SystemInfo().operatingSystem.getProcesses({ p -> p.state != OSProcess.State.INVALID && filter.test(ProcessInfo.create(p.processID.toLong())) },
-                                            null,
-                                            0)
-    .map { it.toProcessInfo() }
-}
+suspend fun getProcessList(filter: Predicate<ProcessInfo>): List<ProcessInfo> =
+  getProcessList().filter(filter::test)
 
 /**
  * Identifies and terminates any leftover processes from previous test runs, specifically those
@@ -200,26 +208,16 @@ private suspend fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: 
 
   logOutput("Guessing IDE process ID on Linux (pid of the IDE process wrapper ${parentProcessInfo.pid})")
 
-  val suitableChildren = withContext(Dispatchers.IO) {
-    SystemInfo().operatingSystem.getChildProcesses(
-      parentProcessInfo.pid.toInt(),
-      { ProcessInfo.create(it.processID.toLong()).isIde(runContext) },
-      OperatingSystem.ProcessSorting.UPTIME_DESC,
-      0
-    ).map { it.toProcessInfo() }
+  val suitableChildren = getProcessList().filter { processInfo ->
+    processInfo.parentPid == parentProcessInfo.pid && processInfo.isIde(runContext)
   }
 
   if (suitableChildren.isEmpty()) {
     throw Exception("There are no suitable candidates for IDE process\n" +
                     "All children: \n" +
-                    withContext(Dispatchers.IO) {
-                      SystemInfo().operatingSystem.getChildProcesses(
-                        parentProcessInfo.pid.toInt(),
-                        null,
-                        OperatingSystem.ProcessSorting.UPTIME_DESC,
-                        0
-                      ).joinToString("\n") { it.toProcessInfo().description }
-                    })
+                    getProcessList()
+                      .filter { it.parentPid == parentProcessInfo.pid }
+                      .joinToString("\n") { it.description })
   }
 
   if (suitableChildren.size > 1) {
