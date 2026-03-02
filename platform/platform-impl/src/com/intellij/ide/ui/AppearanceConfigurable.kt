@@ -771,8 +771,8 @@ private fun createAAListCellRenderer(myUseEditorFont: Boolean): ListCellRenderer
       renderingHints = mapOf(RenderingHints.KEY_TEXT_ANTIALIASING to aaHint)
 
       if (myUseEditorFont) {
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        font = UIUtil.getFontWithFallback(scheme.getFont(EditorFontType.PLAIN))
+        val editorFont = EditorFontType.getGlobalPlainFont()
+        font = UIUtil.getFontWithFallback(editorFont.deriveFont(UISettingsUtils.getInstance().scaledEditorFontSize))
       }
     }
   }

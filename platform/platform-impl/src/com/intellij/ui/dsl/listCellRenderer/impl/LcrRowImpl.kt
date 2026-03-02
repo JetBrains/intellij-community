@@ -67,6 +67,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   private var separator: LcrSeparatorImpl? = null
   private var gap = LcrRow.Gap.DEFAULT
 
+  @Deprecated("Will be removed because we want to get rid of swing dependency for RemDev")
   override val list: JList<out T>
     get() = listCellRendererParams!!.list
   override val value: T
@@ -81,7 +82,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   override var background: Color? = null
   override var selectionColor: Color? = null
   override var toolTipText: @NlsContexts.Tooltip String? = null
-  override var rowHeight: Int? = JBUI.CurrentTheme.List.rowHeight()
+  override var rowHeight: Int? = null
   override var rowWidth: Int? = null
   override var uiInspectorContext: List<PropertyBean>? = null
 
@@ -142,6 +143,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     separator = null
     gap = LcrRow.Gap.DEFAULT
     listCellRendererParams = ListCellRendererParams(list, value, index, isSelected, cellHasFocus)
+    rowHeight = JBUI.CurrentTheme.List.rowHeight()
 
     val renderingType = getRenderingType(list, index)
     // The list is not focused when isSwingPopup = false
