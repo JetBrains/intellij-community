@@ -1,5 +1,4 @@
-a instanceof b
- c
+a instanceof b c?.
 -----
 Groovy script
   Instanceof expression
@@ -11,6 +10,11 @@ Groovy script
     Type element
       Reference element
         PsiElement(identifier)('b')
-  PsiElement(new line)('\n ')
+  PsiErrorElement:';' or new line expected, got 'c'
+    <empty list>
+  PsiWhiteSpace(' ')
   Reference expression
     PsiElement(identifier)('c')
+  PsiElement(?.)('?.')
+  PsiErrorElement:<property selector> expected
+    <empty list>

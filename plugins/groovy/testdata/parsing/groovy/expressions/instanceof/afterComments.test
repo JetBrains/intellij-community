@@ -1,5 +1,4 @@
-a instanceof b
- c
+a instanceof b c // comment
 -----
 Groovy script
   Instanceof expression
@@ -11,6 +10,8 @@ Groovy script
     Type element
       Reference element
         PsiElement(identifier)('b')
-  PsiElement(new line)('\n ')
-  Reference expression
-    PsiElement(identifier)('c')
+    PsiWhiteSpace(' ')
+    GrPatternVariableImpl(PATTERN_VARIABLE)
+      PsiElement(identifier)('c')
+  PsiWhiteSpace(' ')
+  PsiComment(line comment)('// comment')
