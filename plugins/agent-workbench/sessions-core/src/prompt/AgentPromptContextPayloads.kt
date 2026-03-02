@@ -7,7 +7,6 @@ object AgentPromptContextRendererIds {
   const val SYMBOL: String = "symbol"
   const val PATHS: String = "paths"
   const val VCS_REVISIONS: String = "vcsRevisions"
-  const val TEST_FAILURES: String = "testFailures"
 }
 
 object AgentPromptPayload {

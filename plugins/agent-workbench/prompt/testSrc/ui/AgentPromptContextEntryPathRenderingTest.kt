@@ -4,14 +4,8 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.agent.workbench.prompt.vcs.render.AgentPromptVcsRevisionsContextRendererBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRenderers
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptFileContextRendererBridge
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPathsContextRendererBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSnippetContextRendererBridge
-import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptSymbolContextRendererBridge
-import com.intellij.agent.workbench.sessions.core.prompt.InMemoryAgentPromptContextRendererRegistry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -151,19 +145,7 @@ class AgentPromptContextEntryPathRenderingTest {
   }
 
   @Test
-  fun snippetChipShowsTitleOnly() = withBuiltinRenderers {
-    val entry = contextEntry(
-      rendererId = AgentPromptContextRendererIds.SNIPPET,
-      title = "Selection (1-5)",
-      body = "val x = foo.bar(baz)\nval y = 42",
-      projectBasePath = null,
-    )
-
-    assertThat(entry.displayText).isEqualTo("Selection (1-5)")
-  }
-
-  @Test
-  fun vcsRevisionsChipUsesFirstRevisionFromPayload() = withBuiltinRenderers {
+  fun vcsRevisionsChipUsesFirstRevisionFromPayload() {
     val entry = contextEntry(
       rendererId = AgentPromptContextRendererIds.VCS_REVISIONS,
       title = "VCS Revisions",
@@ -180,25 +162,6 @@ class AgentPromptContextEntryPathRenderingTest {
     )
 
     assertThat(entry.displayText).isEqualTo("VCS Revisions: abc12345")
-    assertThat(entry.tooltipText).isEqualTo("vcs revisions:\nabc12345")
-    assertThat(entry.tooltipText).doesNotContain("source=")
-  }
-
-  @Test
-  fun unknownRendererTooltipFallsBackToGenericEnvelopeRender() = withBuiltinRenderers {
-    val entry = contextEntry(
-      rendererId = "customRenderer",
-      title = "Custom",
-      body = "line 1",
-      projectBasePath = null,
-    )
-
-    assertThat(entry.tooltipText).isEqualTo(
-      "context: renderer=customRenderer title=Custom\n" +
-      "```text\n" +
-      "line 1\n" +
-      "```"
-    )
   }
 
   private fun contextEntry(

@@ -122,38 +122,6 @@ class AgentPromptContextResolverServiceTest {
     assertThat(resolved.single().body.lineSequence().toList()).containsExactlyElementsOf(expectedHashes)
   }
 
-  @Test
-  fun testFailuresWinOverVcsAndProjectSelectionWhenBothArePresent() {
-    val project = ProjectManager.getInstance().defaultProject
-    val expectedTestLine = "failed: java:test://Suite.testFailed"
-    val expectedVcsHash = "deadbeef"
-    val dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, project)
-      .add(CommonDataKeys.VIRTUAL_FILE, LightVirtualFile("selected.txt", ""))
-      .build()
-    val service = AgentPromptContextResolverService(
-      contributorsProvider = {
-        listOf(
-          AgentPromptEditorContextContributor(),
-          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 40) {
-            listOf(contextItem(AgentPromptContextRendererIds.TEST_FAILURES, expectedTestLine))
-          },
-          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 50) {
-            listOf(contextItem(AgentPromptContextRendererIds.VCS_REVISIONS, expectedVcsHash))
-          },
-          AgentPromptProjectViewSelectionContextContributor(),
-          AgentPromptSelectedEditorFallbackContextContributor(),
-        )
-      }
-    )
-
-    val resolved = service.collectDefaultContext(invocationData(dataContext = dataContext))
-
-    assertThat(resolved).hasSize(1)
-    assertThat(resolved.single().rendererId).isEqualTo(AgentPromptContextRendererIds.TEST_FAILURES)
-    assertThat(resolved.single().body).isEqualTo(expectedTestLine)
-  }
-
   private fun invocationData(dataContext: com.intellij.openapi.actionSystem.DataContext? = null): AgentPromptInvocationData {
     val project = ProjectManager.getInstance().defaultProject
     val effectiveDataContext = dataContext ?: SimpleDataContext.builder()

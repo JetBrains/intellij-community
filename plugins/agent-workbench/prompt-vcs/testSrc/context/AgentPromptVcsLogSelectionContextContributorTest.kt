@@ -70,8 +70,6 @@ class AgentPromptVcsLogSelectionContextContributorTest {
 
     assertThat(item.rendererId).isEqualTo(AgentPromptContextRendererIds.VCS_REVISIONS)
     assertThat(item.title).isEqualTo(AgentPromptVcsBundle.message("context.vcs.title"))
-    assertThat(item.itemId).isEqualTo("vcsLog.revisions")
-    assertThat(item.parentItemId).isNull()
     assertThat(item.source).isEqualTo("vcsLog")
     assertThat(item.body.lineSequence().toList()).containsExactly(firstHash, secondHash)
     assertThat(payload.number("selectedCount")).isEqualTo("2")
@@ -187,15 +185,16 @@ class AgentPromptVcsLogSelectionContextContributorTest {
 
   private class TestVcsLogCommitSelection(
     selectedCommits: List<CommitId>,
-    override val cachedMetadata: List<VcsCommitMetadata> = emptyList(),
-    override val cachedFullDetails: List<VcsFullCommitDetails> = emptyList(),
   ) : VcsLogCommitSelection {
     override val rows: IntArray = IntArray(selectedCommits.size) { index -> index }
     override val ids: List<VcsLogCommitStorageIndex> = rows.toList()
     override val commits: List<CommitId> = selectedCommits
+    override val cachedMetadata: List<VcsCommitMetadata> = emptyList()
+    override val cachedFullDetails: List<VcsFullCommitDetails> = emptyList()
 
     override fun requestFullDetails(consumer: Consumer<in List<VcsFullCommitDetails>>) {
       consumer.accept(emptyList())
     }
   }
 }
+

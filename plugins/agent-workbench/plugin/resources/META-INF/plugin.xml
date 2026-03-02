@@ -24,6 +24,8 @@
     <module name="intellij.agent.workbench.codex.common"/>
     <module name="intellij.agent.workbench.codex.sessions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.agent.workbench.prompt"/>
+    <module name="intellij.agent.workbench.prompt.vcs"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.sessions.actions"/>
     <module name="intellij.agent.workbench.sessions.toolwindow"/>

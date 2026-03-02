@@ -2,8 +2,6 @@
 package com.intellij.agent.workbench.prompt.vcs.context
 
 import com.intellij.agent.workbench.prompt.vcs.AgentPromptVcsBundle
-import com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsIssueUrls.buildVcsCommitPayloadEntry
-import com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsIssueUrls.resolveIssueUrls
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextContributorPhase
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
@@ -13,20 +11,15 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextTrunc
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
-import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogDataKeys
-import com.intellij.vcs.log.data.LoadingDetails
 
 private const val MAX_INCLUDED_SELECTION_COMMITS = 20
 
 private data class SelectedRevision(
   @JvmField val hash: String,
   @JvmField val rootPath: String?,
-  @JvmField val selection: VcsLogCommitSelection? = null,
-  @JvmField val selectionIndex: Int? = null,
 )
 
 internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContextContributorBridge {
@@ -50,8 +43,14 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
       return emptyList()
     }
 
-    val payloadEntries = included.map { commit ->
-      buildVcsCommitPayloadEntry(commit.hash, commit.rootPath, commit.resolveIssueUrls(invocationData.project))
+    val payloadEntries = included.map { revision ->
+      val fields = linkedMapOf<String, AgentPromptPayloadValue>(
+        "hash" to AgentPromptPayload.str(revision.hash),
+      )
+      revision.rootPath?.let { rootPath ->
+        fields["rootPath"] = AgentPromptPayload.str(rootPath)
+      }
+      AgentPromptPayloadValue.Obj(fields)
     }
     val payload = AgentPromptPayload.obj(
       "entries" to AgentPromptPayloadValue.Arr(payloadEntries),
@@ -65,7 +64,6 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
         title = AgentPromptVcsBundle.message("context.vcs.title"),
         body = content,
         payload = payload,
-        itemId = "vcsLog.revisions",
         source = "vcsLog",
         truncation = AgentPromptContextTruncation(
           originalChars = fullContent.length,
@@ -85,16 +83,8 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
     val dataContext = invocationData.dataContextOrNull() ?: return emptyList()
     val fromCommitSelection = VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION
       .getData(dataContext)
-      ?.let { selection ->
-        selection.commits.mapIndexed { index, commit ->
-          SelectedRevision(
-            hash = commit.hash.asString(),
-            rootPath = commit.root.path,
-            selection = selection,
-            selectionIndex = index,
-          )
-        }
-      }
+      ?.commits
+      ?.map { commit -> SelectedRevision(hash = commit.hash.asString(), rootPath = commit.root.path) }
       .orEmpty()
     if (fromCommitSelection.isNotEmpty()) {
       return normalizeSelectedRevisions(fromCommitSelection)
@@ -146,39 +136,8 @@ internal class AgentPromptVcsLogSelectionContextContributor : AgentPromptContext
       if (previous != null && previous.rootPath == null && normalized.rootPath != null) {
         unique[normalized.hash] = normalized
       }
-      if (previous != null && !previous.hasSelection() && normalized.hasSelection()) {
-        unique[normalized.hash] = normalized
-      }
     }
     return unique.values.toList()
   }
-
-  private fun SelectedRevision.hasSelection(): Boolean {
-    return selection != null && selectionIndex != null
-  }
-
-  private fun SelectedRevision.resolveIssueUrls(project: Project): List<String> {
-    val commitSelection = selection ?: return emptyList()
-    val index = selectionIndex ?: return emptyList()
-    return resolveIssueUrls(project, extractCommitText(commitSelection, index))
-  }
-
-  private fun extractCommitText(selection: VcsLogCommitSelection, index: Int): String {
-    val fullMessage = selection.cachedFullDetails
-      .getOrNull(index)
-      ?.takeUnless { details -> details is LoadingDetails }
-      ?.fullMessage
-      ?.trim()
-      .orEmpty()
-    if (fullMessage.isNotEmpty()) {
-      return fullMessage
-    }
-
-    return selection.cachedMetadata
-      .getOrNull(index)
-      ?.takeUnless { metadata -> metadata is LoadingDetails }
-      ?.subject
-      ?.trim()
-      .orEmpty()
-  }
 }
+

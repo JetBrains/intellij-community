@@ -42,8 +42,6 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
-    <orderEntry type="module" module-name="intellij.markdown" />
-    <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.vcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
