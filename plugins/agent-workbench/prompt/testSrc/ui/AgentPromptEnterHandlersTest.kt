@@ -18,64 +18,52 @@ class AgentPromptEnterHandlersTest {
     runInEdtAndWait {
       val promptArea = JBTextArea()
       var submitCalls = 0
-      var existingDisabledCalls = 0
 
       installPromptEnterHandlers(
         promptArea = promptArea,
         canSubmit = { true },
-        targetMode = { PromptTargetMode.NEW_TASK },
         onSubmit = { submitCalls++ },
-        onExistingTaskSubmitDisabled = { existingDisabledCalls++ },
       )
 
       invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
 
       assertThat(submitCalls).isEqualTo(1)
-      assertThat(existingDisabledCalls).isZero()
     }
   }
 
   @Test
-  fun enterShowsExistingDisabledWhenExistingTaskCannotSubmit() {
+  fun enterSubmitsWhenExistingTaskCannotSubmit() {
     runInEdtAndWait {
       val promptArea = JBTextArea()
       var submitCalls = 0
-      var existingDisabledCalls = 0
 
       installPromptEnterHandlers(
         promptArea = promptArea,
         canSubmit = { false },
-        targetMode = { PromptTargetMode.EXISTING_TASK },
         onSubmit = { submitCalls++ },
-        onExistingTaskSubmitDisabled = { existingDisabledCalls++ },
       )
 
       invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
 
-      assertThat(submitCalls).isZero()
-      assertThat(existingDisabledCalls).isEqualTo(1)
+      assertThat(submitCalls).isEqualTo(1)
     }
   }
 
   @Test
-  fun enterDoesNothingWhenNewTaskCannotSubmit() {
+  fun enterSubmitsWhenNewTaskCannotSubmit() {
     runInEdtAndWait {
       val promptArea = JBTextArea()
       var submitCalls = 0
-      var existingDisabledCalls = 0
 
       installPromptEnterHandlers(
         promptArea = promptArea,
         canSubmit = { false },
-        targetMode = { PromptTargetMode.NEW_TASK },
         onSubmit = { submitCalls++ },
-        onExistingTaskSubmitDisabled = { existingDisabledCalls++ },
       )
 
       invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))
 
-      assertThat(submitCalls).isZero()
-      assertThat(existingDisabledCalls).isZero()
+      assertThat(submitCalls).isEqualTo(1)
     }
   }
 
@@ -87,21 +75,83 @@ class AgentPromptEnterHandlersTest {
         caretPosition = text.length
       }
       var submitCalls = 0
-      var existingDisabledCalls = 0
 
       installPromptEnterHandlers(
         promptArea = promptArea,
         canSubmit = { true },
-        targetMode = { PromptTargetMode.NEW_TASK },
         onSubmit = { submitCalls++ },
-        onExistingTaskSubmitDisabled = { existingDisabledCalls++ },
       )
 
       invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK))
 
       assertThat(promptArea.text).isEqualTo("prompt\n")
       assertThat(submitCalls).isZero()
-      assertThat(existingDisabledCalls).isZero()
+    }
+  }
+
+  @Test
+  fun tabSubmitsWhenTabQueueShortcutEnabled() {
+    runInEdtAndWait {
+      val promptArea = JBTextArea()
+      var submitCalls = 0
+      var forwardFocusCalls = 0
+
+      installPromptEnterHandlers(
+        promptArea = promptArea,
+        canSubmit = { false },
+        isTabQueueEnabled = { true },
+        onSubmit = { submitCalls++ },
+        onTabFocusTransfer = { forwardFocusCalls++ },
+      )
+
+      invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0))
+
+      assertThat(submitCalls).isEqualTo(1)
+      assertThat(forwardFocusCalls).isZero()
+    }
+  }
+
+  @Test
+  fun tabTransfersFocusWhenTabQueueShortcutDisabled() {
+    runInEdtAndWait {
+      val promptArea = JBTextArea()
+      var submitCalls = 0
+      var forwardFocusCalls = 0
+
+      installPromptEnterHandlers(
+        promptArea = promptArea,
+        canSubmit = { true },
+        isTabQueueEnabled = { false },
+        onSubmit = { submitCalls++ },
+        onTabFocusTransfer = { forwardFocusCalls++ },
+      )
+
+      invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0))
+
+      assertThat(submitCalls).isZero()
+      assertThat(forwardFocusCalls).isEqualTo(1)
+    }
+  }
+
+  @Test
+  fun shiftTabTransfersFocusBackwardWithoutSubmitCallbacks() {
+    runInEdtAndWait {
+      val promptArea = JBTextArea()
+      var submitCalls = 0
+      var backwardFocusCalls = 0
+
+      installPromptEnterHandlers(
+        promptArea = promptArea,
+        canSubmit = { true },
+        isTabQueueEnabled = { true },
+        onSubmit = { submitCalls++ },
+        onTabBackwardFocusTransfer = { backwardFocusCalls++ },
+      )
+
+      invokeKeyAction(promptArea, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK))
+
+      assertThat(submitCalls).isZero()
+      assertThat(backwardFocusCalls).isEqualTo(1)
     }
   }
 
