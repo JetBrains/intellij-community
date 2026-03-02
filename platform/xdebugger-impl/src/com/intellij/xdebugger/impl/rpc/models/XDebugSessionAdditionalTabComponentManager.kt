@@ -19,6 +19,7 @@ import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.ui.content.Content
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.SplitDebuggerMode
+import com.intellij.xdebugger.impl.util.createEdtDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,7 +30,7 @@ import javax.swing.Icon
 @ApiStatus.Internal
 class XDebugSessionAdditionalTabComponentManager(private val debugTabScope: CoroutineScope) : AdditionalTabComponentManagerEx {
   init {
-    Disposer.register(debugTabScope.asDisposable(), this)
+    Disposer.register(createEdtDisposable(debugTabScope.asDisposable()), this)
   }
 
   val id: XDebugSessionAdditionalTabComponentManagerId = storeValueGlobally(debugTabScope, this, XDebugSessionAdditionalTabComponentManagerValueIdType)
@@ -46,7 +47,7 @@ class XDebugSessionAdditionalTabComponentManager(private val debugTabScope: Coro
       // start log file reading
       tabComponent.activate(/* force = */ true)
     }
-    val tabId = tabComponent.setupTransfer(debugTabScope.asDisposable())
+    val tabId = tabComponent.setupTransfer(createEdtDisposable(debugTabScope.asDisposable()))
     tabToId[tabComponent] = tabId
     val groupId = tabComponent.toolbarActions?.rpcId(debugTabScope)
     val serializableTab = XDebuggerSessionAdditionalTabDto(tabId, contentId = id, tabComponent.tabTitle, tabComponent.tooltip, icon?.rpcId(), closeable, groupId)

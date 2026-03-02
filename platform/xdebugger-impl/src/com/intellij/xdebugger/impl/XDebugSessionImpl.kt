@@ -108,6 +108,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.impl.ui.allowFramesViewCustomization
 import com.intellij.xdebugger.impl.ui.forceShowNewDebuggerUi
 import com.intellij.xdebugger.impl.ui.getDefaultFramesViewKey
+import com.intellij.xdebugger.impl.util.createEdtDisposable
 import com.intellij.xdebugger.impl.util.start
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
@@ -627,7 +628,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
           val consoleManger = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
         }
-        val disposable = localTabScope.asDisposable()
+        val disposable = createEdtDisposable(localTabScope.asDisposable())
         addAdditionalTabsAndConsolesToManager(runTab.consoleManger, disposable)
 
         val layoutBridge = RunnerLayoutUiBridge(project, disposable)

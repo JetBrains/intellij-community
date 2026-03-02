@@ -1,13 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.FrameNotificationRequest
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
@@ -22,6 +19,7 @@ import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
+import com.intellij.xdebugger.impl.util.createEdtDisposable
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.plaf.basic.BasicArrowButton
 
@@ -70,20 +68,4 @@ object FrameNotificationUtils {
       .createNotification(content, messageType)
       .notify(project)
   }
-}
-
-private fun createEdtDisposable(parentDisposable: Disposable): Disposable {
-  EDT.assertIsEdt()
-  val result = Disposer.newCheckedDisposable()
-  val isSuccess = Disposer.tryRegister(parentDisposable) {
-    runInEdt {
-      Disposer.dispose(result)
-    }
-  }
-  if (!isSuccess) {
-    runInEdt {
-      Disposer.dispose(result)
-    }
-  }
-  return result
 }
