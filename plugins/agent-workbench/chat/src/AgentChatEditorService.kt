@@ -7,9 +7,12 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.common.parseAgentThreadIdentity
+import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -550,6 +553,17 @@ suspend fun updateOpenAgentChatTabTitles(
     titleByPathAndThreadIdentity = titleByPathAndThreadIdentity,
     activityByPathAndThreadIdentity = emptyMap(),
   )
+}
+
+suspend fun collectSelectedChatThreadIdentity(): Pair<AgentSessionProvider, String>? = withContext(Dispatchers.EDT) {
+  for (project in ProjectManager.getInstance().openProjects) {
+    val selectionService = project.serviceIfCreated<AgentChatTabSelectionService>() ?: continue
+    val selection = selectionService.selectedChatTab.value ?: continue
+    val identity = parseAgentThreadIdentity(selection.threadIdentity) ?: continue
+    val provider = AgentSessionProvider.fromOrNull(identity.providerId) ?: continue
+    return@withContext provider to identity.threadId
+  }
+  null
 }
 
 private fun emptyPendingCodexTabRebindReport(): AgentChatPendingCodexTabRebindReport {

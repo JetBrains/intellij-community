@@ -64,4 +64,8 @@ interface AgentSessionSource {
     paths: List<String>,
     knownThreadIdsByPath: Map<String, Set<String>>,
   ): Map<String, AgentSessionRefreshHints> = emptyMap()
+
+  fun markThreadAsRead(threadId: String, updatedAt: Long) {}
+
+  fun setActiveThreadId(threadId: String?) {}
 }

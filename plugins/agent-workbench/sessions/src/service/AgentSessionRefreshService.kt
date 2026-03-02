@@ -152,6 +152,17 @@ internal class AgentSessionRefreshService(
     loadingCoordinator.refreshProviderScope(provider = provider, scopedPaths = setOf(normalizedPath))
   }
 
+  internal fun prepareThreadForOpen(provider: AgentSessionProvider, threadId: String, updatedAt: Long) {
+    val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
+    source.setActiveThreadId(threadId)
+    source.markThreadAsRead(threadId, updatedAt)
+  }
+
+  internal fun markThreadAsRead(provider: AgentSessionProvider, threadId: String, updatedAt: Long) {
+    val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
+    source.markThreadAsRead(threadId, updatedAt)
+  }
+
   fun appendProviderUnavailableWarning(path: String, provider: AgentSessionProvider) {
     loadingCoordinator.appendProviderUnavailableWarning(path = path, provider = provider)
   }
