@@ -12,7 +12,9 @@ import com.intellij.tools.ide.util.common.PrintFailuresMode
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetry
 import com.intellij.util.system.OS
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import oshi.SystemInfo
 import oshi.software.os.OSProcess
 import oshi.software.os.OperatingSystem
@@ -27,16 +29,17 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTimedValue
 
-fun getProcessList(vararg substringToSearch: String): List<ProcessInfo> =
+suspend fun getProcessList(vararg substringToSearch: String): List<ProcessInfo> =
   getProcessList { p ->
     substringToSearch.isEmpty() || p.arguments.any { arg -> substringToSearch.any { arg.contains(it) } }
   }
 
-fun getProcessList(filter: Predicate<ProcessInfo>): List<ProcessInfo> =
+suspend fun getProcessList(filter: Predicate<ProcessInfo>): List<ProcessInfo> = withContext(Dispatchers.IO) {
   SystemInfo().operatingSystem.getProcesses({ p -> p.state != OSProcess.State.INVALID && filter.test(ProcessInfo.create(p.processID.toLong())) },
                                             null,
                                             0)
     .map { it.toProcessInfo() }
+}
 
 /**
  * Identifies and terminates any leftover processes from previous test runs, specifically those
@@ -47,7 +50,7 @@ fun getProcessList(filter: Predicate<ProcessInfo>): List<ProcessInfo> =
  * This lead to OOM and other errors during tests, for example,
  * IDEA-256265: shared-indexes tests on Linux suspiciously fail with 137 (killed by OOM)
  */
-fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false) {
+suspend fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false) {
   val substringToSearch: List<String> = listOf("/$IDE_TESTS_SUBSTRING/", "\\$IDE_TESTS_SUBSTRING\\")
   findAndKillProcessesBySubstring(*substringToSearch.toTypedArray()) { processInfosToKill ->
     if (reportErrors) {
@@ -74,13 +77,13 @@ fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false) {
  *                         to the found processes before attempting to kill them. Defaults to an empty callback.
  * @return `true` if all targeted processes were successfully killed or none were detected; `false` otherwise.
  */
-fun findAndKillProcessesBySubstring(vararg substringToSearch: String, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
+suspend fun findAndKillProcessesBySubstring(vararg substringToSearch: String, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
   return findAndKillProcesses(message = "Killing process containing '${substringToSearch.joinToString(",")}' in command line",
                               filter = { p -> p.arguments.any { arg -> substringToSearch.any { arg.contains(it) } } },
                               onFoundProcesses = onFoundProcesses)
 }
 
-fun findAndKillProcesses(message: String? = null, filter: Predicate<ProcessInfo>, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
+suspend fun findAndKillProcesses(message: String? = null, filter: Predicate<ProcessInfo>, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
   val prefix = message ?: "Killing process matching '$filter' in command line"
   logOutput("$prefix ...")
   val processInfosToKill = getProcessList(filter)
@@ -185,7 +188,7 @@ suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo, runContext:
  * Thus, we must guess the IDE process ID for capturing the thread dumps.
  * In case of Dev Server, under xvfb-run the whole build process is happening so the waiting time can be long.
  */
-private fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long? {
+private suspend fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long? {
   if (OS.CURRENT != OS.Linux) {
     return parentProcessInfo.pid
   }
@@ -197,22 +200,26 @@ private fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: IDERunCo
 
   logOutput("Guessing IDE process ID on Linux (pid of the IDE process wrapper ${parentProcessInfo.pid})")
 
-  val suitableChildren = SystemInfo().operatingSystem.getChildProcesses(
-    parentProcessInfo.pid.toInt(),
-    { ProcessInfo.create(it.processID.toLong()).isIde(runContext) },
-    OperatingSystem.ProcessSorting.UPTIME_DESC,
-    0
-  ).map { it.toProcessInfo() }
+  val suitableChildren = withContext(Dispatchers.IO) {
+    SystemInfo().operatingSystem.getChildProcesses(
+      parentProcessInfo.pid.toInt(),
+      { ProcessInfo.create(it.processID.toLong()).isIde(runContext) },
+      OperatingSystem.ProcessSorting.UPTIME_DESC,
+      0
+    ).map { it.toProcessInfo() }
+  }
 
   if (suitableChildren.isEmpty()) {
     throw Exception("There are no suitable candidates for IDE process\n" +
                     "All children: \n" +
-                    SystemInfo().operatingSystem.getChildProcesses(
-                      parentProcessInfo.pid.toInt(),
-                      null,
-                      OperatingSystem.ProcessSorting.UPTIME_DESC,
-                      0
-                    ).joinToString("\n") { it.toProcessInfo().description })
+                    withContext(Dispatchers.IO) {
+                      SystemInfo().operatingSystem.getChildProcesses(
+                        parentProcessInfo.pid.toInt(),
+                        null,
+                        OperatingSystem.ProcessSorting.UPTIME_DESC,
+                        0
+                      ).joinToString("\n") { it.toProcessInfo().description }
+                    })
   }
 
   if (suitableChildren.size > 1) {

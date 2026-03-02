@@ -3,8 +3,14 @@ package com.intellij.driver.sdk
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.printableString
 import com.intellij.openapi.diagnostic.fileLogger
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 private val LOG get() = fileLogger()
@@ -65,6 +71,27 @@ fun <T> waitNotNull(
   )!!
 }
 
+/** See [waitNotNull] */
+suspend fun <T> waitNotNullAsync(
+  message: String? = null,
+  timeout: Duration = 5.seconds,
+  interval: Duration = 1.seconds,
+  errorMessage: ((T?) -> String)? = null,
+  getter: suspend () -> T?,
+): T {
+  return waitForAsync(
+    message = message,
+    timeout = timeout,
+    interval = interval,
+    errorMessage = if (errorMessage == null) {
+      null
+    }
+    else { it -> errorMessage.invoke(it) },
+    getter = getter,
+    checker = { it != null }
+  )!!
+}
+
 /**
  * Waits for at least one element in the list that satisfies the provided conditions.
  *
@@ -119,6 +146,8 @@ fun <T> waitFor(
   checker: (T) -> Boolean,
 ): T {
   logAwaitStart(message, timeout)
+  // TODO It's NOT a monotonic timer, so it can be a reason of some sporadic incorrect test timeouts.
+  //  use System.nanoTime instead.
   val startTime = System.currentTimeMillis()
   val endTime = startTime + timeout.inWholeMilliseconds
   var result = getter()
@@ -138,6 +167,44 @@ fun <T> waitFor(
       logAwaitFinish(message, result, passedTime)
     }
     return result
+  }
+}
+
+/** See docs for another [waitFor] */
+suspend fun <T> waitForAsync(
+  message: String? = null,
+  timeout: Duration = 5.seconds,
+  interval: Duration = 1.seconds,
+  errorMessage: ((T) -> String)? = null,
+  getter: suspend () -> T,
+  checker: suspend (T) -> Boolean,
+): T {
+  var result: T? = null
+  return try {
+    withTimeout(timeout) {
+      val startTime = System.nanoTime()
+      while (true) {
+        result = getter()
+        if (checker(result)) {
+          break
+        }
+        delay(interval)
+      }
+      val passedTime = (System.nanoTime() - startTime).nanoseconds
+      if (result !is Boolean || passedTime > 10.seconds) {
+        logAwaitFinish(message, result, passedTime)
+      }
+      result
+    }
+  }
+  catch (_: TimeoutCancellationException) {
+    currentCoroutineContext().ensureActive()
+    val errorMessage =
+      if (errorMessage != null && result != null) errorMessage.invoke(result)
+      else ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else "")
+    val exception = WaitForException(timeout, errorMessage)
+    LOG.warn(exception)
+    throw exception
   }
 }
 

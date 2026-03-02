@@ -17,6 +17,7 @@ jvm_library(
     "//platform/remote-driver/client",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
     "//platform/remote-driver/model",
@@ -43,6 +44,7 @@ jvm_library(
   runtime_deps = [
     ":driver-sdk",
     "//platform/remote-driver/client:client_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
     "//libraries/kotlinx/serialization/json:json_test_lib",
     "//libraries/kotlinx/serialization/core:core_test_lib",
     "//platform/remote-driver/model:model_test_lib",

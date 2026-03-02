@@ -6,10 +6,12 @@ import com.intellij.ide.starter.process.ProcessKiller.killProcesses
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.util.system.OS
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.ServerSocket
-import kotlin.text.appendLine
 
 object PortUtil {
 
@@ -42,7 +44,9 @@ object PortUtil {
       return proposedPort
     }
     else {
-      val processes = getProcessesUsingPort(proposedPort)
+      // TODO No doubt, it would be cleaner to propagate `suspend` into `applyVMOptionsPatch`, but it brings a lot of changes.
+      //  Also, can't use `timeoutRunBlocking` here, it's not available in `intellij.tools.plugin.checker.tests`.
+      val processes = runBlocking { getProcessesUsingPort(proposedPort) }
 
       val pidsInfoMap = processes?.associate { it.pid to it }
       val processNames = pidsInfoMap?.map { it.value.name }?.sorted()?.joinToString(", ")
@@ -91,7 +95,7 @@ object PortUtil {
    * @param port The network port to check for processes.
    * @return A list of process IDs that are using the specified port, or null if an error occurs.
    */
-  fun getProcessesUsingPort(port: Int): List<ProcessInfo>? {
+  suspend fun getProcessesUsingPort(port: Int): List<ProcessInfo>? {
     var errorMsg = ""
 
     return runCatching {
@@ -113,7 +117,7 @@ object PortUtil {
         stderrRedirect = stderrRedirectFind,
         args = findCommand,
         analyzeProcessExit = false
-      ).start()
+      ).startCancellable()
 
       val processIdsRaw = stdoutRedirectFind.read().trim()
       errorMsg = stderrRedirectFind.read()
@@ -128,8 +132,10 @@ object PortUtil {
         processIdsRaw.split("\n").mapNotNull { it.removePrefix(prefix).trim().toIntOrNull() }
       }
 
-      pids.map { pid ->
-        ProcessInfo.create(pid.toLong(), portThatIsUsedByProcess = port)
+      withContext(Dispatchers.IO) {
+        pids.map { pid ->
+          ProcessInfo.create(pid.toLong(), portThatIsUsedByProcess = port)
+        }
       }
     }.getOrElse {
       CIServer.instance.reportTestFailure(
@@ -145,7 +151,7 @@ object PortUtil {
     }
   }
 
-  fun killProcessesUsingPort(port: Int): Boolean {
+  suspend fun killProcessesUsingPort(port: Int): Boolean {
     val processes = getProcessesUsingPort(port)
 
     if (processes?.isNotEmpty() == true) {

@@ -31,6 +31,7 @@ jvm_library(
     "//platform/remote-driver/test-sdk:driver-sdk",
     "@lib//:io-qameta-allure-java-commons",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//platform/testFramework/common",
     "//platform/util",
     "@lib//:opentelemetry",
   ]
@@ -50,6 +51,7 @@ jvm_library(
     "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
     "//platform/remote-driver/test-sdk:driver-sdk_test_lib",
     "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
+    "//platform/testFramework/common:common_test_lib",
     "//platform/util:util_test_lib",
   ]
 )

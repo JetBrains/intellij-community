@@ -59,6 +59,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="io.qameta.allure.java.commons" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" exported="" />
     <orderEntry type="library" name="opentelemetry" level="project" />

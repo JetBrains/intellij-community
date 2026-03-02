@@ -38,6 +38,7 @@ jvm_library(
     "@lib//:junit5Launcher-provided",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
     "@lib//:opentelemetry",
+    "//platform/testFramework/common",
   ]
 )
 
@@ -79,6 +80,8 @@ jvm_library(
     "//platform/core-api:core_test_lib",
     "//platform/util",
     "//platform/util:util_test_lib",
+    "//platform/testFramework/common",
+    "//platform/testFramework/common:common_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//images:images-tests",
