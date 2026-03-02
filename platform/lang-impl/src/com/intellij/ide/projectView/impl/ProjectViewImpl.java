@@ -893,6 +893,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     uninitializedPanes.remove(pane);
 
+    if (isBackendMode) {
+      idToPane.remove(idToRemove);
+      return;
+    }
+
     if (!idToPane.containsKey(idToRemove)) return;
     for (int i = getContentManager().getContentCount() - 1; i >= 0; i--) {
       Content content = getContentManager().getContent(i);
@@ -1222,6 +1227,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       isBackendMode = true;
       ensurePanesLoaded();
       isInitialized = true;
+      doAddUninitializedPanesImpl();
     });
   }
 
