@@ -31,6 +31,9 @@
 - name: lib/modules/intellij.agent.workbench.prompt.jar
   contentModules:
   - name: intellij.agent.workbench.prompt
+- name: lib/modules/intellij.agent.workbench.prompt.vcs.jar
+  contentModules:
+  - name: intellij.agent.workbench.prompt.vcs
 - name: lib/modules/intellij.agent.workbench.sessions.core.jar
   contentModules:
   - name: intellij.agent.workbench.sessions.core

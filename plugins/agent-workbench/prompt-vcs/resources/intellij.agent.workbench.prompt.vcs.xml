@@ -1,0 +1,16 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.log"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.AgentPromptVcsBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.promptContextContributor implementation="com.intellij.agent.workbench.prompt.vcs.context.AgentPromptVcsLogSelectionContextContributor"/>
+    <agent.workbench.promptContextRenderer implementation="com.intellij.agent.workbench.prompt.vcs.render.AgentPromptVcsRevisionsContextRendererBridge"/>
+  </extensions>
+</idea-plugin>

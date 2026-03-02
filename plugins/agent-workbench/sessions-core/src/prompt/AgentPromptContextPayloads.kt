@@ -6,6 +6,7 @@ object AgentPromptContextRendererIds {
   const val FILE: String = "file"
   const val SYMBOL: String = "symbol"
   const val PATHS: String = "paths"
+  const val VCS_REVISIONS: String = "vcsRevisions"
 }
 
 object AgentPromptPayload {
@@ -43,4 +44,3 @@ fun AgentPromptPayloadValue.Obj.number(name: String): String? {
 fun AgentPromptPayloadValue.Obj.array(name: String): List<AgentPromptPayloadValue>? {
   return (fields[name] as? AgentPromptPayloadValue.Arr)?.items
 }
-

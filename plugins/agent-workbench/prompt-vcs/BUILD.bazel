@@ -1,18 +1,18 @@
-### auto-generated section `build intellij.agent.workbench.prompt` start
+### auto-generated section `build intellij.agent.workbench.prompt.vcs` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
-  name = "prompt_resources",
+  name = "agent-workbench-prompt-vcs_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "prompt",
-  module_name = "intellij.agent.workbench.prompt",
+  name = "agent-workbench-prompt-vcs",
+  module_name = "intellij.agent.workbench.prompt.vcs",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":prompt_resources"],
+  resources = [":agent-workbench-prompt-vcs_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -21,17 +21,18 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/projectModel-api:projectModel",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-api:vcs",
     "//platform/util",
-    "//plugins/agent-workbench/common",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
   ]
 )
 
 jvm_library(
-  name = "prompt_test_lib",
+  name = "agent-workbench-prompt-vcs_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
-  associates = [":prompt"],
+  associates = [":agent-workbench-prompt-vcs"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -45,14 +46,14 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/api:vcs-log_test_lib",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-api:vcs_test_lib",
     "//platform/util",
     "//platform/util:util_test_lib",
-    "//plugins/agent-workbench/common",
-    "//plugins/agent-workbench/common:common_test_lib",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core",
     "//plugins/agent-workbench/sessions-core:agent-workbench-sessions-core_test_lib",
-    "//plugins/agent-workbench/prompt-vcs:agent-workbench-prompt-vcs",
-    "//plugins/agent-workbench/prompt-vcs:agent-workbench-prompt-vcs_test_lib",
     "//libraries/junit5",
     "//libraries/junit5:junit5_test_lib",
     "//platform/testFramework",
@@ -64,13 +65,13 @@ jvm_library(
   ],
   runtime_deps = ["//platform/platform-impl:ide-impl_test_lib"]
 )
-### auto-generated section `build intellij.agent.workbench.prompt` end
+### auto-generated section `build intellij.agent.workbench.prompt.vcs` end
 
-### auto-generated section `test intellij.agent.workbench.prompt` start
+### auto-generated section `test intellij.agent.workbench.prompt.vcs` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "prompt_test",
-  runtime_deps = [":prompt_test_lib"]
+  name = "agent-workbench-prompt-vcs_test",
+  runtime_deps = [":agent-workbench-prompt-vcs_test_lib"]
 )
-### auto-generated section `test intellij.agent.workbench.prompt` end
+### auto-generated section `test intellij.agent.workbench.prompt.vcs` end

@@ -10,5 +10,6 @@
   - name: intellij.agent.workbench.codex.sessions
   - name: intellij.agent.workbench.sessions.core
   - name: intellij.agent.workbench.prompt
+  - name: intellij.agent.workbench.prompt.vcs
   - name: intellij.agent.workbench.sessions
   - name: intellij.agent.workbench
