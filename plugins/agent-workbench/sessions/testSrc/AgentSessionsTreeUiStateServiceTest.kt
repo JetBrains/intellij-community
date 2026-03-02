@@ -5,7 +5,7 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionThreadPreview
 import com.intellij.agent.workbench.sessions.state.AgentSessionsTreeUiStateService
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class AgentSessionsTreeUiStateServiceTest {
   @Test

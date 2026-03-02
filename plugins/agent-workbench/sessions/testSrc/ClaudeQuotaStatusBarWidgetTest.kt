@@ -9,7 +9,7 @@ import com.intellij.agent.workbench.sessions.claude.formatWidgetText
 import com.intellij.agent.workbench.sessions.claude.formatWidgetTooltip
 import com.intellij.agent.workbench.sessions.claude.isWarningQuota
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class ClaudeQuotaStatusBarWidgetTest {
   @Test

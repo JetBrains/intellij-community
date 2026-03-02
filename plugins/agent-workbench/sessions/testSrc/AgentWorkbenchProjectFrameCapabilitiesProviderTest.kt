@@ -5,16 +5,13 @@ import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameP
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchProjectFrameCapabilitiesProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
-import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.lang.reflect.Proxy
 
+@TestApplication
 class AgentWorkbenchProjectFrameCapabilitiesProviderTest {
-  @get:Rule
-  val applicationRule = ApplicationRule()
-
   private val provider = AgentWorkbenchProjectFrameCapabilitiesProvider()
 
   @Test

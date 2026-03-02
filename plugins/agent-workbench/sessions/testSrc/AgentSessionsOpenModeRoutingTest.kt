@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.sessions.codex.AgentChatOpenRoute
 import com.intellij.agent.workbench.sessions.codex.resolveAgentChatOpenRoute
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class AgentSessionsOpenModeRoutingTest {
   @Test
