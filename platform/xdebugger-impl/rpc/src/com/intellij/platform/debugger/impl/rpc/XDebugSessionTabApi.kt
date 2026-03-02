@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -84,6 +85,7 @@ data class XDebuggerSessionTabInfo(
   @Serializable(with = DeferredSerializer::class) val backendRunContendDescriptorId: Deferred<RunContentDescriptorIdImpl>,
   @Serializable(with = DeferredSerializer::class) val showTab: Deferred<Unit>,
   @Serializable(with = DeferredSerializer::class) val tabLayouterDto: Deferred<XDebugTabLayouterDto>,
+  @Transient val contentToReuse: RunContentDescriptor? = null,
 ) : XDebuggerSessionTabAbstractInfo
 
 @ApiStatus.Internal
