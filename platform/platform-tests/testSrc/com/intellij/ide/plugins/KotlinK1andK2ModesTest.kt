@@ -24,13 +24,12 @@ class KotlinK1andK2ModesTest {
   private val rootDir: Path get() = inMemoryFs.fs.getPath("/")
 
   @Test
-  fun `plugin depending on kotlin disabled by default in K2 mode`() = withKotlinPluginMode(isK2 = true) {
+  fun `plugin depending on kotlin enabled by default in K2 mode`() = withKotlinPluginMode(isK2 = true) {
     plugin("foo") {
       depends("org.jetbrains.kotlin")
     }.buildDir(rootDir.resolve("foo"))
     val (_, reason) = getSinglePlugin(rootDir)
-    assertThat(reason).isNotNull()
-    assertThat(reason).isInstanceOf(PluginIsIncompatibleWithKotlinMode::class.java)
+    assertThat(reason).isNull()
   }
 
   @Test
@@ -67,14 +66,14 @@ class KotlinK1andK2ModesTest {
 
 
   @Test
-  fun `plugin optionally depending on kotlin plugin is not disabled by default in K2 mode and optional dependency is disabled`() = withKotlinPluginMode(isK2 = true) {
+  fun `plugin optionally depending on kotlin plugin is not disabled by default in K2 mode and optional dependency is enabled`() = withKotlinPluginMode(isK2 = true) {
     plugin("foo") {
       depends("org.jetbrains.kotlin", configFile = "kt.xml") { }
     }.buildDir(rootDir.resolve("foo"))
     val (plugin, reason) = getSinglePlugin(rootDir)
     assertThat(reason).isNull()
     val dependency = plugin.dependencies.single()
-    assertThat(dependency.subDescriptor).isNull()
+    assertThat(dependency.subDescriptor).isNotNull
   }
 
   @Test
