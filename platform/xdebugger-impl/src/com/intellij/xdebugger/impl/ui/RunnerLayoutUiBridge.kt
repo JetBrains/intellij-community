@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -37,6 +38,7 @@ internal class RunnerLayoutUiBridge(
   project: Project,
   private val disposable: Disposable,
 ) : RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
+  private val uniqueIdCounter = AtomicInteger(0)
   private val contentManager: ContentManager =
     ContentFactory.getInstance().createContentManager(true, project)
   private val eventsChannel = Channel<XDebugTabLayouterEvent>(Channel.UNLIMITED)
@@ -70,7 +72,7 @@ internal class RunnerLayoutUiBridge(
 
   private fun sendContentCreationEvent(component: JComponent, fakeContent: Content, contentId: @NonNls String, displayName: @Nls String, icon: Icon?) {
     val tabId = component.setupTransfer(disposable)
-    val uniqueId = contents.size
+    val uniqueId = uniqueIdCounter.incrementAndGet()
     contents[fakeContent] = uniqueId
     contentsByUniqueId[uniqueId] = fakeContent
     eventsChannel.trySend(XDebugTabLayouterEvent.ContentCreated(uniqueId, contentId, tabId, displayName, icon?.rpcIdOrNull()))
