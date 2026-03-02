@@ -885,6 +885,7 @@ plugins/agent-workbench/filewatch
 plugins/agent-workbench/json
 plugins/agent-workbench/plugin
 plugins/agent-workbench/prompt
+plugins/agent-workbench/prompt-vcs
 plugins/agent-workbench/sessions
 plugins/agent-workbench/sessions-core
 plugins/ant

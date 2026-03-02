@@ -10,6 +10,7 @@ import org.junit.platform.suite.api.Suite
   "com.intellij.agent.workbench.claude.sessions",
   "com.intellij.agent.workbench.codex.sessions",
   "com.intellij.agent.workbench.prompt",
+  "com.intellij.agent.workbench.prompt.vcs",
   "com.intellij.agent.workbench.sessions",
 )
 class AgentWorkbenchAllTestsSuite

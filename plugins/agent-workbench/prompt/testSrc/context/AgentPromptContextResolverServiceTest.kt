@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationDa
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -93,9 +94,37 @@ class AgentPromptContextResolverServiceTest {
     assertThat(resolved.single().phase).isEqualTo(AgentPromptContextContributorPhase.INVOCATION)
   }
 
-  private fun invocationData(): AgentPromptInvocationData {
+  @Test
+  fun vcsRevisionsWinOverProjectSelectionWhenBothArePresent() {
     val project = ProjectManager.getInstance().defaultProject
+    val expectedHashes = listOf("a1b2c3d4", "e5f6g7h8")
     val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.VIRTUAL_FILE, LightVirtualFile("selected.txt", ""))
+      .build()
+    val service = AgentPromptContextResolverService(
+      contributorsProvider = {
+        listOf(
+          AgentPromptEditorContextContributor(),
+          testContributor(contributorPhase = AgentPromptContextContributorPhase.INVOCATION, contributorOrder = 50) {
+            listOf(contextItem(AgentPromptContextRendererIds.VCS_REVISIONS, expectedHashes.joinToString(separator = "\n")))
+          },
+          AgentPromptProjectViewSelectionContextContributor(),
+          AgentPromptSelectedEditorFallbackContextContributor(),
+        )
+      }
+    )
+
+    val resolved = service.collectDefaultContext(invocationData(dataContext = dataContext))
+
+    assertThat(resolved).hasSize(1)
+    assertThat(resolved.single().rendererId).isEqualTo(AgentPromptContextRendererIds.VCS_REVISIONS)
+    assertThat(resolved.single().body.lineSequence().toList()).containsExactlyElementsOf(expectedHashes)
+  }
+
+  private fun invocationData(dataContext: com.intellij.openapi.actionSystem.DataContext? = null): AgentPromptInvocationData {
+    val project = ProjectManager.getInstance().defaultProject
+    val effectiveDataContext = dataContext ?: SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
       .build()
     return AgentPromptInvocationData(
@@ -105,16 +134,16 @@ class AgentPromptContextResolverServiceTest {
       actionPlace = "MainMenu",
       invokedAtMs = 0L,
       attributes = mapOf(
-        AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY to dataContext,
+        AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY to effectiveDataContext,
       ),
     )
   }
 
-  private fun contextItem(rendererId: String): AgentPromptContextItem {
+  private fun contextItem(rendererId: String, body: String = "Value"): AgentPromptContextItem {
     return AgentPromptContextItem(
       rendererId = rendererId,
       title = "Context",
-      body = "Value",
+      body = body,
       source = "test",
     )
   }

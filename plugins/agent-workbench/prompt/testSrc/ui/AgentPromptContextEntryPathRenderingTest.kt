@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayload
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptPayloadValue
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.SystemProperties
@@ -91,17 +93,39 @@ class AgentPromptContextEntryPathRenderingTest {
     assertThat(entry.displayText).isEqualTo("Symbol: $absoluteContent")
   }
 
+  @Test
+  fun vcsRevisionsChipUsesFirstRevisionFromPayload() {
+    val entry = contextEntry(
+      rendererId = AgentPromptContextRendererIds.VCS_REVISIONS,
+      title = "VCS Revisions",
+      body = "",
+      projectBasePath = null,
+      payload = AgentPromptPayload.obj(
+        "entries" to AgentPromptPayload.arr(
+          AgentPromptPayload.obj(
+            "hash" to AgentPromptPayload.str("abc12345"),
+            "rootPath" to AgentPromptPayload.str("/repo"),
+          ),
+        )
+      ),
+    )
+
+    assertThat(entry.displayText).isEqualTo("VCS Revisions: abc12345")
+  }
+
   private fun contextEntry(
     rendererId: String,
     title: String,
     body: String,
     projectBasePath: String?,
+    payload: AgentPromptPayloadValue = AgentPromptPayloadValue.Obj.EMPTY,
   ): ContextEntry {
     return ContextEntry(
       item = AgentPromptContextItem(
         rendererId = rendererId,
         title = title,
         body = body,
+        payload = payload,
         source = "test",
       ),
       projectBasePath = projectBasePath,
