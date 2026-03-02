@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.chat.codexScopedRefreshSignals
 import com.intellij.agent.workbench.chat.collectOpenAgentChatProjectPaths
 import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdentitiesByPath
 import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
+import com.intellij.agent.workbench.chat.collectSelectedChatThreadIdentity
 import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
 import com.intellij.agent.workbench.chat.updateOpenAgentChatTabPresentation
 import com.intellij.agent.workbench.common.AgentThreadActivity
@@ -66,9 +67,10 @@ internal class AgentSessionRefreshCoordinator(
     Map<Pair<String, String>, String>,
     Map<Pair<String, String>, AgentThreadActivity>,
   ) -> Int = ::updateOpenAgentChatTabPresentation,
-    private val openAgentChatPendingTabsBinder: (
+  private val openAgentChatPendingTabsBinder: (
     Map<String, List<AgentChatPendingCodexTabRebindRequest>>,
   ) -> AgentChatPendingCodexTabRebindReport = ::rebindOpenPendingCodexTabs,
+  private val selectedChatThreadIdentityProvider: suspend () -> Pair<AgentSessionProvider, String>? = ::collectSelectedChatThreadIdentity,
 ) {
   private val refreshMutex = Mutex()
   private val refreshQueueLock = Any()
@@ -743,6 +745,10 @@ internal class AgentSessionRefreshCoordinator(
         "Starting provider refresh id=$refreshId provider=${provider.value} (sourceUpdate=${sourceUpdate.name.lowercase()})"
       }
       val source = sessionSourcesProvider().firstOrNull { it.provider == provider } ?: return
+      val selectedIdentity = selectedChatThreadIdentityProvider()
+      source.setActiveThreadId(
+        if (selectedIdentity != null && selectedIdentity.first == provider) selectedIdentity.second else null
+      )
       val stateSnapshot = stateStore.snapshot()
       val knownThreadIdsByPath = collectLoadedProviderThreadIdsByPath(stateSnapshot, provider)
       val targetPaths = LinkedHashSet<String>()

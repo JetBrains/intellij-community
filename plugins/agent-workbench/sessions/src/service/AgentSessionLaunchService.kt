@@ -181,6 +181,7 @@ internal class AgentSessionLaunchService(
   ) {
     val normalizedPath = normalizeAgentWorkbenchPath(path)
     markClaudeQuotaHintEligible(thread.provider)
+    syncService.prepareThreadForOpen(provider = thread.provider, threadId = thread.id, updatedAt = thread.updatedAt)
     launchDropAction(
       key = buildOpenThreadActionKey(path = normalizedPath, thread = thread, launchOrigin = launchOrigin),
       droppedActionMessage = "Dropped duplicate open thread action for $normalizedPath:${thread.provider}:${thread.id}",
