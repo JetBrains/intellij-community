@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.interpreter
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -14,8 +15,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
+import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.inspections.InterpreterFixExecutor
 import com.jetbrains.python.inspections.PyAsyncFileInspectionRunner
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.module.PyModuleService
@@ -51,18 +54,25 @@ class PyInterpreterNotificationProvider : EditorNotificationProvider, DumbAware 
 
     val interpreterFixes = asyncFileInspectionRunner.runInspection(module)?.takeIf { it.isNotEmpty() } ?: return null
 
-    return Function { fileEditor ->
-      val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
-        text = PyBundle.message("python.sdk.no.interpreter.configured.for.module", module.name)
+    val executor: BusyGuardExecutor = project.service<InterpreterFixExecutor>()
 
-        interpreterFixes.forEach { fix ->
-          createActionLabel(fix.name) {
-            fix.apply(module, project, psiFile)
+    return Function { fileEditor ->
+      object : EditorNotificationPanel(fileEditor, Status.Warning) {
+        init {
+          text = PyBundle.message("python.sdk.no.interpreter.configured.for.module", module.name)
+          if (executor.isBusy) {
+            val label = javax.swing.JLabel(PyBundle.message("python.sdk.interpreter.fix.already.in.progress"))
+            label.foreground = com.intellij.util.ui.UIUtil.getInactiveTextColor()
+            myLinksPanel.add(label)
+            myLinksPanel.add(AsyncProcessIcon("interpreter fix"))
+          }
+          else {
+            interpreterFixes.forEach { fix ->
+              myLinksPanel.add(fix.createActionLink(module, project, psiFile, executor))
+            }
           }
         }
       }
-
-      panel
     }
   }
 }
