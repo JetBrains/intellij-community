@@ -90,7 +90,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject();
 
-    var appName = getCurrentGradleVersion().getMajorVersion() >= 6  ? "my-app" : "my-app-name";
+    // Gradle 6 changes the IdentityPath return value
+    var appName = isGradleAtLeast("6.0")  ? "my-app" : "my-app-name";
 
     assertModules("adhoc",
                   appName, appName + ".main", appName + ".test",
@@ -547,7 +548,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject("");
 
-    var pluginName = getCurrentGradleVersion().getMajorVersion() >= 6  ? "plugin" : "test-plugin";
+    // Gradle 6 changes the IdentityPath return value
+    var pluginName = isGradleAtLeast("6.0")  ? "plugin" : "test-plugin";
     assertModules("project",
                   pluginName, pluginName + ".main", pluginName + ".test",
                   "consumer", "consumer.library", "consumer.library.main", "consumer.library.test", "consumer.library.integrationTest");
@@ -586,7 +588,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject("");
 
-    var includedProjectName = getCurrentGradleVersion().getMajorVersion() >= 6 ? "included-project" : "myId";
+    // Gradle 6 changed IdentityPath return value
+    var includedProjectName = isGradleAtLeast("6.0") ? "included-project" : "myId";
 
     assertModules("root-project",
                   "root-project.sub-project", "root-project.sub-project.main", "root-project.sub-project.test",
@@ -742,7 +745,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject("");
 
-    if (getCurrentGradleVersion().getMajorVersion() >= 8 ) {
+    // Gradle 8 changes the IdentityPath return value
+    if (isGradleAtLeast("8.0")) {
       assertModules("root", "A", "A.AA", "A.AA.AAA");
     } else {
       assertModules("root", "A", "AA", "AAA");
@@ -794,7 +798,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject("");
 
-    if (getCurrentGradleVersion().getMajorVersion() >= 8) {
+    // Gradle 8 changes the IdentityPath return value
+    if (isGradleAtLeast("8.0")) {
       assertModules("root",
                     "A", "A.AA", "A.AA.AAA",
                     "B",
