@@ -6,7 +6,7 @@ import com.intellij.agent.workbench.codex.common.CodexThreadPage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class CodexSessionsPagingLogicTest {
   @Test

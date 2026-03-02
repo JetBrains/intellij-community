@@ -4,12 +4,15 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.icons.AllIcons
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.IconManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
+@TestApplication
 class AgentChatFileEditorProviderTest {
   @BeforeEach
   fun setUp() {
@@ -189,7 +192,7 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
-  fun promotesUnresolvedVirtualFileWhenDescriptorBecomesAvailable() {
+  fun promotesUnresolvedVirtualFileWhenDescriptorBecomesAvailable(): Unit = timeoutRunBlocking {
     val snapshot = AgentChatTabSnapshot.create(
       projectHash = "hash-1",
       projectPath = "/work/project-a",
@@ -207,7 +210,7 @@ class AgentChatFileEditorProviderTest {
     assertThat(unresolved.shellCommand).isEmpty()
 
     val resolved = fileSystem.getOrCreateFile(snapshot)
-    assertThat(resolved).isSameAs(unresolved)
+    assertThat(resolved).isNotSameAs(unresolved)
     assertThat(resolved.projectPath).isEqualTo(snapshot.identity.projectPath)
     assertThat(resolved.threadIdentity).isEqualTo(snapshot.identity.threadIdentity)
     assertThat(resolved.threadId).isEqualTo(snapshot.runtime.threadId)

@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.ProjectManager
 import kotlinx.coroutines.Dispatchers
@@ -23,11 +24,11 @@ internal class AgentChatTabsService {
   fun resolveFromPath(path: String): AgentChatTabResolution? {
     val tabKey = AgentChatTabKey.parsePath(path) ?: return null
     val snapshot = stateService.load(tabKey)
-    return if (snapshot != null) {
-      AgentChatTabResolution.Resolved(snapshot)
+    if (snapshot != null) {
+      return AgentChatTabResolution.Resolved(snapshot)
     }
     else {
-      AgentChatTabResolution.Unresolved(tabKey)
+      return AgentChatTabResolution.Unresolved(tabKey)
     }
   }
 
@@ -59,12 +60,6 @@ internal class AgentChatTabsService {
     val deleteResult = withContext(Dispatchers.IO) {
       stateService.deleteByThreadWithKeys(normalizedProjectPath, threadIdentity, subAgentId)
     }
-    if (deleteResult.deletedKeys.isNotEmpty()) {
-      val fileSystem = agentChatVirtualFileSystem()
-      for (tabKey in deleteResult.deletedKeys) {
-        fileSystem.forgetFile(tabKey)
-      }
-    }
     return AgentChatThreadCleanupResult(
       closedTabs = closedTabs,
       deletedStates = deleteResult.deletedKeys.size,
@@ -79,7 +74,7 @@ private fun closeMatchingOpenTabs(projectPath: String, threadIdentity: String, s
       continue
     }
 
-    val manager = runCatching { FileEditorManager.getInstance(project) }.getOrNull() ?: continue
+    val manager = project.serviceIfCreated<FileEditorManager>() ?: continue
     val matchingFiles = manager.openFiles.filterIsInstance<AgentChatVirtualFile>().filter { chatFile ->
       normalizeAgentWorkbenchPath(chatFile.projectPath) == projectPath &&
       chatFile.threadIdentity == threadIdentity &&

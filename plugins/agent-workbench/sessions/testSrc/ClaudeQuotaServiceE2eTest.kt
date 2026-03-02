@@ -12,8 +12,8 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.SoftAssertions
-import org.junit.Assume.assumeTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.Test
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -35,9 +35,9 @@ class ClaudeQuotaServiceE2eTest {
 
   @Test
   fun fullPipelineReturnsValidQuotaState() {
-    assumeTrue("Set -D$RUN_CLAUDE_QUOTA_E2E_PROPERTY=true to run E2E test", java.lang.Boolean.getBoolean(RUN_CLAUDE_QUOTA_E2E_PROPERTY))
+    assumeTrue(java.lang.Boolean.getBoolean(RUN_CLAUDE_QUOTA_E2E_PROPERTY), "Set -D$RUN_CLAUDE_QUOTA_E2E_PROPERTY=true to run E2E test")
     val token = readOAuthToken()
-    assumeTrue("No Claude OAuth credentials found — skipping E2E test", token != null)
+    assumeTrue(token != null, "No Claude OAuth credentials found — skipping E2E test")
 
     val response = fetchUsageRaw(token!!)
     assertThat(response.statusCode())

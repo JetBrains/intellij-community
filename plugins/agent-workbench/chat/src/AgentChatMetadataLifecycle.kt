@@ -33,9 +33,4 @@ internal fun forgetAgentChatTabMetadata(tabKey: String) {
     return
   }
   application.service<AgentChatTabsService>().forget(tabKey)
-  runCatching {
-    agentChatVirtualFileSystem().forgetFile(tabKey)
-  }.onFailure { t ->
-    LIFECYCLE_LOG.debug("Failed to evict Agent Chat virtual file for tabKey=$tabKey", t)
-  }
 }

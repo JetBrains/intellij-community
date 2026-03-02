@@ -13,7 +13,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
@@ -22,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds
@@ -46,13 +44,6 @@ class AgentChatEditorServiceTest {
         LoadingOrder.FIRST,
         project,
       )
-    }
-  }
-
-  @AfterEach
-  fun tearDown(): Unit = timeoutRunBlocking {
-    runInUi {
-      (VirtualFileManager.getInstance().getFileSystem(AGENT_CHAT_PROTOCOL) as? AgentChatVirtualFileSystem)?.clearFilesForTests()
     }
   }
 

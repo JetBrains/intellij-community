@@ -8,17 +8,14 @@ import com.intellij.agent.workbench.sessions.frame.TERMINAL_TOOL_WINDOW_ID
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.toolWindow.ToolWindowLayoutApplyMode
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.lang.reflect.Proxy
 
+@TestApplication
 class AgentWorkbenchToolWindowLayoutProfileProviderTest {
-  @get:Rule
-  val applicationRule = ApplicationRule()
-
   private val provider = AgentWorkbenchToolWindowLayoutProfileProvider()
 
   @Test
