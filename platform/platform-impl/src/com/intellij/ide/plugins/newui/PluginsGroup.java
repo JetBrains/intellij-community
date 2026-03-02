@@ -31,7 +31,7 @@ public class PluginsGroup {
   public UIPluginGroup ui;
   public Runnable clearCallback;
   public PluginsGroupType type;
-  private final List<PluginUiModel> models = new ArrayList<>();
+  protected final List<PluginUiModel> models = new ArrayList<>();
   private final ListPluginModel preloadedModel = new ListPluginModel();
   public JComponent promotionPanel;
 

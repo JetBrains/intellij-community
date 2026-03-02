@@ -586,12 +586,14 @@ class InstalledPluginsTab extends PluginsTab {
   private final class ComparablePluginsGroup extends PluginsGroup
     implements Comparable<ComparablePluginsGroup> {
 
+    @NotNull private final Map<PluginId, Boolean> myPluginsRequiresUltimateButItsDisabled;
     private boolean myIsEnable = false;
 
     private ComparablePluginsGroup(@NotNull @NlsSafe String category,
                                    @NotNull List<PluginUiModel> descriptors,
                                    @NotNull Map<PluginId, Boolean> pluginsRequiresUltimate) {
       super(category, PluginsGroupType.INSTALLED);
+      myPluginsRequiresUltimateButItsDisabled = pluginsRequiresUltimate;
 
       this.addModels(descriptors);
       sortByName();
@@ -603,6 +605,20 @@ class InstalledPluginsTab extends PluginsTab {
         ContainerUtil.exists(descriptors, it -> !pluginsRequiresUltimate.get(it.getPluginId()));
       mainAction.setVisible(hasPluginsAvailableForEnableDisable);
       titleWithEnabled(myPluginModelFacade);
+    }
+
+    @Override
+    public void titleWithEnabled(@NotNull PluginModelFacade pluginModelFacade) {
+      int enabled = 0;
+      for (PluginUiModel descriptor : models) {
+        if (pluginModelFacade.isLoaded(descriptor) &&
+            pluginModelFacade.isEnabled(descriptor) &&
+            !myPluginsRequiresUltimateButItsDisabled.getOrDefault(descriptor.getPluginId(), false) &&
+            !descriptor.isIncompatible()) {
+          enabled++;
+        }
+      }
+      titleWithCount(enabled);
     }
 
     @Override
