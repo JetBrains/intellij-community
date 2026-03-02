@@ -1,6 +1,7 @@
 // COMPILER_ARGUMENTS: -opt-in=kotlin.ExperimentalStdlibApi
 // WITH_STDLIB
 enum class Main {
+    ;
 
     enum class Test {
         A;
