@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.presentations
 
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.SeUiInspectorInfo
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -10,11 +11,14 @@ import org.jetbrains.annotations.ApiStatus
 sealed interface SeItemPresentation {
   val text: String
   val extendedInfo: SeExtendedInfo? get() = null
+  val uiInspectorInfo: SeUiInspectorInfo? get() = null
   val isMultiSelectionSupported: Boolean
 
   @ApiStatus.Internal
   fun contentEquals(other: SeItemPresentation?): Boolean {
     if (other == null) return false
-    return text == other.text && extendedInfo == other.extendedInfo
+    return text == other.text &&
+           extendedInfo == other.extendedInfo &&
+           uiInspectorInfo == other.uiInspectorInfo
   }
 }

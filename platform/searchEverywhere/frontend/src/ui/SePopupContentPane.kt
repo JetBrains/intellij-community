@@ -4,9 +4,6 @@
 package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.rpc.ThrottledAccumulatedItems
-import com.intellij.ide.rpc.ThrottledItems
-import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 import com.intellij.ide.actions.searcheverywhere.HintHelper
@@ -14,8 +11,12 @@ import com.intellij.ide.actions.searcheverywhere.SEResultsListFactory
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
+import com.intellij.ide.rpc.ThrottledAccumulatedItems
+import com.intellij.ide.rpc.ThrottledItems
+import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.ide.util.gotoByName.QuickSearchComponent
+import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -51,6 +52,7 @@ import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeResultAddedEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
+import com.intellij.platform.searchEverywhere.SeUiInspectorInfo
 import com.intellij.platform.searchEverywhere.data.SeDataKeys
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
@@ -1202,3 +1204,8 @@ private fun ThrottledItems<SeResultEvent>.hasResultsUpdates(): Boolean =
     is ThrottledOneItem<SeResultEvent> -> item is SeResultAddedEvent || item is SeResultReplacedEvent
     is ThrottledAccumulatedItems<SeResultEvent> -> items.any { it is SeResultAddedEvent || it is SeResultReplacedEvent }
   }
+
+internal fun SeUiInspectorInfo?.asPropertyBeans(): List<PropertyBean> {
+  if (this == null) return emptyList()
+  return properties.map { PropertyBean(it.propertyName, it.propertyValue, it.isChanged) }
+}

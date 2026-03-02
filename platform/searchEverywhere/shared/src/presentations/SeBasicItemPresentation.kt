@@ -6,6 +6,7 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.SeUiInspectorInfo
 import com.intellij.ui.SimpleTextAttributes
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -34,6 +35,7 @@ class SeBasicItemPresentationBuilder {
   private var description: String? = null
   private var accessibleAdditionToText: String? = null
   private var extendedInfo: SeExtendedInfo? = null
+  private var uiInspectorInfo: SeUiInspectorInfo? = null
   private var isMultiSelectionSupported: Boolean = false
 
   fun withIcon(icon: Icon?): SeBasicItemPresentationBuilder {
@@ -71,6 +73,11 @@ class SeBasicItemPresentationBuilder {
     return this
   }
 
+  fun withUiInspectorInfo(uiInspectorInfo: SeUiInspectorInfo?): SeBasicItemPresentationBuilder {
+    this.uiInspectorInfo = uiInspectorInfo
+    return this
+  }
+
   fun withMultiSelectionSupported(isMultiSelectionSupported: Boolean): SeBasicItemPresentationBuilder {
     this.isMultiSelectionSupported = isMultiSelectionSupported
     return this
@@ -84,6 +91,7 @@ class SeBasicItemPresentationBuilder {
       description = description,
       accessibleAdditionToText = accessibleAdditionToText,
       extendedInfo = extendedInfo,
+      uiInspectorInfo = uiInspectorInfo,
       isMultiSelectionSupported = isMultiSelectionSupported
     )
 
@@ -104,6 +112,7 @@ class SeBasicItemPresentationImpl internal constructor(
   val description: @NlsSafe String?,
   val accessibleAdditionToText: @NlsSafe String?,
   override val extendedInfo: SeExtendedInfo?,
+  override val uiInspectorInfo: SeUiInspectorInfo?,
   override val isMultiSelectionSupported: Boolean,
 ) : SeBasicItemPresentation {
   override val text: @Nls String get() = textChunk.text

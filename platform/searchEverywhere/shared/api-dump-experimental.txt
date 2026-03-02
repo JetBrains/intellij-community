@@ -135,6 +135,28 @@
 *f:com.intellij.platform.searchEverywhere.SePreviewInfoFactory
 - <init>():V
 - f:create(com.intellij.ide.vfs.VirtualFileId,java.util.List):com.intellij.platform.searchEverywhere.SePreviewInfo
+*f:com.intellij.platform.searchEverywhere.SePropertyBean
+- *sf:Companion:com.intellij.platform.searchEverywhere.SePropertyBean$Companion
+- <init>(java.lang.String,java.lang.String,Z):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():Z
+- f:copy(java.lang.String,java.lang.String,Z):com.intellij.platform.searchEverywhere.SePropertyBean
+- bs:copy$default(com.intellij.platform.searchEverywhere.SePropertyBean,java.lang.String,java.lang.String,Z,I,java.lang.Object):com.intellij.platform.searchEverywhere.SePropertyBean
+- equals(java.lang.Object):Z
+- f:getPropertyName():java.lang.String
+- f:getPropertyValue():java.lang.String
+- hashCode():I
+- f:isChanged():Z
+*bf:com.intellij.platform.searchEverywhere.SePropertyBean$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.searchEverywhere.SePropertyBean$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.searchEverywhere.SePropertyBean
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.searchEverywhere.SePropertyBean):V
+*f:com.intellij.platform.searchEverywhere.SePropertyBean$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 *f:com.intellij.platform.searchEverywhere.SeProviderId
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeProviderId$Companion
 - <init>(java.lang.String):V
@@ -171,6 +193,17 @@
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeSession$Companion
 *f:com.intellij.platform.searchEverywhere.SeSession$Companion
 - f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.platform.searchEverywhere.SeUiInspectorInfo
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeUiInspectorInfo$Companion
+- a:getProperties():java.util.List
+*f:com.intellij.platform.searchEverywhere.SeUiInspectorInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeUiInspectorInfoBuilder
+- <init>():V
+- f:addProperty(com.intellij.platform.searchEverywhere.SePropertyBean):com.intellij.platform.searchEverywhere.SeUiInspectorInfoBuilder
+- f:build():com.intellij.platform.searchEverywhere.SeUiInspectorInfo
+- f:getProperties():java.util.List
+- f:withProperties(java.util.List):com.intellij.platform.searchEverywhere.SeUiInspectorInfoBuilder
 *:com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentation
 - com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 *f:com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
@@ -184,10 +217,12 @@
 - f:withSelectedTextAttributes(com.intellij.ui.SimpleTextAttributes):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
 - f:withText(java.lang.String):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
 - f:withTextAttributes(com.intellij.ui.SimpleTextAttributes):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
+- f:withUiInspectorInfo(com.intellij.platform.searchEverywhere.SeUiInspectorInfo):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
 *:com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 - *sf:Companion:com.intellij.platform.searchEverywhere.presentations.SeItemPresentation$Companion
 - getExtendedInfo():com.intellij.platform.searchEverywhere.SeExtendedInfo
 - a:getText():java.lang.String
+- getUiInspectorInfo():com.intellij.platform.searchEverywhere.SeUiInspectorInfo
 - a:isMultiSelectionSupported():Z
 *f:com.intellij.platform.searchEverywhere.presentations.SeItemPresentation$Companion
 - f:serializer():kotlinx.serialization.KSerializer

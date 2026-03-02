@@ -10,6 +10,8 @@ import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.getGroupName
+import com.intellij.internal.inspector.UiInspectorActionUtil.getActionId
+import com.intellij.internal.inspector.UiInspectorUtil.getClassPresentation
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.Toggleable
@@ -21,6 +23,8 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.SePropertyBean
+import com.intellij.platform.searchEverywhere.SeUiInspectorInfoBuilder
 import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeOptionActionItemPresentation
@@ -38,7 +42,13 @@ object SeActionPresentationProvider {
   suspend fun get(matchedValue: GotoActionModel.MatchedValue, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeItemPresentation {
     val value = matchedValue.value
     if (value is GotoActionModel.ActionWrapper) {
-      var presentation = SeRunnableActionItemPresentation(commonData = SeActionItemPresentation.Common(text = "", extendedInfo = extendedInfo), isMultiSelectionSupported = isMultiSelectionSupported)
+
+      val uiInspectorInfo = SeUiInspectorInfoBuilder()
+        .addProperty(SePropertyBean("Action ID", getActionId(value.action), true))
+        .addProperty(SePropertyBean("Action Class", getClassPresentation(value.action), true))
+        .build()
+      val commonData = SeActionItemPresentation.Common(text = "", extendedInfo = extendedInfo, uiInspectorInfo = uiInspectorInfo)
+      var presentation = SeRunnableActionItemPresentation(commonData = commonData, isMultiSelectionSupported = isMultiSelectionSupported)
 
       val anAction = value.action
       val actionPresentation = value.presentation
@@ -99,7 +109,12 @@ object SeActionPresentationProvider {
       val hit = GotoActionModel.GotoActionListCellRenderer.calcHit(value)
       val displayText = if (hit.startsWith("<html>")) StringUtil.removeHtmlTags(hit) else hit
 
-      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = displayText, extendedInfo = extendedInfo), isMultiSelectionSupported = isMultiSelectionSupported)
+      val uiInspectorInfo = SeUiInspectorInfoBuilder()
+        .addProperty(SePropertyBean("Option ID", value.option, true))
+        .addProperty(SePropertyBean("Option Configurable Id", value.configurableId, true))
+        .build()
+      val commonData = SeActionItemPresentation.Common(text = displayText, extendedInfo = extendedInfo, uiInspectorInfo = uiInspectorInfo)
+      var presentation = SeOptionActionItemPresentation(commonData = commonData, isMultiSelectionSupported = isMultiSelectionSupported)
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run {
