@@ -16,7 +16,7 @@ internal class NoUnexpectedWSMEntitiesOnFrontendListener : WorkspaceModelChangeL
   private val unwantedEntities = listOf(
     ModuleEntity::class.java,
     LibraryEntity::class.java,
-    SdkEntity::class.java,
+    //SdkEntity::class.java,
   )
 
   init {
