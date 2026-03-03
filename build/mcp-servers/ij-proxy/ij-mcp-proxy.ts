@@ -16,8 +16,7 @@ import {createProjectPathManager} from './project-path'
 import {createStreamTransport} from './stream-transport'
 import {setIdeVersion} from './workarounds'
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
-import type {ToolModeInfo} from './proxy-tools/tooling'
-import {createProxyTooling, resolveReadCapabilities, resolveSearchCapabilities, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
+import {createProxyTooling, resolveReadCapabilities, resolveSearchCapabilities} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
 import type {ToolArgs, ToolResultLike, ToolSpecLike} from './proxy-tools/types'
 
@@ -102,7 +101,6 @@ const projectPath = projectPathResolution.projectPath
 const defaultProjectPathKey = 'project_path'
 const projectPathManager = createProjectPathManager({projectPath, defaultProjectPathKey})
 
-const toolModeInfo: ToolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE)
 const REPLACED_TOOL_NAMES = getReplacedToolNames()
 const BASE_BLOCKED_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES])
 let searchCapabilities = resolveSearchCapabilities([]).capabilities
@@ -110,9 +108,6 @@ let readCapabilities = resolveReadCapabilities([]).capabilities
 
 function blockedToolMessage(toolName: string): string {
   if (toolName === 'create_new_file') {
-    if (toolModeInfo.mode === TOOL_MODES.CC) {
-      return `Tool '${toolName}' is not exposed by ij-proxy. Use 'write' instead.`
-    }
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`
   }
   return `Tool '${toolName}' is not exposed by ij-proxy.`
@@ -128,7 +123,6 @@ function updateProxyTooling(): void {
   const tooling = createProxyTooling({
     projectPath,
     callUpstreamTool,
-    toolMode: toolModeInfo.mode,
     searchCapabilities,
     readCapabilities
   })
@@ -153,10 +147,6 @@ void clearLogFile()
 
 if (projectPathResolution.warning) {
   warn(projectPathResolution.warning)
-}
-
-if (toolModeInfo.warning) {
-  warn(toolModeInfo.warning)
 }
 
 
