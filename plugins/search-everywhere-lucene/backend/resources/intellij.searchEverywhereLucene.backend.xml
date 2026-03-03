@@ -22,4 +22,6 @@
             icon="AllIcons.Actions.BuildLoadChanges"/>
   </actions>
 
+  <resource-bundle>messages.searchEverywhereLuceneFrontendBundle</resource-bundle>
+
 </idea-plugin>

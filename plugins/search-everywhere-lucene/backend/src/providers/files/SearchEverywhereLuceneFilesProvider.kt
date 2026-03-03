@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.searchEverywhereLucene.common.SearchEverywhereLuceneProviderIdUtils
+import com.intellij.searchEverywhereLucene.frontend.SearchEverywhereLuceneBackendBundle
 import com.intellij.util.text.matching.MatchingMode
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
@@ -72,7 +73,7 @@ class SearchEverywhereLuceneFileItem(
 
 class SearchEverywhereLuceneFilesProvider(private val project: Project) : SeItemsProvider {
   override val id: String get() = SearchEverywhereLuceneProviderIdUtils.LUCENE_FILES
-  override val displayName: @Nls String get() = "Lucene Files"
+  override val displayName: @Nls String get() = SearchEverywhereLuceneBackendBundle.message("searchEverywhereLucene.files.provider.displayName")
 
   private val fileModel = GotoFileModel(project)
   private val presentationRenderer = SearchEverywherePsiRenderer(this)
