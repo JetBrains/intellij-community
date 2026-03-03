@@ -24,7 +24,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers
 import com.intellij.util.DocumentUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
@@ -122,7 +124,7 @@ private suspend fun applyUpdateWithDocument(
   sourcePath: java.nio.file.Path,
   operation: UpdatePatchOperation,
 ) {
-  readAndEdtWriteAction {
+  val changedDocument = readAndEdtWriteAction {
     if (sourceFile.fileType.isBinary) mcpFail("File ${operation.path} is binary")
     val document = fileDocumentManager.getDocument(sourceFile)
                    ?: mcpFail("Could not get document for ${operation.path}")
@@ -134,7 +136,7 @@ private suspend fun applyUpdateWithDocument(
     }
     val hasContentChanges = updatedText != originalText
     if (!hasContentChanges && moveTarget == null) {
-      return@readAndEdtWriteAction value(Unit)
+      return@readAndEdtWriteAction value<Document?>(null)
     }
 
     writeAction {
@@ -148,8 +150,18 @@ private suspend fun applyUpdateWithDocument(
       }
 
       if (hasContentChanges) {
-        writeFileTextByDocument(fileDocumentManager, document, targetFile, updatedText)
+        writeFileTextByDocument(document, targetFile, updatedText)
+        document
       }
+      else {
+        null
+      }
+    }
+  }
+
+  if (changedDocument != null) {
+    withContext(Dispatchers.Default) {
+      fileDocumentManager.saveDocument(changedDocument)
     }
   }
 }
@@ -218,7 +230,6 @@ private fun moveFile(requestor: Any, file: VirtualFile, targetPath: java.nio.fil
 }
 
 private fun writeFileTextByDocument(
-  fileDocumentManager: FileDocumentManager,
   document: Document,
   file: VirtualFile,
   text: String,
@@ -227,7 +238,6 @@ private fun writeFileTextByDocument(
   DocumentUtil.executeInBulk(document, true) {
     document.setText(documentText)
   }
-  fileDocumentManager.saveDocument(document)
 }
 
 private fun writeFileTextByVfs(
