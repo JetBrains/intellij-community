@@ -88,8 +88,8 @@ internal object AgentPromptEditorContextSupport {
       )
     }
 
-    if (!snapshot.symbolName.isNullOrBlank()) {
-      val symbolName = snapshot.symbolName
+    val symbolName = normalizeSymbolName(snapshot.symbolName)
+    if (symbolName != null) {
       items += AgentPromptContextItem(
         rendererId = AgentPromptContextRendererIds.SYMBOL,
         title = AgentPromptBundle.message("context.symbol.title"),
@@ -136,14 +136,29 @@ internal object AgentPromptEditorContextSupport {
       var element = file.findElementAt(offset)
       while (element != null) {
         val namedElement = element as? PsiNamedElement
-        val name = namedElement?.name
-        if (!name.isNullOrBlank()) {
+        val name = normalizeSymbolName(namedElement?.name)
+        if (name != null) {
           return@runReadActionBlocking name
         }
         element = element.parent
       }
       null
     }
+  }
+
+  private fun normalizeSymbolName(rawName: String?): String? {
+    val normalized = rawName
+      ?.trim()
+      ?.takeIf { it.isNotEmpty() }
+      ?: return null
+    if (isPlaceholderSymbolName(normalized)) {
+      return null
+    }
+    return normalized
+  }
+
+  private fun isPlaceholderSymbolName(name: String): Boolean {
+    return name.length >= 2 && name.first() == '<' && name.last() == '>'
   }
 
   private fun extractSnippet(editor: Editor): AgentPromptSnippet? {

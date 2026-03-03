@@ -1,0 +1,82 @@
+---
+name: "Prompt Context: Project View"
+description: Requirements for project-view selection context contributor and `paths` rendering/chip behavior.
+targets:
+  - ../../prompt/src/context/AgentPromptProjectViewSelectionContextContributor.kt
+  - ../../sessions-core/src/prompt/AgentPromptBuiltinContextRenderers.kt
+  - ../../prompt/resources/intellij.agent.workbench.prompt.xml
+  - ../../prompt/testSrc/context/AgentPromptProjectViewSelectionContextContributorTest.kt
+  - ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
+---
+
+# Prompt Context: Project View
+
+Status: Draft
+Date: 2026-03-03
+
+## Summary
+Define project-view prompt context collection from selected files/directories, including payload schema, source truncation behavior, and `paths` renderer/chip formatting.
+
+## Goals
+- Keep project-view context pointer-first and compact.
+- Keep file/directory path semantics explicit in both envelope and chips.
+
+## Non-goals
+- Defining editor, VCS, or test-runner context behavior.
+- Defining global prompt popup routing and submit flow.
+
+## Requirements
+- Contributor registration contract:
+  - phase is `INVOCATION`,
+  - order is `100`.
+
+- Project-view contributor must collect selection from:
+  - `CommonDataKeys.VIRTUAL_FILE_ARRAY` when present,
+  - otherwise `CommonDataKeys.VIRTUAL_FILE`.
+  [@test] ../../prompt/testSrc/context/AgentPromptProjectViewSelectionContextContributorTest.kt
+
+- Contributor output must produce exactly one context item with:
+  - `rendererId = paths`,
+  - `source = projectView`,
+  - body lines prefixed as `file: <path>` or `dir: <path>`.
+  [@test] ../../prompt/testSrc/context/AgentPromptProjectViewSelectionContextContributorTest.kt
+
+- Source selection contract:
+  - deduplicate by path while preserving encounter order,
+  - include at most five paths,
+  - mark truncation reason as `SOURCE_LIMIT` when selection is capped.
+  [@test] ../../prompt/testSrc/context/AgentPromptProjectViewSelectionContextContributorTest.kt
+
+- Payload contract for project-view item:
+  - `entries[]` with `{ kind, path }`,
+  - `selectedCount`,
+  - `includedCount`,
+  - `directoryCount`,
+  - `fileCount`.
+  [@test] ../../prompt/testSrc/context/AgentPromptProjectViewSelectionContextContributorTest.kt
+
+- `paths` chip rendering must preserve `file:`/`dir:` prefix while shortening path previews (project-relative when under project root).
+  [@test] ../../prompt/testSrc/ui/AgentPromptContextEntryPathRenderingTest.kt
+
+## User Experience
+- Users should see selected project-view paths as concise file/directory anchors.
+- Chips should remain readable for deeply nested absolute paths.
+
+## Data & Backend
+- Envelope rendering resolves relative paths against current project path when possible.
+- Non-resolvable paths are preserved with unresolved marker semantics from built-in renderer contract.
+
+## Error Handling
+- Missing or empty project-view selection returns no context item.
+- Blank/invalid paths are filtered from payload entries.
+
+## Testing / Local Run
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.context.AgentPromptProjectViewSelectionContextContributorTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptContextEntryPathRenderingTest'`
+
+## Open Questions / Risks
+- No dedicated test currently validates directory/file mix counting beyond basic payload assertions.
+
+## References
+- `prompt-context-contracts.spec.md`
+- `../actions/global-prompt-entry.spec.md`

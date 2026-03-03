@@ -106,6 +106,26 @@ class AgentPromptEditorContextContributorTest {
   }
 
   @Test
+  fun buildContextItemsSkipsAnonymousPlaceholderSymbol() {
+    val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<anonymous>"))
+
+    assertThat(items.map { it.rendererId }).containsExactly(
+      AgentPromptContextRendererIds.FILE,
+      AgentPromptContextRendererIds.SNIPPET,
+    )
+  }
+
+  @Test
+  fun buildContextItemsSkipsAngleBracketPlaceholderSymbol() {
+    val items = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<lambda>"))
+
+    assertThat(items.map { it.rendererId }).containsExactly(
+      AgentPromptContextRendererIds.FILE,
+      AgentPromptContextRendererIds.SNIPPET,
+    )
+  }
+
+  @Test
   fun composeInitialMessageRendersFileSymbolThenSnippet() {
     val message = AgentPromptContextEnvelopeFormatter.composeInitialMessage(
       AgentPromptInitialMessageRequest(
@@ -121,6 +141,20 @@ class AgentPromptEditorContextContributorTest {
     assertThat(fileIndex).isGreaterThanOrEqualTo(0)
     assertThat(symbolIndex).isGreaterThan(fileIndex)
     assertThat(snippetIndex).isGreaterThan(symbolIndex)
+  }
+
+  @Test
+  fun composeInitialMessageOmitsPlaceholderSymbolLine() {
+    val message = AgentPromptContextEnvelopeFormatter.composeInitialMessage(
+      AgentPromptInitialMessageRequest(
+        prompt = "Review context",
+        contextItems = AgentPromptEditorContextSupport.buildContextItems(snapshot(symbolName = "<anonymous>")),
+      )
+    )
+
+    assertThat(message).contains("file: /tmp/Sample.kt")
+    assertThat(message).contains("snippet:")
+    assertThat(message).doesNotContain("symbol:")
   }
 
   private fun snapshot(symbolName: String?): AgentEditorContextSnapshot {
