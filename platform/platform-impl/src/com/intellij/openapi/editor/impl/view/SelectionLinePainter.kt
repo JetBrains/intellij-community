@@ -211,10 +211,6 @@ internal class SelectionLinePainter(
     return editor.yToVisualLine(y - yShift)
   }
 
-  private fun visualLineToY(visualLine: Int): Int {
-    return editor.visualLineToY(visualLine) + yShift
-  }
-
   private fun customFoldRegionsFor(visualLine: Int): List<CustomFoldRegion> {
     return customFoldRegions.filter { cfr ->
       val startLine = editor.offsetToVisualLine(cfr.startOffset)
@@ -358,14 +354,6 @@ internal class SelectionLinePainter(
   private fun isSelectionRightBound(block: SelectionRectangle): Boolean {
     val visualLine = yToVisualLine(block.topLeft.y.toInt())
     return customFoldRegionsFor(visualLine).isNotEmpty() || caretSelectionsForLine(visualLine).hasSelectionEnd(false, block.bottomRight.x)
-  }
-
-  fun isLineInSelection(x: Float, y: Int, width: Float): Boolean {
-    val line = yToVisualLine(y)
-    if (y != visualLineToY(line)) return false
-
-    val selection = caretSelectionsForLine(line).selectionContaining(x.toDouble()) ?: return false
-    return selection.contains((x + width).toDouble())
   }
 
   private fun paintRoundedBlock(block: SelectionRectangle, cornerTypes: Array<CornerType>) {
