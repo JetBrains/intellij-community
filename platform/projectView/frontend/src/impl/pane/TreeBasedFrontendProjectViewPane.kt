@@ -17,6 +17,8 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.platform.projectView.actions.FileNestingState
+import com.intellij.platform.projectView.actions.NestingRuleState
 import com.intellij.platform.projectView.actions.ProjectViewActionState
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
@@ -37,6 +39,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateFileNestingRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateOptionValueRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateSortKeyRequest
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
@@ -238,12 +241,21 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 
     override fun getSortKeyState(): ProjectViewSortKeyState? = actionState.load()?.sortKeyState
 
+    override fun getFileNestingState(): FileNestingState? = actionState.load()?.fileNestingState
+
     override fun requestOptionValueUpdate(option: ProjectViewOption, newValue: Boolean) {
       sendRequest(ProjectViewPaneUpdateOptionValueRequest(option, newValue))
     }
 
     override fun requestSortKeyChange(sortKey: NodeSortKey) {
       sendRequest(ProjectViewPaneUpdateSortKeyRequest(sortKey))
+    }
+
+    override fun requestFileNestingChange(
+      fileNestingOn: Boolean,
+      activeRules: List<NestingRuleState>,
+    ) {
+      sendRequest(ProjectViewPaneUpdateFileNestingRequest(fileNestingOn, activeRules))
     }
 
     fun updateActionState(actionState: ProjectViewActionState) {

@@ -45,6 +45,8 @@ public final class FileNestingInProjectViewDialog extends DialogWrapper {
   private static final Comparator<NestingRule> RULE_COMPARATOR =
     Comparator.comparing(o -> o.getParentFileSuffix() + " " + o.getChildFileSuffix());
 
+  private final @NotNull ProjectViewFileNestingModel myModel;
+
   private final JBCheckBox myUseNestingRulesCheckBox;
   private final JPanel myRulesPanel;
   private final TableView<CombinedNestingRule> myTable;
@@ -58,7 +60,13 @@ public final class FileNestingInProjectViewDialog extends DialogWrapper {
   };
 
   public FileNestingInProjectViewDialog(final @NotNull Project project) {
+    this(project, ProjectViewFileNestingService.getInstance());
+  }
+
+  public FileNestingInProjectViewDialog(final @NotNull Project project, @NotNull ProjectViewFileNestingModel model) {
     super(project);
+    myModel = model;
+
     setTitle(IdeBundle.message("file.nesting.dialog.title"));
 
     myUseNestingRulesCheckBox = new JBCheckBox(IdeBundle.message("file.nesting.feature.enabled.checkbox"));
@@ -163,7 +171,7 @@ public final class FileNestingInProjectViewDialog extends DialogWrapper {
     return new Action[]{new DialogWrapperAction(IdeBundle.message("file.nesting.reset.to.default.button")) {
       @Override
       protected void doAction(ActionEvent e) {
-        resetTable(ProjectViewFileNestingService.loadDefaultNestingRules());
+        resetTable(myModel.getDefaultRules());
       }
     }};
   }
@@ -203,7 +211,7 @@ public final class FileNestingInProjectViewDialog extends DialogWrapper {
     myUseNestingRulesCheckBox.setSelected(useFileNestingRules);
     UIUtil.setEnabled(myRulesPanel, myUseNestingRulesCheckBox.isSelected(), true);
 
-    resetTable(ProjectViewFileNestingService.getInstance().getRules());
+    resetTable(myModel.getRules());
   }
 
   private void resetTable(final @NotNull List<? extends NestingRule> rules) {
@@ -233,7 +241,7 @@ public final class FileNestingInProjectViewDialog extends DialogWrapper {
           }
         }
       }
-      ProjectViewFileNestingService.getInstance().setRules(new ArrayList<>(result));
+      myModel.setRules(new ArrayList<>(result));
     }
   }
 

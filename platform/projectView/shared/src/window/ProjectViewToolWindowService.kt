@@ -5,6 +5,8 @@ import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.platform.projectView.actions.FileNestingState
+import com.intellij.platform.projectView.actions.NestingRuleState
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
 import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
@@ -32,7 +34,11 @@ interface ProjectViewOptionSupport {
 
   fun getSortKeyState(): ProjectViewSortKeyState?
 
+  fun getFileNestingState(): FileNestingState?
+
   fun requestOptionValueUpdate(option: ProjectViewOption, newValue: Boolean)
 
   fun requestSortKeyChange(sortKey: NodeSortKey)
+
+  fun requestFileNestingChange(fileNestingOn: Boolean, activeRules: List<NestingRuleState>)
 }

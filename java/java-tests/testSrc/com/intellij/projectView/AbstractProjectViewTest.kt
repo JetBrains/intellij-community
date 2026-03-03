@@ -27,11 +27,11 @@ import com.intellij.ui.tree.TreeTestUtil
 import javax.swing.JTree
 
 abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
-  private var originalNestingRules: MutableList<NestingRule>? = null
+  private var originalNestingRules: List<NestingRule>? = null
 
   override fun tearDown() {
     try {
-      originalNestingRules?.let { ProjectViewFileNestingService.getInstance().rules = it }
+      originalNestingRules?.let { ProjectViewFileNestingService.getInstance().setRules(it) }
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -109,8 +109,8 @@ abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
 
   protected fun setFileNestingRules(vararg rules: Pair<String, String>) {
     val nesting = ProjectViewFileNestingService.getInstance()
-    if (originalNestingRules == null) originalNestingRules = nesting.rules
-    nesting.rules = rules.map { NestingRule(it.first, it.second) }
+    if (originalNestingRules == null) originalNestingRules = nesting.getRules()
+    nesting.setRules(rules.map { NestingRule(it.first, it.second) })
     currentPane.updateFromRoot(false)
   }
 }

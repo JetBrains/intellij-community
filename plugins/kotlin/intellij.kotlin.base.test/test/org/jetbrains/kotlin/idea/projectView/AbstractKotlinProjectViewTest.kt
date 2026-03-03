@@ -35,8 +35,8 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
         super.setUp()
         treeStructure = TestProjectTreeStructure(project, testRootDisposable)
 
-        val initialNestingRules = ProjectViewFileNestingService.getInstance().rules
-        Disposer.register(testRootDisposable) { ProjectViewFileNestingService.getInstance().rules = initialNestingRules }
+        val initialNestingRules = ProjectViewFileNestingService.getInstance().getRules()
+        Disposer.register(testRootDisposable) { ProjectViewFileNestingService.getInstance().setRules(initialNestingRules) }
     }
 
     override fun doMultiFileTest(testDataPath: String, globalDirectives: Directives) {
@@ -51,7 +51,7 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
                 val parentSuffix = it[0]
                 val childSuffix = it[1]
                 val nestingService = ProjectViewFileNestingService.getInstance()
-                nestingService.setRules(nestingService.rules + NestingRule(parentSuffix, childSuffix))
+                nestingService.setRules(nestingService.getRules() + NestingRule(parentSuffix, childSuffix))
             }
         }
 

@@ -4,6 +4,7 @@
 package com.intellij.platform.projectView.actions
 
 import com.intellij.ide.projectView.NodeSortKey
+import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -250,6 +251,7 @@ enum class ProjectViewOption {
 data class ProjectViewActionState(
   val optionStates: Map<ProjectViewOption, ProjectViewOptionState>,
   val sortKeyState: ProjectViewSortKeyState,
+  val fileNestingState: FileNestingState,
 )
 
 @ApiStatus.Internal
@@ -266,6 +268,27 @@ data class ProjectViewSortKeyState(
   val sortKey: NodeSortKey,
   val availableSortKeys: Set<NodeSortKey>,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class FileNestingState(
+  val isFileNestingOn: Boolean,
+  val isFileNestingAvailable: Boolean,
+  val activeRules: List<NestingRuleState>,
+  val defaultRules: List<NestingRuleState>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class NestingRuleState(
+  val parentFileSuffix: String,
+  val childFileSuffix: String,
+) {
+  fun toNestingRule(): ProjectViewFileNestingService.NestingRule = ProjectViewFileNestingService.NestingRule(parentFileSuffix, childFileSuffix)
+}
+
+@ApiStatus.Internal
+fun ProjectViewFileNestingService.NestingRule.toNestingRuleState(): NestingRuleState = NestingRuleState(parentFileSuffix, childFileSuffix)
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal

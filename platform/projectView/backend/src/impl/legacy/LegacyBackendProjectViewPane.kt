@@ -4,7 +4,9 @@ package com.intellij.platform.projectView.backend.impl.legacy
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
+import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewImpl
+import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
@@ -19,11 +21,14 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.projectView.actions.FileNestingState
+import com.intellij.platform.projectView.actions.NestingRuleState
 import com.intellij.platform.projectView.actions.ProjectViewActionState
 import com.intellij.platform.projectView.actions.ProjectViewOption
 import com.intellij.platform.projectView.actions.ProjectViewOptionState
 import com.intellij.platform.projectView.actions.ProjectViewSortKeyState
 import com.intellij.platform.projectView.actions.legacyProjectViewOption
+import com.intellij.platform.projectView.actions.toNestingRuleState
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
 import com.intellij.platform.projectView.backend.pane.projectViewPaneStateBuilder
@@ -42,6 +47,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
+import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateFileNestingRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateOptionValueRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateSortKeyRequest
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
@@ -55,6 +61,7 @@ import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.TreeNodePresentationBuilderImpl
 import com.intellij.ui.tree.buildPresentation
 import com.intellij.ui.treeStructure.CachingTreePath
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
@@ -240,6 +247,7 @@ private class AbstractProjectViewPaneStateManager(
                 is ProjectViewPaneNavigateRequest -> navigate(request.nodeId)
                 is ProjectViewPaneUpdateOptionValueRequest -> updateOptionValue(request.option, request.newValue)
                 is ProjectViewPaneUpdateSortKeyRequest -> updateSortKey(request.sortKey)
+                is ProjectViewPaneUpdateFileNestingRequest -> updateFileNesting(request.isFileNestingOn, request.activeRules)
               }
             }
           }
@@ -480,6 +488,14 @@ private class AbstractProjectViewPaneStateManager(
     updateActionStates()
   }
 
+  private fun updateFileNesting(isOn: Boolean, rules: List<NestingRuleState>) {
+    val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
+    impl.setUseFileNestingRules(isOn)
+    ProjectViewFileNestingService.getInstance().setRules(rules.map { it.toNestingRule() })
+    impl.currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS)
+    updateActionStates()
+  }
+
   private fun updateActionStates() {
     val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
     impl.changeView(id)
@@ -495,9 +511,15 @@ private class AbstractProjectViewPaneStateManager(
       sortKey = impl.getSortKey(id),
       availableSortKeys = NodeSortKey.entries.filter { impl.isSortKeySupported(id, it) }.toSet()
     )
+    val updatedFileNestingState = FileNestingState(
+      isFileNestingOn = ProjectViewState.getInstance(project).useFileNestingRules,
+      isFileNestingAvailable = impl.currentProjectViewPane?.isFileNestingEnabled == true,
+      ProjectViewFileNestingService.getInstance().getRules().map { it.toNestingRuleState() },
+      ProjectViewFileNestingService.getInstance().getDefaultRules().map { it.toNestingRuleState() },
+    )
     LOG.debug { "Updated option states: $updatedOptionStates" }
     handleModelUpdate(ModelActionStatesUpdated(
-      ProjectViewActionState(updatedOptionStates, updatedSortKeyState)
+      ProjectViewActionState(updatedOptionStates, updatedSortKeyState, updatedFileNestingState)
     ))
   }
 
