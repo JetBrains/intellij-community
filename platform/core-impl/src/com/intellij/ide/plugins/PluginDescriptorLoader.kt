@@ -893,8 +893,7 @@ fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
          platformPrefix == PlatformUtils.DBE_PREFIX ||
          platformPrefix == PlatformUtils.DATASPELL_PREFIX ||
          platformPrefix == PlatformUtils.GATEWAY_PREFIX ||
-         platformPrefix == "KotlinLsp" ||
-         platformPrefix == "IntelliJLsp" ||
+         platformPrefix == "LanguageServer" ||
          platformPrefix == "CodeServer"
 }
 

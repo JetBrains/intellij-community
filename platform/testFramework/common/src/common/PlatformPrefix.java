@@ -25,7 +25,7 @@ public final class PlatformPrefix {
     "Ruby",
     "PhpStorm",
     "RustRover",
-    "KotlinLsp", "IntelliJLsp",
+    "LanguageServer",
     "UltimateLangXml", "Idea", "PlatformLangXml",
   };
 
