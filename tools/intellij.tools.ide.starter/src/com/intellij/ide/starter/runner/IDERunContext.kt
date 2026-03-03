@@ -192,7 +192,8 @@ data class IDERunContext(
       if (!useStartupScript) {
         require(commands.count() > 0) { "script builder is not allowed when useStartupScript is disabled" }
       }
-      else
+      // Allow an overridden script file, required for migration of Rider performance tests
+      else if (commands.count() > 0)
         installTestScript(testName = contextName, paths = testContext.paths, commands = commands)
     }
   }
