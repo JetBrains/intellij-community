@@ -99,7 +99,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
   @Test
   fun `test language level approximation`() {
     val highest = JavaRelease.getHighest()
-    val nonPreview = highest.getNonPreviewLevel()
+    val nonPreview = highest.getNonPreviewLevel()!!
     val preview = nonPreview.getPreviewLevel()
 
     Assume.assumeTrue("The IDE $highest Java version doesn't have preview level",
