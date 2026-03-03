@@ -20100,34 +20100,6 @@ jvm_import(
 )
 
 copy_file(
-  name = "xalan/serializer-2.7.3.jar_copy",
-  src = "@xalan-serializer-2_7_3_http//file",
-  out = "xalan/serializer-2.7.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "xslt-debugger-impl-rt-_serializer-2-7-3",
-  jar = "@xalan-serializer-2_7_3_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "xalan/xalan-2.7.3.jar_copy",
-  src = "@xalan-xalan-2_7_3_http//file",
-  out = "xalan/xalan-2.7.3.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "xslt-debugger-impl-rt-_xalan-2-7-3",
-  jar = "@xalan-xalan-2_7_3_http//file",
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.eclipse.xtext/org.eclipse.xtext.xbase.lib-2.40.0.jar_copy",
   src = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0_http//file",
   out = "org.eclipse.xtext/org.eclipse.xtext.xbase.lib-2.40.0.jar",

@@ -1193,12 +1193,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "sa-jdwp", url = "https://github.com/JetBrains/jdk-sa-jdwp")
       .gpl2ce("https://github.com/JetBrains/jdk-sa-jdwp/raw/master/LICENSE.txt"),
 
-    LibraryLicense(libraryName = "Saxon-6.5.5", version = "6.5.5", url = "https://saxon.sourceforge.net/")
-      .license("MPL 1.1", "https://www.mozilla.org/en-US/MPL/1.1/"),
-
-    LibraryLicense(libraryName = "Saxon-9HE", version = "9.9", url = "https://saxon.sourceforge.net/")
-      .mpl2("https://www.mozilla.org/en-US/MPL/2.0/"),
-
     LibraryLicense(name = "Schema Kenerator", libraryName = "io.github.smiley4.schema.kenerator.core", url = "https://github.com/SMILEY4/schema-kenerator",
                    additionalLibraryNames = listOf(
                      "io.github.smiley4.schema.kenerator.jsonschema",
@@ -1359,15 +1353,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "winp", url = "https://github.com/jenkinsci/winp")
       .mit("https://github.com/jenkinsci/winp/blob/master/LICENSE.txt")
       .suppliedByPersons("Kohsuke Kawaguchi"),
-
-    // for workmanager-inspector-proto module library in intellij.android.app-inspection.inspectors.workmanager.model
-    LibraryLicense("Xalan", libraryName = "Xalan-2.7.3", url = "https://xalan.apache.org/xalan-j/")
-      .apache("https://xalan.apache.org/xalan-j/#license")
-      .suppliedByOrganizations(Suppliers.APACHE),
-
-    LibraryLicense("Xalan serializer", libraryName = "Serializer-2.7.3", url = "https://xalan.apache.org/xalan-j/")
-      .apache("https://xalan.apache.org/xalan-j/#license")
-      .suppliedByOrganizations(Suppliers.APACHE),
 
     LibraryLicense(libraryName = "Xerces", url = "https://xerces.apache.org/xerces2-j/")
       .apache("https://svn.apache.org/repos/asf/xerces/java/trunk/LICENSE")
@@ -1535,7 +1520,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("tips-idea-ce"),
     jetbrainsLibrary("tips-pycharm-community"),
     jetbrainsLibrary("workspace-model-codegen"),
-    jetbrainsLibrary("RMI Stubs").copy(name = "XSLT Debugger RMI Stubs"),
   )
 }
 

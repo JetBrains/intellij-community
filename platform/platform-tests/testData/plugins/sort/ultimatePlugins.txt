@@ -27,7 +27,6 @@
 + -com-intellij-gradle-
 + -com-intellij-properties-
 + -XPathView-
-+ -XSLT-Debugger-
 + -com-intellij-copyright-
 + -com-intellij-css-
 + -org-jetbrains-plugins-stylus-

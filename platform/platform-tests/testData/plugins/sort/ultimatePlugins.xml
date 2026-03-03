@@ -823,12 +823,6 @@
     <depends optional="true">-com-jetbrains-php-</depends>
     <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.xslt.debugger/META-INF/plugin.xml">
-    <id>-XSLT-Debugger-</id>
-    <name>XSLT Debugger</name>
-    <depends>-XPathView-</depends>
-    <depends>com.intellij.modules.xml</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.nodeJS/META-INF/plugin.xml">
     <id>-NodeJS-</id>
     <name>NodeJS</name>

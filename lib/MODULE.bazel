@@ -15995,20 +15995,6 @@ http_file(
 )
 
 http_file(
-  name = "xalan-serializer-2_7_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xalan/serializer/2.7.3/serializer-2.7.3.jar",
-  sha256 = "5f6804bacdfdb3ccc52d2538536fab8986696d61559b081054a420c653806667",
-  downloaded_file_path = "serializer-2.7.3.jar"
-)
-
-http_file(
-  name = "xalan-xalan-2_7_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xalan/xalan/2.7.3/xalan-2.7.3.jar",
-  sha256 = "febd48bb133a96c447282213951a6b74ea7fb45c0d896121296c014316bda6b0",
-  downloaded_file_path = "xalan-2.7.3.jar"
-)
-
-http_file(
   name = "org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2.40.0/org.eclipse.xtext.xbase.lib-2.40.0.jar",
   sha256 = "5a810154295fc20a0268cae4cbbc6e5a35a8b32480d8727dc8301910524e4b79",

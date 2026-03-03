@@ -16,7 +16,6 @@ jvm_library(
     "//libraries/xml-rpc",
     "//spellchecker",
     "//java/debugger/openapi:java-debugger",
-    "//plugins/xslt-debugger",
     "//libraries/gson",
     "//platform/core-ui",
   ]
@@ -60,8 +59,6 @@ jvm_library(
     "//libraries/xml-rpc:xml-rpc_test_lib",
     "//java/debugger/openapi:java-debugger",
     "//java/debugger/openapi:java-debugger_test_lib",
-    "//plugins/xslt-debugger",
-    "//plugins/xslt-debugger:xslt-debugger_test_lib",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//libraries/gson",

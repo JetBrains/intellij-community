@@ -1516,9 +1516,6 @@ plugins/ui-designer/jps-plugin/tests
 plugins/webp
 plugins/xpath
 plugins/xpath/xslt-rt
-plugins/xslt-debugger
-plugins/xslt-debugger/engine
-plugins/xslt-debugger/engine/impl
 plugins/yaml
 plugins/yaml/backend
 python
