@@ -37,7 +37,7 @@ sealed interface McpToolFilter {
    * @property allowedTools set of tool names that should be included
    */
   data class AllowList(val allowedTools: Set<String>) : McpToolFilter {
-    override fun shouldInclude(toolName: String): Boolean = toolName in allowedTools
+    override fun shouldInclude(toolName: String): Boolean = toolName.split('.').last() in allowedTools
   }
 
   /**
