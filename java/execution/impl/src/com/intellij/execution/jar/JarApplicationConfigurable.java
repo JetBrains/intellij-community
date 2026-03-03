@@ -54,7 +54,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
       // DO NOT EDIT OR ADD ANY CODE HERE!
       myWholePanel = new JPanel();
       myWholePanel.setLayout(new GridLayoutManager(5, 1, new Insets(0, 0, 0, 0), -1, -1));
-      myCommonProgramParameters = new CommonJavaParametersPanel();
+      myCommonProgramParameters = new CommonJavaParametersPanel(myProject);
       myWholePanel.add(myCommonProgramParameters,
                        new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -63,7 +63,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
       final Spacer spacer1 = new Spacer();
       myWholePanel.add(spacer1, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
                                                     GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
-      myJrePathEditor = new JrePathEditor();
+      myJrePathEditor = new JrePathEditor(myProject);
       myWholePanel.add(myJrePathEditor, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
