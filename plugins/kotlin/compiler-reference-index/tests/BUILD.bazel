@@ -18,7 +18,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/compiler-reference-index",

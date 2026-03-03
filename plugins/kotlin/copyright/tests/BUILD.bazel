@@ -7,7 +7,6 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:junit4",
     "//plugins/kotlin/copyright",
     "//plugins/kotlin/tests-common:common-tests",

@@ -8,7 +8,6 @@ jvm_library(
   runtime_deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinc-kotlin-compiler-tests",
     "//libraries/kotlin/reflect",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/test",

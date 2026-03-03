@@ -14,7 +14,6 @@ jvm_library(
     "//platform/backend/workspace",
     "@lib//:kotlin-gradle-plugin-idea",
     "@lib//:kotlin-test",
-    "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/gradle/gradle-java",
   ]
 )
