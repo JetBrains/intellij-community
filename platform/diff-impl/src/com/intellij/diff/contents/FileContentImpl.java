@@ -35,7 +35,7 @@ public class FileContentImpl extends DiffContentBase implements FileContent {
     myProject = project;
     myType = file.getFileType();
     myHighlightFile = highlightFile;
-    myAssignmentTracker = new FileAssignmentTracker(file);
+    myAssignmentTracker = new FileAssignmentTracker(project, file);
   }
 
   @Override

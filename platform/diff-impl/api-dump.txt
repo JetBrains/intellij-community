@@ -546,9 +546,9 @@ c:com.intellij.diff.impl.DiffWindow
 - p:createProcessor():com.intellij.diff.impl.DiffRequestProcessor
 f:com.intellij.diff.impl.FileAssignmentTracker
 - com.intellij.diff.impl.AssignmentTracker
-- <init>(com.intellij.openapi.vfs.VirtualFile[]):V
-- f:getFiles():com.intellij.openapi.vfs.VirtualFile[]
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile[]):V
 - onEachAssignment():V
+- onLastUnassignment():V
 com.intellij.diff.lang.DiffIgnoredRangeProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent):Z

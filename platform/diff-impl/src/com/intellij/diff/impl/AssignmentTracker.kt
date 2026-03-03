@@ -4,6 +4,7 @@ package com.intellij.diff.impl
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
@@ -60,8 +61,15 @@ open class AssignmentTracker {
   open fun onLastUnassignment() {}
 }
 
-class FileAssignmentTracker(vararg val files: VirtualFile) : AssignmentTracker() {
+class FileAssignmentTracker(
+  private val project: Project?,
+  private vararg val files: VirtualFile,
+) : AssignmentTracker() {
   override fun onEachAssignment() {
     DiffUtil.refreshOnFrameActivation(*files)
+  }
+
+  override fun onLastUnassignment() {
+    DiffUtil.cleanCachesAfterUse(project, *files)
   }
 }

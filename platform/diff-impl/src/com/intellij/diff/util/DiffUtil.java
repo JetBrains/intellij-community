@@ -138,8 +138,11 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
@@ -166,6 +169,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import icons.PlatformDiffImplIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -1608,6 +1612,25 @@ public final class DiffUtil {
   public static void refreshOnFrameActivation(VirtualFile @NotNull ... files) {
     if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       markDirtyAndRefresh(true, false, false, files);
+    }
+  }
+
+  /**
+   * Prevent memory leaks caused by {@link Project} being reachable via {@link UserDataHolder} of the file.
+   * <p>
+   * We expect the file itself still being usable after.
+   */
+  @ApiStatus.Internal
+  public static void cleanCachesAfterUse(@Nullable Project project, VirtualFile @NotNull ... files) {
+    if (project == null) return;
+
+    for (VirtualFile file : files) {
+      if (file instanceof LightVirtualFileBase) {
+        PsiManager psiManager = project.getServiceIfCreated(PsiManager.class);
+        if (psiManager instanceof PsiManagerEx psiManagerEx) {
+          psiManagerEx.getFileManager().setViewProvider(file, null);
+        }
+      }
     }
   }
 

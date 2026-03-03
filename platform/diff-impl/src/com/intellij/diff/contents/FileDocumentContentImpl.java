@@ -34,7 +34,7 @@ public class FileDocumentContentImpl extends DocumentContentBase implements File
     super(project, document);
     myFile = file;
     myHighlightFile = highlightFile;
-    myAssignmentTracker = new FileAssignmentTracker(file);
+    myAssignmentTracker = new FileAssignmentTracker(project, file);
   }
 
   @Override
