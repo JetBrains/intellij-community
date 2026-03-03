@@ -46,7 +46,9 @@ open class TeamCityCIServer(
       ))
       addCodeOwnerMetadata(generifiedTestName, flowId)
       if (isJetbrainsBuildserver) {
-        addTestMetadata(testName = generifiedTestName, TeamCityMetadataType.LINK, flowId = flowId, name = "Start bisect", value = "https://ij-perf.labs.jb.gg/bisect/launcher?buildId=$buildId")
+        val bisectUrl = "https://ij-perf.labs.jb.gg/bisect/launcher?buildId=$buildId" +
+                        (CurrentTestMethod.get()?.clazz?.let { "&testPatterns=$it" } ?: "")
+        addTestMetadata(testName = generifiedTestName, TeamCityMetadataType.LINK, flowId = flowId, name = "Start bisect", value = bisectUrl)
       }
     }
     linkToLogs?.let { addTestMetadata(testName = generifiedTestName, TeamCityMetadataType.LINK, flowId = flowId, name = "Link to Logs and artifacts", value = it) }
