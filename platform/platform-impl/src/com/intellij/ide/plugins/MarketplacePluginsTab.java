@@ -286,8 +286,8 @@ class MarketplacePluginsTab extends PluginsTab {
           myMarketplacePanel.doLayout();
           myMarketplacePanel.initialSelection();
 
-          PluginUpdateListener.calculateUpdates(myCoroutineScope, updates -> {
-            List<PluginUiModel> updateModels = updates == null ? null : new ArrayList<>(updates);
+          PluginUpdateListener.calculateUpdates(myCoroutineScope, plugin -> myPluginModelFacade.isEnabled(plugin), updates -> {
+            List<PluginUiModel> updateModels = new ArrayList<>(updates);
             if (ContainerUtil.isEmpty(updateModels)) {
               clearUpdates(myMarketplacePanel);
               clearUpdates(myMarketplaceSearchPanel.getPanel());
@@ -298,6 +298,7 @@ class MarketplacePluginsTab extends PluginsTab {
             }
             selectionListener.accept(myMarketplacePanel);
             selectionListener.accept(myMarketplaceSearchPanel.getPanel());
+            return null;
           });
         }, ModalityState.any());
       }

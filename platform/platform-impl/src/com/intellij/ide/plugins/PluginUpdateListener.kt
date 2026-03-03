@@ -19,18 +19,22 @@ object PluginUpdateListener {
   private val LOG = logger<PluginUpdateListener>()
 
   @JvmStatic
-  fun calculateUpdates(coroutineScope: CoroutineScope, callback: Consumer<in Collection<PluginUiModel>?>) {
+  fun calculateUpdates(
+    coroutineScope: CoroutineScope,
+    filter: (PluginUiModel) -> Boolean,
+    callback: (List<PluginUiModel>) -> Unit,
+  ) {
     coroutineScope.launch(Dispatchers.IO) {
       val updates = try {
         val updatesModel = PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(buildNumber = null)
-        (updatesModel.pluginUpdates + updatesModel.disabledPluginUpdates).map { it as PluginUiModel }
+        (updatesModel.pluginUpdates + updatesModel.disabledPluginUpdates).map { it as PluginUiModel }.filter { filter(it) }
       }
       catch (e: Throwable) {
         LOG.warn("Failed to load plugin updates from PluginUpdateHandler", e)
-        null
+        emptyList()
       }
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback.accept(updates)
+        callback(updates)
       }
     }
   }
