@@ -65,6 +65,7 @@ jvm_library(
     "//plugins/java-i18n",
     "//plugins/java-i18n:java-i18n_test_lib",
     "//plugins/properties/properties-psi-api:psi",
+    "//jvm/jvm-analysis-api:analysis",
   ],
   runtime_deps = [":kotlin-fir-tests"]
 )
