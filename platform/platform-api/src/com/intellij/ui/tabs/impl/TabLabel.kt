@@ -161,6 +161,10 @@ open class TabLabel @Internal constructor(
       }
 
       override fun mouseExited(e: MouseEvent) {
+        // Don't unhover if the popup menu is currently showing for this tab
+        if (tabs.activePopup != null && tabs.popupInfo === info) {
+          return
+        }
         isHovered = false
       }
     })
