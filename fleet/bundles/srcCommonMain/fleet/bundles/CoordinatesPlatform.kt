@@ -2,7 +2,7 @@ package fleet.bundles
 
 import fleet.util.Os
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.json.Json
 
 @Serializable
@@ -16,11 +16,11 @@ enum class CoordinatesPlatform {
   Wasm
 }
 
-val Coordinates.platforms: List<CoordinatesPlatform>?
+val Coordinates.platforms: Set<CoordinatesPlatform>?
   get() = meta[KnownCoordinatesMeta.Platforms]?.let {
     runCatching {
-      Json.decodeFromString(ListSerializer(CoordinatesPlatform.serializer()), it)
-    }.getOrDefault(emptyList())
+      Json.decodeFromString(SetSerializer(CoordinatesPlatform.serializer()), it)
+    }.getOrDefault(emptySet())
   }
 
 private val currentPlatform by lazy {
@@ -33,6 +33,13 @@ private val currentPlatform by lazy {
   }
 }
 
-fun Iterable<Coordinates>.filterCoordinatesByPlatform(platform: CoordinatesPlatform? = currentPlatform): List<Coordinates> = filter { coordinates ->
-  coordinates.platforms?.contains(platform) != false
+fun Iterable<Coordinates>.filterCoordinatesByPlatform(platform: CoordinatesPlatform? = currentPlatform): Iterable<Coordinates> {
+  return if (platform == null) {
+    this
+  }
+  else {
+    filter { coordinates ->
+      coordinates.platforms?.contains(platform) != false
+    }
+  }
 }
