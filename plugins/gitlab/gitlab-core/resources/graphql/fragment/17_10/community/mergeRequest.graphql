@@ -1,4 +1,4 @@
-# <14.7 commits removed
+# Diff with EE: approved not included
 fragment mergeRequest on MergeRequest {
   id
   iid
@@ -26,7 +26,6 @@ fragment mergeRequest on MergeRequest {
     headSha
   }
 
-  approvalsRequired # Not available in community
   conflicts
   headPipeline {
     ...pipeline
@@ -85,6 +84,15 @@ fragment mergeRequest on MergeRequest {
     }
   }
 
+  commits(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...glCommit
+    }
+  }
   userPermissions {
     ...mergeRequestPermissions
   }

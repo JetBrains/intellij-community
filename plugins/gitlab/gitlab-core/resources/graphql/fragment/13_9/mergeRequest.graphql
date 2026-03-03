@@ -37,7 +37,6 @@ fragment mergeRequest on MergeRequest {
 
   squash
   squashOnMerge
-  squashReadOnly
   defaultSquashCommitMessage
   defaultMergeCommitMessage
   shouldRemoveSourceBranch

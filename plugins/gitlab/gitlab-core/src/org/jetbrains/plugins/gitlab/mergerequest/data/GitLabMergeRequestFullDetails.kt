@@ -46,7 +46,7 @@ data class GitLabMergeRequestFullDetails(
   val allowMergeOnSkippedPipeline: Boolean,
   val shouldSquash: Boolean,
   val shouldSquashWithProject: Boolean, // [shouldSquash] + project override
-  val shouldSquashReadOnly: Boolean,
+  val shouldSquashReadOnly: Boolean?,
   val defaultSquashCommitMessage: String?,
   val defaultMergeCommitMessage: String?,
   val removeSourceBranch: Boolean,
