@@ -24,7 +24,16 @@ internal class PythonPackageManagerServiceImpl(private val serviceScope: Corouti
   private val bridgeCache = ConcurrentHashMap<UUID, PythonPackageManagementServiceBridge>()
 
   /**
-   * Requires Sdk to be Python Sdk and have PythonSdkAdditionalData.
+   * Returns a cached [PythonPackageManager] for the given [sdk], creating one on first access.
+   *
+   * On cache hit the call is effectively free (a [ConcurrentHashMap] lookup).
+   * On cache miss (once per SDK per project lifetime) the method creates the manager,
+   * registers Disposer listeners and sets up VFS watchers — this may involve lightweight I/O
+   * (e.g. flavor detection in [com.jetbrains.python.sdk.getOrCreateAdditionalData]).
+   * In practice the first call happens during project/SDK setup on a background thread,
+   * so subsequent EDT callers always get a cached instance.
+   *
+   * Requires [sdk] to be a Python SDK with [com.jetbrains.python.sdk.PythonSdkAdditionalData].
    */
   override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
     val cacheKey = (sdk.getOrCreateAdditionalData()).uuid
