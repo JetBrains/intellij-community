@@ -119,7 +119,6 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -248,7 +247,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
@@ -403,7 +401,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     TestDaemonCodeAnalyzerImpl testDaemonCodeAnalyzer = new TestDaemonCodeAnalyzerImpl(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+    DaemonCodeAnalyzerSettings.getInstance();
     ProjectInspectionProfileManager.getInstance(project); // avoid "severities changed, restart" event
 
     Throwable exception = null;
@@ -2009,8 +2007,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     String psiFileText = originalFile.getText();
     String path = getTestDataPath() + "/" + expectedFile;
-    String charset = Optional.ofNullable(originalFile.getVirtualFile()).map(f -> f.getCharset().name()).orElse(null);
-    checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(path, charset), psiFileText);
+    VirtualFile virtualFile = VirtualFileUtil.refreshAndFindVirtualFile(Paths.get(path));
+    assert virtualFile != null : "File not found: " + path;
+    checkResult(expectedFile, stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromFile(virtualFile), psiFileText);
   }
 
   private void checkResult(@NotNull String expectedFile,
@@ -2518,27 +2517,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       newFileText = fileDocument.getText();
     }
 
-    private static @NotNull SelectionAndCaretMarkupLoader fromFile(@NotNull String path, String charset) {
-      VirtualFile virtualFile = VirtualFileUtil.refreshAndFindVirtualFile(Paths.get(path));
-      assert virtualFile != null : "File not found: " + path;
-      return fromFile(virtualFile);
-    }
-
     private static @NotNull SelectionAndCaretMarkupLoader fromFile(@NotNull VirtualFile file) {
-      return fromIoSource(() -> {
-        String originText = VfsUtilCore.loadText(file);
-        String documentText = TextPresentationTransformers.fromPersistent(originText, file).toString();
-        return new Pair<>(originText, documentText);
-      }, file.getPath());
-    }
-
-    private static @NotNull SelectionAndCaretMarkupLoader fromIoSource(@NotNull ThrowableComputable<Pair<String, String>, IOException> source,
-                                                                       String path) {
       try {
-        Pair<String, String> fileDocumentTextPair = source.compute();
-        String fileText = StringUtil.convertLineSeparators(fileDocumentTextPair.first);
-        String documentText = StringUtil.convertLineSeparators(fileDocumentTextPair.second);
-        return new SelectionAndCaretMarkupLoader(fileText, documentText, path);
+        String originText = VfsUtilCore.loadText(file);
+        String fileText = StringUtil.convertLineSeparators(originText);
+        String documentText = StringUtil.convertLineSeparators(TextPresentationTransformers.fromPersistent(originText, file).toString());
+        return new SelectionAndCaretMarkupLoader(fileText, documentText, file.getPath());
       }
       catch (IOException e) {
         throw new RuntimeException(e);
