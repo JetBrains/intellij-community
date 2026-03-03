@@ -90,9 +90,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -107,6 +109,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.border.Border
+import kotlin.time.Duration.Companion.seconds
 
 internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineScope) : BoundConfigurable(message("title.settings.sync")),
                                                                                       SettingsSyncEnabler.Listener,
@@ -541,19 +544,25 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         updateRemoveDataState(RemoteDataRemovalState.IN_PROGRESS)
         val project: Project? = ProjectManager.getInstanceIfCreated()?.openProjects?.firstOrNull()
         val result = try {
-          withBackgroundProgress(
-            currentOrDefaultProject(project),
-            message("disable.remove.data.background.progress",
-                    userAccount.toString()),
-            false,
-          ) {
-            if (shouldStopSyncing) {
-              sendRemoveRemoteDataEvent()
-            } else {
-              SettingsSyncBridge.removeRemoteData(userAccount.userData)
+          withTimeout(60.seconds) {
+            withBackgroundProgress(
+              currentOrDefaultProject(project),
+              message("disable.remove.data.background.progress",
+                      userAccount.toString()),
+              false,
+            ) {
+              if (shouldStopSyncing) {
+                sendRemoveRemoteDataEvent()
+              } else {
+                SettingsSyncBridge.removeRemoteData(userAccount.userData)
+              }
             }
           }
+        } catch (_: TimeoutCancellationException) {
+          LOG.warn("Remote data removal timed out after 60 seconds")
+          DeleteServerDataResult.Error("Remote data removal timed out after 60 seconds")
         } catch (ex : Exception) {
+          LOG.warn("Exception during remote data removal", ex)
           DeleteServerDataResult.Error(ex.toString())
         }
         when (result) {
