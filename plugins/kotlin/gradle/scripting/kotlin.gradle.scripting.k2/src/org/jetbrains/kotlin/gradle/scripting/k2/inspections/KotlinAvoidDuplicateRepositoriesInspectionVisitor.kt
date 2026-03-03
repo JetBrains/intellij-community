@@ -13,8 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.gradle.scripting.k2.fixes.ShowDuplicateElementsAction
 import org.jetbrains.kotlin.idea.base.util.letIf
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.parentOrNull
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
@@ -25,7 +24,7 @@ class KotlinAvoidDuplicateRepositoriesInspectionVisitor(
     override fun visitCallExpression(expression: KtCallExpression) {
         if (!expression.isGradleRepositoriesBlock()) return
         val repositoriesBlock = expression.getBlock() ?: return
-        val repositories = repositoriesBlock.childrenOfType<KtCallExpression>().filter { isRepositoryDeclaration(it) }
+        val repositories = repositoriesBlock.childrenOfType<KtCallExpression>().filter { it.isRepositoryDeclaration() }
         val duplicateGroups = repositories.groupBy { it.normalizedRepositoryKey() }.filterValues { it.size > 1 }
         duplicateGroups.forEach { (key, repositories) ->
             repositories.forEach { repository ->
@@ -48,14 +47,14 @@ class KotlinAvoidDuplicateRepositoriesInspectionVisitor(
         }
     }
 
-    private fun isRepositoryDeclaration(expression: KtCallExpression): Boolean = analyze(expression) {
-        val symbol = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return@analyze false
-        if (symbol.callableId?.asSingleFqName()?.parentOrNull() == FqName("org.gradle.api.artifacts.dsl.RepositoryHandler")) {
-            return true
-        } else {
-            val returnType = symbol.returnType.symbol?.classId?.asSingleFqName() ?: return@analyze false
-            returnType.startsWith(FqName("org.gradle.api.artifacts.repositories"))
-        }
+    private fun KtCallExpression.isRepositoryDeclaration(): Boolean = analyze(this) {
+        val symbol = this@isRepositoryDeclaration.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return@analyze false
+        val returnClassId = symbol.returnType.symbol?.classId ?: return@analyze false
+        return isInheritor(
+            this@isRepositoryDeclaration,
+            returnClassId,
+            ARTIFACT_REPOSITORY_CLASS_ID
+        )
     }
 
     /**
@@ -77,6 +76,10 @@ class KotlinAvoidDuplicateRepositoriesInspectionVisitor(
             }
         })
         return sb.toString()
+    }
+
+    companion object {
+        private val ARTIFACT_REPOSITORY_CLASS_ID = ClassId.fromString("org/gradle/api/artifacts/repositories/ArtifactRepository")
     }
 }
 

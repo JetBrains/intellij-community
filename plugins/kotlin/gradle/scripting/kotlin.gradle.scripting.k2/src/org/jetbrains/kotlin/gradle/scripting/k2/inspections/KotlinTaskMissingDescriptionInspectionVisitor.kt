@@ -112,15 +112,6 @@ class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: Problems
         return unwrappedType?.symbol?.classId ?: callPartiallyAppliedSymbol.symbol.callableId?.classId
     }
 
-    private fun isInheritor(useSiteElement: KtElement, targetClassId: ClassId, baseClassId: ClassId): Boolean {
-        if (targetClassId == baseClassId) return true
-        return analyze(useSiteElement) {
-            val targetClass = findClass(targetClassId) ?: return@analyze false
-            val baseClass = findClass(baseClassId) ?: return@analyze false
-            return targetClass.isSubClassOf(baseClass)
-        }
-    }
-
     companion object {
         private const val DESCRIPTION_SETTER = "setDescription"
         private val GRADLE_API_TASK_CLASS_ID = ClassId.fromString(GRADLE_API_TASK.replace('.', '/'))
