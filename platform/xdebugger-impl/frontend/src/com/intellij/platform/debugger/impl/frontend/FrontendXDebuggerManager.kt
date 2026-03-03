@@ -202,7 +202,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
       }
 
       private fun getDescriptor(event: ContentManagerEvent): RunContentDescriptor? {
-        if (event.operation != ContentManagerEvent.ContentOperation.add) return null
+        if (event.operation != ContentManagerEvent.ContentOperation.add && event.operation != ContentManagerEvent.ContentOperation.remove) return null
         val executor = RunContentManagerImpl.getExecutorByContent(event.content) ?: return null
         if (executor.toolWindowId != ToolWindowId.DEBUG) return null
         return RunContentManagerImpl.getRunContentDescriptorByContent(event.content)
