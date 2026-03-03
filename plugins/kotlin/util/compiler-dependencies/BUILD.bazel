@@ -7,8 +7,6 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   runtime_deps = [
     "@lib//:kotlinc-kotlin-dist",
-    "@lib//:kotlin-stdlib",
-    "//libraries/kotlin/reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fir",
     "@lib//:kotlinc-kotlin-compiler-ir",
@@ -49,9 +47,6 @@ jvm_library(
   module_name = "kotlin.util.compiler-dependencies",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":compiler-dependencies",
-    "//libraries/kotlin/reflect:reflect_test_lib",
-  ]
+  runtime_deps = [":compiler-dependencies"]
 )
 ### auto-generated section `build kotlin.util.compiler-dependencies` end
