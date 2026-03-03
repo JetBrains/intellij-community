@@ -1,10 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.projectView.impl
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.projectView.actions
 
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectView.impl.FileNestingInProjectViewDialog
+import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.platform.projectView.window.isProjectViewSplit
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 
 internal class ConfigureFilesNestingAction : DumbAwareAction() {

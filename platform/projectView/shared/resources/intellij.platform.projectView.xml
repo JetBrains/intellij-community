@@ -73,7 +73,7 @@
                 class="com.intellij.platform.projectView.actions.CompactDirectories"/>
         <separator/>
         <action id="ProjectView.FileNesting"
-                class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
+                class="com.intellij.platform.projectView.actions.ConfigureFilesNestingAction"/>
         <separator/>
         <action id="ProjectView.CustomizeTrees"
                 class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
