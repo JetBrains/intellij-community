@@ -54,8 +54,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   public static final Logger LOG = Logger.getInstance(ContributorsBasedGotoByModel.class);
 
   protected final Project myProject;
-  @ApiStatus.Internal
-  protected final List<ChooseByNameContributor> myContributors;
+
+  private final List<ChooseByNameContributor> myContributors;
 
   protected ContributorsBasedGotoByModel(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors) {
     this(project, List.of(contributors));
