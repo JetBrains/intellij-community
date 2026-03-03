@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.application.Application;
@@ -132,10 +132,17 @@ public final class SmartPointerTracker {
     }
   }
 
-  synchronized @Nullable Segment getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument document, @NotNull List<? extends DocumentEvent> events) {
+  synchronized @Nullable Segment getUpdatedRange(@NotNull SelfElementInfo info,
+                                                 @NotNull FrozenDocument document,
+                                                 @NotNull List<? extends DocumentEvent> events) {
     return markerCache.getUpdatedRange(info, document, events);
   }
-  synchronized @Nullable Segment getUpdatedRange(@NotNull PsiFile containingFile, @NotNull Segment segment, boolean isSegmentGreedy, @NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
+
+  synchronized @Nullable Segment getUpdatedRange(@NotNull PsiFile containingFile,
+                                                 @NotNull Segment segment,
+                                                 boolean isSegmentGreedy,
+                                                 @NotNull FrozenDocument frozen,
+                                                 @NotNull List<? extends DocumentEvent> events) {
     return MarkerCache.getUpdatedRange(containingFile, segment, isSegmentGreedy, frozen, events);
   }
 
@@ -162,7 +169,8 @@ public final class SmartPointerTracker {
     });
   }
 
-  private static <E extends PsiElement> void updatePointerTarget(@NotNull SmartPsiElementPointerImpl<E> pointer, @Nullable Segment pointerRange) {
+  private static <E extends PsiElement> void updatePointerTarget(@NotNull SmartPsiElementPointerImpl<E> pointer,
+                                                                 @Nullable Segment pointerRange) {
     E cachedElement = pointer.getCachedElement();
     if (cachedElement == null) {
       return;
@@ -240,5 +248,4 @@ public final class SmartPointerTracker {
       reference.tracker.removeReference(reference);
     }
   }
-
 }
