@@ -33,6 +33,9 @@
     <extensionPoint name="vcsLogChangesTreeBuilder"
                     interface="com.intellij.vcs.log.ui.frame.VcsLogChangesTreeModifier"
                     dynamic="true"/>
+    <extensionPoint name="vcsLogRefreshActionListener"
+                    interface="com.intellij.vcs.log.ui.actions.VcsLogRefreshActionListener"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

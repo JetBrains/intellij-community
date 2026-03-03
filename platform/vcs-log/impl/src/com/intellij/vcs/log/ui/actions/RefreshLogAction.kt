@@ -15,6 +15,7 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.util.VcsLogUtil
+import kotlinx.coroutines.launch
 
 private val LOG = logger<RefreshLogAction>()
 
@@ -24,6 +25,9 @@ internal class RefreshLogAction : RefreshAction() {
 
     val logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER) ?: return
     val ui = e.getData(VcsLogDataKeys.VCS_LOG_UI) ?: return
+
+    val logData = logManager.dataManager
+    if (logData.isRefreshInProgress.value) return
 
     // diagnostic for possible refresh problems
     if (ui is VcsLogUiEx) {
@@ -40,7 +44,12 @@ internal class RefreshLogAction : RefreshAction() {
       }
     }
 
-    logManager.dataManager.refresh(VcsLogUtil.getVisibleRoots(ui))
+    val project = logData.project
+    val roots = VcsLogUtil.getVisibleRoots(ui)
+    e.coroutineScope.launch {
+      VcsLogRefreshActionListener.EP_NAME.forEachExtensionSafe { listener -> listener.beforeRefresh(project, roots) }
+      logData.refresh(roots)
+    }
   }
 
   override fun update(e: AnActionEvent) {
