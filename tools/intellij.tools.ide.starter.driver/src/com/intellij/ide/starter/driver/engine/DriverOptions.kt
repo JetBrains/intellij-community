@@ -6,7 +6,7 @@ import java.net.InetAddress
 class DriverOptions(
   host: InetAddress = InetAddress.getLoopbackAddress(),
   internal val port: Int = getAvailablePort(proposedPort = 7777),
-  webServerPort: Int = getAvailablePort(proposedPort = 63000),
+  webServerPort: Int = getAvailablePort(proposedPort = 11111),
   additionalProperties: Map<String, String> = emptyMap()
 ) {
 
