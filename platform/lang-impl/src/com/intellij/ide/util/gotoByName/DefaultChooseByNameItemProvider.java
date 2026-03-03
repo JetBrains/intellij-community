@@ -458,9 +458,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
         //noinspection CastToIncompatibleInterface
         // The only usage in monorepo so far is in rider, it just returns TRUE here. So, pointless?
         final var customMatch = ((CustomMatcherModel)base.getModel()).matches(name, namePattern) ? new MatchResult(name, 0, true) : null;
-        if (LOG.isDebugEnabled() && customMatch != null) {
-          LOG.debug("custom result weight for name [" + name + "] = " + customMatch.matchingDegree);
-        }
+        //if (LOG.isDebugEnabled() && customMatch != null) {
+        //  LOG.debug("custom result weight for name [" + name + "] = " + customMatch.matchingDegree);
+        //}
         return customMatch;
       }
       catch (Exception e) {
@@ -470,9 +470,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     }
     final var qualifiedMatch = qualifiedNameMatcher != null ? matchName(qualifiedNameMatcher, name) : null;
     final var defaultMatch = qualifiedMatch != null ? qualifiedMatch : matchName(nameMatcher, name);
-    if (LOG.isDebugEnabled() && defaultMatch != null) {
-      LOG.debug("default result weight for name [" + name + "] = " + defaultMatch.matchingDegree);
-    }
+    //if (LOG.isDebugEnabled() && defaultMatch != null) {
+    //  LOG.debug("default result weight for name [" + name + "] = " + defaultMatch.matchingDegree);
+    //}
     return defaultMatch;
   }
 
