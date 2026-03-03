@@ -28,6 +28,8 @@ class AgentPromptContextEntryPathRenderingTest {
     )
 
     assertThat(entry.displayText).isEqualTo("File: src${File.separator}Main.kt")
+    assertThat(entry.tooltipText).isEqualTo("file: $filePath")
+    assertThat(entry.tooltipText).doesNotContain("source=")
   }
 
   @Test
@@ -75,6 +77,7 @@ class AgentPromptContextEntryPathRenderingTest {
     )
 
     assertThat(entry.displayText).isEqualTo("Paths: dir: subdir")
+    assertThat(entry.tooltipText).isEqualTo("paths:\ndir: $selectedDirectory")
   }
 
   @Test
@@ -111,6 +114,25 @@ class AgentPromptContextEntryPathRenderingTest {
     )
 
     assertThat(entry.displayText).isEqualTo("VCS Revisions: abc12345")
+    assertThat(entry.tooltipText).isEqualTo("vcs revisions:\nabc12345")
+    assertThat(entry.tooltipText).doesNotContain("source=")
+  }
+
+  @Test
+  fun unknownRendererTooltipFallsBackToGenericEnvelopeRender() {
+    val entry = contextEntry(
+      rendererId = "customRenderer",
+      title = "Custom",
+      body = "line 1",
+      projectBasePath = null,
+    )
+
+    assertThat(entry.tooltipText).isEqualTo(
+      "context: renderer=customRenderer title=Custom\n" +
+      "```text\n" +
+      "line 1\n" +
+      "```"
+    )
   }
 
   private fun contextEntry(

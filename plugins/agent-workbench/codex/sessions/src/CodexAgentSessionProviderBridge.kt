@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodex
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -75,6 +76,18 @@ internal class CodexAgentSessionProviderBridge(
     return baseLaunchSpec.copy(command = baseLaunchSpec.command + listOf("--", prompt))
   }
 
+  override fun composeInitialMessage(request: AgentPromptInitialMessageRequest): String {
+    val message = super.composeInitialMessage(request)
+    if (!request.codexPlanModeEnabled) {
+      return message
+    }
+    return ensurePlanModePrefix(message)
+  }
+
+  override fun shouldUseStartupPromptCommand(request: AgentPromptInitialMessageRequest): Boolean {
+    return !request.codexPlanModeEnabled
+  }
+
   @Suppress("UNUSED_PARAMETER")
   override suspend fun createNewSession(path: String, mode: AgentSessionLaunchMode): AgentSessionLaunchSpec {
     return AgentSessionLaunchSpec(
@@ -96,6 +109,21 @@ internal class CodexAgentSessionProviderBridge(
   override fun isCliMissingError(throwable: Throwable): Boolean {
     return throwable is CodexCliNotFoundException
   }
+
+  private fun ensurePlanModePrefix(message: String): String {
+    val normalized = message.trim()
+    if (normalized.isEmpty()) {
+      return PLAN_MODE_COMMAND
+    }
+    if (normalized.startsWith(PLAN_MODE_COMMAND)) {
+      val suffix = normalized.removePrefix(PLAN_MODE_COMMAND)
+      if (suffix.isEmpty() || suffix.first().isWhitespace()) {
+        return normalized
+      }
+    }
+    return "$PLAN_MODE_COMMAND $normalized"
+  }
 }
 
 private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"
+private const val PLAN_MODE_COMMAND: String = "/plan"

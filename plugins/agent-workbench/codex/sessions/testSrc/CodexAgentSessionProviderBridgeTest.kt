@@ -85,6 +85,48 @@ class CodexAgentSessionProviderBridgeTest {
   }
 
   @Test
+  fun composeInitialMessagePrefixesPlanCommandWhenEnabled() {
+    val message = bridge.composeInitialMessage(
+      AgentPromptInitialMessageRequest(
+        prompt = "Refactor this",
+        codexPlanModeEnabled = true,
+      )
+    )
+
+    assertThat(message).isEqualTo("/plan Refactor this")
+  }
+
+  @Test
+  fun composeInitialMessageDoesNotDoublePrefixPlanCommand() {
+    val message = bridge.composeInitialMessage(
+      AgentPromptInitialMessageRequest(
+        prompt = " /plan Refactor this ",
+        codexPlanModeEnabled = true,
+      )
+    )
+
+    assertThat(message).isEqualTo("/plan Refactor this")
+  }
+
+  @Test
+  fun shouldUseStartupPromptCommandDependsOnPlanMode() {
+    assertThat(
+      bridge.shouldUseStartupPromptCommand(
+        AgentPromptInitialMessageRequest(prompt = "Refactor this")
+      )
+    ).isTrue()
+
+    assertThat(
+      bridge.shouldUseStartupPromptCommand(
+        AgentPromptInitialMessageRequest(
+          prompt = "Refactor this",
+          codexPlanModeEnabled = true,
+        )
+      )
+    ).isFalse()
+  }
+
+  @Test
   fun composeInitialMessageUsesCompactContextBlock() {
     val message = bridge.composeInitialMessage(
       AgentPromptInitialMessageRequest(

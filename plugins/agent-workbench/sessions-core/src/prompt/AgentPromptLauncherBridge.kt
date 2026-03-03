@@ -26,6 +26,14 @@ interface AgentPromptLauncherBridge {
 
   suspend fun refreshExistingThreads(projectPath: String, provider: AgentSessionProvider) {
   }
+
+  fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String? {
+    return null
+  }
+
+  fun listWorkingProjectPathCandidates(invocationData: AgentPromptInvocationData): List<AgentPromptProjectPathCandidate> {
+    return emptyList()
+  }
 }
 
 private class AgentPromptLauncherBridgeLog

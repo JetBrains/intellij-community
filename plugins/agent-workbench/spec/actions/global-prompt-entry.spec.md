@@ -10,11 +10,14 @@ targets:
   - ../../prompt/resources/intellij.agent.workbench.prompt.xml
   - ../../prompt/resources/messages/AgentPromptBundle.properties
   - ../../sessions-core/src/prompt/AgentPromptLauncherBridge.kt
+  - ../../sessions/src/service/AgentSessionsPromptLauncherBridge.kt
   - ../../prompt/testSrc/ui/AgentPromptSubmitValidationDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptFooterHintDecisionsTest.kt
+  - ../../prompt/testSrc/ui/AgentPromptPlanModeDecisionsTest.kt
   - ../../prompt/testSrc/ui/AgentPromptEnterHandlersTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPaletteViewStructureTest.kt
   - ../../prompt/testSrc/ui/AgentPromptPaletteViewLayoutTest.kt
+  - ../../sessions/testSrc/AgentSessionsPromptLauncherBridgeTest.kt
 ---
 
 # Global Prompt Entry
@@ -61,6 +64,16 @@ Prompt-context collection and rendering contracts are specified separately in `s
   - `EXISTING_TASK` mode without selected existing task id.
   [@test] ../../prompt/testSrc/ui/AgentPromptSubmitValidationDecisionsTest.kt
 
+- Working project path resolution for submit and existing-task loading must never use dedicated-frame project path.
+
+- Working project path resolution order in dedicated-frame project must be:
+  - selected Sessions tree context path (project/thread/worktree),
+  - selected chat tab source path,
+  - most recent non-dedicated project path.
+  [@test] ../../sessions/testSrc/AgentSessionsPromptLauncherBridgeTest.kt
+
+- If no working project path can be resolved automatically, submit must prompt user to choose from available non-dedicated project candidates; cancel keeps popup open and shows project-path validation error.
+
 - Keyboard behavior contract:
   - `Enter` runs submit action,
   - `Shift+Enter` inserts line break,
@@ -79,6 +92,14 @@ Prompt-context collection and rendering contracts are specified separately in `s
 
 - Submit flow must route through `AgentPromptLauncherBridge` using `AgentPromptLaunchRequest`; prompt popup must not directly call provider session sources.
 
+- Codex-only Plan mode toggle contract:
+  - Toggle is visible only when selected provider is `CODEX`.
+  - Toggle default is enabled and is persisted in per-project prompt draft state.
+  - When effective plan mode is enabled, submit must set `initialMessageRequest.codexPlanModeEnabled = true`.
+  - Effective plan mode must be forced off for `EXISTING_TASK` target when selected thread activity is `PROCESSING` or `REVIEWING`.
+  - Non-Codex providers must always submit with plan mode disabled.
+  [@test] ../../prompt/testSrc/ui/AgentPromptPlanModeDecisionsTest.kt
+
 - Context block soft-cap limit is `12_000` characters. When exceeded, user must explicitly choose send-full, auto-trim, or cancel before launch.
 
 ## User Experience
@@ -88,6 +109,7 @@ Prompt-context collection and rendering contracts are specified separately in `s
 
 ## Data & Backend
 - Existing-task list comes from launcher `observeExistingThreads(...)` stream with background refresh.
+- Existing-task list must be scoped to resolved working project path.
 - On successful launch, popup closes and draft is cleared; otherwise popup remains and shows error feedback.
 
 ## Error Handling
@@ -97,9 +119,11 @@ Prompt-context collection and rendering contracts are specified separately in `s
 ## Testing / Local Run
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptSubmitValidationDecisionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptFooterHintDecisionsTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPlanModeDecisionsTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptEnterHandlersTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewStructureTest'`
 - `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewLayoutTest'`
+- `./tests.cmd '-Dintellij.build.test.patterns=com.intellij.agent.workbench.sessions.AgentSessionsPromptLauncherBridgeTest'`
 
 ## Open Questions / Risks
 - Keymap conflict resolution for `Cmd/Ctrl+\\` still relies on duplicate keymap declarations and does not enforce a runtime winner.

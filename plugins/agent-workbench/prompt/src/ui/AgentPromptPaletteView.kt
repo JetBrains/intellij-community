@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.ui.WindowMoveListener
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -39,18 +40,20 @@ internal data class AgentPromptPaletteView(
   val existingTaskList: JBList<ThreadEntry>,
   val existingTaskScrollPane: JBScrollPane,
   val footerLabel: JBLabel,
+  val codexPlanModeCheckBox: JBCheckBox?,
 )
 
 internal fun createAgentPromptPaletteView(
   promptArea: JBTextArea,
   contextChipsPanel: JPanel,
+  codexPlanModeCheckBox: JBCheckBox? = null,
   onProviderIconClicked: () -> Unit,
   onExistingTaskSelected: (ThreadEntry) -> Unit,
 ): AgentPromptPaletteView {
   val providerIconLabel = JBLabel().apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     toolTipText = AgentPromptBundle.message("popup.provider.selector.tooltip")
-    border = JBUI.Borders.empty(0, 8)
+    border = JBUI.Borders.empty()
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {
         onProviderIconClicked()
@@ -59,6 +62,12 @@ internal fun createAgentPromptPaletteView(
   }
 
   lateinit var tabbedPane: JBTabbedPane
+  val headerControlsInsets = JBUI.CurrentTheme.BigPopup.headerToolbarInsets()
+  val controlsLeftGap = headerControlsInsets.left
+  val controlToIconGap = headerControlsInsets.right
+  val spacer = JPanel().apply {
+    isOpaque = false
+  }
   val headerPanel = panel {
     row {
       tabbedPane = tabbedPaneHeader()
@@ -70,10 +79,16 @@ internal fun createAgentPromptPaletteView(
         }
         .component
       cell(tabbedPane)
-      cell(providerIconLabel)
+      cell(spacer)
         .resizableColumn()
+      if (codexPlanModeCheckBox != null) {
+        cell(codexPlanModeCheckBox)
+          .align(AlignX.RIGHT)
+          .customize(UnscaledGaps(left = controlsLeftGap))
+      }
+      cell(providerIconLabel)
         .align(AlignX.RIGHT)
-        .customize(UnscaledGaps(left = 18))
+        .customize(UnscaledGaps(left = if (codexPlanModeCheckBox != null) controlToIconGap else controlsLeftGap))
     }
   }
   headerPanel.apply {
@@ -164,5 +179,6 @@ internal fun createAgentPromptPaletteView(
     existingTaskList = existingTaskList,
     existingTaskScrollPane = existingTaskScrollPane,
     footerLabel = footerLabel,
+    codexPlanModeCheckBox = codexPlanModeCheckBox,
   )
 }

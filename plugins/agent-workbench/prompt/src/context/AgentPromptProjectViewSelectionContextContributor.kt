@@ -30,8 +30,15 @@ internal class AgentPromptProjectViewSelectionContextContributor : AgentPromptCo
     }
 
     val uniqueSelection = LinkedHashMap<String, Boolean>()
-    selectedFiles.forEach { file ->
-      uniqueSelection.putIfAbsent(file.path, file.isDirectory)
+    for (file in selectedFiles) {
+      if (!file.isInLocalFileSystem) {
+        continue
+      }
+      val path = file.path
+      if (path == ".") {
+        continue
+      }
+      uniqueSelection.putIfAbsent(path, file.isDirectory)
     }
     if (uniqueSelection.isEmpty()) {
       return emptyList()
