@@ -53,6 +53,10 @@ interface GitLabMergeRequestDiscussionsContainer {
   val canAddNotes: Boolean
   val canAddDraftNotes: Boolean
   val canAddPositionalDraftNotes: Boolean
+  /**
+   * if the position of a note can be multiline
+   */
+  val canAddMultilinePositionalNotes: Boolean
 
   suspend fun addNote(body: String)
 
@@ -79,11 +83,18 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   private val cs = parentCs.childScope(this::class, Dispatchers.Default)
 
+
   override val canAddNotes: Boolean = mr.details.value.userPermissions.createNote
   override val canAddDraftNotes: Boolean =
     canAddNotes && (glMetadata != null && GitLabVersion(15, 10) <= glMetadata.version)
   override val canAddPositionalDraftNotes: Boolean =
     canAddNotes && (glMetadata != null && GitLabVersion(16, 3) <= glMetadata.version)
+  // There were two bugs in Gitlab api that cause posting failures for multiline comments,
+  // https://gitlab.com/gitlab-org/gitlab/-/issues/520794 - affects plain comments, fixed in v17.10
+  // https://gitlab.com/gitlab-org/gitlab/-/issues/571619 - affects drafts, fixed in v18.6
+  // since one messages can be posted either as a comment or as a draft, we need them both to work with multiline correctly
+  override val canAddMultilinePositionalNotes: Boolean =
+    canAddNotes && (glMetadata != null && GitLabVersion(18, 6) <= glMetadata.version)
 
   private val reloadRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
     tryEmit(Unit)
@@ -181,7 +192,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
           mapDataToModel(
             GitLabMergeRequestDraftNoteRestDTO::id,
             {
-              GitLabMergeRequestDraftNoteImpl(this, api, glMetadata, projectId, mr, { draftNotesEvents.emit(it) }, it, currentUser)
+              GitLabMergeRequestDraftNoteImpl(this, api, glMetadata, projectId, mr, { draftNotesEvents.emit(it) }, it, currentUser, canAddMultilinePositionalNotes)
             },
             { update(it) }
           )
@@ -215,7 +226,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) {
     withContext(cs.coroutineContext) {
       val newDiscussion = withContext(Dispatchers.IO) {
-        api.rest.addDiffNote(projectId, mr.iid, GitLabDiffPositionInput.from(position), body).body()
+        api.rest.addDiffNote(projectId, mr.iid, GitLabDiffPositionInput.from(position), canAddMultilinePositionalNotes, body).body()
       }
 
       withContext(NonCancellable) {
@@ -227,7 +238,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addDraftNote(body: String) {
     withContext(cs.coroutineContext) {
       val newNote = withContext(Dispatchers.IO) {
-        api.rest.addDraftNote(projectId, mr.iid, null, body).body()
+        api.rest.addDraftNote(projectId, mr.iid, null, canAddMultilinePositionalNotes, body).body()
       }
 
       withContext(NonCancellable) {
@@ -239,7 +250,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addDraftNote(position: GitLabMergeRequestNewDiscussionPosition, body: String) {
     withContext(cs.coroutineContext) {
       val newNote = withContext(Dispatchers.IO) {
-        api.rest.addDraftNote(projectId, mr.iid, GitLabDiffPositionInput.from(position), body).body()
+        api.rest.addDraftNote(projectId, mr.iid, GitLabDiffPositionInput.from(position), canAddMultilinePositionalNotes, body).body()
       }
 
       withContext(NonCancellable) {

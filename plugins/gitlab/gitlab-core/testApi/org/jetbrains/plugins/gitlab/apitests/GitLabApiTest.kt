@@ -207,6 +207,7 @@ class GitLabApiTest : GitLabApiTestCase() {
         volatileProjectMr1Iid,
         GitLabDiffPositionInput("bd857928", "bd857928", 1, "063282e5", 1,
                                 DiffPathsInputDTO("README.md", null)),
+        false,
         initialBody
       ).body()
       assertNotNull(addNoteResult)
@@ -271,6 +272,7 @@ class GitLabApiTest : GitLabApiTestCase() {
         volatileProjectMr1Iid,
         GitLabDiffPositionInput("bd857928", "bd857928", 1, "063282e5", 1,
                                 DiffPathsInputDTO("README.md", null)),
+        false,
         initialBody
       ).body()
       assertNotNull(addNoteResult)

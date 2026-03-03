@@ -28,6 +28,7 @@ interface CodeReviewInlayModel : EditorMappedViewModel {
       enum class AdjustmentDisabledReason {
         SUGGESTED_CHANGE,
         SINGLE_COMMIT_REVIEW,
+        UNSUPPORTED_VERSION,
       }
     }
   }
