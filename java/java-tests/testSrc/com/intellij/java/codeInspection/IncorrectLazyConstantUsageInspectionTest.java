@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.IncorrectLazyConstantUsageInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.siyeh.ig.style.FieldMayBeFinalInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class IncorrectLazyConstantUsageInspectionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -18,6 +19,11 @@ public class IncorrectLazyConstantUsageInspectionTest extends LightJavaCodeInsig
     myFixture.configureByFile(name + ".java");
     myFixture.launchAction(myFixture.findSingleIntention("Make 'f' 'final'"));
     myFixture.checkResultByFile(name + "_after.java");
+  }
+
+  public void testNoDuplicateWithFieldMayBeFinal() {
+    myFixture.enableInspections(new FieldMayBeFinalInspection());
+    doTest();
   }
 
   @Override

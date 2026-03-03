@@ -1,15 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalHandler;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -27,6 +32,8 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class FieldMayBeFinalInspection extends BaseInspection implements CleanupLocalInspectionTool {
+  private static final String JAVA_LANG_LAZY_CONSTANT = "java.lang.LazyConstant";
+  private static final String INCORRECT_LAZY_CONSTANT_USAGE_SHORT_NAME = "IncorrectLazyConstantUsage";
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
@@ -78,7 +85,32 @@ public final class FieldMayBeFinalInspection extends BaseInspection implements C
         return;
       }
       if (UnusedSymbolUtil.isImplicitWrite(field)) return;
+
+      // IDEA-386070: IncorrectLazyConstantUsageInspection already reports non-final LazyConstant fields on the fly.
+      if (isOnTheFly() && isEnabledIncorrectLazyConstantUsage(field) && isLazyConstantField(field)) {
+        return;
+      }
+
       registerVariableError(field, field);
+    }
+
+    private static boolean isEnabledIncorrectLazyConstantUsage(@NotNull PsiField field) {
+      if (!PsiUtil.isAvailable(JavaFeature.LAZY_CONSTANTS, field)) {
+        return false;
+      }
+
+      HighlightDisplayKey key = HighlightDisplayKey.find(INCORRECT_LAZY_CONSTANT_USAGE_SHORT_NAME);
+      if (key == null) {
+        return false;
+      }
+
+      InspectionProfile profile = InspectionProjectProfileManager.getInstance(field.getProject()).getCurrentProfile();
+      return profile.isToolEnabled(key, field) && !HighlightDisplayLevel.DO_NOT_SHOW.equals(profile.getErrorLevel(key, field));
+    }
+
+    private static boolean isLazyConstantField(@NotNull PsiField field) {
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(field.getType());
+      return aClass != null && JAVA_LANG_LAZY_CONSTANT.equals(aClass.getQualifiedName());
     }
   }
 }
