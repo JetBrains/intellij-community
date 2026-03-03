@@ -5,8 +5,6 @@ package com.intellij.ui.layout.migLayout
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.OnePixelDivider
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
@@ -15,24 +13,18 @@ import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.CellBuilder
 import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.SpacingConfiguration
-import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.SmartList
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
 import net.miginfocom.layout.DimConstraint
-import net.miginfocom.layout.LayoutUtil
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JCheckBox
-import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JScrollPane
-import javax.swing.JSlider
-import javax.swing.JSpinner
 import javax.swing.JTextArea
 import javax.swing.border.LineBorder
-import javax.swing.text.JTextComponent
 import kotlin.math.max
 
 @ApiStatus.ScheduledForRemoval
@@ -284,8 +276,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  private val labeledComponents = listOf(JTextComponent::class, JComboBox::class, JSpinner::class, JSlider::class)
-
 }
 
 @ApiStatus.ScheduledForRemoval
@@ -302,11 +292,6 @@ private class CellBuilderImpl<T : JComponent>(
     return this
   }
 
-  override fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
-    builder.validateCallbacks.add { callback(ValidationInfoBuilder(component.origin), component) }
-    return this
-  }
-
   override fun constraints(vararg constraints: CCFlags): CellBuilder<T> {
     builder.updateComponentConstraints(viewComponent) {
       overrideFlags(this, constraints)
@@ -314,11 +299,3 @@ private class CellBuilderImpl<T : JComponent>(
     return this
   }
 }
-
-private val JComponent.origin: JComponent
-  get() {
-    return when (this) {
-      is TextFieldWithBrowseButton -> textField
-      else -> this
-    }
-  }

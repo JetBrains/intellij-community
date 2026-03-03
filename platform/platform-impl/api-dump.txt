@@ -1629,15 +1629,15 @@ com.intellij.ui.dsl.validation.CellValidation
 com.intellij.ui.layout.BaseBuilder
 a:com.intellij.ui.layout.Cell
 - com.intellij.ui.layout.BaseBuilder
+- <init>():V
+- f:getGrowX():com.intellij.ui.layout.CCFlags
 com.intellij.ui.layout.CellBuilder
 - a:constraints(com.intellij.ui.layout.CCFlags[]):com.intellij.ui.layout.CellBuilder
 - ba:focused():com.intellij.ui.layout.CellBuilder
 - a:getComponent():javax.swing.JComponent
-- ba:withValidationOnApply(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
 com.intellij.ui.layout.LayoutBuilderImpl
 - a:build(java.awt.Container,com.intellij.ui.layout.LCFlags[]):V
 - a:getPreferredFocusedComponent():javax.swing.JComponent
-- a:getValidateCallbacks():java.util.List
 com.intellij.ui.layout.RowBuilder
 - com.intellij.ui.layout.BaseBuilder
 - b:row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row

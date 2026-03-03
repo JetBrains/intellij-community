@@ -3,13 +3,9 @@
 
 package com.intellij.ui.layout
 
-import com.intellij.BundleBase
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.NlsContexts.Button
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import org.jetbrains.annotations.ApiStatus
-import java.awt.event.ActionEvent
-import javax.swing.JButton
 import javax.swing.JComponent
 
 @DslMarker
@@ -35,10 +31,6 @@ interface CellBuilder<out T : JComponent> {
   fun focused(): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
-
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
 
@@ -55,21 +47,12 @@ abstract class Cell : BaseBuilder {
    * Grow weight will only be compared against the weights for the same cell.
    */
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
+  @Deprecated("Use Kotlin UI DSL Version 2")
   val growX: CCFlags = CCFlags.growX
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
+  @ApiStatus.Internal
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>
 
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-class InnerCell(val cell: Cell) : Cell() {
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun <T : JComponent> component(component: T): CellBuilder<T> {
-    return cell.component(component)
-  }
 }

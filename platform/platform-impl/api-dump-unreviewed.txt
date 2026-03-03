@@ -12953,17 +12953,8 @@ e:com.intellij.ui.layout.CCFlags
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.layout.CCFlags
 - s:values():com.intellij.ui.layout.CCFlags[]
-a:com.intellij.ui.layout.Cell
-- <init>():V
-- a:component(javax.swing.JComponent):com.intellij.ui.layout.CellBuilder
-- bf:getGrowX():com.intellij.ui.layout.CCFlags
 @:com.intellij.ui.layout.CellMarker
 - java.lang.annotation.Annotation
-f:com.intellij.ui.layout.InnerCell
-- com.intellij.ui.layout.Cell
-- <init>(com.intellij.ui.layout.Cell):V
-- component(javax.swing.JComponent):com.intellij.ui.layout.CellBuilder
-- f:getCell():com.intellij.ui.layout.Cell
 e:com.intellij.ui.layout.LCFlags
 - java.lang.Enum
 - sf:debug:com.intellij.ui.layout.LCFlags
