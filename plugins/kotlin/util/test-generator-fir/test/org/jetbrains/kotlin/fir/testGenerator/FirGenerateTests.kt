@@ -133,12 +133,14 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
+import org.jetbrains.kotlin.testGenerator.model.TAnnotation
 import org.jetbrains.kotlin.testGenerator.model.TWorkspace
 import org.jetbrains.kotlin.testGenerator.model.model
 import org.jetbrains.kotlin.testGenerator.model.or
 import org.jetbrains.kotlin.testGenerator.model.testClass
 import org.jetbrains.kotlin.testGenerator.model.testGroup
 import org.jetbrains.kotlin.testGenerator.model.workspace
+import org.junit.Ignore
 
 fun main(@Suppress("UNUSED_PARAMETER", "unused") args: Array<String>) {
     generateK2Tests()
@@ -210,8 +212,9 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         }
     }
 
+    // @IJIgnore(issue = "AT-3959")
     testGroup("compiler-plugins/parcelize/tests/k2", testDataPath = "../testData", category = QUICKFIXES) {
-        testClass<AbstractParcelizeK2QuickFixTest> {
+        testClass<AbstractParcelizeK2QuickFixTest>(annotations = listOf(TAnnotation<Ignore>())) {
             model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
         }
     }
