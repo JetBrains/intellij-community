@@ -4,7 +4,7 @@ import java.util.stream.Stream;
 
 public class ChainInSourceExpression {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final String res = makeProducer()
       .map(len -> "Length is " + len)
       .collect(Collectors.joining());

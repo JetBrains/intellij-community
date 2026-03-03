@@ -5,6 +5,7 @@ import com.intellij.debugger.streams.core.lib.ResolverFactory
 import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver
 import com.intellij.debugger.streams.core.resolve.ResolvedStreamCall
 import com.intellij.debugger.streams.core.resolve.ResolvedStreamChain
+import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
 import com.intellij.debugger.streams.core.trace.EvaluateExpressionTracer
 import com.intellij.debugger.streams.core.trace.NextAwareState
 import com.intellij.debugger.streams.core.trace.PrevAwareState
@@ -37,8 +38,8 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 abstract class TraceExecutionTestHelper(
-  private val session: XDebugSession,
-  private val librarySupportProvider: LibrarySupportProvider,
+  protected val session: XDebugSession,
+  protected val librarySupportProvider: LibrarySupportProvider,
   private val debuggerPositionResolver: DebuggerPositionResolver,
   private val LOG: Logger,
 ) {
@@ -48,11 +49,11 @@ abstract class TraceExecutionTestHelper(
     COMPILATION, EVALUATION, CHAIN_CONSTRUCTION
   }
 
-  private fun createResultInterpreter(): TraceResultInterpreter {
+  protected fun createResultInterpreter(): TraceResultInterpreter {
     return TraceResultInterpreterImpl(librarySupportProvider.getLibrarySupport().interpreterFactory)
   }
 
-  private fun createXValueInterpreter(): XValueInterpreter {
+  protected fun createXValueInterpreter(): XValueInterpreter {
     return librarySupportProvider.getXValueInterpreter(project)
   }
 
@@ -67,6 +68,9 @@ abstract class TraceExecutionTestHelper(
   protected open fun createExpressionBuilder(): TraceExpressionBuilder {
     return librarySupportProvider.getExpressionBuilder(project)
   }
+
+  protected open fun createTracer(chain: StreamChain, commandLauncher: DebuggerCommandLauncher): StreamTracer =
+    EvaluateExpressionTracer(session, createExpressionBuilder(), createXValueInterpreter(), createResultInterpreter(), commandLauncher)
 
   suspend fun onPause(chainSelector: ChainSelector, resultMustBeNull: Boolean? = null) {
     val chain = readAction {
@@ -89,13 +93,7 @@ abstract class TraceExecutionTestHelper(
     }
 
     val commandLauncher = librarySupportProvider.getDebuggerCommandLauncher(session)
-    val tracer = EvaluateExpressionTracer(
-      session,
-      createExpressionBuilder(),
-      createXValueInterpreter(),
-      createResultInterpreter(),
-      commandLauncher
-    )
+    val tracer = createTracer(chain, commandLauncher)
     val trace = tracer.trace(chain)
     when (trace) {
       is StreamTracer.Result.Evaluated -> complete(chain, trace.result, resultMustBeNull, null, null)

@@ -143,6 +143,9 @@ abstract class TraceExecutionTestCase : DebuggerTestCase() {
     return ExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG)
   }
 
+  protected fun breakpointEngineHelper(session: XDebugSession): TraceExecutionTestHelper =
+    BreakpointBasedExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG)
+
   protected open fun getLibrarySupportProvider(): LibrarySupportProvider {
     return StandardLibrarySupportProvider()
   }

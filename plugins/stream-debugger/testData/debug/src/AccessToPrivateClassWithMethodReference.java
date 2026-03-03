@@ -2,7 +2,7 @@ import java.util.stream.Stream;
 
 public class AccessToPrivateClassWithMethodReference {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     Stream.generate(MyClass::new).mapToInt(x -> x.field).limit(10).count();
   }
 

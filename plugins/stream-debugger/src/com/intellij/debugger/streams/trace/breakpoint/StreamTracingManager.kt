@@ -11,6 +11,7 @@ import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.BreakpointBasedHandlerFactory
 import com.intellij.debugger.streams.trace.breakpoint.instrumentation.StreamInstrumentationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.sun.jdi.InvocationException
 import com.sun.jdi.Value
@@ -19,6 +20,8 @@ import com.sun.jdi.request.MethodEntryRequest
 import com.sun.jdi.request.MethodExitRequest
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.Nls
+
+private val LOG = logger<StreamTracingManager>()
 
 sealed class EvaluationResult {
   data class Success(val evaluationContext: EvaluationContextImpl, val rawTrace: Value) : EvaluationResult()
@@ -119,6 +122,7 @@ internal class StreamTracingManager(
     methodSignature: JvmMethodSignature,
   ): MethodExitRequest {
     return breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
+      LOG.debug("Source operation exit request hit")
       val result = instrumentationManager.onSourceOperationExit(evalContext, value)
       enableNextBreakpoint(-1)
       result
@@ -133,11 +137,13 @@ internal class StreamTracingManager(
   ): StreamCallRuntimeInfo {
     // create exit request first to be able to activate it in entry request
     val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
+      LOG.debug("Intermediate operation ${call.name} exit request hit")
       val result = instrumentationManager.onIntermediateOperationExit(evalContext, callOrder, value)
       enableNextBreakpoint(callOrder)
       result
     }
     val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { evalContext, method, args ->
+      LOG.debug("Intermediate operation ${call.name} entry request hit")
       val result = instrumentationManager.onIntermediateOperationEntry(evalContext, callOrder, method, args)
       exitRequest.enable()
       result
@@ -151,6 +157,7 @@ internal class StreamTracingManager(
     methodSignature: JvmMethodSignature,
   ): StreamCallRuntimeInfo {
     val exitRequest = breakpointFactory.createMethodExitBreakpoint(evaluationContext, methodSignature) { evalContext, _, value ->
+      LOG.debug("Terminal operation ${call.name} exit request hit")
       instrumentationManager.onTerminalOperationExit(evalContext, value)
 
       // Step out of the terminal method so VM lands on the next statement in user code.
@@ -159,6 +166,7 @@ internal class StreamTracingManager(
       value
     }
     val entryRequest = breakpointFactory.createMethodEntryBreakpoint(evaluationContext, methodSignature) { evalContext, method, args ->
+      LOG.debug("Terminal operation ${call.name} entry request hit")
       val result = instrumentationManager.onTerminalOperationEntry(evalContext, method, args)
       exitRequest.enable()
       result
