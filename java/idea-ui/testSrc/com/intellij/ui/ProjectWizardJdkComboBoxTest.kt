@@ -34,10 +34,12 @@ class ProjectWizardJdkComboBoxTest {
     val comboBox = ProjectWizardJdkComboBox(null, disposable)
 
     comboBox.refreshJdks(LocalEelDescriptor)
+    comboBox.loadWorkspaceModelJob?.join()
     Assertions.assertTrue(comboBox.contains(localSdk))
     Assertions.assertFalse(comboBox.contains(eelSdk))
 
     comboBox.refreshJdks(eelFixture.get().eelDescriptor)
+    comboBox.loadWorkspaceModelJob?.join()
     Assertions.assertFalse(comboBox.contains(localSdk))
     Assertions.assertTrue(comboBox.contains(eelSdk))
   }
