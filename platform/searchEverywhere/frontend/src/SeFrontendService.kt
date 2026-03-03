@@ -56,14 +56,15 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import fleet.kernel.change
-import fleet.kernel.onDispose
 import fleet.kernel.rebase.shared
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -141,26 +142,37 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
       try {
         popupSemaphore.withPermit {
-          SeMlService.getInstanceIfEnabled()?.onSessionStarted(project, tabId)
-          
-          val providersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend", false)
-          localProvidersHolder = providersHolder
-          initializeVmAndSetToPopup(popupFuture,
-                                    popup,
-                                    popupContentPane,
-                                    searchStatePublisher,
-                                    tabFactories,
-                                    tabId,
-                                    searchText,
-                                    initEvent,
-                                    popupScope,
-                                    session,
-                                    providersHolder)
+          val mlService = SeMlService.getInstanceIfEnabled()
+          mlService?.onSessionStarted(project, tabId)
 
-          val showPopupEndTime = System.currentTimeMillis()
-          SeLog.log { "Search Everywhere popup opened in ${showPopupEndTime - showPopupStartTime} ms" }
+          try {
+            val providersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend", false)
+            localProvidersHolder = providersHolder
+            initializeVmAndSetToPopup(popupFuture,
+                                      popup,
+                                      popupContentPane,
+                                      searchStatePublisher,
+                                      tabFactories,
+                                      tabId,
+                                      searchText,
+                                      initEvent,
+                                      popupScope,
+                                      session,
+                                      providersHolder)
 
-          popupClosedCompletable.await()
+            val showPopupEndTime = System.currentTimeMillis()
+            SeLog.log { "Search Everywhere popup opened in ${showPopupEndTime - showPopupStartTime} ms" }
+
+            popupClosedCompletable.await()
+          }
+          finally {
+            withContext(NonCancellable) {
+              // Keep ML session callbacks within the same permit window to avoid finishing
+              // a session while tab flows may still emit state updates.
+              popupScope.coroutineContext[Job]?.cancelAndJoin()
+              mlService?.onSessionFinished()
+            }
+          }
         }
       }
       finally {
@@ -169,8 +181,6 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
         localProvidersHolder = null
 
         withContext(NonCancellable) {
-          SeMlService.getInstanceIfEnabled()?.onSessionFinished()
-          
           popupScope.cancel()
           if (removeSessionRef.get()) {
             change {
