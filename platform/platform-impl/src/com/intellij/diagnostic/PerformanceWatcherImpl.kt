@@ -296,6 +296,10 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     }
 
   override fun smokeAndMirrors(name: @NonNls String): AccessToken {
+    if (!Registry.`is`("performance.watcher.enable.smoke.and.mirrors.compensation", true)) {
+      return AccessToken.EMPTY_ACCESS_TOKEN
+    }
+
     LOG.trace("Entered smokeAndMirrors phase: $name")
     ThreadingAssertions.assertEventDispatchThread()
 
