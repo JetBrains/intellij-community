@@ -2902,7 +2902,7 @@ c:com.intellij.psi.ResolveState
 - s:initial():com.intellij.psi.ResolveState
 - put(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.psi.ResolveState
 - putAll(com.intellij.psi.ResolveState):com.intellij.psi.ResolveState
-a:com.intellij.psi.SmartPointerManager
+Fa:com.intellij.psi.SmartPointerManager
 - <init>():V
 - createLazyPointer(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiElementPointer
 - s:createPointer(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiElementPointer
