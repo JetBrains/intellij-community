@@ -48,6 +48,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
@@ -761,7 +762,7 @@ private class RemoveFileSetsRegistrarImpl(
     }
   }
 
-  override fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
+  override fun registerExclusionCondition(root: VirtualFileUrl, condition: WorkspaceFileSetExclusionCondition, entity: WorkspaceEntity) {
     val rootFile = root.virtualFile
     if (rootFile == null) {
       nonExistingFilesRegistry.unregisterUrl(root, entity, storageKind)
@@ -918,7 +919,7 @@ private class StoreFileSetsRegistrarImpl(
     }
   }
 
-  override fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
+  override fun registerExclusionCondition(root: VirtualFileUrl, condition: WorkspaceFileSetExclusionCondition, entity: WorkspaceEntity) {
     val rootFile = root.virtualFile
     if (rootFile == null) {
       nonExistingFilesRegistry.registerUrl(root, entity, storageKind, NonExistingFileSetKind.EXCLUDED_OTHER)
