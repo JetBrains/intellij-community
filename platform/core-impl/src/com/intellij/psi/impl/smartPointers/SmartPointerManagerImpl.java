@@ -97,7 +97,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
       return pointer;
     }
 
-    pointer = new SmartPsiElementPointerImpl<>((SmartPointerManagerEx)getInstance(myProject), element, containingFile, forInjected);
+    pointer = new SmartPsiElementPointerImpl<>(getInstanceEx(myProject), element, containingFile, forInjected);
     if (containingFile != null) {
       trackPointer(pointer, containingFile.getViewProvider().getVirtualFile());
     }
@@ -148,7 +148,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
                                                                    boolean forInjected) {
     PsiUtilCore.ensureValid(file);
     SmartPointerTracker.processQueue();
-    SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl((SmartPointerManagerEx)getInstance(myProject), file, ProperTextRange.create(range), forInjected);
+    SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(getInstanceEx(myProject), file, ProperTextRange.create(range), forInjected);
     trackPointer(pointer, file.getViewProvider().getVirtualFile());
 
     return pointer;

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -43,7 +43,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.BlockSupportImpl;
 import com.intellij.psi.impl.BooleanRunnable;
@@ -242,7 +241,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
 
     TextRange hostTextRange = info.host.getTextRange();
     TextRange relevantRangeInHostFile = relevantRange.shiftRight(hostTextRange.getStartOffset());
-    SmartPointerManagerEx manager = (SmartPointerManagerEx)SmartPointerManager.getInstance(hostPsiFile.getProject());
+    SmartPointerManagerEx manager = SmartPointerManagerEx.getInstanceEx(hostPsiFile.getProject());
     return new ShredImpl(manager.createSmartPsiFileRangePointer(hostPsiFile, relevantRangeInHostFile, true),
                          manager.createSmartPsiElementPointer(info.host, hostPsiFile, true),
                          info.prefix, info.suffix, info.rangeInDecodedPSI, false, info.myEscaper.isOneLine());

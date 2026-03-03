@@ -63,7 +63,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
@@ -531,7 +530,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile != null) {
-      getSmartPointerManager().fastenBelts(virtualFile);
+      SmartPointerManagerEx.getInstanceEx(myProject).fastenBelts(virtualFile);
     }
 
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
@@ -581,7 +580,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
     clearUncommittedInfo(document);
     if (virtualFile != null) {
-      getSmartPointerManager().updatePointerTargetsAfterReparse(virtualFile);
+      SmartPointerManagerEx.getInstanceEx(myProject).updatePointerTargetsAfterReparse(virtualFile);
     }
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     for (FileViewProvider viewProvider : viewProviders) {
@@ -1277,13 +1276,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     UncommittedInfo info = getUncommittedInfo(document);
     if (info != null) {
       document.putUserData(UNCOMMITTED_INFO_KEY, null);
-      getSmartPointerManager().updatePointers(document, info.myFrozen, info.myEvents);
+      SmartPointerManagerEx.getInstanceEx(myProject).updatePointers(document, info.myFrozen, info.myEvents);
     }
     return info;
-  }
-
-  private SmartPointerManagerEx getSmartPointerManager() {
-    return (SmartPointerManagerEx)SmartPointerManager.getInstance(myProject);
   }
 
   private boolean isRelevant(@NotNull VirtualFile virtualFile) {

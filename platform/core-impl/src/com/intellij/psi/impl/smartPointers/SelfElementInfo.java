@@ -21,7 +21,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.PsiDocumentManagerEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -265,7 +264,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       return null;
     }
 
-    SmartPointerManagerEx pointerManager = (SmartPointerManagerEx)SmartPointerManager.getInstance(project);
+    SmartPointerManagerEx pointerManager = SmartPointerManagerEx.getInstanceEx(project);
     SmartPointerTracker tracker = pointerManager.getTracker(containingFile.getViewProvider().getVirtualFile());
     if (tracker == null) {
       return null;

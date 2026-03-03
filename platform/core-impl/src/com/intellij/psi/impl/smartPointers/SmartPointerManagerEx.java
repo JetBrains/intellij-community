@@ -29,6 +29,7 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public abstract class SmartPointerManagerEx extends SmartPointerManager implements Disposable {
+
   public abstract void fastenBelts(@NotNull VirtualFile file);
 
   public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
@@ -50,4 +51,8 @@ public abstract class SmartPointerManagerEx extends SmartPointerManager implemen
   public abstract @NotNull Project getProject();
 
   public abstract @NotNull PsiDocumentManagerEx getPsiDocumentManager();
+
+  public static @NotNull SmartPointerManagerEx getInstanceEx(@NotNull Project project) {
+    return (SmartPointerManagerEx)getInstance(project);
+  }
 }
