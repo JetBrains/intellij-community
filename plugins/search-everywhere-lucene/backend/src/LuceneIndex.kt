@@ -69,27 +69,42 @@ class LuceneIndex(val project: Project, indexName: String, val log: Logger) : Di
     try {
       var before = 0
       if (log.isDebugEnabled) {
-        before = indexRW.searcherManager.acquire().indexReader.numDocs()
+        val searcher = indexRW.searcherManager.acquire()
+        before = searcher.indexReader.numDocs()
+        indexRW.searcherManager.release(searcher)
       }
 
       changes(indexRW.writer)
       indexRW.writer.commit()
       indexRW.searcherManager.maybeRefresh()
       if (log.isDebugEnabled) {
-        val after = indexRW.searcherManager.acquire().indexReader.numDocs()
+        val searcher = indexRW.searcherManager.acquire()
+        val after = searcher.indexReader.numDocs()
+        indexRW.searcherManager.release(searcher)
+        
         log.debug{ "Lucene Index docs number changes: before=$before, after=${after} (diff ${after - before})" }
       }
     }
     catch (t: Throwable) {
       // Best-effort rollback of any uncommitted changes
+      try {
+        indexRW.searcherManager.close()
+      }
+      catch (e: Throwable) {
+        t.addSuppressed(e)
+      }
 
-      indexRW.writer.rollback()
-      indexRW.searcherManager.close()
-      indexRW.writer.close()
-
+      // This also closes the writer.
+      try {
+        indexRW.writer.rollback()
+      }
+      catch (e: Throwable) {
+        t.addSuppressed(e)
+      }
       // Reopen writer + searcher infrastructure so the index can continue operating
       atomicIndexRW.store(createIndexReaderWriter())
-      throw t
+
+      log.error(LuceneIndexInsufficientFaultHandlingException(t))
     }
   }
 
@@ -123,18 +138,49 @@ class LuceneIndex(val project: Project, indexName: String, val log: Logger) : Di
 
   override fun dispose() {
     val indexRW = this.atomicIndexRW.load()
+
+    var exception: Throwable? = null
+
     try {
       indexRW.searcherManager.close()
-    }catch (_: IOException) {}
+    }
+    catch (e: Throwable) {
+      exception = e
+    }
+
     try {
       indexRW.writer.close()
-    }catch (_: IOException) {}
+    }
+    catch (e: Throwable) {
+      if (exception == null) {
+        exception = e
+      }
+      else {
+        exception.addSuppressed(e)
+      }
+    }
+
     try {
       directory.close()
-    }catch (_: IOException) {}
+    }
+    catch (e: Throwable) {
+      if (exception == null) {
+        exception = e
+      }
+      else {
+        exception.addSuppressed(e)
+      }
+    }
+
+    if (exception != null) {
+      log.error(LuceneIndexInsufficientFaultHandlingException(exception))
+    }
   }
+
 
   companion object {
     const val PAGE_SIZE: Int = 10
   }
 }
+
+class LuceneIndexInsufficientFaultHandlingException(cause: Throwable) : RuntimeException(cause)
