@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.application.ApplicationManager
@@ -208,7 +208,7 @@ class XBreakpointVisualRepresentation(
       if (!mayDecompile && file.fileType.isBinary()) {
         return null
       }
-      document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+      document = getDocumentOrNull(file) ?: return null
     }
 
     // TODO IJPL-185322 support XBreakpointTypeWithDocumentDelegation
@@ -216,6 +216,17 @@ class XBreakpointVisualRepresentation(
       document = (myBreakpoint.type as XBreakpointTypeWithDocumentDelegation).getDocumentForHighlighting(document)
     }
     return document
+  }
+
+  private fun getDocumentOrNull(file: VirtualFile): Document? {
+    return try {
+      FileDocumentManager.getInstance().getDocument(file)
+    }
+    catch (e: Exception) {
+      // See IJPL-202734 for the reason why we handle the exception here
+      LOG.warn("Failed to load document for breakpoint file: ${file.url}", e)
+      null
+    }
   }
 
   fun removeHighlighter() {
