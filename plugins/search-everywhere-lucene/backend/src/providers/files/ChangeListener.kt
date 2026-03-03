@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereLucene.backend.providers.files
 
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,9 +13,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 
 internal class ChangeListener : AsyncFileListener {
   override fun prepareChange(events: List<out VFileEvent>): AsyncFileListener.ChangeApplier? {
-
-    // TODO in Dumb mode, return null
-    // Wait until config is loaded and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
 
     val projects = ProjectManager.getInstance().openProjects
       .filter { project -> project.basePath != null }

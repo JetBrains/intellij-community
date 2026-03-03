@@ -56,7 +56,6 @@ internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) :
 
     coroutineScope.launch {
       // Wait until the config is loaded, and we can expect `ProjectFileIndex.getInstance()` to return the files to index.
-      //Observation.awaitConfiguration(project)
 
       LOG.debug { "File Index in ${project.name} project stated processing changes..." }
 
@@ -72,17 +71,17 @@ internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) :
         }
         else {
           // Since all others are ReindexFiles, we can merge them to reduce the number of times indexing runs:
-          val merged_files = ops.asSequence()
+          val mergedFiles = ops.asSequence()
             .filterIsInstance<LuceneFileIndexOperation.ReindexFiles>()
             .flatMap { it.changedFiles }
             .toSet()
 
-          val merged_urls = ops.asSequence()
+          val mergedUrls = ops.asSequence()
             .filterIsInstance<LuceneFileIndexOperation.ReindexFiles>()
             .flatMap { it.changedUrls }
             .toSet()
 
-          processFileIndexOp(LuceneFileIndexOperation.ReindexFiles(merged_files, merged_urls))
+          processFileIndexOp(LuceneFileIndexOperation.ReindexFiles(mergedFiles, mergedUrls))
         }
       }
     }
@@ -124,8 +123,8 @@ internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) :
 
       is LuceneFileIndexOperation.ReindexFiles -> {
         val fileIndex = ProjectFileIndex.getInstance(project)
-        val files_to_reindex = mutableListOf<VirtualFile>()
-        val urls_to_delete = mutableListOf<Term>()
+        val filesToReindex = mutableListOf<VirtualFile>()
+        val urlsToDelete = mutableListOf<Term>()
         
         
         // The reindexing Op may point to directories that should be reindexed, so we must reindex the contents of the dir, as these paths have changed.
@@ -135,7 +134,7 @@ internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) :
 
           op.changedUrls.forEach { url ->
             val virtualFile = VirtualFileManager.getInstance().findFileByUrl(url) ?: let {
-              urls_to_delete.add(getTerm(url))
+              urlsToDelete.add(getTerm(url))
               return@forEach
             } 
             virtualFiles.add(virtualFile)
@@ -145,12 +144,12 @@ internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) :
             if (!fileIndex.isInProject(virtualFile)) return@forEach
             check(virtualFile.isValid) { "The file at ${virtualFile.presentableUrl} is not Valid! We assume file events only returns valid files" }
             if (!virtualFile.isDirectory) {
-              files_to_reindex.add(virtualFile)
+              filesToReindex.add(virtualFile)
             } else {
               // Should be used from readAction
               fileIndex.iterateContentUnderDirectory(virtualFile) { file ->
                 if (!file.isDirectory) {
-                  files_to_reindex.add(file)
+                  filesToReindex.add(file)
                 }
                 true // continue iteration
               }
@@ -158,16 +157,16 @@ internal class FileIndex(val project: Project, coroutineScope: CoroutineScope) :
           }
         }
 
-        if (files_to_reindex.isEmpty() && urls_to_delete.isEmpty()) return
-        LOG.debug {"Reindexing ${files_to_reindex.size} files, deleting ${urls_to_delete.size} files" }
+        if (filesToReindex.isEmpty() && urlsToDelete.isEmpty()) return
+        LOG.debug {"Reindexing ${filesToReindex.size} files, deleting ${urlsToDelete.size} files" }
 
         luceneIndex.processChanges { writer ->
-          files_to_reindex.forEach { file ->
+          filesToReindex.forEach { file ->
             val (term, doc) = getDocument(file)
             writer.updateDocument(term, doc)
           }
 
-          urls_to_delete.forEach { writer.deleteDocuments(it) }
+          urlsToDelete.forEach { writer.deleteDocuments(it) }
 
           LOG.debug("Reindexed all updated files for the next lucene index commit.")
         }
