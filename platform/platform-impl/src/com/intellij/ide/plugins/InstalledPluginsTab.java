@@ -288,8 +288,8 @@ class InstalledPluginsTab extends PluginsTab {
           }
         }
 
-        PluginUpdateListener.calculateUpdates(myCoroutineScope, updates -> {
-          List<PluginUiModel> updateModels = updates == null ? null : new ArrayList<>(updates);
+        PluginUpdateListener.calculateUpdates(myCoroutineScope, plugin -> myPluginModelFacade.isEnabled(plugin), updates -> {
+          List<PluginUiModel> updateModels = new ArrayList<>(updates);
           if (ContainerUtil.isEmpty(updateModels)) {
             clearUpdates(myInstalledPanel);
             clearUpdates(myInstalledSearchPanel.getPanel());
@@ -301,6 +301,7 @@ class InstalledPluginsTab extends PluginsTab {
           applyBundledUpdates(updateModels);
           selectionListener.accept(myInstalledPanel);
           selectionListener.accept(myInstalledSearchPanel.getPanel());
+          return null;
         });
       }
       finally {
