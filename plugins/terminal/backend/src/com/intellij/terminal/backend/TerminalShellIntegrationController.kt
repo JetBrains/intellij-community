@@ -4,6 +4,7 @@ package com.intellij.terminal.backend
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.EventDispatcher
 import com.jediterm.terminal.Terminal
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import java.util.HexFormat
 import java.util.Locale
@@ -27,8 +28,11 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
           else -> LOG.warn("Unknown shell integration event: $args")
         }
       }
+      catch (e: CancellationException) {
+        throw e
+      }
       catch (t: Throwable) {
-        LOG.warn("Exception during processing shell integration event: $args", t)
+        LOG.error("Exception during processing shell integration event: $args", t)
       }
     }
   }
