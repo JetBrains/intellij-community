@@ -26,7 +26,8 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.pane.projectViewPaneProviderId
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
-import com.intellij.platform.projectView.window.ProjectViewOptionSupport
+import com.intellij.platform.projectView.actions.ProjectViewActionSupport
+import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
@@ -43,7 +44,6 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
@@ -71,9 +71,9 @@ internal class ProjectViewToolWindowServiceImpl(
       }
     }
   }
-  private val optionService = ProjectViewOptionSupportImpl(currentPaneFlow)
+  private val optionService = ProjectViewActionSupportImpl(currentPaneFlow)
 
-  override fun getOptionSupport(): ProjectViewOptionSupport = optionService
+  override fun getActionSupport(): ProjectViewActionSupport = optionService
 
   @RequiresEdt
   override fun setupToolWindow(toolWindow: ToolWindow) {

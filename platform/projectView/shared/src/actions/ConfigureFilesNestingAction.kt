@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.platform.projectView.window.ProjectViewOptionSupport
 import com.intellij.platform.projectView.window.isProjectViewSplit
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 
@@ -41,7 +40,7 @@ internal class ConfigureFilesNestingAction : DumbAwareAction(), ActionRemoteBeha
       return view.currentProjectViewPane?.isFileNestingEnabled ?: false
     }
 
-    return ProjectViewOptionSupport.getInstance(project).getFileNestingState()?.isFileNestingAvailable == true
+    return ProjectViewActionSupport.getInstance(project).getFileNestingState()?.isFileNestingAvailable == true
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -58,15 +57,15 @@ internal class ConfigureFilesNestingAction : DumbAwareAction(), ActionRemoteBeha
       return
     }
 
-    val projectViewOptionSupport = ProjectViewOptionSupport.getInstance(project)
-    val model = FileNestingModel(projectViewOptionSupport.getFileNestingState() ?: return)
+    val projectViewActionSupport = ProjectViewActionSupport.getInstance(project)
+    val model = FileNestingModel(projectViewActionSupport.getFileNestingState() ?: return)
     val dialog = FileNestingInProjectViewDialog(project, model)
     dialog.reset(model.isFileNestingOn)
     if (dialog.showAndGet()) {
       dialog.apply { isOn ->
         model.isFileNestingOn = isOn
       }
-      projectViewOptionSupport.requestFileNestingChange(model.isFileNestingOn, model.activeRules)
+      projectViewActionSupport.requestFileNestingChange(model.isFileNestingOn, model.activeRules)
     }
   }
 }

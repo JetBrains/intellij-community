@@ -44,7 +44,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateOptionValueRe
 import com.intellij.platform.projectView.pane.ProjectViewPaneUpdateSortKeyRequest
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
-import com.intellij.platform.projectView.window.ProjectViewOptionSupport
+import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.pom.Navigatable
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.treeStructure.Tree
@@ -75,7 +75,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
   private val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
   private val contentPanel = ContentPanel(scrollPane)
 
-  private val optionSupport = OptionSupport()
+  private val optionSupport = ActionSupport()
   
   private inner class ContentPanel(content: JComponent) : SimpleToolWindowPanel(true), UiDataProvider {
     init {
@@ -122,7 +122,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     awaitCancellation()
   }
 
-  override fun getOptionSupport(): ProjectViewOptionSupport = optionSupport
+  override fun getOptionSupport(): ProjectViewActionSupport = optionSupport
 
   override fun applyStateChange(event: ProjectViewPaneStateEvent) {
     when (event) {
@@ -234,7 +234,7 @@ internal abstract class TreeBasedFrontendProjectViewPane(
     TreeState.createFrom(element).applyTo(tree)
   }
   
-  private inner class OptionSupport : ProjectViewOptionSupport {
+  private inner class ActionSupport : ProjectViewActionSupport {
     private val actionState = AtomicReference<ProjectViewActionState?>(null)
 
     override fun getOptionState(option: ProjectViewOption): ProjectViewOptionState? = actionState.load()?.optionStates?.get(option)

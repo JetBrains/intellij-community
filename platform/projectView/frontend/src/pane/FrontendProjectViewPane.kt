@@ -8,7 +8,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneProviderId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
-import com.intellij.platform.projectView.window.ProjectViewOptionSupport
+import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.channels.ReceiveChannel
 import org.jdom.Element
@@ -49,5 +49,5 @@ interface FrontendProjectViewPane {
 
   suspend fun manage()
   
-  fun getOptionSupport(): ProjectViewOptionSupport
+  fun getOptionSupport(): ProjectViewActionSupport
 }

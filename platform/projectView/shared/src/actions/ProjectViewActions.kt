@@ -4,7 +4,6 @@
 package com.intellij.platform.projectView.actions
 
 import com.intellij.ide.projectView.NodeSortKey
-import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -23,18 +22,39 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.platform.projectView.window.ProjectViewOptionSupport
 import com.intellij.platform.projectView.window.isProjectViewSplit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.function.Function
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+
+internal class OpenInPreviewTab : OptionAction(ProjectViewOption.OPEN_IN_PREVIEW_TAB)
+internal class AutoscrollToSource : OptionAction(ProjectViewOption.AUTOSCROLL_TO_SOURCE)
+internal class OpenDirectoriesWithSingleClick : OptionAction(ProjectViewOption.OPEN_DIRECTORIES_WITH_SINGLE_CLICK)
+internal class AutoscrollFromSource : OptionAction(ProjectViewOption.AUTOSCROLL_FROM_SOURCE)
+internal class ShowModules : OptionAction(ProjectViewOption.SHOW_MODULES)
+internal class ShowMembers : OptionAction(ProjectViewOption.SHOW_MEMBERS)
+internal class ShowExcludedFiles : OptionAction(ProjectViewOption.SHOW_EXCLUDED_FILES)
+internal class ShowVisibilityIcons : OptionAction(ProjectViewOption.SHOW_VISIBILITY_ICONS)
+internal class ShowLibraryContents : OptionAction(ProjectViewOption.SHOW_LIBRARY_CONTENTS)
+internal class ShowScratchesAndConsoles : OptionAction(ProjectViewOption.SHOW_SCRATCHES_AND_CONSOLES)
+internal class FlattenModules : OptionAction(ProjectViewOption.FLATTEN_MODULES)
+internal class FlattenPackages : OptionAction(ProjectViewOption.FLATTEN_PACKAGES)
+internal class AbbreviatePackageNames : OptionAction(ProjectViewOption.ABBREVIATE_PACKAGE_NAMES)
+internal class HideEmptyMiddlePackages : OptionAction(ProjectViewOption.HIDE_EMPTY_MIDDLE_PACKAGES)
+internal class CompactDirectories : OptionAction(ProjectViewOption.COMPACT_DIRECTORIES)
+
+internal class SortByName : SortKeyAction(NodeSortKey.BY_NAME)
+internal class SortByType : SortKeyAction(NodeSortKey.BY_TYPE)
+internal class SortByTimeDescending : SortKeyAction(NodeSortKey.BY_TIME_DESCENDING)
+internal class SortByTimeAscending : SortKeyAction(NodeSortKey.BY_TIME_ASCENDING)
+internal class FoldersAlwaysOnTop : OptionAction(ProjectViewOption.FOLDERS_ALWAYS_ON_TOP)
+internal class ManualOrder : OptionAction(ProjectViewOption.MANUAL_ORDER)
 
 internal abstract class OptionAction(
   legacyActionSupplier: () -> ProjectViewImpl.Action,
@@ -105,7 +125,7 @@ internal abstract class SortKeyAction(
     }
     if (!state) return
     val project = e.project ?: return
-    ProjectViewOptionSupport.getInstance(project).requestSortKeyChange(sortKey)
+    ProjectViewActionSupport.getInstance(project).requestSortKeyChange(sortKey)
     val menu = e.getActionMenu()
     if (menu != null) {
       LOG.debug { "Requested a sort key change to $sortKey, action menu update pending" }
@@ -114,32 +134,9 @@ internal abstract class SortKeyAction(
   }
 
   private fun getSortKeyState(e: AnActionEvent): ProjectViewSortKeyState? {
-    return ProjectViewOptionSupport.getInstance(e.project ?: return null).getSortKeyState()
+    return ProjectViewActionSupport.getInstance(e.project ?: return null).getSortKeyState()
   }
 }
-
-internal class OpenInPreviewTab : OptionAction(ProjectViewOption.OPEN_IN_PREVIEW_TAB)
-internal class AutoscrollToSource : OptionAction(ProjectViewOption.AUTOSCROLL_TO_SOURCE)
-internal class OpenDirectoriesWithSingleClick : OptionAction(ProjectViewOption.OPEN_DIRECTORIES_WITH_SINGLE_CLICK)
-internal class AutoscrollFromSource : OptionAction(ProjectViewOption.AUTOSCROLL_FROM_SOURCE)
-internal class ShowModules : OptionAction(ProjectViewOption.SHOW_MODULES)
-internal class ShowMembers : OptionAction(ProjectViewOption.SHOW_MEMBERS)
-internal class ShowExcludedFiles : OptionAction(ProjectViewOption.SHOW_EXCLUDED_FILES)
-internal class ShowVisibilityIcons : OptionAction(ProjectViewOption.SHOW_VISIBILITY_ICONS)
-internal class ShowLibraryContents : OptionAction(ProjectViewOption.SHOW_LIBRARY_CONTENTS)
-internal class ShowScratchesAndConsoles : OptionAction(ProjectViewOption.SHOW_SCRATCHES_AND_CONSOLES)
-internal class FlattenModules : OptionAction(ProjectViewOption.FLATTEN_MODULES)
-internal class FlattenPackages : OptionAction(ProjectViewOption.FLATTEN_PACKAGES)
-internal class AbbreviatePackageNames : OptionAction(ProjectViewOption.ABBREVIATE_PACKAGE_NAMES)
-internal class HideEmptyMiddlePackages : OptionAction(ProjectViewOption.HIDE_EMPTY_MIDDLE_PACKAGES)
-internal class CompactDirectories : OptionAction(ProjectViewOption.COMPACT_DIRECTORIES)
-
-internal class SortByName : SortKeyAction(NodeSortKey.BY_NAME)
-internal class SortByType : SortKeyAction(NodeSortKey.BY_TYPE)
-internal class SortByTimeDescending : SortKeyAction(NodeSortKey.BY_TIME_DESCENDING)
-internal class SortByTimeAscending : SortKeyAction(NodeSortKey.BY_TIME_ASCENDING)
-internal class FoldersAlwaysOnTop : OptionAction(ProjectViewOption.FOLDERS_ALWAYS_ON_TOP)
-internal class ManualOrder : OptionAction(ProjectViewOption.MANUAL_ORDER)
 
 private fun optionSupplier(
   legacyActionSupplier: () -> ProjectViewImpl.Action,
@@ -219,76 +216,11 @@ private class FrontendOption(private val event: AnActionEvent, private val optio
     }
   }
   
-  private fun service(): ProjectViewOptionSupport? {
+  private fun service(): ProjectViewActionSupport? {
     val project = event.project ?: return null
-    return ProjectViewOptionSupport.getInstance(project)
+    return ProjectViewActionSupport.getInstance(project)
   }
 }
-
-@ApiStatus.Internal
-enum class ProjectViewOption {
-  OPEN_IN_PREVIEW_TAB,
-  AUTOSCROLL_TO_SOURCE,
-  OPEN_DIRECTORIES_WITH_SINGLE_CLICK,
-  AUTOSCROLL_FROM_SOURCE,
-  SHOW_MODULES,
-  SHOW_MEMBERS,
-  SHOW_EXCLUDED_FILES,
-  SHOW_VISIBILITY_ICONS,
-  SHOW_LIBRARY_CONTENTS,
-  SHOW_SCRATCHES_AND_CONSOLES,
-  FLATTEN_MODULES,
-  FLATTEN_PACKAGES,
-  ABBREVIATE_PACKAGE_NAMES,
-  HIDE_EMPTY_MIDDLE_PACKAGES,
-  COMPACT_DIRECTORIES,
-  FOLDERS_ALWAYS_ON_TOP,
-  MANUAL_ORDER,
-}
-
-@ApiStatus.Internal
-@Serializable
-data class ProjectViewActionState(
-  val optionStates: Map<ProjectViewOption, ProjectViewOptionState>,
-  val sortKeyState: ProjectViewSortKeyState,
-  val fileNestingState: FileNestingState,
-)
-
-@ApiStatus.Internal
-@Serializable
-data class ProjectViewOptionState(
-  val isSelected: Boolean,
-  val isEnabled: Boolean,
-  val isAlwaysVisible: Boolean,
-)
-
-@ApiStatus.Internal
-@Serializable
-data class ProjectViewSortKeyState(
-  val sortKey: NodeSortKey,
-  val availableSortKeys: Set<NodeSortKey>,
-)
-
-@ApiStatus.Internal
-@Serializable
-data class FileNestingState(
-  val isFileNestingOn: Boolean,
-  val isFileNestingAvailable: Boolean,
-  val activeRules: List<NestingRuleState>,
-  val defaultRules: List<NestingRuleState>,
-)
-
-@ApiStatus.Internal
-@Serializable
-data class NestingRuleState(
-  val parentFileSuffix: String,
-  val childFileSuffix: String,
-) {
-  fun toNestingRule(): ProjectViewFileNestingService.NestingRule = ProjectViewFileNestingService.NestingRule(parentFileSuffix, childFileSuffix)
-}
-
-@ApiStatus.Internal
-fun ProjectViewFileNestingService.NestingRule.toNestingRuleState(): NestingRuleState = NestingRuleState(parentFileSuffix, childFileSuffix)
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
