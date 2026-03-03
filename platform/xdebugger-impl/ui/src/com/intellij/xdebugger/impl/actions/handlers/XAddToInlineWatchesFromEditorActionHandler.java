@@ -8,7 +8,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -32,7 +31,7 @@ public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerSplitAc
 
     getTextToEvaluate(dataContext, session)
       .onSuccess(text -> {
-        UIUtil.invokeLaterIfNeeded(() -> {
+        DebuggerUIUtil.invokeLaterIfNeeded(() -> {
           XDebuggerWatchesManager watchesManager = XDebugManagerProxy.getInstance().getWatchesManager(session.getProject());
           XSourcePosition caretPosition = DebuggerUIUtil.getCaretPosition(dataContext);
           if (text != null) {
