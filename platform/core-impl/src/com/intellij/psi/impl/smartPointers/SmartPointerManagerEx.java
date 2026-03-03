@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.Disposable;
@@ -39,8 +39,7 @@ public abstract class SmartPointerManagerEx extends SmartPointerManager implemen
                                                                             @NotNull TextRange range,
                                                                             boolean forInjected);
 
-  @Nullable
-  public abstract SmartPointerTracker getTracker(@NotNull VirtualFile file);
+  public abstract @Nullable SmartPointerTracker getTracker(@NotNull VirtualFile file);
 
   public abstract void updatePointers(@NotNull Document document,
                                       @NotNull FrozenDocument frozen,
@@ -48,9 +47,7 @@ public abstract class SmartPointerManagerEx extends SmartPointerManager implemen
 
   public abstract void updatePointerTargetsAfterReparse(@NotNull VirtualFile file);
 
-  @NotNull
-  public abstract Project getProject();
+  public abstract @NotNull Project getProject();
 
-  @NotNull
-  public abstract PsiDocumentManagerEx getPsiDocumentManager();
+  public abstract @NotNull PsiDocumentManagerEx getPsiDocumentManager();
 }
