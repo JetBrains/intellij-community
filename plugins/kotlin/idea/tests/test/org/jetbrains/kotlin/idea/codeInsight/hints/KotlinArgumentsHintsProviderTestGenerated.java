@@ -30,6 +30,11 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("annotations.kt")
+    public void testAnnotations() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/annotations.kt");
+    }
+
     @TestMetadata("blacklisted.kt")
     public void testBlacklisted() throws Exception {
         runTest("testData/codeInsight/hints/arguments/blacklisted.kt");

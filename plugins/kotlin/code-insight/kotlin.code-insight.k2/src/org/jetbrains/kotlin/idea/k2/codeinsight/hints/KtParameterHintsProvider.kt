@@ -36,6 +36,7 @@ import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -43,6 +44,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -200,6 +203,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
         val args: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>> = functionCall.valueArgumentMapping
         val referencedName = (callElement.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
+        val numberOfValueParametersWithNames = valueParametersWithNames.size
         for (indexedValue in valueParametersWithNames.withIndex()) {
             val (symbol, name) = indexedValue.value
             if (name == null) continue
@@ -218,7 +222,17 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 continue
             }
 
-            if (argument.isArgumentNamed(symbol, session)) {
+            // do not show parameter name for single annotation attribute
+            val containingSymbol = symbol.containingSymbol
+            if (
+                containingSymbol is KaConstructorSymbol &&
+                (containingSymbol.containingSymbol as? KaClassSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS &&
+                numberOfValueParametersWithNames == 1
+            ) {
+                continue
+            }
+
+            if (argument.isArgumentNamed(symbol)) {
                 continue
             }
 
@@ -355,7 +369,8 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         text(symbolPsi, targetPsi?.asNavigatablePsiLoad())
     }
 
-    private fun KtValueArgument.isArgumentNamed(symbol: KaValueParameterSymbol, session: KaSession): Boolean {
+    context(session: KaSession)
+    private fun KtValueArgument.isArgumentNamed(symbol: KaValueParameterSymbol): Boolean {
         // avoid cases like "`value =` value"
         val argumentText = this.text
         val symbolName = symbol.name.asString()
