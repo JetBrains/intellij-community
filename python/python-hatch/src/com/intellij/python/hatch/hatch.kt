@@ -40,8 +40,8 @@ class EnvironmentCreationHatchError(details: @NlsSafe String) : HatchError(
   PyHatchBundle.message("python.hatch.error.environment.creation", details)
 )
 
-class FileSystemOperationHatchError(eelFsError: EelFsError) : HatchError(
-  PyHatchBundle.message("python.hatch.error.filesystem.operation", eelFsError)
+class FileSystemOperationHatchError(details: @NlsSafe Any) : HatchError(
+  PyHatchBundle.message("python.hatch.error.filesystem.operation", details)
 )
 
 

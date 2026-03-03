@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.validation.CHECK_NO_RESERVED_WORDS
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
@@ -36,7 +37,7 @@ class ProjectPathFlows private constructor(val projectPath: Flow<Path?>) {
   /**
    * Flow emits project file name only when project path is valid
    */
-  val projectName: Flow<@NlsSafe String> = projectPath.filterNotNull().map { it.name.replace(" ", "_") }
+  val projectName: Flow<@NlsSafe String> = projectPath.filterNotNull().map { PyPackageName.normalizeProjectName(it.name) }
 
 
   companion object {

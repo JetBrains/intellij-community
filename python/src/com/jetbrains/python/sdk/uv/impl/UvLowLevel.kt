@@ -51,9 +51,10 @@ private class UvLowLevelImpl<P : PathHolder>(private val cwd: Path, private val 
       val initArgs = mutableListOf("init")
       addPythonArg(initArgs)
       initArgs.add("--bare")
-      if (cwd.name.isNotBlank()) {
+      val projectName = PyPackageName.normalizeProjectName(cwd.name)
+      if (projectName.isNotBlank()) {
         initArgs.add("--name")
-        initArgs.add(cwd.name)
+        initArgs.add(projectName)
       }
       initArgs.add("--no-project")
       uvCli.runUv(cwd, null, true, *initArgs.toTypedArray()).getOr { return it }
