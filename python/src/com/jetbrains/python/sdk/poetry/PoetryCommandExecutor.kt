@@ -18,6 +18,7 @@ import com.jetbrains.python.getOrNull
 import com.jetbrains.python.isSuccess
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -33,6 +34,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 /**
@@ -95,6 +97,12 @@ suspend fun setupPoetry(
   if (init) {
     // Build poetry init command with Python version constraint if available
     val initArgs = mutableListOf("init", "-n")
+
+    val projectName = PyPackageName.normalizeProjectName(projectPath.name)
+    if (projectName.isNotBlank()) {
+      initArgs.add("--name")
+      initArgs.add(projectName)
+    }
 
     // Validate Python and get version info
     val pythonInfo = basePythonBinaryPath.validatePythonAndGetInfo().getOr { return it }
