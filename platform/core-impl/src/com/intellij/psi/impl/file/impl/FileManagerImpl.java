@@ -63,13 +63,9 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -659,7 +655,7 @@ public final class FileManagerImpl implements FileManagerEx {
     });
   }
 
-  private void markInvalidated(@NotNull FileViewProvider viewProvider) {
+  void markInvalidated(@NotNull FileViewProvider viewProvider) {
     viewProvider.putUserData(IN_COMA, null);
     ((AbstractFileViewProvider)viewProvider).markInvalidated();
     viewProvider.getVirtualFile().putUserData(myPsiHardRefKey, null);
@@ -700,96 +696,8 @@ public final class FileManagerImpl implements FileManagerEx {
   @ApiStatus.Internal
   @Override
   public void removeInvalidFilesAndDirs(boolean useFind) {
-    removeInvalidDirs();
-
-    // note: important to update directories the map first - findFile uses findDirectory!
-    ArrayList<Entry> fileToPsiFileMap = new ArrayList<>(myVFileToViewProviderMap.getAllEntries());
-    List<Entry> originalFileToPsiFileMap = myVFileToViewProviderMap.getAllEntries();
-    if (useFind) {
-      myVFileToViewProviderMap.clear();
-    }
-
-    // When some file is moved to another directory, its contexts might change.
-    // So, view providers associated with irrelevant contexts should be processed.
-    // The best way to deal with such view providers is just to invalidate them.
-    // But PSI clients are not usually ready for that.
-    // So we try to preserve one of the view providers, clearing the context of this lucky view provider and setting its context to `any`.
-    // It is possible to do that if there are no other relevant view providers for this file left.
-    // Also, if there's a view provider with `any` context, there can be no other view providers for this file, so we don't need to do anything for this file.
-    Set<VirtualFile> filesHavingRelevantViewProviders = new HashSet<>();
-    Map<VirtualFile, Entry> irrelevantViewProviders = new LinkedHashMap<>();
-
-    for (Iterator<Entry> iterator = fileToPsiFileMap.iterator(); iterator.hasNext();) {
-      Entry entry = iterator.next();
-
-      VirtualFile vFile = entry.getFile();
-      CodeInsightContext context = entry.getContext();
-      FileViewProvider viewProvider = entry.getProvider();
-
-      if (!vFile.isValid()) {
-        iterator.remove();
-        continue;
-      }
-
-      if (useFind) {
-        PsiFile psiFile1 = findFile(vFile, context);
-        if (psiFile1 == null) {
-          iterator.remove();
-          continue;
-        }
-
-        if (!areViewProvidersEquivalent(viewProvider, psiFile1.getViewProvider())) {
-          iterator.remove();
-          continue;
-        }
-
-        clearPsiCaches(viewProvider);
-
-        if (context != CodeInsightContexts.anyContext()) {
-          if (CodeInsightContextUtil.isContextRelevant(vFile, context, myManager.getProject())) {
-            filesHavingRelevantViewProviders.add(vFile);
-          }
-          else {
-            irrelevantViewProviders.putIfAbsent(vFile, entry);
-            iterator.remove();
-          }
-        }
-      }
-      else if (!evaluateValidity((AbstractFileViewProvider)viewProvider)) {
-        iterator.remove();
-      }
-    }
-
-    if (!irrelevantViewProviders.isEmpty()) {
-      CodeInsightContextManagerImpl codeInsightContextManager = CodeInsightContextManagerImpl.getInstanceImpl(myManager.getProject());
-      irrelevantViewProviders.values().stream()
-        .filter(entry -> {
-          boolean contains = filesHavingRelevantViewProviders.contains(entry.getFile());
-          if (contains && LOG.isDebugEnabled()) {
-            FileViewProvider viewProvider = entry.getProvider();
-            CodeInsightContext context = codeInsightContextManager.getCodeInsightContextRaw(viewProvider);
-            LOG.debug("- View provider " + viewProvider + " with irrelevant context " + context + " has not survived moving");
-          }
-          return !contains;
-        })
-        .map(entry -> {
-          VirtualFile vFile = entry.getFile();
-          FileViewProvider viewProvider = entry.getProvider();
-          codeInsightContextManager.setCodeInsightContext(viewProvider, CodeInsightContexts.anyContext());
-
-          if (LOG.isDebugEnabled()) {
-            CodeInsightContext context = codeInsightContextManager.getCodeInsightContextRaw(viewProvider);
-            LOG.debug("+ View provider " + viewProvider + " with irrelevant context " + context + " has survived moving");
-          }
-
-          return new Entry(vFile, CodeInsightContexts.anyContext(), viewProvider);
-        })
-        .collect(Collectors.toCollection(() -> fileToPsiFileMap));
-    }
-
-    myVFileToViewProviderMap.replaceAll(fileToPsiFileMap);
-
-    markInvalidations(originalFileToPsiFileMap);
+    removeInvalidDirs(); // note: important to update directories the map first - findFile uses findDirectory!
+    new InvalidFileProcessor(this, myManager.getProject(), myVFileToViewProviderMap, useFind).processInvalidFiles();
   }
 
   @ApiStatus.Internal
@@ -804,19 +712,6 @@ public final class FileManagerImpl implements FileManagerEx {
     PsiFile psi2 = view2.getPsi(baseLanguage);
     if (psi1 == null || psi2 == null) return psi1 == psi2;
     return psi1.getClass() == psi2.getClass();
-  }
-
-  private void markInvalidations(@NotNull List<Entry> originalFileToPsiFileMap) {
-    if (!originalFileToPsiFileMap.isEmpty()) {
-      DebugUtil.performPsiModification(null, ()->{
-        for (Entry entry : originalFileToPsiFileMap) {
-          FileViewProvider viewProvider = entry.getProvider();
-          if (myVFileToViewProviderMap.get(entry.getFile(), entry.getContext()) != viewProvider) {
-            markInvalidated(viewProvider);
-          }
-        }
-      });
-    }
   }
 
   @RequiresWriteLock
@@ -859,7 +754,7 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @RequiresReadLock
-  private boolean evaluateValidity(@NotNull AbstractFileViewProvider viewProvider) {
+  boolean evaluateValidity(@NotNull AbstractFileViewProvider viewProvider) {
     VirtualFile file = viewProvider.getVirtualFile();
     // todo IJPL-339 maybe rework evaluate validity
     //      so that all view providers are invalidated together?
