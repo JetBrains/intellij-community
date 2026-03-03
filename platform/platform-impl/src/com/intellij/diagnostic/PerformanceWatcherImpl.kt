@@ -14,6 +14,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.impl.ModalityStateEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
@@ -53,7 +55,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -63,8 +64,6 @@ import org.jetbrains.annotations.NonNls
 import sun.awt.ModalityEvent
 import sun.awt.ModalityListener
 import sun.awt.SunToolkit
-import java.awt.AWTEvent
-import java.awt.EventQueue
 import java.awt.Toolkit
 import java.io.IOException
 import java.lang.management.ThreadInfo
@@ -75,14 +74,12 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.SwingUtilities
 import kotlin.coroutines.coroutineContext
 import kotlin.io.path.fileSize
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.useDirectoryEntries
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -122,7 +119,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 
 
   private val isActive: Boolean = !ApplicationManager.getApplication().isHeadlessEnvironment
-  private var smokeAndMirrorsCounter: Int = 0
+  private var smokeAndMirrorsModalities: MutableList<ModalityStateEx> = mutableListOf()
 
   private val taskFlow = MutableSharedFlow<FreezeCheckerTask?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -301,27 +298,43 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   override fun smokeAndMirrors(name: @NonNls String): AccessToken {
     LOG.trace("Entered smokeAndMirrors phase: $name")
     ThreadingAssertions.assertEventDispatchThread()
-    smokeAndMirrorsCounter++
+
+    val smokedModalityState = LaterInvocator.getCurrentModalityState()
+    smokeAndMirrorsModalities += smokedModalityState
 
     return AccessToken.create {
       LOG.trace("Exited smokeAndMirrors phase: $name")
       ThreadingAssertions.assertEventDispatchThread()
-      smokeAndMirrorsCounter--
+
+      val removed = smokeAndMirrorsModalities.removeLast()
+      LOG.assertTrue(removed === smokedModalityState, "Modality state mismatch: $removed != $smokedModalityState")
     }
   }
 
   @ApiStatus.Internal
   override fun edtEventStarted() {
     if (!isActive) return
-    if (smokeAndMirrorsCounter > 0) return
+    if (shouldSkipCurrentEdtEvent()) {
+      return
+    }
     stopCurrentTaskAndReEmit(FreezeCheckerTask(System.nanoTime()))
   }
 
   @ApiStatus.Internal
   override fun edtEventFinished() {
     if (!isActive) return
-    if (smokeAndMirrorsCounter > 0) return
+    if (shouldSkipCurrentEdtEvent()) {
+      return
+    }
     stopCurrentTaskAndReEmit(null)
+  }
+
+  private fun shouldSkipCurrentEdtEvent(): Boolean {
+    if (smokeAndMirrorsModalities.isEmpty()) return false
+
+    // we do not want to report DialogWrapper opened inside 'smokeAndMirrors' frame as a UI freeze
+    val currentModality = LaterInvocator.getCurrentModalityState()
+    return currentModality.accepts(smokeAndMirrorsModalities.last())
   }
 
   private fun stopCurrentTaskAndReEmit(task: FreezeCheckerTask?) {
