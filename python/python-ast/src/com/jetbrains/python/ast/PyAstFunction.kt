@@ -108,7 +108,6 @@ interface PyAstFunction : PsiNameIdentifierOwner, PyAstCompoundStatement,
            statements.size == 2 && PyUtilCore.isStringLiteral(statements[0]) && isRaiseNotImplementedError(statements[1])
   }
 
-
   /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().
    */
@@ -122,40 +121,6 @@ interface PyAstFunction : PsiNameIdentifierOwner, PyAstCompoundStatement,
      * Function is decorated with {@code @staticmethod}, its first param is as in a regular function.
      */
     STATICMETHOD,
-  }
-
-  /**
-   * @return function protection level (underscore based)
-   */
-  val protectionLevel: ProtectionLevel
-    get() {
-      val underscoreLevels = PyUtilCore.getInitialUnderscores(name)
-      return ProtectionLevel.entries
-               .firstOrNull { it.underscoreLevel == underscoreLevels }
-             ?: ProtectionLevel.PRIVATE
-    }
-
-  enum class ProtectionLevel(
-    /**
-     * number of underscores
-     */
-    val underscoreLevel: Int,
-  ) {
-    /**
-     * public members
-     */
-    PUBLIC(0),
-
-    /**
-     * _protected_members
-     */
-    PROTECTED(1),
-
-    /**
-     * __private_members
-     */
-    PRIVATE(2);
-
   }
 
   override fun getContainingClass(): PyAstClass? =

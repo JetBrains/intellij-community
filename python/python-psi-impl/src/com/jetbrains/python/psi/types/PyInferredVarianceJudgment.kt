@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyAnnotation
@@ -199,8 +200,7 @@ object PyInferredVarianceJudgment {
    * - The attribute's name starts with an underscore (i.e., is private or protected).
    */
   fun attributeDoesNotAffectVarianceInference(target: PyTargetExpression): Boolean {
-    val attrName = target.name ?: return false
-    return PyNames.isPrivate(attrName) || PyNames.isProtected(attrName)
+    return target.protectionLevel != ProtectionLevel.PUBLIC
   }
 
   /**
@@ -209,8 +209,7 @@ object PyInferredVarianceJudgment {
    * - if [functionIgnoresVariance] is true
    */
   fun functionDoesNotAffectVarianceInference(callable: PyFunction): Boolean {
-    val funName = callable.name ?: return false
-    if (PyNames.isPrivate(funName) || PyNames.isProtected(funName)) return true
+    if (callable.protectionLevel != ProtectionLevel.PUBLIC) return true
     return functionIgnoresVariance(callable)
   }
 
@@ -221,7 +220,7 @@ object PyInferredVarianceJudgment {
    * - Is decorated as a class or static method.
    */
   fun functionIgnoresVariance(callable: PyFunction): Boolean {
-    if (callable.parameterList.parameters.size == 0) {
+    if (callable.parameterList.parameters.isEmpty()) {
       return true // methods with no parameters are unbound instance methods and cannot be called on an instance
     }
     when (callable.name) {

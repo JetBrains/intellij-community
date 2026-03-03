@@ -11,8 +11,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.PyNames.isPrivate
 import com.jetbrains.python.PythonRuntimeService
+import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -1045,7 +1045,7 @@ object PyCallExpressionHelper {
     return type.findMember(PyNames.CALL, resolveContext)
   }
 
-  private fun isLegacyPositionalOnly(parameter: PyCallableParameter): Boolean = !parameter.isSelf && isPrivate(parameter.name.orEmpty())
+  private fun isLegacyPositionalOnly(parameter: PyCallableParameter): Boolean = !parameter.isSelf && parameter.protectionLevel == ProtectionLevel.PRIVATE
 
   @JvmStatic
   fun analyzeArguments(

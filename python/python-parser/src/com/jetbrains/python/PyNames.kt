@@ -683,12 +683,14 @@ object PyNames {
     return name.replaceFirst("__([a-z]+)__".toRegex(), "__r$1__")
   }
 
+  @Deprecated("use `PyAstElement.protectionLevel` instead")
   fun isProtected(name: @NonNls String): Boolean =
-    name.length > 1 && name.startsWith("_") && !name.endsWith("_") && name[1] != '_'
+    ProtectionLevel.forName(name) == ProtectionLevel.PROTECTED
 
   @JvmStatic
+  @Deprecated("use `PyAstElement.protectionLevel` instead")
   fun isPrivate(name: @NonNls String): Boolean =
-    name.length > 2 && name.startsWith("__") && !name.endsWith("__") && name[2] != '_'
+    ProtectionLevel.forName(name) == ProtectionLevel.PRIVATE
 
   fun isSunder(name: @NonNls String): Boolean =
     name.length > 2 && name.startsWith("_") && name.endsWith("_") && name[1] != '_' && name[name.length - 2] != '_'

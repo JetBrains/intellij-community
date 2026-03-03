@@ -1,6 +1,6 @@
 package com.jetbrains.python.psi.types
 
-import com.jetbrains.python.PyNames.isPrivate
+import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.psi.impl.ParamHelper
 import org.jetbrains.annotations.ApiStatus
 import java.util.ArrayDeque
@@ -336,7 +336,7 @@ object PyCallableParameterMapping {
       else {
         if (state == ParameterState.POSITIONAL_OR_KEYWORD) {
           val paramName = param.name
-          val isPositionalOnly = paramName == null || isPrivate(paramName)
+          val isPositionalOnly = paramName == null || param.protectionLevel == ProtectionLevel.PRIVATE
           if (isPositionalOnly) {
             parameters.lastOrNull()?.let {
               if (it.kind != ParameterKind.POSITIONAL_ONLY && it.kind != ParameterKind.TYPE_VAR_TUPLE && !it.parameter.isSelf) {

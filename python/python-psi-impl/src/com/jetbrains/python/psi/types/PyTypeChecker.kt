@@ -5,14 +5,12 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.PyNames.isPrivate
-import com.jetbrains.python.PyNames.isProtected
 import com.jetbrains.python.PythonRuntimeService
+import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -27,7 +25,6 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyListLiteralExpression
-import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypedElement
@@ -749,9 +746,8 @@ object PyTypeChecker {
     val moduleElements =
       (module.topLevelAttributes + module.topLevelFunctions)
         .asSequence()
-        .filter { e: PsiNameIdentifierOwner? ->
-          val name = (e as PyQualifiedNameOwner).name
-          name != null && !isPrivate(name) && !isProtected(name)
+        .filter {
+          it.protectionLevel == ProtectionLevel.PUBLIC
         }
         .associateBy { it.name }
 

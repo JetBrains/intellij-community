@@ -7,17 +7,24 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
+import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore
-import com.jetbrains.python.ast.impl.PyUtilCore
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface PyAstElement : NavigatablePsiElement {
+  /**
+   * @return protection level (underscore based)
+   */
+  @get:ApiStatus.Experimental
+  val protectionLevel: ProtectionLevel
+    get() = ProtectionLevel.forName(name.orEmpty())
+
   fun <T : PyAstElement> childrenToPsi(filterSet: TokenSet?, array: Array<T>): Array<T> =
     PyPsiUtilsCore.nodesToPsi<T>(node.getChildren(filterSet), array)
 
   fun <T : PyAstElement> childToPsi(filterSet: TokenSet?, index: Int): T? =
-    node.getChildren(filterSet).getOrNull(index)?.psi as T
+    node.getChildren(filterSet).getOrNull(index)?.psi as T?
 
   fun <T : PyAstElement> childToPsi(elType: IElementType): T? =
     node.findChildByType(elType)?.psi as T?
