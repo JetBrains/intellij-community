@@ -4,12 +4,8 @@
 // may not be desirable.
 
 // Update as of 28/08/2025: in response to IDEA-375898, we now generate the record canonical constructor for this case.
-class Point2<caret> {
-  private final double x;
-  private final double y;
-
-  Point2(double actuallyY) {
-    this.y = actuallyY;
-    this.x = 0;
-  }
+record Point2(double x, double y) {
+    Point2(double actuallyY) {
+        this(0, actuallyY);
+    }
 }

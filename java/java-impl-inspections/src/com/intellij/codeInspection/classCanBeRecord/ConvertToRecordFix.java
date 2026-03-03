@@ -47,6 +47,7 @@ import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.memory.InnerClassReferenceVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -245,9 +246,22 @@ public final class ConvertToRecordFix implements LocalQuickFix {
     }
 
     private boolean isValid() {
+      if (StreamEx.of(myClass.getFields()).distinct(2).findFirst().isPresent()) {
+        // The class has duplicate fields.
+        // Return early because duplicate field names produce broken maps (fieldNamesToInitializers is keyed by name).
+        return false;
+      }
+
       int possibleCanonicalConstructorCount = 0;
       for (var constructorCandidate : myMethodsToConstructorCandidates.values()) {
-        if (constructorCandidate == null) return false; // the constructor was invalid
+        if (constructorCandidate == null) return false; // the constructor is invalid
+
+        if (StreamEx.of(constructorCandidate.constructor.getParameterList().getParameters()).distinct(2).findFirst().isPresent()) {
+          // The constructor has duplicate parameters.
+          // Return early because duplicate parameter names produce broken delegating constructor calls.
+          return false;
+        }
+
         if (!throwsOnlyUncheckedExceptions(constructorCandidate.constructor())) return false;
         if (containsObjectMethodCalls(constructorCandidate.constructor())) return false;
         if (constructorCandidate.kind == RecordConstructorCandidate.Kind.CANONICAL) {
@@ -263,7 +277,10 @@ public final class ConvertToRecordFix implements LocalQuickFix {
           possibleCanonicalConstructorCount++;
         }
       }
-      if (!myMethodsToConstructorCandidates.isEmpty() && possibleCanonicalConstructorCount != 1) return false;
+      if (possibleCanonicalConstructorCount > 1) {
+        // At most one constructor can be canonical; others must be DELEGATING or CUSTOM.
+        return false;
+      }
 
       if (myFieldsToAccessorCandidates.size() == 0) return false;
       for (var entry : myFieldsToAccessorCandidates.entrySet()) {

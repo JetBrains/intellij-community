@@ -95,7 +95,7 @@ final class ConstructorBodyProcessor {
     }
 
     // Is it an assignment expression to an instance field?
-    if (!expressionIsAssignmentToInstanceField(expression) && !delegating) {
+    if (Boolean.FALSE.equals(expressionIsAssignmentToInstanceField(expression)) && !delegating) {
       // It is NOT an assignment expression to an instance field.
       // This means that:
       //  - all instance variables must be already initialized, OR
@@ -188,29 +188,19 @@ final class ConstructorBodyProcessor {
       if (allFieldsAssignedIn(constructor.getBody(), instanceFields)) {
         if (ctorParams.length == instanceFields.size()) {
           assert constructor.getContainingClass() != null; // The caller asserts this 
-          if (constructor.getContainingClass().getConstructors().length == 1) {
-            // If there is just a single constructor, even if the order and types of its parameters don't exactly match the
-            // order of instance fields, we can still convert it to a canonical constructor using the paramsToFields map.
+          boolean fieldsMatchInOrder = true;
+          for (int i = 0; i < ctorParams.length; i++) {
+            PsiType ctorParamType = ctorParams[i].getType();
+            PsiType instanceFieldType = instanceFields.get(i).getType();
+            if (!TypeConversionUtil.isAssignable(instanceFieldType, ctorParamType)) {
+              fieldsMatchInOrder = false;
+              break;
+            }
+          }
+
+          if (fieldsMatchInOrder) {
             canonical = true;
           }
-          else {
-            boolean fieldsMatchInOrder = true;
-            for (int i = 0; i < ctorParams.length; i++) {
-              PsiType ctorParamType = ctorParams[i].getType();
-              PsiType instanceFieldType = instanceFields.get(i).getType();
-              if (!TypeConversionUtil.isAssignable(instanceFieldType, ctorParamType)) {
-                fieldsMatchInOrder = false;
-                break;
-              }
-            }
-
-            if (fieldsMatchInOrder) {
-              canonical = true;
-            }
-          }
-        }
-        else {
-          // Not canonical and not delegating: just a custom constructor that assigns all instance fields.
         }
       }
       else {
@@ -263,11 +253,16 @@ final class ConstructorBodyProcessor {
     return true;
   }
 
-  private static boolean expressionIsAssignmentToInstanceField(PsiExpression expr) {
+  /// Returns:
+  /// - `true` if expression is an assignment to a non-static field
+  /// - `false` if expression is not an assignment expression
+  /// - `null` if expression is an assignment but the target is unresolved
+  private static @Nullable Boolean expressionIsAssignmentToInstanceField(PsiExpression expr) {
     if (!(expr instanceof PsiAssignmentExpression assignExpr)) return false;
     PsiExpression leftExpr = assignExpr.getLExpression();
     if (!(leftExpr instanceof PsiReferenceExpression referenceExpr)) return false;
     PsiElement resolved = referenceExpr.resolve();
+    if (resolved == null) return null;
     return resolved instanceof PsiField psiField && !psiField.hasModifierProperty(STATIC);
   }
 
