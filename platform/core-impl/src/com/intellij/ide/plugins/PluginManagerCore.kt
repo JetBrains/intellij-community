@@ -590,8 +590,10 @@ object PluginManagerCore {
       if (loadingError is PluginDependencyIsDisabled) {
         val disabledDependencyId = loadingError.dependencyId
         if (initContext.isPluginDisabled(disabledDependencyId)) {
-          val disabledPlugin = fullIdMap.get(disabledDependencyId)!!
-          pluginsToEnable.put(disabledDependencyId, PluginStateChangeData(disabledPlugin.pluginId, disabledPlugin.name))
+          val disabledPlugin = fullIdMap.get(disabledDependencyId)
+          if (disabledPlugin != null) {
+            pluginsToEnable.put(disabledDependencyId, PluginStateChangeData(disabledPlugin.pluginId, disabledPlugin.name))
+          }
         }
       }
     }
