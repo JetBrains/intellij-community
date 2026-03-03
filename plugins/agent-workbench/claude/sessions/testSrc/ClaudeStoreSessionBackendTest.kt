@@ -5,8 +5,10 @@ import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.claude.sessions.backend.store.ClaudeChangeSet
 import com.intellij.agent.workbench.claude.sessions.backend.store.ClaudeStoreSessionBackend
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
+import kotlin.time.Duration.Companion.milliseconds
 
 class ClaudeStoreSessionBackendTest {
   @TempDir
@@ -40,6 +43,7 @@ class ClaudeStoreSessionBackendTest {
         projectDir.resolve("session-processing.jsonl"),
         listOf(
           claudeUserLine("2026-02-10T10:01:00.000Z", "session-processing", projectPath, "Build it"),
+          claudeAssistantToolUseLine("2026-02-10T10:01:00.500Z", "session-processing", projectPath, "Working"),
           claudeProgressLine("2026-02-10T10:01:01.000Z", "session-processing", projectPath),
         ),
       )
@@ -203,6 +207,48 @@ class ClaudeStoreSessionBackendTest {
       val threads = backend.listThreads(path = projectPath, openProject = null)
 
       assertThat(threads.map { it.id }).containsExactly("session-new", "session-old")
+    }
+  }
+
+  @Test
+  fun listThreadsDoesNotLeakThreadsAcrossConcurrentProjectLoads() {
+    runBlocking(Dispatchers.Default) {
+      val projectAPath = "/work/project-concurrent-a"
+      val projectBPath = "/work/project-concurrent-b"
+      val projectADir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-concurrent-a")
+      val projectBDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-concurrent-b")
+      Files.createDirectories(projectADir)
+      Files.createDirectories(projectBDir)
+
+      // Project A has enough files to keep its parse loop active while B loads concurrently.
+      for (i in 1..80) {
+        val sessionId = "a-session-$i"
+        writeJsonl(
+          projectADir.resolve("$sessionId.jsonl"),
+          listOf(
+            claudeUserLine("2026-02-10T10:00:00.000Z", sessionId, projectAPath, "A task $i"),
+            claudeAssistantLine("2026-02-10T10:00:01.000Z", sessionId, projectAPath, "Done"),
+          ),
+        )
+      }
+
+      writeJsonl(
+        projectBDir.resolve("b-session.jsonl"),
+        listOf(
+          claudeUserLine("2026-02-10T10:00:00.000Z", "b-session", projectBPath, "B task"),
+          claudeAssistantLine("2026-02-10T10:00:01.000Z", "b-session", projectBPath, "Done"),
+        ),
+      )
+
+      val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+      val projectAThreadsDeferred = async { backend.listThreads(path = projectAPath, openProject = null) }
+      delay(10.milliseconds)
+      val projectBThreads = backend.listThreads(path = projectBPath, openProject = null)
+      val projectAThreads = projectAThreadsDeferred.await()
+
+      assertThat(projectBThreads.map { it.id }).containsExactly("b-session")
+      assertThat(projectAThreads.map { it.id }).allMatch { it.startsWith("a-session-") }
     }
   }
 

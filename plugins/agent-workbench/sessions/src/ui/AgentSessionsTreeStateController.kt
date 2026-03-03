@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.sessions.ui
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
+import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
@@ -31,18 +33,19 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.SwingUtilities
 
 internal class AgentSessionsTreeStateController(
-    private val sessionsStateFlow: StateFlow<AgentSessionsState>,
-    private val chatSelectionService: AgentChatTabSelectionService,
+  private val sessionsStateFlow: StateFlow<AgentSessionsState>,
+  private val chatSelectionService: AgentChatTabSelectionService,
   private val treeUiStateService: AgentSessionTreeUiStateService,
   private val uiPreferencesStateService: AgentSessionUiPreferencesStateService,
-    private val tree: Tree,
-    private val getSessionTreeModel: () -> SessionTreeModel,
-    private val setSessionTreeModel: (SessionTreeModel) -> Unit,
-    private val onLastUsedProviderChanged: (AgentSessionProvider?) -> Unit,
-    private val onBeforeModelSwap: () -> Unit,
-    private val invalidateTreeModel: (SessionTreeModelDiff) -> CompletableFuture<*>,
-    private val expandNode: (SessionTreeId) -> Unit,
-    private val selectNode: (SessionTreeId) -> Unit,
+  private val markThreadAsRead: (AgentSessionProvider, String, Long) -> Unit,
+  private val tree: Tree,
+  private val getSessionTreeModel: () -> SessionTreeModel,
+  private val setSessionTreeModel: (SessionTreeModel) -> Unit,
+  private val onLastUsedProviderChanged: (AgentSessionProvider?) -> Unit,
+  private val onBeforeModelSwap: () -> Unit,
+  private val invalidateTreeModel: (SessionTreeModelDiff) -> CompletableFuture<*>,
+  private val expandNode: (SessionTreeId) -> Unit,
+  private val selectNode: (SessionTreeId) -> Unit,
 ) {
   @Suppress("RAW_SCOPE_CREATION")
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
@@ -63,6 +66,7 @@ internal class AgentSessionsTreeStateController(
     scope.launch {
       chatSelectionService.selectedChatTab.collect { selection ->
         selectedChatTab = selection
+        markSelectedTabThreadAsRead(selection)
         rebuildTree()
       }
     }
@@ -77,6 +81,24 @@ internal class AgentSessionsTreeStateController(
   fun dispose() {
     rebuildJob?.cancel()
     scope.cancel("Agent sessions tree state controller disposed")
+  }
+
+  private fun markSelectedTabThreadAsRead(selection: AgentChatTabSelection?) {
+    if (selection == null) return
+    val provider = AgentSessionProvider.fromOrNull(
+      parseAgentThreadIdentity(selection.threadIdentity)?.providerId ?: return
+    ) ?: return
+    val thread = sessionsState.projects
+      .asSequence()
+      .flatMap { project ->
+        when {
+          project.path == selection.projectPath -> project.threads.asSequence()
+          else -> project.worktrees.firstOrNull { it.path == selection.projectPath }?.threads?.asSequence() ?: emptySequence()
+        }
+      }
+      .firstOrNull { it.id == selection.threadId && it.provider == provider && it.activity == AgentThreadActivity.UNREAD }
+      ?: return
+    markThreadAsRead(provider, thread.id, thread.updatedAt)
   }
 
   private fun rebuildTree() {

@@ -140,6 +140,7 @@ internal class AgentSessionsToolWindowPanel(
     chatSelectionService = chatSelectionService,
     treeUiStateService = treeUiStateService,
     uiPreferencesStateService = uiPreferencesStateService,
+    markThreadAsRead = syncService::markThreadAsRead,
     tree = tree,
     getSessionTreeModel = { sessionTreeModel },
     setSessionTreeModel = { sessionTreeModel = it },

@@ -11,10 +11,10 @@ import java.time.Instant
 import kotlin.io.path.invariantSeparatorsPathString
 
 private const val CLAUDE_PROJECTS_DIR = "projects"
-private const val MAX_JSONL_SCAN_OBJECTS = 3
 private const val MAX_TITLE_LENGTH = 120
 
 enum class ClaudeSessionActivity {
+  UNREAD,
   PROCESSING,
   READY,
 }
@@ -54,8 +54,12 @@ class ClaudeSessionsStore(
     val normalizedSessionId = headState.sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
 
     val tailState = scanJsonlTail(path)
-    val activity = deriveActivity(tailState.lastEventType ?: headState.lastEventType)
-    val updatedAt = listOfNotNull(headState.updatedAt, tailState.updatedAt).maxOrNull()
+    val activityState: ActivityTrackingState = if (tailState.lastEventType != null) tailState else headState
+
+    val lastEventType = activityState.lastEventType ?: headState.lastEventType
+    val lastAssistantHadToolUse = if (activityState.lastEventType != null) activityState.lastAssistantHadToolUse else headState.lastAssistantHadToolUse
+    val activity = deriveActivity(lastEventType, lastAssistantHadToolUse)
+    val updatedAt = listOfNotNull(headState.updatedAt, tailState.updatedAt, activityState.updatedAt).maxOrNull()
 
     val title = resolveThreadTitle(
       firstPrompt = headState.firstPrompt,
@@ -88,10 +92,8 @@ class ClaudeSessionsStore(
     return WorkbenchJsonlScanner.scanJsonObjects(
       path = path,
       jsonFactory = jsonFactory,
-      maxObjects = MAX_JSONL_SCAN_OBJECTS,
       newState = ::JsonlMetadataScanState,
     ) { parser, scanState ->
-      scanState.scannedObjectCount++
       val lineData = parseJsonlLine(parser) ?: return@scanJsonObjects true
       if (lineData.isSidechain) {
         scanState.isSidechain = true
@@ -107,15 +109,16 @@ class ClaudeSessionsStore(
         scanState.hasConversationSignal = true
       }
       updateActivityFields(scanState, lineData)
-      true
+      !(scanState.sessionId != null && scanState.hasConversationSignal && scanState.firstPrompt != null)
     }
   }
 
 }
 
-private fun deriveActivity(lastEventType: String?): ClaudeSessionActivity {
+private fun deriveActivity(lastEventType: String?, lastAssistantHadToolUse: Boolean?): ClaudeSessionActivity {
   return when (lastEventType) {
-    "progress" -> ClaudeSessionActivity.PROCESSING
+    "progress" -> if (lastAssistantHadToolUse == false) ClaudeSessionActivity.READY else ClaudeSessionActivity.PROCESSING
+    "assistant" -> if (lastAssistantHadToolUse == true) ClaudeSessionActivity.PROCESSING else ClaudeSessionActivity.READY
     else -> ClaudeSessionActivity.READY
   }
 }
@@ -130,6 +133,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     var type: String? = null
     var messageRole: String? = null
     var messageContent: String? = null
+    var messageHasToolUse = false
 
     forEachJsonObjectField(parser) { fieldName ->
       when (fieldName) {
@@ -142,6 +146,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
             val parsedMessage = readMessageObject(parser)
             messageRole = parsedMessage.role
             messageContent = parsedMessage.contentPreview
+            messageHasToolUse = parsedMessage.hasToolUse
           }
           else {
             parser.skipChildren()
@@ -155,6 +160,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
       firstPrompt = sanitizeTitle(messageContent)
     }
     val hasConversationSignal = type == "user" || type == "assistant"
+    val hasToolUse = type == "assistant" && messageHasToolUse
     return ParsedJsonlLine(
       sessionId = sessionId,
       isSidechain = isSidechain,
@@ -162,6 +168,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
       firstPrompt = firstPrompt,
       hasConversationSignal = hasConversationSignal,
       eventType = type,
+      hasToolUse = hasToolUse,
     )
   }
   catch (_: Throwable) {
@@ -172,32 +179,39 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
 private fun readMessageObject(parser: JsonParser): ParsedMessageObject {
   var role: String? = null
   var contentPreview: String? = null
+  var hasToolUse = false
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
       "role" -> role = readJsonStringOrNull(parser)
-      "content" -> contentPreview = readContentPreview(parser)
+      "content" -> {
+        val result = readContentWithToolUseCheck(parser)
+        contentPreview = result.first
+        hasToolUse = result.second
+      }
       else -> parser.skipChildren()
     }
     true
   }
-  return ParsedMessageObject(role = role, contentPreview = contentPreview)
+  return ParsedMessageObject(role = role, contentPreview = contentPreview, hasToolUse = hasToolUse)
 }
 
-private fun readContentPreview(parser: JsonParser): String? {
+private fun readContentWithToolUseCheck(parser: JsonParser): Pair<String?, Boolean> {
   return when (parser.currentToken) {
-    JsonToken.VALUE_STRING -> readJsonStringOrNull(parser)
-    JsonToken.START_ARRAY -> readFirstTextFromArray(parser)
+    JsonToken.VALUE_STRING -> Pair(readJsonStringOrNull(parser), false)
+    JsonToken.START_ARRAY -> readFirstTextAndToolUseFromArray(parser)
     else -> {
       parser.skipChildren()
-      null
+      Pair(null, false)
     }
   }
 }
 
-private fun readFirstTextFromArray(parser: JsonParser): String? {
+private fun readFirstTextAndToolUseFromArray(parser: JsonParser): Pair<String?, Boolean> {
+  var firstText: String? = null
+  var hasToolUse = false
   while (true) {
-    val token = parser.nextToken() ?: return null
-    if (token == JsonToken.END_ARRAY) return null
+    val token = parser.nextToken() ?: return Pair(firstText, hasToolUse)
+    if (token == JsonToken.END_ARRAY) return Pair(firstText, hasToolUse)
     if (token != JsonToken.START_OBJECT) {
       parser.skipChildren()
       continue
@@ -212,8 +226,11 @@ private fun readFirstTextFromArray(parser: JsonParser): String? {
       }
       true
     }
-    if (itemType == "text" && !itemText.isNullOrBlank()) {
-      return itemText
+    if (itemType == "tool_use") {
+      hasToolUse = true
+    }
+    if (firstText == null && itemType == "text" && !itemText.isNullOrBlank()) {
+      firstText = itemText
     }
   }
 }
@@ -279,15 +296,18 @@ private data class ParsedJsonlLine(
   val firstPrompt: String?,
   val hasConversationSignal: Boolean,
   val eventType: String?,
+  val hasToolUse: Boolean = false,
 )
 
 private data class ParsedMessageObject(
   val role: String?,
   val contentPreview: String?,
+  val hasToolUse: Boolean = false,
 )
 
 private interface ActivityTrackingState {
   var lastEventType: String?
+  var lastAssistantHadToolUse: Boolean?
   var updatedAt: Long?
 }
 
@@ -295,6 +315,10 @@ private fun updateActivityFields(state: ActivityTrackingState, lineData: ParsedJ
   val eventType = lineData.eventType
   if (eventType == "user" || eventType == "assistant" || eventType == "progress") {
     state.lastEventType = eventType
+    when (eventType) {
+      "user" -> state.lastAssistantHadToolUse = null
+      "assistant" -> state.lastAssistantHadToolUse = lineData.hasToolUse
+    }
   }
   val lineTimestamp = lineData.timestampMillis
   if (lineTimestamp != null) {
@@ -304,6 +328,7 @@ private fun updateActivityFields(state: ActivityTrackingState, lineData: ParsedJ
 
 private data class JsonlTailScanState(
   override var lastEventType: String? = null,
+  override var lastAssistantHadToolUse: Boolean? = null,
   override var updatedAt: Long? = null,
 ) : ActivityTrackingState
 
@@ -314,5 +339,5 @@ private data class JsonlMetadataScanState(
   override var updatedAt: Long? = null,
   var hasConversationSignal: Boolean = false,
   override var lastEventType: String? = null,
-  var scannedObjectCount: Int = 0,
+  override var lastAssistantHadToolUse: Boolean? = null,
 ) : ActivityTrackingState
