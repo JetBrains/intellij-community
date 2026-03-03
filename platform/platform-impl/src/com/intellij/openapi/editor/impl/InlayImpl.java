@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import org.jetbrains.annotations.ApiStatus;
@@ -88,6 +91,12 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   abstract void doUpdate();
 
+  /**
+   * WARNING: for legacy reasons implements both {@link Disposable#dispose()} and {@link RangeMarker#dispose()}.
+   * These have different contracts.
+   * <p>
+   * We rely on {@link IntervalTreeImpl#fireAfterRemoved(RangeMarkerEx)} for proper {@link Disposable} disposal.
+   */
   @Override
   public void dispose() {
     EditorImpl.assertIsDispatchThread();

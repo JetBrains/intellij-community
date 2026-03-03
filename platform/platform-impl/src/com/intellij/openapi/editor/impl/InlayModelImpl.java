@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.view.EditorView;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.DocumentEventUtil;
@@ -69,6 +70,11 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
 
   private static final Processor<InlayImpl<?,?>> UPDATE_PROCESSOR = inlay -> {
     inlay.update();
+    return true;
+  };
+
+  private static final Processor<InlayImpl<?, ?>> DISPOSE_PROCESSOR = inlay -> {
+    Disposer.dispose(inlay);
     return true;
   };
 
@@ -147,6 +153,11 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
 
   @Override
   public void dispose() {
+    // the tree will not remove nodes on disposal, we have to dispose remaining inlays manually
+    myInlineElementsTree.processAll(DISPOSE_PROCESSOR);
+    myBlockElementsTree.processAll(DISPOSE_PROCESSOR);
+    myAfterLineEndElementsTree.processAll(DISPOSE_PROCESSOR);
+
     myInlineElementsTree.dispose(myDocument);
     myBlockElementsTree.dispose(myDocument);
     myAfterLineEndElementsTree.dispose(myDocument);
@@ -170,6 +181,9 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
     InlineInlayImpl<T> inlay = new InlineInlayImpl<>(myEditor, offset, relatesToPrecedingText, priority, renderer);
     notifyAdded(inlay);
+    if (myEditor.isDisposed()) {
+      Disposer.dispose(inlay);
+    }
     return inlay;
   }
 
@@ -211,6 +225,9 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     offset = Math.max(0, Math.min(myDocument.getTextLength(), offset));
     BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, showWhenFolded, priority, renderer);
     notifyAdded(inlay);
+    if (myEditor.isDisposed()) {
+      Disposer.dispose(inlay);
+    }
     return inlay;
   }
 
@@ -241,6 +258,9 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     AfterLineEndInlayImpl<T> inlay = new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, softWrappable, priority,
                                                                  renderer);
     notifyAdded(inlay);
+    if (myEditor.isDisposed()) {
+      Disposer.dispose(inlay);
+    }
     return inlay;
   }
 
@@ -662,6 +682,13 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
         }
       }
     }
+
+    @Override
+    protected void fireAfterRemoved(@NotNull InlineInlayImpl<?> marker) {
+      super.fireAfterRemoved(marker);
+
+      Disposer.dispose(marker);
+    }
   }
 
   private final class BlockElementsTree extends MarkerTreeWithPartialSums<BlockInlayImpl<?>> {
@@ -675,6 +702,13 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
         notifyRemoved(inlay);
       }
     }
+
+    @Override
+    protected void fireAfterRemoved(@NotNull BlockInlayImpl<?> marker) {
+      super.fireAfterRemoved(marker);
+
+      Disposer.dispose(marker);
+    }
   }
 
   private final class AfterLineEndElementTree extends HardReferencingRangeMarkerTree<AfterLineEndInlayImpl<?>> {
@@ -687,6 +721,13 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
       if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
+    }
+
+    @Override
+    protected void fireAfterRemoved(@NotNull AfterLineEndInlayImpl<?> marker) {
+      super.fireAfterRemoved(marker);
+
+      Disposer.dispose(marker);
     }
   }
 }
