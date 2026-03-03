@@ -47,7 +47,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
         """,
       """
         <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://Gr"><code><span style="color:#000000;">Gr</span></code></a></div><div class='definition'><pre><span style="color:#000043;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-            Use <a href="psi_element://Gr#bar()"><code>#bar()</code></a> from class <a href="psi_element://Gr"><code><span style="color:#0000ff;">Gr</span></code></a> instead
+            Use <a href="psi_element://Gr#bar()"><code><span style="color:#0000ff;">bar</span><span style="">()</span></code></a> from class <a href="psi_element://Gr"><code><span style="color:#0000ff;">Gr</span></code></a> instead
            </div><table class='sections'></table>""");
   }
 
@@ -86,11 +86,11 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
         """,
       """
         <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://Main"><code><span style="color:#000000;">Main</span></code></a></div><div class='definition'><pre><span style="color:#000043;font-weight:bold;">static</span>&nbsp;<span style="color:#000043;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-            Link 1: <a href="psi_element://Main#foo(java.lang.String[])"><code>#foo(String[])</code></a>
+            Link 1: <a href="psi_element://Main#foo(java.lang.String[])"><code><span style="color:#0000ff;">foo</span><span style="">(String[])</span></code></a>
             <p>
-            Link 2: <a href="psi_element://Main#bar(java.lang.String[])"><code>#bar(String[])</code></a>
+            Link 2: <a href="psi_element://Main#bar(java.lang.String[])"><code><span style="color:#0000ff;">bar</span><span style="">(String[])</span></code></a>
             <p>
-            Link 3: <a href="psi_element://Main#bar(java.lang.String[], java.lang.Integer)"><code>#bar(String[],Integer)</code></a>
+            Link 3: <a href="psi_element://Main#bar(java.lang.String[], java.lang.Integer)"><code><span style="color:#0000ff;">bar</span><span style="">(String[],&#32;Integer)</span></code></a>
            </div><table class='sections'></table>""");
   }
 

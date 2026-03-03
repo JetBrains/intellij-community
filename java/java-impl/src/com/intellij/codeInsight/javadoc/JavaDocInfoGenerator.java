@@ -2417,7 +2417,12 @@ public class JavaDocInfoGenerator {
     PsiElement ref = getRefElement(tagElements);
     String label = getLinkLabel(tagElements, ref);
     StringBuilder b = new StringBuilder();
-    collectElementText(b, ref != null ? ref : tag);
+    if (ref != null) {
+      collectElementText(b, ref);
+    }
+    else {
+      collectElementText(b, tag, false);
+    }
     PsiElement context = tag;
     if (ref instanceof PsiDocFragmentRef) context = ref;
     generateLink(buffer, b.toString(), label, context, plainLink, !hasLinkLabel(tagElements, ref));
@@ -2535,19 +2540,24 @@ public class JavaDocInfoGenerator {
   }
 
   protected void collectElementText(StringBuilder buffer, PsiElement element) {
+    collectElementText(buffer, element, true);
+  }
+
+  protected void collectElementText(StringBuilder buffer, PsiElement element, boolean visitTag) {
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof PsiInlineDocTag inlineDocTag) {
+      public void visitElement(@NotNull PsiElement subElement) {
+        if (subElement instanceof PsiInlineDocTag inlineDocTag && ((element != subElement) || visitTag)) {
           generateValue(buffer, new PsiElement[] {inlineDocTag}, ourEmptyElementsProvider);
           return;
         }
 
-        super.visitElement(element);
-        if (element instanceof PsiWhiteSpace ||
-            element instanceof PsiJavaToken ||
-            element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
-          buffer.append(element.getText());
+        super.visitElement(subElement);
+        if (subElement instanceof PsiWhiteSpace ||
+            subElement instanceof PsiJavaToken ||
+            subElement instanceof PsiDocToken &&
+            ((PsiDocToken)subElement).getTokenType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+          buffer.append(subElement.getText());
         }
       }
     });
