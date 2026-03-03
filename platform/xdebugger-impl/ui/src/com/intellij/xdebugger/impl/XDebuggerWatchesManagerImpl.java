@@ -19,6 +19,7 @@ import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -214,6 +215,7 @@ public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManage
 
   @Override
   public void addInlineWatchExpression(@NotNull XExpression expression, int index, @NotNull XSourcePosition position, boolean navigateToWatchNode) {
+    EDT.assertIsEdt();
     InlineWatch watch = new InlineWatch(expression, position);
     watch.setMarker();
     String fileUrl = position.getFile().getUrl();
