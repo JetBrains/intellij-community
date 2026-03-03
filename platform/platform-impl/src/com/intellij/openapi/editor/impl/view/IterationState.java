@@ -124,7 +124,7 @@ public final class IterationState {
   private Color myLastBackgroundColor;
   private FoldRegion myCurrentFold;
   private boolean myNextIsFoldRegion;
-  private boolean myIsInSelection = false;
+  private final boolean myShouldUseNewSelection;
 
   @ApiStatus.Internal
   public IterationState(
@@ -172,6 +172,11 @@ public final class IterationState {
     myDocumentHighlighters = createSweep(getDocumentMarkupModel(editor));
     myGuardedBlocks =  buildGuardedBlocks(start, end);
     myEndOffset = myStartOffset;
+    if (editor instanceof EditorImpl impl) {
+      myShouldUseNewSelection = impl.shouldUseNewSelection();
+    } else {
+      myShouldUseNewSelection = !Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode;
+    }
 
     advance();
   }
@@ -540,7 +545,7 @@ public final class IterationState {
                               ? null
                               : myHighlighterIterator.getTextAttributes();
     TextAttributes selection = getSelectionAttributes(isInSelection);
-    if (!Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode && selection != null) {
+    if (myShouldUseNewSelection && selection != null) {
       selection = selection.clone();
       selection.setBackgroundColor(null);
     }

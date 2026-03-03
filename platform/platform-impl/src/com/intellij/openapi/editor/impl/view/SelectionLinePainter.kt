@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.scale.JBUIScale.scale
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -669,8 +668,8 @@ internal class SelectionLinePainter(
   }
 
   private fun paint(rect: Rectangle2D) {
-    if (Registry.`is`("editor.old.full.horizontal.selection.enabled") || editor.isColumnMode) {
-      LOG.error("Using the new selection painting is disabled or editor is in column mode but SelectionLinePainter.paint was called, proceeding with caution")
+    if (!editor.shouldUseNewSelection()) {
+      LOG.error("Using the new selection painting is disabled but SelectionLinePainter.paint was called, proceeding with caution")
       EditorPainter.fillRectExact(
         graphics,
         rect,
