@@ -716,6 +716,8 @@ jvm_library(
     "//python/python-test-env/plain:plain_test_lib",
     "//python/python-test-env/uv",
     "//python/python-test-env/uv:uv_test_lib",
+    "//plugins/maven-server-api/test:maven-server-tests",
+    "//plugins/maven-server-api/test:maven-server-tests_test_lib",
     "//platform/completion/common:common-tests",
     "//platform/completion/common:common-tests_test_lib",
     "//platform/settings-local:settings-local-tests",
