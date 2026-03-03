@@ -301,8 +301,8 @@ public final class IterationState {
   }
 
   @ApiStatus.Internal
-  public boolean isInSelection() {
-    return myIsInSelection;
+  public boolean hasPastLineEndExtension() {
+    return isInSelection(hasSoftWrap());
   }
 
   @ApiStatus.Internal
@@ -410,7 +410,7 @@ public final class IterationState {
     );
   }
 
-  private boolean isInSelection(boolean atBreak) {
+  boolean isInSelection(boolean atBreak) {
     return myCurrentSelectionIndex < myCaretData.selectionsSize() &&
            (myReverseIteration ? lessThan(myStartOffset, myCaretData.selectionEnd(myCurrentSelectionIndex, true), !atBreak)
                                : lessThan(myCaretData.selectionStart(myCurrentSelectionIndex, false), myStartOffset, !atBreak));
@@ -532,7 +532,6 @@ public final class IterationState {
 
   private void setAttributes(TextAttributes attributes, boolean atBreak, boolean beforeBreak) {
     boolean isInSelection = isInSelection(atBreak);
-    myIsInSelection = isInSelection;
     boolean isInCaretRow = isInCaretRow(
       !myReverseIteration && (!atBreak || !beforeBreak),
       myReverseIteration || (atBreak && beforeBreak)
