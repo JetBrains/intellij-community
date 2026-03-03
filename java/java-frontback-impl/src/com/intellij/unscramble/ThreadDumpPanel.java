@@ -179,6 +179,7 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
           }
         } else {
           AnalyzeStacktraceUtil.printStacktrace(consoleView, "");
+          currentlySelectedItem = null;
         }
         threadTree.repaint();
       }
