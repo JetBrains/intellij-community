@@ -22,12 +22,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderHelperLightPsiClass;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
+import org.jetbrains.plugins.groovy.transformations.singleton.LightAstTransformationSupport;
 
 import java.util.Objects;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
-public final class DefaultBuilderStrategySupport extends BuilderAnnotationContributor {
+public final class DefaultBuilderStrategySupport extends BuilderAnnotationContributor implements LightAstTransformationSupport {
 
   public static final String DEFAULT_STRATEGY_NAME = "DefaultStrategy";
 

@@ -112,6 +112,10 @@ public interface TransformationContext {
 
   void addField(@NotNull GrField field);
 
+  /**
+   * NB: the inner class addition is only supported for {@code LightAstTransformationSupport}
+   * @see org.jetbrains.plugins.groovy.transformations.singleton.LightAstTransformationSupport
+   */
   void addInnerClass(@NotNull PsiClass innerClass);
 
   void setSuperType(@NotNull String fqn);

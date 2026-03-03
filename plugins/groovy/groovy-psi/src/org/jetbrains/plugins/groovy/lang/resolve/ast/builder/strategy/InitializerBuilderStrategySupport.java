@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderHelperLightPsiClass;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
+import org.jetbrains.plugins.groovy.transformations.singleton.LightAstTransformationSupport;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -30,7 +31,7 @@ import java.util.Objects;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getBuilderClassName;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getFieldMethodName;
 
-public final class InitializerBuilderStrategySupport extends BuilderAnnotationContributor {
+public final class InitializerBuilderStrategySupport extends BuilderAnnotationContributor implements LightAstTransformationSupport {
 
   public static final String INITIALIZER_STRATEGY_NAME = "InitializerStrategy";
   public static final String SET_FQN = "groovy.transform.builder.InitializerStrategy.SET";
