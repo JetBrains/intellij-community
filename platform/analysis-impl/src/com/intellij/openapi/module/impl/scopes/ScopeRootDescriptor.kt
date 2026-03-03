@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ScopeRootDescriptors")
 
 package com.intellij.openapi.module.impl.scopes
@@ -92,16 +92,24 @@ private class SdkScopeDescriptor(
   orderEntry: JdkOrderEntry,
   orderIndex: Int,
 ) : ScopeRootDescriptorBase<JdkOrderEntry>(root, orderEntry, orderIndex) {
-  private val sdk: Sdk? by lazy { orderEntry.jdk }
+  @Volatile
+  private var cachedSdk: Any? = null
 
   override fun correspondTo(rootDescriptor: RootDescriptor): Boolean {
     if (rootDescriptor is SdkRootDescriptor) {
-      val orderEntrySdk = sdk ?: return false
+      val orderEntrySdk = inferSdk() ?: return false
       val rootDescriptorSdk = rootDescriptor.sdk
       return orderEntrySdk == rootDescriptorSdk ||
              isEqualBackup(orderEntrySdk, rootDescriptorSdk)
     }
     return super.correspondTo(rootDescriptor)
+  }
+
+  private fun inferSdk(): Sdk? {
+    if (cachedSdk == null) {
+      cachedSdk = orderEntry.jdk ?: NullSdkMarker
+    }
+    return cachedSdk as? Sdk
   }
 
   // todo IJPL-339 get rid of this method
@@ -150,3 +158,5 @@ private abstract class ScopeRootDescriptorBase<Entry : OrderEntry>(
 }
 
 private val log = logger<SdkRootDescriptor>()
+
+private object NullSdkMarker
