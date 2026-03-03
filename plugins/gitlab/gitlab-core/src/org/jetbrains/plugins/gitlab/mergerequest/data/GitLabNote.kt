@@ -244,7 +244,8 @@ class GitLabMergeRequestDraftNoteImpl(
   private val mr: GitLabMergeRequest,
   private val eventSink: suspend (Change<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
   private val noteData: GitLabMergeRequestDraftNoteRestDTO,
-  override val author: GitLabUserDTO
+  override val author: GitLabUserDTO,
+  private val isMultilinePositionSupported: Boolean,
 ) : GitLabMergeRequestDraftNote, MutableGitLabNote {
 
   private val cs = parentCs.childScope(this::class)
@@ -273,7 +274,7 @@ class GitLabMergeRequestDraftNoteImpl(
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
           // Checked by canEdit
-          api.rest.updateDraftNote(projectId, mr.iid, noteData.id.restId, noteData.position, newText)
+          api.rest.updateDraftNote(projectId, mr.iid, noteData.id.restId, noteData.position, newText, isMultilinePositionSupported)
         }
       }
       data.update { it.copy(note = newText) }

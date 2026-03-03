@@ -85,11 +85,12 @@ suspend fun GitLabApi.Rest.addDiffNote(
   projectId: String,
   mrIid: String,
   position: GitLabDiffPositionInput,
+  canPostPositionLineRange: Boolean,
   body: String,
 ): HttpResponse<out GitLabDiscussionRestDTO> {
   val uri = getMergeRequestDiscussionsUri(projectId, mrIid).withQuery {
     "body" eq body
-    addDiffPositionParameters(position)
+    addDiffPositionParameters(position, canPostPositionLineRange)
   }
   val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
   return withErrorStats(GitLabApiRequestName.REST_CREATE_MERGE_REQUEST_DIFF_NOTE) {
@@ -179,7 +180,8 @@ suspend fun GitLabApi.Rest.changeMergeRequestDiscussionResolve(
  * This function converts a [GitLabDiffPositionInput] to query parameters in the format
  * expected by GitLab REST API for creating notes and draft notes on diffs.
  */
-internal fun GitLabApiUriQueryBuilder.addDiffPositionParameters(position: GitLabDiffPositionInput) {
+internal fun GitLabApiUriQueryBuilder.addDiffPositionParameters(position: GitLabDiffPositionInput,
+                                                                canPostPositionLineRange: Boolean) {
   "position" {
     "base_sha" eq position.baseSha
     "head_sha" eq position.headSha
@@ -190,12 +192,16 @@ internal fun GitLabApiUriQueryBuilder.addDiffPositionParameters(position: GitLab
     "old_path" eq position.paths.oldPath
     "position_type" eq "text"
     position.lineRange?.let { lineRange ->
-      addLineRangeParameters(lineRange)
+      addLineRangeParameters(lineRange, canPostPositionLineRange)
     }
   }
 }
 
-internal fun GitLabApiUriQueryBuilder.addLineRangeParameters(lineRange: LineRangeDTO) {
+internal fun GitLabApiUriQueryBuilder.addLineRangeParameters(lineRange: LineRangeDTO,
+                                                             canPostPositionLineRange: Boolean) {
+  // providing line_range in API call will cause GitLab to return 400 Bad Request
+  // if the position is not supported by GitLab server, so we just omit it in this case
+  if (!canPostPositionLineRange) return
   "line_range" {
     "start" {
       "line_code" eq lineRange.start.lineCode

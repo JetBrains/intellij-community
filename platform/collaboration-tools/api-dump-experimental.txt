@@ -1055,6 +1055,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - java.lang.Enum
 - sf:SINGLE_COMMIT_REVIEW:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
 - sf:SUGGESTED_CHANGE:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
+- sf:UNSUPPORTED_VERSION:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
 - s:values():com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason[]

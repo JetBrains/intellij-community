@@ -13,6 +13,7 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterAct
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel.Ranged.Adjustable.AdjustmentDisabledReason
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.collaboration.ui.codereview.editor.MutableCodeReviewEditorGutterChangesModel
 import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
@@ -243,7 +244,8 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
     override val range: StateFlow<LineRange?> = vm.location.shiftLineRange()
     override val line: StateFlow<Int?> = range.mapState { it?.end }
-    override val adjustmentDisabledReason = MutableStateFlow(null)
+    override val adjustmentDisabledReason =
+      MutableStateFlow(AdjustmentDisabledReason.UNSUPPORTED_VERSION.takeIf { !vm.isMultilinePositionSupported })
     override fun adjustRange(newStart: Int?, newEnd: Int?) {
       if (newStart == null && newEnd == null) return
       val ranges = postReviewRanges.value ?: emptyList()
