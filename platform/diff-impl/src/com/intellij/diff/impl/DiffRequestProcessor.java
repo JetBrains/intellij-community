@@ -1385,7 +1385,7 @@ public abstract class DiffRequestProcessor
       request.onAssigned(isAssigned);
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.error(Logger.shouldRethrow(e) ? new RuntimeException(e) : e);
     }
   }
 
