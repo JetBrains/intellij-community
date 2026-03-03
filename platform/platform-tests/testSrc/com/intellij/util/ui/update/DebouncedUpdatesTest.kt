@@ -1,10 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.ComponentUtil.forceMarkAsShowing
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.withForcedRespectIsShowingClientProperty
+import com.intellij.util.ui.withShowingChanged
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -12,16 +18,33 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.JLabel
+import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
+@TestApplication
 @OptIn(DelicateCoroutinesApi::class)
 class DebouncedUpdatesTest {
+
+  @BeforeEach
+  fun cleanEDTQueue() {
+    UIUtil.pump()
+  }
+
+  private val container = JPanel().also {
+    forceMarkAsShowing(it, true)
+  }
 
   @Test
   fun `test debounce behavior restarts timer on each request`() {
@@ -369,6 +392,130 @@ class DebouncedUpdatesTest {
       }
       finally {
         scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test component queue executes only when component is showing`() {
+    edtTest {
+      val component = JLabel()
+      val executedValues = CopyOnWriteArrayList<Int>()
+
+      val queue = DebouncedUpdates.forComponent<Int>(component, "test-component", 50.milliseconds)
+        .runLatest { value ->
+          executedValues.add(value)
+        }
+
+      // Queue value when component is not showing - should not execute
+      queue.queue(1)
+      delay(100)
+      assertEquals(emptyList<Int>(), awaitValue(emptyList()) { executedValues.toList() })
+
+      // Show component - execution should start
+      withShowingChanged { container.add(component) }
+      yield()
+      assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
+
+      // Queue another value while showing - should execute
+      queue.queue(2)
+      delay(100)
+      assertEquals(listOf(1, 2), awaitValue(listOf(1, 2)) { executedValues.toList() })
+
+      // Hide component
+      withShowingChanged { container.remove(component) }
+      yield()
+
+      // Queue value while hidden - should not execute
+      queue.queue(3)
+      delay(100)
+      assertEquals(listOf(1, 2), awaitValue(listOf(1, 2)) { executedValues.toList() })
+
+      // Show component again - queued value should execute
+      withShowingChanged { container.add(component) }
+      yield()
+      assertEquals(listOf(1, 2, 3), awaitValue(listOf(1, 2, 3)) { executedValues.toList() })
+    }
+  }
+
+  @Test
+  fun `test component batched queue collects items only when showing`() {
+    edtTest {
+      val component = JLabel()
+      val batches = CopyOnWriteArrayList<List<Int>>()
+
+      val queue = DebouncedUpdates.forComponent<Int>(component, "test-component-batched", 100.milliseconds)
+        .runBatched { batch ->
+          batches.add(batch)
+        }
+
+      // Queue items when not showing
+      queue.queue(1)
+      delay(40)
+      queue.queue(2)
+      delay(120)
+      assertEquals(emptyList<List<Int>>(), awaitValue(emptyList()) { batches.toList() })
+
+      // Show component - batched items should execute
+      withShowingChanged { container.add(component) }
+      yield()
+      delay(120)
+      assertEquals(1, awaitValue(1) { batches.size })
+      assertEquals(listOf(1, 2), awaitValue(listOf(1, 2)) { batches[0] })
+
+      // Queue more items while showing
+      queue.queue(3)
+      delay(40)
+      queue.queue(4)
+      delay(120)
+      assertEquals(2, awaitValue(2) { batches.size })
+      assertEquals(listOf(3, 4), awaitValue(listOf(3, 4)) { batches[1] })
+    }
+  }
+
+  @Test
+  fun `test component queue with debounce behavior`() {
+    edtTest {
+      val component = JLabel()
+      val executedValues = CopyOnWriteArrayList<Int>()
+
+      withShowingChanged { container.add(component) }
+      yield()
+
+      val queue = DebouncedUpdates.forComponent<Int>(component, "test-component-debounce", 100.milliseconds)
+        .restartTimerOnAdd(true)
+        .runLatest { value ->
+          executedValues.add(value)
+        }
+
+      // Queue values with delays shorter than debounce window
+      queue.queue(1)
+      delay(50)
+      queue.queue(2)
+      delay(50)
+      queue.queue(3)
+      delay(150)
+
+      // Only last value should execute (debouncing)
+      assertEquals(listOf(3), awaitValue(listOf(3)) { executedValues.toList() })
+    }
+  }
+
+  private suspend fun <T> awaitValue(expected: T, getter: () -> T): T {
+    val mark = TimeSource.Monotonic.markNow()
+    var value = getter()
+    while (mark.elapsedNow() < 5.seconds) {
+      if (value == expected) break
+      delay(1.milliseconds)
+      value = getter()
+    }
+    return value
+  }
+
+  private fun edtTest(block: suspend CoroutineScope.() -> Unit) {
+    timeoutRunBlocking(timeout = 30.seconds) {
+      withForcedRespectIsShowingClientProperty {
+        withContext(Dispatchers.EDT, block)
       }
     }
   }
