@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -312,6 +312,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Editor editor = createEditor(virtualFile);
     setFileAndEditor(virtualFile, editor);
   }
+
   private void setFileAndEditor(@NotNull VirtualFile file, @NotNull Editor editor) {
     myVirtualFile = file;
     this.editor = editor;
@@ -378,6 +379,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       disableInstantiateAndRun.decrementAndGet();
     }
   }
+
   @TestOnly
   public static @NotNull @Unmodifiable List<HighlightInfo> instantiateAndRun(@NotNull PsiFile psiFile,
                                                                              @NotNull Editor editor,
@@ -385,7 +387,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                              boolean canChangeDocument,
                                                                              boolean readEditorMarkupModel) {
     if (disableInstantiateAndRun.get() != 0) {
-      throw new IllegalStateException("This test prohibited direct daemon call, because it checks the production daemon behaviour. use TestDaemonCodeAnalyzerImpl.wait* methods instead");
+      throw new IllegalStateException(
+        "This test prohibited direct daemon call, because it checks the production daemon behaviour. use TestDaemonCodeAnalyzerImpl.wait* methods instead");
     }
     SmartPsiElementPointer<PsiFile> filePointer = ReadAction.compute(() -> SmartPointerManager.createPointer(psiFile));
     Project project = psiFile.getProject();
@@ -819,9 +822,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public @NotNull PsiReference getReferenceAtCaretPositionWithAssertion(String @NotNull ... filePaths) {
     PsiReference reference = getReferenceAtCaretPosition(filePaths);
-    assertNotNull("no reference found in "+getFile()+
-                  " at " + editor.getCaretModel().getLogicalPosition()+
-                  ", there's just "+ReadAction.compute(() -> getFile().findElementAt(editor.getCaretModel().getOffset())), reference);
+    assertNotNull("no reference found in " + getFile() +
+                  " at " + editor.getCaretModel().getLogicalPosition() +
+                  ", there's just " + ReadAction.compute(() -> getFile().findElementAt(editor.getCaretModel().getOffset())), reference);
     return reference;
   }
 
@@ -1938,7 +1941,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    * Files loaded with <b>configure*</b> methods (which are called, e.g., from {@link #testHighlighting(String...)}) won't be checked
    * because their AST will be loaded before setting filter. Use {@link #copyFileToProject(String)} and similar methods.
    * <p>
-   *   Use {@link #allowTreeAccessForAllFiles()} to restore default behaviour.
+   * Use {@link #allowTreeAccessForAllFiles()} to restore default behaviour.
    * </p>
    */
   public void setVirtualFileFilter(@Nullable VirtualFileFilter filter) {
@@ -2098,6 +2101,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                         @Nullable Function<? super T, String> attrCalculator) {
     return getTagsFromSegments(text, segments, tagName, -1, attrCalculator);
   }
+
   public static @NotNull <T extends Segment> String getTagsFromSegments(@NotNull String text,
                                                                         @NotNull Collection<? extends T> segments,
                                                                         @NotNull String tagName,
@@ -2110,7 +2114,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           new Border(false, region.getEndOffset(), "", tagName)))
         .toList();
     List<Border> caret = caretLocationOffset == -1 ? List.of() : List.of(new Border(true, caretLocationOffset, null, "caret"));
-    Collection<Border> borders = ContainerUtil.sorted(ContainerUtil.concat(segs, caret), Comparator.comparingInt(Border::offset).thenComparing(b -> ObjectUtils.notNull(b.text(),"")).reversed());
+    Collection<Border> borders = ContainerUtil.sorted(ContainerUtil.concat(segs, caret), Comparator.comparingInt(Border::offset)
+      .thenComparing(b -> ObjectUtils.notNull(b.text(), "")).reversed());
     StringBuilder result = new StringBuilder(text);
     for (Border border : borders) {
       StringBuilder info = new StringBuilder();
@@ -2366,15 +2371,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       var lines = new ArrayList<>(StringUtil.split(hintText, "\n-\n"));
       lines.sort(Comparator.comparing(line -> {
-        if (line.startsWith("["))
+        if (line.startsWith("[")) {
           return "!" + line;
-        else if (line.startsWith("<mismatched>"))
+        }
+        else if (line.startsWith("<mismatched>")) {
           return "~" + line;
-        else
+        }
+        else {
           return line;
+        }
       }));
       return StringUtil.join(lines, "\n-\n");
-    } finally {
+    }
+    finally {
       Disposer.dispose(disposable);
     }
   }
@@ -2425,7 +2434,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             if (!executed) {
               boolean available = action.isAvailable(project, editor, file);
               fail("Quick fix '" + action.getText() + "' (" + action.getClass() + ")" +
-                          " hasn't executed. isAvailable()=" + available);
+                   " hasn't executed. isAvailable()=" + available);
             }
           }
           catch (StubTextInconsistencyException e) {
@@ -2550,7 +2559,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public boolean isOpenedInMyEditor(@NotNull VirtualFile virtualFile) {
-    return virtualFile.equals(myVirtualFile) || myAllPsiFiles != null && ContainerUtil.exists(myAllPsiFiles, psiFile -> virtualFile.equals(PsiUtilCore.getVirtualFile(psiFile)));
+    return virtualFile.equals(myVirtualFile) ||
+           myAllPsiFiles != null && ContainerUtil.exists(myAllPsiFiles, psiFile -> virtualFile.equals(PsiUtilCore.getVirtualFile(psiFile)));
   }
 
   /**
