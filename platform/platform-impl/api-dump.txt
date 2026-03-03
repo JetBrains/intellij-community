@@ -1555,6 +1555,7 @@ com.intellij.ui.dsl.builder.Row
 - a:enabledIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Row
 - a:expandableTextField(com.intellij.util.Function,com.intellij.util.Function):com.intellij.ui.dsl.builder.Cell
 - bs:expandableTextField$default(com.intellij.ui.dsl.builder.Row,com.intellij.util.Function,com.intellij.util.Function,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- a:extendableTextField():com.intellij.ui.dsl.builder.Cell
 - a:icon(javax.swing.Icon):com.intellij.ui.dsl.builder.Cell
 - a:intTextField(kotlin.ranges.IntRange,java.lang.Integer):com.intellij.ui.dsl.builder.Cell
 - bs:intTextField$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,java.lang.Integer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell

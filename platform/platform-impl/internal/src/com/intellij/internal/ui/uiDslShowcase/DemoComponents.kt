@@ -124,6 +124,10 @@ fun demoComponents(): DialogPanel {
       expandableTextField()
     }
 
+    row("extendableTextField:") {
+      extendableTextField()
+    }
+
     row("intTextField(0..100):") {
       intTextField(0..100)
     }
