@@ -72,7 +72,9 @@
       <reference ref="ChangesView.Revert"/>
       <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction"/>
       <action id="Subversion.MarkResolved" class="org.jetbrains.idea.svn.actions.MarkResolvedAction"/>
-      <action id="Subversion.MarkTreeResolved" class="org.jetbrains.idea.svn.actions.MarkTreeConflictResolvedAction"/>
+      <action id="Subversion.MarkTreeResolved" class="org.jetbrains.idea.svn.actions.MarkTreeConflictResolvedAction">
+        <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="Diff.ShowStandaloneDiff"/>
+      </action>
       <action id="Subversion.Clenaup" class="org.jetbrains.idea.svn.actions.CleanupAction"/>
       <separator/>
       <reference ref="Show.Current.Revision"/>
@@ -93,9 +95,6 @@
       <separator/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
-    <reference ref="Subversion.MarkTreeResolved">
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="Diff.ShowStandaloneDiff"/>
-    </reference>
     <group id="SubversionUpdateActionGroup" class="org.jetbrains.idea.svn.actions.SubversionGroup">
       <reference ref="ChangesView.AddUnversioned"/>
       <reference ref="ChangesView.Revert"/>
