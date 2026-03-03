@@ -30,7 +30,9 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
 
     fun processRoot(root: Path, libraries: List<JpsLibrary>) {
         println("Processing kotlinc libraries in '$root'...")
-        regenerateProjectLibraries(root.resolve(".idea"), libraries, resolverSettings)
+        val dotIdea = root.resolve(".idea")
+        regenerateProjectLibraries(dotIdea, libraries, resolverSettings)
+        regenerateAnchorsXml(dotIdea, libraries)
     }
 
     if (monorepoRoot != null) {
@@ -122,6 +124,34 @@ private fun regenerateCompilerDependenciesIml(communityRoot: Path, libraries: Li
     )
     println("Rewriting '$imlFile'...")
     imlFile.writeText(renderCompilerDependenciesIml(libraries))
+}
+
+private fun regenerateAnchorsXml(dotIdea: Path, libraries: List<JpsLibrary>) {
+    val anchorsFile = dotIdea.resolve("anchors.xml")
+    println("Rewriting '$anchorsFile'...")
+    anchorsFile.writeText(renderAnchorsXml(libraries))
+}
+
+internal fun renderAnchorsXml(libraries: List<JpsLibrary>): String {
+    val anchorModule = "kotlin.util.compiler-classpath"
+
+    // Some non-kotlinc libraries might require anchors as well
+    val hardcodedLibraries = listOf("kotlin-script-runtime")
+    val libraryNames = libraries.map { it.name } + hardcodedLibraries
+    return xml("project", "version" to "4") {
+        xml("component", "name" to "KotlinIdeAnchorService") {
+            xml("option", "name" to "moduleNameToAnchorName") {
+                xml("map") {
+                    for (name in libraryNames.sorted()) {
+                        xml("entry", "key" to name, "value" to anchorModule)
+                    }
+                }
+            }
+        }
+        xml("component", "name" to "LibraryToSourceAnalysisState") {
+            xml("option", "name" to "isEnabled", "value" to "true")
+        }
+    }.render(addXmlDeclaration = true)
 }
 
 internal fun renderCompilerDependenciesIml(libraries: List<JpsLibrary>): String {
