@@ -1,9 +1,8 @@
-// "Convert to record class" "true"
+// "Convert to record class" "false"
 
-// Converting this to record would create a new constructor (the record canonical constructor), which
-// may not be desirable.
+// Converting this to record would create a new constructor (the record canonical constructor) with a different number of parameters
+// than the already existing constructor, which may not be desirable.
 
-// Update as of 28/08/2025: in response to IDEA-375898, we now generate the record canonical constructor for this case.
 class <caret>R {
   final int first;
 

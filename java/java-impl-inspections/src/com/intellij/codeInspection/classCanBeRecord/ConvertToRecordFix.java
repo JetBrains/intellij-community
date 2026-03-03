@@ -281,6 +281,17 @@ public final class ConvertToRecordFix implements LocalQuickFix {
         // At most one constructor can be canonical; others must be DELEGATING or CUSTOM.
         return false;
       }
+      if (possibleCanonicalConstructorCount == 0 && myMethodsToConstructorCandidates.size() == 1) {
+        // A heuristic to reduce noisy-ness:
+        // If there's no constructor that could become a record canonical constructor after conversion, then
+        // only report if the existing will-be delegating constructor has the same number of parameters as the number of instance fields.
+        List<PsiField> instanceFields = new ArrayList<>(myFieldsToAccessorCandidates.keySet());
+        PsiParameter[] parameters =
+          myMethodsToConstructorCandidates.entrySet().iterator().next().getValue().constructor().getParameterList().getParameters();
+
+        if (instanceFields.size() != parameters.length) return false;
+      }
+
 
       if (myFieldsToAccessorCandidates.size() == 0) return false;
       for (var entry : myFieldsToAccessorCandidates.entrySet()) {
