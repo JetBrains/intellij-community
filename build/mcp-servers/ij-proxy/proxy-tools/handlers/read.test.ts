@@ -75,6 +75,69 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
+  it('uses read_file in cc mode and returns numbered output', async () => {
+    await withProxy({
+      proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'},
+      onToolCall({name}) {
+        if (name === 'get_file_text_by_path') {
+          return {text: 'alpha\nbeta\ngamma\n'}
+        }
+        return {text: '{}'}
+      }
+    }, async ({fakeServer, proxyClient, testDir}) => {
+      await proxyClient.send('tools/list')
+      const callPromise = fakeServer.waitForToolCall()
+      const response = await proxyClient.send('tools/call', {
+        name: 'read_file',
+        arguments: {
+          file_path: 'sample.txt',
+          offset: 2,
+          limit: 2
+        }
+      })
+      const call = await withTimeout(callPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
+
+      strictEqual(call.name, 'get_file_text_by_path')
+      strictEqual(call.args.pathInProject, 'sample.txt')
+      strictEqual(realpathSync(call.args.project_path), realpathSync(testDir))
+
+      const content = response.result.content[0].text
+      strictEqual(content, 'L2: beta\nL3: gamma')
+    })
+  })
+
+  it('accepts indentation mode arguments in cc mode', async () => {
+    await withProxy({
+      proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'},
+      onToolCall({name}) {
+        if (name === 'get_file_text_by_path') {
+          return {text: 'root\n    parent\n        child\n'}
+        }
+        return {text: '{}'}
+      }
+    }, async ({proxyClient}) => {
+      await proxyClient.send('tools/list')
+      const response = await proxyClient.send('tools/call', {
+        name: 'read_file',
+        arguments: {
+          file_path: 'sample.txt',
+          offset: 3,
+          limit: 1,
+          mode: 'indentation',
+          indentation: {
+            anchor_line: 3,
+            max_levels: 0,
+            include_siblings: false,
+            include_header: false
+          }
+        }
+      })
+
+      const content = response.result.content[0].text
+      strictEqual(content, 'L3:         child')
+    })
+  })
+
   it('returns truncation error when upstream appends inline marker', async () => {
     const truncated = ['alpha', `beta${TRUNCATION_MARKER}`].join('\n')
     await withProxy({

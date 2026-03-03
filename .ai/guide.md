@@ -53,7 +53,7 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 - List dir: `mcp__ijproxy__list_dir`
 <!-- /IF_TOOL:CODEX -->
 <!-- IF_TOOL:CLAUDE -->
-- Read: `read`
+- Read: `read_file`
 - Edit: `edit`
 - Write: `write`
 - **Search symbols (preferred):** `search_symbol`

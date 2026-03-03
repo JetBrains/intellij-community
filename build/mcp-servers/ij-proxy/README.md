@@ -48,7 +48,7 @@ Environment variables (optional):
 - `JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S`: timeout for upstream tool calls waiting to be sent while the stream is unavailable (seconds). Defaults to the tool-call timeout when set; use `0` to disable.
 - `JETBRAINS_MCP_PROJECT_PATH`: override the injected project path (defaults to `process.cwd()`, relative paths resolve from the current working directory, and `file://` URIs are supported).
 - `MCP_LOG`: path to a log file for proxy progress (cleared on startup).
-- `JETBRAINS_MCP_TOOL_MODE`: tool API shape to expose. `codex` (default) uses `read_file`, `list_dir`, `apply_patch`, `rename`. `cc` uses `read`, `write`, `edit`, `rename`. Search tools are documented in `search.md`.
+- `JETBRAINS_MCP_TOOL_MODE`: tool API shape to expose. `codex` (default) uses `read_file`, `list_dir`, `apply_patch`, `rename`. `cc` uses `read_file`, `write`, `edit`, `rename`. Search tools are documented in `search.md`.
 - `JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH`: force legacy search tools when available; hides search_text/search_regex/search_file if only the new tools exist.
 - `JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS`: disable all version-gated workarounds (set to any non-empty value except `0` or `false`).
 - `JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS`: comma-separated list of workaround keys to disable (see `workarounds.ts`).
@@ -58,10 +58,9 @@ Environment variables (optional):
 
 The proxy is not a pure pass-through: it exposes a mode-specific proxy tool set (unless the upstream already provides the same tool name), filters out blocked tools (for example `create_new_file` and `execute_terminal_command`), hides upstream tools that are replaced by proxy tools, and keeps the remaining upstream tools whose names do not collide with proxy tools.
 
-| Mode  | Proxy tools (exposed when not provided upstream)             | Upstream tools also exposed                                                   |
-|-------|--------------------------------------------------------------|-------------------------------------------------------------------------------|
-| codex | `read_file`, `list_dir`, `apply_patch`, `rename`              | All upstream tools except blocked names, replaced tools, and name collisions. |
-| cc    | `read`, `write`, `edit`, `rename`                             | All upstream tools except blocked names, replaced tools, and name collisions. |
+- `codex` mode proxy tools (when not provided upstream): `read_file`, `list_dir`, `apply_patch`, `rename`.
+- `cc` mode proxy tools (when not provided upstream): `read_file`, `write`, `edit`, `rename`.
+- Upstream tools: all upstream tools except blocked names, replaced tools, and name collisions.
 
 Notes:
 - Upstream JetBrains file tools that are replaced by proxy tools (for example `get_file_text_by_path`, `replace_text_in_file`, `list_directory_tree`) are hidden.
@@ -74,25 +73,21 @@ Notes:
 The proxy exposes a small, client-shaped tool set. Names are chosen to match client conventions:
 
 - **codex** mode mirrors the Codex CLI tool surface (see `/Users/develar/Downloads/codex-main`).
-- **cc** mode mirrors the Claude Code tool surface (see `cc-tools.json`).
+- **cc** mode keeps Claude Code-style `write`/`edit` names and uses Codex-style `read_file` for read parity.
 
 Each proxy command maps to one or more JetBrains MCP tools. Search tool mapping and compatibility are documented in `search.md`.
 
 ### codex mode
 
-| Proxy command   | Why this name                                                        | JetBrains MCP under the hood                                                        |
-|-----------------|----------------------------------------------------------------------|-------------------------------------------------------------------------------------|
-| `read_file`     | Matches Codex `read_file` (line-numbered output + indentation mode). | `get_file_text_by_path`                                                             |
-| `list_dir`      | Matches Codex `list_dir`.                                            | `list_directory_tree`                                                               |
-| `apply_patch`   | Matches Codex `apply_patch`.                                         | `get_file_text_by_path` + `create_new_file`; uses `git rm`/`git mv` for delete/move |
+- `read_file`: Matches Codex `read_file` (line-numbered output + indentation mode). Uses `get_file_text_by_path`.
+- `list_dir`: Matches Codex `list_dir`. Uses `list_directory_tree`.
+- `apply_patch`: Matches Codex `apply_patch`. Uses `get_file_text_by_path` + `create_new_file` and `git rm`/`git mv` for delete/move.
 
 ### cc mode
 
-| Proxy command   | Why this name                                | JetBrains MCP under the hood                 |
-|-----------------|----------------------------------------------|----------------------------------------------|
-| `read`          | Matches Claude Code `read` (raw text).       | `get_file_text_by_path`                      |
-| `write`         | Matches Claude Code `write`.                 | `create_new_file` (overwrite)                |
-| `edit`          | Matches Claude Code `edit`.                  | `get_file_text_by_path` + `create_new_file`  |
+- `read_file`: Matches Codex `read_file` (line-numbered output + indentation mode). Uses `get_file_text_by_path`.
+- `write`: Matches Claude Code `write`. Uses `create_new_file` (overwrite).
+- `edit`: Matches Claude Code `edit`. Uses `get_file_text_by_path` + `create_new_file`.
 
 Example `.mcp.toml` entry (Codex):
 

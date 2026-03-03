@@ -98,12 +98,13 @@ const TOOL_VARIANTS: ToolVariant[] = [
   },
   {
     mode: TOOL_MODES.CC,
-    name: 'read',
-    description: 'Read a local file using absolute or project-relative paths. Returns raw text.',
-    schemaFactory: () => createReadSchema(false),
+    name: 'read_file',
+    description: 'Reads a local file with 1-indexed line numbers, supporting slice and indentation-aware block modes.',
+    schemaFactory: () => createReadSchema(true),
     handlerFactory: ({projectPath, callUpstreamTool, readCapabilities}) => (args) =>
-      handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, {format: 'raw'}),
-    upstreamNames: ['get_file_text_by_path']
+      handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, {format: 'numbered'}),
+    upstreamNames: ['get_file_text_by_path'],
+    expose: ({readCapabilities}) => !readCapabilities.hasReadFile
   },
   {
     mode: TOOL_MODES.CODEX,

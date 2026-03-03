@@ -138,6 +138,8 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       assertExcludesAll(names, BLOCKED_TOOL_NAMES)
       assertExcludesAll(names, getReplacedToolNames())
       ok(!names.includes('grep_files'))
+      ok(names.includes('read_file'))
+      ok(!names.includes('read'))
     })
   })
 
