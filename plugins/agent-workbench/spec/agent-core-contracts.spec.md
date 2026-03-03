@@ -66,14 +66,16 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../sessions/testSrc/AgentSessionCliTest.kt
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
 
-- New-thread prompt bootstrap contract:
-  - provider bridges may build one-shot startup commands by appending `-- <prompt>` to canonical command,
-  - startup prompt command is transient and must not be persisted into chat tab runtime `shellCommand`,
-  - if startup command support is unavailable or exceeds command-size guard, fallback is post-start send-once initial message metadata.
+- New-thread prompt bootstrap — startup command format: provider bridges may build one-shot startup commands by appending `-- <prompt>` to canonical command.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderBridgeTest.kt
+
+- Startup prompt command is transient and must not be persisted into chat tab runtime `shellCommand`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
+
+- If startup command support is unavailable or exceeds command-size guard, fallback is post-start send-once initial message metadata.
+  [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
 
 - Editor-tab popup contract for a selected Agent chat tab must expose exactly these actions with this placement:
   - `Archive Thread` appears before built-in close actions.

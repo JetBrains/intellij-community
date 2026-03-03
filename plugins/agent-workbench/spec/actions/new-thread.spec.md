@@ -96,7 +96,8 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Codex new-thread opens must start in pending identity state (`codex:new-*`) with `sessionId = null`.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Pending Codex tabs must persist pending metadata (`pendingCreatedAtMs`, optional `pendingFirstInputAtMs`, optional `pendingLaunchMode`) so rebind matching can use deterministic time windows.
+- Pending Codex tabs must persist pending metadata (`pendingCreatedAtMs`, optional `pendingFirstInputAtMs`, optional `pendingLaunchMode`).
+  - Note: rebind matching uses these timestamps for deterministic time windows.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - App-server backend remains the default discovery source; rollout discovery remains an explicit compatibility override.
@@ -105,8 +106,9 @@ Canonical command mapping is owned by `spec/agent-core-contracts.spec.md`.
 - Optional app-server mode must surface concrete thread id after first user input.
   [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
 
-- Provider refresh must rebind pending Codex chat tabs only to newly discovered concrete thread ids for the path, switch shell command to canonical resume mapping, and skip rebinding when baseline thread ids are not known for that path.
-  Matching must use strict path-local one-to-one assignment with timestamp windows; ambiguous candidates must not be rebound automatically.
+- Provider refresh must rebind pending Codex chat tabs only to newly discovered concrete thread ids for the path and switch shell command to canonical resume mapping.
+- Rebinding must skip when baseline thread ids are not known for that path.
+- Matching must use strict path-local one-to-one assignment with timestamp windows; ambiguous candidates must not be rebound automatically.
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionsLoadingCoordinatorTest.kt
 

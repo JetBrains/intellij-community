@@ -41,7 +41,8 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   - `editorTabTitleProvider` for Agent chat tabs.
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
-- Chat editor opening must use `AsyncFileEditorProvider` and terminal reworked frontend integration (`TerminalToolWindowTabsManager`) with `shouldAddToToolWindow(false)`.
+- Chat editor opening must use `AsyncFileEditorProvider`.
+- Terminal integration must use reworked frontend (`TerminalToolWindowTabsManager`) with `shouldAddToToolWindow(false)`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Chat tabs must reuse an existing tab for the same canonical thread identity (`provider:threadId`) and `subAgentId` when present.
@@ -56,13 +57,18 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Restore metadata must be persisted in app-level cache-file-backed `AgentChatTabsStateService` keyed by `tabKey`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Persisted tab-state payload must include project hash/path, thread identity/sub-agent, thread id, shell command, title, activity, pending Codex metadata (`pendingCreatedAtMs`, `pendingFirstInputAtMs`, `pendingLaunchMode`), and updated timestamp.
+- Persisted tab-state payload must include:
+  - project hash/path,
+  - thread identity/sub-agent and thread id,
+  - shell command, title, activity,
+  - pending Codex metadata (`pendingCreatedAtMs`, `pendingFirstInputAtMs`, `pendingLaunchMode`),
+  - updated timestamp.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Chat restore must restore all previously open Agent chat tabs, not only the selected one.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Persisted tab-state entries are canonical restore source; legacy descriptor URL format and legacy `<config>/agent-workbench-chat-frame/tabs/*.awchat.json` metadata are out of compatibility scope and may be removed best-effort.
+- Persisted tab-state entries are canonical restore source. Legacy descriptor URL format and `*.awchat.json` metadata are unsupported and may be removed.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Stale or invalid tab-state entries must be pruned periodically.
@@ -79,7 +85,8 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
   [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../chat/testSrc/AgentChatTerminalTabCloseTest.kt
 
-- Editor tab title must come from thread title with fallback `Agent Chat`, via `EditorTabTitleProvider` (no virtual-file-name mutation dependency), and must be middle-truncated to 50 characters for presentation while tooltip keeps full title.
+- Editor tab title must come from thread title with fallback `Agent Chat`, via `EditorTabTitleProvider` (no virtual-file-name mutation dependency).
+- Tab title must be middle-truncated to 50 characters for presentation; tooltip keeps full title.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
@@ -104,13 +111,6 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 
 - Terminal initialization failures caused by command lookup must include actionable warning text with attempted command and startup `PATH` snapshot when available.
   [@test] ../chat/testSrc/AgentChatRestoreNotificationServiceTest.kt
-
-- Dedicated-frame vs current-project target frame selection must follow `spec/agent-dedicated-frame.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
-
-- Shared command mapping and editor-tab popup action contract must follow `spec/agent-core-contracts.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
 - Editor tab actions must include `Bind Pending Codex Thread` for pending Codex tabs, invoking targeted rebind for the active pending tab only.
   [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
@@ -146,4 +146,4 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - `spec/agent-core-contracts.spec.md`
 - `spec/agent-dedicated-frame.spec.md`
 - `spec/agent-sessions.spec.md`
-- `spec/agent-chat-terminal-api-spike.md`
+- `spec/agent-dedicated-frame-project-switching.spec.md`

@@ -44,7 +44,7 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 
 ## Architecture Decision
 - The sessions tool window must use IntelliJ-native Swing async tree infrastructure.
-  Rationale: this aligns interaction semantics with platform conventions, removes duplicate UI stacks in the plugin, and reduces maintenance/testing overhead.
+  - Rationale: aligns interaction semantics with platform conventions, removes duplicate UI stacks, and reduces maintenance/testing overhead.
   [@test] ../sessions/testSrc/AgentSessionsToolWindowFactorySwingTest.kt
 
 - The sessions tool-window UI implementation must be decomposed into small, single-purpose Swing modules instead of a monolithic panel file.
@@ -117,7 +117,8 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 - On-demand loading must deduplicate concurrent requests for the same normalized path.
   [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
 
-- Refresh requests must be coalesced while processing is in progress; catalog-sync requests must not be dropped, and any queued full refresh must take precedence.
+- Refresh requests must be coalesced while processing is in progress.
+- Catalog-sync requests must not be dropped; any queued full refresh takes precedence over catalog-sync.
   [@test] ../sessions/testSrc/AgentSessionsServiceConcurrencyIntegrationTest.kt
 
 - Project open/close lifecycle updates must run catalog sync and load threads only for newly opened paths; already open paths must not be reloaded by lifecycle updates.
@@ -169,11 +170,6 @@ Shared contracts remain in `spec/agent-core-contracts.spec.md`.
 
 - Branch mismatch between thread origin and current worktree branch must show warning confirmation before opening chat.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
-
-- Shared command mapping, editor-tab popup actions, archive gating, and visibility primitives must follow `spec/agent-core-contracts.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsEditorTabActionsTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt
 
 - Batch archive must archive all targets whose providers support archive, while unsupported targets are skipped without blocking successful targets.
   [@test] ../sessions/testSrc/AgentSessionsServiceArchiveIntegrationTest.kt

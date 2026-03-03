@@ -54,16 +54,16 @@ Provider/source-specific context rules are defined in separate specs under `spec
   [@test] ../../prompt/testSrc/context/AgentPromptContextResolverServiceTest.kt
 
 - Envelope formatting contract:
-  - context block header is `### IDE Context`,
-  - when soft cap is exceeded, envelope includes `soft-cap: limit=<n> auto-trim=<yes|no>` summary,
-  - each item is rendered by `rendererId` bridge when present,
-  - unknown or failing renderer falls back to generic `context: renderer=<id> title=<title>` + text code fence.
+  - Context block header is `### IDE Context`.
+  - When soft cap is exceeded, envelope includes `soft-cap: limit=<n> auto-trim=<yes|no>` summary.
+  - Each item is rendered by `rendererId` bridge when present.
+  - Unknown or failing renderer falls back to generic `context: renderer=<id> title=<title>` + text code fence.
 
 - Soft-cap policy contract:
-  - default soft cap is `12_000` chars,
-  - trimming starts from the last context item,
-  - trim mode uses partial truncation first, then omitted stub (`[omitted due to soft cap]`) when needed,
-  - items are retained with updated truncation metadata (not dropped outright).
+  - Default soft cap is `12_000` chars.
+  - Trimming starts from the last context item.
+  - Trim mode uses partial truncation first, then omitted stub (`[omitted due to soft cap]`) when needed.
+  - Items are retained with updated truncation metadata (not dropped outright).
   [@test] ../../prompt/testSrc/ui/AgentPromptContextSoftCapPolicyTest.kt
 
 - Truncation metadata contract:
