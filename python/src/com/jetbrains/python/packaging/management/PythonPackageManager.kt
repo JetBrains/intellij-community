@@ -187,25 +187,25 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   }
 
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   suspend fun listInstalledPackages(): List<PythonPackage> {
     waitForInit()
     return listInstalledPackagesSnapshot()
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   fun listInstalledPackagesSnapshot(): List<PythonPackage> {
     return installedPackages
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   suspend fun listOutdatedPackages(): Map<String, PythonOutdatedPackage> {
     waitForInit()
     return listOutdatedPackagesSnapshot()
   }
 
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   fun listOutdatedPackagesSnapshot(): Map<String, PythonOutdatedPackage> {
     return outdatedPackages
   }
@@ -283,7 +283,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
    *         PyResult.Failure if extraction is supported but failed (e.g., parsing error),
    *         PyResult.Success with the list of dependencies if extraction succeeded.
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   suspend fun extractDependenciesCached(): PyResult<List<PythonPackage>>? {
     val dependencyFile = getDependencyFile() ?: return null
     return createCachedDependencies(dependencyFile).await()
