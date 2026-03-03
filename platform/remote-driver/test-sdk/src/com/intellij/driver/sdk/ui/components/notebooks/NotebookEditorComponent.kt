@@ -6,6 +6,7 @@ import com.intellij.driver.sdk.PsiFile
 import com.intellij.driver.sdk.PsiManager
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.invokeActionWithRetries
+import com.intellij.driver.sdk.plugins.notebooks.NotebookEditorInfoService
 import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
@@ -121,6 +122,10 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = x("//div[@class='JupyterAddNewCellToolbar']").xx("//div[@class='ActionButtonWithText']", JButtonUiComponent::class.java).list()
   val foldingBars: List<UiComponent>
     get() = xx("//div[@class='EditorCellFoldingBarComponent']").list()
+
+  val selectedCellOrdinal: Int?
+    get() = driver.service<NotebookEditorInfoService>(driver.singleProject())
+      .getSelectedCellOrdinal(editor)
 
   override val editorComponent: EditorComponentImpl
     get() = when {
