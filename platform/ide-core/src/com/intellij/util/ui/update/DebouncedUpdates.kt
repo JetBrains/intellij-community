@@ -86,8 +86,8 @@ object DebouncedUpdates {
    * @param delay The delay as a [Duration]
    * @return A builder to configure and create the queue
    */
-  fun <T> forScope(scope: CoroutineScope, name: String, delay: Duration): ScopeBuilder<T> {
-    return ScopeBuilder(scope, name, delay)
+  fun <T> forScope(scope: CoroutineScope, name: String, delay: Duration): Builder<T> {
+    return Builder.forScope(scope, name, delay)
   }
 
   /**
@@ -100,7 +100,7 @@ object DebouncedUpdates {
    * @return A builder to configure and create the queue
    */
   @JvmStatic
-  fun <T> forScope(scope: CoroutineScope, name: String, delayMillis: Int): ScopeBuilder<T> {
+  fun <T> forScope(scope: CoroutineScope, name: String, delayMillis: Int): Builder<T> {
     return forScope(scope, name, delayMillis.milliseconds)
   }
 
@@ -113,8 +113,8 @@ object DebouncedUpdates {
    * @param delay The delay as a [Duration]
    * @return A builder to configure and create the queue
    */
-  fun <T> forComponent(component: JComponent, name: String, delay: Duration): ComponentBuilder<T> {
-    return ComponentBuilder(component, name, delay)
+  fun <T> forComponent(component: JComponent, name: String, delay: Duration): Builder<T> {
+    return Builder.forComponent(component, name, delay)
   }
 
   /**
@@ -127,69 +127,72 @@ object DebouncedUpdates {
    * @return A builder to configure and create the queue
    */
   @JvmStatic
-  fun <T> forComponent(component: JComponent, name: String, delayMillis: Int): ComponentBuilder<T> {
+  fun <T> forComponent(component: JComponent, name: String, delayMillis: Int): Builder<T> {
     return forComponent(component, name, delayMillis.milliseconds)
   }
 
   /**
-   * Java-friendly helper to build a coroutine context.
-   * Combines additional context with modality state from a component.
-   *
-   * @param additionalContext Additional coroutine context (e.g., Dispatchers.EDT)
-   * @param modalityStateComponent Component to derive modality state from (optional)
-   * @return Combined coroutine context
+   * Sealed hierarchy for builder owner types
    */
-  @JvmStatic
-  private fun buildContext(
-    additionalContext: CoroutineContext?,
-    modalityStateComponent: JComponent?
-  ): CoroutineContext {
-    return (additionalContext ?: EmptyCoroutineContext) +
-           (modalityStateComponent?.let { ModalityState.stateForComponent(it).asContextElement() } ?: EmptyCoroutineContext)
+  private sealed interface BuilderOwner {
+    companion object {
+      fun scope(scope: CoroutineScope): BuilderOwner = ScopeOwner(scope)
+      fun component(component: JComponent): BuilderOwner = ComponentOwner(component)
+    }
   }
 
+  private data class ScopeOwner(val scope: CoroutineScope) : BuilderOwner
+
+  private data class ComponentOwner(val component: JComponent) : BuilderOwner
+
   /**
-   * Builder for scope-bound debounced update queues.
+   * Unified builder for debounced update queues.
    */
   @ApiStatus.Experimental
-  class ScopeBuilder<T> internal constructor(
-    private val scope: CoroutineScope,
+  class Builder<T> private constructor(
+    private val owner: BuilderOwner,
     private val name: String,
     private val delay: Duration
   ) {
+    companion object {
+      internal fun <T> forScope(scope: CoroutineScope, name: String, delay: Duration): Builder<T> {
+        return Builder(BuilderOwner.scope(scope), name, delay)
+      }
+
+      internal fun <T> forComponent(component: JComponent, name: String, delay: Duration): Builder<T> {
+        return Builder(BuilderOwner.component(component), name, delay)
+      }
+    }
+
     private var context: CoroutineContext = EmptyCoroutineContext
     private var restartTimerOnAdd: Boolean = false
 
     /**
      * Sets the coroutine context for executing the action (e.g., Dispatchers.EDT).
      */
-    fun withContext(context: CoroutineContext): ScopeBuilder<T> {
+    fun withContext(context: CoroutineContext): Builder<T> {
       this.context = context
       return this
     }
 
     /**
-     * Java-friendly method to build context from additional context and modality state component.
+     * Sets the coroutine context with modality state derived from the given component.
+     * The modality state is combined with the provided context.
      *
-     * @param additionalContext Optional coroutine context (e.g., Dispatchers.EDT)
-     * @param modalityStateComponent Optional component for modality state
+     * @param context The coroutine context (e.g., Dispatchers.EDT)
+     * @param component The component to derive modality state from
      */
-    @JvmName("withContextForModality")
-    @JvmOverloads
-    fun withContext(
-      additionalContext: CoroutineContext?,
-      modalityStateComponent: JComponent? = null
-    ): ScopeBuilder<T> {
-      this.context = buildContext(additionalContext, modalityStateComponent)
+    fun withComponentModality(context: CoroutineContext, component: JComponent): Builder<T> {
+      this.context = context + ModalityState.stateForComponent(component).asContextElement()
       return this
     }
 
     /**
      * Sets whether the timer should restart on each new request.
      * - true: Debouncing behavior (timer resets on each request)
-     * - false: Throttling behavior (timer starts once)
+     * - false: Throttling behavior (timer starts once, default)
      */
-    fun restartTimerOnAdd(restart: Boolean): ScopeBuilder<T> {
+    fun restartTimerOnAdd(restart: Boolean = false): Builder<T> {
       this.restartTimerOnAdd = restart
       return this
     }
@@ -203,8 +206,12 @@ object DebouncedUpdates {
      * @param action The action to perform for each item
      * @return A queue that can be used to submit items via [UpdateQueue.queue]
      */
+    @JvmSynthetic
     fun runLatest(action: suspend (T) -> Unit): UpdateQueue<T> {
-      return SingleScopeQueue(scope, name, delay, context, restartTimerOnAdd, action)
+      return when (owner) {
+        is ScopeOwner -> SingleScopeQueue(owner.scope, name, delay, context, restartTimerOnAdd, action)
+        is ComponentOwner -> SingleComponentQueue(owner.component, name, delay, context, restartTimerOnAdd, action)
+      }
     }
 
     /**
@@ -217,7 +224,6 @@ object DebouncedUpdates {
      * @param action The action to perform for each item
      * @return A queue that can be used to submit items via [UpdateQueue.queue]
      */
-    @JvmName("runLatestConsumer")
     fun runLatest(action: Consumer<T>): UpdateQueue<T> {
       return runLatest { action.accept(it) }
     }
@@ -225,118 +231,60 @@ object DebouncedUpdates {
     /**
      * Creates a queue that batches all items during the delay window.
      *
+     * Collects all items queued within the delay period and processes them together as a batch.
+     *
+     * Example:
+     * ```kotlin
+     * val queue = DebouncedUpdates.forScope<Int>(scope, "batch", 100.milliseconds)
+     *   .runBatched { items -> processBatch(items) }
+     *
+     * delay(40)
+     * queue.queue(1)
+     * delay(40)
+     * queue.queue(2)
+     * delay(120)  // First batch emitted: [1, 2]
+     * queue.queue(3)
+     * delay(120)  // Second batch emitted: [3]
+     * queue.queue(4)
+     * // Final batch emitted: [4]
+     * ```
+     *
      * @param action The action to perform for each batch of items
      * @return A queue that can be used to submit items via [UpdateQueue.queue]
      */
+    @JvmSynthetic
     fun runBatched(action: suspend (List<T>) -> Unit): UpdateQueue<T> {
-      return BatchedScopeQueue(scope, name, delay, context, action)
+      return when (owner) {
+        is ScopeOwner -> BatchedScopeQueue(owner.scope, name, delay, context, action)
+        is ComponentOwner -> BatchedComponentQueue(owner.component, name, delay, context, action)
+      }
     }
 
     /**
      * Creates a queue that batches all items during the delay window.
      * Java-friendly overload accepting a [Consumer].
      *
-     * @param action The action to perform for each batch of items
-     * @return A queue that can be used to submit items via [UpdateQueue.queue]
-     */
-    @JvmName("runBatchedConsumer")
-    fun runBatched(action: Consumer<List<T>>): UpdateQueue<T> {
-      return runBatched { action.accept(it) }
-    }
-  }
-
-  /**
-   * Builder for component-bound debounced update queues.
-   */
-  @ApiStatus.Experimental
-  class ComponentBuilder<T> internal constructor(
-    private val component: JComponent,
-    private val name: String,
-    private val delay: Duration
-  ) {
-    private var context: CoroutineContext = EmptyCoroutineContext
-    private var restartTimerOnAdd: Boolean = false
-
-    /**
-     * Sets the coroutine context for executing the action (e.g., Dispatchers.EDT).
-     */
-    fun withContext(context: CoroutineContext): ComponentBuilder<T> {
-      this.context = context
-      return this
-    }
-
-    /**
-     * Java-friendly method to build context from additional context and modality state component.
+     * Collects all items queued within the delay period and processes them together as a batch.
      *
-     * @param additionalContext Optional coroutine context (e.g., Dispatchers.EDT)
-     * @param modalityStateComponent Optional component for modality state
-     */
-    @JvmName("withContextForModality")
-    @JvmOverloads
-    fun withContext(
-      additionalContext: CoroutineContext?,
-      modalityStateComponent: JComponent? = null
-    ): ComponentBuilder<T> {
-      this.context = buildContext(additionalContext, modalityStateComponent)
-      return this
-    }
-
-    /**
-     * Sets whether the timer should restart on each new request.
-     * - true: Debouncing behavior (timer resets on each request)
-     * - false: Throttling behavior (timer starts once)
-     */
-    fun restartTimerOnAdd(restart: Boolean): ComponentBuilder<T> {
-      this.restartTimerOnAdd = restart
-      return this
-    }
-
-    /**
-     * Creates a queue that processes only the latest item (DROP_OLDEST strategy).
+     * Example:
+     * ```kotlin
+     * val queue = DebouncedUpdates.forScope<Int>(scope, "batch", 100.milliseconds)
+     *   .runBatched { items -> processBatch(items) }
      *
-     * Uses `collectLatest` internally: if a new item arrives while the previous action is still executing,
-     * the previous execution will be cancelled before processing the new item.
-     *
-     * @param action The action to perform for each item
-     * @return A queue that can be used to submit items via [UpdateQueue.queue]
-     */
-    fun runLatest(action: suspend (T) -> Unit): UpdateQueue<T> {
-      return SingleComponentQueue(component, name, delay, context, restartTimerOnAdd, action)
-    }
-
-    /**
-     * Creates a queue that processes only the latest item (DROP_OLDEST strategy).
-     * Java-friendly overload accepting a [Consumer].
-     *
-     * Uses `collectLatest` internally: if a new item arrives while the previous action is still executing,
-     * the previous execution will be cancelled before processing the new item.
-     *
-     * @param action The action to perform for each item
-     * @return A queue that can be used to submit items via [UpdateQueue.queue]
-     */
-    @JvmName("runLatestConsumer")
-    fun runLatest(action: Consumer<T>): UpdateQueue<T> {
-      return runLatest { action.accept(it) }
-    }
-
-    /**
-     * Creates a queue that batches all items during the delay window.
+     * delay(40)
+     * queue.queue(1)
+     * delay(40)
+     * queue.queue(2)
+     * delay(120)  // First batch emitted: [1, 2]
+     * queue.queue(3)
+     * delay(120)  // Second batch emitted: [3]
+     * queue.queue(4)
+     * // Final batch emitted: [4]
+     * ```
      *
      * @param action The action to perform for each batch of items
      * @return A queue that can be used to submit items via [UpdateQueue.queue]
      */
-    fun runBatched(action: suspend (List<T>) -> Unit): UpdateQueue<T> {
-      return BatchedComponentQueue(component, name, delay, context, action)
-    }
-
-    /**
-     * Creates a queue that batches all items during the delay window.
-     * Java-friendly overload accepting a [Consumer].
-     *
-     * @param action The action to perform for each batch of items
-     * @return A queue that can be used to submit items via [UpdateQueue.queue]
-     */
-    @JvmName("runBatchedConsumer")
     fun runBatched(action: Consumer<List<T>>): UpdateQueue<T> {
       return runBatched { action.accept(it) }
     }
@@ -347,9 +295,12 @@ object DebouncedUpdates {
  * Common interface for update queues.
  */
 @ApiStatus.Experimental
-interface UpdateQueue<T> {
+sealed interface UpdateQueue<T> {
   /**
    * Queues an item for processing.
+   *
+   * @throws IllegalArgumentException if the queue has been cancelled (e.g., scope was cancelled or component was removed)
+   * @throws IllegalStateException if the item cannot be sent to the channel (e.g., channel is closed)
    */
   fun queue(item: T)
 
@@ -417,10 +368,16 @@ private suspend fun <T> Channel<T>.processBatched(
  */
 @ApiStatus.Experimental
 private abstract class BaseUpdateQueue<T>(
-  protected val name: String
+  protected val name: String,
+  protected val context: CoroutineContext,
+  channelCapacity: Int
 ) : UpdateQueue<T> {
 
-  protected abstract val channel: Channel<T>
+  init {
+    require(context[Job] == null) { "context must not contain a Job" }
+  }
+
+  protected val channel: Channel<T> = Channel(capacity = channelCapacity, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   protected abstract val job: Job
 
   override fun queue(item: T) {
@@ -446,13 +403,8 @@ private class SingleScopeQueue<T>(
   context: CoroutineContext,
   restartTimerOnAdd: Boolean,
   action: suspend (T) -> Unit
-) : BaseUpdateQueue<T>(name) {
+) : BaseUpdateQueue<T>(name, context, channelCapacity = 1) {
 
-  init {
-    require(context[Job] == null) { "context must not contain a Job" }
-  }
-
-  override val channel = Channel<T>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   override val job: Job = scope.launch(CoroutineName(name)) {
     channel.processLatest(name, delay, context, restartTimerOnAdd, action)
   }
@@ -468,13 +420,8 @@ private class BatchedScopeQueue<T>(
   delay: Duration,
   context: CoroutineContext,
   action: suspend (List<T>) -> Unit
-) : BaseUpdateQueue<T>(name) {
+) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
-  init {
-    require(context[Job] == null) { "context must not contain a Job" }
-  }
-
-  override val channel = Channel<T>(capacity = Channel.UNLIMITED)
   override val job: Job = scope.launch(CoroutineName(name)) {
     channel.processBatched(name, delay, context, action)
   }
@@ -491,13 +438,8 @@ private class SingleComponentQueue<T>(
   context: CoroutineContext,
   restartTimerOnAdd: Boolean,
   action: suspend (T) -> Unit
-) : BaseUpdateQueue<T>(name) {
+) : BaseUpdateQueue<T>(name, context, channelCapacity = 1) {
 
-  init {
-    require(context[Job] == null) { "context must not contain a Job" }
-  }
-
-  override val channel = Channel<T>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   override val job: Job = component.launchOnShow(name) {
     channel.processLatest(name, delay, context, restartTimerOnAdd, action)
   }
@@ -513,13 +455,8 @@ private class BatchedComponentQueue<T>(
   delay: Duration,
   context: CoroutineContext,
   action: suspend (List<T>) -> Unit
-) : BaseUpdateQueue<T>(name) {
+) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
-  init {
-    require(context[Job] == null) { "context must not contain a Job" }
-  }
-
-  override val channel = Channel<T>(capacity = Channel.UNLIMITED)
   override val job: Job = component.launchOnShow(name) {
     channel.processBatched(name, delay, context, action)
   }

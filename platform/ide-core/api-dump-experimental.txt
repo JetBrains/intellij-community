@@ -79,30 +79,21 @@ f:com.intellij.util.ui.UiScopeKt
 - *bs:launchOnceOnShow$default(java.awt.Component,java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Job
 *f:com.intellij.util.ui.update.DebouncedUpdates
 - sf:INSTANCE:com.intellij.util.ui.update.DebouncedUpdates
-- sf:forComponent(javax.swing.JComponent,java.lang.String,I):com.intellij.util.ui.update.DebouncedUpdates$ComponentBuilder
-- f:forComponent-SxA4cEA(javax.swing.JComponent,java.lang.String,J):com.intellij.util.ui.update.DebouncedUpdates$ComponentBuilder
-- sf:forScope(kotlinx.coroutines.CoroutineScope,java.lang.String,I):com.intellij.util.ui.update.DebouncedUpdates$ScopeBuilder
-- f:forScope-SxA4cEA(kotlinx.coroutines.CoroutineScope,java.lang.String,J):com.intellij.util.ui.update.DebouncedUpdates$ScopeBuilder
-*f:com.intellij.util.ui.update.DebouncedUpdates$ComponentBuilder
-- f:restartTimerOnAdd(Z):com.intellij.util.ui.update.DebouncedUpdates$ComponentBuilder
-- f:runBatched(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
-- f:runBatchedConsumer(java.util.function.Consumer):com.intellij.util.ui.update.UpdateQueue
-- f:runLatest(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
-- f:runLatestConsumer(java.util.function.Consumer):com.intellij.util.ui.update.UpdateQueue
-- f:withContext(kotlin.coroutines.CoroutineContext):com.intellij.util.ui.update.DebouncedUpdates$ComponentBuilder
-- f:withContextForModality(kotlin.coroutines.CoroutineContext):com.intellij.util.ui.update.DebouncedUpdates$ComponentBuilder
-- f:withContextForModality(kotlin.coroutines.CoroutineContext,javax.swing.JComponent):com.intellij.util.ui.update.DebouncedUpdates$ComponentBuilder
-- bs:withContextForModality$default(com.intellij.util.ui.update.DebouncedUpdates$ComponentBuilder,kotlin.coroutines.CoroutineContext,javax.swing.JComponent,I,java.lang.Object):com.intellij.util.ui.update.DebouncedUpdates$ComponentBuilder
-*f:com.intellij.util.ui.update.DebouncedUpdates$ScopeBuilder
-- f:restartTimerOnAdd(Z):com.intellij.util.ui.update.DebouncedUpdates$ScopeBuilder
-- f:runBatched(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
-- f:runBatchedConsumer(java.util.function.Consumer):com.intellij.util.ui.update.UpdateQueue
-- f:runLatest(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
-- f:runLatestConsumer(java.util.function.Consumer):com.intellij.util.ui.update.UpdateQueue
-- f:withContext(kotlin.coroutines.CoroutineContext):com.intellij.util.ui.update.DebouncedUpdates$ScopeBuilder
-- f:withContextForModality(kotlin.coroutines.CoroutineContext):com.intellij.util.ui.update.DebouncedUpdates$ScopeBuilder
-- f:withContextForModality(kotlin.coroutines.CoroutineContext,javax.swing.JComponent):com.intellij.util.ui.update.DebouncedUpdates$ScopeBuilder
-- bs:withContextForModality$default(com.intellij.util.ui.update.DebouncedUpdates$ScopeBuilder,kotlin.coroutines.CoroutineContext,javax.swing.JComponent,I,java.lang.Object):com.intellij.util.ui.update.DebouncedUpdates$ScopeBuilder
+- sf:forComponent(javax.swing.JComponent,java.lang.String,I):com.intellij.util.ui.update.DebouncedUpdates$Builder
+- f:forComponent-SxA4cEA(javax.swing.JComponent,java.lang.String,J):com.intellij.util.ui.update.DebouncedUpdates$Builder
+- sf:forScope(kotlinx.coroutines.CoroutineScope,java.lang.String,I):com.intellij.util.ui.update.DebouncedUpdates$Builder
+- f:forScope-SxA4cEA(kotlinx.coroutines.CoroutineScope,java.lang.String,J):com.intellij.util.ui.update.DebouncedUpdates$Builder
+*f:com.intellij.util.ui.update.DebouncedUpdates$Builder
+- *sf:Companion:com.intellij.util.ui.update.DebouncedUpdates$Builder$Companion
+- f:restartTimerOnAdd(Z):com.intellij.util.ui.update.DebouncedUpdates$Builder
+- bs:restartTimerOnAdd$default(com.intellij.util.ui.update.DebouncedUpdates$Builder,Z,I,java.lang.Object):com.intellij.util.ui.update.DebouncedUpdates$Builder
+- f:runBatched(java.util.function.Consumer):com.intellij.util.ui.update.UpdateQueue
+- bf:runBatched(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
+- f:runLatest(java.util.function.Consumer):com.intellij.util.ui.update.UpdateQueue
+- bf:runLatest(kotlin.jvm.functions.Function2):com.intellij.util.ui.update.UpdateQueue
+- f:withComponentModality(kotlin.coroutines.CoroutineContext,javax.swing.JComponent):com.intellij.util.ui.update.DebouncedUpdates$Builder
+- f:withContext(kotlin.coroutines.CoroutineContext):com.intellij.util.ui.update.DebouncedUpdates$Builder
+*f:com.intellij.util.ui.update.DebouncedUpdates$Builder$Companion
 f:com.intellij.util.ui.update.UiNotifyConnector$Companion
 - *f:forceNotifyIsShown(java.awt.Component):V
 *:com.intellij.util.ui.update.UpdateQueue
