@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.AbstractBundle
 import com.intellij.CommonBundle
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.prompt.AgentPromptBundle
 import com.intellij.agent.workbench.prompt.context.AgentPromptContextResolverService
 import com.intellij.agent.workbench.prompt.context.dataContextOrNull
@@ -22,6 +23,7 @@ import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchers
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
@@ -31,6 +33,8 @@ import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.execution.ui.TagButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeTooltip
+import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -40,10 +44,14 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -65,6 +73,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.FlowLayout
+import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -76,6 +85,7 @@ import javax.swing.DefaultListModel
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 import javax.swing.event.ChangeListener
@@ -86,6 +96,39 @@ import javax.swing.text.DefaultEditorKit
 private const val CONTEXT_SOFT_CAP_CHARS = AgentPromptContextEnvelopeFormatter.DEFAULT_SOFT_CAP_CHARS
 private const val MAX_EXISTING_TASKS = 200
 private const val CONTEXT_CHIP_GAP = 6
+
+internal fun buildPlainTextTooltipComponent(text: @Nls String): JBTextArea {
+  return JBTextArea(text).apply {
+    isEditable = false
+    isFocusable = false
+    lineWrap = false
+    wrapStyleWord = false
+    isOpaque = true
+    background = UIUtil.getToolTipBackground()
+    foreground = UIUtil.getToolTipForeground()
+    font = UIUtil.getToolTipFont()
+    border = JBUI.Borders.empty(4, 6)
+  }
+}
+
+internal fun createPlainTextIdeTooltip(component: JComponent, textProvider: () -> @Nls String): IdeTooltip {
+  return object : IdeTooltip(component, Point(0, 0), null, component) {
+    init {
+      layer = Balloon.Layer.top
+      preferredPosition = Balloon.Position.above
+    }
+
+    override fun beforeShow(): Boolean {
+      val text = textProvider().takeIf { it.isNotBlank() } ?: return false
+      tipComponent = buildPlainTextTooltipComponent(text)
+      return true
+    }
+  }
+}
+
+internal fun installPlainTextIdeTooltip(component: JComponent, textProvider: () -> @Nls String) {
+  IdeTooltipManager.getInstance().setCustomTooltip(component, createPlainTextIdeTooltip(component, textProvider))
+}
 
 internal class AgentPromptPalettePopup(
   private val invocationData: AgentPromptInvocationData,
@@ -108,6 +151,8 @@ internal class AgentPromptPalettePopup(
     isOpaque = false
   }
 
+  private lateinit var codexPlanModeCheckBox: JBCheckBox
+
   private lateinit var footerLabel: JBLabel
 
   private var popup: JBPopup? = null
@@ -120,6 +165,7 @@ internal class AgentPromptPalettePopup(
   private var selectedProvider: ProviderEntry? = null
   private var allExistingTaskEntries: List<ThreadEntry> = emptyList()
   private var selectedExistingTaskId: String? = null
+  private var selectedWorkingProjectPath: String? = null
   private var existingTaskSearchQuery: String = ""
   private val threadLoadVersion = AtomicInteger(0)
   @Suppress("RAW_SCOPE_CREATION")
@@ -175,9 +221,11 @@ internal class AgentPromptPalettePopup(
   }
 
   private fun createContentPanel(): JPanel {
+    val planModeCheckBox = createCodexPlanModeCheckBox()
     val view = createAgentPromptPaletteView(
       promptArea = promptArea,
       contextChipsPanel = contextChipsPanel,
+      codexPlanModeCheckBox = planModeCheckBox,
       onProviderIconClicked = ::showProviderChooser,
       onExistingTaskSelected = ::onExistingTaskSelected,
     )
@@ -186,8 +234,15 @@ internal class AgentPromptPalettePopup(
     existingTaskListModel = view.existingTaskListModel
     existingTaskList = view.existingTaskList
     existingTaskScrollPane = view.existingTaskScrollPane
+    codexPlanModeCheckBox = checkNotNull(view.codexPlanModeCheckBox)
     footerLabel = view.footerLabel
     return view.rootPanel
+  }
+
+  private fun createCodexPlanModeCheckBox(): JBCheckBox {
+    return JBCheckBox(AgentPromptBundle.message("popup.plan.checkbox"), true).apply {
+      isFocusable = false
+    }
   }
 
   private fun onExistingTaskSelected(selected: ThreadEntry) {
@@ -279,11 +334,17 @@ internal class AgentPromptPalettePopup(
     if (provider == null) {
       providerIconLabel.icon = AllIcons.Toolwindows.ToolWindowMessages
       providerIconLabel.toolTipText = AgentPromptBundle.message("popup.provider.selector.tooltip")
+      updateCodexPlanToggleVisibility()
       return
     }
 
     providerIconLabel.icon = provider.icon
     providerIconLabel.toolTipText = provider.displayName
+    updateCodexPlanToggleVisibility()
+  }
+
+  private fun updateCodexPlanToggleVisibility() {
+    codexPlanModeCheckBox.isVisible = selectedProvider?.bridge?.provider == AgentSessionProvider.CODEX
   }
 
   private fun showProviderChooser() {
@@ -366,7 +427,8 @@ internal class AgentPromptPalettePopup(
 
   private fun loadInitialContext() {
     val resolved = contextResolverService.collectDefaultContext(invocationData)
-    contextEntries = resolved.map { item -> ContextEntry(item = item, projectBasePath = project.basePath) }
+    val projectPath = resolveWorkingProjectPath(launcherProvider()) ?: project.basePath
+    contextEntries = resolved.map { item -> ContextEntry(item = item, projectBasePath = projectPath) }
     rebuildContextChips()
   }
 
@@ -395,8 +457,8 @@ internal class AgentPromptPalettePopup(
           it.isOpaque = false
           it.background = UIUtil.TRANSPARENT_COLOR
           it.putClientProperty("JButton.backgroundColor", UIUtil.TRANSPARENT_COLOR)
+          installPlainTextIdeTooltip(component = it) { entry.tooltipText }
         }
-      setToolTip(entry.tooltipText)
     }
   }
 
@@ -421,8 +483,16 @@ internal class AgentPromptPalettePopup(
       return
     }
 
-    val projectPath = project.basePath
-    if (projectPath.isNullOrBlank()) {
+    val launcher = launcherProvider()
+    if (launcher == null) {
+      updateExistingTaskListState(AgentPromptBundle.message("popup.error.no.launcher"))
+      selectedExistingTaskId = null
+      updateSendAvailability()
+      return
+    }
+
+    val projectPath = resolveWorkingProjectPath(launcher)
+    if (projectPath == null) {
       updateExistingTaskListState(AgentPromptBundle.message("popup.error.project.path"))
       allExistingTaskEntries = emptyList()
       selectedExistingTaskId = null
@@ -433,14 +503,6 @@ internal class AgentPromptPalettePopup(
     updateExistingTaskListState(AgentPromptBundle.message("popup.existing.loading"))
     allExistingTaskEntries = emptyList()
     existingTaskListModel.clear()
-
-    val launcher = launcherProvider()
-    if (launcher == null) {
-      updateExistingTaskListState(AgentPromptBundle.message("popup.error.no.launcher"))
-      selectedExistingTaskId = null
-      updateSendAvailability()
-      return
-    }
 
     val requestVersion = threadLoadVersion.incrementAndGet()
     existingTasksObservationJob = popupScope.launch {
@@ -521,6 +583,7 @@ internal class AgentPromptPalettePopup(
             nowLabel = nowLabel,
             unknownLabel = unknownLabel,
           ),
+          activity = thread.activity,
         )
       }
       .toList()
@@ -534,7 +597,7 @@ internal class AgentPromptPalettePopup(
   private fun updateSendAvailability() {
     val selectedProviderEntry = selectedProvider
     val hasPrompt = promptArea.text.trim().isNotEmpty()
-    val hasProjectPath = !project.basePath.isNullOrBlank()
+    val hasProjectPath = resolveWorkingProjectPath(launcherProvider()) != null
     val hasExistingTaskTarget = !selectedExistingTaskId.isNullOrBlank()
 
     val submitPrerequisitesMet = hasPrompt && hasProjectPath && selectedProviderEntry != null && selectedProviderEntry.isCliAvailable
@@ -548,16 +611,22 @@ internal class AgentPromptPalettePopup(
     val openedPopup = popup ?: return
     val selectedProviderEntry = selectedProvider
     val launcher = launcherProvider()
+    val projectPath = resolveWorkingProjectPath(launcher)
     val validationErrorKey = resolveSubmitValidationErrorMessageKey(
       targetMode = currentTargetMode(),
       prompt = promptArea.text,
       selectedProvider = selectedProviderEntry?.bridge?.provider,
       isProviderCliAvailable = selectedProviderEntry?.isCliAvailable == true,
-      hasProjectPath = !project.basePath.isNullOrBlank(),
+      hasProjectPath = projectPath != null,
       hasLauncher = launcher != null,
       selectedExistingTaskId = selectedExistingTaskId,
     )
     if (validationErrorKey != null) {
+      if (validationErrorKey == "popup.error.project.path" &&
+          launcher != null &&
+          promptWorkingProjectPathSelection(launcher) { submit() }) {
+        return
+      }
       val message = if (validationErrorKey == "popup.error.provider.unavailable") {
         AgentPromptBundle.message(validationErrorKey, selectedProviderEntry?.displayName ?: "")
       }
@@ -570,26 +639,33 @@ internal class AgentPromptPalettePopup(
 
     val prompt = promptArea.text.trim()
     val providerEntry = selectedProviderEntry ?: return
-    val projectPath = project.basePath ?: return
+    val effectiveProjectPath = projectPath ?: return
 
     val selectedContextItems = contextEntries.map { it.item }
-    val contextSelection = resolveContextSelection(selectedContextItems) ?: return
+    val contextSelection = resolveContextSelection(selectedContextItems, effectiveProjectPath) ?: return
     val launcherBridge = launcher ?: return
 
     val targetThreadId = when (currentTargetMode()) {
       PromptTargetMode.NEW_TASK -> null
       PromptTargetMode.EXISTING_TASK -> selectedExistingTaskId ?: return
     }
+    val effectiveCodexPlanModeEnabled = resolveEffectiveCodexPlanModeEnabled(
+      selectedProvider = providerEntry.bridge.provider,
+      isCodexPlanModeSelected = codexPlanModeCheckBox.isSelected,
+      targetMode = currentTargetMode(),
+      selectedThreadActivity = selectedExistingTaskEntry()?.activity,
+    )
 
     val request = AgentPromptLaunchRequest(
       provider = providerEntry.bridge.provider,
-      projectPath = projectPath,
+      projectPath = effectiveProjectPath,
       launchMode = AgentSessionLaunchMode.STANDARD,
       initialMessageRequest = AgentPromptInitialMessageRequest(
         prompt = prompt,
-        projectPath = projectPath,
+        projectPath = effectiveProjectPath,
         contextItems = contextSelection.items,
         contextEnvelopeSummary = contextSelection.summary,
+        codexPlanModeEnabled = effectiveCodexPlanModeEnabled,
       ),
       targetThreadId = targetThreadId,
       preferredDedicatedFrame = null,
@@ -612,7 +688,7 @@ internal class AgentPromptPalettePopup(
     showError(errorMessage)
   }
 
-  private fun resolveContextSelection(items: List<AgentPromptContextItem>): ContextSelection? {
+  private fun resolveContextSelection(items: List<AgentPromptContextItem>, projectPath: String?): ContextSelection? {
     val baseSummary = AgentPromptContextEnvelopeSummary(
       softCapChars = CONTEXT_SOFT_CAP_CHARS,
       softCapExceeded = false,
@@ -626,7 +702,7 @@ internal class AgentPromptPalettePopup(
     val serializedChars = AgentPromptContextEnvelopeFormatter.measureContextBlockChars(
       items = normalizedItems,
       summary = baseSummary,
-      projectPath = project.basePath,
+      projectPath = projectPath,
     )
     if (serializedChars <= CONTEXT_SOFT_CAP_CHARS) {
       return ContextSelection(items = normalizedItems, summary = baseSummary)
@@ -658,7 +734,7 @@ internal class AgentPromptPalettePopup(
         val trimResult = AgentPromptContextEnvelopeFormatter.applySoftCap(
           items = normalizedItems,
           softCapChars = CONTEXT_SOFT_CAP_CHARS,
-          projectPath = project.basePath,
+          projectPath = projectPath,
         )
         ContextSelection(
           items = trimResult.items,
@@ -673,10 +749,65 @@ internal class AgentPromptPalettePopup(
     }
   }
 
+  private fun resolveWorkingProjectPath(launcher: AgentPromptLauncherBridge?): String? {
+    selectedWorkingProjectPath?.takeIf { path -> path.isNotBlank() }?.let { path ->
+      return path
+    }
+    return launcher
+      ?.resolveWorkingProjectPath(invocationData)
+      ?.takeIf { path -> path.isNotBlank() }
+  }
+
+  private fun promptWorkingProjectPathSelection(launcher: AgentPromptLauncherBridge, onSelected: () -> Unit): Boolean {
+    val candidates = launcher.listWorkingProjectPathCandidates(invocationData)
+      .asSequence()
+      .filter { candidate -> candidate.path.isNotBlank() }
+      .distinctBy { candidate -> candidate.path }
+      .toList()
+    if (candidates.isEmpty()) {
+      return false
+    }
+
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(candidates)
+      .setTitle(AgentPromptBundle.message("popup.project.chooser.title"))
+      .setRenderer(object : ColoredListCellRenderer<AgentPromptProjectPathCandidate>() {
+        override fun customizeCellRenderer(
+          list: JList<out AgentPromptProjectPathCandidate>,
+          value: AgentPromptProjectPathCandidate?,
+          index: Int,
+          selected: Boolean,
+          hasFocus: Boolean,
+        ) {
+          if (value == null) {
+            return
+          }
+          append(value.displayName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+          if (value.displayName != value.path) {
+            append("  ${value.path}", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+          }
+        }
+      })
+      .setItemChosenCallback { candidate ->
+        selectedWorkingProjectPath = candidate.path
+        if (currentTargetMode() == PromptTargetMode.EXISTING_TASK) {
+          selectedExistingTaskId = null
+          reloadExistingTasks()
+        }
+        updateSendAvailability()
+        onSelected()
+      }
+      .createPopup()
+      .showInBestPositionFor(invocationData.dataContextOrNull() ?: DataManager.getInstance().getDataContext(promptArea))
+
+    return true
+  }
+
   private fun restoreDraft() {
     val draft = uiStateService.loadDraft()
 
     promptArea.text = draft.promptText
+    codexPlanModeCheckBox.isSelected = draft.codexPlanModeEnabled
     val persistedProvider = draft.providerId?.let(AgentSessionProvider::fromOrNull)
     selectedProvider = findProviderEntry(persistedProvider) ?: selectedProvider
     updateProviderIconPresentation()
@@ -688,6 +819,11 @@ internal class AgentPromptPalettePopup(
     if (draft.targetMode == PromptTargetMode.EXISTING_TASK) {
       reloadExistingTasks()
     }
+  }
+
+  private fun selectedExistingTaskEntry(): ThreadEntry? {
+    val selectedId = selectedExistingTaskId ?: return null
+    return allExistingTaskEntries.firstOrNull { entry -> entry.id == selectedId }
   }
 
   private fun findProviderEntry(provider: AgentSessionProvider?): ProviderEntry? {
@@ -706,6 +842,7 @@ internal class AgentPromptPalettePopup(
         sendMode = PromptSendMode.SEND_NOW,
         existingTaskSearch = existingTaskSearchQuery,
         selectedExistingTaskId = selectedExistingTaskId,
+        codexPlanModeEnabled = codexPlanModeCheckBox.isSelected,
       )
     )
   }
@@ -815,6 +952,21 @@ internal fun shouldShowExistingTaskSelectionHint(
   return targetMode == PromptTargetMode.EXISTING_TASK &&
          selectedExistingTaskId.isNullOrBlank() &&
          selectedProvider != AgentSessionProvider.CODEX
+}
+
+internal fun resolveEffectiveCodexPlanModeEnabled(
+  selectedProvider: AgentSessionProvider?,
+  isCodexPlanModeSelected: Boolean,
+  targetMode: PromptTargetMode,
+  selectedThreadActivity: AgentThreadActivity?,
+): Boolean {
+  if (selectedProvider != AgentSessionProvider.CODEX || !isCodexPlanModeSelected) {
+    return false
+  }
+  if (targetMode != PromptTargetMode.EXISTING_TASK) {
+    return true
+  }
+  return selectedThreadActivity != AgentThreadActivity.PROCESSING && selectedThreadActivity != AgentThreadActivity.REVIEWING
 }
 
 internal fun resolveSubmitValidationErrorMessageKey(

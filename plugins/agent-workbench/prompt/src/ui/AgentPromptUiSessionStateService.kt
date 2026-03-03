@@ -23,6 +23,7 @@ internal data class AgentPromptUiDraft(
   @JvmField val sendMode: PromptSendMode = PromptSendMode.SEND_NOW,
   @JvmField val existingTaskSearch: String = "",
   @JvmField val selectedExistingTaskId: String? = null,
+  @JvmField val codexPlanModeEnabled: Boolean = true,
 )
 
 internal data class AgentPromptUiState(

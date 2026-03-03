@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptChipRenderInput
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextRenderers
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
@@ -37,7 +39,12 @@ internal data class ContextEntry(
 
   val displayText: String = chipRender?.text ?: buildDefaultDisplayText()
 
-  val tooltipText: String = chipRender?.tooltipText ?: buildDefaultTooltip()
+  private val fallbackTooltipText: String by lazy(LazyThreadSafetyMode.NONE) {
+    AgentPromptContextEnvelopeFormatter.renderContextItem(item = item, projectPath = projectBasePath)
+  }
+
+  val tooltipText: String
+    get() = chipRender?.tooltipText ?: fallbackTooltipText
 
   private fun buildDefaultDisplayText(): String {
     val title = item.title?.takeIf { it.isNotBlank() } ?: "Context"
@@ -48,24 +55,13 @@ internal data class ContextEntry(
     val preview = if (firstLine.length <= 60) firstLine else firstLine.take(60) + "\u2026"
     return "$title: $preview"
   }
-
-  private fun buildDefaultTooltip(): String {
-    val details = buildList {
-      add("renderer=${item.rendererId}")
-      add("source=${item.source}")
-      item.phase?.let { add("phase=${it.name.lowercase()}") }
-      if (item.truncation.reason.name != "NONE") {
-        add("truncated=${item.truncation.reason.name.lowercase()} ${item.truncation.includedChars}/${item.truncation.originalChars}")
-      }
-    }
-    return details.joinToString(separator = ", ")
-  }
 }
 
 internal data class ThreadEntry(
   val id: String,
   val displayText: @NlsSafe String,
   val secondaryText: @NlsSafe String,
+  val activity: AgentThreadActivity = AgentThreadActivity.READY,
 )
 
 internal class ExistingTaskCellRenderer : ListCellRenderer<ThreadEntry> {

@@ -3,11 +3,11 @@ package com.intellij.agent.workbench.prompt.context
 
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY as CORE_INVOCATION_DATA_CONTEXT_KEY
 
-internal const val AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY: String = "dataContext"
+internal const val AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY: String = CORE_INVOCATION_DATA_CONTEXT_KEY
 internal const val AGENT_PROMPT_INVOCATION_ACTION_EVENT_KEY: String = "actionEvent"
 
 internal fun AgentPromptInvocationData.dataContextOrNull(): DataContext? {
   return attributes[AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY] as? DataContext
 }
-

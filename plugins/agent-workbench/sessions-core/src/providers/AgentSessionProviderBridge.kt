@@ -50,6 +50,8 @@ interface AgentSessionProviderBridge {
     return AgentPromptContextEnvelopeFormatter.composeInitialMessage(request)
   }
 
+  fun shouldUseStartupPromptCommand(request: AgentPromptInitialMessageRequest): Boolean = true
+
   fun isCliMissingError(throwable: Throwable): Boolean = false
 }
 

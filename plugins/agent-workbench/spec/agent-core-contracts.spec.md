@@ -70,12 +70,18 @@ Define the single source of truth for cross-feature behavior that must stay cons
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
   [@test] ../claude/sessions/testSrc/ClaudeAgentSessionProviderBridgeTest.kt
 
+- Provider bridge policy may explicitly disable startup prompt command usage for a launch request (for example Codex Plan mode), forcing post-start message send path.
+  [@test] ../sessions/testSrc/AgentSessionsPromptLauncherBridgeTest.kt
+
 - Startup prompt command is transient and must not be persisted into chat tab runtime `shellCommand`.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - If startup command support is unavailable or exceeds command-size guard, fallback is post-start send-once initial message metadata.
   [@test] ../codex/sessions/testSrc/CodexAgentSessionProviderBridgeTest.kt
+
+- Post-start initial message fallback must be terminal-readiness-gated for all providers: dispatch only after terminal session reaches `Running` and startup output readiness heuristic, never before process readiness; if readiness signal is missing, fallback dispatch may proceed after bounded timeout.
+  [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
 - Editor-tab popup contract for a selected Agent chat tab must expose exactly these actions with this placement:
   - `Archive Thread` appears before built-in close actions.

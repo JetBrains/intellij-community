@@ -4,8 +4,8 @@ package com.intellij.agent.workbench.prompt.actions
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
 
 import com.intellij.agent.workbench.prompt.context.AGENT_PROMPT_INVOCATION_ACTION_EVENT_KEY
-import com.intellij.agent.workbench.prompt.context.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
 import com.intellij.agent.workbench.prompt.ui.AgentPromptPalettePopup
+import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction

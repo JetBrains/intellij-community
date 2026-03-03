@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabsShortcutsUtils
@@ -209,7 +209,7 @@ class SePopupHeaderPane(
     toolbar.targetComponent = this
     val toolbarComponent = toolbar.getComponent()
     toolbarComponent.setOpaque(false)
-    toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9))
+    toolbarComponent.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.BigPopup.headerToolbarInsets()))
 
     setFilterComponent(toolbarComponent)
     toolbar.addListener(object : ActionToolbarListener {

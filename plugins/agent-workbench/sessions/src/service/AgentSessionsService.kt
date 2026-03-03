@@ -439,6 +439,7 @@ internal class AgentSessionsService private constructor(
             bridge = bridge,
             baseLaunchSpec = createSpec.launchSpec,
             prompt = message,
+            initialMessageRequest = initialMessageRequest,
           )
         }
       val initialMessageForChat = if (startupLaunchSpecOverride != null) null else initialComposedMessage
@@ -502,6 +503,7 @@ internal class AgentSessionsService private constructor(
               bridge = bridge,
               baseLaunchSpec = resumeLaunchSpec,
               prompt = message,
+              initialMessageRequest = request.initialMessageRequest,
             )
           }
 
@@ -914,7 +916,11 @@ private fun buildStartupLaunchSpecOverride(
   bridge: AgentSessionProviderBridge,
   baseLaunchSpec: AgentSessionTerminalLaunchSpec,
   prompt: String,
+  initialMessageRequest: AgentPromptInitialMessageRequest,
 ): AgentSessionTerminalLaunchSpec? {
+  if (!bridge.shouldUseStartupPromptCommand(initialMessageRequest)) {
+    return null
+  }
   val startupLaunchSpec = bridge.buildLaunchSpecWithInitialPrompt(baseLaunchSpec = baseLaunchSpec, prompt = prompt) ?: return null
   val estimatedCommandSize = estimateCommandSizeBytes(startupLaunchSpec.command)
   if (estimatedCommandSize <= MAX_STARTUP_COMMAND_BYTES) {

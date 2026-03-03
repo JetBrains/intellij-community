@@ -96,6 +96,12 @@ Define how Agent chat tabs are opened, restored, reused, and rendered in editor 
 - Pending Codex tabs must capture first user-input timestamp once (on first terminal key event) and persist it for later rebind matching.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
+- Post-start initial prompt metadata (`initialComposedMessage`, `initialMessageToken`) must be dispatched only after terminal session state reaches `Running` and terminal output indicates startup readiness (first meaningful output plus idle stabilization window), not eagerly at editor initialization.
+- Readiness stabilization defaults: 250ms output-idle window after first meaningful output; if no readiness signal appears within 2s after `Running`, fallback dispatch is allowed.
+- If terminal session reaches `Terminated` before `Running`, or the editor is disposed before `Running`, pending initial prompt metadata must remain unsent.
+- If initial prompt metadata is updated while waiting for `Running`, dispatch must use the latest metadata and stale in-flight dispatch attempts must not mark metadata as sent.
+  [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
 - Editor tab icon must be provider-specific using canonical identity; `READY` is unbadged, non-`READY` activities use the activity badge mapping, unknown provider uses the default chat icon, and unknown activity defaults to `READY`.
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 

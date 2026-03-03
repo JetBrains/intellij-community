@@ -65,6 +65,10 @@ object AgentPromptContextEnvelopeFormatter {
     return buildContextBlock(items = normalizedItems, summary = summary, projectPath = projectPath)
   }
 
+  fun renderContextItem(item: AgentPromptContextItem, projectPath: String? = null): String {
+    return renderNormalizedItem(item = normalizeItem(item), projectPath = projectPath).trimEnd()
+  }
+
   fun applySoftCap(
     items: List<AgentPromptContextItem>,
     softCapChars: Int = DEFAULT_SOFT_CAP_CHARS,
@@ -220,14 +224,14 @@ object AgentPromptContextEnvelopeFormatter {
       if (index > 0) {
         builder.append('\n')
       }
-      builder.append(renderItem(item = item, projectPath = projectPath).trimEnd())
+      builder.append(renderNormalizedItem(item = item, projectPath = projectPath).trimEnd())
       builder.append('\n')
     }
 
     return builder.toString().trimEnd()
   }
 
-  private fun renderItem(item: AgentPromptContextItem, projectPath: String?): String {
+  private fun renderNormalizedItem(item: AgentPromptContextItem, projectPath: String?): String {
     val renderer = AgentPromptContextRenderers.find(item.rendererId)
     if (renderer != null) {
       return try {
@@ -266,4 +270,3 @@ object AgentPromptContextEnvelopeFormatter {
     }
   }
 }
-

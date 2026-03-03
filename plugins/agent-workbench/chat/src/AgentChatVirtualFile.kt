@@ -80,6 +80,8 @@ internal class AgentChatVirtualFile internal constructor(
   var initialMessageSent: Boolean = false
     private set
 
+  private var initialMessageDispatchInFlight: AgentChatInitialMessageDispatch? = null
+
   @TestOnly
   internal constructor(
     projectPath: String,
@@ -194,6 +196,7 @@ internal class AgentChatVirtualFile internal constructor(
     return true
   }
 
+  @Synchronized
   fun updateInitialMessageMetadata(
     initialComposedMessage: String?,
     initialMessageToken: String?,
@@ -210,15 +213,54 @@ internal class AgentChatVirtualFile internal constructor(
     this.initialComposedMessage = normalizedMessage
     this.initialMessageToken = initialMessageToken
     this.initialMessageSent = initialMessageSent
+    initialMessageDispatchInFlight = null
     return true
   }
 
-  fun markInitialMessageSent(): Boolean {
-    if (initialComposedMessage.isNullOrBlank() || initialMessageSent) {
+  @Synchronized
+  fun hasPendingInitialMessageForDispatch(): Boolean {
+    return !initialMessageSent && !initialComposedMessage.isNullOrBlank()
+  }
+
+  @Synchronized
+  fun acquireInitialMessageDispatch(): AgentChatInitialMessageDispatch? {
+    if (initialMessageSent) {
+      return null
+    }
+    val message = initialComposedMessage?.trim().orEmpty()
+    if (message.isEmpty()) {
+      return null
+    }
+    val token = initialMessageToken
+    val inFlight = initialMessageDispatchInFlight
+    if (inFlight != null && inFlight.message == message && inFlight.token == token) {
+      return null
+    }
+    return AgentChatInitialMessageDispatch(message = message, token = token).also {
+      initialMessageDispatchInFlight = it
+    }
+  }
+
+  @Synchronized
+  fun completeInitialMessageDispatch(dispatch: AgentChatInitialMessageDispatch): Boolean {
+    if (initialMessageDispatchInFlight !== dispatch) {
+      return false
+    }
+    val currentMessage = initialComposedMessage?.trim().orEmpty()
+    if (currentMessage.isEmpty() || initialMessageSent || initialMessageToken != dispatch.token || currentMessage != dispatch.message) {
+      initialMessageDispatchInFlight = null
       return false
     }
     initialMessageSent = true
+    initialMessageDispatchInFlight = null
     return true
+  }
+
+  @Synchronized
+  fun cancelInitialMessageDispatch(dispatch: AgentChatInitialMessageDispatch) {
+    if (initialMessageDispatchInFlight === dispatch) {
+      initialMessageDispatchInFlight = null
+    }
   }
 
   fun markPendingFirstInputAtMsIfAbsent(timestampMs: Long): Boolean {
@@ -345,6 +387,11 @@ internal class AgentChatVirtualFile internal constructor(
     )
   }
 }
+
+internal class AgentChatInitialMessageDispatch internal constructor(
+  val message: String,
+  val token: String?,
+)
 
 private fun resolveFileName(tabKey: String): String {
   return "chat-$tabKey"

@@ -2,23 +2,34 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupActionContext
+import com.intellij.agent.workbench.sessions.actions.AgentSessionsTreePopupDataKeys
 import com.intellij.agent.workbench.sessions.core.AgentSessionLaunchMode
 import com.intellij.agent.workbench.sessions.core.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.prompt.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptInvocationData
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchError
 import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.sessions.core.prompt.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderBridges
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.service.AgentSessionsChatOpenExecutor
 import com.intellij.agent.workbench.sessions.service.AgentSessionsPromptLauncherBridge
+import com.intellij.agent.workbench.sessions.tree.SessionTreeId
+import com.intellij.agent.workbench.sessions.tree.SessionTreeNode
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +37,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.lang.reflect.InvocationHandler
+import java.lang.reflect.Proxy
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -155,6 +168,50 @@ class AgentSessionsPromptLauncherBridgeTest {
           assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
           assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("composed:Refactor selected code")
+          waitForCondition {
+            chatOpenExecutor.openNewChatCalls.get() == 1
+          }
+          val openRequest = checkNotNull(chatOpenExecutor.lastOpenNewChatRequest.get())
+          assertThat(openRequest.startupLaunchSpecOverride).isNull()
+          assertThat(openRequest.initialComposedMessage).isEqualTo("composed:Refactor selected code")
+          assertThat(openRequest.initialMessageToken).isNotNull()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun launchFallsBackWhenBridgePolicyDisablesStartupPromptCommand() {
+    val providerBridge = RecordingPromptLaunchProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      startupPromptCommandPolicyEnabled = false,
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    AgentSessionProviderBridges.withRegistryForTest(
+      InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
+    ) {
+      runBlocking(Dispatchers.Default) {
+        withService(
+          sessionSourcesProvider = { listOf(providerBridge.sessionSource) },
+          projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { service ->
+          val bridge = AgentSessionsPromptLauncherBridge { service }
+          val request = promptLaunchRequest(projectPath = INVALID_PROMPT_PROJECT_PATH)
+
+          val result = bridge.launch(request)
+
+          assertThat(result.launched).isTrue()
+          assertThat(result.error).isNull()
+          waitForCondition {
+            providerBridge.createCalls.get() == 1
+          }
+          assertThat(providerBridge.composeCalls.get()).isEqualTo(1)
+          assertThat(providerBridge.shouldUseStartupPromptCommandCalls.get()).isEqualTo(1)
+          assertThat(providerBridge.lastShouldUseStartupPromptCommandRequest.get()).isEqualTo(request.initialMessageRequest)
+          assertThat(providerBridge.startupCommandCalls.get()).isZero()
+
           waitForCondition {
             chatOpenExecutor.openNewChatCalls.get() == 1
           }
@@ -710,6 +767,94 @@ class AgentSessionsPromptLauncherBridgeTest {
       assertThat(codexSnapshot.hasError).isFalse()
     }
   }
+
+  @Test
+  fun dedicatedInvocationPrefersSelectedTreePathForWorkingProjectResolution() {
+    val dedicatedProject = projectProxy(
+      name = "Agent Dedicated Frame",
+      basePath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath(),
+    )
+    val selectedTreePath = "/work/project-from-tree"
+    val invocation = invocationData(
+      project = dedicatedProject,
+      treeContext = AgentSessionsTreePopupActionContext(
+        project = dedicatedProject,
+        nodeId = SessionTreeId.Thread(
+          projectPath = selectedTreePath,
+          provider = AgentSessionProvider.CODEX,
+          threadId = "thread-1",
+        ),
+        node = SessionTreeNode.Thread(
+          project = AgentProjectSessions(path = selectedTreePath, name = "Project From Tree", isOpen = true),
+          thread = thread(id = "thread-1", updatedAt = 100, provider = AgentSessionProvider.CODEX),
+        ),
+        archiveTargets = emptyList(),
+      ),
+    )
+    val bridge = AgentSessionsPromptLauncherBridge {
+      throw UnsupportedOperationException("Not used in path resolution test")
+    }
+
+    val candidates = bridge.listWorkingProjectPathCandidates(invocation)
+
+    assertThat(candidates).isNotEmpty()
+    assertThat(candidates.first().path).isEqualTo(selectedTreePath)
+    assertThat(bridge.resolveWorkingProjectPath(invocation)).isEqualTo(selectedTreePath)
+  }
+
+  @Test
+  fun nonDedicatedInvocationUsesCurrentProjectPathForWorkingProjectResolution() {
+    val currentProjectPath = "/work/current-project"
+    val currentProject = projectProxy(name = "Current Project", basePath = currentProjectPath)
+    val invocation = invocationData(
+      project = currentProject,
+      treeContext = AgentSessionsTreePopupActionContext(
+        project = currentProject,
+        nodeId = SessionTreeId.Project(path = "/work/project-from-tree"),
+        node = SessionTreeNode.Project(
+          AgentProjectSessions(path = "/work/project-from-tree", name = "Project From Tree", isOpen = true),
+        ),
+        archiveTargets = emptyList(),
+      ),
+    )
+    val bridge = AgentSessionsPromptLauncherBridge {
+      throw UnsupportedOperationException("Not used in path resolution test")
+    }
+
+    val candidates = bridge.listWorkingProjectPathCandidates(invocation)
+
+    assertThat(candidates).containsExactly(
+      AgentPromptProjectPathCandidate(
+        path = currentProjectPath,
+        displayName = "Current Project",
+      )
+    )
+    assertThat(bridge.resolveWorkingProjectPath(invocation)).isEqualTo(currentProjectPath)
+  }
+
+  @Test
+  fun dedicatedWorkingProjectCandidatesNeverContainDedicatedFramePath() {
+    val dedicatedPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
+    val dedicatedProject = projectProxy(name = "Agent Dedicated Frame", basePath = dedicatedPath)
+    val invocation = invocationData(
+      project = dedicatedProject,
+      treeContext = AgentSessionsTreePopupActionContext(
+        project = dedicatedProject,
+        nodeId = SessionTreeId.Project(path = dedicatedPath),
+        node = SessionTreeNode.Project(
+          AgentProjectSessions(path = dedicatedPath, name = "Dedicated", isOpen = true),
+        ),
+        archiveTargets = emptyList(),
+      ),
+    )
+    val bridge = AgentSessionsPromptLauncherBridge {
+      throw UnsupportedOperationException("Not used in path resolution test")
+    }
+
+    val candidates = bridge.listWorkingProjectPathCandidates(invocation)
+
+    assertThat(candidates.none { candidate -> candidate.path == dedicatedPath }).isTrue()
+  }
 }
 
 private const val INVALID_PROMPT_PROJECT_PATH: String = "invalid\u0000project"
@@ -817,20 +962,65 @@ private fun promptLaunchRequest(
   )
 }
 
+private fun invocationData(
+  project: Project,
+  treeContext: AgentSessionsTreePopupActionContext?,
+): AgentPromptInvocationData {
+  val dataContextBuilder = SimpleDataContext.builder()
+  if (treeContext != null) {
+    dataContextBuilder.add(AgentSessionsTreePopupDataKeys.CONTEXT, treeContext)
+  }
+  val dataContext = dataContextBuilder.build()
+  return AgentPromptInvocationData(
+    project = project,
+    actionId = "AgentWorkbenchPrompt.OpenGlobalPalette",
+    actionText = "Ask Agent with Context",
+    actionPlace = "test",
+    invokedAtMs = 0,
+    attributes = mapOf(AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY to dataContext),
+  )
+}
+
+private fun projectProxy(
+  name: String,
+  basePath: String?,
+): Project {
+  val handler = InvocationHandler { proxy, method, args ->
+    when (method.name) {
+      "getName" -> name
+      "getBasePath" -> basePath
+      "isOpen" -> true
+      "isDisposed" -> false
+      "toString" -> "MockProject($name)"
+      "hashCode" -> System.identityHashCode(proxy)
+      "equals" -> proxy === args?.firstOrNull()
+      else -> null
+    }
+  }
+  return Proxy.newProxyInstance(
+    ProjectManager::class.java.classLoader,
+    arrayOf(Project::class.java),
+    handler,
+  ) as Project
+}
+
 private class RecordingPromptLaunchProviderBridge(
   override val provider: AgentSessionProvider,
   private val supportedModes: Set<AgentSessionLaunchMode>,
   private val startupPromptCommandSupported: Boolean = true,
+  private val startupPromptCommandPolicyEnabled: Boolean = true,
   private val startupPromptCommandEnvVariables: Map<String, String> = emptyMap(),
 ) : AgentSessionProviderBridge {
   val createCalls: AtomicInteger = AtomicInteger(0)
   val composeCalls: AtomicInteger = AtomicInteger(0)
   val startupCommandCalls: AtomicInteger = AtomicInteger(0)
+  val shouldUseStartupPromptCommandCalls: AtomicInteger = AtomicInteger(0)
   val lastCreatePath: AtomicReference<String?> = AtomicReference(null)
   val lastCreateMode: AtomicReference<AgentSessionLaunchMode?> = AtomicReference(null)
   val lastComposeRequest: AtomicReference<AgentPromptInitialMessageRequest?> = AtomicReference(null)
   val lastStartupBaseLaunchSpec: AtomicReference<AgentSessionTerminalLaunchSpec?> = AtomicReference(null)
   val lastStartupPrompt: AtomicReference<String?> = AtomicReference(null)
+  val lastShouldUseStartupPromptCommandRequest: AtomicReference<AgentPromptInitialMessageRequest?> = AtomicReference(null)
 
   override val displayNameKey: String
     get() = "toolwindow.provider.codex"
@@ -900,5 +1090,11 @@ private class RecordingPromptLaunchProviderBridge(
     composeCalls.incrementAndGet()
     lastComposeRequest.set(request)
     return "composed:${request.prompt.trim()}"
+  }
+
+  override fun shouldUseStartupPromptCommand(request: AgentPromptInitialMessageRequest): Boolean {
+    shouldUseStartupPromptCommandCalls.incrementAndGet()
+    lastShouldUseStartupPromptCommandRequest.set(request)
+    return startupPromptCommandPolicyEnabled
   }
 }
