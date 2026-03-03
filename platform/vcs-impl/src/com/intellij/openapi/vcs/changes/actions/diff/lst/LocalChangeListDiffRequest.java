@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.impl.AssignmentTracker;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -30,8 +31,7 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
   private final @NotNull @NlsSafe String myChangelistName;
   private final @NotNull ContentDiffRequest myRequest;
 
-  private int myAssignments;
-  private boolean myInstalled;
+  private final AssignmentTracker myAssignmentTracker = new LstAssignmentTracker();
 
   public LocalChangeListDiffRequest(@NotNull Project project,
                                     @NotNull VirtualFile virtualFile,
@@ -104,22 +104,7 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
   @RequiresEdt
   public void onAssigned(boolean isAssigned) {
     myRequest.onAssigned(isAssigned);
-
-    if (isAssigned) {
-      if (!myInstalled) {
-        myInstalled = installTracker();
-      }
-      myAssignments++;
-    }
-    else {
-      if (myAssignments == 1 && myInstalled) {
-        releaseTracker();
-        myInstalled = false;
-      }
-      myAssignments--;
-    }
-
-    assert myAssignments >= 0;
+    myAssignmentTracker.onAssigned(isAssigned);
   }
 
   private boolean installTracker() {
@@ -141,5 +126,24 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
     if (document == null) return;
 
     LineStatusTrackerManager.getInstance(myProject).releaseTrackerFor(document, this);
+  }
+
+  private class LstAssignmentTracker extends AssignmentTracker {
+    private boolean myInstalled;
+
+    @Override
+    public void onEachAssignment() {
+      if (!myInstalled) {
+        myInstalled = installTracker();
+      }
+    }
+
+    @Override
+    public void onLastUnassignment() {
+      if (myInstalled) {
+        releaseTracker();
+        myInstalled = false;
+      }
+    }
   }
 }

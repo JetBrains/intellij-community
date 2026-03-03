@@ -312,6 +312,15 @@ f:com.intellij.diff.editor.SimpleDiffVirtualFile
 - createProcessor(com.intellij.openapi.project.Project):com.intellij.diff.impl.DiffRequestProcessor
 - getName():java.lang.String
 - f:getRequest():com.intellij.diff.requests.DiffRequest
+c:com.intellij.diff.impl.AssignmentTracker
+- sf:Companion:com.intellij.diff.impl.AssignmentTracker$Companion
+- <init>():V
+- f:onAssigned(Z):V
+- onEachAssignment():V
+- onEachUnassignment():V
+- onFirstAssignment():V
+- onLastUnassignment():V
+f:com.intellij.diff.impl.AssignmentTracker$Companion
 c:com.intellij.diff.impl.CacheDiffRequestChainProcessor
 - com.intellij.diff.impl.CacheDiffRequestProcessor$Simple
 - <init>(com.intellij.openapi.project.Project,com.intellij.diff.chains.DiffRequestChain):V
@@ -535,6 +544,11 @@ f:com.intellij.diff.impl.DiffSettingsHolder$State
 c:com.intellij.diff.impl.DiffWindow
 - <init>(com.intellij.openapi.project.Project,com.intellij.diff.chains.DiffRequestChain,com.intellij.diff.DiffDialogHints):V
 - p:createProcessor():com.intellij.diff.impl.DiffRequestProcessor
+f:com.intellij.diff.impl.FileAssignmentTracker
+- com.intellij.diff.impl.AssignmentTracker
+- <init>(com.intellij.openapi.vfs.VirtualFile[]):V
+- f:getFiles():com.intellij.openapi.vfs.VirtualFile[]
+- onEachAssignment():V
 com.intellij.diff.lang.DiffIgnoredRangeProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent):Z
