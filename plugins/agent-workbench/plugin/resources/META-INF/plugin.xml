@@ -2,8 +2,15 @@
   <id>com.intellij.agent.workbench</id>
   <name>Agent Workbench</name>
   <description><![CDATA[
-    Experimental, alpha-quality plugin for AI-assisted development workflows in IntelliJ.
-    Includes agent-thread and chat workbench capabilities; features are under active development and may be unstable or change without notice.
+    AI-first development workflow plugin for IntelliJ-based IDEs.
+    <ul>
+      <li><b>Global Prompt Palette</b> — press <code>Cmd+\</code> / <code>Ctrl+\</code> from anywhere to start a new task or continue an existing one. Automatically captures invocation context (selection, file, symbol) and attaches it as context chips.</li>
+      <li><b>Agent Threads</b> — provider-agnostic, project-scoped browser that aggregates sessions from multiple AI providers (Codex, Claude) into a single tree view grouped by project and worktree.</li>
+      <li><b>Chat Editor Tabs</b> — each thread opens in a dedicated terminal-backed editor tab with persistent state across restarts.</li>
+      <li><b>Dedicated Frame Mode</b> — optionally routes all AI chat into a separate IDE frame for parallel task orchestration alongside your normal project window.</li>
+      <li><b>Prompt Context Providers</b> — extensible context system that collects editor selections, VCS changes, project-view selections, and test-runner results to enrich prompts automatically.</li>
+    </ul>
+    <em>Experimental — features are under active development and may change without notice.</em>
   ]]></description>
   <vendor>JetBrains</vendor>
   <content namespace="jetbrains">
