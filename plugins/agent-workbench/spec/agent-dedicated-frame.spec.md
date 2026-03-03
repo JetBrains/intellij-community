@@ -78,12 +78,9 @@ Define dedicated-frame mode behavior for Agent chat routing. This spec owns fram
 - Chat persistence and restore behavior must follow `spec/agent-chat-editor.spec.md` in both modes.
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
 
-- Implementation must stay independent from `welcomeScreenProjectProvider` singleton model.
+## Architecture Decision — Welcome Screen Independence
+- Implementation must stay independent from `welcomeScreenProjectProvider` singleton model. Dedicated-frame lifecycle is self-contained and must not couple to welcome-screen project provider internals.
   [@test] ../sessions/testSrc/AgentSessionsOpenModeRoutingTest.kt
-
-- Shared command mapping and new-thread semantics must follow `spec/agent-core-contracts.spec.md` and `spec/actions/new-thread.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
-  [@test] ../sessions/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
 ## User Experience
 - Default click behavior opens chat in dedicated frame.

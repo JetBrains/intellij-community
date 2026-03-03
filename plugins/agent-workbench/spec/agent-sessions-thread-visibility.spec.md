@@ -85,7 +85,8 @@ Define deterministic visibility rules for project/worktree thread rows so empty 
 - Tree-side `More` click handling must not trigger backend loads directly; it only updates local visibility state.
   [@test] ../sessions/testSrc/AgentSessionsServiceOnDemandIntegrationTest.kt
 
-- Thread-row layout/padding/clip decisions must remain pure helper functions in the UI layer, so renderer customization does not query tree viewport APIs during cell rendering.
+## Architecture Decision — Renderer Purity
+- Thread-row layout/padding/clip decisions must remain pure helper functions in the UI layer; renderer customization must not query tree viewport APIs during cell rendering.
   [@test] ../sessions/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
 
 ## User Experience

@@ -91,7 +91,10 @@ Define Codex thread-list behavior where discovery defaults to app-server `thread
 - `thread_name_updated` messages with non-blank `payload.thread_name` must override derived title.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Title normalization must strip `## My request for Codex:` marker when present, ignore session-prefix messages (`<environment_context>`, `<turn_aborted>`), normalize whitespace, and apply bounded trim.
+- Title normalization must:
+  - strip `## My request for Codex:` marker when present,
+  - ignore session-prefix messages (`<environment_context>`, `<turn_aborted>`),
+  - normalize whitespace and apply bounded trim.
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - If no qualifying title is found, fallback title must be `Thread <id-prefix>`.
@@ -119,9 +122,6 @@ Define Codex thread-list behavior where discovery defaults to app-server `thread
 
 - Paging seed logic must guard against cursor loops and no-progress iterations; it must terminate safely without infinite looping and preserve already collected thread results.
   [@test] ../codex/sessions/testSrc/CodexSessionsPagingLogicTest.kt
-
-- New-thread and resume command mapping must follow `spec/agent-core-contracts.spec.md`.
-  [@test] ../sessions/testSrc/AgentSessionCliTest.kt
 
 ## User Experience
 - Codex activity indicators should reflect recent rollout activity consistently.
