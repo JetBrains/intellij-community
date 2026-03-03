@@ -2261,6 +2261,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_amper-async-processes-0_8_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/async-processes/0.8.0/async-processes-0.8.0.jar",
+  sha256 = "bf3b892c9eb21becbd06b063539244bd96169f12b00bec9461eae6b13daa9ed8",
+  downloaded_file_path = "async-processes-0.8.0.jar"
+)
+
+http_file(
+  name = "org_jetbrains_amper-async-processes-0_8_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/async-processes/0.8.0/async-processes-0.8.0-sources.jar",
+  sha256 = "8b8142a3ae9e6bb757ba1945f576e63c98e60afc36599e5ab10b1595462f8c6c",
+  downloaded_file_path = "async-processes-0.8.0-sources.jar"
+)
+
+http_file(
   name = "com_jetbrains_intellij_idea-idea-community-build-zip-252_11244_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/intellij/idea/idea-community-build-zip/252.11244/idea-community-build-zip-252.11244.jar",
   sha256 = "c86d2bfa23d5d23f916d3574591a166b3df259bea6c23d39abea597b34ba022f",

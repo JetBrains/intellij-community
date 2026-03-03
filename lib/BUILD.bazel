@@ -2879,6 +2879,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.jetbrains.amper/async-processes-0.8.0.jar_copy",
+  src = "@org_jetbrains_amper-async-processes-0_8_0_http//file",
+  out = "org.jetbrains.amper/async-processes-0.8.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-jetbrains-amper-async-processes",
+  jar = "@org_jetbrains_amper-async-processes-0_8_0_http//file",
+  source_jar = "@org_jetbrains_amper-async-processes-0_8_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "com.jetbrains.intellij.idea/idea-community-build-zip-252.11244.jar_copy",
   src = "@com_jetbrains_intellij_idea-idea-community-build-zip-252_11244_http//file",
   out = "com.jetbrains.intellij.idea/idea-community-build-zip-252.11244.jar",

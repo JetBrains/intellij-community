@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="fleet:jetbrains.amper.async.processes" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.amper:async-processes:0.8.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/async-processes/0.8.0/async-processes-0.8.0.jar">
+          <sha256sum>bf3b892c9eb21becbd06b063539244bd96169f12b00bec9461eae6b13daa9ed8</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/async-processes/0.8.0/async-processes-0.8.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/async-processes/0.8.0/async-processes-0.8.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
