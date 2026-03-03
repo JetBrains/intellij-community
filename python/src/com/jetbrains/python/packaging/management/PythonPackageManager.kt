@@ -346,7 +346,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   companion object {
     private val CACHE_KEY = Key.create<CachedValue<Deferred<PyResult<List<PythonPackage>>?>>>("PythonPackageManagerDependenciesCache")
 
-    @RequiresBackgroundThread
     @Throws(AlreadyDisposedException::class)
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
