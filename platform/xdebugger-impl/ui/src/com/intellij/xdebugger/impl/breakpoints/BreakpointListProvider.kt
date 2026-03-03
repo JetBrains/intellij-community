@@ -121,7 +121,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
         for (item in items) {
           if (item.canNavigate() || Registry.`is`("ide.bookmark.show.all.breakpoints", false)) {
             var any = item as Any
-            for (rule in enabledRules) {
+            for (rule in enabledRules.reversed()) {
               val breakpoint = item.breakpoint ?: continue
               rule.getGroup(breakpoint)?.let {
                 breakpoints[any] = it
