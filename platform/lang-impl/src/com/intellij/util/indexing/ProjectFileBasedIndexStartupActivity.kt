@@ -110,7 +110,7 @@ internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
       registeredIndexesWereCorrupted = wasCorrupted,
       sourceOfScanning = InitialScanningSkipReporter.SourceOfScanning.OnProjectOpen,
     )
-    indexCleanupJob.forgetProjectDirtyFilesOnCompletion(
+    indexCleanupJob?.forgetProjectDirtyFilesOnCompletion(
       fileBasedIndex = fileBasedIndex,
       project = project,
       projectDirtyFilesQueue = projectDirtyFilesQueue,

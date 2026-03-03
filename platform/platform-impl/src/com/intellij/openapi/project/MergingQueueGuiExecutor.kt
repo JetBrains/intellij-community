@@ -16,6 +16,7 @@ import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.reportRawProgress
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -34,11 +35,12 @@ import java.util.function.Supplier
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
-open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected constructor(val project: Project,
-                                                                                    val taskQueue: MergingTaskQueue<T>,
-                                                                                    listener: ExecutorStateListener,
-                                                                                    progressTitle: @ProgressTitle String,
-                                                                                    suspendedText: @ProgressText String
+open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected constructor(
+  val project: Project,
+  val taskQueue: MergingTaskQueue<T>,
+  listener: ExecutorStateListener,
+  progressTitle: @ProgressTitle String,
+  suspendedText: @ProgressText String,
 ) {
   @ApiStatus.Experimental
   interface ExecutorStateListener {
@@ -106,8 +108,10 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
     }
   }
 
-  open fun processTasksWithProgress(reporter: RawProgressReporter,
-                                    activity: StructuredIdeActivity?): SubmissionReceipt? {
+  open fun processTasksWithProgress(
+    reporter: RawProgressReporter,
+    activity: StructuredIdeActivity?,
+  ): SubmissionReceipt? {
     return guiSuspender.setCurrentSuspenderAndSuspendIfRequested(TaskSuspender.getContextSuspender(), Supplier<SubmissionReceipt?> {
       while (true) {
         if (project.isDisposed) return@Supplier null
@@ -226,6 +230,9 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
     }
     catch (_: ProcessCanceledException) {
       LOG.info("Task canceled (PCE): ${task.infoString}")
+    }
+    catch (_: CancellationException) {
+      LOG.info("Task canceled (CancellationException): ${task.infoString}")
     }
     catch (unexpected: Throwable) {
       LOG.error("Failed to execute task " + task.infoString + ". " + unexpected.message, unexpected)
