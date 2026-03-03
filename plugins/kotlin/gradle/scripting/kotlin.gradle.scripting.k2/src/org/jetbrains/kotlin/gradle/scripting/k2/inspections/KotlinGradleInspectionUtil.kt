@@ -10,10 +10,12 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -138,3 +140,12 @@ private val REPOSITORIES_FQ_NAMES = setOf(
     FqName("org.gradle.plugin.management.PluginManagementSpec.repositories"),
     FqName("org.gradle.api.initialization.resolve.DependencyResolutionManagement.repositories")
 )
+
+internal fun isInheritor(useSiteElement: KtElement, targetClassId: ClassId, baseClassId: ClassId): Boolean {
+    if (targetClassId == baseClassId) return true
+    return analyze(useSiteElement) {
+        val targetClass = findClass(targetClassId) ?: return@analyze false
+        val baseClass = findClass(baseClassId) ?: return@analyze false
+        return targetClass.isSubClassOf(baseClass)
+    }
+}
