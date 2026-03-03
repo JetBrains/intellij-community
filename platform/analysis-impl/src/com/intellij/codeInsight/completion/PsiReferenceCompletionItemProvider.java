@@ -58,8 +58,8 @@ final class PsiReferenceCompletionItemProvider implements ModCompletionItemProvi
         completeReference(ref, set);
       }
     }
-    else{
-      @SuppressWarnings("SSBasedInspection") 
+    else {
+      @SuppressWarnings("SSBasedInspection")
       @Nullable Object[] completions = reference.getVariants();
       for (Object completion : completions) {
         ModCompletionItem ret = objectToLookupItem(completion);
