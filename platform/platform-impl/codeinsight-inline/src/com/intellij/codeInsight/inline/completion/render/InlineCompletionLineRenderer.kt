@@ -99,12 +99,20 @@ open class InlineCompletionLineRenderer(
   }
 
   protected fun getWidth(textBlocks: List<InlineCompletionRenderTextBlock>): Int {
-    val result = InlineCompletionVolumetricTextBlockFactory(editor).use { volumetricFactory ->
+    val result = getWidthAsDouble(textBlocks)
+    return maxOf(1, roundAccumulatedWidthToInt(result))
+  }
+
+  protected fun getWidthAsDouble(textBlocks: List<InlineCompletionRenderTextBlock>): Double {
+    return InlineCompletionVolumetricTextBlockFactory(editor).use { volumetricFactory ->
       textBlocks.sumOf { block ->
         if (block.text.isEmpty()) 0.0 else volumetricFactory.getVolumetric(block).widthInPixels
       }
     }
-    return maxOf(1, accumulatedWidthToInt(result))
+  }
+
+  protected fun roundAccumulatedWidthToInt(width: Double): Int {
+    return accumulatedWidthToInt(width)
   }
 
   private fun paintBackground(
