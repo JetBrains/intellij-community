@@ -121,6 +121,10 @@ private suspend fun buildNonBundledPlugins(
   val json: Lazy<JSON> = lazy { JSON.std.without(JSON.Feature.USE_FIELDS) }
   val pluginDirs = getOsSpecificNonBundledPluginsDirs(context)
   val mappings = pluginDirs.mapNotNull { (os, arch, targetDir) ->
+    if (os != null && arch != null && !context.shouldBuildDistributionForOS(os, arch)) {
+      return@mapNotNull null
+    }
+
     val filteredPlugins = pluginsToPublish.filter {
       satisfiesOsArchRestrictions(plugin = it, osFamily = os, arch = arch)
     }.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)

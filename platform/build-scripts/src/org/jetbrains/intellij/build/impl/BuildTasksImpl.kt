@@ -145,7 +145,6 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-    buildDistribution(context = context, isUpdateFromSources = true)
     val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
@@ -153,6 +152,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       JvmArchitecture.currentJvmArch
     }
     context.options.targetArch = arch
+    buildDistribution(context = context, isUpdateFromSources = true)
     val targetLibcImpl = LibcImpl.current(OsFamily.currentOs)
     layoutShared(context)
     if (includeBinAndRuntime) {
