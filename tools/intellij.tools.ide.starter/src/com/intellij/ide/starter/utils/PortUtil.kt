@@ -9,6 +9,7 @@ import com.intellij.util.system.OS
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.ServerSocket
+import kotlin.text.appendLine
 
 object PortUtil {
 
@@ -66,10 +67,19 @@ object PortUtil {
           return proposedPort + it
         }
       }
+
       error(buildString {
         appendLine("No available port found in a range $proposedPort..${proposedPort + 100}")
         listOf(proposedPort, proposedPort + 50, proposedPort + 100).forEach { port ->
           appendLine("Unavailability reason of $port is ${getPortUnavailabilityReason(host, port)}")
+        }
+
+        if (OS.CURRENT == OS.Windows) {
+          runCatching {
+            val (stdout, stderr) = findExcludedPortRanges()
+            appendLine("Excluded port ranges:\n$stdout")
+            if (stderr.isNotEmpty()) appendLine("Error message:\n$stderr")
+          }
         }
       })
     }
@@ -150,5 +160,19 @@ object PortUtil {
       }
       return false
     }
+  }
+
+  private fun findExcludedPortRanges(): Pair<String, String> {
+    val stdout = ExecOutputRedirect.ToStdOutAndString("[netsh]")
+    val stderr = ExecOutputRedirect.ToStdOutAndString("[netsh]")
+    ProcessExecutor(
+      "find excluded port ranges",
+      null,
+      args = listOf("cmd", "/c", "netsh interface ipv4 show excludedportrange protocol=tcp"),
+      stdoutRedirect = stdout,
+      stderrRedirect = stderr,
+      analyzeProcessExit = false
+    ).start()
+    return stdout.read() to stderr.read()
   }
 }
