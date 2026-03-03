@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.Set.copyOf
 
 @ApiStatus.Internal
 object TerminalCommandUsageStatistics {
@@ -17,7 +16,7 @@ object TerminalCommandUsageStatistics {
   private val whitespacesCommand = CommandData("<whitespaces>", null)
   private val relativePathCommand = CommandData("<relative path>", null)
   private val absolutePathCommand = CommandData("<absolute path>", null)
-  val knownCommandToSubCommandsMap: Map<String, Set<String>> = buildKnownCommandToSubCommandMap()
+  private val knownCommandsData: KnownCommandsData = buildKnownCommandsData()
 
   fun getKnownCommandValuesList(): List<String> {
     val cornerCases = listOf(
@@ -26,11 +25,11 @@ object TerminalCommandUsageStatistics {
       emptyCommand.command,
       whitespacesCommand.command
     )
-    return cornerCases + knownCommandToSubCommandsMap.keys
+    return cornerCases + knownCommandsData.commands.toList()
   }
 
   fun getKnownSubCommandValuesList(): List<String> {
-    return knownCommandToSubCommandsMap.values.flatten()
+    return knownCommandsData.subCommands.toList()
   }
 
   internal val commandExecutableField = EventFields.String("command", getKnownCommandValuesList())
@@ -69,20 +68,32 @@ object TerminalCommandUsageStatistics {
     val executable: String = (userCommand.getOrNull(0) ?: return null).let {
       if (SystemInfo.isWindows) it.removeSuffix(".exe") else it
     }
-    val knownSubCommands: Set<String> = knownCommandToSubCommandsMap[executable] ?: return null
-    val subCommand = userCommand.getOrNull(1)?.takeIf { knownSubCommands.contains(it) }
+    if (executable !in knownCommandsData.commands) {
+      return null
+    }
+    val subCommand = userCommand.getOrNull(1)?.takeIf { it in knownCommandsData.subCommands }
     return CommandData(executable, subCommand)
   }
 
-  private fun buildKnownCommandToSubCommandMap(): Map<String, Set<String>> {
+  private fun buildKnownCommandsData(): KnownCommandsData {
+    val commands = HashSet<String>()
+    val subCommands = HashSet<String>()
+
     val commandLines = AllowedItemsResourceWeakRefStorage(TerminalCommandUsageStatistics.javaClass, "known-commands.txt").items
-    val result: Map<String, List<String?>> = commandLines.asSequence().mapNotNull {
-      val command = ParametersListUtil.parse(it)
-      val executable = command.getOrNull(0)
-      if (executable != null) executable to command.getOrNull(1) else null
-    }.groupBy({ it.first }, { it.second })
-    return result.map { it.key to copyOf(it.value.filterNotNull()) }.associateTo(HashMap(result.size)) { it }
+    for (line in commandLines) {
+      val command = line.substringBefore(' ')
+      val subCommand = line.substring(command.length).trim().takeIf { it.isNotEmpty() }
+      commands.add(command)
+      subCommand?.let { subCommands.add(it) }
+    }
+
+    return KnownCommandsData(commands, subCommands)
   }
 
   class CommandData(val command: String, val subCommand: String?)
+
+  class KnownCommandsData(
+    val commands: Set<String>,
+    val subCommands: Set<String>,
+  )
 }
