@@ -192,8 +192,6 @@ public class JUnit6EventsTest extends AbstractTestFrameworkCompilingIntegrationT
     ProcessOutput output = doStartTestsProcess(createRunClassConfiguration("com.intellij.junit6.testData.SimpleFailTest"));
     assertEmpty(output.err);
 
-    assertEmpty(output.err);
-
     String tests = output.messages.stream().filter(m -> m instanceof BaseTestMessage)
       .map(m -> normalizedTestOutput(m, Map.of("details", (value) -> {
         int idx = value.indexOf("\n", 2);
