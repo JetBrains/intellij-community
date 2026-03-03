@@ -578,28 +578,22 @@ public class MergingTaskQueueTest {
     assertFalse(receiptWhenQueried.isAfter(receiptWhenAdded));
   }
 
-  private static class TaskWithCancellationTracking implements MergeableQueueTask<TaskWithCancellationTracking> {
+  private static class TaskWithRunnable implements MergeableQueueTask<TaskWithRunnable> {
 
-    private final Job job;
-    ProcessCanceledException exception = null;
+    private final Runnable r;
 
-    TaskWithCancellationTracking(Job job) {
-      this.job = job;
+    TaskWithRunnable(Runnable r) {
+      this.r = r;
     }
 
     @Override
-    public @Nullable TaskWithCancellationTracking tryMergeWith(@NotNull MergingTaskQueueTest.TaskWithCancellationTracking taskFromQueue) {
+    public @Nullable MergingTaskQueueTest.TaskWithRunnable tryMergeWith(@NotNull MergingTaskQueueTest.TaskWithRunnable taskFromQueue) {
       return this;
     }
 
     @Override
     public void perform(@NotNull ProgressIndicator indicator) {
-      try {
-        job.cancel(null);
-        indicator.checkCanceled();
-      } catch (ProcessCanceledException e) {
-        exception = e;
-      }
+      r.run();
     }
 
     @Override
@@ -612,13 +606,41 @@ public class MergingTaskQueueTest {
     ProgressManager.getInstance(); // preload service so that it does not throw PCE
 
     Job job = JobKt.Job(null);
-    TaskWithCancellationTracking task = new TaskWithCancellationTracking(job);
+    TaskWithRunnable task = new TaskWithRunnable(() -> {
+      job.cancel(null);
+      ProgressManager.checkCanceled();
+    });
+
     queue.addTask(task);
     ThreadContext.installThreadContext(job, true, () -> {
-      runAllTasks();
+      try {
+        runAllTasks();
+        fail();
+      } catch (ProcessCanceledException e) {
+        // expected
+      }
       return Unit.INSTANCE;
     });
-    assertNotNull(task.exception);
+  }
+
+  @Test
+  public void testExceptionGetsOverriddenByPCE() {
+    ProgressManager.getInstance(); // preload service so that it does not throw PCE
+
+    Job job = JobKt.Job(null);
+    TaskWithRunnable task = new TaskWithRunnable(() -> {
+      job.cancel(null);
+      throw new IllegalStateException(); // simulation of some broken invariant during dispose
+    });
+    queue.addTask(task);
+    ThreadContext.installThreadContext(job, true, () -> {
+      try {
+        runAllTasks();
+      } catch (ProcessCanceledException e) {
+        // expected
+      }
+      return Unit.INSTANCE;
+    });
   }
 
   private static void await(@NotNull CyclicBarrier b) {

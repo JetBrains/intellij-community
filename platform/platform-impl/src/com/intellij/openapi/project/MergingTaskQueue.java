@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.CeProcessCanceledException;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
@@ -319,7 +320,17 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
         contextJob.invokeOnCompletion(true, true, e -> cancelIndicator(indicator, e));
       }
 
-      ProgressManager.getInstance().runProcess(() -> task.perform(indicator), indicator);
+      try {
+        ProgressManager.getInstance().runProcess(() -> task.perform(indicator), indicator);
+      } catch (ProcessCanceledException e) {
+        throw e;
+      } catch (Throwable e) {
+        if (indicator.isCanceled()) {
+          LOG.warn("Exception during cancellation of Dumb Task: " + e.getMessage(), e);
+          indicator.checkCanceled();
+        }
+        throw e;
+      }
     }
 
     private static @NotNull Unit cancelIndicator(@NotNull ProgressIndicator indicator, @Nullable Throwable exception) {
