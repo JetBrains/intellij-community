@@ -26,6 +26,8 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Handles events about settings change both from the current IDE, and from the server, merges the settings, logs them,
@@ -73,7 +75,7 @@ class SettingsSyncBridge(
         pendingExclusiveEvents.add(event)
         coroutineScope.launch {
           try {
-            withTimeoutOrNull(60_000) {
+            withTimeoutOrNull(60.seconds) {
               eventsMutex.withLock {
                 LOG.debug("Lock obtained for exclusive event")
                 processExclusiveEvent(event)
@@ -133,22 +135,26 @@ class SettingsSyncBridge(
   private fun startQueue() {
     LOG.info("Starting settings sync queue")
     queueJob = coroutineScope.launch {
-      while (true) {
-        processPendingEvents()
-        if (!SettingsSyncSettings.getInstance().syncEnabled && pendingEvents.isEmpty() && pendingExclusiveEvents.isEmpty()) {
-          LOG.info("Sync disabled and no pending events. Stopping queue.")
-          break
-        }
-        try {
-          delay(1000)
-        }
-        catch (_: CancellationException) {
-          queueJob = null
-          LOG.info("queue processing was cancelled")
-          break;
+      try {
+        while (true) {
+          processPendingEvents()
+          if (!SettingsSyncSettings.getInstance().syncEnabled && pendingEvents.isEmpty() && pendingExclusiveEvents.isEmpty()) {
+            LOG.info("Sync disabled and no pending events. Stopping queue.")
+            break
+          }
+          try {
+            delay(1000.milliseconds)
+          }
+          catch (_: CancellationException) {
+            LOG.info("queue processing was cancelled")
+            break
+          }
         }
       }
-      LOG.info("Queue processing stopped")
+      finally {
+        queueJob = null
+        LOG.info("Queue processing stopped, queueJob set to null")
+      }
     }
   }
 
@@ -304,7 +310,7 @@ class SettingsSyncBridge(
       return
     }
     if (force) {
-      withTimeoutOrNull(60_000) {
+      withTimeoutOrNull(60.seconds) {
         eventsMutex.withLock {
           processPendingEventsUnderLock()
         }
@@ -443,6 +449,7 @@ class SettingsSyncBridge(
 
     // for tests it is important to have it the last statement, otherwise waitForAllExecuted can finish before rollback
     queueJob?.cancel()
+    queueJob = null // Mark as not initialized so it can be re-initialized
   }
 
   private fun rollback(previousState: CurrentState) {
@@ -555,7 +562,7 @@ class SettingsSyncBridge(
     processPendingEvents(force = true)
     val startTime = System.currentTimeMillis()
     while (System.currentTimeMillis() - startTime < 10000 && queueSize > 0) {
-      delay(10)
+      delay(10.milliseconds)
     }
     if (queueSize > 0) {
       LOG.warn("Queue size > 0 !!!!!!")
@@ -603,7 +610,7 @@ class SettingsSyncBridge(
 
     override fun isFileExists(filePath: String): Boolean {
       LOG.info("Cannot check if file '$filePath' exists - no communicator provided")
-      return false;
+      return false
     }
   }
 

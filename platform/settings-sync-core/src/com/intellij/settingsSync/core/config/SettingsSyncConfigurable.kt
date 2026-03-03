@@ -427,6 +427,11 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(
             SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
         }
+        // Don't set syncEnabled = false here - the bridge will do it via stopSyncingAndRollback
+        // when processing the DeleteServerData event
+        disableSyncOption.set(DisableSyncType.DISABLE)
+        syncStatusChanged()
+        return
       }
       DisableSyncType.DISABLE -> {
         SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
@@ -586,13 +591,18 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   private suspend fun sendRemoveRemoteDataEvent(): DeleteServerDataResult {
+    LOG.info("sendRemoveRemoteDataEvent: firing DeleteServerData event")
     val result = suspendCancellableCoroutine { continuation ->
+      LOG.info("sendRemoveRemoteDataEvent: creating suspendCancellableCoroutine")
       SettingsSyncEvents.getInstance().fireSettingsChanged(
         SyncSettingsEvent.DeleteServerData { deleteResult ->
+          LOG.info("sendRemoveRemoteDataEvent: callback invoked with result=$deleteResult")
           continuation.resume(deleteResult) { _, _, _ -> }
         }
       )
+      LOG.info("sendRemoveRemoteDataEvent: event fired, waiting for callback")
     }
+    LOG.info("sendRemoveRemoteDataEvent: returning result=$result")
     return result
   }
 
