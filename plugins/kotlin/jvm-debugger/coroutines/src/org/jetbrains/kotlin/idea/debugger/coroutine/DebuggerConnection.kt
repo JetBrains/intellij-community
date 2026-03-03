@@ -23,6 +23,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xdebugger.DapMode
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
@@ -59,6 +60,7 @@ class DebuggerConnection(
     }
 
     override fun processStarted(debugProcess: XDebugProcess) {
+        if (DapMode.isDap()) return
         val session = debugProcess.session as? XDebugSessionImpl ?: return
         session.runWhenUiReady { ui ->
             if (debugProcess is JavaDebugProcess &&
