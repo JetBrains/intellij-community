@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.CeProcessCanceledException;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -311,14 +312,21 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
           reporter.fraction(fraction);
         }
       };
-      taskJob.invokeOnCompletion(true, true, (exception) -> {
-        if (exception instanceof CancellationException) {
-          indicator.cancel();
-        }
-        return Unit.INSTANCE;
-      });
+      taskJob.invokeOnCompletion(true, true, e -> cancelIndicator(indicator, e));
+      Job contextJob = Cancellation.currentJob();
+      if (contextJob != null) {
+        // this branch handles completion caused by cancellation of the container where dumb tasks are running
+        contextJob.invokeOnCompletion(true, true, e -> cancelIndicator(indicator, e));
+      }
 
       ProgressManager.getInstance().runProcess(() -> task.perform(indicator), indicator);
+    }
+
+    private static @NotNull Unit cancelIndicator(@NotNull ProgressIndicator indicator, @Nullable Throwable exception) {
+      if (exception instanceof CancellationException) {
+        indicator.cancel();
+      }
+      return Unit.INSTANCE;
     }
 
     String getInfoString() {

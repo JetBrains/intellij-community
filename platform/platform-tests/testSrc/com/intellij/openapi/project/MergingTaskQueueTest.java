@@ -1,14 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.platform.util.progress.RawProgressReporter;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.junit5.TestApplication;
+import kotlin.Unit;
+import kotlinx.coroutines.Job;
+import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
@@ -30,6 +35,8 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -569,6 +576,49 @@ public class MergingTaskQueueTest {
     assertEquals(receiptWhenAdded, receiptWhenQueried);
     assertFalse(receiptWhenAdded.isAfter(receiptWhenQueried));
     assertFalse(receiptWhenQueried.isAfter(receiptWhenAdded));
+  }
+
+  private static class TaskWithCancellationTracking implements MergeableQueueTask<TaskWithCancellationTracking> {
+
+    private final Job job;
+    ProcessCanceledException exception = null;
+
+    TaskWithCancellationTracking(Job job) {
+      this.job = job;
+    }
+
+    @Override
+    public @Nullable TaskWithCancellationTracking tryMergeWith(@NotNull MergingTaskQueueTest.TaskWithCancellationTracking taskFromQueue) {
+      return this;
+    }
+
+    @Override
+    public void perform(@NotNull ProgressIndicator indicator) {
+      try {
+        job.cancel(null);
+        indicator.checkCanceled();
+      } catch (ProcessCanceledException e) {
+        exception = e;
+      }
+    }
+
+    @Override
+    public void dispose() {
+    }
+  }
+
+  @Test
+  public void testRunnablesGetCanceledOnCancellationOfContextJob() {
+    ProgressManager.getInstance(); // preload service so that it does not throw PCE
+
+    Job job = JobKt.Job(null);
+    TaskWithCancellationTracking task = new TaskWithCancellationTracking(job);
+    queue.addTask(task);
+    ThreadContext.installThreadContext(job, true, () -> {
+      runAllTasks();
+      return Unit.INSTANCE;
+    });
+    assertNotNull(task.exception);
   }
 
   private static void await(@NotNull CyclicBarrier b) {
