@@ -132,7 +132,7 @@ internal fun renderCompilerDependenciesIml(libraries: List<JpsLibrary>): String 
             xml("orderEntry", "type" to "inheritedJdk")
             xml("orderEntry", "type" to "sourceFolder", "forTests" to "false")
             for (library in libraries) {
-                xml("orderEntry", "type" to "library", "name" to library.name, "level" to "project")
+                xml("orderEntry", "type" to "library", "scope" to "PROVIDED", "name" to library.name, "level" to "project")
             }
         }
     }.render(addXmlDeclaration = true)
