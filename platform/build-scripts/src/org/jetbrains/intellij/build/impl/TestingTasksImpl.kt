@@ -273,6 +273,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (options.repeatCount < 1) {
       context.messages.logErrorAndThrow("'intellij.build.test.repeat.count' option should be greater than 0, actual: ${options.repeatCount}")
     }
+    if (options.repeatCount > 1 && options.attemptCount > 1) {
+      context.messages.logErrorAndThrow("'intellij.build.test.repeat.count' and 'intellij.build.test.attempt.count' options cannot be used together")
+    }
   }
 
   private fun errorOptionIgnored(specifiedOption: String, ignoredOption: String) {
