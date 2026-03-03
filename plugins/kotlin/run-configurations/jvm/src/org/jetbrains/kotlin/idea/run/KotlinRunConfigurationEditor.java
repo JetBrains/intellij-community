@@ -106,7 +106,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                               null, new Dimension(-1, 20), null, 0, false));
-      commonProgramParameters = new CommonJavaParametersPanel();
+      commonProgramParameters = new CommonJavaParametersPanel(project);
       mainPanel.add(commonProgramParameters, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK |
                                                                  GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -123,7 +123,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
       mainPanel.add(moduleChooser, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      jrePathEditor = new JrePathEditor();
+      jrePathEditor = new JrePathEditor(project);
       mainPanel.add(jrePathEditor, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,

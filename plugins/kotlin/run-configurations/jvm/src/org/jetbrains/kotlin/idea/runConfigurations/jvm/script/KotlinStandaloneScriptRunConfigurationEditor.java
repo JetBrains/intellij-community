@@ -52,13 +52,13 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
       final Spacer spacer1 = new Spacer();
       mainPanel.add(spacer1, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
                                                  GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
-      commonProgramParameters = new CommonJavaParametersPanel();
+      commonProgramParameters = new CommonJavaParametersPanel(project);
       mainPanel.add(commonProgramParameters, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK |
                                                                  GridConstraints.SIZEPOLICY_CAN_GROW,
                                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK |
                                                                  GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-      jrePathEditor = new JrePathEditor();
+      jrePathEditor = new JrePathEditor(project);
       mainPanel.add(jrePathEditor, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
