@@ -9,6 +9,8 @@ import com.intellij.psi.stubs.StubBuildCachedValuesManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -17,7 +19,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.code.BodyCodeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.code.GrCodeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
+import org.jetbrains.plugins.groovy.transformations.MethodInfo;
 import org.jetbrains.plugins.groovy.transformations.TransformationResult;
+import org.jetbrains.plugins.groovy.transformations.TransformationType;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.Collection;
@@ -26,11 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
-  /**
-   * In some scenarios the search for nested classes of the same type goes after the retrieval of super classes for this type which is
-   * not normally possible. This key restricts such search to avoid infinite recursion.
-   */
-  private static final Key<Boolean> IGNORE_INNER_CLASS_SEARCH = Key.create("IGNORE_INNER_CLASS_SEARCH");
   private final T myDefinition;
   private final GrCodeMembersProvider<? super T> myCodeMembersProvider;
   private static final Collection<?> myDependencies = Collections.singletonList(PsiModificationTracker.MODIFICATION_COUNT);
@@ -71,12 +70,11 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public PsiClass[] getInnerClasses() {
-    if (Boolean.TRUE.equals(IGNORE_INNER_CLASS_SEARCH.get(myDefinition))) return PsiClass.EMPTY_ARRAY;
-    return getTransformationResult().getInnerClasses().clone();
+    return ArrayUtil.mergeArrays(getCodeInnerClasses(), getLightTransformationResult().getInnerClasses()).clone();
   }
 
   public PsiMethod[] getMethods() {
-    return getTransformationResult().getMethods().clone();
+    return ContainerUtil.map(getTransformationResult().getMethodInfos(), MethodInfo::getMethod).toArray(PsiMethod.EMPTY_ARRAY).clone();
   }
 
   public PsiMethod[] getConstructors() {
@@ -86,14 +84,11 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public GrField[] getFields() {
-    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, Boolean.TRUE);
     GrField[] fields = getTransformationResult().getFields().clone();
-    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, null);
     return fields;
   }
 
   public PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic) {
-    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, Boolean.TRUE);
     PsiClassType[] types = CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] extendsTypes = getTransformationResult().getExtendsTypes();
       return CachedValueProvider.Result.create(extendsTypes, myDependencies);
@@ -101,7 +96,6 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
       PsiClassType[] extendsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getExtendsClause());
       return CachedValueProvider.Result.create(extendsTypes, myDependencies);
     }).clone();
-    IGNORE_INNER_CLASS_SEARCH.set(myDefinition, null);
     return types;
   }
 
@@ -123,10 +117,22 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     return modifierMap.getOrDefault(modifierList, List.of());
   }
 
-  private @NotNull TransformationResult getTransformationResult() {
+  private @NotNull TransformationResult getLightTransformationResult() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
-      TransformationUtilKt.transformDefinition(myDefinition), myDependencies
+      TransformationUtilKt.transformDefinition(myDefinition, TransformationType.LIGHT), myDependencies
     ));
+  }
+
+  private @NotNull TransformationResult getTransformationResult() {
+    return CachedValuesManager.getCachedValue(
+      myDefinition,
+      () -> {
+        TransformationResult lightResult = getLightTransformationResult();
+        TransformationResult recursiveResult = TransformationUtilKt.transformDefinition(myDefinition, TransformationType.RECURSIVE);
+        TransformationResult result = TransformationUtilKt.plus(lightResult, recursiveResult);
+        return CachedValueProvider.Result.create(result, myDependencies);
+      }
+    );
   }
 
   private static final Key<StubBuildCachedValuesManager.StubBuildCachedValue<GrMethod[]>>

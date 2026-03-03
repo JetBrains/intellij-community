@@ -20,6 +20,7 @@ import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.impl.light.LightPsiClassBuilder
 import com.intellij.psi.util.MethodSignature
+import com.intellij.psi.util.MethodSignatureUtil.areSignaturesErasureEqual
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.toArray
@@ -40,6 +41,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.getAllFields
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.getReferenceListTypes
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.getSuperClass
 import org.jetbrains.plugins.groovy.transformations.dsl.MemberBuilder
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.LinkedList
 
 internal class TransformationContextImpl(private val myCodeClass: GrTypeDefinition) : TransformationContext {
@@ -50,9 +53,16 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
   private val myClassType: PsiClassType = myPsiFacade.elementFactory.createType(codeClass, PsiSubstitutor.EMPTY)
   private val myMemberBuilder = MemberBuilder(this)
 
-  private val myMethods: LinkedList<PsiMethod> by lazy(LazyThreadSafetyMode.NONE) {
-    myCodeClass.codeMethods.flatMapTo(LinkedList(), ::expandReflectedMethods)
+  private val myMethods: LinkedList<MethodInfo> by lazy(LazyThreadSafetyMode.NONE) {
+    myCodeClass.codeMethods.flatMapTo(LinkedList()) {
+      expandReflectedMethods(it).map { expanded -> MethodInfo(expanded, MethodOrder.DEFAULT) }
+    }
   }
+
+  private val myRemovedMethodInfos: MutableSet<MethodInfo> by lazy(LazyThreadSafetyMode.NONE) {
+    Collections.newSetFromMap(IdentityHashMap())
+  }
+
   private val myFields: MutableList<GrField> by lazy(LazyThreadSafetyMode.NONE) {
     myCodeClass.codeFields.toMutableList()
   }
@@ -69,8 +79,8 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
   private val mySignaturesCache: Map<String, MutableSet<MethodSignature>> = FactoryMap.create { name ->
     val result = ObjectOpenCustomHashSet(AST_TRANSFORMATION_AWARE_METHOD_PARAMETERS_ERASURE_EQUALITY)
     for (existingMethod in myMethods) {
-      if (existingMethod.name == name) {
-        result.add(existingMethod.getSignature(PsiSubstitutor.EMPTY))
+      if (existingMethod.method.name == name) {
+        result.add(existingMethod.method.getSignature(PsiSubstitutor.EMPTY))
       }
     }
     result
@@ -78,6 +88,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
   private val myAnnotations: MutableList<PsiAnnotation> by lazy(LazyThreadSafetyMode.NONE) {
     myCodeClass.annotations.toMutableList()
   }
+
 
   // Modifiers should be processed with care in transformation context to avoid recursion issues.
   // This code re-creates erasures computation to properly handle modifier querying
@@ -115,7 +126,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
       factory.createType(clazz, erasureSubstitutor, type.languageLevel)
     }
     else {
-      return type
+      type
     }
   }
 
@@ -175,7 +186,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     return fields
   }
 
-  override fun getMethods(): Collection<PsiMethod> = myMethods
+  override fun getMethods(): Collection<PsiMethod> = myMethods.map { it.method }
 
   override fun getInnerClasses(): Collection<PsiClass> = myInnerClasses
 
@@ -210,8 +221,8 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
   }
 
   override fun findMethodsByName(name: String, checkBases: Boolean): Collection<PsiMethod> {
-    val methods = myMethods.filter {
-      name == it.name
+    val methods = myMethods.mapNotNull {
+      if (name == it.method.name) it.method else null
     }
     if (checkBases) {
       val superMethods = superClass?.findMethodsByName(name, true) ?: PsiMethod.EMPTY_ARRAY
@@ -233,10 +244,14 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     val signatures = mySignaturesCache.getValue(method.name)
     if (signatures.add(signature)) {
       if (prepend) {
-        myMethods.addFirst(method)
+        val info = MethodInfo(method, MethodOrder.FIRST)
+        myRemovedMethodInfos.remove(info)
+        myMethods.addFirst(info)
       }
       else {
-        myMethods.addLast(method)
+        val info = MethodInfo(method, MethodOrder.LAST)
+        myRemovedMethodInfos.remove(info)
+        myMethods.addLast(info)
       }
     }
   }
@@ -264,7 +279,14 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     for (expanded in expandReflectedMethods(method)) {
       val signature = expanded.getSignature(PsiSubstitutor.EMPTY)
       if (signatures.remove(signature)) {
-        myMethods.removeIf { m -> com.intellij.psi.util.MethodSignatureUtil.areSignaturesErasureEqual(signature, m.getSignature(PsiSubstitutor.EMPTY)) }
+        myMethods.removeIf { m ->
+          if (areSignaturesErasureEqual(signature, m.method.getSignature(PsiSubstitutor.EMPTY))) {
+            myRemovedMethodInfos.add(m)
+            true
+          } else {
+            false
+          }
+        }
       }
     }
   }
@@ -306,7 +328,8 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
 
   internal val transformationResult: TransformationResult
     get() = TransformationResult(
-      (methods + enumMethods()).toArray(PsiMethod.EMPTY_ARRAY),
+      (myMethods + enumMethods()).toTypedArray(),
+      myRemovedMethodInfos,
       fields.toArray(GrField.EMPTY_ARRAY),
       innerClasses.toArray(PsiClass.EMPTY_ARRAY),
       implementsTypes.toArray(PsiClassType.EMPTY_ARRAY),
@@ -314,7 +337,9 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
       myModifiers
     )
 
-  private fun enumMethods() : List<PsiMethod> {
-    return if (myCodeClass is GrEnumTypeDefinitionImpl) myCodeClass.getDefEnumMethods(this) else emptyList()
+  private fun enumMethods() : List<MethodInfo> {
+    return if (myCodeClass is GrEnumTypeDefinitionImpl)
+      myCodeClass.getDefEnumMethods(this).map { MethodInfo(it, MethodOrder.LAST) }
+    else emptyList()
   }
 }

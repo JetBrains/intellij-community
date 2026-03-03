@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.RepositoryTestLibrary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
-internal class SpockInheritanceTest: LightGroovyTestCase() {
+internal class SpockWithNestedClassesTest: LightGroovyTestCase() {
   private val descriptor = LibraryLightProjectDescriptor(
     LIB_GROOVY_4_0.plus(RepositoryTestLibrary("org.spockframework:spock-core:2.4-groovy-4.0"))
   )
@@ -45,4 +45,25 @@ internal class SpockInheritanceTest: LightGroovyTestCase() {
     assertFalse(InheritanceUtil.isInheritor(clazz, "spock.lang.Specification"))
   }
 
+  fun testNoRecursionWithCompletion() {
+    myFixture.configureByText(
+      GroovyFileType.GROOVY_FILE_TYPE, """
+                  package org.b
+
+                  import static org.b.SomeClass.ServerEndpoint.A
+                  
+                  abstract class SomeClass<T> extends SomeClassBase<T> {
+                      <caret>
+                      enum ServerEndpoint {
+                          A
+                      }
+                  }
+                  
+                  abstract class SomeClassBase<T> extends Specificatio { // typo is intentional
+                  
+                  }
+    """.trimIndent())
+    myFixture.type('.')
+    myFixture.completeBasic()
+  }
 }
